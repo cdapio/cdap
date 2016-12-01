@@ -18,18 +18,20 @@ package co.cask.cdap.internal.app.runtime.plugin;
 
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 
 /**
  * Thrown when a plugin does not exist.
  */
 public class PluginNotExistsException extends NotFoundException {
 
-  public PluginNotExistsException(Id.Namespace namespace, String type, String name) {
-    super("plugin", String.format("%s:%s:%s", namespace.getId(), type, name));
+  public PluginNotExistsException(NamespaceId namespace, String type, String name) {
+    super("plugin", String.format("%s:%s:%s", namespace.getEntityName(), type, name));
   }
 
-  public PluginNotExistsException(Id.Artifact artifactId, String type, String name) {
+  public PluginNotExistsException(ArtifactId artifactId, String type, String name) {
     super("plugin", String.format("%s:%s:%s:%s:%s",
-      artifactId.getNamespace().getId(), type, name, artifactId.getName(), artifactId.getVersion()));
+      artifactId.getParent().getEntityName(), type, name, artifactId.getArtifact(), artifactId.getVersion()));
   }
 }

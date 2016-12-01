@@ -36,7 +36,7 @@ public class StreamFileTestUtils {
 
   public static Location getStreamBaseLocation(NamespacedLocationFactory namespacedLocationFactory,
                                                StreamId streamId) throws IOException {
-    return namespacedLocationFactory.get(streamId.getParent().toId()).append(streamId.getEntityName());
+    return namespacedLocationFactory.get(streamId.getParent()).append(streamId.getEntityName());
   }
 
   public static StreamEvent createEvent(long timestamp, String body) {

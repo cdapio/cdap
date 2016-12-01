@@ -46,8 +46,8 @@ public abstract class StreamConsumerStateTestBase {
   protected static final NamespaceId OTHER_NAMESPACE = new NamespaceId("otherNamespace");
 
   protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
-    namespacedLocationFactory.get(TEST_NAMESPACE.toId()).mkdirs();
-    namespacedLocationFactory.get(OTHER_NAMESPACE.toId()).mkdirs();
+    namespacedLocationFactory.get(TEST_NAMESPACE).mkdirs();
+    namespacedLocationFactory.get(OTHER_NAMESPACE).mkdirs();
   }
 
   @Test

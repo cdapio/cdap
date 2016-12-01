@@ -51,8 +51,8 @@ public class GetMetadataPropertiesCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
     String scope = arguments.getOptional(ArgumentName.METADATA_SCOPE.toString());
-    Map<String, String> properties = scope == null ? client.getProperties(entity.toId()) :
-      client.getProperties(entity.toId(), MetadataScope.valueOf(scope.toUpperCase()));
+    Map<String, String> properties = scope == null ? client.getProperties(entity) :
+      client.getProperties(entity, MetadataScope.valueOf(scope.toUpperCase()));
 
     Table table = Table.builder()
       .setHeader("key", "value")

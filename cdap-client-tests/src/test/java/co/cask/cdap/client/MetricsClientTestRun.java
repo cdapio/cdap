@@ -25,6 +25,9 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.MetricTagValue;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -71,8 +74,9 @@ public class MetricsClientTestRun extends ClientTestBase {
       // TODO: remove arbitrary sleep
       TimeUnit.SECONDS.sleep(5);
 
-      Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
-      Id.Program programId = Id.Program.from(appId, ProgramType.FLOW, FakeFlow.NAME);
+      ApplicationId appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), FakeApp.NAME);
+      ProgramId programId = new ProgramId(appId.getNamespace(), appId.getApplication(),
+                                          ProgramType.FLOW, FakeFlow.NAME);
       String flowlet = FakeFlow.FLOWLET_NAME;
 
       MetricQueryResult result = metricsClient.query(MetricsTags.flowlet(programId, flowlet),

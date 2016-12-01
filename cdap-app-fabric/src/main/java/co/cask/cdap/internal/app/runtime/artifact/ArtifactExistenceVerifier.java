@@ -39,7 +39,7 @@ public class ArtifactExistenceVerifier implements EntityExistenceVerifier<Artifa
   @Override
   public void ensureExists(ArtifactId artifactId) throws ArtifactNotFoundException {
     try {
-      artifactStore.getArtifact(artifactId.toId());
+      artifactStore.getArtifact(artifactId);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

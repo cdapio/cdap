@@ -289,7 +289,7 @@ public abstract class ConcurrentStreamWriterTestBase {
   }
 
   private FileInfo generateFile(NamespacedLocationFactory locationFactory, int id, int events) throws IOException {
-    Id.Namespace dummyNs = Id.Namespace.from("dummy");
+    NamespaceId dummyNs = new NamespaceId("dummy");
     Location eventLocation = locationFactory.get(dummyNs).append(UUID.randomUUID().toString());
     Location indexLocation = locationFactory.get(dummyNs).append(UUID.randomUUID().toString());
 

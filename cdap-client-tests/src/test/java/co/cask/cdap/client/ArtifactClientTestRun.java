@@ -42,6 +42,8 @@ import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -82,17 +84,17 @@ public class ArtifactClientTestRun extends ClientTestBase {
   public void setUp() throws Throwable {
     super.setUp();
     artifactClient = new ArtifactClient(clientConfig, new RESTClient(clientConfig));
-    for (ArtifactSummary artifactSummary : artifactClient.list(Id.Namespace.DEFAULT)) {
+    for (ArtifactSummary artifactSummary : artifactClient.list(NamespaceId.DEFAULT)) {
       artifactClient.delete(
-        Id.Artifact.from(Id.Namespace.DEFAULT, artifactSummary.getName(), artifactSummary.getVersion()));
+        new ArtifactId(NamespaceId.DEFAULT.getNamespace(), artifactSummary.getName(), artifactSummary.getVersion()));
     }
   }
 
   @Test
   public void testNotFound() throws Exception {
-    Id.Artifact ghostId = Id.Artifact.from(Id.Namespace.DEFAULT, "ghost", "1.0.0");
+    ArtifactId ghostId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "ghost", "1.0.0");
     try {
-      artifactClient.list(Id.Namespace.from("ghost"));
+      artifactClient.list(new NamespaceId("ghost"));
       Assert.fail();
     } catch (NotFoundException e) {
       // expected
@@ -106,7 +108,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
     }
 
     try {
-      artifactClient.listVersions(ghostId.getNamespace(), ghostId.getName());
+      artifactClient.listVersions(new NamespaceId(ghostId.getNamespace()), ghostId.getEntityName());
       Assert.fail();
     } catch (ArtifactNotFoundException e) {
       // expected
@@ -114,9 +116,11 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test adding an artifact that extends a non-existent artifact
     Set<ArtifactRange> parents = Sets.newHashSet(
-      new ArtifactRange(ghostId.getNamespace(), ghostId.getName(), new ArtifactVersion("1"), new ArtifactVersion("2")));
+      new ArtifactRange(new NamespaceId(ghostId.getNamespace()),
+                        ghostId.getEntityName(), new ArtifactVersion("1"),
+                        new ArtifactVersion("2")));
     try {
-      artifactClient.add(Id.Namespace.DEFAULT, "abc", DUMMY_SUPPLIER, "1.0.0", parents);
+      artifactClient.add(NamespaceId.DEFAULT, "abc", DUMMY_SUPPLIER, "1.0.0", parents);
       Assert.fail();
     } catch (NotFoundException e) {
       // expected
@@ -148,7 +152,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
   public void testAddArtifactBadIds() throws Exception {
     // test bad version
     try {
-      artifactClient.add(Id.Namespace.DEFAULT, "abc", DUMMY_SUPPLIER, "1/0.0");
+      artifactClient.add(NamespaceId.DEFAULT, "abc", DUMMY_SUPPLIER, "1/0.0");
       Assert.fail();
     } catch (BadRequestException e) {
       // expected
@@ -156,7 +160,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test bad name
     try {
-      artifactClient.add(Id.Namespace.DEFAULT, "ab:c", DUMMY_SUPPLIER, "1.0.0");
+      artifactClient.add(NamespaceId.DEFAULT, "ab:c", DUMMY_SUPPLIER, "1.0.0");
       Assert.fail();
     } catch (BadRequestException e) {
       // expected
@@ -166,8 +170,8 @@ public class ArtifactClientTestRun extends ClientTestBase {
   @Test
   public void testAddSelfExtendingThrowsBadRequest() throws Exception {
     try {
-      artifactClient.add(Id.Namespace.DEFAULT, "abc", DUMMY_SUPPLIER, "1.0.0", Sets.newHashSet(
-        new ArtifactRange(Id.Namespace.DEFAULT, "abc", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))
+      artifactClient.add(NamespaceId.DEFAULT, "abc", DUMMY_SUPPLIER, "1.0.0", Sets.newHashSet(
+        new ArtifactRange(NamespaceId.DEFAULT, "abc", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))
       ));
       Assert.fail();
     } catch (BadRequestException e) {
@@ -178,8 +182,8 @@ public class ArtifactClientTestRun extends ClientTestBase {
   @Test
   public void testArtifacts() throws Exception {
     // add 2 versions of an artifact with an application
-    Id.Artifact myapp1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp", "1.0.0");
-    Id.Artifact myapp2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp", "2.0.0");
+    ArtifactId myapp1Id = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "myapp", "1.0.0");
+    ArtifactId myapp2Id = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "myapp", "2.0.0");
     LocalLocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, "2.0.0");
@@ -191,20 +195,20 @@ public class ArtifactClientTestRun extends ClientTestBase {
         return appJarLoc.getInputStream();
       }
     };
-    artifactClient.add(myapp1Id.getNamespace(), myapp1Id.getName(),
-                       inputSupplier, myapp1Id.getVersion().getVersion());
+    artifactClient.add(new NamespaceId(myapp1Id.getNamespace()), myapp1Id.getEntityName(),
+                       inputSupplier, myapp1Id.getVersion());
     // add some properties
     Map<String, String> myapp1Properties = ImmutableMap.of("k1", "v1");
     artifactClient.writeProperties(myapp1Id, myapp1Properties);
 
     // let it derive version from jar manifest, which has bundle-version at 2.0.0
-    artifactClient.add(myapp2Id.getNamespace(), myapp2Id.getName(), inputSupplier, null, null);
+    artifactClient.add(new NamespaceId(myapp2Id.getNamespace()), myapp2Id.getEntityName(), inputSupplier, null, null);
     // add some properties
     Map<String, String> myapp2Properties = ImmutableMap.of("k1", "v1", "k2", "v2");
     artifactClient.writeProperties(myapp2Id, myapp2Properties);
 
     // add an artifact that contains a plugin, but only extends myapp-2.0.0
-    Id.Artifact pluginId = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp-plugins", "2.0.0");
+    ArtifactId pluginId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "myapp-plugins", "2.0.0");
     manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
     final Location pluginJarLoc = PluginJarHelper.createPluginJar(locationFactory, manifest, Plugin1.class);
@@ -215,28 +219,29 @@ public class ArtifactClientTestRun extends ClientTestBase {
       }
     };
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
-      myapp2Id.getNamespace(), myapp2Id.getName(), myapp2Id.getVersion(), new ArtifactVersion("3.0.0")));
+      new NamespaceId(myapp2Id.getNamespace()), myapp2Id.getEntityName(),
+      new ArtifactVersion(myapp2Id.getVersion()), new ArtifactVersion("3.0.0")));
     Set<PluginClass> additionalPlugins = Sets.newHashSet(new PluginClass(
       "jdbc", "mysql", "", "com.mysql.jdbc.Driver", null, Collections.<String, PluginPropertyField>emptyMap()));
-    artifactClient.add(pluginId.getNamespace(), pluginId.getName(), inputSupplier,
-                       pluginId.getVersion().getVersion(), parents, additionalPlugins);
+    artifactClient.add(new NamespaceId(pluginId.getNamespace()), pluginId.getEntityName(), inputSupplier,
+                       pluginId.getVersion(), parents, additionalPlugins);
 
-    ArtifactSummary myapp1Summary = new ArtifactSummary(myapp1Id.getName(), myapp1Id.getVersion().getVersion());
-    ArtifactSummary myapp2Summary = new ArtifactSummary(myapp2Id.getName(), myapp2Id.getVersion().getVersion());
-    ArtifactSummary pluginArtifactSummary = new ArtifactSummary(pluginId.getName(), pluginId.getVersion().getVersion());
+    ArtifactSummary myapp1Summary = new ArtifactSummary(myapp1Id.getEntityName(), myapp1Id.getVersion());
+    ArtifactSummary myapp2Summary = new ArtifactSummary(myapp2Id.getEntityName(), myapp2Id.getVersion());
+    ArtifactSummary pluginArtifactSummary = new ArtifactSummary(pluginId.getEntityName(), pluginId.getVersion());
 
-    Set<ArtifactSummary> artifacts = Sets.newHashSet(artifactClient.list(Id.Namespace.DEFAULT));
+    Set<ArtifactSummary> artifacts = Sets.newHashSet(artifactClient.list(NamespaceId.DEFAULT));
     Assert.assertEquals(Sets.newHashSet(myapp1Summary, myapp2Summary, pluginArtifactSummary), artifacts);
 
     // list all artifacts named 'myapp'
     Assert.assertEquals(Sets.newHashSet(myapp1Summary, myapp2Summary),
-                        Sets.newHashSet(artifactClient.listVersions(Id.Namespace.DEFAULT, myapp1Id.getName())));
+                        Sets.newHashSet(artifactClient.listVersions(NamespaceId.DEFAULT, myapp1Id.getEntityName())));
     // list all artifacts named 'myapp-plugins'
     Assert.assertEquals(Sets.newHashSet(pluginArtifactSummary),
-                        Sets.newHashSet(artifactClient.listVersions(Id.Namespace.DEFAULT, pluginId.getName())));
+                        Sets.newHashSet(artifactClient.listVersions(NamespaceId.DEFAULT, pluginId.getEntityName())));
     // artifacts should be in user scope
     try {
-      artifactClient.listVersions(Id.Namespace.DEFAULT, pluginId.getName(), ArtifactScope.SYSTEM);
+      artifactClient.listVersions(NamespaceId.DEFAULT, pluginId.getEntityName(), ArtifactScope.SYSTEM);
       Assert.fail();
     } catch (ArtifactNotFoundException e) {
       // expected
@@ -250,13 +255,13 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test get myapp-1.0.0
     ArtifactInfo myapp1Info =
-      new ArtifactInfo(myapp1Id.getName(), myapp1Id.getVersion().getVersion(), ArtifactScope.USER,
+      new ArtifactInfo(myapp1Id.getEntityName(), myapp1Id.getVersion(), ArtifactScope.USER,
                        myAppClasses, myapp1Properties);
     Assert.assertEquals(myapp1Info, artifactClient.getArtifactInfo(myapp1Id));
 
     // test get myapp-2.0.0
     ArtifactInfo myapp2Info =
-      new ArtifactInfo(myapp2Id.getName(), myapp2Id.getVersion().getVersion(), ArtifactScope.USER,
+      new ArtifactInfo(myapp2Id.getEntityName(), myapp2Id.getVersion(), ArtifactScope.USER,
                        myAppClasses, myapp2Properties);
     Assert.assertEquals(myapp2Info, artifactClient.getArtifactInfo(myapp2Id));
     // test overwriting properties
@@ -284,7 +289,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
       .addPlugins(additionalPlugins)
       .build();
     ArtifactInfo pluginArtifactInfo =
-      new ArtifactInfo(pluginId.getName(), pluginId.getVersion().getVersion(), ArtifactScope.USER,
+      new ArtifactInfo(pluginId.getEntityName(), pluginId.getVersion(), ArtifactScope.USER,
                        pluginClasses, ImmutableMap.<String, String>of());
     Assert.assertEquals(pluginArtifactInfo, artifactClient.getArtifactInfo(pluginId));
 

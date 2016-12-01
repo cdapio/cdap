@@ -18,9 +18,9 @@ package co.cask.cdap.common.conf;
 
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.InvalidArtifactException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Charsets;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -48,13 +48,13 @@ import java.util.Set;
  * Reads files into {@link ArtifactConfig ArtifactConfigs} for a specific namespace.
  */
 public class ArtifactConfigReader {
-  private final LoadingCache<Id.Namespace, Gson> gsonCache;
+  private final LoadingCache<NamespaceId, Gson> gsonCache;
 
   public ArtifactConfigReader() {
     this.gsonCache = CacheBuilder.newBuilder().build(
-      new CacheLoader<Id.Namespace, Gson>() {
+      new CacheLoader<NamespaceId, Gson>() {
         @Override
-        public Gson load(Id.Namespace namespace) throws Exception {
+        public Gson load(NamespaceId namespace) throws Exception {
           return new GsonBuilder()
             .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeDeserializer(namespace))
             .registerTypeAdapter(ArtifactConfig.class, new ArtifactConfigDeserializer())
@@ -74,7 +74,7 @@ public class ArtifactConfigReader {
    * @throws InvalidArtifactException if there was a problem deserializing the file contents due to some invalid
    *                                  format or unexpected value.
    */
-  public ArtifactConfig read(Id.Namespace namespace, File configFile) throws IOException, InvalidArtifactException {
+  public ArtifactConfig read(NamespaceId namespace, File configFile) throws IOException, InvalidArtifactException {
     String fileName = configFile.getName();
     try (Reader reader = Files.newReader(configFile, Charsets.UTF_8)) {
       try {
@@ -82,8 +82,8 @@ public class ArtifactConfigReader {
 
         // check namespaces in parents are either system or the specified namespace
         for (ArtifactRange parent : config.getParents()) {
-          Id.Namespace parentNamespace = parent.getNamespace();
-          if (!parentNamespace.equals(Id.Namespace.SYSTEM) && !parent.getNamespace().equals(namespace)) {
+          NamespaceId parentNamespace = parent.getNamespace();
+          if (!parentNamespace.equals(NamespaceId.SYSTEM) && !parent.getNamespace().equals(namespace)) {
             throw new InvalidArtifactException(String.format("Invalid parent %s. Parents must be in the same " +
               "namespace or a system artifact.", parent));
           }
@@ -99,12 +99,12 @@ public class ArtifactConfigReader {
 
   /**
    * Deserializer for ArtifactRange in a ArtifactConfig. Artifact ranges are expected to be able to be
-   * parsed via {@link ArtifactRange#parse(String)} or {@link ArtifactRange#parse(Id.Namespace, String)}.
+   * parsed via {@link ArtifactRange#parse(String)} or {@link ArtifactRange#parse(NamespaceId, String)}.
    */
   private static class ArtifactRangeDeserializer implements JsonDeserializer<ArtifactRange> {
-    private final Id.Namespace namespace;
+    private final NamespaceId namespace;
 
-    ArtifactRangeDeserializer(Id.Namespace namespace) {
+    ArtifactRangeDeserializer(NamespaceId namespace) {
       this.namespace = namespace;
     }
 

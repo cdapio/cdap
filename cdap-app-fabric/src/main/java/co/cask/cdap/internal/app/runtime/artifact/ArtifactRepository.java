@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.artifact;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -144,7 +145,10 @@ public class ArtifactRepository {
    */
   public void clear(NamespaceId namespace) throws Exception {
     for (ArtifactDetail artifactDetail : artifactStore.getArtifacts(namespace)) {
-      deleteArtifact(Id.Artifact.from(namespace.toId(), artifactDetail.getDescriptor().getArtifactId()));
+      deleteArtifact(new co.cask.cdap.proto.id.ArtifactId(
+        namespace.getEntityName(),
+        artifactDetail.getDescriptor().getArtifactId().getName(),
+        artifactDetail.getDescriptor().getArtifactId().getVersion().getVersion()));
     }
   }
 
@@ -192,8 +196,8 @@ public class ArtifactRepository {
    * @throws IOException if there as an exception reading from the meta store
    * @throws ArtifactNotFoundException if the given artifact does not exist
    */
-  public ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception {
-    ensureAccess(artifactId.toEntityId());
+  public ArtifactDetail getArtifact(co.cask.cdap.proto.id.ArtifactId artifactId) throws Exception {
+    ensureAccess(artifactId);
     return artifactStore.getArtifact(artifactId);
   }
 
@@ -213,7 +217,7 @@ public class ArtifactRepository {
         @Override
         public boolean apply(ArtifactDetail artifactDetail) {
           ArtifactId artifactId = artifactDetail.getDescriptor().getArtifactId();
-          return filter.apply(range.getNamespace().toEntityId().artifact(artifactId.getName(),
+          return filter.apply(range.getNamespace().artifact(artifactId.getName(),
                                                                          artifactId.getVersion().getVersion()));
         }
       })
@@ -273,7 +277,8 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(NamespaceId namespace, Id.Artifact artifactId)
+  public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(NamespaceId namespace,
+                                                                    co.cask.cdap.proto.id.ArtifactId artifactId)
     throws IOException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId);
   }
@@ -290,7 +295,8 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(NamespaceId namespace, Id.Artifact artifactId,
+  public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(NamespaceId namespace,
+                                                                    co.cask.cdap.proto.id.ArtifactId artifactId,
                                                                     String pluginType)
     throws IOException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId, pluginType);
@@ -309,7 +315,8 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(NamespaceId namespace, Id.Artifact artifactId,
+  public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(NamespaceId namespace,
+                                                               co.cask.cdap.proto.id.ArtifactId artifactId,
                                                                String pluginType, String pluginName)
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId, pluginType, pluginName);
@@ -328,7 +335,8 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws PluginNotExistsException if no plugins of the given type and name are available to the given artifact
    */
-  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId namespace, Id.Artifact artifactId,
+  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId namespace,
+                                                               co.cask.cdap.proto.id.ArtifactId artifactId,
                                                                String pluginType, String pluginName,
                                                                PluginSelector selector)
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
@@ -367,7 +375,7 @@ public class ArtifactRepository {
    *                               the artifact is added successfully, then the user gets all {@link Action privileges}
    *                               on the added artifact.
    */
-  public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
+  public ArtifactDetail addArtifact(co.cask.cdap.proto.id.ArtifactId artifactId, File artifactFile) throws Exception {
     return addArtifact(artifactId, artifactFile, null);
   }
 
@@ -391,7 +399,7 @@ public class ArtifactRepository {
    *                               on the added artifact.
    */
   @VisibleForTesting
-  public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
+  public ArtifactDetail addArtifact(co.cask.cdap.proto.id.ArtifactId artifactId, File artifactFile,
                                     @Nullable Set<ArtifactRange> parentArtifacts) throws Exception {
     return addArtifact(artifactId, artifactFile, parentArtifacts, null);
   }
@@ -416,19 +424,19 @@ public class ArtifactRepository {
    *                               the artifact is added successfully, then the user gets all {@link Action privileges}
    *                               on the added artifact.
    */
-  public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
+  public ArtifactDetail addArtifact(co.cask.cdap.proto.id.ArtifactId artifactId, File artifactFile,
                                     @Nullable Set<ArtifactRange> parentArtifacts,
                                     @Nullable Set<PluginClass> additionalPlugins) throws Exception {
     // To add an artifact, a user must have write privileges on the namespace in which the artifact is being added
     // This method is used to add user app artifacts, so enforce authorization on the specified, non-system namespace
     Principal principal = authenticationContext.getPrincipal();
-    NamespaceId namespace = artifactId.getNamespace().toEntityId();
+    NamespaceId namespace = artifactId.getParent();
     authorizationEnforcer.enforce(namespace, principal, Action.WRITE);
 
     ArtifactDetail artifactDetail = addArtifact(artifactId, artifactFile, parentArtifacts, additionalPlugins,
                                                 Collections.<String, String>emptyMap());
     // artifact successfully added. now grant ALL permissions on the artifact to the current user
-    privilegesManager.grant(artifactId.toEntityId(), principal, EnumSet.allOf(Action.class));
+    privilegesManager.grant(artifactId, principal, EnumSet.allOf(Action.class));
     return artifactDetail;
   }
 
@@ -454,7 +462,7 @@ public class ArtifactRepository {
    *                               on the added artifact.
    */
   @VisibleForTesting
-  public ArtifactDetail addArtifact(final Id.Artifact artifactId, final File artifactFile,
+  public ArtifactDetail addArtifact(final co.cask.cdap.proto.id.ArtifactId artifactId, final File artifactFile,
                                     @Nullable Set<ArtifactRange> parentArtifacts,
                                     @Nullable Set<PluginClass> additionalPlugins,
                                     Map<String, String> properties) throws Exception {
@@ -464,7 +472,7 @@ public class ArtifactRepository {
 
     parentArtifacts = parentArtifacts == null ? Collections.<ArtifactRange>emptySet() : parentArtifacts;
     CloseableClassLoader parentClassLoader = null;
-    NamespacedImpersonator namespacedImpersonator = new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
+    NamespacedImpersonator namespacedImpersonator = new NamespacedImpersonator(artifactId.getParent(),
                                                                                impersonator);
     if (!parentArtifacts.isEmpty()) {
       validateParentSet(artifactId, parentArtifacts);
@@ -480,7 +488,7 @@ public class ArtifactRepository {
       ArtifactInfo artifactInfo = new ArtifactInfo(descriptor.getArtifactId(), artifactDetail.getMeta().getClasses(),
                                                    artifactDetail.getMeta().getProperties());
       // add system metadata for artifacts
-      writeSystemMetadata(artifactId.toEntityId(), artifactInfo);
+      writeSystemMetadata(artifactId, artifactInfo);
       return artifactDetail;
     } finally {
       Closeables.closeQuietly(parentClassLoader);
@@ -497,8 +505,9 @@ public class ArtifactRepository {
    * @throws UnauthorizedException if the current user is not permitted to write properties to the artifact. To be able
    *                               to write properties to an artifact, users must have admin privileges on the artifact
    */
-  public void writeArtifactProperties(Id.Artifact artifactId, final Map<String, String> properties) throws Exception {
-    authorizationEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+  public void writeArtifactProperties(co.cask.cdap.proto.id.ArtifactId artifactId,
+                                      final Map<String, String> properties) throws Exception {
+    authorizationEnforcer.enforce(artifactId, authenticationContext.getPrincipal(), Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -519,8 +528,9 @@ public class ArtifactRepository {
    * @throws UnauthorizedException if the current user is not permitted to write properties to the artifact. To be able
    *                               to write properties to an artifact, users must have admin privileges on the artifact
    */
-  public void writeArtifactProperty(Id.Artifact artifactId, final String key, final String value) throws Exception {
-    authorizationEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+  public void writeArtifactProperty(co.cask.cdap.proto.id.ArtifactId artifactId, final String key,
+                                    final String value) throws Exception {
+    authorizationEnforcer.enforce(artifactId, authenticationContext.getPrincipal(), Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -542,8 +552,8 @@ public class ArtifactRepository {
    * @throws UnauthorizedException if the current user is not permitted to remove a property from the artifact. To be
    *                               able to remove a property, users must have admin privileges on the artifact
    */
-  public void deleteArtifactProperty(Id.Artifact artifactId, final String key) throws Exception {
-    authorizationEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+  public void deleteArtifactProperty(co.cask.cdap.proto.id.ArtifactId artifactId, final String key) throws Exception {
+    authorizationEnforcer.enforce(artifactId, authenticationContext.getPrincipal(), Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -567,8 +577,8 @@ public class ArtifactRepository {
    * @throws UnauthorizedException if the current user is not permitted to remove properties from the artifact. To be
    *                               able to remove properties, users must have admin privileges on the artifact
    */
-  public void deleteArtifactProperties(Id.Artifact artifactId) throws Exception {
-    authorizationEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+  public void deleteArtifactProperties(co.cask.cdap.proto.id.ArtifactId artifactId) throws Exception {
+    authorizationEnforcer.enforce(artifactId, authenticationContext.getPrincipal(), Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -577,7 +587,7 @@ public class ArtifactRepository {
     });
   }
 
-  private ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
+  private ArtifactClasses inspectArtifact(co.cask.cdap.proto.id.ArtifactId artifactId, File artifactFile,
                                           @Nullable Set<PluginClass> additionalPlugins,
                                           @Nullable  ClassLoader parentClassLoader) throws IOException,
                                                                                            InvalidArtifactException {
@@ -609,19 +619,17 @@ public class ArtifactRepository {
     for (File systemArtifactDir : systemArtifactDirs) {
       for (File jarFile : DirUtils.listFiles(systemArtifactDir, "jar")) {
         // parse id from filename
-        Id.Artifact artifactId;
+        co.cask.cdap.proto.id.ArtifactId artifactId;
         try {
-          artifactId = Id.Artifact.parse(Id.Namespace.SYSTEM, jarFile.getName());
+          artifactId = new co.cask.cdap.proto.id.ArtifactId(NamespaceId.SYSTEM.getEntityName(), jarFile.getName());
         } catch (IllegalArgumentException e) {
           LOG.warn(String.format("Skipping system artifact '%s' because the name is invalid: ", e.getMessage()));
           continue;
         }
 
-        // first revoke any orphane privileges
-        co.cask.cdap.proto.id.ArtifactId artifact = artifactId.toEntityId();
-        privilegesManager.revoke(artifact);
+        privilegesManager.revoke(artifactId);
         // then grant all on the artifact
-        privilegesManager.grant(artifact, principal, EnumSet.allOf(Action.class));
+        privilegesManager.grant(artifactId, principal, EnumSet.allOf(Action.class));
 
         // check for a corresponding .json config file
         String artifactFileName = jarFile.getName();
@@ -631,7 +639,7 @@ public class ArtifactRepository {
         try {
           // read and parse the config file if it exists. Otherwise use an empty config with the artifact filename
           ArtifactConfig artifactConfig = configFile.isFile() ?
-            configReader.read(artifactId.getNamespace(), configFile) : new ArtifactConfig();
+            configReader.read(artifactId.getParent(), configFile) : new ArtifactConfig();
 
           validateParentSet(artifactId, artifactConfig.getParents());
           validatePluginSet(artifactConfig.getPlugins());
@@ -639,7 +647,7 @@ public class ArtifactRepository {
         } catch (InvalidArtifactException e) {
           LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", artifactFileName), e);
           // since adding artifact failed, revoke privileges, since they may be orphane now
-          privilegesManager.revoke(artifact);
+          privilegesManager.revoke(artifactId);
         }
       }
     }
@@ -647,12 +655,12 @@ public class ArtifactRepository {
     // taking advantage of the fact that we only have 1 level of dependencies
     // so we can add all the parents first, then we know its safe to add everything else
     // add all parents
-    Set<Id.Artifact> parents = new HashSet<>();
+    Set<co.cask.cdap.proto.id.ArtifactId> parents = new HashSet<>();
     for (SystemArtifactInfo child : systemArtifacts) {
-      Id.Artifact childId = child.getArtifactId();
+      co.cask.cdap.proto.id.ArtifactId childId = child.getArtifactId();
 
       for (SystemArtifactInfo potentialParent : systemArtifacts) {
-        Id.Artifact potentialParentId = potentialParent.getArtifactId();
+        co.cask.cdap.proto.id.ArtifactId potentialParentId = potentialParent.getArtifactId();
         // skip if we're looking at ourselves
         if (childId.equals(potentialParentId)) {
           continue;
@@ -682,10 +690,10 @@ public class ArtifactRepository {
   private void addSystemArtifact(SystemArtifactInfo systemArtifactInfo) throws Exception {
     String fileName = systemArtifactInfo.getArtifactFile().getName();
     try {
-      Id.Artifact artifactId = systemArtifactInfo.getArtifactId();
+      co.cask.cdap.proto.id.ArtifactId artifactId = systemArtifactInfo.getArtifactId();
 
       // if it's not a snapshot and it already exists, don't bother trying to add it since artifacts are immutable
-      if (!artifactId.getVersion().isSnapshot()) {
+      if (!(new ArtifactVersion(artifactId.getVersion())).isSnapshot()) {
         try {
           artifactStore.getArtifact(artifactId);
           LOG.info("Artifact {} already exists, will not try loading it again.", artifactId);
@@ -720,16 +728,16 @@ public class ArtifactRepository {
    * @throws UnauthorizedException if the current user is not authorized to delete the artifact. To delete an artifact,
    *                               a user needs {@link Action#ADMIN} permission on the artifact.
    */
-  public void deleteArtifact(Id.Artifact artifactId) throws Exception {
+  public void deleteArtifact(co.cask.cdap.proto.id.ArtifactId artifactId) throws Exception {
     // for deleting artifacts, users need admin privileges on the artifact being deleted.
     Principal principal = authenticationContext.getPrincipal();
-    authorizationEnforcer.enforce(artifactId.toEntityId(), principal, Action.ADMIN);
+    authorizationEnforcer.enforce(artifactId, principal, Action.ADMIN);
     // delete the artifact first and then privileges. Not the other way to avoid orphan artifact
     // which does not have any privilege if the artifact delete from store fails. see CDAP-6648
     artifactStore.delete(artifactId);
-    metadataStore.removeMetadata(artifactId.toEntityId());
+    metadataStore.removeMetadata(artifactId);
     // revoke all privileges on the artifact
-    privilegesManager.revoke(artifactId.toEntityId());
+    privilegesManager.revoke(artifactId);
   }
 
   // convert details to summaries (to hide location and other unnecessary information)
@@ -790,7 +798,8 @@ public class ArtifactRepository {
    * @throws InvalidArtifactException if one of the parents also has parents
    * @throws IOException if there was some error reading from the store
    */
-  private CloseableClassLoader createParentClassLoader(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts,
+  private CloseableClassLoader createParentClassLoader(co.cask.cdap.proto.id.ArtifactId artifactId,
+                                                       Set<ArtifactRange> parentArtifacts,
                                                        NamespacedImpersonator namespacedImpersonator)
     throws ArtifactRangeNotFoundException, IOException, InvalidArtifactException {
 
@@ -852,7 +861,8 @@ public class ArtifactRepository {
    * @throws InvalidArtifactException if there is more than one version range for an artifact
    */
   @VisibleForTesting
-  static void validateParentSet(Id.Artifact artifactId, Set<ArtifactRange> parents) throws InvalidArtifactException {
+  static void validateParentSet(co.cask.cdap.proto.id.ArtifactId artifactId,
+                                Set<ArtifactRange> parents) throws InvalidArtifactException {
     boolean isInvalid = false;
     StringBuilder errMsg = new StringBuilder("Invalid parents field.");
 
@@ -870,7 +880,7 @@ public class ArtifactRepository {
         dupes.add(parentName);
         isInvalid = true;
       }
-      if (artifactId.getName().equals(parentName) && artifactId.getNamespace().equals(parent.getNamespace())) {
+      if (artifactId.getArtifact().equals(parentName) && artifactId.getNamespace().equals(parent.getNamespace())) {
         throw new InvalidArtifactException(String.format(
           "Invalid parent '%s' for artifact '%s'. An artifact cannot extend itself.", parent, artifactId));
       }

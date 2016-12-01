@@ -51,7 +51,7 @@ public class DeleteArtifactCommand extends AbstractAuthCommand {
     String artifactVersion = arguments.get(ArgumentName.ARTIFACT_VERSION.toString());
     ArtifactId artifactId = cliConfig.getCurrentNamespace().artifact(artifactName, artifactVersion);
 
-    artifactClient.delete(artifactId.toId());
+    artifactClient.delete(artifactId);
 
     output.printf("Successfully deleted artifact\n");
   }

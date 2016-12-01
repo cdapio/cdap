@@ -27,7 +27,8 @@ import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.internal.app.customaction.DefaultCustomActionConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 
 /**
@@ -64,8 +65,8 @@ final class WorkflowNodeCreator {
     return new WorkflowActionNode(spec.getName(), spec);
   }
 
-  static WorkflowNode createWorkflowCustomActionNode(CustomAction action, Id.Namespace deployNamespace,
-                                                     Id.Artifact artifactId, ArtifactRepository artifactRepository,
+  static WorkflowNode createWorkflowCustomActionNode(CustomAction action, NamespaceId deployNamespace,
+                                                     ArtifactId artifactId, ArtifactRepository artifactRepository,
                                                      PluginInstantiator pluginInstantiator) {
     Preconditions.checkArgument(action != null, "CustomAction is null.");
     CustomActionSpecification spec = DefaultCustomActionConfigurer.configureAction(action, deployNamespace, artifactId,

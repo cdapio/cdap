@@ -25,10 +25,10 @@ import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.io.Files;
@@ -62,10 +62,11 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   // if the application could not be created
   @Test(expected = ArtifactNotFoundException.class)
   public void testDeployArtifactAndApplicationCleansUpArtifactOnFailure() throws Exception {
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "missing-mr", "1.0.0-SNAPSHOT");
+    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "missing-mr", "1.0.0-SNAPSHOT");
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, MissingMapReduceWorkflowApp.class);
     File appJarFile = new File(tmpFolder.newFolder(),
-                               String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+                               String.format("%s-%s.jar", artifactId.getEntityName(),
+                                             artifactId.getVersion()));
     Files.copy(Locations.newInputSupplier(appJar), appJarFile);
     appJar.delete();
 
@@ -99,16 +100,16 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
     // start a program in one namespace
     // flow is stopped initially
-    Assert.assertEquals("STOPPED", getProgramStatus(wordcountFlow1.toId()));
+    Assert.assertEquals("STOPPED", getProgramStatus(wordcountFlow1));
     // start a flow and check the status
-    startProgram(wordcountFlow1.toId());
+    startProgram(wordcountFlow1);
     waitState(wordcountFlow1.toId(), ProgramRunStatus.RUNNING.toString());
 
     // delete the app from another (default namespace)
     deleteApp(defaultNSAppId.toId(), 200);
 
     // cleanup
-    stopProgram(wordcountFlow1.toId());
+    stopProgram(wordcountFlow1);
     waitState(wordcountFlow1.toId(), "STOPPED");
     deleteApp(testNSAppId.toId(), 200);
   }

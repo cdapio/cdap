@@ -117,7 +117,7 @@ public class DefaultStoreTest {
     store.clear();
     NamespacedLocationFactory namespacedLocationFactory =
       AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
-    namespacedLocationFactory.get(Id.Namespace.DEFAULT).delete(true);
+    namespacedLocationFactory.get(NamespaceId.DEFAULT).delete(true);
     NamespaceAdmin admin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     admin.create(NamespaceMeta.DEFAULT);
   }

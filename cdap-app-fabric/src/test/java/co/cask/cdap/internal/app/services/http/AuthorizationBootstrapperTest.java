@@ -181,7 +181,7 @@ public class AuthorizationBootstrapperTest {
       @Override
       public Boolean call() throws Exception {
         try {
-          artifactRepository.getArtifact(SYSTEM_ARTIFACT.toId());
+          artifactRepository.getArtifact(SYSTEM_ARTIFACT);
           return true;
         } catch (Exception e) {
           return false;

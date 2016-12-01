@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
 
 /**
  * Thrown when there is a write conflict adding an artifact, such as when multiple writers are trying to
@@ -25,7 +26,7 @@ import co.cask.cdap.proto.Id;
  */
 public class WriteConflictException extends ConflictException {
 
-  public WriteConflictException(Id.Artifact artifactId) {
+  public WriteConflictException(ArtifactId artifactId) {
     super(String.format("Write conflict while writing artifact %s.", artifactId));
   }
 

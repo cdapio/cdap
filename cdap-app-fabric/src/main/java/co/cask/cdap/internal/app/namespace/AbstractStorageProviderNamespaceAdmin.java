@@ -104,7 +104,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
 
   private void deleteLocation(NamespaceId namespaceId) throws IOException {
     // TODO: CDAP-1581: Implement soft delete
-    Location namespaceHome = namespacedLocationFactory.get(namespaceId.toId());
+    Location namespaceHome = namespacedLocationFactory.get(namespaceId);
     try {
       if (hasCustomLocation(namespaceQueryAdmin.get(namespaceId))) {
         LOG.debug("Custom location mapping {} was found while deleting namespace {}. Deleting all data inside it but" +

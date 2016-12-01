@@ -29,6 +29,8 @@ import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -42,14 +44,14 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & Workfl
 
   private final T parentForkConfigurer;
   private final List<List<WorkflowNode>> branches = Lists.newArrayList();
-  private final Id.Namespace deployNamespace;
-  private final Id.Artifact artifactId;
+  private final NamespaceId deployNamespace;
+  private final ArtifactId artifactId;
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
 
   private List<WorkflowNode> currentBranch;
 
-  public DefaultWorkflowForkConfigurer(T parentForkConfigurer, Id.Namespace deployNamespace, Id.Artifact artifactId,
+  public DefaultWorkflowForkConfigurer(T parentForkConfigurer, NamespaceId deployNamespace, ArtifactId artifactId,
                                        ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
     this.parentForkConfigurer = parentForkConfigurer;
     currentBranch = Lists.newArrayList();

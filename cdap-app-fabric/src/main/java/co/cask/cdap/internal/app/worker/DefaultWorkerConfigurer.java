@@ -26,6 +26,8 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 
@@ -46,7 +48,7 @@ public class DefaultWorkerConfigurer extends DefaultPluginConfigurer implements 
   private Map<String, String> properties;
   private Set<String> datasets;
 
-  public DefaultWorkerConfigurer(Worker worker, Id.Namespace deployNamespace, Id.Artifact artifactId,
+  public DefaultWorkerConfigurer(Worker worker, NamespaceId deployNamespace, ArtifactId artifactId,
                                  ArtifactRepository artifactRepository,
                                  PluginInstantiator pluginInstantiator) {
     super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);

@@ -27,6 +27,8 @@ import co.cask.cdap.internal.app.runtime.plugin.FindPluginHelper;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
@@ -43,15 +45,15 @@ import javax.annotation.Nullable;
  */
 public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements PluginConfigurer {
 
-  private final Id.Artifact artifactId;
+  private final ArtifactId artifactId;
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
   private final Map<String, Plugin> plugins;
   // this is the namespace that the app will be deployed in, which can be different than the namespace of
   // the artifact. If the artifact is a system artifact, it will have the system namespace.
-  protected final Id.Namespace deployNamespace;
+  protected final NamespaceId deployNamespace;
 
-  public DefaultPluginConfigurer(Id.Namespace deployNamespace, Id.Artifact artifactId,
+  public DefaultPluginConfigurer(NamespaceId deployNamespace, ArtifactId artifactId,
                                  ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
     this.deployNamespace = deployNamespace;
     this.artifactId = artifactId;
@@ -149,7 +151,7 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
     Preconditions.checkArgument(!plugins.containsKey(pluginId),
                                 "Plugin of type %s, name %s was already added as id %s.",
                                 pluginType, pluginName, pluginId);
-    return FindPluginHelper.findPlugin(artifactRepository, pluginInstantiator, deployNamespace.toEntityId(), artifactId,
+    return FindPluginHelper.findPlugin(artifactRepository, pluginInstantiator, deployNamespace, artifactId,
                                        pluginType, pluginName, properties, selector);
   }
 }

@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.common.conf.ArtifactConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
 
 import java.io.File;
 
@@ -25,17 +26,17 @@ import java.io.File;
  * Container for information about a system artifact.
  */
 public class SystemArtifactInfo {
-  private final Id.Artifact artifactId;
+  private final ArtifactId artifactId;
   private final File artifactFile;
   private final ArtifactConfig config;
 
-  public SystemArtifactInfo(Id.Artifact artifactId, File artifactFile, ArtifactConfig config) {
+  public SystemArtifactInfo(ArtifactId artifactId, File artifactFile, ArtifactConfig config) {
     this.artifactId = artifactId;
     this.artifactFile = artifactFile;
     this.config = config;
   }
 
-  public Id.Artifact getArtifactId() {
+  public ArtifactId getArtifactId() {
     return artifactId;
   }
 

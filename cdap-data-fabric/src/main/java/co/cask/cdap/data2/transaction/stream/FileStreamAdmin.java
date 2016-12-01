@@ -611,7 +611,7 @@ public class FileStreamAdmin implements StreamAdmin {
    * Returns the location for the given namespace that contains all streams belong to that namespace.
    */
   private Location getStreamBaseLocation(NamespaceId namespace) throws IOException {
-    return namespacedLocationFactory.get(namespace.toId()).append(streamBaseDirPath);
+    return namespacedLocationFactory.get(namespace).append(streamBaseDirPath);
   }
 
   private void doTruncate(final StreamId streamId, final Location streamLocation) throws Exception {

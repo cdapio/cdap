@@ -246,7 +246,7 @@ public class ServiceClientTestRun extends ClientTestBase {
         return appJarLoc.getInputStream();
       }
     };
-    artifactClient.add(Id.Namespace.DEFAULT, artifactId.getArtifact(), inputSupplier, artifactId.getVersion());
+    artifactClient.add(NamespaceId.DEFAULT, artifactId.getArtifact(), inputSupplier, artifactId.getVersion());
     appJarLoc.delete();
   }
 

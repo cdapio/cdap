@@ -35,6 +35,8 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -166,14 +168,14 @@ public class ApplicationClientTestRun extends ClientTestBase {
   @Test
   public void testAppUpdate() throws Exception {
     String artifactName = "cfg-programs";
-    Id.Artifact artifactIdV1 = Id.Artifact.from(Id.Namespace.DEFAULT, artifactName, "1.0.0");
-    Id.Artifact artifactIdV2 = Id.Artifact.from(Id.Namespace.DEFAULT, artifactName, "2.0.0");
+    ArtifactId artifactIdV1 = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), artifactName, "1.0.0");
+    ArtifactId artifactIdV2 = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), artifactName, "2.0.0");
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ProgramsApp");
 
-    artifactClient.add(Id.Namespace.DEFAULT, artifactName,
-      Files.newInputStreamSupplier(createAppJarFile(ConfigurableProgramsApp.class)),
-      "1.0.0");
-    artifactClient.add(Id.Namespace.DEFAULT, artifactName,
+    artifactClient.add(NamespaceId.DEFAULT, artifactName,
+                       Files.newInputStreamSupplier(createAppJarFile(ConfigurableProgramsApp.class)),
+                       "1.0.0");
+    artifactClient.add(NamespaceId.DEFAULT, artifactName,
       Files.newInputStreamSupplier(createAppJarFile(ConfigurableProgramsApp2.class)),
       "2.0.0");
 
@@ -182,7 +184,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
       ConfigurableProgramsApp.Programs conf =
         new ConfigurableProgramsApp.Programs(null, "worker1", "stream1", "dataset1");
       AppRequest<ConfigurableProgramsApp.Programs> request = new AppRequest<>(
-        new ArtifactSummary(artifactIdV1.getName(), artifactIdV1.getVersion().getVersion()), conf);
+        new ArtifactSummary(artifactIdV1.getEntityName(), artifactIdV1.getVersion()), conf);
       appClient.deploy(appId, request);
 
       // should only have the worker
@@ -192,7 +194,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
       // update to use just the flow
       conf = new ConfigurableProgramsApp.Programs("flow1", null, "stream1", "dataset1");
       request = new AppRequest<>(
-        new ArtifactSummary(artifactIdV1.getName(), artifactIdV1.getVersion().getVersion()), conf);
+        new ArtifactSummary(artifactIdV1.getEntityName(), artifactIdV1.getVersion()), conf);
       appClient.update(appId, request);
 
       // should only have the flow
@@ -209,7 +211,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
       // check different artifact name is invalid
       request = new AppRequest<>(
-        new ArtifactSummary("ghost", artifactIdV1.getVersion().getVersion()), conf);
+        new ArtifactSummary("ghost", artifactIdV1.getVersion()), conf);
       try {
         appClient.update(appId, request);
         Assert.fail();
@@ -219,7 +221,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
       // check nonexistent artifact is not found
       request = new AppRequest<>(
-        new ArtifactSummary(artifactIdV1.getName(), "0.0.1"), conf);
+        new ArtifactSummary(artifactIdV1.getEntityName(), "0.0.1"), conf);
       try {
         appClient.update(appId, request);
         Assert.fail();
@@ -231,7 +233,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
       ConfigurableProgramsApp2.Programs conf2 =
         new ConfigurableProgramsApp2.Programs(null, null, "stream1", "dataset1", "service2");
       AppRequest<ConfigurableProgramsApp2.Programs> request2 = new AppRequest<>(
-        new ArtifactSummary(artifactIdV2.getName(), artifactIdV2.getVersion().getVersion()), conf2);
+        new ArtifactSummary(artifactIdV2.getEntityName(), artifactIdV2.getVersion()), conf2);
       appClient.update(appId, request2);
 
       // should only have a single service

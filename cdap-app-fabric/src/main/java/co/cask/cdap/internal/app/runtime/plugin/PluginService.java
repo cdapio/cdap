@@ -109,7 +109,7 @@ public class PluginService extends AbstractIdleService {
    * @throws ClassNotFoundException
    */
   public PluginEndpoint getPluginEndpoint(NamespaceId namespace,
-                                          Id.Artifact artifactId, String pluginType,
+                                          co.cask.cdap.proto.id.ArtifactId artifactId, String pluginType,
                                           String pluginName, String methodName)
     throws Exception {
     // should not happen
@@ -122,13 +122,14 @@ public class PluginService extends AbstractIdleService {
                              pickParentArtifact(artifactDetail, artifactId), methodName);
   }
 
-  private ArtifactDescriptor pickParentArtifact(ArtifactDetail artifactDetail, Id.Artifact artifact)
+  private ArtifactDescriptor pickParentArtifact(ArtifactDetail artifactDetail,
+                                                co.cask.cdap.proto.id.ArtifactId artifact)
     throws Exception {
 
     // get parent artifacts
     Set<ArtifactRange> parentArtifactRanges = artifactDetail.getMeta().getUsableBy();
     if (parentArtifactRanges.isEmpty()) {
-      throw new ArtifactNotFoundException(artifact.toEntityId());
+      throw new ArtifactNotFoundException(artifact);
     }
 
     // just pick the first parent artifact from the set.
@@ -137,7 +138,7 @@ public class PluginService extends AbstractIdleService {
     List<ArtifactDetail> artifactDetails = artifactRepository.getArtifacts(parentArtifactRange);
     if (artifactDetails.isEmpty()) {
       // should not happen
-      throw new ArtifactNotFoundException(artifact.toEntityId());
+      throw new ArtifactNotFoundException(artifact);
     }
 
     // return the first one from the artifact details list.
@@ -263,7 +264,9 @@ public class PluginService extends AbstractIdleService {
                                            String methodName)
     throws NotFoundException, IOException, ClassNotFoundException {
 
-    Id.Artifact artifactId = Id.Artifact.from(namespace.toId(), artifactDetail.getDescriptor().getArtifactId());
+    co.cask.cdap.proto.id.ArtifactId artifactId = new co.cask.cdap.proto.id.ArtifactId(
+      namespace.getEntityName(),
+      artifactDetail.getDescriptor().getArtifactId().getName());
     Set<PluginClass> pluginClasses = artifactDetail.getMeta().getClasses().getPlugins();
     PluginClass pluginClass = null;
 
@@ -293,7 +296,9 @@ public class PluginService extends AbstractIdleService {
     // as plugin method will use this context to load other plugins.
     DefaultEndpointPluginContext defaultEndpointPluginContext =
       new DefaultEndpointPluginContext(namespace, artifactRepository, pluginInstantiator,
-                                       Id.Artifact.from(namespace.toId(), parentArtifactDescriptor.getArtifactId()));
+                                       new co.cask.cdap.proto.id.ArtifactId(
+                                         namespace.getEntityName(),
+                                         parentArtifactDescriptor.getArtifactId().getName()));
 
     return getPluginEndpoint(pluginInstantiator, artifactId,
                              pluginClass, methodName, defaultEndpointPluginContext);
@@ -312,7 +317,8 @@ public class PluginService extends AbstractIdleService {
    * @throws ClassNotFoundException if plugin class cannot be loaded
    * @throws NotFoundException Not Found exception thrown if no matching plugin found.
    */
-  private PluginEndpoint getPluginEndpoint(final PluginInstantiator pluginInstantiator, Id.Artifact artifact,
+  private PluginEndpoint getPluginEndpoint(final PluginInstantiator pluginInstantiator,
+                                           co.cask.cdap.proto.id.ArtifactId artifact,
                                            PluginClass pluginClass, String endpointName,
                                            final DefaultEndpointPluginContext endpointPluginContext)
     throws IOException, ClassNotFoundException, NotFoundException {
