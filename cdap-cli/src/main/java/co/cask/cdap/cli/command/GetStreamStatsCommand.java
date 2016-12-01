@@ -32,11 +32,11 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -45,6 +45,7 @@ import com.google.inject.Inject;
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -75,7 +76,10 @@ public class GetStreamStatsCommand extends AbstractCommand {
 
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     // limit limit to [1, MAX_LIMIT]
-    int limit = Math.max(1, Math.min(MAX_LIMIT, arguments.getIntOptional(ArgumentName.LIMIT.toString(), DEFAULT_LIMIT)));
+    Integer limitInput = arguments.getIntOptional(ArgumentName.LIMIT.toString(), DEFAULT_LIMIT);
+    // we know we're passing a non-null default, so limitInput should never be null.
+    Preconditions.checkNotNull(limitInput);
+    int limit = Math.max(1, Math.min(MAX_LIMIT, limitInput));
     long startTime = getTimestamp(arguments.getOptional(ArgumentName.START_TIME.toString(), "min"), currentTime);
     long endTime = getTimestamp(arguments.getOptional(ArgumentName.END_TIME.toString(), "max"), currentTime);
 
@@ -88,7 +92,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
     }
 
     // build processorMap: Hive column name -> StatsProcessor
-    Map<String, Set<StatsProcessor>> processorMap = Maps.newHashMap();
+    Map<String, Set<StatsProcessor>> processorMap = new HashMap<>();
     Schema streamSchema = config.getFormat().getSchema();
     for (Schema.Field field : streamSchema.getFields()) {
       Schema fieldSchema = field.getSchema();
