@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -36,32 +36,55 @@ function download_includes() {
   local target_includes_dir=${1}
   echo "Copying CLI Docs: building rst file from cli-docs results..." 
   python "${CLI_DOC_TOOL}" "${CLI_INPUT_TXT}" "${target_includes_dir}/${CLI_TABLE_RST}"
-  status_code=$?
-  if [ "${status_code}" == "0" ]; then
+  warnings=$?
+  if [[ ${warnings} -eq 0 ]]; then
     echo "CLI rst file written to ${CLI_TABLE_RST}"
   else
-    local m="Error ${status_code} building CLI docs table"
+    local m="Error ${warnings} building CLI docs table"
     echo_red_bold "${m}"
     set_message "${m}"
   fi
-  return $status_code
+  return ${warnings}
 }
 
 function build_extras() {
   echo_red_bold "Building extras."
-  local html_path="${TARGET_PATH}/${HTML}"
 
-  if [ "x${USING_JAVADOCS}" != "x" ]; then
+  if [[ -n ${USING_JAVADOCS} ]]; then
     echo "Copying Javadocs."
-    rm -rf ${html_path}/${JAVADOCS}
-    cp -r ${API_JAVADOCS} ${html_path}/.
-    mv -f ${html_path}/${APIDOCS} ${html_path}/${JAVADOCS}
+    rm -rf ${TARGET_PATH}/html/javadocs
+    warnings=$?
+    if [[ ${warnings} -ne 0 ]]; then
+      set_message "Unable to remove existing Javadocs"
+      return ${warnings}
+    fi
+    cp -r ${API_JAVADOCS} ${TARGET_PATH}/html/.
+    warnings=$?
+    if [[ ${warnings} -ne 0 ]]; then
+      set_message "Unable to copy new Javadocs"
+      return ${warnings}
+    fi
+    mv -f ${TARGET_PATH}/html/${API_DOCS} ${TARGET_PATH}/html/javadocs
+    warnings=$?
+    if [[ ${warnings} -ne 0 ]]; then
+      set_message "Unable to move new Javadocs into place"
+      return ${warnings}
+    fi
+    echo "Copied Javadocs."
   else
     echo "Not using Javadocs."
   fi
 
-  echo "Copying license PDFs."
-  cp ${SCRIPT_PATH}/${LICENSES_PDF}/*.pdf ${html_path}/${LICENSES}
+  cp ${SCRIPT_PATH}/licenses-pdf/*.pdf ${TARGET_PATH}/html/licenses
+  warnings=$?
+  if [[ ${warnings} -eq 0 ]]; then
+    echo "Copied license PDFs."
+  else
+    local m="Error ${warnings} copying license PDFs."
+    echo_red_bold "${m}"
+    set_message "${m}"
+    return ${warnings}
+  fi
 }
 
 run_command ${1}
