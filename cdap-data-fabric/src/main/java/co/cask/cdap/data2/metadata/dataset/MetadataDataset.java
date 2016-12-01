@@ -629,7 +629,7 @@ public class MetadataDataset extends AbstractDataset {
    */
   private Put getIndexPut(NamespacedEntityId targetId, String metadataKey, String index) {
     MDSKey mdsIndexKey = MdsKey.getMDSIndexKey(targetId, metadataKey, index.toLowerCase());
-    String namespacedIndex = MdsKey.getNamespaceId(mdsIndexKey) + KEYVALUE_SEPARATOR + index.toLowerCase();
+    String namespacedIndex = targetId.getNamespace() + KEYVALUE_SEPARATOR + index.toLowerCase();
     Put put = new Put(mdsIndexKey.getKey());
     put.add(Bytes.toBytes(INDEX_COLUMN), Bytes.toBytes(namespacedIndex));
     return put;
