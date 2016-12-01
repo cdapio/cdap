@@ -15,10 +15,15 @@
  */
 package co.cask.cdap.data2.metadata.dataset;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
+import co.cask.cdap.data2.metadata.indexer.InvertedValueIndexer;
+import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -27,6 +32,7 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -82,7 +88,10 @@ public class MetadataDatasetTest {
   @After
   public void after() throws Exception {
     dataset = null;
-    dsFrameworkUtil.getFramework().getAdmin(datasetInstance, null).truncate();
+    DatasetAdmin admin = dsFrameworkUtil.getFramework().getAdmin(datasetInstance, null);
+    if (admin != null) {
+      admin.truncate();
+    }
   }
 
   @Test
@@ -578,7 +587,7 @@ public class MetadataDatasetTest {
         Assert.assertTrue(results.isEmpty());
 
         // Test wrong ns
-        List<MetadataEntry> results2  =
+        List<MetadataEntry> results2 =
           dataset.search("ns12", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1",
                          ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
         Assert.assertTrue(results2.isEmpty());
@@ -857,8 +866,9 @@ public class MetadataDatasetTest {
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        dataset.setProperty(flow1, "flowKey", "flowValue", new ReversingIndexer());
-        dataset.setProperty(dataset1, "datasetKey", "datasetValue", new ReversingIndexer());
+        Indexer indexer = new ReversingIndexer();
+        dataset.setMetadata(new MetadataEntry(flow1, "flowKey", "flowValue"), Collections.singleton(indexer));
+        dataset.setMetadata(new MetadataEntry(dataset1, "datasetKey", "datasetValue"), Collections.singleton(indexer));
       }
     });
     final String namespaceId = flow1.getNamespace();
@@ -973,6 +983,89 @@ public class MetadataDatasetTest {
         Assert.assertEquals(0, dataset.deleteAllIndexes(1));
       }
     });
+  }
+
+  @Test
+  public void testMultipleIndexes() throws Exception {
+    final MetadataDataset dataset =
+      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testMultipleIndexes"), MetadataScope.SYSTEM);
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
+    final String value = "value";
+    final String body = "body";
+    final String schema = Schema.recordOf("schema", Schema.Field.of(body, Schema.of(Schema.Type.BYTES))).toString();
+    final String name = "dataset1";
+    final long creationTime = System.currentTimeMillis();
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        dataset.setProperty(flow1, "key", "value");
+        dataset.setProperty(flow1, AbstractSystemMetadataWriter.SCHEMA_KEY, schema);
+        dataset.setProperty(dataset1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, name);
+        dataset.setProperty(dataset1, AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(creationTime));
+      }
+    });
+    final String namespaceId = flow1.getNamespace();
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        String searchQuery = namespaceId + MetadataDataset.KEYVALUE_SEPARATOR + value;
+        try (Scanner scan = dataset.searchByIndex(MetadataDataset.DEFAULT_INDEX_COLUMN, searchQuery)) {
+          Assert.assertNotNull(scan.next());
+          Assert.assertNull(scan.next());
+        }
+      }
+    });
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // entry with no special indexes
+        assertSingleIndex(dataset, MetadataDataset.DEFAULT_INDEX_COLUMN, namespaceId, value);
+        assertNoIndexes(dataset, MetadataDataset.ENTITY_NAME_INDEX_COLUMN, namespaceId, value);
+        assertNoIndexes(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN, namespaceId, value);
+        assertNoIndexes(dataset, MetadataDataset.CREATION_TIME_INDEX_COLUMN, namespaceId, value);
+        assertNoIndexes(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN, namespaceId, value);
+        // entry with a schema
+        assertSingleIndex(dataset, MetadataDataset.DEFAULT_INDEX_COLUMN, namespaceId, body);
+        assertNoIndexes(dataset, MetadataDataset.ENTITY_NAME_INDEX_COLUMN, namespaceId, body);
+        assertNoIndexes(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN, namespaceId, body);
+        assertNoIndexes(dataset, MetadataDataset.CREATION_TIME_INDEX_COLUMN, namespaceId, body);
+        assertNoIndexes(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN, namespaceId, body);
+        // entry with entity name
+        assertSingleIndex(dataset, MetadataDataset.DEFAULT_INDEX_COLUMN, namespaceId, name);
+        assertSingleIndex(dataset, MetadataDataset.ENTITY_NAME_INDEX_COLUMN, namespaceId, name);
+        assertNoIndexes(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN, namespaceId, name);
+        Indexer indexer = new InvertedValueIndexer();
+        String index = Iterables.getOnlyElement(indexer.getIndexes(new MetadataEntry(dataset1, "key", name)));
+        assertSingleIndex(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN, namespaceId, index.toLowerCase());
+        assertNoIndexes(dataset, MetadataDataset.CREATION_TIME_INDEX_COLUMN, namespaceId, name);
+        assertNoIndexes(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN, namespaceId, name);
+        // entry with creation time
+        String time = String.valueOf(creationTime);
+        assertSingleIndex(dataset, MetadataDataset.DEFAULT_INDEX_COLUMN, namespaceId, time);
+        assertNoIndexes(dataset, MetadataDataset.ENTITY_NAME_INDEX_COLUMN, namespaceId, time);
+        assertNoIndexes(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN, namespaceId, time);
+        assertSingleIndex(dataset, MetadataDataset.CREATION_TIME_INDEX_COLUMN, namespaceId, time);
+        assertNoIndexes(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN, namespaceId, time);
+        assertSingleIndex(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN, namespaceId,
+                          String.valueOf(Long.MAX_VALUE - creationTime));
+      }
+    });
+  }
+
+  private void assertSingleIndex(final MetadataDataset dataset, final String indexColumn, final String namespaceId,
+                                 final String value) throws InterruptedException, TransactionFailureException {
+    final String searchQuery = namespaceId + MetadataDataset.KEYVALUE_SEPARATOR + value;
+    try (Scanner scan = dataset.searchByIndex(indexColumn, searchQuery)) {
+      Assert.assertNotNull(scan.next());
+      Assert.assertNull(scan.next());
+    }
+  }
+
+  private void assertNoIndexes(final MetadataDataset dataset, String indexColumn, String namespaceId, String value) {
+    String searchQuery = namespaceId + MetadataDataset.KEYVALUE_SEPARATOR + value;
+    try (Scanner scan = dataset.searchByIndex(indexColumn, searchQuery)) {
+      Assert.assertNull(scan.next());
+    }
   }
 
   private void doTestHistory(final MetadataDataset dataset, final NamespacedEntityId targetId, final String prefix)
@@ -1241,9 +1334,16 @@ public class MetadataDatasetTest {
   }
 
   private static MetadataDataset getDataset(DatasetId instance) throws Exception {
+    return getDataset(instance, MetadataScope.USER);
+  }
+
+  private static MetadataDataset getDataset(DatasetId instance, MetadataScope scope) throws Exception {
     return DatasetsUtil.getOrCreateDataset(dsFrameworkUtil.getFramework(), instance,
                                            MetadataDataset.class.getName(),
-                                           DatasetProperties.EMPTY, null, null);
+                                           DatasetProperties.builder()
+                                             .add(MetadataDatasetDefinition.SCOPE_KEY, scope.name())
+                                             .build(),
+                                           null, null);
   }
 
   private static final class ReversingIndexer implements Indexer {
