@@ -123,7 +123,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
     specBuilder.addConnections(config.getConnections())
       .setResources(config.getResources())
-      .setStageLoggingEnabled(config.isStageLoggingEnabled());
+      .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .setNumOfRecordsPreview(config.getNumOfRecordsPreview());
   }
 
   /**
