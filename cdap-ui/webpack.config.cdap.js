@@ -77,6 +77,13 @@ var loaders = [
     loader: 'style-loader!css-loader!less-loader'
   },
   {
+    test: /app\/lib\/avsc-bundle.js/,
+    loaders: [
+      'imports?this=>window',
+      'script'
+    ]
+  },
+  {
     test: /\.js$/,
     loader: 'babel',
     exclude: /node_modules/,
@@ -145,7 +152,8 @@ module.exports = {
     alias: {
       components: __dirname + '/app/cdap/components',
       services: __dirname + '/app/cdap/services',
-      api: __dirname + '/app/cdap/api'
+      api: __dirname + '/app/cdap/api',
+      lib: __dirname + '/app/lib'
     }
   }
 };
