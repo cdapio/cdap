@@ -6,8 +6,31 @@
     {
       "label": "Transform Configuration",
       "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "My Option",
+          "name": "myOption",
+          "widget-attributes": {
+            "width": "large",
+            "default": "some default value"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "My Optional Option",
+          "name": "myOptionalOption",
+          "widget-attributes": {
+            "width": "large"
+          }
+        }
       ]
     }
   ],
-  "outputs": []
+  "outputs": [
+    {
+      "name": "schema",
+      "label": "schema",
+      "widget-type": "schema"
+    }
+  ]
 }

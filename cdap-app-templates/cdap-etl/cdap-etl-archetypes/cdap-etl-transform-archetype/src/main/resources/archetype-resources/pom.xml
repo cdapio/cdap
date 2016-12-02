@@ -32,6 +32,12 @@
     <widgets.dir>widgets</widgets.dir>
     <docs.dir>docs</docs.dir>
     <etl.versionRange>[3.3.0,10.0.0-SNAPSHOT)</etl.versionRange>
+    <app.parents>
+      system:cdap-etl-batch,
+      system:cdap-etl-realtime,
+      system:cdap-data-pipeline,
+      system:cdap-data-streams
+    </app.parents>
     <!-- this is here because project.basedir evaluates to null in the script build step -->
     <main.basedir>${project.basedir}</main.basedir>
   </properties>
@@ -108,16 +114,12 @@
           <artifactId>maven-antrun-plugin</artifactId>
           <version>1.7</version>
           <executions>
-            <!-- Create the config file for artifact which can be used to deploy the artifact.
-                 Sets the parents field to system:cdap-etl-batch and system:cdap-etl-realtime with whatever
-                 version range is set in the etl.versionRange property.
-                 also sets a widget and doc property for each file contained in the widgets and docs directories. -->
             <execution>
               <id>create-artifact-config</id>
               <phase>prepare-package</phase>
               <configuration>
                 <target>
-                  <script language="javascript"> <![CDATA[
+                  <script language="javascript"><![CDATA[
 
                   // for some reason, project.basedir evaluates to null if we just get the property here.
                   // so we set main.basedir to project.basedir in the pom properties, then main.basedir is used here
@@ -132,10 +134,14 @@
                     cfgFile.createNewFile();
                   }
 
-                  var etlRange = project.getProperty("etl.versionRange");
+                  var parents = project.getProperty("app.parents").split(",");
+                  var parentVersions = project.getProperty("etl.versionRange");
                   var config = {
-                    "parents": [ "system:cdap-etl-batch" + etlRange, "system:cdap-etl-realtime" + etlRange ],
+                    "parents": [ ],
                     "properties": {}
+                  }
+                  for (i = 0; i < parents.length; i+=2) {
+                    config.parents.push(parents[i].trim() + parentVersions);
                   }
 
                   // look in widgets directory for widget config for each plugin
