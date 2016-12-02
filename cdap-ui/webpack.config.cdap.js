@@ -44,10 +44,6 @@ var plugins = [
       to: './fonts/'
     },
     {
-      from: path.resolve(__dirname, 'node_modules', 'vega', 'vega.js'),
-      to: './'
-    },
-    {
       from: path.resolve(__dirname, 'app', 'lib', 'c3.js'),
       to: './'
     },

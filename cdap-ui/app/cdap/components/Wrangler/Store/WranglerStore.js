@@ -158,6 +158,10 @@ const visualization = (state = defaultInitialState.visualization, action = defau
     case WranglerActions.renameColumn:
       stateCopy = Object.assign({}, state);
       for (let id in stateCopy.charts) {
+        if (stateCopy.charts[id].x === action.payload.activeColumn) {
+          stateCopy.charts[id].x = action.payload.newName;
+        }
+
         let index = stateCopy.charts[id].y.indexOf(action.payload.activeColumn);
         if (index !== -1) {
           stateCopy.charts[id].y[index] = action.payload.newName;
@@ -167,6 +171,10 @@ const visualization = (state = defaultInitialState.visualization, action = defau
     case WranglerActions.dropColumn:
       stateCopy = Object.assign({}, state);
       for (let id in stateCopy.charts) {
+        if (stateCopy.charts[id].x === action.payload.activeColumn) {
+          stateCopy.charts[id].x = '##'; // revert to default
+        }
+
         let index = stateCopy.charts[id].y.indexOf(action.payload.activeColumn);
         if (index !== -1) {
           stateCopy.charts[id].y.splice(index, 1);
