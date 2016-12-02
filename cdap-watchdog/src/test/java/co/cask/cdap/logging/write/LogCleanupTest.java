@@ -165,7 +165,7 @@ public class LogCleanupTest {
     // Setup directories
     LoggingContext dummyContext = new FlowletLoggingContext("ns", "app", "flw", "flwt", "run", "instance");
 
-    Location namespacedLogsDir = namespacedLocationFactory.get(Id.Namespace.from("ns")).append(logBaseDir);
+    Location namespacedLogsDir = namespacedLocationFactory.get(new NamespaceId("ns")).append(logBaseDir);
     Location contextDir = namespacedLogsDir.append("app").append("flw");
     List<Location> toDelete = Lists.newArrayList();
     for (int i = 0; i < 5; ++i) {
@@ -367,7 +367,7 @@ public class LogCleanupTest {
     NamespaceMeta finalMetadata = new NamespaceMeta.Builder().setName("ns").build();
     namespaceQueryAdmin.create(finalMetadata);
 
-    Location namespacedLogsDir = namespacedLocationFactory.get(Id.Namespace.from("ns")).append(logBaseDir);
+    Location namespacedLogsDir = namespacedLocationFactory.get(new NamespaceId("ns")).append(logBaseDir);
 
     Location contextDir = namespacedLogsDir.append("app").append("flw");
     List<Location> withMetaFiles = Lists.newArrayList();
@@ -486,7 +486,7 @@ public class LogCleanupTest {
   private Location createContextDir(String namespace, NamespacedLocationFactory namespacedLocationFactory)
     throws Exception {
     namespaceQueryAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
-    Location nsNamespacedLogsDir = namespacedLocationFactory.get(Id.Namespace.from(namespace)).append(logBaseDir);
+    Location nsNamespacedLogsDir = namespacedLocationFactory.get(new NamespaceId(namespace)).append(logBaseDir);
     return nsNamespacedLogsDir.append("app").append("flw");
   }
 

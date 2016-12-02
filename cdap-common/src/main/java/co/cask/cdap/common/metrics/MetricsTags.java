@@ -17,7 +17,7 @@
 package co.cask.cdap.common.metrics;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
@@ -41,26 +41,26 @@ public final class MetricsTags {
     return tagMap;
   }
   // TODO: Use Id.Flow.Flowlet
-  public static Map<String, String> flowlet(Id.Program flowId, String flowletId) {
+  public static Map<String, String> flowlet(ProgramId flowId, String flowletId) {
     return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, flowId.getNamespaceId(),
-      Constants.Metrics.Tag.APP, flowId.getApplicationId(),
-      Constants.Metrics.Tag.FLOW, flowId.getId(),
+      Constants.Metrics.Tag.NAMESPACE, flowId.getNamespace(),
+      Constants.Metrics.Tag.APP, flowId.getApplication(),
+      Constants.Metrics.Tag.FLOW, flowId.getEntityName(),
       Constants.Metrics.Tag.FLOWLET, flowletId);
   }
 
-  public static Map<String, String> service(Id.Program id) {
+  public static Map<String, String> service(ProgramId id) {
     return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, id.getNamespaceId(),
-      Constants.Metrics.Tag.APP, id.getApplicationId(),
-      Constants.Metrics.Tag.SERVICE, id.getId());
+      Constants.Metrics.Tag.NAMESPACE, id.getNamespace(),
+      Constants.Metrics.Tag.APP, id.getApplication(),
+      Constants.Metrics.Tag.SERVICE, id.getEntityName());
   }
 
-  public static Map<String, String> serviceHandler(Id.Program id, String handlerId) {
+  public static Map<String, String> serviceHandler(ProgramId id, String handlerId) {
     return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, id.getNamespaceId(),
-      Constants.Metrics.Tag.APP, id.getApplicationId(),
-      Constants.Metrics.Tag.SERVICE, id.getId(),
+      Constants.Metrics.Tag.NAMESPACE, id.getNamespace(),
+      Constants.Metrics.Tag.APP, id.getApplication(),
+      Constants.Metrics.Tag.SERVICE, id.getEntityName(),
       Constants.Metrics.Tag.HANDLER, handlerId);
   }
 }

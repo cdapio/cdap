@@ -229,13 +229,8 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
-    artifactRepository.addArtifact(artifactId, artifactFile);
-  }
-
-  @Override
   public ArtifactManager addArtifact(ArtifactId artifactId, File artifactFile) throws Exception {
-    artifactRepository.addArtifact(artifactId.toId(), artifactFile);
+    artifactRepository.addArtifact(artifactId, artifactFile);
     return artifactManagerFactory.create(artifactId);
   }
 
@@ -288,7 +283,7 @@ public class UnitTestManager implements TestManager {
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
-      Ids.namespace(parent.getNamespace()).toId(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
+      Ids.namespace(parent.getNamespace()), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
       true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, pluginClass, pluginClasses);
     return artifactManagerFactory.create(artifactId);
@@ -304,7 +299,7 @@ public class UnitTestManager implements TestManager {
   public ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
-    artifactRepository.addArtifact(artifactId.toId(), pluginJar, parents);
+    artifactRepository.addArtifact(artifactId, pluginJar, parents);
     Preconditions.checkState(pluginJar.delete());
     return artifactManagerFactory.create(artifactId);
   }
@@ -322,7 +317,7 @@ public class UnitTestManager implements TestManager {
                                            Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
-      Ids.namespace(parent.getNamespace()).toId(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
+      Ids.namespace(parent.getNamespace()), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
       true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, additionalPlugins, pluginClass, pluginClasses);
     return artifactManagerFactory.create(artifactId);
@@ -340,14 +335,14 @@ public class UnitTestManager implements TestManager {
                                            @Nullable Set<PluginClass> additionalPlugins, Class<?> pluginClass,
                                            Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
-    artifactRepository.addArtifact(artifactId.toId(), pluginJar, parents,
+    artifactRepository.addArtifact(artifactId, pluginJar, parents,
                                    additionalPlugins, Collections.<String, String>emptyMap());
     Preconditions.checkState(pluginJar.delete());
     return artifactManagerFactory.create(artifactId);
   }
 
   @Override
-  public void deleteArtifact(Id.Artifact artifactId) throws Exception {
+  public void deleteArtifact(ArtifactId artifactId) throws Exception {
     artifactRepository.deleteArtifact(artifactId);
   }
 
@@ -515,7 +510,7 @@ public class UnitTestManager implements TestManager {
     Files.copy(Locations.newInputSupplier(jar), destination);
     jar.delete();
 
-    artifactRepository.addArtifact(artifactId.toId(), destination);
+    artifactRepository.addArtifact(artifactId, destination);
     Preconditions.checkState(destination.delete());
   }
 }

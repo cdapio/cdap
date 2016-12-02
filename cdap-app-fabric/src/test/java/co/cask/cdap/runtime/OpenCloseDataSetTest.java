@@ -94,7 +94,7 @@ public class OpenCloseDataSetTest {
   public static void setup() throws Exception {
     NamespacedLocationFactory namespacedLocationFactory =
       AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
-    namespaceHomeLocation = namespacedLocationFactory.get(DefaultId.NAMESPACE.toId());
+    namespaceHomeLocation = namespacedLocationFactory.get(DefaultId.NAMESPACE);
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(DefaultId.NAMESPACE).build());
     Locations.mkdirsIfNotExists(namespaceHomeLocation);

@@ -111,7 +111,7 @@ final class ArtifactInspector {
    * @throws InvalidArtifactException if the artifact is invalid. For example, if the application main class is not
    *                                  actually an Application.
    */
-  ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
+  ArtifactClasses inspectArtifact(co.cask.cdap.proto.id.ArtifactId artifactId, File artifactFile,
                                   @Nullable ClassLoader parentClassLoader) throws IOException,
                                                                                   InvalidArtifactException {
     Path tmpDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
@@ -145,7 +145,7 @@ final class ArtifactInspector {
     }
   }
 
-  private ArtifactClasses.Builder inspectApplications(Id.Artifact artifactId,
+  private ArtifactClasses.Builder inspectApplications(co.cask.cdap.proto.id.ArtifactId artifactId,
                                                       ArtifactClasses.Builder builder,
                                                       Location artifactLocation,
                                                       ClassLoader artifactClassLoader) throws IOException,

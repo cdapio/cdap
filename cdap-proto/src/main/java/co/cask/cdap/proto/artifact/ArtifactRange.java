@@ -18,6 +18,7 @@ package co.cask.cdap.proto.artifact;
 
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.Objects;
 
@@ -25,18 +26,18 @@ import java.util.Objects;
  * Represents a range of versions for an artifact. The lower version is inclusive and the upper version is exclusive.
  */
 public class ArtifactRange {
-  private final Id.Namespace namespace;
+  private final NamespaceId namespace;
   private final String name;
   private final ArtifactVersion lower;
   private final ArtifactVersion upper;
   private final boolean isLowerInclusive;
   private final boolean isUpperInclusive;
 
-  public ArtifactRange(Id.Namespace namespace, String name, ArtifactVersion lower, ArtifactVersion upper) {
+  public ArtifactRange(NamespaceId namespace, String name, ArtifactVersion lower, ArtifactVersion upper) {
     this(namespace, name, lower, true, upper, false);
   }
 
-  public ArtifactRange(Id.Namespace namespace, String name, ArtifactVersion lower, boolean isLowerInclusive,
+  public ArtifactRange(NamespaceId namespace, String name, ArtifactVersion lower, boolean isLowerInclusive,
                        ArtifactVersion upper, boolean isUpperInclusive) {
     this.namespace = namespace;
     this.name = name;
@@ -46,7 +47,7 @@ public class ArtifactRange {
     this.isUpperInclusive = isUpperInclusive;
   }
 
-  public Id.Namespace getNamespace() {
+  public NamespaceId getNamespace() {
     return namespace;
   }
 
@@ -105,7 +106,7 @@ public class ArtifactRange {
 
   @Override
   public String toString() {
-    return toString(new StringBuilder().append(namespace.getId()).append(':'));
+    return toString(new StringBuilder().append(namespace.getEntityName()).append(':'));
   }
 
   private String toString(StringBuilder builder) {
@@ -137,9 +138,9 @@ public class ArtifactRange {
         "Could not find ':' separating namespace from artifact name.", artifactRangeStr));
     }
     String namespaceStr = artifactRangeStr.substring(0, nameStartIndex);
-    Id.Namespace namespace;
+    NamespaceId namespace;
     try {
-      namespace = Id.Namespace.from(namespaceStr);
+      namespace = new NamespaceId(namespaceStr);
     } catch (Exception e) {
       throw new InvalidArtifactRangeException(String.format("Invalid namespace %s: %s", namespaceStr, e.getMessage()));
     }
@@ -164,7 +165,7 @@ public class ArtifactRange {
    * @return the ArtifactRange corresponding to the given string
    * @throws InvalidArtifactRangeException if the string is malformed, or if the lower version is higher than the upper
    */
-  public static ArtifactRange parse(Id.Namespace namespace,
+  public static ArtifactRange parse(NamespaceId namespace,
                                     String artifactRangeStr) throws InvalidArtifactRangeException {
     // search for the '[' or '(' between the artifact name and lower version
     int versionStartIndex = indexOf(artifactRangeStr, '[', '(', 0);

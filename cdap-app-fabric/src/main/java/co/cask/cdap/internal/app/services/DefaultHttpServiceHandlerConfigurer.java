@@ -27,6 +27,8 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,8 +54,8 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer
    * @param handler the handler for the service
    */
   public DefaultHttpServiceHandlerConfigurer(HttpServiceHandler handler,
-                                             Id.Namespace deployNamespace,
-                                             Id.Artifact artifactId,
+                                             NamespaceId deployNamespace,
+                                             ArtifactId artifactId,
                                              ArtifactRepository artifactRepository,
                                              PluginInstantiator pluginInstantiator) {
     super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);

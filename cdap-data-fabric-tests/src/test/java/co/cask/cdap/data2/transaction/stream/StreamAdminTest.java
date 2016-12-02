@@ -87,8 +87,8 @@ public abstract class StreamAdminTest {
   protected abstract Authorizer getAuthorizer();
 
   protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
-    namespacedLocationFactory.get(FOO_NAMESPACE.toId()).mkdirs();
-    namespacedLocationFactory.get(OTHER_NAMESPACE.toId()).mkdirs();
+    namespacedLocationFactory.get(FOO_NAMESPACE).mkdirs();
+    namespacedLocationFactory.get(OTHER_NAMESPACE).mkdirs();
   }
 
   @ClassRule

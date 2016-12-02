@@ -74,7 +74,7 @@ public class SetArtifactPropertiesCommand extends AbstractAuthCommand {
                                      "and that it contains a 'properties' key whose value is a JSON object of the " +
                                      "artifact properties.", e);
       }
-      artifactClient.writeProperties(artifactId.toId(), properties.properties);
+      artifactClient.writeProperties(artifactId, properties.properties);
     }
   }
 

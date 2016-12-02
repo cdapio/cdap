@@ -37,7 +37,7 @@ public interface NamespaceQueryAdmin {
   /**
    * Gets details of a namespace.
    *
-   * @param namespaceId the {@link Id.Namespace} of the requested namespace
+   * @param namespaceId the {@link NamespaceId} of the requested namespace
    * @return the {@link NamespaceMeta} of the requested namespace
    * @throws NamespaceNotFoundException if the requested namespace is not found
    */
@@ -46,7 +46,7 @@ public interface NamespaceQueryAdmin {
   /**
    * Checks if the specified namespace exists.
    *
-   * @param namespaceId the {@link Id.Namespace} to check for existence
+   * @param namespaceId the {@link NamespaceId} to check for existence
    * @return true, if the specifed namespace exists, false otherwise
    */
   boolean exists(NamespaceId namespaceId) throws Exception;

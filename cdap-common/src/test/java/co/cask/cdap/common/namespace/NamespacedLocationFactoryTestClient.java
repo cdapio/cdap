@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -44,18 +45,18 @@ public class NamespacedLocationFactoryTestClient implements NamespacedLocationFa
   }
 
   @Override
-  public Location get(Id.Namespace namespaceId) throws IOException {
+  public Location get(NamespaceId namespaceId) throws IOException {
     return get(namespaceId, null);
   }
 
   @Override
   public Location get(NamespaceMeta namespaceMeta) throws IOException {
-    return get(namespaceMeta.getNamespaceId().toId(), null);
+    return get(namespaceMeta.getNamespaceId(), null);
   }
 
   @Override
-  public Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException {
-    Location namespaceLocation = locationFactory.create(namespaceDir).append(namespaceId.getId());
+  public Location get(NamespaceId namespaceId, @Nullable String subPath) throws IOException {
+    Location namespaceLocation = locationFactory.create(namespaceDir).append(namespaceId.getEntityName());
     if (subPath != null) {
       namespaceLocation = namespaceLocation.append(subPath);
     }

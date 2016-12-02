@@ -45,6 +45,8 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.TxConstants;
@@ -85,7 +87,8 @@ public class DistributedProgramRunnerTxTimeoutTest {
   public static void setup() {
     Application app = new AppWithAllProgramTypes();
     DefaultAppConfigurer configurer = new DefaultAppConfigurer(
-      Id.Namespace.DEFAULT, new Id.Artifact(Id.Namespace.DEFAULT, "artifact", new ArtifactVersion("0.1")), app);
+      NamespaceId.DEFAULT,
+      new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "artifact", "0.1"), app);
     app.configure(configurer, new ApplicationContext() {
       @Override
       public Config getConfig() {

@@ -60,11 +60,11 @@ public class SchedulerServiceTest {
   private static SchedulerService schedulerService;
   private static Store store;
   private static NamespaceAdmin namespaceAdmin;
-  private static final Id.Namespace namespace = new Id.Namespace("notdefault");
-  private static final ApplicationId appId = new ApplicationId(namespace.getId(), AppWithWorkflow.NAME);
+  private static final NamespaceId namespace = new NamespaceId("notdefault");
+  private static final ApplicationId appId = new ApplicationId(namespace.getNamespace(), AppWithWorkflow.NAME);
   private static final ProgramId program = appId.workflow(AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
-  private static final Id.Stream STREAM_ID = Id.Stream.from(namespace, "stream");
+  private static final Id.Stream STREAM_ID = Id.Stream.from(namespace.getEntityName(), "stream");
   private static final Schedule TIME_SCHEDULE_0 = Schedules.builder("Schedule0")
     .setDescription("Next 10 minutes")
     .createTimeSchedule(getCron(10, TimeUnit.MINUTES));
@@ -120,7 +120,7 @@ public class SchedulerServiceTest {
 
   @AfterClass
   public static void finish() throws Exception {
-    namespaceAdmin.delete(namespace.toEntityId());
+    namespaceAdmin.delete(namespace);
     namespaceAdmin.deleteDatasets(NamespaceId.DEFAULT);
     schedulerService.stopAndWait();
   }

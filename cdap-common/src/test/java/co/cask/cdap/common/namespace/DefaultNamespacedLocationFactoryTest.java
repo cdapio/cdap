@@ -51,8 +51,8 @@ public class DefaultNamespacedLocationFactoryTest {
 
     NamespaceAdmin nsAdmin = new InMemoryNamespaceClient();
 
-    Id.Namespace ns1 = Id.Namespace.from("ns1");
-    NamespaceMeta defaultNSMeta = new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build();
+    NamespaceId ns1 = new NamespaceId("ns1");
+    NamespaceMeta defaultNSMeta = new NamespaceMeta.Builder().setName(NamespaceId.DEFAULT).build();
     NamespaceMeta ns1NSMeta = new NamespaceMeta.Builder().setName(ns1).setRootDirectory("/ns1").build();
 
     nsAdmin.create(defaultNSMeta);
@@ -62,7 +62,7 @@ public class DefaultNamespacedLocationFactoryTest {
     NamespacedLocationFactory namespacedLocationFactory =
       new DefaultNamespacedLocationFactory(cConf, rootLocationFactory, locationFactory, nsAdmin);
 
-    Location defaultLoc = namespacedLocationFactory.get(Id.Namespace.DEFAULT);
+    Location defaultLoc = namespacedLocationFactory.get(NamespaceId.DEFAULT);
     Location ns1Loc = namespacedLocationFactory.get(ns1);
 
     // check if location was as expected

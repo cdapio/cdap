@@ -26,6 +26,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
@@ -70,7 +71,7 @@ public final class StreamFileJanitor {
       final Location streamBaseLocation = impersonator.doAs(namespace, new Callable<Location>() {
         @Override
         public Location call() throws Exception {
-          return namespacedLocationFactory.get(Id.Namespace.from(namespace.getName())).append(streamBaseDirPath);
+          return namespacedLocationFactory.get(new NamespaceId(namespace.getName())).append(streamBaseDirPath);
         }
       });
 

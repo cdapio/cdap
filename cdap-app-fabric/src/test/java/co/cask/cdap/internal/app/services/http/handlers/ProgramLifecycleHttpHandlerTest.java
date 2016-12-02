@@ -55,8 +55,11 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
@@ -134,8 +137,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Id.Flow wordcountFlow1 = Id.Flow.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME);
-    Id.Flow wordcountFlow2 = Id.Flow.from(TEST_NAMESPACE2, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME);
+    FlowId wordcountFlow1 = new FlowId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME);
+    FlowId wordcountFlow2 = new FlowId(TEST_NAMESPACE2, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME);
 
     // flow is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(wordcountFlow1));
@@ -156,8 +159,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Id.Program dummyMR1 = Id.Program.from(TEST_NAMESPACE1, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
-    Id.Program dummyMR2 = Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
+    ProgramId dummyMR1 = new ProgramId(TEST_NAMESPACE1, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
+    ProgramId dummyMR2 = new ProgramId(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
 
     // mapreduce is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(dummyMR2));
@@ -213,10 +216,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = deploy(SleepingWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Id.Program sleepWorkflow1 =
-      Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
-    Id.Program sleepWorkflow2 =
-      Id.Program.from(TEST_NAMESPACE2, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
+    ProgramId sleepWorkflow1 =
+      new ProgramId(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
+    ProgramId sleepWorkflow2 =
+      new ProgramId(TEST_NAMESPACE2, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
 
     // workflow is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
@@ -241,16 +244,16 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testVersionedProgramStartStopStatus() throws Exception {
-    Id.Artifact wordCountArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcountapp", VERSION1);
+    ArtifactId wordCountArtifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "wordcountapp", VERSION1);
     addAppArtifact(wordCountArtifactId, WordCountApp.class);
     AppRequest<? extends Config> wordCountRequest = new AppRequest<>(
-      new ArtifactSummary(wordCountArtifactId.getName(), wordCountArtifactId.getVersion().getVersion()));
+      new ArtifactSummary(wordCountArtifactId.getEntityName(), wordCountArtifactId.getVersion()));
 
     ApplicationId wordCountApp1 = NamespaceId.DEFAULT.app("WordCountApp", VERSION1);
     ProgramId wordcountFlow1 = wordCountApp1.program(ProgramType.FLOW, "WordCountFlow");
     
     Id.Application wordCountAppDefault = wordCountApp1.toId();
-    Id.Program wordcountFlowDefault = wordcountFlow1.toId();
+    ProgramId wordcountFlowDefault = wordcountFlow1;
 
     ApplicationId wordCountApp2 = NamespaceId.DEFAULT.app("WordCountApp", VERSION2);
     ProgramId wordcountFlow2 = wordCountApp2.program(ProgramType.FLOW, "WordCountFlow");
@@ -290,7 +293,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     ProgramId wordFrequencyService1 = wordCountApp1.program(ProgramType.SERVICE, "WordFrequencyService");
     ProgramId wordFrequencyService2 = wordCountApp2.program(ProgramType.SERVICE, "WordFrequencyService");
-    Id.Program wordFrequencyServiceDefault = wordFrequencyService1.toId();
+    ProgramId wordFrequencyServiceDefault = wordFrequencyService1;
     // service is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyService1));
     // start service
@@ -317,10 +320,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     stopProgram(wordFrequencyService2, null, 200, null);
     stopProgram(wordFrequencyServiceDefault, null, 200, null);
 
-    Id.Artifact sleepWorkflowArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "sleepworkflowapp", VERSION1);
+    ArtifactId sleepWorkflowArtifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(),
+                                                        "sleepworkflowapp", VERSION1);
     addAppArtifact(sleepWorkflowArtifactId, SleepingWorkflowApp.class);
     AppRequest<? extends Config> sleepWorkflowRequest = new AppRequest<>(
-      new ArtifactSummary(sleepWorkflowArtifactId.getName(), sleepWorkflowArtifactId.getVersion().getVersion()));
+      new ArtifactSummary(sleepWorkflowArtifactId.getEntityName(), sleepWorkflowArtifactId.getVersion()));
 
     ApplicationId sleepWorkflowApp1 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", VERSION1);
     ProgramId sleepWorkflow1 = sleepWorkflowApp1.program(ProgramType.WORKFLOW, "SleepWorkflow");
@@ -365,65 +369,65 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     // start unknown program
-    startProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, "noexist"), 404);
+    startProgram(new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, "noexist"), 404);
     // start program in unknonw app
-    startProgram(Id.Program.from(TEST_NAMESPACE1, "noexist", ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 404);
+    startProgram(new ProgramId(TEST_NAMESPACE1, "noexist", ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 404);
     // start program in unknown namespace
-    startProgram(Id.Program.from("noexist", WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 404);
+    startProgram(new ProgramId("noexist", WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 404);
 
     // debug unknown program
-    debugProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, "noexist"), 404);
+    debugProgram(new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, "noexist"), 404);
     // debug a program that does not support it
-    debugProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.MAPREDUCE, WORDCOUNT_MAPREDUCE_NAME),
+    debugProgram(new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.MAPREDUCE, WORDCOUNT_MAPREDUCE_NAME),
                  501); // not implemented
 
     // status for unknown program
-    programStatus(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, "noexist"), 404);
+    programStatus(new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, "noexist"), 404);
     // status for program in unknonw app
-    programStatus(Id.Program.from(TEST_NAMESPACE1, "noexist", ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 404);
+    programStatus(new ProgramId(TEST_NAMESPACE1, "noexist", ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 404);
     // status for program in unknown namespace
-    programStatus(Id.Program.from("noexist", WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 404);
+    programStatus(new ProgramId("noexist", WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 404);
 
     // stop unknown program
-    stopProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, "noexist"), 404);
+    stopProgram(new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, "noexist"), 404);
     // stop program in unknonw app
-    stopProgram(Id.Program.from(TEST_NAMESPACE1, "noexist", ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 404);
+    stopProgram(new ProgramId(TEST_NAMESPACE1, "noexist", ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 404);
     // stop program in unknown namespace
-    stopProgram(Id.Program.from("noexist", WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 404);
+    stopProgram(new ProgramId("noexist", WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 404);
     // stop program that is not running
-    stopProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 400);
+    stopProgram(new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 400);
     // stop run of a program with ill-formed run id
-    stopProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
+    stopProgram(new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
                 "norunid", 400);
 
     // start program twice
-    startProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME));
-    waitState(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), RUNNING);
+    startProgram(new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME));
+    waitState(new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), RUNNING);
 
-    startProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
+    startProgram(new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
                  409); // conflict
 
     // get run records for later use
     List<RunRecord> runs = getProgramRuns(
-      Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), "running");
+      new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), "running");
     Assert.assertEquals(1, runs.size());
     String runId = runs.get(0).getPid();
 
     // stop program
-    stopProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 200);
-    waitState(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), "STOPPED");
+    stopProgram(new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 200);
+    waitState(new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), "STOPPED");
 
     // get run records again, should be empty now
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        Id.Program id = Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
+        ProgramId id = new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
         return getProgramRuns(id, "running").isEmpty();
       }
     }, 10, TimeUnit.SECONDS);
 
     // stop run of the program that is not running
-    stopProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
+    stopProgram(new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
                 runId, 404); // active run not found
 
     // cleanup
@@ -436,7 +440,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testFlowHistory() throws Exception {
     testHistory(WordCountApp.class,
-                Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME));
+                new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME));
   }
 
   /**
@@ -446,7 +450,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testMapreduceHistory() throws Exception {
     testHistory(DummyAppWithTrackingTable.class,
-                Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME));
+                new ProgramId(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME));
   }
 
   /**
@@ -474,8 +478,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testWorkflowHistory() throws Exception {
     try {
       deploy(SleepingWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-      Id.Program sleepWorkflow1 =
-        Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
+      ProgramId sleepWorkflow1 =
+        new ProgramId(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
 
       // first run
       startProgram(sleepWorkflow1);
@@ -578,9 +582,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
 
     // start the flow
-    Id.Program wordcountFlow1 =
-      Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
-    Id.Program service2 = Id.Program.from(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
+    ProgramId wordcountFlow1 =
+      new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
+    ProgramId service2 = new ProgramId(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
                                           ProgramType.SERVICE, APP_WITH_SERVICES_SERVICE_NAME);
     startProgram(wordcountFlow1);
 
@@ -686,8 +690,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
 
     // start the flow
-    Id.Program wordcountFlow1 =
-      Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
+    ProgramId wordcountFlow1 =
+      new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
     startProgram(wordcountFlow1);
 
     response = doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'," +
@@ -696,7 +700,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, returnedBody.get(0).get("provisioned").getAsInt());
 
     // start the service
-    Id.Program service2 = Id.Program.from(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
+    ProgramId service2 = new ProgramId(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
                                           ProgramType.SERVICE, APP_WITH_SERVICES_SERVICE_NAME);
     startProgram(service2);
 
@@ -894,8 +898,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(WORDCOUNT_FLOW_NAME, liveInfo.get("id").getAsString());
 
     // start flow
-    Id.Program wordcountFlow1 =
-      Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
+    ProgramId wordcountFlow1 =
+      new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
     startProgram(wordcountFlow1);
 
     liveInfo = getLiveInfo(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
@@ -921,10 +925,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Deploy the app
     NamespaceId testNamespace2 = new NamespaceId(TEST_NAMESPACE2);
     Id.Namespace idTestNamespace2 = testNamespace2.toId();
-    Id.Artifact artifactId = Id.Artifact.from(idTestNamespace2, "appwithmultiplescheduledworkflows", VERSION1);
+    ArtifactId artifactId = new ArtifactId(idTestNamespace2.getId(), "appwithmultiplescheduledworkflows", VERSION1);
     addAppArtifact(artifactId, AppWithMultipleScheduledWorkflows.class);
     AppRequest<? extends Config> appRequest = new AppRequest<>(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
+      new ArtifactSummary(artifactId.getEntityName(), artifactId.getVersion()));
     Id.Application appDefault = new Id.Application(idTestNamespace2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME);
     ApplicationId app1 = testNamespace2.app(APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME, VERSION1);
     ApplicationId app2 = testNamespace2.app(APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME, VERSION2);
@@ -980,10 +984,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Id.Service service1 = Id.Service.from(Id.Namespace.from(TEST_NAMESPACE1), APP_WITH_SERVICES_APP_ID,
+    ServiceId service1 = new ServiceId(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
                                           APP_WITH_SERVICES_SERVICE_NAME);
-    final Id.Service service2 = Id.Service.from(Id.Namespace.from(TEST_NAMESPACE2), APP_WITH_SERVICES_APP_ID,
-                                                APP_WITH_SERVICES_SERVICE_NAME);
+    final ServiceId service2 = new ServiceId(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
+                                               APP_WITH_SERVICES_SERVICE_NAME);
     HttpResponse activeResponse = getServiceAvailability(service1);
     // Service is not valid, so it should return 404
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), activeResponse.getStatusLine().getStatusCode());
@@ -1114,37 +1118,38 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       });
   }
 
-  private HttpResponse getServiceAvailability(Id.Service serviceId) throws Exception {
-    String activeUrl = String.format("apps/%s/services/%s/available", serviceId.getApplicationId(), serviceId.getId());
+  private HttpResponse getServiceAvailability(ServiceId serviceId) throws Exception {
+    String activeUrl = String.format("apps/%s/services/%s/available", serviceId.getApplication(),
+                                     serviceId.getEntityName());
     String versionedActiveUrl = getVersionedAPIPath(activeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                    serviceId.getNamespaceId());
+                                                    serviceId.getNamespace());
     return doGet(versionedActiveUrl);
   }
 
-  private ServiceInstances getServiceInstances(Id.Service serviceId) throws Exception {
-    String instanceUrl = String.format("apps/%s/services/%s/instances", serviceId.getApplicationId(),
-                                       serviceId.getId());
+  private ServiceInstances getServiceInstances(ServiceId serviceId) throws Exception {
+    String instanceUrl = String.format("apps/%s/services/%s/instances", serviceId.getApplication(),
+                                       serviceId.getEntityName());
     String versionedInstanceUrl = getVersionedAPIPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                      serviceId.getNamespaceId());
+                                                      serviceId.getNamespace());
     HttpResponse response = doGet(versionedInstanceUrl);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     return readResponse(response, ServiceInstances.class);
   }
 
-  private int setServiceInstances(Id.Service serviceId, int instances) throws Exception {
-    String instanceUrl = String.format("apps/%s/services/%s/instances", serviceId.getApplicationId(),
-                                       serviceId.getId());
+  private int setServiceInstances(ServiceId serviceId, int instances) throws Exception {
+    String instanceUrl = String.format("apps/%s/services/%s/instances", serviceId.getApplication(),
+                                       serviceId.getEntityName());
     String versionedInstanceUrl = getVersionedAPIPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                      serviceId.getNamespaceId());
+                                                      serviceId.getNamespace());
     String instancesBody = GSON.toJson(new Instances(instances));
     return doPut(versionedInstanceUrl, instancesBody).getStatusLine().getStatusCode();
   }
 
-  private HttpResponse callService(Id.Service serviceId, HttpMethod method, String endpoint) throws Exception {
+  private HttpResponse callService(ServiceId serviceId, HttpMethod method, String endpoint) throws Exception {
     String serviceUrl = String.format("apps/%s/service/%s/methods/%s",
-                                      serviceId.getApplicationId(), serviceId.getId(), endpoint);
+                                      serviceId.getApplication(), serviceId.getEntityName(), endpoint);
     String versionedServiceUrl = getVersionedAPIPath(serviceUrl, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                     serviceId.getNamespaceId());
+                                                     serviceId.getNamespace());
     if (HttpMethod.GET.equals(method)) {
       return doGet(versionedServiceUrl);
     } else if (HttpMethod.POST.equals(method)) {
@@ -1300,23 +1305,23 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     }
   }
 
-  private void testHistory(Class<?> app, Id.Program program) throws Exception {
-    String namespace = program.getNamespaceId();
+  private void testHistory(Class<?> app, ProgramId program) throws Exception {
+    String namespace = program.getNamespace();
     try {
       deploy(app, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-      verifyProgramHistory(program.toEntityId());
+      verifyProgramHistory(program);
     } catch (Exception e) {
       LOG.error("Got exception: ", e);
     } finally {
-      deleteApp(program.getApplication(), 200);
+      deleteApp(program.getParent(), 200);
     }
-    ApplicationId appId = new ApplicationId(namespace, program.getApplicationId(), VERSION1);
-    ProgramId programId = appId.program(program.getType(), program.getId());
+    ApplicationId appId = new ApplicationId(namespace, program.getApplication(), VERSION1);
+    ProgramId programId = appId.program(program.getType(), program.getEntityName());
     try {
-      Id.Artifact artifactId = Id.Artifact.from(program.getNamespace(), app.getSimpleName(), "1.0.0");
+      ArtifactId artifactId = new ArtifactId(program.getNamespace(), app.getSimpleName(), "1.0.0");
       addAppArtifact(artifactId, app);
       AppRequest<Config> request = new AppRequest<>(
-        new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), null);
+        new ArtifactSummary(artifactId.getEntityName(), artifactId.getVersion()), null);
       Assert.assertEquals(200, deploy(appId, request).getStatusLine().getStatusCode());
       verifyProgramHistory(programId);
     } catch (Exception e) {

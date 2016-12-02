@@ -20,6 +20,7 @@ import co.cask.cdap.api.Config;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.StreamClient;
@@ -52,6 +53,7 @@ import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -345,7 +347,7 @@ public abstract class AppFabricTestBase {
     return gson.fromJson(readResponse(response), type);
   }
 
-  protected HttpResponse addAppArtifact(Id.Artifact artifactId, Class<?> cls) throws Exception {
+  protected HttpResponse addAppArtifact(ArtifactId artifactId, Class<?> cls) throws Exception {
 
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest());
 
@@ -356,7 +358,7 @@ public abstract class AppFabricTestBase {
     }
   }
 
-  protected HttpResponse addPluginArtifact(Id.Artifact artifactId, Class<?> cls,
+  protected HttpResponse addPluginArtifact(ArtifactId artifactId, Class<?> cls,
                                            Manifest manifest,
                                            Set<ArtifactRange> parents) throws Exception {
 
@@ -369,12 +371,12 @@ public abstract class AppFabricTestBase {
   }
 
   // add an artifact and return the response code
-  protected HttpResponse addArtifact(Id.Artifact artifactId, InputSupplier<? extends InputStream> artifactContents,
+  protected HttpResponse addArtifact(ArtifactId artifactId, InputSupplier<? extends InputStream> artifactContents,
                                      Set<ArtifactRange> parents) throws Exception {
-    String path = getVersionedAPIPath("artifacts/" + artifactId.getName(), artifactId.getNamespace().getId());
+    String path = getVersionedAPIPath("artifacts/" + artifactId.getEntityName(), artifactId.getNamespace());
     HttpEntityEnclosingRequestBase request = getPost(path);
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setHeader("Artifact-Version", artifactId.getVersion().getVersion());
+    request.setHeader("Artifact-Version", artifactId.getVersion());
     if (parents != null && !parents.isEmpty()) {
       request.setHeader("Artifact-Extends", Joiner.on('/').join(parents));
     }
@@ -384,11 +386,11 @@ public abstract class AppFabricTestBase {
   }
 
   // add artifact properties and return the response code
-  protected HttpResponse addArtifactProperties(Id.Artifact artifactId,
+  protected HttpResponse addArtifactProperties(ArtifactId artifactId,
                                                Map<String, String> properties) throws Exception {
     String nonNamespacePath = String.format("artifacts/%s/versions/%s/properties",
-                                            artifactId.getName(), artifactId.getVersion());
-    String path = getVersionedAPIPath(nonNamespacePath, artifactId.getNamespace().getId());
+                                            artifactId.getEntityName(), artifactId.getVersion());
+    String path = getVersionedAPIPath(nonNamespacePath, artifactId.getNamespace());
     HttpEntityEnclosingRequestBase request = getPut(path);
     request.setEntity(new ByteArrayEntity(properties.toString().getBytes()));
     return execute(request);
@@ -519,7 +521,7 @@ public abstract class AppFabricTestBase {
     return readResponse(response, typeToken);
   }
 
-  protected void assertRunHistory(final Id.Program program, final String status, int expected,
+  protected void assertRunHistory(final ProgramId program, final String status, int expected,
                                   long timeout, TimeUnit timeoutUnit) throws Exception {
     Tasks.waitFor(expected, new Callable<Integer>() {
       @Override
@@ -532,14 +534,14 @@ public abstract class AppFabricTestBase {
   /**
    * Checks the given schedule states.
    */
-  protected void assertSchedule(final Id.Program program, final String scheduleName,
+  protected void assertSchedule(final ProgramId program, final String scheduleName,
                                 boolean scheduled, long timeout, TimeUnit timeoutUnit) throws Exception {
     Tasks.waitFor(scheduled, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         String statusURL = getVersionedAPIPath(String.format("apps/%s/schedules/%s/status",
-            program.getApplicationId(), scheduleName),
-          Constants.Gateway.API_VERSION_3_TOKEN, program.getNamespaceId());
+            program.getApplication(), scheduleName),
+          Constants.Gateway.API_VERSION_3_TOKEN, program.getNamespace());
         HttpResponse response = doGet(statusURL);
         Preconditions.checkState(200 == response.getStatusLine().getStatusCode());
         Map<String, String> result = GSON.fromJson(EntityUtils.toString(response.getEntity()),
@@ -560,12 +562,12 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
   }
 
-  protected void deleteApp(final Id.Application app, int expectedResponseCode,
+  protected void deleteApp(final ApplicationId app, int expectedResponseCode,
                            long timeout, TimeUnit timeoutUnit) throws Exception {
     Tasks.waitFor(expectedResponseCode, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        HttpResponse response = doDelete(getVersionedAPIPath("apps/" + app.getId(), app.getNamespaceId()));
+        HttpResponse response = doDelete(getVersionedAPIPath("apps/" + app.getEntityName(), app.getNamespace()));
         return response.getStatusLine().getStatusCode();
       }
     }, timeout, timeoutUnit, 100, TimeUnit.MILLISECONDS);
@@ -578,42 +580,35 @@ public abstract class AppFabricTestBase {
     return readResponse(response, typeToken);
   }
 
-  protected void deleteArtifact(Id.Artifact artifact, int expectedResponseCode) throws Exception {
-    String path = String.format("artifacts/%s/versions/%s", artifact.getName(), artifact.getVersion().getVersion());
-    HttpResponse response = doDelete(getVersionedAPIPath(path, artifact.getNamespace().getId()));
+  protected void deleteArtifact(ArtifactId artifact, int expectedResponseCode) throws Exception {
+    String path = String.format("artifacts/%s/versions/%s", artifact.getEntityName(), artifact.getVersion());
+    HttpResponse response = doDelete(getVersionedAPIPath(path, artifact.getNamespace()));
     Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
   }
 
   /**
    * Starts the given program.
    */
-  protected void startProgram(Id.Program program) throws Exception {
+  protected void startProgram(ProgramId program) throws Exception {
     startProgram(program, 200);
-  }
-
-  /**
-   * Tries to start the given program and expect the call completed with the status.
-   */
-  protected void startProgram(Id.Program program, int expectedStatusCode) throws Exception {
-    startProgram(program, ImmutableMap.<String, String>of(), expectedStatusCode);
   }
 
   /**
    * Starts the given program with the given runtime arguments.
    */
-  protected void startProgram(Id.Program program, Map<String, String> args) throws Exception {
+  protected void startProgram(ProgramId program, Map<String, String> args) throws Exception {
     startProgram(program, args, 200);
   }
 
   /**
    * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
    */
-  protected void startProgram(Id.Program program, Map<String, String> args, int expectedStatusCode) throws Exception {
+  protected void startProgram(ProgramId program, Map<String, String> args, int expectedStatusCode) throws Exception {
     String path = String.format("apps/%s/%s/%s/start",
-                                program.getApplicationId(),
+                                program.getApplication(),
                                 program.getType().getCategoryName(),
-                                program.getId());
-    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()), GSON.toJson(args));
+                                program.getEntityName());
+    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespace()), GSON.toJson(args));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
   }
 
@@ -635,12 +630,12 @@ public abstract class AppFabricTestBase {
   /**
    * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
    */
-  protected void debugProgram(Id.Program program, int expectedStatusCode) throws Exception {
+  protected void debugProgram(ProgramId program, int expectedStatusCode) throws Exception {
     String path = String.format("apps/%s/%s/%s/debug",
-                                program.getApplicationId(),
+                                program.getApplication(),
                                 program.getType().getCategoryName(),
-                                program.getId());
-    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()),
+                                program.getEntityName());
+    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespace()),
                                    GSON.toJson(ImmutableMap.<String, String>of()));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
   }
@@ -648,18 +643,18 @@ public abstract class AppFabricTestBase {
   /**
    * Stops the given program.
    */
-  protected void stopProgram(Id.Program program) throws Exception {
+  protected void stopProgram(ProgramId program) throws Exception {
     stopProgram(program, 200);
   }
 
   /**
    * Tries to stop the given program and expect the call completed with the status.
    */
-  protected void stopProgram(Id.Program program, int expectedStatusCode) throws Exception {
+  protected void stopProgram(ProgramId program, int expectedStatusCode) throws Exception {
     stopProgram(program, null, expectedStatusCode);
   }
 
-  protected void stopProgram(Id.Program program, String runId, int expectedStatusCode) throws Exception {
+  protected void stopProgram(ProgramId program, String runId, int expectedStatusCode) throws Exception {
     stopProgram(program, runId, expectedStatusCode, null);
   }
 
@@ -757,20 +752,16 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
-  protected String getProgramStatus(Id.Program program) throws Exception {
-    return getStatus(programStatus(program));
-  }
-
-  protected void programStatus(Id.Program program, int expectedStatus) throws Exception {
+  protected void programStatus(ProgramId program, int expectedStatus) throws Exception {
     Assert.assertEquals(expectedStatus, programStatus(program).getStatusLine().getStatusCode());
   }
 
-  protected HttpResponse programStatus(Id.Program program) throws Exception {
+  protected HttpResponse programStatus(ProgramId program) throws Exception {
     String path = String.format("apps/%s/%s/%s/status",
-                                program.getApplicationId(),
+                                program.getApplication(),
                                 program.getType().getCategoryName(),
-                                program.getId());
-    return doGet(getVersionedAPIPath(path, program.getNamespaceId()));
+                                program.getEntityName());
+    return doGet(getVersionedAPIPath(path, program.getNamespace()));
   }
 
   /**
@@ -832,7 +823,7 @@ public abstract class AppFabricTestBase {
     return GSON.fromJson(json, new TypeToken<List<ScheduleSpecification>>() { }.getType());
   }
 
-  protected void verifyNoRunWithStatus(final Id.Program program, final String status) throws Exception {
+  protected void verifyNoRunWithStatus(final ProgramId program, final String status) throws Exception {
     Tasks.waitFor(0, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
@@ -841,11 +832,11 @@ public abstract class AppFabricTestBase {
     }, 60, TimeUnit.SECONDS);
   }
 
-  protected void verifyProgramRuns(Id.Program program, String status) throws Exception {
+  protected void verifyProgramRuns(ProgramId program, String status) throws Exception {
     verifyProgramRuns(program, status, 0);
   }
 
-  protected void verifyProgramRuns(final Id.Program program, final String status, final int expected)
+  protected void verifyProgramRuns(final ProgramId program, final String status, final int expected)
     throws Exception {
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -855,10 +846,10 @@ public abstract class AppFabricTestBase {
     }, 60, TimeUnit.SECONDS);
   }
 
-  protected List<RunRecord> getProgramRuns(Id.Program program, String status) throws Exception {
-    String path = String.format("apps/%s/%s/%s/runs?status=%s", program.getApplicationId(),
-                                program.getType().getCategoryName(), program.getId(), status);
-    HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
+  protected List<RunRecord> getProgramRuns(ProgramId program, String status) throws Exception {
+    String path = String.format("apps/%s/%s/%s/runs?status=%s", program.getApplication(),
+                                program.getType().getCategoryName(), program.getProgram(), status);
+    HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespace()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
     return GSON.fromJson(json, LIST_RUNRECORD_TYPE);

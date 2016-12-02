@@ -29,6 +29,8 @@ import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -45,8 +47,8 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   private final List<WorkflowNode> elseBranch = Lists.newArrayList();
   private final String predicateClassName;
   private final String conditionNodeName;
-  private final Id.Namespace deployNamespace;
-  private final Id.Artifact artifactId;
+  private final NamespaceId deployNamespace;
+  private final ArtifactId artifactId;
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
 
@@ -54,7 +56,7 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   private boolean addingToIfBranch = true;
 
   public DefaultWorkflowConditionConfigurer(String conditionNodeName, T parentConfigurer, String predicateClassName,
-                                            Id.Namespace deployNamespace, Id.Artifact artifactId,
+                                            NamespaceId deployNamespace, ArtifactId artifactId,
                                             ArtifactRepository artifactRepository,
                                             PluginInstantiator pluginInstantiator) {
     this.conditionNodeName = conditionNodeName;
