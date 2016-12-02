@@ -140,6 +140,6 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
   public co.cask.cdap.api.artifact.ArtifactId toArtifactId() {
     return new co.cask.cdap.api.artifact.ArtifactId(
       artifact, new ArtifactVersion(version),
-      NamespaceId.SYSTEM.equals(namespace) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
+      NamespaceId.SYSTEM.getEntityName().equals(namespace) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
   }
 }

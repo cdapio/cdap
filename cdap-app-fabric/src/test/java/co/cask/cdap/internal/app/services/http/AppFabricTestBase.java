@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services.http;
 
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
@@ -389,7 +390,7 @@ public abstract class AppFabricTestBase {
   protected HttpResponse addArtifactProperties(ArtifactId artifactId,
                                                Map<String, String> properties) throws Exception {
     String nonNamespacePath = String.format("artifacts/%s/versions/%s/properties",
-                                            artifactId.getEntityName(), artifactId.getVersion());
+                                            artifactId.getEntityName(), new ArtifactVersion(artifactId.getVersion()));
     String path = getVersionedAPIPath(nonNamespacePath, artifactId.getNamespace());
     HttpEntityEnclosingRequestBase request = getPut(path);
     request.setEntity(new ByteArrayEntity(properties.toString().getBytes()));
@@ -682,8 +683,8 @@ public abstract class AppFabricTestBase {
       path = String.format("apps/%s/versions/%s/%s/%s/stop", program.getApplication(), program.getVersion(),
                            program.getType().getCategoryName(), program.getProgram());
     } else {
-      // TODO: HTTP endpoint for stopping a program run of an app version not implemented
-      path = null;
+      path = String.format("apps/%s/%s/%s/runs/%s/stop", program.getApplication(),
+                           program.getType().getCategoryName(), program.getProgram(), runId);
     }
     HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespace()));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());

@@ -92,8 +92,7 @@ public class ConfiguratorTest {
   public void testInMemoryConfigurator() throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
-    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(),
-                                           WordCountApp.class.getSimpleName(), "1.0.0");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact(WordCountApp.class.getSimpleName(), "1.0.0");
     CConfiguration cConf = CConfiguration.create();
     ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizer,
                                                              new DummyProgramRunnerFactory(),
@@ -126,8 +125,7 @@ public class ConfiguratorTest {
   public void testAppWithConfig() throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
-    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(),
-                                           ConfigTestApp.class.getSimpleName(), "1.0.0");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact(ConfigTestApp.class.getSimpleName(), "1.0.0");
     CConfiguration cConf = CConfiguration.create();
     ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizer,
                                                              new DummyProgramRunnerFactory(),

@@ -79,7 +79,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testDeployWithExtraConfig() throws Exception {
-    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "extraConfig", "1.0.0-SNAPSHOT");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("extraConfig", "1.0.0-SNAPSHOT");
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ExtraConfigApp");
     HttpResponse response = addAppArtifact(artifactId, AppWithNoServices.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -92,7 +92,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testAppWithConfig() throws Exception {
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp");
-    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "appWithConfig", "1.0.0-SNAPSHOT");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("appWithConfig", "1.0.0-SNAPSHOT");
     HttpResponse response = addAppArtifact(artifactId, ConfigTestApp.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -117,7 +117,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testDeployUsingArtifact() throws Exception {
-    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "configapp", "1.0.0");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("configapp", "1.0.0");
     addAppArtifact(artifactId, ConfigTestApp.class);
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "cfgApp");
@@ -135,7 +135,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testDeployVersionedAndNonVersionedApp() throws Exception {
-    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "configapp", "1.0.0");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("configapp", "1.0.0");
     addAppArtifact(artifactId, ConfigTestApp.class);
 
     ApplicationId appId = new ApplicationId(Id.Namespace.DEFAULT.getId(), "cfgAppWithVersion", "1.0.0");
@@ -244,7 +244,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     final String appName = "AppWithDatasetName";
     NamespaceId ns2 = new NamespaceId(TEST_NAMESPACE2);
 
-    ArtifactId ns2ArtifactId = new ArtifactId(ns2.getNamespace(), "bloatedListAndGet", "1.0.0-SNAPSHOT");
+    ArtifactId ns2ArtifactId = ns2.artifact("bloatedListAndGet", "1.0.0-SNAPSHOT");
 
     //deploy without name to testnamespace1
     HttpResponse response = deploy(BloatedWordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
@@ -366,7 +366,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doDelete(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("'" + program.getApplication() +
+    Assert.assertEquals("'" + program.getParent() +
                           "' could not be deleted. Reason: The following programs are still running: "
                           + program.getEntityName(), readResponse(response));
 
@@ -379,7 +379,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doDelete(getVersionedAPIPath("apps", Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("'" + program.getNamespace() +
+    Assert.assertEquals("'" + program.getNamespaceId() +
                           "' could not be deleted. Reason: The following programs are still running: "
                           + program.getApplication() + ": " + program.getEntityName(), readResponse(response));
 
@@ -397,7 +397,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
     // Deploy an app with version
-    ArtifactId wordCountArtifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "wordcountapp", VERSION1);
+    ArtifactId wordCountArtifactId = NamespaceId.DEFAULT.artifact("wordcountapp", VERSION1);
     addAppArtifact(wordCountArtifactId, WordCountApp.class);
     AppRequest<? extends Config> wordCountRequest = new AppRequest<>(
       new ArtifactSummary(wordCountArtifactId.getEntityName(), wordCountArtifactId.getVersion()));

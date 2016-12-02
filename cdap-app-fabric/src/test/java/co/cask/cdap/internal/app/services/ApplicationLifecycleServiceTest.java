@@ -62,7 +62,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   // if the application could not be created
   @Test(expected = ArtifactNotFoundException.class)
   public void testDeployArtifactAndApplicationCleansUpArtifactOnFailure() throws Exception {
-    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "missing-mr", "1.0.0-SNAPSHOT");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("missing-mr", "1.0.0-SNAPSHOT");
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, MissingMapReduceWorkflowApp.class);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getEntityName(),

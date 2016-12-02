@@ -917,7 +917,7 @@ public class ArtifactStore {
     for (Map.Entry<byte[], byte[]> columnVal : row.getColumns().entrySet()) {
       String version = Bytes.toString(columnVal.getKey());
       ArtifactData data = GSON.fromJson(Bytes.toString(columnVal.getValue()), ArtifactData.class);
-      ArtifactId artifactId = new ArtifactId(artifactKey.namespace.getEntityName(), artifactKey.name, version);
+      ArtifactId artifactId = artifactKey.namespace.artifact(artifactKey.name, version);
       artifactDetails.add(new ArtifactDetail(
         new ArtifactDescriptor(artifactId.toArtifactId(), locationFactory.create(data.locationURI)),
         data.meta));

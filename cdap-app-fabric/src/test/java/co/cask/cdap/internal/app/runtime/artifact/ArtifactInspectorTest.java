@@ -76,7 +76,7 @@ public class ArtifactInspectorTest {
     File appFile =
       createJar(InvalidConfigApp.class, new File(TMP_FOLDER.newFolder(), "InvalidConfigApp-1.0.0.jar"), manifest);
 
-    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "InvalidConfigApp", "1.0.0");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("InvalidConfigApp", "1.0.0");
     Location artifactLocation = Locations.toLocation(appFile);
     try (CloseableClassLoader artifactClassLoader =
            classLoaderFactory.createClassLoader(
@@ -94,7 +94,7 @@ public class ArtifactInspectorTest {
     File appFile =
       createJar(InspectionApp.class, new File(TMP_FOLDER.newFolder(), "InspectionApp-1.0.0.jar"), manifest);
 
-    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "InspectionApp", "1.0.0");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("InspectionApp", "1.0.0");
     Location artifactLocation = Locations.toLocation(appFile);
     try (CloseableClassLoader artifactClassLoader =
            classLoaderFactory.createClassLoader(

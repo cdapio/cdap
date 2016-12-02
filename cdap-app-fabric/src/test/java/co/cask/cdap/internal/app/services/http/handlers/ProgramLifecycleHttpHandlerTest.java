@@ -245,7 +245,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testVersionedProgramStartStopStatus() throws Exception {
-    ArtifactId wordCountArtifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "wordcountapp", VERSION1);
+    ArtifactId wordCountArtifactId = NamespaceId.DEFAULT.artifact("wordcountapp", VERSION1);
     addAppArtifact(wordCountArtifactId, WordCountApp.class);
     AppRequest<? extends Config> wordCountRequest = new AppRequest<>(
       new ArtifactSummary(wordCountArtifactId.getEntityName(), wordCountArtifactId.getVersion()));
@@ -253,8 +253,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ApplicationId wordCountApp1 = NamespaceId.DEFAULT.app("WordCountApp", VERSION1);
     ProgramId wordcountFlow1 = wordCountApp1.program(ProgramType.FLOW, "WordCountFlow");
     
-    Id.Application wordCountAppDefault = wordCountApp1.toId();
-    ProgramId wordcountFlowDefault = wordcountFlow1;
+    ApplicationId wordCountAppDefault = wordCountApp1.getParent().app(wordCountApp1.getApplication());
+    ProgramId wordcountFlowDefault = wordCountAppDefault.flow("WordCountFlow");
 
     ApplicationId wordCountApp2 = NamespaceId.DEFAULT.app("WordCountApp", VERSION2);
     ProgramId wordcountFlow2 = wordCountApp2.program(ProgramType.FLOW, "WordCountFlow");
@@ -294,7 +294,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     ProgramId wordFrequencyService1 = wordCountApp1.program(ProgramType.SERVICE, "WordFrequencyService");
     ProgramId wordFrequencyService2 = wordCountApp2.program(ProgramType.SERVICE, "WordFrequencyService");
-    ProgramId wordFrequencyServiceDefault = wordFrequencyService1;
+    ProgramId wordFrequencyServiceDefault = wordCountAppDefault.program(ProgramType.SERVICE, "WordFrequencyService");
+
     // service is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyService1));
     // start service
@@ -321,8 +322,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     stopProgram(wordFrequencyService2, null, 200, null);
     stopProgram(wordFrequencyServiceDefault, null, 200, null);
 
-    ArtifactId sleepWorkflowArtifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(),
-                                                        "sleepworkflowapp", VERSION1);
+    ArtifactId sleepWorkflowArtifactId = NamespaceId.DEFAULT.artifact("sleepworkflowapp", VERSION1);
     addAppArtifact(sleepWorkflowArtifactId, SleepingWorkflowApp.class);
     AppRequest<? extends Config> sleepWorkflowRequest = new AppRequest<>(
       new ArtifactSummary(sleepWorkflowArtifactId.getEntityName(), sleepWorkflowArtifactId.getVersion()));

@@ -168,8 +168,8 @@ public class ApplicationClientTestRun extends ClientTestBase {
   @Test
   public void testAppUpdate() throws Exception {
     String artifactName = "cfg-programs";
-    ArtifactId artifactIdV1 = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), artifactName, "1.0.0");
-    ArtifactId artifactIdV2 = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), artifactName, "2.0.0");
+    ArtifactId artifactIdV1 = NamespaceId.DEFAULT.artifact(artifactName, "1.0.0");
+    ArtifactId artifactIdV2 = NamespaceId.DEFAULT.artifact(artifactName, "2.0.0");
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ProgramsApp");
 
     artifactClient.add(NamespaceId.DEFAULT, artifactName,

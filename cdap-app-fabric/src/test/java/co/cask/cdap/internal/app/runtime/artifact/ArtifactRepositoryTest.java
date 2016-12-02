@@ -165,8 +165,7 @@ public class ArtifactRepositoryTest {
 
   @Test(expected = InvalidArtifactException.class)
   public void testSelfExtendingArtifact() throws InvalidArtifactException {
-    co.cask.cdap.proto.id.ArtifactId child = new co.cask.cdap.proto.id.ArtifactId(NamespaceId.SYSTEM.getNamespace(),
-                                                                                  "abc", "1.0.0");
+    co.cask.cdap.proto.id.ArtifactId child = NamespaceId.SYSTEM.artifact("abc", "1.0.0");
     ArtifactRepository.validateParentSet(child, ImmutableSet.of(
       new ArtifactRange(NamespaceId.SYSTEM, "abc", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))));
   }
@@ -181,14 +180,14 @@ public class ArtifactRepositoryTest {
   @Test
   public void testAddSystemArtifacts() throws Exception {
     co.cask.cdap.proto.id.ArtifactId systemAppArtifactId =
-      new co.cask.cdap.proto.id.ArtifactId(NamespaceId.SYSTEM.getNamespace(), "PluginTest", "1.0.0");
+      NamespaceId.SYSTEM.artifact("PluginTest", "1.0.0");
     File systemAppJar = createAppJar(PluginTestApp.class, new File(systemArtifactsDir1, "PluginTest-1.0.0.jar"),
                                      createManifest(ManifestFields.EXPORT_PACKAGE,
                                                     PluginTestRunnable.class.getPackage().getName()));
 
     // write plugins jar
     co.cask.cdap.proto.id.ArtifactId pluginArtifactId1 =
-      new co.cask.cdap.proto.id.ArtifactId(NamespaceId.SYSTEM.getNamespace(), "APlugin", "1.0.0");
+      NamespaceId.SYSTEM.artifact("APlugin", "1.0.0");
 
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
     File pluginJar1 = createPluginJar(TestPlugin.class, new File(systemArtifactsDir1, "APlugin-1.0.0.jar"), manifest);
@@ -255,14 +254,14 @@ public class ArtifactRepositoryTest {
       Assert.assertEquals(systemAppArtifactId.getEntityName(),
                           appArtifactDetail.getDescriptor().getArtifactId().getName());
       Assert.assertEquals(systemAppArtifactId.getVersion(),
-                          appArtifactDetail.getDescriptor().getArtifactId().getVersion());
+                          appArtifactDetail.getDescriptor().getArtifactId().getVersion().getVersion());
 
       // check plugin artifact added correctly
       ArtifactDetail pluginArtifactDetail = artifactRepository.getArtifact(pluginArtifactId1);
       Assert.assertEquals(pluginArtifactId1.getEntityName(),
                           pluginArtifactDetail.getDescriptor().getArtifactId().getName());
       Assert.assertEquals(pluginArtifactId1.getVersion(),
-                          pluginArtifactDetail.getDescriptor().getArtifactId().getVersion());
+                          pluginArtifactDetail.getDescriptor().getArtifactId().getVersion().getVersion());
       // check manually added plugins are there
       Assert.assertTrue(pluginArtifactDetail.getMeta().getClasses().getPlugins().containsAll(manuallyAddedPlugins1));
       // check properties are there
@@ -273,7 +272,7 @@ public class ArtifactRepositoryTest {
       Assert.assertEquals(pluginArtifactId2.getEntityName(),
                           pluginArtifactDetail.getDescriptor().getArtifactId().getName());
       Assert.assertEquals(pluginArtifactId2.getVersion(),
-                          pluginArtifactDetail.getDescriptor().getArtifactId().getVersion());
+                          pluginArtifactDetail.getDescriptor().getArtifactId().getVersion().getVersion());
       // check manually added plugins are there
       Assert.assertTrue(pluginArtifactDetail.getMeta().getClasses().getPlugins().containsAll(manuallyAddedPlugins2));
       // check properties are there

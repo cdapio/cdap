@@ -86,13 +86,13 @@ public class ArtifactClientTestRun extends ClientTestBase {
     artifactClient = new ArtifactClient(clientConfig, new RESTClient(clientConfig));
     for (ArtifactSummary artifactSummary : artifactClient.list(NamespaceId.DEFAULT)) {
       artifactClient.delete(
-        new ArtifactId(NamespaceId.DEFAULT.getNamespace(), artifactSummary.getName(), artifactSummary.getVersion()));
+        NamespaceId.DEFAULT.artifact(artifactSummary.getName(), artifactSummary.getVersion()));
     }
   }
 
   @Test
   public void testNotFound() throws Exception {
-    ArtifactId ghostId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "ghost", "1.0.0");
+    ArtifactId ghostId = NamespaceId.DEFAULT.artifact("ghost", "1.0.0");
     try {
       artifactClient.list(new NamespaceId("ghost"));
       Assert.fail();
@@ -182,8 +182,8 @@ public class ArtifactClientTestRun extends ClientTestBase {
   @Test
   public void testArtifacts() throws Exception {
     // add 2 versions of an artifact with an application
-    ArtifactId myapp1Id = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "myapp", "1.0.0");
-    ArtifactId myapp2Id = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "myapp", "2.0.0");
+    ArtifactId myapp1Id = NamespaceId.DEFAULT.artifact("myapp", "1.0.0");
+    ArtifactId myapp2Id = NamespaceId.DEFAULT.artifact("myapp", "2.0.0");
     LocalLocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, "2.0.0");
@@ -208,7 +208,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
     artifactClient.writeProperties(myapp2Id, myapp2Properties);
 
     // add an artifact that contains a plugin, but only extends myapp-2.0.0
-    ArtifactId pluginId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "myapp-plugins", "2.0.0");
+    ArtifactId pluginId = NamespaceId.DEFAULT.artifact("myapp-plugins", "2.0.0");
     manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
     final Location pluginJarLoc = PluginJarHelper.createPluginJar(locationFactory, manifest, Plugin1.class);

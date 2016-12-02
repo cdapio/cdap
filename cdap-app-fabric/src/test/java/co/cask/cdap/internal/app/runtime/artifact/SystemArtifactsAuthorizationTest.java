@@ -154,7 +154,7 @@ public class SystemArtifactsAuthorizationTest {
     co.cask.cdap.api.artifact.ArtifactId artifactId = artifactDetail.getDescriptor().getArtifactId();
     Assert.assertEquals(SYSTEM_ARTIFACT.getArtifact(), artifactId.getName());
     Assert.assertEquals(SYSTEM_ARTIFACT.getVersion(), artifactId.getVersion().getVersion());
-    Assert.assertEquals(SYSTEM_ARTIFACT.getNamespace(), artifactId.getScope().name().toLowerCase());
+    Assert.assertEquals(SYSTEM_ARTIFACT.getParent().getEntityName(), artifactId.getScope().name().toLowerCase());
 
     namespaceAdmin.delete(namespaceId);
     authorizer.enforce(SYSTEM_ARTIFACT, ALICE, EnumSet.allOf(Action.class));

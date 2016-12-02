@@ -88,7 +88,7 @@ public class DistributedProgramRunnerTxTimeoutTest {
     Application app = new AppWithAllProgramTypes();
     DefaultAppConfigurer configurer = new DefaultAppConfigurer(
       NamespaceId.DEFAULT,
-      new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "artifact", "0.1"), app);
+      NamespaceId.DEFAULT.artifact("artifact", "0.1"), app);
     app.configure(configurer, new ApplicationContext() {
       @Override
       public Config getConfig() {
