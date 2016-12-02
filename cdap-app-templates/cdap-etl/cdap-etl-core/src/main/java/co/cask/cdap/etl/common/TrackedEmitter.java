@@ -21,6 +21,8 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.StageMetrics;
 
+import javax.annotation.Nullable;
+
 /**
  * Wrapper around another emitter that tracks how many records were emitted.
  *
@@ -31,20 +33,23 @@ public class TrackedEmitter<T> implements Emitter<T> {
   private final Emitter<T> delegate;
   private final StageMetrics stageMetrics;
   private final String emitMetricName;
+  private final String previewOutName;
   private final DataTracer dataTracer;
 
-  public TrackedEmitter(Emitter<T> delegate, StageMetrics stageMetrics, String emitMetricName, DataTracer dataTracer) {
+  public TrackedEmitter(Emitter<T> delegate, StageMetrics stageMetrics, String emitMetricName, DataTracer dataTracer,
+                        @Nullable String previewOutName) {
     this.delegate = delegate;
     this.stageMetrics = stageMetrics;
     this.emitMetricName = emitMetricName;
     this.dataTracer = dataTracer;
+    this.previewOutName = previewOutName;
   }
 
   @Override
   public void emit(T value) {
     delegate.emit(value);
     stageMetrics.count(emitMetricName, 1);
-    if (dataTracer.isEnabled()) {
+    if (dataTracer.isEnabled() && previewOutName != null) {
       dataTracer.info(emitMetricName, value);
     }
   }
@@ -53,7 +58,7 @@ public class TrackedEmitter<T> implements Emitter<T> {
   public void emitError(InvalidEntry<T> value) {
     delegate.emitError(value);
     stageMetrics.count(RECORDS_ERROR, 1);
-    if (dataTracer.isEnabled()) {
+    if (dataTracer.isEnabled() && previewOutName != null) {
       dataTracer.info(RECORDS_ERROR, value);
     }
   }

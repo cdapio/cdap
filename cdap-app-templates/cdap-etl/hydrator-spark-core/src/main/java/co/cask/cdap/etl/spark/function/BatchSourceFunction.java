@@ -42,7 +42,7 @@ public class BatchSourceFunction implements FlatMapFunction<Tuple2<Object, Objec
       BatchSource<Object, Object, Object> batchSource = pluginFunctionContext.createPlugin();
       batchSource.initialize(pluginFunctionContext.createBatchRuntimeContext());
       transform = new TrackedTransform<>(batchSource, pluginFunctionContext.createStageMetrics(),
-                                         pluginFunctionContext.getDataTracer());
+                                         pluginFunctionContext.getDataTracer(), null, TrackedTransform.RECORDS_OUT);
       emitter = new DefaultEmitter<>();
     }
     emitter.reset();

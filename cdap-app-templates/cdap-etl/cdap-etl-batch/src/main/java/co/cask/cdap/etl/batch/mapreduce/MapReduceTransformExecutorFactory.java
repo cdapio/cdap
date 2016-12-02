@@ -29,6 +29,8 @@ import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.api.batch.BatchSink;
+import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.KVTransformations;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
@@ -149,7 +151,9 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     }
     return new TrackedTransform(KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
                                                                       getInitializedTransformation(stageName)),
-                                       stageMetrics, taskContext.getDataTracer(stageName));
+                                stageMetrics, taskContext.getDataTracer(stageName),
+                                BatchSource.PLUGIN_TYPE.equals(pluginType) ? null : TrackedTransform.RECORDS_IN,
+                                BatchSink.PLUGIN_TYPE.equals(pluginType) ? null : TrackedTransform.RECORDS_OUT);
   }
 
   /**

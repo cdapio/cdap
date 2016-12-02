@@ -39,21 +39,28 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destr
   private final String metricInName;
   private final String metricOutName;
   private final String previewInName;
+  private final String previewOutName;
   private final DataTracer dataTracer;
 
   public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics, DataTracer dataTracer) {
-    this(transform, metrics, RECORDS_IN, RECORDS_OUT, dataTracer, RECORDS_IN);
+    this(transform, metrics, RECORDS_IN, RECORDS_OUT, dataTracer, RECORDS_IN, RECORDS_OUT);
+  }
+
+  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics, DataTracer dataTracer,
+                          @Nullable String previewInName, @Nullable String previewOutName) {
+    this(transform, metrics, RECORDS_IN, RECORDS_OUT, dataTracer, previewInName, previewOutName);
   }
 
   public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics,
                           @Nullable String metricInName, @Nullable String metricOutName, DataTracer dataTracer,
-                          String previewInName) {
+                          @Nullable String previewInName, @Nullable String previewOutName) {
     this.transform = transform;
     this.metrics = metrics;
     this.metricInName = metricInName;
     this.metricOutName = metricOutName;
     this.dataTracer = dataTracer;
     this.previewInName = previewInName;
+    this.previewOutName = previewOutName;
   }
 
   @Override
@@ -65,7 +72,7 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destr
       dataTracer.info(previewInName, input);
     }
     transform.transform(input, metricOutName == null ? emitter :
-      new TrackedEmitter<>(emitter, metrics, metricOutName, dataTracer));
+      new TrackedEmitter<>(emitter, metrics, metricOutName, dataTracer, previewOutName));
   }
 
   @Override

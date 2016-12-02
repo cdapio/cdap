@@ -52,10 +52,10 @@ public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
       BatchJoinerRuntimeContext context = pluginFunctionContext.createJoinerRuntimeContext();
       joiner.initialize(context);
       joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner, inputStageName),
-                                               pluginFunctionContext.createStageMetrics(),
-                                               TrackedTransform.RECORDS_IN,
-                                               null, pluginFunctionContext.getDataTracer(),
-                                               TrackedTransform.RECORDS_IN);
+                                            pluginFunctionContext.createStageMetrics(),
+                                            TrackedTransform.RECORDS_IN,
+                                            null, pluginFunctionContext.getDataTracer(),
+                                            TrackedTransform.RECORDS_IN, null);
       emitter = new DefaultEmitter<>();
     }
     emitter.reset();
