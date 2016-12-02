@@ -16,18 +16,6 @@ define(['core/models/program'], function (Program) {
         'system/apps/{{appId}}/spark/{{programId}}/runs/{{runId}}/{{programId}}.DAGScheduler.stage.waitingStages?aggregate=true': 'schedulerWaitingStages'
     };
 
-    var METRIC_TYPES = {
-        'blockRemainingMemory': 'number',
-        'blockMaxMemory': 'number',
-        'blockUsedMemory': 'number',
-        'blockDiskSpaceUsed': 'number',
-        'schedulerActiveJobs': 'number',
-        'schedulerAllJobs': 'number',
-        'schedulerFailedStages': 'number',
-        'schedulerRunningStages': 'number',
-        'schedulerWaitingStages': 'number'
-    };
-
     var EXPECTED_FIELDS = [
         'name',
         'description'
@@ -36,11 +24,11 @@ define(['core/models/program'], function (Program) {
     var Model = Program.extend({
         type: 'Spark',
         plural: 'Spark',
+        currentState: '',
+
         href: function () {
             return '#/spark/' + this.get('id');
         }.property('id'),
-
-        currentState: '',
 
         init: function () {
             this._super();
@@ -50,7 +38,7 @@ define(['core/models/program'], function (Program) {
                 this.set('startTime', this.get('meta').startTime);
             }
 
-            this.set("metricsData", Em.Object.create({
+            this.set('metricsData', Em.Object.create({
                 blockRemainingMemory: 0,
                 blockMaxMemory: 0,
                 blockUsedMemory: 0,
@@ -61,6 +49,9 @@ define(['core/models/program'], function (Program) {
                 schedulerRunningStages: 0,
                 schedulerWaitingStages: 0
             }));
+
+            //flag for metrics stacked progress
+            this.set('metricsUpdated', false);
         },
 
         start: function (http) {
@@ -106,39 +97,29 @@ define(['core/models/program'], function (Program) {
         }.property('startTime'),
 
         context: function () {
-
             return this.interpolate('apps/{parent}/spark/{id}');
-
         }.property('app', 'name'),
 
         interpolate: function (path) {
-
             return path.replace(/\{parent\}/, this.get('app'))
                 .replace(/\{id\}/, this.get('name'));
-
         },
 
         startStopDisabled: function () {
-
-            if (this.currentState === 'STARTING' ||
-                this.currentState === 'STOPPING') {
+            if (this.currentState === 'STARTING' || this.currentState === 'STOPPING') {
                 return true;
             }
-
             return false;
-
         }.property('currentState'),
 
         getMetricsRequest: function (http) {
             var self = this;
             var appId = this.get('app');
             var programId = this.get('id');
-            var paths = [];
-            var pathMap = {};
             http.rest('apps', appId, 'spark', programId, 'runs?limit=1', function (runIdResponse, status) {
 
                 if ((status != 200) || (!runIdResponse.length > 0)) {
-                  return;
+                    return;
                 }
                 var runId = runIdResponse[0]["runid"];
                 var paths = [];
@@ -167,15 +148,14 @@ define(['core/models/program'], function (Program) {
                                     });
                                     self.setMetricData(metric, respData);
                                 }
-                                else if (METRIC_TYPES[metric] === 'number') {
-                                    self.setMetricData(metric, C.Util.numberArrayToString(respData));
-                                } else {
+                                else {
                                     self.setMetricData(metric, respData);
                                 }
                             }
                         }
                         metric = null;
                     }
+                    self.set('metricsUpdated', !self.get('metricsUpdated'));
                 });
             });
         },
