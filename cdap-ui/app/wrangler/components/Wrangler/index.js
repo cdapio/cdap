@@ -21,6 +21,8 @@ import WrangleData from 'wrangler/components/Wrangler/WrangleData';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 
+import FileDnD from 'components/FileDnD';
+
 require('./Wrangler.less');
 
 /**
@@ -40,7 +42,8 @@ export default class Wrangler extends Component {
       skipEmptyLines: false,
       delimiter: '',
       wranglerInput: '',
-      originalData: []
+      originalData: [],
+      file: ''
     };
 
     this.handleSetHeaders = this.handleSetHeaders.bind(this);
@@ -51,6 +54,7 @@ export default class Wrangler extends Component {
     this.handleTextInput = this.handleTextInput.bind(this);
     this.onPlusButtonClick = this.onPlusButtonClick.bind(this);
     this.onWrangleClick = this.onWrangleClick.bind(this);
+    this.onWrangleFile = this.onWrangleFile.bind(this);
   }
 
   // componentDidMount() {
@@ -62,8 +66,16 @@ export default class Wrangler extends Component {
     this.wrangle();
   }
 
-  wrangle() {
+  onWrangleFile() {
+    this.wrangle(true);
+  }
+
+  wrangle(isFile) {
     let input = this.state.wranglerInput;
+
+    if (isFile) {
+      input = this.state.file;
+    }
 
     // Keeping these for dev purposes
 
@@ -275,6 +287,30 @@ export default class Wrangler extends Component {
             Wrangle
           </button>
         </div>
+
+        <div className="file-input">
+          <hr/>
+
+          <h4>Upload File</h4>
+          <div>
+            <FileDnD
+              file={this.state.file}
+              onDropHandler={(e) => this.setState({file: e[0]})}
+            />
+          </div>
+
+          <br/>
+
+          <div className="text-center">
+            <button
+              className="btn btn-primary"
+              onClick={this.onWrangleFile}
+            >
+              Wrangle File
+            </button>
+          </div>
+        </div>
+
       </div>
     );
   }
