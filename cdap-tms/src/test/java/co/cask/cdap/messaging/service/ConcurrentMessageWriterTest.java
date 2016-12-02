@@ -20,8 +20,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.utils.TimeProvider;
 import co.cask.cdap.messaging.StoreRequest;
-import co.cask.cdap.messaging.data.Message;
 import co.cask.cdap.messaging.data.MessageId;
+import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Stopwatch;
@@ -63,13 +63,13 @@ public class ConcurrentMessageWriterTest {
     writer.persist(new TestStoreRequest(topicId1, Arrays.asList("1", "2", "3")));
 
     // There should be 3 messages being written
-    List<Message> messages = testWriter.getMessages().get(topicId1);
+    List<RawMessage> messages = testWriter.getMessages().get(topicId1);
     Assert.assertEquals(3, messages.size());
 
     // All messages should be written with timestamp 0
     List<String> payloads = new ArrayList<>();
-    for (Message message : messages) {
-      Assert.assertEquals(0L, message.getId().getPublishTimestamp());
+    for (RawMessage message : messages) {
+      Assert.assertEquals(0L, new MessageId(message.getId()).getPublishTimestamp());
       payloads.add(Bytes.toString(message.getPayload()));
     }
     Assert.assertEquals(Arrays.asList("1", "2", "3"), payloads);
@@ -83,8 +83,8 @@ public class ConcurrentMessageWriterTest {
 
     // All messages should be written with timestamp 1
     payloads.clear();
-    for (Message message : messages) {
-      Assert.assertEquals(1L, message.getId().getPublishTimestamp());
+    for (RawMessage message : messages) {
+      Assert.assertEquals(1L, new MessageId(message.getId()).getPublishTimestamp());
       payloads.add(Bytes.toString(message.getPayload()));
     }
     Assert.assertEquals(Arrays.asList("a", "b", "c"), payloads);
@@ -108,17 +108,17 @@ public class ConcurrentMessageWriterTest {
     ConcurrentMessageWriter writer = new ConcurrentMessageWriter(testWriter);
     writer.persist(new TestStoreRequest(topicId, payloads));
 
-    List<Message> messages = testWriter.getMessages().get(topicId);
+    List<RawMessage> messages = testWriter.getMessages().get(topicId);
     Assert.assertEquals(msgCount, messages.size());
 
     // The first SEQUENCE_ID_LIMIT messages should be with the same timestamp, with seqId from 0 to SEQUENCE_ID_LIMIT
     for (int i = 0; i < StoreRequestWriter.SEQUENCE_ID_LIMIT; i++) {
-      MessageId id = messages.get(i).getId();
+      MessageId id = new MessageId(messages.get(i).getId());
       Assert.assertEquals(0L, id.getPublishTimestamp());
       Assert.assertEquals((short) i, id.getSequenceId());
     }
     // The (SEQUENCE_ID_LIMIT + 1)th message should have a different timestamp and seqId = 0
-    MessageId id = messages.get(msgCount - 1).getId();
+    MessageId id = new MessageId(messages.get(msgCount - 1).getId());
     Assert.assertEquals(1L, id.getPublishTimestamp());
     Assert.assertEquals(0, id.getPayloadSequenceId());
   }
@@ -179,7 +179,7 @@ public class ConcurrentMessageWriterTest {
     Assert.assertTrue(executor.awaitTermination(1, TimeUnit.MINUTES));
 
     // Validates all messages are being written
-    List<Message> messages = testWriter.getMessages().get(topicId);
+    List<RawMessage> messages = testWriter.getMessages().get(topicId);
     Assert.assertEquals(requestCount * msgCount, messages.size());
 
     // We expect the payload is in repeated sequence of [0..msgCount-1]
@@ -188,8 +188,8 @@ public class ConcurrentMessageWriterTest {
     // The timestamp should be (i / SEQUENCE_ID_LIMIT)
     // The sequenceId should be (i % SEQUENCE_ID_LIMIT)
     for (int i = 0; i < messages.size(); i++) {
-      Message message = messages.get(i);
-      MessageId messageId = message.getId();
+      RawMessage message = messages.get(i);
+      MessageId messageId = new MessageId(message.getId());
       Assert.assertEquals(i / StoreRequestWriter.SEQUENCE_ID_LIMIT, messageId.getPublishTimestamp());
       Assert.assertEquals((short) (i % StoreRequestWriter.SEQUENCE_ID_LIMIT), messageId.getSequenceId());
 
@@ -246,25 +246,25 @@ public class ConcurrentMessageWriterTest {
     LOG.info("Total time passed: {} ms", stopwatch.elapsedMillis());
 
     // Validate that the total number of messages written is correct
-    List<Message> messages = testWriter.getMessages().get(topicId);
+    List<RawMessage> messages = testWriter.getMessages().get(topicId);
     Assert.assertEquals(payloadsPerRequest * threadCount * requestPerThread, messages.size());
 
     // The message id must be sorted
-    Message lastMessage = null;
-    for (Message message : messages) {
+    RawMessage lastMessage = null;
+    for (RawMessage message : messages) {
       if (lastMessage != null) {
-        Assert.assertTrue(Bytes.compareTo(lastMessage.getId().getRawId(), message.getId().getRawId()) < 0);
+        Assert.assertTrue(Bytes.compareTo(lastMessage.getId(), message.getId()) < 0);
       }
       lastMessage = message;
     }
   }
 
   /**
-   * A {@link StoreRequestWriter} that turns all payloads to {@link Message} and stores it in a List.
+   * A {@link StoreRequestWriter} that turns all payloads to {@link RawMessage} and stores it in a List.
    */
   private static final class TestStoreRequestWriter extends StoreRequestWriter<TestEntry> {
 
-    private final ListMultimap<TopicId, Message> messages = ArrayListMultimap.create();
+    private final ListMultimap<TopicId, RawMessage> messages = ArrayListMultimap.create();
     private long writeDelayMillis;
 
     TestStoreRequestWriter(TimeProvider timeProvider) {
@@ -292,8 +292,8 @@ public class ConcurrentMessageWriterTest {
         byte[] rawId = new byte[MessageId.RAW_ID_SIZE];
         MessageId.putRawId(entry.getWriteTimestamp(), entry.getSequenceId(), 0L, (short) 0, rawId, 0);
         byte[] payload = entry.getPayload();
-        messages.put(entry.getTopicId(), new Message(new MessageId(rawId),
-                                                     payload == null ? null : Arrays.copyOf(payload, payload.length)));
+        messages.put(entry.getTopicId(),
+                     new RawMessage(rawId, payload == null ? null : Arrays.copyOf(payload, payload.length)));
       }
 
       if (writeDelayMillis > 0) {
@@ -301,7 +301,7 @@ public class ConcurrentMessageWriterTest {
       }
     }
 
-    ListMultimap<TopicId, Message> getMessages() {
+    ListMultimap<TopicId, RawMessage> getMessages() {
       return messages;
     }
 

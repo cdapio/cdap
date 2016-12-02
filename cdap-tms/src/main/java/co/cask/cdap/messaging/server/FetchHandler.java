@@ -26,8 +26,7 @@ import co.cask.cdap.messaging.MessageFetcher;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.Schemas;
 import co.cask.cdap.messaging.TopicNotFoundException;
-import co.cask.cdap.messaging.data.Message;
-import co.cask.cdap.messaging.data.MessageId;
+import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.http.AbstractHttpHandler;
@@ -103,7 +102,7 @@ public final class FetchHandler extends AbstractHttpHandler {
     DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(Schemas.V1.ConsumeRequest.SCHEMA);
 
     // Fetch the messages
-    CloseableIterator<Message> iterator = fetchMessages(datumReader.read(null, decoder), topicId);
+    CloseableIterator<RawMessage> iterator = fetchMessages(datumReader.read(null, decoder), topicId);
     try {
       responder.sendContent(HttpResponseStatus.OK, new MessagesBodyProducer(iterator, messageChunkSize),
                             ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "avro/binary"));
@@ -114,18 +113,17 @@ public final class FetchHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Creates a {@link CloseableIterator} of {@link Message} based on the given fetch request.
+   * Creates a {@link CloseableIterator} of {@link RawMessage} based on the given fetch request.
    */
-  private CloseableIterator<Message> fetchMessages(GenericRecord fetchRequest,
-                                                   TopicId topicId) throws IOException, TopicNotFoundException {
+  private CloseableIterator<RawMessage> fetchMessages(GenericRecord fetchRequest,
+                                                      TopicId topicId) throws IOException, TopicNotFoundException {
     MessageFetcher fetcher = messagingService.prepareFetch(topicId);
 
     Object startFrom = fetchRequest.get("startFrom");
     if (startFrom != null) {
       if (startFrom instanceof ByteBuffer) {
         // start message id is specified
-        fetcher.setStartMessage(new MessageId(Bytes.toBytes((ByteBuffer) startFrom)),
-                                (Boolean) fetchRequest.get("inclusive"));
+        fetcher.setStartMessage(Bytes.toBytes((ByteBuffer) startFrom), (Boolean) fetchRequest.get("inclusive"));
       } else if (startFrom instanceof Long) {
         // start by timestamp is specified
         fetcher.setStartTime((Long) startFrom);
@@ -155,8 +153,8 @@ public final class FetchHandler extends AbstractHttpHandler {
    */
   private static class MessagesBodyProducer extends BodyProducer {
 
-    private final CloseableIterator<Message> iterator;
-    private final List<Message> messages;
+    private final CloseableIterator<RawMessage> iterator;
+    private final List<RawMessage> messages;
     private final int messageChunkSize;
     private final ChannelBuffer chunk;
     private final Encoder encoder;
@@ -165,7 +163,7 @@ public final class FetchHandler extends AbstractHttpHandler {
     private boolean arrayStarted;
     private boolean arrayEnded;
 
-    MessagesBodyProducer(CloseableIterator<Message> iterator, int messageChunkSize) {
+    MessagesBodyProducer(CloseableIterator<RawMessage> iterator, int messageChunkSize) {
       this.iterator = iterator;
       this.messages = new ArrayList<>();
       this.messageChunkSize = messageChunkSize;
@@ -204,23 +202,23 @@ public final class FetchHandler extends AbstractHttpHandler {
       int size = 0;
       messages.clear();
       while (iterator.hasNext() && size < messageChunkSize) {
-        Message message = iterator.next();
+        RawMessage message = iterator.next();
         messages.add(message);
 
         // Avro encodes bytes as (len + bytes), hence adding 8 to cater for the length of the id and payload
         // Straightly speaking it can be up to 9 bytes each (hence 18 bytes),
         // but we don't expect id and payload of such size
-        size += message.getId().getRawId().length + message.getPayload().length + 8;
+        size += message.getId().length + message.getPayload().length + 8;
       }
 
       encoder.setItemCount(messages.size());
-      for (Message message : messages) {
+      for (RawMessage message : messages) {
         encoder.startItem();
 
         // Write individual message (array element) with DatumWrite.
         // This provides greater flexibility on schema evolution.
         // The response will likely always be an array, but the element schema can evolve.
-        messageRecord.put("id", message.getId().getRawId());
+        messageRecord.put("id", message.getId());
         messageRecord.put("payload", message.getPayload());
         messageWriter.write(messageRecord, encoder);
       }

@@ -32,8 +32,7 @@ import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.TopicNotFoundException;
-import co.cask.cdap.messaging.data.Message;
-import co.cask.cdap.messaging.data.MessageId;
+import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.common.http.HttpRequest;
@@ -413,11 +412,11 @@ public final class ClientMessagingService implements MessagingService {
     }
 
     @Override
-    public CloseableIterator<Message> fetch() throws IOException, TopicNotFoundException {
+    public CloseableIterator<RawMessage> fetch() throws IOException, TopicNotFoundException {
       GenericRecord record = new GenericData.Record(Schemas.V1.ConsumeRequest.SCHEMA);
 
       if (getStartOffset() != null) {
-        record.put("startFrom", ByteBuffer.wrap(getStartOffset().getRawId()));
+        record.put("startFrom", ByteBuffer.wrap(getStartOffset()));
       }
       if (getStartTime() != null) {
         record.put("startFrom", getStartTime());
@@ -468,12 +467,12 @@ public final class ClientMessagingService implements MessagingService {
       // Decode the avro array manually instead of using DatumReader in order to support streaming decode.
       final Decoder decoder = DecoderFactory.get().binaryDecoder(urlConn.getInputStream(), null);
       final long initialItemCount = decoder.readArrayStart();
-      return new AbstractCloseableIterator<Message>() {
+      return new AbstractCloseableIterator<RawMessage>() {
 
         private long itemCount = initialItemCount;
 
         @Override
-        protected Message computeNext() {
+        protected RawMessage computeNext() {
           if (initialItemCount == 0) {
             return endOfData();
           }
@@ -494,8 +493,8 @@ public final class ClientMessagingService implements MessagingService {
             // The response will likely always be an array, but the element schema can evolve.
             messageRecord = messageReader.read(messageRecord, decoder);
 
-            return new Message(new MessageId(Bytes.toBytes((ByteBuffer) messageRecord.get("id"))),
-                               Bytes.toBytes((ByteBuffer) messageRecord.get("payload")));
+            return new RawMessage(Bytes.toBytes((ByteBuffer) messageRecord.get("id")),
+                                  Bytes.toBytes((ByteBuffer) messageRecord.get("payload")));
           } catch (IOException e) {
             throw Throwables.propagate(e);
           }

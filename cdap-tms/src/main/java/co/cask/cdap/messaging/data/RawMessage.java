@@ -17,21 +17,21 @@
 package co.cask.cdap.messaging.data;
 
 /**
- * Represents a unique message in the messaging system. It contains the {@link MessageId} and the payload
+ * Represents a unique message in the messaging system. It contains the message id and the payload
  */
-public class Message {
-  private final MessageId id;
+public class RawMessage {
+  private final byte[] id;
   private final byte[] payload;
 
-  public Message(MessageId id, byte[] payload) {
+  public RawMessage(byte[] id, byte[] payload) {
     this.id = id;
     this.payload = payload;
   }
 
   /**
-   * Returns the unique {@link MessageId} of this message.
+   * Returns the unique id of this message.
    */
-  public MessageId getId() {
+  public byte[] getId() {
     return id;
   }
 
