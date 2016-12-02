@@ -62,6 +62,7 @@ commons:
   descriptionLabel: Description
   formatLabel: Format
   schemaLabel: Schema
+  wrangler: Cask Wrangler
 features:
   ConfirmationModal:
     confirmDefaultText: OK

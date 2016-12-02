@@ -45,6 +45,12 @@ export default class ProductsDrawer extends Component {
         label: T.translate('commons.tracker'),
         name: 'tracker',
         icon: 'icon-tracker'
+      },
+      {
+        link: '/wrangler/',
+        label: T.translate('commons.wrangler'),
+        name: 'wrangler',
+        icon: 'icon-DataWrangler'
       }
     ];
     let currentChoice = head(products.filter(product => product.name === props.currentChoice));

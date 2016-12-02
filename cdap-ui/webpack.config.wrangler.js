@@ -28,8 +28,8 @@ var plugins = [
   new webpack.optimize.DedupePlugin(),
   new CopyWebpackPlugin([
     {
-      from: './cdap.html',
-      to: './cdap.html'
+      from: './wrangler.html',
+      to: './wrangler.html'
     },
     {
       from: './styles/fonts',
@@ -38,6 +38,10 @@ var plugins = [
     {
       from: path.resolve(__dirname, 'node_modules', 'font-awesome', 'fonts'),
       to: './fonts/'
+    },
+    {
+      from: path.resolve(__dirname, 'app', 'lib', 'c3.js'),
+      to: './'
     },
     {
       from: './styles/img',
@@ -79,10 +83,7 @@ var loaders = [
   {
     test: /\.js$/,
     loader: 'babel',
-    exclude: [
-      /node_modules/,
-      /lib/
-    ],
+    exclude: /node_modules/,
     query: {
       plugins: ['lodash'],
       presets: ['react', 'es2015']
@@ -91,34 +92,26 @@ var loaders = [
 ];
 
 module.exports = {
-  context: __dirname + '/app/cdap',
+  context: __dirname + '/app/wrangler',
   entry: {
-    'cdap': ['./cdap.js'],
+    'wrangler': ['./wrangler.js'],
     'common': [
-      'whatwg-fetch',
       'react',
       'react-dom',
       'redux',
       'lodash',
       'classnames',
-      'node-uuid',
-      'sockjs-client',
       'rx',
       'reactstrap',
       'react-addons-css-transition-group',
       'i18n-react',
-      'fuse.js',
       'react-dropzone',
       'react-redux',
-      'react-router',
-      'moment',
       'react-file-download',
-      'mousetrap',
       'papaparse',
       'rx-dom',
       'd3',
-      'chart.js',
-      'cdap-avsc'
+      'chart.js'
     ]
   },
   module: {
@@ -132,7 +125,7 @@ module.exports = {
           /dist/,
           /cdap_dist/,
           /common_dist/,
-          /lib/,
+          /login_dist/,
           /wrangler_dist/
         ]
       }
@@ -144,7 +137,7 @@ module.exports = {
   ],
   output: {
     filename: './[name].js',
-    path: __dirname + '/cdap_dist/cdap_assets'
+    path: __dirname + '/wrangler_dist/wrangler_assets'
   },
   plugins: plugins,
   resolve: {
@@ -152,7 +145,7 @@ module.exports = {
       components: __dirname + '/app/cdap/components',
       services: __dirname + '/app/cdap/services',
       api: __dirname + '/app/cdap/api',
-      lib: __dirname + '/app/lib'
+      wrangler: __dirname + '/app/wrangler'
     }
   }
 };
