@@ -17,6 +17,7 @@
 package co.cask.cdap.datastreams;
 
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.streaming.StreamingContext;
@@ -33,9 +34,12 @@ import co.cask.cdap.etl.spark.streaming.PairDStreamCollection;
 import co.cask.cdap.etl.spark.streaming.function.CountingTranformFunction;
 import co.cask.cdap.etl.spark.streaming.function.DynamicJoinMerge;
 import co.cask.cdap.etl.spark.streaming.function.DynamicJoinOn;
+import co.cask.cdap.etl.spark.streaming.function.preview.LimitingFunction;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -43,16 +47,19 @@ import java.util.List;
  * Driver for running pipelines using Spark Streaming.
  */
 public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
+  private static final Logger LOG = LoggerFactory.getLogger(SparkStreamingPipelineRunner.class);
 
   private final JavaSparkExecutionContext sec;
   private final JavaStreamingContext streamingContext;
   private final boolean checkpointsDisabled;
+  private final int numOfRecordsPreview;
 
   public SparkStreamingPipelineRunner(JavaSparkExecutionContext sec, JavaStreamingContext streamingContext,
-                                      boolean checkpointsDisabled) {
+                                      boolean checkpointsDisabled, int numOfRecordsPreview) {
     this.sec = sec;
     this.streamingContext = streamingContext;
     this.checkpointsDisabled = checkpointsDisabled;
+    this.numOfRecordsPreview = numOfRecordsPreview;
   }
 
   @Override
@@ -76,10 +83,15 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       source = sec.getPluginContext().newPluginInstance(stageInfo.getName(), macroEvaluator);
     }
 
+    DataTracer dataTracer = sec.getDataTracer(stageInfo.getName());
     StreamingContext sourceContext = new DefaultStreamingContext(stageInfo.getName(), sec, streamingContext);
-    JavaDStream<Object> javaDStream = source.getStream(sourceContext)
-      .transform(new CountingTranformFunction<>(stageInfo.getName(), sec.getMetrics(), "records.out",
-                                                sec.getDataTracer(stageInfo.getName())));
+    JavaDStream<Object> javaDStream = source.getStream(sourceContext);
+    if (dataTracer.isEnabled()) {
+      LOG.info("Yaojie - numberRecords: {}", numOfRecordsPreview);
+      javaDStream = javaDStream.filter(new LimitingFunction<>(numOfRecordsPreview == 0 ? 100 : numOfRecordsPreview));
+    }
+    javaDStream = javaDStream.transform(new CountingTranformFunction<>(stageInfo.getName(), sec.getMetrics(),
+                                                                       "records.out", dataTracer));
     return new DStreamCollection<>(sec, javaDStream);
   }
 

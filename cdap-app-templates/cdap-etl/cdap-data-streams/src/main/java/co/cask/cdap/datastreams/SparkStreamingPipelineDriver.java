@@ -123,7 +123,8 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       public JavaStreamingContext create() {
         JavaStreamingContext jssc = new JavaStreamingContext(
           new JavaSparkContext(), Durations.milliseconds(pipelineSpec.getBatchIntervalMillis()));
-        SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, false);
+        SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, false,
+                                                                               pipelineSpec.getNumOfRecordsPreview());
         // TODO: figure out how to get partitions to use for aggregators and joiners.
         // Seems like they should be set at configure time instead of runtime? but that requires an API change.
         try {
