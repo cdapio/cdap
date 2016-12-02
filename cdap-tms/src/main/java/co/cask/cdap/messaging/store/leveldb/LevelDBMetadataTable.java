@@ -57,7 +57,7 @@ final class LevelDBMetadataTable implements MetadataTable {
   @Override
   public TopicMetadata getMetadata(TopicId topicId) throws IOException, TopicNotFoundException {
     try {
-      byte[] value = levelDB.get(MessagingUtils.toRowKeyPrefix(topicId));
+      byte[] value = levelDB.get(MessagingUtils.toMetadataRowKey(topicId));
       if (value == null) {
         throw new TopicNotFoundException(topicId);
       }
@@ -76,7 +76,7 @@ final class LevelDBMetadataTable implements MetadataTable {
   @Override
   public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
     try {
-      byte[] key = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
+      byte[] key = MessagingUtils.toMetadataRowKey(topicMetadata.getTopicId());
       byte[] value = Bytes.toBytes(GSON.toJson(topicMetadata));
       synchronized (this) {
         byte[] tableValue = levelDB.get(key);
@@ -101,7 +101,7 @@ final class LevelDBMetadataTable implements MetadataTable {
   @Override
   public void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException {
     try {
-      byte[] key = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
+      byte[] key = MessagingUtils.toMetadataRowKey(topicMetadata.getTopicId());
       synchronized (this) {
         byte[] tableValue = levelDB.get(key);
         if (tableValue == null) {
@@ -123,7 +123,7 @@ final class LevelDBMetadataTable implements MetadataTable {
 
   @Override
   public void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException {
-    byte[] rowKey = MessagingUtils.toRowKeyPrefix(topicId);
+    byte[] rowKey = MessagingUtils.toMetadataRowKey(topicId);
     try {
       synchronized (this) {
         byte[] tableValue = levelDB.get(rowKey);

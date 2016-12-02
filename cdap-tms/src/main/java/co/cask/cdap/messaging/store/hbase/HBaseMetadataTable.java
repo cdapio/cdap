@@ -64,7 +64,7 @@ final class HBaseMetadataTable implements MetadataTable {
 
   @Override
   public TopicMetadata getMetadata(TopicId topicId) throws IOException, TopicNotFoundException {
-    Get get = tableUtil.buildGet(MessagingUtils.toRowKeyPrefix(topicId))
+    Get get = tableUtil.buildGet(MessagingUtils.toMetadataRowKey(topicId))
       .addFamily(columnFamily)
       .build();
 
@@ -84,7 +84,7 @@ final class HBaseMetadataTable implements MetadataTable {
 
   @Override
   public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
-    byte[] rowKey = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
+    byte[] rowKey = MessagingUtils.toMetadataRowKey(topicMetadata.getTopicId());
     PutBuilder putBuilder = tableUtil.buildPut(rowKey);
 
     Get get = tableUtil.buildGet(rowKey)
@@ -118,7 +118,7 @@ final class HBaseMetadataTable implements MetadataTable {
   public void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException {
     boolean completed = false;
 
-    byte[] rowKey = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
+    byte[] rowKey = MessagingUtils.toMetadataRowKey(topicMetadata.getTopicId());
     TopicMetadata oldMetadata = getMetadata(topicMetadata.getTopicId());
     TopicMetadata newMetadata = new TopicMetadata(topicMetadata.getTopicId(), topicMetadata.getProperties(),
                                                   oldMetadata.getGeneration());
@@ -139,7 +139,7 @@ final class HBaseMetadataTable implements MetadataTable {
     boolean completed = false;
 
     // Keep trying to delete
-    byte[] rowKey = MessagingUtils.toRowKeyPrefix(topicId);
+    byte[] rowKey = MessagingUtils.toMetadataRowKey(topicId);
     TopicMetadata oldMetadata = getMetadata(topicId);
     TopicMetadata newMetadata = new TopicMetadata(topicId, oldMetadata.getProperties(),
                                                   oldMetadata.getGeneration() * -1);

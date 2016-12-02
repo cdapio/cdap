@@ -141,15 +141,18 @@ final class CoreMessageFetcher extends MessageFetcher {
       // do the scanning based on time. The smallest start time should be the currentTime - TTL.
       if (startOffset == null || startOffset.getPublishTimestamp() < smallestPublishTime) {
         long fetchStartTime = Math.max(smallestPublishTime, startTime == null ? smallestPublishTime : startTime);
-        messageIterator = messageTable.fetch(topicId, fetchStartTime, messageLimit, getTransaction());
+        messageIterator = messageTable.fetch(topicId, topicMetadata.getGeneration(), fetchStartTime,
+                                             messageLimit, getTransaction());
       } else {
         // Start scanning based on the start message id
         if (startOffset.getPayloadWriteTimestamp() != 0L) {
           // This message ID refer to payload table. Scan the message table with the reference message ID inclusively.
-          messageIterator = messageTable.fetch(topicId, createMessageTableMessageId(startOffset),
+          messageIterator = messageTable.fetch(topicId, topicMetadata.getGeneration(),
+                                               createMessageTableMessageId(startOffset),
                                                true, messageLimit, getTransaction());
         } else {
-          messageIterator = messageTable.fetch(topicId, startOffset, isIncludeStart(), messageLimit, getTransaction());
+          messageIterator = messageTable.fetch(topicId, topicMetadata.getGeneration(), startOffset, isIncludeStart(),
+                                               messageLimit, getTransaction());
         }
       }
       this.messageIterator = messageIterator;

@@ -69,6 +69,7 @@ final class MessageTableStoreRequestWriter extends StoreRequestWriter<MessageTab
   private static final class MutableMessageTableEntry implements MessageTable.Entry {
 
     private TopicId topicId;
+    private int generation;
     private boolean transactional;
     private long transactionWritePointer;
     private long publishTimestamp;
@@ -77,6 +78,11 @@ final class MessageTableStoreRequestWriter extends StoreRequestWriter<MessageTab
 
     MutableMessageTableEntry setTopicId(TopicId topicId) {
       this.topicId = topicId;
+      return this;
+    }
+
+    MutableMessageTableEntry setGeneration(int generation) {
+      this.generation = generation;
       return this;
     }
 
@@ -108,6 +114,11 @@ final class MessageTableStoreRequestWriter extends StoreRequestWriter<MessageTab
     @Override
     public TopicId getTopicId() {
       return topicId;
+    }
+
+    @Override
+    public int getGeneration() {
+      return generation;
     }
 
     @Override

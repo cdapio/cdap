@@ -35,7 +35,7 @@ public final class MessagingUtils {
    * @param topicId {@link TopicId}
    * @return byte array representation for the topic id
    */
-  public static byte[] toRowKeyPrefix(TopicId topicId) {
+  public static byte[] toMetadataRowKey(TopicId topicId) {
     String topic = topicId.getNamespace() + ":" + topicId.getTopic() + ":";
     return Bytes.toBytes(topic);
   }
@@ -49,11 +49,11 @@ public final class MessagingUtils {
    * @return byte array representation to be used as row key prefix for data tables
    */
   public static byte[] toDataKeyPrefix(TopicId topicId, int generation) {
-    return Bytes.add(toRowKeyPrefix(topicId), Bytes.toBytes(generation));
+    return Bytes.add(toMetadataRowKey(topicId), Bytes.toBytes(generation));
   }
 
   /**
-   * Convert byte array encoded with the {@link #toRowKeyPrefix(TopicId)} method back to the {@link TopicId}
+   * Convert byte array encoded with the {@link #toMetadataRowKey(TopicId)} method back to the {@link TopicId}
    *
    * @param topicBytes byte array which contains the representation of the topic id
    * @param offset offset to start decoding
@@ -69,7 +69,7 @@ public final class MessagingUtils {
   }
 
   /**
-   * Convert byte array encoded with the {@link #toRowKeyPrefix(TopicId)} method back to the {@link TopicId}.
+   * Convert byte array encoded with the {@link #toMetadataRowKey(TopicId)} method back to the {@link TopicId}.
    * Same as calling {@link #toTopicId(byte[], int, int)} with {@code offset = 0}
    * and {@code length = topicBytes.length}.
    *

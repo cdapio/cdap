@@ -186,8 +186,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     Exception failure = null;
     try (MessageTable messageTable = createMessageTable(metadata)) {
       // Safe to cast to short because message table only use the sequence id as unsigned bytes.
-      messageTable.delete(topicId, rollbackDetail.getStartTimestamp(), (short) rollbackDetail.getStartSequenceId(),
-                          rollbackDetail.getEndTimestamp(), (short) rollbackDetail.getEndSequenceId());
+      messageTable.delete(topicId, metadata.getGeneration(), rollbackDetail.getStartTimestamp(),
+                          (short) rollbackDetail.getStartSequenceId(), rollbackDetail.getEndTimestamp(),
+                          (short) rollbackDetail.getEndSequenceId());
     } catch (Exception e) {
       failure = e;
     }

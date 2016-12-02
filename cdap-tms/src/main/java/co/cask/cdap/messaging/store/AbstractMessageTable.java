@@ -71,9 +71,9 @@ public abstract class AbstractMessageTable implements MessageTable {
   protected abstract CloseableIterator<RawMessageTableEntry> read(byte[] startRow, byte[] stopRow) throws IOException;
 
   @Override
-  public CloseableIterator<Entry> fetch(TopicId topicId, long startTime, int limit,
+  public CloseableIterator<Entry> fetch(TopicId topicId, int generation, long startTime, int limit,
                                         @Nullable Transaction transaction) throws IOException {
-    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
+    byte[] topic = MessagingUtils.toDataKeyPrefix(topicId, generation);
     byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, startTime);
@@ -83,9 +83,9 @@ public abstract class AbstractMessageTable implements MessageTable {
   }
 
   @Override
-  public CloseableIterator<Entry> fetch(TopicId topicId, MessageId messageId, boolean inclusive, final int limit,
-                                        @Nullable final Transaction transaction) throws IOException {
-    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
+  public CloseableIterator<Entry> fetch(TopicId topicId, int generation, MessageId messageId, boolean inclusive,
+                                        final int limit, @Nullable final Transaction transaction) throws IOException {
+    byte[] topic = MessagingUtils.toDataKeyPrefix(topicId, generation);
     byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, messageId.getPublishTimestamp());
@@ -101,9 +101,9 @@ public abstract class AbstractMessageTable implements MessageTable {
   }
 
   @Override
-  public void delete(TopicId topicId, long startTimestamp, short startSequenceId,
+  public void delete(TopicId topicId, int generation, long startTimestamp, short startSequenceId,
                      long endTimestamp, short endSequenceId) throws IOException {
-    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
+    byte[] topic = MessagingUtils.toDataKeyPrefix(topicId, generation);
     byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, startTimestamp);
@@ -235,7 +235,7 @@ public abstract class AbstractMessageTable implements MessageTable {
       // Create new byte arrays only when the topicId is different. Else, reuse the byte arrays.
       if (topicId == null || (!topicId.equals(entry.getTopicId()))) {
         topicId = entry.getTopicId();
-        topic = MessagingUtils.toRowKeyPrefix(topicId);
+        topic = MessagingUtils.toDataKeyPrefix(topicId, entry.getGeneration());
         rowKey = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
       }
 

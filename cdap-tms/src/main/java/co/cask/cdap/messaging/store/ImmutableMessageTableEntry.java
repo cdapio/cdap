@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  */
 final class ImmutableMessageTableEntry implements MessageTable.Entry {
   private final TopicId topicId;
+  private final int generation;
   private final boolean transactional;
   private final long transactionWritePointer;
   private final byte[] payload;
@@ -39,12 +40,19 @@ final class ImmutableMessageTableEntry implements MessageTable.Entry {
     this.sequenceId = Bytes.toShort(row, row.length - Bytes.SIZEOF_SHORT);
     this.transactional = (txPtr != null);
     this.transactionWritePointer = txPtr == null ? -1 : Bytes.toLong(txPtr);
-    this.topicId = MessagingUtils.toTopicId(row, 0, row.length - Bytes.SIZEOF_SHORT - Bytes.SIZEOF_LONG);
+    this.generation = Bytes.toInt(row, row.length - Bytes.SIZEOF_SHORT - Bytes.SIZEOF_LONG - Bytes.SIZEOF_INT);
+    this.topicId = MessagingUtils.toTopicId(row, 0, row.length - Bytes.SIZEOF_SHORT - Bytes.SIZEOF_LONG
+      - Bytes.SIZEOF_INT);
   }
 
   @Override
   public TopicId getTopicId() {
     return topicId;
+  }
+
+  @Override
+  public int getGeneration() {
+    return generation;
   }
 
   @Override

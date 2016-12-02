@@ -44,6 +44,11 @@ public interface MessageTable extends Closeable {
     TopicId getTopicId();
 
     /**
+     * Returns the generation id of the topic.
+     */
+    int getGeneration();
+
+    /**
      * Returns {@code true} if the entry is a reference to messages stored in payload table.
      */
     boolean isPayloadReference();
@@ -86,7 +91,7 @@ public interface MessageTable extends Closeable {
    * @param transaction an optional {@link Transaction} to use for fetching
    * @return a {@link CloseableIterator} of {@link Entry}.
    */
-  CloseableIterator<Entry> fetch(TopicId topicId, long startTime,
+  CloseableIterator<Entry> fetch(TopicId topicId, int generation, long startTime,
                                  int limit, @Nullable Transaction transaction) throws IOException;
 
   /**
@@ -100,7 +105,7 @@ public interface MessageTable extends Closeable {
    * @param transaction an optional {@link Transaction} to use for fetching
    * @return a {@link CloseableIterator} of {@link Entry}.
    */
-  CloseableIterator<Entry> fetch(TopicId topicId, MessageId messageId, boolean inclusive,
+  CloseableIterator<Entry> fetch(TopicId topicId, int generation, MessageId messageId, boolean inclusive,
                                  int limit, @Nullable Transaction transaction) throws IOException;
 
   /**
@@ -120,6 +125,6 @@ public interface MessageTable extends Closeable {
    * @param endTimestamp the publish timestamp of the last entry to delete (inclusive)
    * @param endSequenceId the sequence id of the last entry to delete (inclusive)
    */
-  void delete(TopicId topicId, long startTimestamp, short startSequenceId,
+  void delete(TopicId topicId, int generation, long startTimestamp, short startSequenceId,
               long endTimestamp, short endSequenceId) throws IOException;
 }
