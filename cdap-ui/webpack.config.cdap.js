@@ -44,6 +44,10 @@ var plugins = [
       to: './fonts/'
     },
     {
+      from: path.resolve(__dirname, 'app', 'lib', 'c3.js'),
+      to: './'
+    },
+    {
       from: './styles/img',
       to: './img/'
     }

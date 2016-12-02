@@ -15,7 +15,7 @@
  */
 
 import {combineReducers, createStore} from 'redux';
-import WranglerActions from 'components/Wrangler/Redux/WranglerActions';
+import WranglerActions from 'components/Wrangler/Store/WranglerActions';
 import shortid from 'shortid';
 import cloneDeep from 'lodash/cloneDeep';
 import {createBucket} from 'components/Wrangler/data-buckets';
@@ -49,10 +49,14 @@ const defaultInitialState = {
     filter: null,
     sort: null,
     sortAscending: true
+  },
+  visualization: {
+    chartOrder: [],
+    charts: {}
   }
 };
 
-const wrangler = (state = defaultInitialState, action = defaultAction) => {
+const wrangler = (state = defaultInitialState.wrangler, action = defaultAction) => {
   let stateCopy;
   let data;
   switch (action.type) {
@@ -123,13 +127,67 @@ const wrangler = (state = defaultInitialState, action = defaultAction) => {
     case WranglerActions.redo:
       return _forwardHistory(state);
     case WranglerActions.reset:
-      return defaultInitialState;
+      return defaultInitialState.wrangler;
 
     default:
       return Object.assign({}, state);
   }
 
   return Object.assign({}, state, stateCopy, addHistory(stateCopy, action.type, action.payload));
+};
+
+const visualization = (state = defaultInitialState.visualization, action = defaultAction) => {
+  let stateCopy;
+
+  switch (action.type) {
+    case WranglerActions.addChart:
+      stateCopy = Object.assign({}, state);
+      stateCopy.chartOrder.unshift(action.payload.chart.id);
+      stateCopy.charts[action.payload.chart.id] = action.payload.chart;
+      stateCopy.charts[action.payload.chart.id].label = `Chart ${stateCopy.chartOrder.length}`;
+      break;
+    case WranglerActions.editChart:
+      stateCopy = Object.assign({}, state);
+      stateCopy.charts[action.payload.chart.id] = action.payload.chart;
+      break;
+    case WranglerActions.deleteChart:
+      stateCopy = Object.assign({}, state);
+      stateCopy.chartOrder.splice(stateCopy.chartOrder.indexOf(action.payload.id), 1);
+      delete stateCopy.charts[action.payload.id];
+      break;
+    case WranglerActions.renameColumn:
+      stateCopy = Object.assign({}, state);
+      for (let id in stateCopy.charts) {
+        if (stateCopy.charts[id].x === action.payload.activeColumn) {
+          stateCopy.charts[id].x = action.payload.newName;
+        }
+
+        let index = stateCopy.charts[id].y.indexOf(action.payload.activeColumn);
+        if (index !== -1) {
+          stateCopy.charts[id].y[index] = action.payload.newName;
+        }
+      }
+      break;
+    case WranglerActions.dropColumn:
+      stateCopy = Object.assign({}, state);
+      for (let id in stateCopy.charts) {
+        if (stateCopy.charts[id].x === action.payload.activeColumn) {
+          stateCopy.charts[id].x = '##'; // revert to default
+        }
+
+        let index = stateCopy.charts[id].y.indexOf(action.payload.activeColumn);
+        if (index !== -1) {
+          stateCopy.charts[id].y.splice(index, 1);
+        }
+      }
+      break;
+    case WranglerActions.reset:
+      return defaultInitialState.visualization;
+    default:
+      return Object.assign({}, state);
+  }
+
+  return Object.assign({}, state, stateCopy);
 };
 
 function _setData(payload) {
@@ -391,7 +449,8 @@ function removeColumnMetadata(state, columns) {
 const WranglerStoreWrapper = () => {
   return createStore(
     combineReducers({
-      wrangler
+      wrangler,
+      visualization
     }),
     defaultInitialState
   );

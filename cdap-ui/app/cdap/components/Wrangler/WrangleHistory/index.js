@@ -15,8 +15,8 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import WranglerStore from 'components/Wrangler/Redux/WranglerStore';
-import WranglerActions from 'components/Wrangler/Redux/WranglerActions';
+import WranglerStore from 'components/Wrangler/Store/WranglerStore';
+import WranglerActions from 'components/Wrangler/Store/WranglerActions';
 import classnames from 'classnames';
 import T from 'i18n-react';
 require('./WrangleHistory.less');
@@ -64,7 +64,7 @@ export default class WrangleHistory extends Component {
                   <span>{T.translate(`features.Wrangler.Actions.${history.action}`)}</span>
                   <span>: {history.payload.activeColumn}</span>
                   <span
-                    className="fa fa-times-circle pull-right"
+                    className="fa fa-times-circle pull-right history-delete"
                     onClick={this.deleteHistory.bind(this, index)}
                   />
                 </span>

@@ -39,7 +39,8 @@
     "jest": true,
     "beforeEach": true,
     "afterEach": true,
-    "avsc": true
+    "avsc": true,
+    "c3": true
   },
   "plugins": ["react", "babel"],
   "extends": ["eslint:recommended", "plugin:react/recommended"]

@@ -18,8 +18,8 @@ import React, { Component } from 'react';
 import Papa from 'papaparse';
 import WrangleData from 'components/Wrangler/WrangleData';
 
-import WranglerActions from 'components/Wrangler/Redux/WranglerActions';
-import WranglerStore from 'components/Wrangler/Redux/WranglerStore';
+import WranglerActions from 'components/Wrangler/Store/WranglerActions';
+import WranglerStore from 'components/Wrangler/Store/WranglerStore';
 
 require('./Wrangler.less');
 
@@ -53,6 +53,10 @@ export default class Wrangler extends Component {
     this.onWrangleClick = this.onWrangleClick.bind(this);
   }
 
+  // componentDidMount() {
+  //   this.wrangle();
+  // }
+
   onWrangleClick() {
     this.setState({loading: true});
     this.wrangle();
@@ -60,6 +64,60 @@ export default class Wrangler extends Component {
 
   wrangle() {
     let input = this.state.wranglerInput;
+
+    // Keeping these for dev purposes
+
+//     let input = `Hakeem Gillespie,91,753,599
+// Arsenio Gardner,683,754,641
+// Darius Mcdonald,567,473,520
+// Zachary Small,981,271,385
+// Travis Rutledge,468,91,578
+// Thaddeus Clemons,346,1106,367
+// Yardley Merrill,278,1028,473
+// Lars Fowler,494,1268,354
+// Omar Rocha,856,694,318
+// Ryan Chapman,553,1009,565
+// Drew Murray,912,402,272
+// Henry Reynolds,734,848,643
+// Hu Noel,655,668,599
+// Abraham Ellis,914,304,307
+// Kenyon Newman,83,1040,606
+// James Winters,473,327,569
+// Asher Mcclure,548,86,458
+// Quamar Watts,393,454,547
+// Alfonso Webster,986,848,525
+// Darius Sharpe,710,931,581
+// Gavin Baldwin,139,302,572
+// Lyle Hardin,989,857,612
+// Nathan Glenn,807,464,334
+// Ethan Figueroa,70,834,276
+// Silas Wheeler,827,1353,259
+// Isaiah Franklin,290,508,259
+// Sean Schneider,655,828,622
+// Quinlan Hewitt,417,944,671
+// Brody Sharp,245,162,511
+// Bruno Whitaker,805,1453,390
+// Nolan Combs,70,302,696
+// Ray Larsen,538,444,232
+// Garth Mckee,919,420,379
+// Wesley Rivera,122,476,363
+// Louis Thornton,731,1288,356
+// Jackson Waller,906,801,239
+// Beck Singleton,196,391,559
+// Abel Anthony,13,572,459
+// Victor Gray,856,826,280
+// Vance Colon,349,906,264
+// Solomon Herrera,128,1181,370
+// Drake Church,258,1048,291
+// Rafael Ramsey,475,231,428
+// Timon Bowen,481,1090,439
+// Eric Dunlap,205,1357,582
+// Joel Mcbride,794,1237,423
+// Kane Richardson,956,241,597
+// Luke Zamora,666,1293,200
+// Zeus Herrera,84,577,379
+// Jeremy Acosta,668,1039,426
+// Boris Jimenez,69,406,232`;
 
     let papaConfig = {
       header: this.state.header,
@@ -143,6 +201,7 @@ export default class Wrangler extends Component {
       <textarea
         className="form-control"
         onChange={this.handleTextInput}
+        autoFocus={true}
       />
     );
   }

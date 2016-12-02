@@ -95,6 +95,7 @@
 
   .wrangler-data {
     position: relative;
+    margin: 0;
 
     .wrangle-transforms,
     .wrangle-results {
@@ -147,7 +148,7 @@
 
     .wrangle-results {
       left: @wrangler-left-panel-width;
-      right: 0;
+      right: 250px; // offset right panel
       overflow-y: auto;
 
       .data-table { overflow-x: auto; }
@@ -156,6 +157,18 @@
 
   .table {
     margin-bottom: 0;
+
+    &.table-bordered { border: 0; }
+
+    th:first-child,
+    td:first-child {
+      border-left: 0;
+    }
+
+    th:last-child,
+    td:last-child {
+      border-right: 0;
+    }
 
     .column-name {
       cursor: pointer;

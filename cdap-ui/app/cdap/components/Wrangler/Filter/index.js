@@ -15,8 +15,8 @@
  */
 
 import React, { Component, PropTypes } from 'react';
-import WranglerStore from 'components/Wrangler/Redux/WranglerStore';
-import WranglerActions from 'components/Wrangler/Redux/WranglerActions';
+import WranglerStore from 'components/Wrangler/Store/WranglerStore';
+import WranglerActions from 'components/Wrangler/Store/WranglerActions';
 import classnames from 'classnames';
 
 export default class Filter extends Component {
