@@ -268,8 +268,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
         public ConcurrentMessageWriter load(TopicId topicId) throws Exception {
           TopicMetadata metadata = getTopic(topicId);
           StoreRequestWriter<?> messagesWriter = messageTable
-            ? new MessageTableStoreRequestWriter(createMessageTable(metadata), timeProvider)
-            : new PayloadTableStoreRequestWriter(createPayloadTable(metadata), timeProvider);
+            ? new MessageTableStoreRequestWriter(metadata, createMessageTable(metadata), timeProvider)
+            : new PayloadTableStoreRequestWriter(metadata, createPayloadTable(metadata), timeProvider);
 
           MetricsContext writerMetricsContext = metricsContext.childContext(ImmutableMap.of(
             Constants.Metrics.Tag.NAMESPACE, topicId.getNamespace(),

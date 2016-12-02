@@ -18,6 +18,7 @@ package co.cask.cdap.messaging.service;
 
 import co.cask.cdap.common.utils.TimeProvider;
 import co.cask.cdap.messaging.StoreRequest;
+import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.AbstractIterator;
@@ -45,6 +46,7 @@ abstract class StoreRequestWriter<T> implements Closeable {
   @VisibleForTesting
   static final int SEQUENCE_ID_LIMIT = 0x10000;
 
+  private final TopicMetadata metadata;
   private final TimeProvider timeProvider;
   private long writeTimestamp;
   private long lastWriteTimestamp;
@@ -59,7 +61,8 @@ abstract class StoreRequestWriter<T> implements Closeable {
    * @param generateNullPayloadEntry {@code true} to generate table entry with {@code null} payload if
    *                                 a {@link PendingStoreRequest} has an empty iterator of payload.
    */
-  StoreRequestWriter(TimeProvider timeProvider, boolean generateNullPayloadEntry) {
+  StoreRequestWriter(TopicMetadata metadata, TimeProvider timeProvider, boolean generateNullPayloadEntry) {
+    this.metadata = metadata;
     this.timeProvider = timeProvider;
     this.payloadTransformIterator = new PayloadTransformIterator(generateNullPayloadEntry);
   }
@@ -99,6 +102,7 @@ abstract class StoreRequestWriter<T> implements Closeable {
    * Returns an entry to be written based on the provided information.
    *
    * @param topicId the topic id
+   * @param generation generation id of the topic
    * @param transactional whether a store request is transactional or not
    * @param transactionWritePointer the transaction write pointer if the request is transactional
    * @param writeTimestamp the timestamp to be used as the write timestamp
@@ -106,7 +110,7 @@ abstract class StoreRequestWriter<T> implements Closeable {
    * @param payload the message payload
    * @return an entry of type {@code <T>}.
    */
-  abstract T getEntry(TopicId topicId, boolean transactional, long transactionWritePointer,
+  abstract T getEntry(TopicId topicId, int generation, boolean transactional, long transactionWritePointer,
                       long writeTimestamp, short sequenceId, @Nullable byte[] payload);
 
   /**
@@ -145,7 +149,7 @@ abstract class StoreRequestWriter<T> implements Closeable {
 
   /**
    * A resettable {@link Iterator} to transform payloads in a {@link PendingStoreRequest} to entries using
-   * the {@link #getEntry(TopicId, boolean, long, long, short, byte[])} method.
+   * the {@link #getEntry(TopicId, int, boolean, long, long, short, byte[])} method.
    */
   private final class PayloadTransformIterator implements Iterator<T> {
 
@@ -172,9 +176,8 @@ abstract class StoreRequestWriter<T> implements Closeable {
       // or if the iterator is empty but we wanted to generate an entry with null payload
       if (storeRequest.hasNext() || (generateNullPayloadEntry && !computedFirst)) {
         byte[] payload = storeRequest.hasNext() ? storeRequest.next() : null;
-        nextEntry = getEntry(storeRequest.getTopicId(), storeRequest.isTransactional(),
-                             storeRequest.getTransactionWritePointer(),
-                             writeTimestamp, (short) seqId, payload);
+        nextEntry = getEntry(storeRequest.getTopicId(), metadata.getGeneration(), storeRequest.isTransactional(),
+                             storeRequest.getTransactionWritePointer(), writeTimestamp, (short) seqId, payload);
       }
       computedFirst = true;
       completed = nextEntry == null;

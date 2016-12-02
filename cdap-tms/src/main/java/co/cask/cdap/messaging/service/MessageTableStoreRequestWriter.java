@@ -18,6 +18,7 @@ package co.cask.cdap.messaging.service;
 
 import co.cask.cdap.common.utils.TimeProvider;
 import co.cask.cdap.messaging.StoreRequest;
+import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.proto.id.TopicId;
 
@@ -35,17 +36,18 @@ final class MessageTableStoreRequestWriter extends StoreRequestWriter<MessageTab
   private final MessageTable messageTable;
   private final MutableMessageTableEntry entry;
 
-  MessageTableStoreRequestWriter(MessageTable messageTable, TimeProvider timeProvider) {
-    super(timeProvider, true);
+  MessageTableStoreRequestWriter(TopicMetadata metadata, MessageTable messageTable, TimeProvider timeProvider) {
+    super(metadata, timeProvider, true);
     this.messageTable = messageTable;
     this.entry = new MutableMessageTableEntry();
   }
 
   @Override
-  MessageTable.Entry getEntry(TopicId topicId, boolean transactional, long transactionWritePointer,
+  MessageTable.Entry getEntry(TopicId topicId, int generation, boolean transactional, long transactionWritePointer,
                               long writeTimestamp, short sequenceId, @Nullable byte[] payload) {
     return entry
       .setTopicId(topicId)
+      .setGeneration(generation)
       .setTransactional(transactional)
       .setTransactionWritePointer(transactionWritePointer)
       .setPublishTimestamp(writeTimestamp)
