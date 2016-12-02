@@ -42,6 +42,11 @@ public interface PayloadTable extends Closeable {
     TopicId getTopicId();
 
     /**
+     * Returns the generation id of the topic.
+     */
+    int getGeneration();
+
+    /**
      * Returns the message payload.
      */
     byte[] getPayload();
@@ -72,7 +77,7 @@ public interface PayloadTable extends Closeable {
    * @param limit maximum number of entries to fetch
    * @return a {@link CloseableIterator} of entries
    */
-  CloseableIterator<Entry> fetch(TopicId topicId, long transactionWritePointer, MessageId messageId,
+  CloseableIterator<Entry> fetch(TopicId topicId, int generation, long transactionWritePointer, MessageId messageId,
                                  boolean inclusive, int limit) throws IOException;
 
   /**
@@ -89,5 +94,5 @@ public interface PayloadTable extends Closeable {
    * @param topicId topic to delete from
    * @param transactionWritePointer the transaction write pointer for scanning entries to delete.
    */
-  void delete(TopicId topicId, long transactionWritePointer) throws IOException;
+  void delete(TopicId topicId, int generation, long transactionWritePointer) throws IOException;
 }

@@ -68,6 +68,7 @@ final class PayloadTableStoreRequestWriter extends StoreRequestWriter<PayloadTab
   private static final class MutablePayloadTableEntry implements PayloadTable.Entry {
 
     private TopicId topicId;
+    private int generation;
     private long transactionWritePointer;
     private long writeTimestamp;
     private short sequenceId;
@@ -75,6 +76,11 @@ final class PayloadTableStoreRequestWriter extends StoreRequestWriter<PayloadTab
 
     MutablePayloadTableEntry setTopicId(TopicId topicId) {
       this.topicId = topicId;
+      return this;
+    }
+
+    MutablePayloadTableEntry setGeneration(int generation) {
+      this.generation = generation;
       return this;
     }
 
@@ -101,6 +107,11 @@ final class PayloadTableStoreRequestWriter extends StoreRequestWriter<PayloadTab
     @Override
     public TopicId getTopicId() {
       return topicId;
+    }
+
+    @Override
+    public int getGeneration() {
+      return generation;
     }
 
     @Override

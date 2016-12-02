@@ -180,7 +180,8 @@ final class CoreMessageFetcher extends MessageFetcher {
               if (payloadTable == null) {
                 payloadTable = payloadTableProvider.get();
               }
-              payloadIterator = payloadTable.fetch(topicId, messageEntry.getTransactionWritePointer(),
+              payloadIterator = payloadTable.fetch(topicId, topicMetadata.getGeneration(),
+                                                   messageEntry.getTransactionWritePointer(),
                                                    createMessageId(messageEntry, null),
                                                    inclusive, messageLimit);
             } catch (IOException e) {

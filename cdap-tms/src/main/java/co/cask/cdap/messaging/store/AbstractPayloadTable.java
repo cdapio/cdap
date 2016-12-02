@@ -64,8 +64,8 @@ public abstract class AbstractPayloadTable implements PayloadTable {
                                                                   int limit) throws IOException;
 
   @Override
-  public void delete(TopicId topicId, long transactionWritePointer) throws IOException {
-    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
+  public void delete(TopicId topicId, int generation, long transactionWritePointer) throws IOException {
+    byte[] topic = MessagingUtils.toDataKeyPrefix(topicId, generation);
     byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, transactionWritePointer);
@@ -79,9 +79,9 @@ public abstract class AbstractPayloadTable implements PayloadTable {
   }
 
   @Override
-  public CloseableIterator<Entry> fetch(TopicId topicId, long transactionWritePointer, MessageId messageId,
-                                        final boolean inclusive, int limit) throws IOException {
-    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
+  public CloseableIterator<Entry> fetch(TopicId topicId, int generation, long transactionWritePointer,
+                                        MessageId messageId, final boolean inclusive, int limit) throws IOException {
+    byte[] topic = MessagingUtils.toDataKeyPrefix(topicId, generation);
     final byte[] startRow = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
     byte[] stopRow = new byte[topic.length + Bytes.SIZEOF_LONG];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
@@ -165,7 +165,7 @@ public abstract class AbstractPayloadTable implements PayloadTable {
 
       if (topicId == null || (!topicId.equals(entry.getTopicId()))) {
         topicId = entry.getTopicId();
-        topic = MessagingUtils.toRowKeyPrefix(topicId);
+        topic = MessagingUtils.toDataKeyPrefix(topicId, entry.getGeneration());
         rowKey = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
       }
 

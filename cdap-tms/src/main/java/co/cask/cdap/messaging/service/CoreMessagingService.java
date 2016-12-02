@@ -192,7 +192,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       failure = e;
     }
     try (PayloadTable payloadTable = createPayloadTable(metadata)) {
-      payloadTable.delete(topicId, rollbackDetail.getTransactionWritePointer());
+      payloadTable.delete(topicId, metadata.getGeneration(), rollbackDetail.getTransactionWritePointer());
     } catch (Exception e) {
       if (failure != null) {
         failure.addSuppressed(e);

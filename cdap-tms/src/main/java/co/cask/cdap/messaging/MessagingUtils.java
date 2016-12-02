@@ -30,7 +30,7 @@ public final class MessagingUtils {
   }
 
   /**
-   * Convert {@link TopicId} to byte array to be used a message tables row key prefix.
+   * Convert {@link TopicId} to byte array to be used for metadata table row key.
    *
    * @param topicId {@link TopicId}
    * @return byte array representation for the topic id
@@ -38,6 +38,18 @@ public final class MessagingUtils {
   public static byte[] toRowKeyPrefix(TopicId topicId) {
     String topic = topicId.getNamespace() + ":" + topicId.getTopic() + ":";
     return Bytes.toBytes(topic);
+  }
+
+  /**
+   * Convert {@link TopicId} and generation id to byte array to be used for data tables (message and payload) as
+   * row key prefix.
+   *
+   * @param topicId {@link TopicId}
+   * @param generation generation id of the topic
+   * @return byte array representation to be used as row key prefix for data tables
+   */
+  public static byte[] toDataKeyPrefix(TopicId topicId, int generation) {
+    return Bytes.add(toRowKeyPrefix(topicId), Bytes.toBytes(generation));
   }
 
   /**

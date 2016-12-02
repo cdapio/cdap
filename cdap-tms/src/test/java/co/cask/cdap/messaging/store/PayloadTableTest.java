@@ -36,6 +36,7 @@ import java.util.Set;
 public abstract class PayloadTableTest {
   private static final TopicId T1 = NamespaceId.DEFAULT.topic("t1");
   private static final TopicId T2 = NamespaceId.DEFAULT.topic("t2");
+  private static final int GENERATION = 1;
 
   protected abstract PayloadTable getPayloadTable() throws Exception;
 
@@ -46,18 +47,18 @@ public abstract class PayloadTableTest {
     long txWritePtr = 123L;
     try (PayloadTable table = getPayloadTable()) {
       List<PayloadTable.Entry> entryList = new ArrayList<>();
-      entryList.add(new TestPayloadEntry(topicId, txWritePtr, 0L, (short) 0, Bytes.toBytes(payload)));
+      entryList.add(new TestPayloadEntry(topicId, GENERATION, txWritePtr, 0L, (short) 0, Bytes.toBytes(payload)));
       table.store(entryList.iterator());
       byte[] messageId = new byte[MessageId.RAW_ID_SIZE];
       MessageId.putRawId(0L, (short) 0, 0L, (short) 0, messageId, 0);
-      try (CloseableIterator<PayloadTable.Entry> iterator = table.fetch(topicId, txWritePtr,
+      try (CloseableIterator<PayloadTable.Entry> iterator = table.fetch(topicId, GENERATION, txWritePtr,
                                                                         new MessageId(messageId),
                                                                         false, Integer.MAX_VALUE)) {
         // Fetch not including the first message, expect empty
         Assert.assertFalse(iterator.hasNext());
       }
 
-      try (CloseableIterator<PayloadTable.Entry> iterator = table.fetch(topicId, txWritePtr,
+      try (CloseableIterator<PayloadTable.Entry> iterator = table.fetch(topicId, GENERATION, txWritePtr,
                                                                         new MessageId(messageId),
                                                                         true, Integer.MAX_VALUE)) {
         // Fetch including the first message
@@ -68,9 +69,9 @@ public abstract class PayloadTableTest {
         Assert.assertFalse(iterator.hasNext());
       }
 
-      table.delete(topicId, txWritePtr);
+      table.delete(topicId, GENERATION, txWritePtr);
 
-      try (CloseableIterator<PayloadTable.Entry> iterator = table.fetch(topicId, txWritePtr,
+      try (CloseableIterator<PayloadTable.Entry> iterator = table.fetch(topicId, GENERATION, txWritePtr,
                                                                         new MessageId(messageId),
                                                                         true, Integer.MAX_VALUE)) {
         // After delete the payload, expect empty fetch
@@ -89,25 +90,25 @@ public abstract class PayloadTableTest {
       MessageId.putRawId(0L, (short) 0, 0L, (short) 0, messageId, 0);
 
       // Fetch data with 100 write pointer
-      CloseableIterator<PayloadTable.Entry> iterator = table.fetch(T1, 100, new MessageId(messageId), true,
+      CloseableIterator<PayloadTable.Entry> iterator = table.fetch(T1, GENERATION, 100, new MessageId(messageId), true,
                                                                    Integer.MAX_VALUE);
       checkData(iterator, 123, ImmutableSet.of(100L), 50);
 
       // Fetch only 10 items with 101 write pointer
-      iterator = table.fetch(T1, 101, new MessageId(messageId), true, 1);
+      iterator = table.fetch(T1, GENERATION, 101, new MessageId(messageId), true, 1);
       checkData(iterator, 123, ImmutableSet.of(101L), 1);
 
       // Fetch items with 102 write pointer
-      iterator = table.fetch(T1, 102, new MessageId(messageId), true, Integer.MAX_VALUE);
+      iterator = table.fetch(T1, GENERATION, 102, new MessageId(messageId), true, Integer.MAX_VALUE);
       checkData(iterator, 123, ImmutableSet.of(102L), 50);
 
       // Delete items with 101 write pointer and then try and read from that
-      table.delete(T1, 101);
-      iterator = table.fetch(T1, 101, new MessageId(messageId), true, Integer.MAX_VALUE);
+      table.delete(T1, GENERATION, 101);
+      iterator = table.fetch(T1, GENERATION, 101, new MessageId(messageId), true, Integer.MAX_VALUE);
       checkData(iterator, 123, null, 0);
 
       // Fetch from t2 with 101 write pointer
-      iterator = table.fetch(T2, 101, new MessageId(messageId), true, Integer.MAX_VALUE);
+      iterator = table.fetch(T2, GENERATION, 101, new MessageId(messageId), true, Integer.MAX_VALUE);
       checkData(iterator, 123, ImmutableSet.of(101L), 50);
     }
   }
@@ -132,8 +133,8 @@ public abstract class PayloadTableTest {
     short seqId = 0;
     for (Integer writePtr : writePointers) {
       for (int i = 0; i < 50; i++) {
-        payloadTable.add(new TestPayloadEntry(T1, writePtr, timestamp, seqId++, Bytes.toBytes(data)));
-        payloadTable.add(new TestPayloadEntry(T2, writePtr, timestamp, seqId++, Bytes.toBytes(data)));
+        payloadTable.add(new TestPayloadEntry(T1, GENERATION, writePtr, timestamp, seqId++, Bytes.toBytes(data)));
+        payloadTable.add(new TestPayloadEntry(T2, GENERATION, writePtr, timestamp, seqId++, Bytes.toBytes(data)));
       }
     }
   }
@@ -141,13 +142,16 @@ public abstract class PayloadTableTest {
   // Private class for publishing messages
   private static class TestPayloadEntry implements PayloadTable.Entry {
     private final TopicId topicId;
+    private final int generation;
     private final byte[] payload;
     private final long transactionWritePointer;
     private final long writeTimestamp;
     private final short seqId;
 
-    TestPayloadEntry(TopicId topicId, long transactionWritePointer, long writeTimestamp, short seqId, byte[] payload) {
+    TestPayloadEntry(TopicId topicId, int generation, long transactionWritePointer, long writeTimestamp,
+                     short seqId, byte[] payload) {
       this.topicId = topicId;
+      this.generation = generation;
       this.transactionWritePointer = transactionWritePointer;
       this.writeTimestamp = writeTimestamp;
       this.seqId = seqId;
@@ -157,6 +161,11 @@ public abstract class PayloadTableTest {
     @Override
     public TopicId getTopicId() {
       return topicId;
+    }
+
+    @Override
+    public int getGeneration() {
+      return generation;
     }
 
     @Override
