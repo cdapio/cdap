@@ -18,16 +18,17 @@ package co.cask.cdap.messaging.store.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.PutBuilder;
 import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.store.MetadataTable;
+import co.cask.cdap.messaging.store.TopicMetadataCodec;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import org.apache.hadoop.hbase.client.Delete;
+import com.google.gson.GsonBuilder;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -37,13 +38,9 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 /**
  * HBase implementation of {@link MetadataTable}.
@@ -51,9 +48,9 @@ import java.util.TreeMap;
 final class HBaseMetadataTable implements MetadataTable {
 
   private static final byte[] COL = Bytes.toBytes("m");
-  private static final Gson GSON = new Gson();
-  // It has to be a sorted map since we depends on the serialized map for compareAndPut operation for topic update.
-  private static final Type MAP_TYPE = new TypeToken<SortedMap<String, String>>() { }.getType();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(TopicMetadata.class, new TopicMetadataCodec())
+    .create();
 
   private final HBaseTableUtil tableUtil;
   private final byte[] columnFamily;
@@ -77,19 +74,43 @@ final class HBaseMetadataTable implements MetadataTable {
       throw new TopicNotFoundException(topicId);
     }
 
-    Map<String, String> properties = GSON.fromJson(Bytes.toString(value), MAP_TYPE);
-    return new TopicMetadata(topicId, properties);
+    TopicMetadata topicMetadata = GSON.fromJson(Bytes.toString(value), TopicMetadata.class);
+    if (topicMetadata.isDeleted()) {
+      throw new TopicNotFoundException(topicId);
+    }
+
+    return topicMetadata;
   }
 
   @Override
   public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
     byte[] rowKey = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
-    Put put = tableUtil.buildPut(rowKey)
-      .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(new TreeMap<>(topicMetadata.getProperties()), MAP_TYPE)))
+    PutBuilder putBuilder = tableUtil.buildPut(rowKey);
+
+    Get get = tableUtil.buildGet(rowKey)
+      .addFamily(columnFamily)
       .build();
 
-    if (!hTable.checkAndPut(rowKey, columnFamily, COL, null, put)) {
-      throw new TopicAlreadyExistsException(topicMetadata.getTopicId());
+    Result result = hTable.get(get);
+    byte[] value = result.getValue(columnFamily, COL);
+    if (value == null) {
+      putBuilder.add(columnFamily, COL, Bytes.toBytes(GSON.toJson(topicMetadata)));
+      if (!hTable.checkAndPut(rowKey, columnFamily, COL, null, putBuilder.build())) {
+        throw new TopicAlreadyExistsException(topicMetadata.getTopicId());
+      }
+    } else {
+      TopicMetadata metadata = GSON.fromJson(Bytes.toString(value), TopicMetadata.class);
+      if (!metadata.isDeleted()) {
+        throw new TopicAlreadyExistsException(metadata.getTopicId());
+      }
+
+      int newGenerationId = (metadata.getGeneration() * -1) + 1;
+      TopicMetadata newMetadata = new TopicMetadata(metadata.getTopicId(), metadata.getProperties(), newGenerationId);
+      byte[] newValue = Bytes.toBytes(GSON.toJson(newMetadata));
+      putBuilder.add(columnFamily, COL, newValue);
+      if (!hTable.checkAndPut(rowKey, columnFamily, COL, value, putBuilder.build())) {
+        throw new TopicAlreadyExistsException(topicMetadata.getTopicId());
+      }
     }
   }
 
@@ -97,15 +118,18 @@ final class HBaseMetadataTable implements MetadataTable {
   public void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException {
     boolean completed = false;
 
-    // Keep trying to update
     byte[] rowKey = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
+    TopicMetadata oldMetadata = getMetadata(topicMetadata.getTopicId());
+    TopicMetadata newMetadata = new TopicMetadata(topicMetadata.getTopicId(), topicMetadata.getProperties(),
+                                                  oldMetadata.getGeneration());
     Put put = tableUtil.buildPut(rowKey)
-      .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(new TreeMap<>(topicMetadata.getProperties()), MAP_TYPE)))
+      .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(newMetadata)))
       .build();
 
+    // Keep trying to update
     while (!completed) {
-      TopicMetadata oldMetadata = getMetadata(topicMetadata.getTopicId());
-      byte[] oldValue = Bytes.toBytes(GSON.toJson(new TreeMap<>(oldMetadata.getProperties()), MAP_TYPE));
+      oldMetadata = getMetadata(topicMetadata.getTopicId());
+      byte[] oldValue = Bytes.toBytes(GSON.toJson(oldMetadata));
       completed = hTable.checkAndPut(rowKey, columnFamily, COL, oldValue, put);
     }
   }
@@ -116,11 +140,18 @@ final class HBaseMetadataTable implements MetadataTable {
 
     // Keep trying to delete
     byte[] rowKey = MessagingUtils.toRowKeyPrefix(topicId);
-    Delete delete = tableUtil.buildDelete(rowKey).build();
+    TopicMetadata oldMetadata = getMetadata(topicId);
+    TopicMetadata newMetadata = new TopicMetadata(topicId, oldMetadata.getProperties(),
+                                                  oldMetadata.getGeneration() * -1);
+
+    Put put = tableUtil.buildPut(rowKey)
+      .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(newMetadata)))
+      .build();
+
     while (!completed) {
       TopicMetadata metadata = getMetadata(topicId);
-      byte[] oldValue = Bytes.toBytes(GSON.toJson(new TreeMap<>(metadata.getProperties()), MAP_TYPE));
-      completed = hTable.checkAndDelete(rowKey, columnFamily, COL, oldValue, delete);
+      byte[] oldValue = Bytes.toBytes(GSON.toJson(metadata));
+      completed = hTable.checkAndPut(rowKey, columnFamily, COL, oldValue, put);
     }
   }
 
@@ -149,7 +180,11 @@ final class HBaseMetadataTable implements MetadataTable {
     List<TopicId> topicIds = new ArrayList<>();
     try (ResultScanner resultScanner = hTable.getScanner(scan)) {
       for (Result result : resultScanner) {
-        topicIds.add(MessagingUtils.toTopicId(result.getRow()));
+        byte[] value = result.getValue(columnFamily, COL);
+        TopicMetadata metadata = GSON.fromJson(Bytes.toString(value), TopicMetadata.class);
+        if (!metadata.isDeleted()) {
+          topicIds.add(MessagingUtils.toTopicId(result.getRow()));
+        }
       }
     }
     return topicIds;

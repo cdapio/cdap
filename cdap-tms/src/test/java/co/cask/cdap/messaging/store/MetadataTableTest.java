@@ -79,6 +79,29 @@ public abstract class MetadataTableTest {
   }
 
   @Test
+  public void testGenerations() throws Exception {
+    try (MetadataTable table = createMetadataTable()) {
+      TopicId topicId = NamespaceId.DEFAULT.topic("gtopic");
+      for (int i = 1; i <= 50; i++) {
+        table.createTopic(new TopicMetadata(topicId, "ttl", 1));
+
+        TopicMetadata metadata = table.getMetadata(topicId);
+        Assert.assertEquals(i, metadata.getGeneration());
+        Assert.assertEquals(1, metadata.getTTL());
+
+        table.deleteTopic(topicId);
+
+        try {
+          table.getMetadata(topicId);
+          Assert.fail("Expected TopicNotFoundException");
+        } catch (TopicNotFoundException ex) {
+          // Expected
+        }
+      }
+    }
+  }
+
+  @Test
   public void testCRUD() throws Exception {
     try (MetadataTable table = createMetadataTable()) {
       TopicId topicId = NamespaceId.DEFAULT.topic("topic");

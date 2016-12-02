@@ -34,6 +34,7 @@ public class TopicMetadata {
   private final TopicId topicId;
   private final Map<String, String> properties;
   private final boolean validated;
+  private final int generation;
 
   /**
    * Creates a new instance for the given topic with the associated properties.
@@ -56,6 +57,14 @@ public class TopicMetadata {
       validateProperties();
     }
     this.validated = validate;
+    this.generation = 1;
+  }
+
+  public TopicMetadata(TopicId topicId, Map<String, String> properties, int generation) {
+    this.topicId = topicId;
+    this.properties = ImmutableMap.copyOf(properties);
+    this.generation = generation;
+    this.validated = false;
   }
 
   /**
@@ -84,6 +93,20 @@ public class TopicMetadata {
   }
 
   /**
+   * Returns the generation id for the topic.
+   */
+  public int getGeneration() {
+    return generation;
+  }
+
+  /**
+   * Check whether the topic has been marked as deleted or not.
+   */
+  public boolean isDeleted() {
+    return generation < 0;
+  }
+
+  /**
    * Returns the time-to-live in seconds property of the topic.
    */
   public long getTTL() {
@@ -102,12 +125,13 @@ public class TopicMetadata {
       return false;
     }
     TopicMetadata that = (TopicMetadata) o;
-    return Objects.equals(topicId, that.topicId) && Objects.equals(properties, that.properties);
+    return Objects.equals(topicId, that.topicId) && Objects.equals(properties, that.properties)
+      && Objects.equals(generation, that.generation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(topicId, properties);
+    return Objects.hash(topicId, properties, generation);
   }
 
   @Override
@@ -115,6 +139,7 @@ public class TopicMetadata {
     return "TopicMetadata{" +
       "topicId=" + topicId +
       ", properties=" + properties +
+      ", generation=" + generation +
       '}';
   }
 
