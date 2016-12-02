@@ -25,6 +25,7 @@ import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
@@ -48,7 +49,6 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -274,7 +274,7 @@ public class AllProgramsApp extends AbstractApplication {
   /**
    *
    */
-  public static class NoOpAction extends AbstractWorkflowAction {
+  public static class NoOpAction extends AbstractCustomAction {
 
     @Override
     public void run() {

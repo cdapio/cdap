@@ -18,7 +18,6 @@ package co.cask.cdap.gateway.handlers.log;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;

@@ -20,7 +20,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.verification.AbstractVerifier;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.error.Err;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 
 /**

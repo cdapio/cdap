@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.workflow;
+package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /**
  * Action to be executed in Workflow for Programs.
@@ -35,12 +36,15 @@ public final class ProgramWorkflowAction extends AbstractWorkflowAction {
   private static final String PROGRAM_NAME = "ProgramName";
   public static final String PROGRAM_TYPE = "ProgramType";
 
-  private String programName;
-  private SchedulableProgramType programType;
+  private final String programName;
+  private final SchedulableProgramType programType;
+  private final ProgramWorkflowRunner programWorkflowRunner;
 
-  public ProgramWorkflowAction(String programName, SchedulableProgramType programType) {
+  public ProgramWorkflowAction(String programName, SchedulableProgramType programType,
+                               @Nullable ProgramWorkflowRunner programWorkflowRunner) {
     this.programName = programName;
     this.programType = programType;
+    this.programWorkflowRunner = programWorkflowRunner;
   }
 
   @Override
@@ -58,7 +62,11 @@ public final class ProgramWorkflowAction extends AbstractWorkflowAction {
   public void run() {
     try {
       String programName = getContext().getSpecification().getProperties().get(PROGRAM_NAME);
-      Runnable programRunner = getContext().getProgramRunner(programName);
+      // this should not happen, since null is only passed in from WorkflowDriver, only when calling configure
+      if (programWorkflowRunner == null) {
+        throw new UnsupportedOperationException("Operation not allowed.");
+      }
+      Runnable programRunner = programWorkflowRunner.create(programName);
       LOG.info("Starting Program for workflow action: {}", programName);
       programRunner.run();
 

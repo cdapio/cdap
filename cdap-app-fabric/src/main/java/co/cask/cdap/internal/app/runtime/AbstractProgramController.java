@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;

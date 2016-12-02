@@ -20,10 +20,11 @@ import co.cask.cdap.api.ProgramStatus
 import co.cask.cdap.api.annotation.{Property, UseDataSet}
 import co.cask.cdap.api.app.AbstractApplication
 import co.cask.cdap.api.common.Bytes
+import co.cask.cdap.api.customaction.AbstractCustomAction
 import co.cask.cdap.api.data.stream.Stream
 import co.cask.cdap.api.dataset.lib._
 import co.cask.cdap.api.spark.AbstractSpark
-import co.cask.cdap.api.workflow.{AbstractWorkflow, AbstractWorkflowAction}
+import co.cask.cdap.api.workflow.AbstractWorkflow
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
 
 import scala.collection.JavaConversions._
@@ -108,9 +109,9 @@ class TestSparkApp extends AbstractApplication {
     }
   }
 
-  final class VerifyAction extends AbstractWorkflowAction {
+  final class VerifyAction extends AbstractCustomAction {
     override def run() = {
-      val values = getContext.getToken.getAll("sum")
+      val values = getContext.getWorkflowToken.getAll("sum")
       require(values.map(_.getValue.getAsInt).distinct.size == 2,
               "Expect number of distinct 'sum' token be 2: " + values)
     }

@@ -27,7 +27,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.proto.ProgramType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

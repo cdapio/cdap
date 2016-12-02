@@ -27,7 +27,6 @@ import com.google.common.collect.Iterables;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * Duplicate store class for application meatadata.

@@ -18,9 +18,9 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowContext;
 
 import javax.annotation.Nullable;
@@ -74,7 +74,7 @@ public class NonUniqueProgramsInWorkflowWithForkApp extends AbstractApplication 
   /**
    * Sample action added to the Workflow.
    */
-  public static final class MyDummyAction extends AbstractWorkflowAction {
+  public static final class MyDummyAction extends AbstractCustomAction {
 
     @Override
     public void run() {

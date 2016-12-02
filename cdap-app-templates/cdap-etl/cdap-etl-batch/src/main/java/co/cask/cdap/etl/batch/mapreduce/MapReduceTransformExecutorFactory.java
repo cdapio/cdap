@@ -19,7 +19,6 @@ package co.cask.cdap.etl.batch.mapreduce;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.etl.api.Aggregator;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.JoinElement;

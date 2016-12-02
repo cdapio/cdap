@@ -16,7 +16,6 @@
 
 package co.cask.cdap.app.verification;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import org.junit.Assert;
 import org.junit.Test;

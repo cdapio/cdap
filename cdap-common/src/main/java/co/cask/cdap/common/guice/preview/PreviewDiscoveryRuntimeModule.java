@@ -16,7 +16,6 @@
 package co.cask.cdap.common.guice.preview;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import org.apache.twill.discovery.DiscoveryService;

@@ -17,13 +17,12 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.Value;
-import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -68,13 +67,12 @@ public class AppWithSchedule extends AbstractApplication {
   /**
    * DummyAction
    */
-  public static class DummyAction extends AbstractWorkflowAction {
+  public static class DummyAction extends AbstractCustomAction {
     private static final Logger LOG = LoggerFactory.getLogger(DummyAction.class);
 
     @Override
-    public void initialize(WorkflowContext context) throws Exception {
-      super.initialize(context);
-      WorkflowToken token = context.getToken();
+    public void initialize() throws Exception {
+      WorkflowToken token = getContext().getWorkflowToken();
       token.put("running", Value.of(true));
       token.put("finished", Value.of(false));
     }
@@ -91,7 +89,7 @@ public class AppWithSchedule extends AbstractApplication {
 
     @Override
     public void destroy() {
-      WorkflowToken token = getContext().getToken();
+      WorkflowToken token = getContext().getWorkflowToken();
       token.put("running", Value.of(false));
       token.put("finished", Value.of(true));
     }

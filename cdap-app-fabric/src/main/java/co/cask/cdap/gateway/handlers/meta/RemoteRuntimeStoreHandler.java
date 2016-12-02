@@ -21,7 +21,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ProgramId;

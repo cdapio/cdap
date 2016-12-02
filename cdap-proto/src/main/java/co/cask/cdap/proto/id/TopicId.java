@@ -16,7 +16,6 @@
 
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 

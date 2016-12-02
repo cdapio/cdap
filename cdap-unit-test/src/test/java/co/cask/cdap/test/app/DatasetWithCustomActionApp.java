@@ -28,10 +28,10 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import com.google.common.base.Throwables;
 import com.google.common.io.CharStreams;
+import org.apache.tephra.TransactionFailureException;
 import org.junit.Assert;
 
 import java.io.BufferedReader;
@@ -83,13 +83,18 @@ public class DatasetWithCustomActionApp extends AbstractApplication {
       }
     }
 
-    private static class TestAction extends AbstractWorkflowAction {
+    private static class TestAction extends AbstractCustomAction {
       @UseDataSet(CUSTOM_TABLE)
       private KeyValueTable table;
 
       @Override
-      public void run() {
-        table.write("hello", "world");
+      public void run() throws TransactionFailureException {
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            table.write("hello", "world");
+          }
+        });
 
         FileSet fs = getContext().getDataset(CUSTOM_FILESET);
         try (OutputStream out = fs.getLocation("test").getOutputStream()) {

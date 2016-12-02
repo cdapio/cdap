@@ -21,6 +21,7 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.DatasetManagementException;
@@ -46,7 +47,6 @@ import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -319,7 +319,7 @@ public class AdminApp extends AbstractApplication {
       addAction(new AdminAction());
     }
 
-    public static class AdminAction extends AbstractWorkflowAction {
+    public static class AdminAction extends AbstractCustomAction {
       @Override
       public void run() {
         performAdmin(getContext());

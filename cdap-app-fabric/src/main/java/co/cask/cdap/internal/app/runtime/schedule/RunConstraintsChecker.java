@@ -20,7 +20,6 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Predicate;

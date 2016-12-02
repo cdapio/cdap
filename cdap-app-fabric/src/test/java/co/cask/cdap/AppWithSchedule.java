@@ -17,11 +17,11 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -75,7 +75,7 @@ public class AppWithSchedule extends AbstractApplication {
   /**
    * DummyAction
    */
-  public static class DummyAction extends AbstractWorkflowAction {
+  public static class DummyAction extends AbstractCustomAction {
     private static final Logger LOG = LoggerFactory.getLogger(DummyAction.class);
     @Override
     public void run() {

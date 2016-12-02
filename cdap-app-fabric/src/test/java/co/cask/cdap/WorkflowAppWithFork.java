@@ -17,8 +17,8 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ public class WorkflowAppWithFork extends AbstractApplication {
     }
   }
 
-  static final class SimpleAction extends AbstractWorkflowAction {
+  static final class SimpleAction extends AbstractCustomAction {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleAction.class);
 
     SimpleAction(String name) {

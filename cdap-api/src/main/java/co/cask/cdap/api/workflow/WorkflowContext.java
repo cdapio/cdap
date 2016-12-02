@@ -44,16 +44,6 @@ public interface WorkflowContext extends RuntimeContext, Transactional,
   long getLogicalStartTime();
 
   /**
-   * Returns a {@link Runnable} that launches the associated program with the specified name when
-   * the {@link Runnable#run() run} method is invoked.
-   *
-   * @throws IllegalArgumentException if no program with the specified name is defined in the workflow
-   * @throws UnsupportedOperationException if it is called from {@link Predicate}
-   */
-  @Deprecated
-  Runnable getProgramRunner(String name);
-
-  /**
    * @return a {@link WorkflowToken}
    */
   WorkflowToken getToken();
@@ -65,17 +55,6 @@ public interface WorkflowContext extends RuntimeContext, Transactional,
    */
   @Beta
   Map<String, WorkflowNodeState> getNodeStates();
-
-  /**
-   * Return true if the execution was successful, false otherwise. This method can be
-   * used from {@link AbstractWorkflow#destroy} to determine the status of the {@link Workflow}.
-   * It can also be used from {@link WorkflowAction#destroy} method to determine the status
-   * of the {@link WorkflowAction}. If it is called before the execution is completed, false is returned.
-   * Deprecated as of release 3.5. Please use {@link #getState} instead.
-   */
-  @Beta
-  @Deprecated
-  boolean isSuccessful();
 
   /**
    * Return the state of the workflow. This method can be used from {@link AbstractWorkflow#destroy}

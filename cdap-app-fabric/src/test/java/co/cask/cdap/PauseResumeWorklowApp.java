@@ -17,8 +17,8 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,7 @@ public class PauseResumeWorklowApp extends AbstractApplication {
     }
   }
 
-  static final class SimpleAction extends AbstractWorkflowAction {
+  static final class SimpleAction extends AbstractCustomAction {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleAction.class);
 
     public SimpleAction(String name) {
