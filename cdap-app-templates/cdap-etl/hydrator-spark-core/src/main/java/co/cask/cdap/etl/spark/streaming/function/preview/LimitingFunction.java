@@ -16,6 +16,8 @@
 
 package co.cask.cdap.etl.spark.streaming.function.preview;
 
+import co.cask.cdap.etl.spark.streaming.function.CountingTranformFunction;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,19 +27,33 @@ import org.slf4j.LoggerFactory;
  *
  * @param <T> type of object in the rdd.
  */
-public class LimitingFunction<T> implements Function<T, Boolean> {
+public class LimitingFunction<T> implements Function<JavaRDD<T>, JavaRDD<T>> {
   private static final Logger LOG = LoggerFactory.getLogger(LimitingFunction.class);
+  private final Function<JavaRDD<T>, JavaRDD<T>> function;
   private final int numOfRecordsLimited;
   private int numOfRecordsEmitted;
 
-  public LimitingFunction(int numOfRecordsLimited) {
+  public LimitingFunction(Function<JavaRDD<T>, JavaRDD<T>> function, int numOfRecordsLimited) {
     LOG.info("Yaojie - limit records: {}, emit records: {}", numOfRecordsLimited, numOfRecordsEmitted);
+    this.function = function;
     this.numOfRecordsLimited = numOfRecordsLimited;
-    numOfRecordsEmitted = 0;
   }
 
+//  @Override
+//  public Boolean call(T v1) throws Exception {
+//    return numOfRecordsEmitted++ < numOfRecordsLimited;
+//  }
+
   @Override
-  public Boolean call(T v1) throws Exception {
-    return numOfRecordsEmitted++ < numOfRecordsLimited;
+  public JavaRDD<T> call(JavaRDD<T> v1) throws Exception {
+    if (numOfRecordsEmitted++ < numOfRecordsLimited) {
+      return function.call(v1);
+    }
+    return v1.filter(new Function<T, Boolean>() {
+      @Override
+      public Boolean call(T v1) throws Exception {
+        return numOfRecordsEmitted < numOfRecordsLimited;
+      }
+    });
   }
 }

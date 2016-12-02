@@ -86,12 +86,14 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
     DataTracer dataTracer = sec.getDataTracer(stageInfo.getName());
     StreamingContext sourceContext = new DefaultStreamingContext(stageInfo.getName(), sec, streamingContext);
     JavaDStream<Object> javaDStream = source.getStream(sourceContext);
+    CountingTranformFunction<Object> function = new CountingTranformFunction<>(stageInfo.getName(), sec.getMetrics(),
+                                                                               "records.out", dataTracer);
     if (dataTracer.isEnabled()) {
       LOG.info("Yaojie - numberRecords: {}", numOfRecordsPreview);
-      javaDStream = javaDStream.filter(new LimitingFunction<>(numOfRecordsPreview == 0 ? 100 : numOfRecordsPreview));
+      javaDStream.transform(new LimitingFunction<>(function, numOfRecordsPreview));
+    } else {
+      javaDStream = javaDStream.transform(function);
     }
-    javaDStream = javaDStream.transform(new CountingTranformFunction<>(stageInfo.getName(), sec.getMetrics(),
-                                                                       "records.out", dataTracer));
     return new DStreamCollection<>(sec, javaDStream);
   }
 
