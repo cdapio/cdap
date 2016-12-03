@@ -20,6 +20,7 @@ import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 
+import java.io.IOException;
 import java.util.Iterator;
 import javax.annotation.Nullable;
 

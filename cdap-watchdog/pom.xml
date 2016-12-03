@@ -97,6 +97,11 @@
       <artifactId>hbase-server</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-solrj</artifactId>
+      <version>6.3.0</version>
+    </dependency>
 
     <dependency>
       <groupId>org.xerial.snappy</groupId>

@@ -36,6 +36,7 @@ import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.kafka.client.KafkaPublisher;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -50,7 +51,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Test for {@link SpamClassifier}
@@ -140,7 +143,7 @@ public class SpamClassifierTest extends TestBase {
       expected.equalsIgnoreCase(response.getResponseBodyAsString()));
   }
 
-  private void publishKafkaMessages() {
+  private void publishKafkaMessages() throws InterruptedException, ExecutionException, TimeoutException {
     KafkaPublisher publisher = kafkaClient.getPublisher(KafkaPublisher.Ack.ALL_RECEIVED, Compression.NONE);
     KafkaPublisher.Preparer preparer = publisher.prepare(KAFKA_TOPIC);
 
@@ -148,7 +151,7 @@ public class SpamClassifierTest extends TestBase {
                                          "offers pls reply 2 this text with your valid name, house no and postcode"),
                  "1"); // spam
     preparer.add(Charsets.UTF_8.encode("2:I will call you later"), "2"); // ham
-    preparer.send();
+    Assert.assertTrue(preparer.send().get(300, TimeUnit.SECONDS) == 2);
   }
 
   private void ingestTrainingData() throws IOException {
@@ -177,6 +180,7 @@ public class SpamClassifierTest extends TestBase {
     prop.setProperty("log.flush.interval.messages", "10000");
     prop.setProperty("log.flush.interval.ms", "1000");
     prop.setProperty("log.segment.bytes", "536870912");
+    prop.setProperty("message.send.max.retries", "10");
     prop.setProperty("zookeeper.connect", zkConnectStr);
     prop.setProperty("zookeeper.connection.timeout.ms", "1000000");
     prop.setProperty("default.replication.factor", "1");

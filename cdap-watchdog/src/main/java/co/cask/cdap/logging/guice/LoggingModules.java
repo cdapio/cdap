@@ -25,6 +25,7 @@ import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.logging.appender.standalone.StandaloneLogAppender;
 import co.cask.cdap.logging.save.KafkaLogProcessor;
 import co.cask.cdap.logging.save.KafkaLogProcessorFactory;
+import co.cask.cdap.logging.save.LogIndexPluginFactory;
 import co.cask.cdap.logging.save.LogMetricsPluginFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
@@ -52,6 +53,7 @@ public class LoggingModules extends RuntimeModule {
         Multibinder<KafkaLogProcessorFactory> handlerBinder = Multibinder.newSetBinder
           (binder(), KafkaLogProcessorFactory.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES));
         handlerBinder.addBinding().to(LogMetricsPluginFactory.class);
+        handlerBinder.addBinding().to(LogIndexPluginFactory.class);
       }
     };
   }
@@ -65,6 +67,7 @@ public class LoggingModules extends RuntimeModule {
         Multibinder<KafkaLogProcessorFactory> handlerBinder = Multibinder.newSetBinder
           (binder(), KafkaLogProcessorFactory.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES));
         handlerBinder.addBinding().to(LogMetricsPluginFactory.class);
+        handlerBinder.addBinding().to(LogIndexPluginFactory.class);
       }
     };
   }
