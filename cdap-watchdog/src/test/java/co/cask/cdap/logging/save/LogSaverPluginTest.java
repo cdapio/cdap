@@ -120,6 +120,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
   @BeforeClass
   public static void initialize() throws IOException {
     cConf = KAFKA_TESTER.getCConf();
+    cConf.set(LoggingConfiguration.SOLR_URL, "http://146.148.93.232:8983/solr/test");
     namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
 
     injector = KAFKA_TESTER.getInjector();

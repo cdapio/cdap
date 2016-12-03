@@ -29,6 +29,7 @@ import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.save.KafkaLogProcessorFactory;
 import co.cask.cdap.logging.save.KafkaLogWriterPluginFactory;
+import co.cask.cdap.logging.save.LogIndexPluginFactory;
 import co.cask.cdap.logging.save.LogMetricsPluginFactory;
 import co.cask.cdap.logging.save.LogSaverFactory;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
@@ -90,6 +91,7 @@ public abstract class KafkaTestBase {
             (binder(), KafkaLogProcessorFactory.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES));
           logProcessorBinder.addBinding().to(KafkaLogWriterPluginFactory.class);
           logProcessorBinder.addBinding().to(LogMetricsPluginFactory.class);
+          logProcessorBinder.addBinding().to(LogIndexPluginFactory.class);
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
           install(new FactoryModuleBuilder().build(LogSaverFactory.class));

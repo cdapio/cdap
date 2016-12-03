@@ -26,6 +26,7 @@ import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -52,7 +53,6 @@ public class LogIndexPlugin extends AbstractKafkaLogProcessor {
   private final CheckpointManager checkpointManager;
   private final CConfiguration cConfig;
 
-  private static final String SOLR_CORE_URL = "http://146.148.93.232:8983/solr/gettingstarted";
   private SolrClient solrClient;
 
   private final Map<Integer, Checkpoint> partitionCheckpoints = Maps.newConcurrentMap();
@@ -77,7 +77,11 @@ public class LogIndexPlugin extends AbstractKafkaLogProcessor {
     super.init(checkpoint);
     this.partition = partition;
 
-    solrClient = new HttpSolrClient.Builder(SOLR_CORE_URL).build();
+    String solrUrl = cConfig.get(LoggingConfiguration.SOLR_URL);
+    if (solrUrl == null) {
+      throw new IllegalStateException("Solr URL not provided in configuration");
+    }
+    solrClient = new HttpSolrClient.Builder(solrUrl).build();
 
     scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
       Threads.createDaemonThreadFactory("log-index-plugin")));
@@ -91,28 +95,31 @@ public class LogIndexPlugin extends AbstractKafkaLogProcessor {
   }
 
   public void doProcess(Iterator<KafkaLogEvent> events) {
-
+    KafkaLogEvent event = null;
     while (events.hasNext()) {
-      KafkaLogEvent event = events.next();
+      event = events.next();
       LoggingContext context = event.getLoggingContext();
       SolrInputDocument document = new SolrInputDocument();
       event.getLogEvent();
-      for (String field : getIndexFields(event, context)) {
-        document.addField("q", field);
+      for (Map.Entry<String, Object> entry : getIndexFields(event, context).entrySet()) {
+        document.addField(entry.getKey(), entry.getValue());
       }
       try {
         solrClient.add(document);
       } catch (Exception e) {
-        LOG.error(e.getMessage());
+        LOG.error("Got exception for event {}", event, e);
       }
-
-      partitionCheckpoints.put(event.getPartition(),
-                               new Checkpoint(event.getNextOffset(), event.getLogEvent().getTimeStamp()));
     }
-    try {
-      solrClient.commit();
-    } catch (Exception e) {
-      LOG.error(e.getMessage());
+
+    // Commit only if at least one event was added
+    if (event != null) {
+      try {
+        solrClient.commit();
+        partitionCheckpoints.put(event.getPartition(),
+                                 new Checkpoint(event.getNextOffset(), event.getLogEvent().getTimeStamp()));
+      } catch (Exception e) {
+        LOG.error("Got exception while committing solr index", e);
+      }
     }
   }
 
@@ -126,6 +133,7 @@ public class LogIndexPlugin extends AbstractKafkaLogProcessor {
       if (checkPointWriter != null) {
         checkPointWriter.flush();
       }
+      solrClient.close();
     } catch (Throwable th) {
       LOG.error("Caught exception while closing Log metrics plugin {}", th.getMessage(), th);
     }
@@ -145,14 +153,17 @@ public class LogIndexPlugin extends AbstractKafkaLogProcessor {
     return this.checkpointManager;
   }
 
-  private String[] getIndexFields(KafkaLogEvent kafkaLogEvent, LoggingContext context) {
+  private Map<String, Object> getIndexFields(KafkaLogEvent kafkaLogEvent, LoggingContext context) {
     Map<String, String> tags = LoggingContextHelper.getMetricsTags(context);
     ILoggingEvent event = kafkaLogEvent.getLogEvent();
-    return new String[] {
-      "timestamp:" + event.getTimeStamp(),
-      "message:'" + event.getFormattedMessage(),
-      "level:" + event.getLevel(),
-      "namespace:" + tags.get(Constants.Metrics.Tag.NAMESPACE)
-    };
+    return ImmutableMap.<String, Object>builder()
+      .put("timestamp", event.getTimeStamp())
+      .put("message", event.getFormattedMessage())
+      .put("level", event.getLevel())
+      .put("namespace", tags.get(Constants.Metrics.Tag.NAMESPACE))
+      .put("application", tags.get(Constants.Metrics.Tag.APP))
+      .put("program", LoggingContextHelper.getProgramName(context))
+      .put("run", tags.get(Constants.Metrics.Tag.RUN_ID))
+      .build();
   }
 }

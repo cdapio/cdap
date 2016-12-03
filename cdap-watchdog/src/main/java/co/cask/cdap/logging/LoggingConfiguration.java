@@ -32,6 +32,7 @@ public final class LoggingConfiguration {
   public static final String LOG_PATTERN = "log.pattern";
   public static final String LOG_BASE_DIR = "log.base.dir";
   public static final String LOG_FILE_SYNC_INTERVAL_BYTES = "log.file.sync.interval.bytes";
+  public static final String SOLR_URL = "log.saver.solr.url";
 
   // Used only in Distributed mode
   public static final String NUM_PARTITIONS = "log.publish.num.partitions";

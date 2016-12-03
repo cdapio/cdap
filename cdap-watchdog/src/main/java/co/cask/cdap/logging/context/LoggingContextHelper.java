@@ -283,6 +283,26 @@ public final class LoggingContextHelper {
     }
   }
 
+  public static String getProgramName(LoggingContext loggingContext) {
+    final String tagname;
+    if (loggingContext instanceof FlowletLoggingContext) {
+      tagname = FlowletLoggingContext.TAG_FLOW_ID;
+    } else if (loggingContext instanceof WorkflowLoggingContext) {
+      tagname = WorkflowLoggingContext.TAG_WORKFLOW_ID;
+    } else if (loggingContext instanceof MapReduceLoggingContext) {
+      tagname = MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID;
+    } else if (loggingContext instanceof SparkLoggingContext) {
+      tagname = SparkLoggingContext.TAG_SPARK_JOB_ID;
+    } else if (loggingContext instanceof UserServiceLoggingContext) {
+      tagname = UserServiceLoggingContext.TAG_USER_SERVICE_ID;
+    } else if (loggingContext instanceof WorkerLoggingContext) {
+      tagname = WorkerLoggingContext.TAG_WORKER_ID;
+    } else {
+      throw new IllegalArgumentException(String.format("Invalid logging context: %s", loggingContext));
+    }
+    return loggingContext.getSystemTagsMap().get(tagname).getValue();
+  }
+
   public static LoggingContext.SystemTag getEntityId(LoggingContext loggingContext) {
     final String tagName;
     if (loggingContext instanceof FlowletLoggingContext) {
