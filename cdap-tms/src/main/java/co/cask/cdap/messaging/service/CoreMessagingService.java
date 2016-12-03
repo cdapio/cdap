@@ -35,7 +35,10 @@ import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.google.common.base.Objects;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -65,6 +68,20 @@ import javax.annotation.concurrent.ThreadSafe;
 public class CoreMessagingService extends AbstractIdleService implements MessagingService {
 
   private static final Logger LOG = LoggerFactory.getLogger(CoreMessagingService.class);
+
+  private static final Function<String, TopicId> CONVERT_TO_TOPICID = new Function<String, TopicId>() {
+    @Nullable
+    @Override
+    public TopicId apply(@Nullable String input) {
+      if (!Strings.isNullOrEmpty(input)) {
+        int index = input.indexOf(':');
+        String namespace = input.substring(0, index);
+        String topic = input.substring(index + 1);
+        return new TopicId(namespace, topic);
+      }
+      return null;
+    }
+  };
 
   private final CConfiguration cConf;
   private final TableFactory tableFactory;
@@ -211,6 +228,18 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   protected void startUp() throws Exception {
     LOG.info("Core Messaging Service started");
+    String topicProperty = cConf.get(Constants.MessagingSystem.STARTUP_TOPIC_CREATION_LIST);
+    if (!Strings.isNullOrEmpty(topicProperty)) {
+      Iterable<String> topicList = Splitter.on(',').omitEmptyStrings().split(topicProperty);
+      for (String topic : topicList) {
+        TopicId topicId = CONVERT_TO_TOPICID.apply(topic);
+        try {
+          createTopic(new TopicMetadata(topicId));
+        } catch (TopicAlreadyExistsException ex) {
+          LOG.trace("Topic {} already exists. So the exception can be ignored.", topicId, ex);
+        }
+      }
+    }
   }
 
   @Override

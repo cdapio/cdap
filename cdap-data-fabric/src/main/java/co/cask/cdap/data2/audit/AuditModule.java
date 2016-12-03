@@ -80,7 +80,7 @@ public class AuditModule extends RuntimeModule {
     @Override
     public AuditPublisher get() {
       if (cConf.getBoolean(Constants.Audit.ENABLED, false)) {
-        return injector.getInstance(KafkaAuditPublisher.class);
+        return injector.getInstance(TMSAuditPublisher.class);
       }
       return injector.getInstance(NoOpAuditPublisher.class);
     }

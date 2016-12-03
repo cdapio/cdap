@@ -1223,6 +1223,13 @@
     </description>
   </property>
 
+  <property>
+    <name>messaging.startup.topic.creation.list</name>
+    <value>system:audit</value>
+    <description>
+      Comma separated topics to be created during startup. ':' is used to separate namespace and topic.
+    </description>
+  </property>
 
   <!-- Metadata Configuration -->
 

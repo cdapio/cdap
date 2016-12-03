@@ -1106,6 +1106,9 @@ public final class Constants {
 
     // The guice binding name for http handler used by the messaging system
     public static final String HANDLER_BINDING_NAME = "messaging.http.handler";
+
+    // List of topics to be created during startup
+    public static final String STARTUP_TOPIC_CREATION_LIST = "messaging.startup.topic.creation.list";
   }
 
   /**
