@@ -51,7 +51,7 @@
               <!--
               FIXME: We need to rename this widget to code-editor and have a mode.
               -->
-              <fieldset ng-disabled="isDisabled" ng-if="(['javascript-editor', 'python-editor'].indexOf(field['widget-type']) === -1)">
+              <fieldset ng-disabled="isDisabled" ng-if="(['javascript-editor', 'python-editor', 'java-editor'].indexOf(field['widget-type']) === -1)">
                 <div data-name="field"
                      class="my-widget-container"
                      ng-class="{'select-wrapper': field.widget === 'select'}"
@@ -71,7 +71,7 @@
                 ace-editor requires 'onFocus' event to enable copy paste functionality as part of the directive. When we wrap everything in <fieldset>
                 and disable it in published mode the 'onFocus' event doesn't gets propagated to its children ergo ace-editor not knowing about 'onFocus' event. This prevents the user from copying the snippet (CMD + C) from the editor in published mode. Source JIRA: https://issues.cask.co/browse/CDAP-6074
               -->
-              <div ng-if="(['javascript-editor', 'python-editor'].indexOf(field['widget-type']) !== -1)">
+              <div ng-if="(['javascript-editor', 'python-editor', 'java-editor'].indexOf(field['widget-type']) !== -1)">
                 <div data-name="field"
                      class="my-widget-container"
                      ng-class="{'select-wrapper': field.widget === 'select'}"
