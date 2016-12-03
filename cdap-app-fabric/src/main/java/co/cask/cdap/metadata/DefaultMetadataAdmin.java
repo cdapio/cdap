@@ -17,11 +17,13 @@
 package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
+import co.cask.cdap.common.security.AuthEnforce;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.EntityId;
@@ -30,6 +32,7 @@ import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
+import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -77,7 +80,9 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public void addProperties(NamespacedEntityId namespacedEntityId, Map<String, String> properties)
+  @AuthEnforce(entities = "namespacedEntityId", enforceOn = NamespacedEntityId.class, actions = Action.ADMIN)
+  public void addProperties(@Name("namespacedEntityId") NamespacedEntityId namespacedEntityId,
+                            Map<String, String> properties)
     throws NotFoundException, InvalidMetadataException {
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     validateProperties(namespacedEntityId, properties);
@@ -85,7 +90,8 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public void addTags(NamespacedEntityId namespacedEntityId, String... tags)
+  @AuthEnforce(entities = "namespacedEntityId", enforceOn = NamespacedEntityId.class, actions = Action.ADMIN)
+  public void addTags(@Name("namespacedEntityId") NamespacedEntityId namespacedEntityId, String... tags)
     throws NotFoundException, InvalidMetadataException {
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     validateTags(namespacedEntityId, tags);
@@ -119,13 +125,17 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public Set<String> getTags(NamespacedEntityId namespacedEntityId) throws NotFoundException {
+  @AuthEnforce(entities = "namespacedEntityId", enforceOn = NamespacedEntityId.class, actions = Action.READ)
+  public Set<String> getTags(@Name("namespacedEntityId") NamespacedEntityId namespacedEntityId)
+          throws NotFoundException {
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     return metadataStore.getTags(namespacedEntityId);
   }
 
   @Override
-  public Set<String> getTags(MetadataScope scope, NamespacedEntityId namespacedEntityId) throws NotFoundException {
+  @AuthEnforce(entities = "namespacedEntityId", enforceOn = NamespacedEntityId.class, actions = Action.READ)
+  public Set<String> getTags(MetadataScope scope, @Name("namespacedEntityId") NamespacedEntityId namespacedEntityId)
+          throws NotFoundException {
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     return metadataStore.getTags(scope, namespacedEntityId);
   }
@@ -149,13 +159,16 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public void removeTags(NamespacedEntityId namespacedEntityId) throws NotFoundException {
+  @AuthEnforce(entities = "namespacedEntityId", enforceOn = NamespacedEntityId.class, actions = Action.ADMIN)
+  public void removeTags(@Name("namespacedEntityId") NamespacedEntityId namespacedEntityId) throws NotFoundException {
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     metadataStore.removeTags(MetadataScope.USER, namespacedEntityId);
   }
 
   @Override
-  public void removeTags(NamespacedEntityId namespacedEntityId, String... tags) throws NotFoundException {
+  @AuthEnforce(entities = "namespacedEntityId", enforceOn = NamespacedEntityId.class, actions = Action.ADMIN)
+  public void removeTags(@Name("namespacedEntityId") NamespacedEntityId namespacedEntityId, String... tags)
+          throws NotFoundException {
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     metadataStore.removeTags(MetadataScope.USER, namespacedEntityId, tags);
   }

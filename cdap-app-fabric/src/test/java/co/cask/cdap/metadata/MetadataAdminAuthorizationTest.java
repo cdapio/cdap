@@ -20,10 +20,14 @@ import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.test.AppJarHelper;
+import co.cask.cdap.common.test.TestRunner;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -31,6 +35,7 @@ import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -41,20 +46,24 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * Test authorization for metadata
  */
+@RunWith(TestRunner.class)
 public class MetadataAdminAuthorizationTest {
 
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
   private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
+  private static final Principal BOB = new Principal("bob", Principal.PrincipalType.USER);
 
   private static CConfiguration cConf;
   private static MetadataAdmin metadataAdmin;
@@ -74,13 +83,60 @@ public class MetadataAdminAuthorizationTest {
   @Test
   public void testSearch() throws Exception {
     SecurityRequestContext.setUserId(ALICE.getName());
+    authorizer.grant(new InstanceId(cConf.get(Constants.INSTANCE_NAME)), ALICE, Collections.singleton(Action.ADMIN));
     authorizer.grant(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.WRITE));
-    AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, "{}", cConf);
+    AppFabricTestHelper.deployApplication(NamespaceId.DEFAULT.toId(), AllProgramsApp.class, "{}", cConf);
+    ApplicationId appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), AllProgramsApp.NAME);
     Assert.assertFalse(metadataAdmin.searchMetadata(NamespaceId.DEFAULT.getNamespace(), "*",
-                                                    EnumSet.allOf(MetadataSearchTargetType.class)).isEmpty());
+            EnumSet.allOf(MetadataSearchTargetType.class)).isEmpty());
     SecurityRequestContext.setUserId("bob");
     Assert.assertTrue(metadataAdmin.searchMetadata(NamespaceId.DEFAULT.getNamespace(), "*",
-                                                   EnumSet.allOf(MetadataSearchTargetType.class)).isEmpty());
+            EnumSet.allOf(MetadataSearchTargetType.class)).isEmpty());
+
+    // Bob should not be able to add a tag
+    try {
+      metadataAdmin.addTags(appId, "someTag");
+      Assert.fail("Adding tag should have failed since bob does not have ADMIN on entity");
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof UnauthorizedException);
+    }
+
+    // Alice should be able to add a tag
+    SecurityRequestContext.setUserId(ALICE.getName());
+    metadataAdmin.addTags(appId, "someTag");
+    Set<String> tags = metadataAdmin.getTags(MetadataScope.USER, appId);
+    Assert.assertTrue(tags.contains("someTag"));
+
+    // Bob should not be able to get the tag since he does not have READ on the entity
+    SecurityRequestContext.setUserId(BOB.getName());
+    try {
+      metadataAdmin.getTags(MetadataScope.USER, appId);
+      Assert.fail("Adding tag should have failed since bob does not have ADMIN on entity");
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof UnauthorizedException);
+    }
+
+    // Bob should not be able to remove the tag since he does not have ADMIN on the entity
+    try {
+      metadataAdmin.removeTags(appId, "someTag");
+      Assert.fail("Adding tag should have failed since bob does not have ADMIN on entity");
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof UnauthorizedException);
+    }
+
+    // Give bob read on the entity and he should be able to get the tag
+    SecurityRequestContext.setUserId(ALICE.getName());
+    authorizer.grant(appId, BOB, Collections.singleton(Action.READ));
+
+    SecurityRequestContext.setUserId(BOB.getName());
+    tags = metadataAdmin.getTags(MetadataScope.USER, appId);
+    Assert.assertTrue(tags.contains("someTag"));
+
+    // But Alice should be able to remove the tag
+    SecurityRequestContext.setUserId(ALICE.getName());
+    metadataAdmin.removeTags(appId, "someTag");
+    tags = metadataAdmin.getTags(MetadataScope.USER, appId);
+    Assert.assertFalse(tags.contains("someTag"));
   }
 
   @AfterClass
