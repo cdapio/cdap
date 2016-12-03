@@ -30,6 +30,14 @@
       margin-bottom: 10px;
       width: 100%;
     }
+    .queries-table-wrapper {
+      margin-top: 10px;
+      // FIXME: MAGIC NUMBER Alert. This is BS and we need to figure out how to nest tables.
+      max-height: ~"calc(80vh - 225px)";
+      max-height: ~"-moz-calc(80vh - 225px)";
+      max-height: ~"-webkit-calc(80vh - 225px)";
+      overflow: auto;
+    }
     .queries-table {
       .btn-group {
         .btn.btn-default {

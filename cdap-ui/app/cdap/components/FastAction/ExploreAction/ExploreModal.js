@@ -267,36 +267,6 @@ export default class ExploreModal extends Component {
               onChange={this.onQueryStringChange}
             >
             </textarea>
-            <table className="table table-bordered queries-table">
-              <thead>
-                <tr>
-                  <th className="query-timestamp">Start time</th>
-                  <th className="query-status">Status</th>
-                  <th>SQL Query</th>
-                  <th className="query-actions">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-              {
-                !this.state.queries.length ?
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="text-center"
-                    > No Results</td>
-                  </tr>
-                :
-                  this.state
-                    .queries
-                    .map((query) => {
-                      if (query.preview || query.schema) {
-                        return renderPreviewRow(query);
-                      }
-                      return renderQueryRow(query);
-                    })
-              }
-              </tbody>
-            </table>
             <div className="clearfix">
               <button
                 className="btn btn-primary pull-right"
@@ -304,6 +274,38 @@ export default class ExploreModal extends Component {
               >
                 Execute
               </button>
+            </div>
+            <div className="queries-table-wrapper">
+              <table className="table table-bordered queries-table">
+                <thead>
+                  <tr>
+                    <th className="query-timestamp">Start time</th>
+                    <th className="query-status">Status</th>
+                    <th>SQL Query</th>
+                    <th className="query-actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {
+                  !this.state.queries.length ?
+                    <tr>
+                      <td
+                        colSpan="4"
+                        className="text-center"
+                      > No Results</td>
+                    </tr>
+                  :
+                    this.state
+                      .queries
+                      .map((query) => {
+                        if (query.preview || query.schema) {
+                          return renderPreviewRow(query);
+                        }
+                        return renderQueryRow(query);
+                      })
+                }
+                </tbody>
+              </table>
             </div>
           </div>
         </ModalBody>
