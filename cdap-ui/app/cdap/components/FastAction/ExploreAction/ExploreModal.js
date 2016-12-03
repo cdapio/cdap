@@ -24,6 +24,7 @@ import fileDownload from 'react-file-download';
 import {contructUrl, insertAt, removeAt, humanReadableDate} from 'services/helpers';
 import cookie from 'react-cookie';
 require('./ExploreModal.less');
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class ExploreModal extends Component {
   constructor(props) {
@@ -64,7 +65,7 @@ export default class ExploreModal extends Component {
   }
 
   submitQuery() {
-    let {namespace} = this.context.params;
+    let {selectedNamespace: namespace} = NamespaceStore.getState();
     myExploreApi
       .submitQuery({namespace}, {query: this.state.queryString})
       .flatMap((res) => {
@@ -76,7 +77,7 @@ export default class ExploreModal extends Component {
       });
   }
   fetchAndUpdateQueries() {
-    let {namespace} = this.context.params;
+    let {selectedNamespace: namespace} = NamespaceStore.getState();
     myExploreApi
       .fetchQueries({ namespace })
       .subscribe(
