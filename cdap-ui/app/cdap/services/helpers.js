@@ -16,7 +16,7 @@
 
 import isObject from 'lodash/isObject';
 import numeral from 'numeral';
-
+import moment from 'moment';
 
 /*
   Purpose: Query a json object or an array of json objects
@@ -78,6 +78,25 @@ function humanReadableNumber(num, type) {
   }
 
 }
+function humanReadableDate(date, isMilliseconds) {
+  const format = 'MM-DD-YYYY HH:mm:ss A';
+  if (isMilliseconds) {
+    return moment(date).format(format);
+  }
+  return (moment(date * 1000)).format(format);
+}
+
+function contructUrl ({path}) {
+  return [
+    window.CDAP_CONFIG.sslEnabled? 'https://': 'http://',
+    window.CDAP_CONFIG.cdap.routerServerUrl,
+    ':',
+    window.CDAP_CONFIG.sslEnabled? window.CDAP_CONFIG.cdap.routerSSLServerPort: window.CDAP_CONFIG.cdap.routerServerPort,
+    '/v3',
+    path
+  ].join('');
+}
+
 
 function convertBytesToHumanReadable(bytes) {
   if (!bytes || typeof bytes !== 'number') {
@@ -129,5 +148,7 @@ export {
   isDescendant,
   getArtifactNameAndVersion,
   insertAt,
-  removeAt
+  removeAt,
+  humanReadableDate,
+  contructUrl
 };

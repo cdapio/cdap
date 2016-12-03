@@ -12,10 +12,23 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
+import myExploreApi from 'api/explore';
+import ExploreTablesActions from 'services/ExploreTables/ExploreTablesActions';
 
-.create-stream-wizard {
-  .modal-body {
-    border: 1px solid #262933;
-  }
-}
+const fetchTables = (namespace) => {
+  return (dispatch) => {
+    return  myExploreApi
+      .fetchTables({ namespace })
+      .subscribe(res => {
+        dispatch({
+          type: ExploreTablesActions.SET_TABLES,
+          payload: {
+            tables: res
+          }
+        });
+      });
+  };
+};
+
+export {fetchTables};

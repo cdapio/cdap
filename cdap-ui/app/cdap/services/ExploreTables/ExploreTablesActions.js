@@ -14,8 +14,8 @@
  * the License.
  */
 
-.upload-data-wizard {
-  .modal-body {
-    border: 1px solid #262933;
-  }
-}
+const ExploreTablesActions = {
+  FETCH_TABLES: 'FETCH_TABLES',
+  SET_TABLES: 'SET_TABLES'
+};
+export default ExploreTablesActions;

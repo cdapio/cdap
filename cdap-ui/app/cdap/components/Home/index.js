@@ -26,6 +26,8 @@ import T from 'i18n-react';
 const shortid = require('shortid');
 const classNames = require('classnames');
 require('./Home.less');
+import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
+import {fetchTables} from 'services/ExploreTables/ActionCreator';
 
 const defaultFilter = ['app', 'dataset', 'stream'];
 
@@ -103,7 +105,13 @@ class Home extends Component {
 
   componentWillReceiveProps(nextProps) {
     this.search(this.state.query, this.state.filter, this.state.sortObj, nextProps.params.namespace);
+    // To enable explore fastaction on each card in home page.
+    ExploreTablesStore.dispatch(
+     fetchTables(nextProps.params.namespace)
+   );
   }
+
+
 
   //Update Store and State to correspond to query parameters before component renders
   componentWillMount() {
@@ -113,6 +121,11 @@ class Home extends Component {
         selectedNamespace: this.props.params.namespace
       }
     });
+
+     // To enable explore fastaction on each card in home page.
+     ExploreTablesStore.dispatch(
+      fetchTables(this.props.params.namespace)
+    );
 
     //Process and return valid query parameters
     let queryObject = this.getQueryObject();
