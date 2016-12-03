@@ -102,6 +102,16 @@ angular.module(PKG.name + '.commons')
           placeholder: '{{::myconfig["widget-attributes"].default}}'
         }
       },
+      'java-editor': {
+        element: '<div my-ace-editor></div>',
+        attributes: {
+          'ng-model': 'model',
+          'config': 'myconfig',
+          'mode': 'java',
+          'disabled': 'disabled',
+          placeholder: '{{::myconfig["widget-attributes"].default}}'
+        }
+      },
       'python-editor': {
         element: '<div my-ace-editor></div>',
         attributes: {
