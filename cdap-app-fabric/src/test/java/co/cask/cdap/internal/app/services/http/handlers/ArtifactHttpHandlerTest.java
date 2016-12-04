@@ -315,7 +315,8 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     artifactRepository.addArtifact(systemId, systemArtifact, Sets.<ArtifactRange>newHashSet());
 
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
-      systemId.getNamespace(), systemId.getName(), systemId.getVersion(), true, systemId.getVersion(), true));
+      systemId.getNamespace().toEntityId(), systemId.getName(),
+      systemId.getVersion(), true, systemId.getVersion(), true));
 
     Id.Namespace namespace1 = Id.Namespace.from("ns1");
     Id.Namespace namespace2 = Id.Namespace.from("ns2");
@@ -429,7 +430,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, CallablePlugin.class.getPackage().getName());
     Id.Artifact plugins3Id = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins3", "1.0.0");
     Set<ArtifactRange> plugins3Parents = Sets.newHashSet(new ArtifactRange(
-      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                         addPluginArtifact(plugins3Id, CallablePlugin.class, manifest,
                                           plugins3Parents).getStatusLine().getStatusCode());
@@ -450,7 +451,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, CallingPlugin.class.getPackage().getName());
     Id.Artifact plugins4Id = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins4", "1.0.0");
     Set<ArtifactRange> plugins4Parents = Sets.newHashSet(new ArtifactRange(
-      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                         addPluginArtifact(plugins4Id, CallingPlugin.class, manifest,
                                           plugins4Parents).getStatusLine().getStatusCode());
@@ -465,7 +466,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, PluginWithPojo.class.getPackage().getName());
     Id.Artifact plugins5Id = Id.Artifact.from(Id.Namespace.DEFAULT, "aggregator", "1.0.0");
     Set<ArtifactRange> plugins5Parents = Sets.newHashSet(new ArtifactRange(
-      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                         addPluginArtifact(plugins5Id, PluginWithPojo.class, manifest,
                                           plugins5Parents).getStatusLine().getStatusCode());
@@ -492,7 +493,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, InvalidPlugin.class.getPackage().getName());
     Id.Artifact invalidPluginId = Id.Artifact.from(Id.Namespace.DEFAULT, "invalid", "1.0.0");
     Set<ArtifactRange> invalidPluginParents = Sets.newHashSet(new ArtifactRange(
-      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(),
                         addPluginArtifact(invalidPluginId, InvalidPlugin.class, manifest,
                                           invalidPluginParents).getStatusLine().getStatusCode());
@@ -503,7 +504,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
                                      InvalidPluginMethodParams.class.getPackage().getName());
     invalidPluginId = Id.Artifact.from(Id.Namespace.DEFAULT, "invalidParams", "1.0.0");
     invalidPluginParents = Sets.newHashSet(new ArtifactRange(
-      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(),
                         addPluginArtifact(invalidPluginId, InvalidPluginMethodParams.class, manifest,
                                           invalidPluginParents).getStatusLine().getStatusCode());
@@ -515,7 +516,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
                                      InvalidPluginMethodParamType.class.getPackage().getName());
     invalidPluginId = Id.Artifact.from(Id.Namespace.DEFAULT, "invalidParamType", "1.0.0");
     invalidPluginParents = Sets.newHashSet(new ArtifactRange(
-      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(),
                         addPluginArtifact(invalidPluginId, InvalidPluginMethodParamType.class, manifest,
                                           invalidPluginParents).getStatusLine().getStatusCode());
@@ -528,7 +529,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
                                      PluginEndpointContextTestPlugin.class.getPackage().getName());
     Id.Artifact validPluginId = Id.Artifact.from(Id.Namespace.DEFAULT, "extender", "1.0.0");
     Set<ArtifactRange> validPluginParents = Sets.newHashSet(new ArtifactRange(
-      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                         addPluginArtifact(validPluginId, PluginEndpointContextTestPlugin.class, manifest,
                                           validPluginParents).getStatusLine().getStatusCode());
@@ -551,7 +552,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
     Id.Artifact pluginsId1 = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "1.0.0");
     Set<ArtifactRange> plugins1Parents = Sets.newHashSet(new ArtifactRange(
-      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                         addPluginArtifact(pluginsId1, Plugin1.class, manifest,
                                           plugins1Parents).getStatusLine().getStatusCode());
@@ -559,7 +560,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     // plugin-2.0.0 extends wordcount[1.0.0,3.0.0)
     Id.Artifact pluginsId2 = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "2.0.0");
     Set<ArtifactRange> plugins2Parents = Sets.newHashSet(new ArtifactRange(
-      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("3.0.0")));
+      NamespaceId.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("3.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                         addPluginArtifact(pluginsId2, Plugin1.class, manifest,
                                           plugins2Parents).getStatusLine().getStatusCode());

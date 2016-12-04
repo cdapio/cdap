@@ -287,7 +287,7 @@ public class IntegrationTestManager implements TestManager {
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
-      Ids.namespace(parent.getNamespace()).toId(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
+      parent.getParent(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
       true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, pluginClass, pluginClasses);
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
@@ -328,7 +328,7 @@ public class IntegrationTestManager implements TestManager {
                                            Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
-      Ids.namespace(parent.getNamespace()).toId(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
+      parent.getParent(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
       true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, additionalPlugins, pluginClass, pluginClasses);
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);

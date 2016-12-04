@@ -759,15 +759,14 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         try {
           range = ArtifactRange.parse(parent);
           // only support extending an artifact that is in the same namespace, or system namespace
-          if (!range.getNamespace().equals(Id.Namespace.SYSTEM) &&
-            !range.getNamespace().equals(namespace.toId())) {
+          if (!NamespaceId.SYSTEM.equals(range.getNamespace()) && !namespace.equals(range.getNamespace())) {
             throw new BadRequestException(
               String.format("Parent artifact %s must be in the same namespace or a system artifact.", parent));
           }
         } catch (InvalidArtifactRangeException e) {
           // if this failed, try parsing as a non-namespaced range like etl-batch[1.0.0,2.0.0)
           try {
-            range = ArtifactRange.parse(namespace.toId(), parent);
+            range = ArtifactRange.parse(namespace, parent);
           } catch (InvalidArtifactRangeException e1) {
             throw new BadRequestException(String.format("Invalid artifact range %s: %s", parent, e1.getMessage()));
           }

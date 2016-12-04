@@ -22,6 +22,7 @@ import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -46,8 +47,8 @@ public class ArtifactConfigReaderTest {
   public void testRead() throws IOException, InvalidArtifactException {
     ArtifactConfig validConfig = new ArtifactConfig(
       ImmutableSet.of(
-        new ArtifactRange(Id.Namespace.SYSTEM, "a", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")),
-        new ArtifactRange(Id.Namespace.DEFAULT, "b", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))
+        new ArtifactRange(NamespaceId.SYSTEM, "a", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")),
+        new ArtifactRange(NamespaceId.DEFAULT, "b", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))
       ),
       ImmutableSet.of(
         new PluginClass("type", "name", "desc", "classname", null, ImmutableMap.of(
@@ -72,7 +73,7 @@ public class ArtifactConfigReaderTest {
   public void testInvalidParentNamespace() throws IOException, InvalidArtifactException {
     ArtifactConfig badConfig = new ArtifactConfig(
       ImmutableSet.of(
-        new ArtifactRange(Id.Namespace.DEFAULT, "b", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))
+        new ArtifactRange(NamespaceId.DEFAULT, "b", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))
       ),
       ImmutableSet.<PluginClass>of(),
       ImmutableMap.<String, String>of());
