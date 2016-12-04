@@ -42,6 +42,7 @@ import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -114,7 +115,8 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test adding an artifact that extends a non-existent artifact
     Set<ArtifactRange> parents = Sets.newHashSet(
-      new ArtifactRange(ghostId.getNamespace(), ghostId.getName(), new ArtifactVersion("1"), new ArtifactVersion("2")));
+      new ArtifactRange(ghostId.getNamespace().toEntityId(), ghostId.getName(),
+                        new ArtifactVersion("1"), new ArtifactVersion("2")));
     try {
       artifactClient.add(Id.Namespace.DEFAULT, "abc", DUMMY_SUPPLIER, "1.0.0", parents);
       Assert.fail();
@@ -167,7 +169,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
   public void testAddSelfExtendingThrowsBadRequest() throws Exception {
     try {
       artifactClient.add(Id.Namespace.DEFAULT, "abc", DUMMY_SUPPLIER, "1.0.0", Sets.newHashSet(
-        new ArtifactRange(Id.Namespace.DEFAULT, "abc", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))
+        new ArtifactRange(NamespaceId.DEFAULT, "abc", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))
       ));
       Assert.fail();
     } catch (BadRequestException e) {
@@ -215,7 +217,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
       }
     };
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
-      myapp2Id.getNamespace(), myapp2Id.getName(), myapp2Id.getVersion(), new ArtifactVersion("3.0.0")));
+      myapp2Id.getNamespace().toEntityId(), myapp2Id.getName(), myapp2Id.getVersion(), new ArtifactVersion("3.0.0")));
     Set<PluginClass> additionalPlugins = Sets.newHashSet(new PluginClass(
       "jdbc", "mysql", "", "com.mysql.jdbc.Driver", null, Collections.<String, PluginPropertyField>emptyMap()));
     artifactClient.add(pluginId.getNamespace(), pluginId.getName(), inputSupplier,

@@ -50,7 +50,6 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.ArtifactManagerFactory;
@@ -288,7 +287,7 @@ public class UnitTestManager implements TestManager {
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
-      Ids.namespace(parent.getNamespace()).toId(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
+      parent.getParent(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
       true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, pluginClass, pluginClasses);
     return artifactManagerFactory.create(artifactId);
@@ -322,7 +321,7 @@ public class UnitTestManager implements TestManager {
                                            Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
-      Ids.namespace(parent.getNamespace()).toId(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
+      parent.getParent(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
       true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, additionalPlugins, pluginClass, pluginClasses);
     return artifactManagerFactory.create(artifactId);

@@ -234,7 +234,7 @@ public class ArtifactStore {
         @Override
         public List<ArtifactDetail> call(DatasetContext context) throws Exception {
           List<ArtifactDetail> artifacts = Lists.newArrayList();
-          ArtifactKey artifactKey = new ArtifactKey(range.getNamespace().toEntityId(), range.getName());
+          ArtifactKey artifactKey = new ArtifactKey(range.getNamespace(), range.getName());
 
           Row row = getMetaTable(context).get(artifactKey.getRowKey());
           for (Map.Entry<byte[], byte[]> columnEntry : row.getColumns().entrySet()) {
@@ -820,7 +820,7 @@ public class ArtifactStore {
       for (ArtifactRange artifactRange : data.meta.getUsableBy()) {
         // p:{namespace}:{type}:{name}
         PluginKey pluginKey = new PluginKey(
-          artifactRange.getNamespace(), artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
+          artifactRange.getNamespace().toId(), artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
 
         byte[] pluginDataBytes = Bytes.toBytes(
           GSON.toJson(new PluginData(pluginClass, artifactRange, artifactLocation)));
@@ -851,7 +851,7 @@ public class ArtifactStore {
       for (ArtifactRange artifactRange : oldMeta.meta.getUsableBy()) {
         // p:{namespace}:{type}:{name}
         PluginKey pluginKey = new PluginKey(
-          artifactRange.getNamespace(), artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
+          artifactRange.getNamespace().toId(), artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
         table.delete(pluginKey.getRowKey(), artifactColumn);
       }
     }

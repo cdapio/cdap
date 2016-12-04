@@ -20,6 +20,7 @@ import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,8 +33,8 @@ public class ArtifactRangeTest {
 
   @Test
   public void testWhitespace() throws InvalidArtifactRangeException {
-    ArtifactRange range = ArtifactRange.parse(Id.Namespace.DEFAULT, "name[ 1.0.0 , 2.0.0 )");
-    Assert.assertEquals(new ArtifactRange(Id.Namespace.DEFAULT, "name",
+    ArtifactRange range = ArtifactRange.parse(NamespaceId.DEFAULT, "name[ 1.0.0 , 2.0.0 )");
+    Assert.assertEquals(new ArtifactRange(NamespaceId.DEFAULT, "name",
                                           new ArtifactVersion("1.0.0"), true,
                                           new ArtifactVersion("2.0.0"), false),
                         range);
@@ -41,7 +42,7 @@ public class ArtifactRangeTest {
 
   @Test
   public void testIsInRange() {
-    ArtifactRange range = new ArtifactRange(Id.Namespace.DEFAULT, "test",
+    ArtifactRange range = new ArtifactRange(NamespaceId.DEFAULT, "test",
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
 
     Assert.assertFalse(range.versionIsInRange(new ArtifactVersion("0.0.9")));
@@ -65,14 +66,14 @@ public class ArtifactRangeTest {
 
   @Test
   public void testVersionParse() throws InvalidArtifactRangeException {
-    ArtifactRange expected = new ArtifactRange(Id.Namespace.DEFAULT, "test",
+    ArtifactRange expected = new ArtifactRange(NamespaceId.DEFAULT, "test",
       new ArtifactVersion("1.0.0"), true, new ArtifactVersion("2.0.0-SNAPSHOT"), false);
-    ArtifactRange actual = ArtifactRange.parse(Id.Namespace.DEFAULT, "test[1.0.0,2.0.0-SNAPSHOT)");
+    ArtifactRange actual = ArtifactRange.parse(NamespaceId.DEFAULT, "test[1.0.0,2.0.0-SNAPSHOT)");
     Assert.assertEquals(expected, actual);
 
-    expected = new ArtifactRange(Id.Namespace.DEFAULT, "test",
+    expected = new ArtifactRange(NamespaceId.DEFAULT, "test",
       new ArtifactVersion("0.1.0-SNAPSHOT"), false, new ArtifactVersion("1.0.0"), true);
-    actual = ArtifactRange.parse(Id.Namespace.DEFAULT, "test(0.1.0-SNAPSHOT,1.0.0]");
+    actual = ArtifactRange.parse(NamespaceId.DEFAULT, "test(0.1.0-SNAPSHOT,1.0.0]");
     Assert.assertEquals(expected, actual);
 
     // test compatible with toString
@@ -92,7 +93,7 @@ public class ArtifactRangeTest {
 
     for (String invalidRange : invalidRanges) {
       try {
-        ArtifactRange.parse(Id.Namespace.DEFAULT, invalidRange);
+        ArtifactRange.parse(NamespaceId.DEFAULT, invalidRange);
         Assert.fail();
       } catch (InvalidArtifactRangeException e) {
         // expected
@@ -128,7 +129,7 @@ public class ArtifactRangeTest {
 
     for (String invalidRange : invalidRanges) {
       try {
-        ArtifactRange.parse(Id.Namespace.DEFAULT, invalidRange);
+        ArtifactRange.parse(NamespaceId.DEFAULT, invalidRange);
         Assert.fail();
       } catch (InvalidArtifactRangeException e) {
         // expected
