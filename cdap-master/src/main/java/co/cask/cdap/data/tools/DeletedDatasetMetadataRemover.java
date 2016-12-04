@@ -17,7 +17,9 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.DatasetId;
@@ -49,12 +51,12 @@ final class DeletedDatasetMetadataRemover {
     this.dsFramework = dsFramework;
   }
 
-  void remove() throws DatasetManagementException {
+  void remove() throws DatasetManagementException, BadRequestException {
     List<DatasetId> removedDatasets = new ArrayList<>();
     for (NamespaceMeta namespaceMeta : nsStore.list()) {
       Set<MetadataSearchResultRecord> searchResults =
-        metadataStore.searchMetadataOnType(namespaceMeta.getName(), "*",
-                                           ImmutableSet.of(MetadataSearchTargetType.DATASET));
+        metadataStore.search(namespaceMeta.getName(), "*",
+                             ImmutableSet.of(MetadataSearchTargetType.DATASET), SortInfo.DEFAULT);
       for (MetadataSearchResultRecord searchResult : searchResults) {
         NamespacedEntityId entityId = searchResult.getEntityId();
         Preconditions.checkState(entityId instanceof DatasetId,

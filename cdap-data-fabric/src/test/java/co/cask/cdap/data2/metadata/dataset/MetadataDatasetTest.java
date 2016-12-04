@@ -998,23 +998,13 @@ public class MetadataDatasetTest {
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        dataset.setProperty(flow1, "key", "value");
+        dataset.setProperty(flow1, "key", value);
         dataset.setProperty(flow1, AbstractSystemMetadataWriter.SCHEMA_KEY, schema);
         dataset.setProperty(dataset1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, name);
         dataset.setProperty(dataset1, AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(creationTime));
       }
     });
     final String namespaceId = flow1.getNamespace();
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        String searchQuery = namespaceId + MetadataDataset.KEYVALUE_SEPARATOR + value;
-        try (Scanner scan = dataset.searchByIndex(MetadataDataset.DEFAULT_INDEX_COLUMN, searchQuery)) {
-          Assert.assertNotNull(scan.next());
-          Assert.assertNull(scan.next());
-        }
-      }
-    });
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
@@ -1351,6 +1341,11 @@ public class MetadataDatasetTest {
     @Override
     public Set<String> getIndexes(MetadataEntry entry) {
       return ImmutableSet.of(reverse(entry.getKey()), reverse(entry.getValue()));
+    }
+
+    @Override
+    public SortInfo.SortOrder getSortOrder() {
+      return SortInfo.SortOrder.WEIGHTED;
     }
 
     private String reverse(String toReverse) {

@@ -20,6 +20,7 @@ import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.test.AppJarHelper;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.proto.Id;
@@ -76,11 +77,11 @@ public class MetadataAdminAuthorizationTest {
     SecurityRequestContext.setUserId(ALICE.getName());
     authorizer.grant(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.WRITE));
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, "{}", cConf);
-    Assert.assertFalse(metadataAdmin.searchMetadata(NamespaceId.DEFAULT.getNamespace(), "*",
-                                                    EnumSet.allOf(MetadataSearchTargetType.class)).isEmpty());
+    Assert.assertFalse(metadataAdmin.search(NamespaceId.DEFAULT.getNamespace(), "*",
+                                            EnumSet.allOf(MetadataSearchTargetType.class), SortInfo.DEFAULT).isEmpty());
     SecurityRequestContext.setUserId("bob");
-    Assert.assertTrue(metadataAdmin.searchMetadata(NamespaceId.DEFAULT.getNamespace(), "*",
-                                                   EnumSet.allOf(MetadataSearchTargetType.class)).isEmpty());
+    Assert.assertTrue(metadataAdmin.search(NamespaceId.DEFAULT.getNamespace(), "*",
+                                           EnumSet.allOf(MetadataSearchTargetType.class), SortInfo.DEFAULT).isEmpty());
   }
 
   @AfterClass

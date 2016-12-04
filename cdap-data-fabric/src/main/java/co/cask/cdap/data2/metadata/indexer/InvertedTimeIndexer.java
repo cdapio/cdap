@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.metadata.indexer;
 
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 
 import java.util.Collections;
 import java.util.Set;
@@ -36,5 +37,10 @@ public class InvertedTimeIndexer implements Indexer {
       throw new IllegalArgumentException("Expected value in InvertedTimeIndexer to be a long but found " + value);
     }
     return Collections.singleton(String.valueOf(Long.MAX_VALUE - creationTime));
+  }
+
+  @Override
+  public SortInfo.SortOrder getSortOrder() {
+    return SortInfo.SortOrder.DESC;
   }
 }

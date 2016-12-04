@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.metadata.indexer;
 
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 
 import java.util.Collections;
 import java.util.Set;
@@ -40,5 +41,10 @@ public class InvertedValueIndexer implements Indexer {
       reversed.append((char) inverted);
     }
     return reversed.toString();
+  }
+
+  @Override
+  public SortInfo.SortOrder getSortOrder() {
+    return SortInfo.SortOrder.DESC;
   }
 }
