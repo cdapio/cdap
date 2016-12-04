@@ -26,8 +26,6 @@ import cookie from 'react-cookie';
 
 import head from 'lodash/head';
 
-require('./UploadData.less');
-
 export default class UploadDataWizard extends Component {
   constructor(props) {
     super(props);
