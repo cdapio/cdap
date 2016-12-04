@@ -274,7 +274,8 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
     BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(programName, phase, spec.getResources(),
                                                        spec.getDriverResources(),
-                                                       spec.isStageLoggingEnabled(), phaseConnectorDatasets);
+                                                       spec.isStageLoggingEnabled(), phaseConnectorDatasets,
+                                                       spec.getNumOfRecordsPreview());
 
     // Custom action is the only phase in the pipeline which has no associated dag
     boolean hasCustomAction = batchPhaseSpec.getPhase().getSources().isEmpty()

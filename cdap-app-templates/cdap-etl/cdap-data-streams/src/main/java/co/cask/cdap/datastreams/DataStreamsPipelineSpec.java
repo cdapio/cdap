@@ -35,8 +35,8 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
   private DataStreamsPipelineSpec(Set<StageSpec> stages, Set<Connection> connections,
                                   Resources resources, Resources driverResources,
                                   boolean stageLoggingEnabled, long batchIntervalMillis,
-                                  String extraJavaOpts) {
-    super(stages, connections, resources, stageLoggingEnabled);
+                                  String extraJavaOpts, int numOfRecordsPreview) {
+    super(stages, connections, resources, stageLoggingEnabled, numOfRecordsPreview);
     this.driverResources = driverResources;
     this.batchIntervalMillis = batchIntervalMillis;
     this.extraJavaOpts = extraJavaOpts;
@@ -116,7 +116,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     public DataStreamsPipelineSpec build() {
       return new DataStreamsPipelineSpec(stages, connections, resources,
                                          driverResources == null ? resources : driverResources,
-                                         stageLoggingEnabled, batchIntervalMillis, extraJavaOpts);
+                                         stageLoggingEnabled, batchIntervalMillis, extraJavaOpts, numOfRecordsPreview);
     }
   }
 }
