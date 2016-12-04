@@ -36,11 +36,13 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -78,14 +80,13 @@ public abstract class AbstractMetadataClient {
    */
   public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
                                                @Nullable MetadataSearchTargetType target)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
     Set<MetadataSearchTargetType> targets = ImmutableSet.of();
     if (target != null) {
       targets = ImmutableSet.of(target);
     }
     return searchMetadata(namespace, query, targets);
   }
-
 
   /**
    * Searches entities in the specified namespace whose metadata matches the specified query.
@@ -97,14 +98,35 @@ public abstract class AbstractMetadataClient {
    */
   public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
                                                Set<MetadataSearchTargetType> targets)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
+    return searchMetadata(namespace, query, targets, null);
+  }
+
+  /**
+   * Searches entities in the specified namespace whose metadata matches the specified query.
+   *
+   * @param namespace the namespace to search in
+   * @param query the query string with which to search
+   * @param targets {@link MetadataSearchTargetType}s to search. If empty, all possible types will be searched
+   * @param sort specifies sort field and sort order
+   * @return A set of {@link MetadataSearchResultRecord} for the given query.
+   */
+  public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
+                                               Set<MetadataSearchTargetType> targets, String sort)
+    throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
 
     String path = String.format("metadata/search?query=%s", query);
     for (MetadataSearchTargetType t : targets) {
       path += "&target=" + t;
     }
+    if (sort != null) {
+      path += "&sort=" + URLEncoder.encode(sort, "UTF-8");
+    }
     URL searchURL = resolve(namespace, path);
-    HttpResponse response = execute(HttpRequest.get(searchURL).build());
+    HttpResponse response = execute(HttpRequest.get(searchURL).build(), HttpResponseStatus.BAD_REQUEST.getCode());
+    if (HttpResponseStatus.BAD_REQUEST.getCode() == response.getResponseCode()) {
+      throw new BadRequestException(response.getResponseBodyAsString());
+    }
     return GSON.fromJson(response.getResponseBodyAsString(), MetadataSearchResponse.class);
   }
 

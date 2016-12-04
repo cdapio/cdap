@@ -458,7 +458,15 @@ public abstract class MetadataTestBase extends ClientTestBase {
 
   protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
                                                            Set<MetadataSearchTargetType> targets) throws Exception {
-    return metadataClient.searchMetadata(namespaceId.toId(), query, targets).getResults();
+    // Note: Can't delegate this to the next method. This is because MetadataHttpHandlerTestRun overrides these two
+    // methods, to strip out metadata from search results for easier assertions.
+    return metadataClient.searchMetadata(namespaceId.toId(), query, targets, null).getResults();
+  }
+
+  protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
+                                                           Set<MetadataSearchTargetType> targets,
+                                                           @Nullable String sort) throws Exception {
+    return metadataClient.searchMetadata(namespaceId.toId(), query, targets, sort).getResults();
   }
 
   protected Set<String> getTags(ApplicationId app, MetadataScope scope) throws Exception {

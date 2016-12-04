@@ -16,7 +16,9 @@
 
 package co.cask.cdap.data2.metadata.store;
 
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -25,6 +27,7 @@ import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Defines operations on {@link MetadataDataset} for both system and user metadata.
@@ -158,40 +161,18 @@ public interface MetadataStore {
   void removeTags(MetadataScope scope, NamespacedEntityId namespacedEntityId, String ... tagsToRemove);
 
   /**
-   * Search the Metadata Dataset in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
-   */
-  Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery);
-
-  /**
-   * Search the Metadata Dataset in the specified {@link MetadataScope}.
-   *
-   * @param scope the {@link MetadataScope} to restrict the search to
-   * @param namespaceId the namespace to search in
-   * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value]
-   */
-  Set<MetadataSearchResultRecord> searchMetadata(MetadataScope scope, String namespaceId, String searchQuery);
-
-  /**
    * Search the Metadata Dataset for the specified target types in both {@link MetadataScope#USER} and
    * {@link MetadataScope#SYSTEM}.
    *
    * @param namespaceId the namespace to search in
    * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value]
    * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
+   * @param sortInfo represents sorting information. Use {@link SortInfo#DEFAULT} to return search results without
+   *                 sorting (which implies that the sort order is by relevance to the search query)
    */
-  Set<MetadataSearchResultRecord> searchMetadataOnType(String namespaceId, String searchQuery,
-                                                       Set<MetadataSearchTargetType> types);
-
-  /**
-   * Search the Metadata Dataset for the specified target types in the specified {@link MetadataScope}.
-   *
-   * @param scope the {@link MetadataScope} to restrict the search to
-   * @param namespaceId the namespace to search in
-   * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value]
-   * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
-   */
-  Set<MetadataSearchResultRecord> searchMetadataOnType(MetadataScope scope, String namespaceId, String searchQuery,
-                                                       Set<MetadataSearchTargetType> types);
+  Set<MetadataSearchResultRecord> search(String namespaceId, String searchQuery,
+                                         Set<MetadataSearchTargetType> types,
+                                         SortInfo sortInfo) throws BadRequestException;
 
   /**
    * Returns the snapshot of the metadata for entities on or before the given time in both {@link MetadataScope#USER}

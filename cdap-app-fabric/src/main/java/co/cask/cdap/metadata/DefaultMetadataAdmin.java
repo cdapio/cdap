@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
@@ -161,16 +162,10 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery,
-                                                        Set<MetadataSearchTargetType> types) throws Exception {
-
-    return filterAuthorizedSearchResult(metadataStore.searchMetadataOnType(namespaceId, searchQuery, types));
-  }
-
-  @Override
-  public Set<MetadataSearchResultRecord> searchMetadata(MetadataScope scope, String namespaceId, String searchQuery,
-                                                        Set<MetadataSearchTargetType> types) throws Exception {
-    return filterAuthorizedSearchResult(metadataStore.searchMetadataOnType(scope, namespaceId, searchQuery, types));
+  public Set<MetadataSearchResultRecord> search(String namespaceId, String searchQuery,
+                                                Set<MetadataSearchTargetType> types,
+                                                SortInfo sortInfo) throws Exception {
+    return filterAuthorizedSearchResult(metadataStore.search(namespaceId, searchQuery, types, sortInfo));
   }
 
   /**
