@@ -381,7 +381,7 @@ public class MetadataDataset extends AbstractDataset {
     // call remove metadata for tags which will delete all the existing indexes for tags of this targetId
     removeMetadata(targetId, TAGS_KEY);
     //check if tags are all deleted before set Tags, if tags are all deleted, a null value will be set to the targetId,
-    //which will give a NPE later when searchMetadataOnType.
+    //which will give a NPE later when search.
     if (!existingTags.isEmpty()) {
       setTags(targetId, Iterables.toArray(existingTags, String.class));
     }
@@ -532,24 +532,41 @@ public class MetadataDataset extends AbstractDataset {
    *                    at the end for a prefix search
    * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
    */
-  public List<MetadataEntry> search(String namespaceId, String searchQuery, Set<MetadataSearchTargetType> types) {
+  @VisibleForTesting
+  List<MetadataEntry> search(String namespaceId, String searchQuery, Set<MetadataSearchTargetType> types) {
+    return search(namespaceId, searchQuery, types, SortInfo.DEFAULT);
+  }
+
+  /**
+   * Searches entities that match the specified search query in the specified namespace and {@link NamespaceId#SYSTEM}
+   * for the specified {@link MetadataSearchTargetType}.
+   *
+   * @param namespaceId the namespace to search in
+   * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value] and can have '*'
+   *                    at the end for a prefix search
+   * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
+   * @param sortInfo the {@link SortInfo} to sort the results by
+   */
+  public List<MetadataEntry> search(String namespaceId, String searchQuery, Set<MetadataSearchTargetType> types,
+                                    SortInfo sortInfo) {
     boolean includeAllTypes = types.isEmpty() || types.contains(MetadataSearchTargetType.ALL);
     List<MetadataEntry> results = new ArrayList<>();
+    String indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
     for (String searchTerm : getSearchTerms(namespaceId, searchQuery)) {
       Scanner scanner;
       if (searchTerm.endsWith("*")) {
         // if prefixed search get start and stop key
         byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
         byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
-        scanner = indexedTable.scanByIndex(Bytes.toBytes(DEFAULT_INDEX_COLUMN), startKey, stopKey);
+        scanner = indexedTable.scanByIndex(Bytes.toBytes(indexColumn), startKey, stopKey);
       } else {
         byte[] value = Bytes.toBytes(searchTerm);
-        scanner = indexedTable.readByIndex(Bytes.toBytes(DEFAULT_INDEX_COLUMN), value);
+        scanner = indexedTable.readByIndex(Bytes.toBytes(indexColumn), value);
       }
       try {
         Row next;
         while ((next = scanner.next()) != null) {
-          String rowValue = next.getString(DEFAULT_INDEX_COLUMN);
+          String rowValue = next.getString(indexColumn);
           if (rowValue == null) {
             continue;
           }
@@ -585,7 +602,8 @@ public class MetadataDataset extends AbstractDataset {
    * </ol>t
    *
    * @param namespaceId the namespaceId to search in
-   * @param searchQuery the user specified search query
+   * @param searchQuery the user specified search query. If {@code *}, returns a singleton list containing
+   *                    {code *} which matches everything.
    * @return formatted search query which is namespaced
    */
   private Iterable<String> getSearchTerms(String namespaceId, String searchQuery) {
@@ -635,31 +653,37 @@ public class MetadataDataset extends AbstractDataset {
 
     for (Indexer indexer : indexers) {
       Set<String> indexes = indexer.getIndexes(metadataEntry);
+      String indexColumn = getIndexColumn(metadataKey, indexer.getSortOrder());
       for (String index : indexes) {
-        String indexColumn = getIndexColumn(metadataKey, indexer);
-        // store the index with key of the metadata, so that we allow searches of the form [key]:[value]
-        indexedTable.put(getIndexPut(targetId, metadataKey, metadataKey + KEYVALUE_SEPARATOR + index, indexColumn));
         // store just the index value
         indexedTable.put(getIndexPut(targetId, metadataKey, index, indexColumn));
       }
     }
   }
 
-  private String getIndexColumn(String key, Indexer indexer) {
+  private String getIndexColumn(String key, SortInfo.SortOrder sortOrder) {
     String indexColumn = DEFAULT_INDEX_COLUMN;
-    if (indexer instanceof ValueOnlyIndexer) {
-      switch (key) {
-        case AbstractSystemMetadataWriter.ENTITY_NAME_KEY:
-          indexColumn = ENTITY_NAME_INDEX_COLUMN;
-          break;
-        case AbstractSystemMetadataWriter.CREATION_TIME_KEY:
-          indexColumn = CREATION_TIME_INDEX_COLUMN;
-          break;
-      }
-    } else if (indexer instanceof InvertedValueIndexer) {
-      indexColumn = INVERTED_ENTITY_NAME_INDEX_COLUMN;
-    } else if (indexer instanceof InvertedTimeIndexer) {
-      indexColumn = INVERTED_CREATION_TIME_INDEX_COLUMN;
+    switch (sortOrder) {
+      case ASC:
+        switch (key) {
+          case AbstractSystemMetadataWriter.ENTITY_NAME_KEY:
+            indexColumn = ENTITY_NAME_INDEX_COLUMN;
+            break;
+          case AbstractSystemMetadataWriter.CREATION_TIME_KEY:
+            indexColumn = CREATION_TIME_INDEX_COLUMN;
+            break;
+        }
+        break;
+      case DESC:
+        switch (key) {
+          case AbstractSystemMetadataWriter.ENTITY_NAME_KEY:
+            indexColumn = INVERTED_ENTITY_NAME_INDEX_COLUMN;
+            break;
+          case AbstractSystemMetadataWriter.CREATION_TIME_KEY:
+            indexColumn = INVERTED_CREATION_TIME_INDEX_COLUMN;
+            break;
+        }
+        break;
     }
     return indexColumn;
   }
@@ -672,7 +696,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param index the index for this metadata
    * @param indexColumn the column to store the index in. This column should exist in the
    * {@link IndexedTable#INDEX_COLUMNS_CONF_KEY} property in the dataset's definition
-   * @return {@link Put} which is a index row with the value to be indexed in the {@link #DEFAULT_INDEX_COLUMN}
+   * @return {@link Put} which is a index row with the value to be indexed in the #indexColumn
    */
   private Put getIndexPut(NamespacedEntityId targetId, String metadataKey, String index, String indexColumn) {
     MDSKey mdsIndexKey = MdsKey.getMDSIndexKey(targetId, metadataKey, index.toLowerCase());
@@ -778,7 +802,11 @@ public class MetadataDataset extends AbstractDataset {
    * @return {@code true} if the row was deleted, {@code false} otherwise
    */
   private boolean deleteIndexRow(Row row) {
-    if (row.get(DEFAULT_INDEX_COLUMN) == null) {
+    if (row.get(DEFAULT_INDEX_COLUMN) == null &&
+      row.get(ENTITY_NAME_INDEX_COLUMN) == null &&
+      row.get(INVERTED_ENTITY_NAME_INDEX_COLUMN) == null &&
+      row.get(CREATION_TIME_INDEX_COLUMN) == null &&
+      row.get(INVERTED_CREATION_TIME_INDEX_COLUMN) == null) {
       return false;
     }
     indexedTable.delete(new Delete(row.getRow()));

@@ -18,6 +18,7 @@ package co.cask.cdap.metadata;
 
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -26,6 +27,7 @@ import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Interface that the {@link MetadataHttpHandler} uses to interact with Metadata.
@@ -153,27 +155,15 @@ public interface MetadataAdmin {
 
   /**
    * Executes a search for CDAP entities in the specified namespace with the specified search query and
-   * an optional set of {@link MetadataSearchTargetType entity types} in both
-   * {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
-   *
-   * @param namespaceId The namespace to filter the search by
-   * @param searchQuery The search query
-   * @param types The types of CDAP entity to be searched. If empty all possible types will be searched
-   * @return a {@link Set} containing a {@link MetadataSearchResultRecord} for each matching entity
-   */
-  Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery,
-                                                 Set<MetadataSearchTargetType> types) throws Exception;
-
-  /**
-   * Executes a search for CDAP entities in the specified namespace with the specified search query and
    * an optional set of {@link MetadataSearchTargetType entity types} in the specified {@link MetadataScope}.
    *
-   * @param scope the {@link MetadataScope} to restrict the search to
    * @param namespaceId The namespace id to filter the search by
    * @param searchQuery The search query
    * @param types The types of CDAP entity to be searched. If empty all possible types will be searched
+   * @param sortInfo represents sorting information. Use {@link SortInfo#DEFAULT} to return search results without
+   *                 sorting (which implies that the sort order is by relevance to the search query)
    * @return a {@link Set} containing a {@link MetadataSearchResultRecord} for each matching entity
    */
-  Set<MetadataSearchResultRecord> searchMetadata(MetadataScope scope, String namespaceId, String searchQuery,
-                                                 Set<MetadataSearchTargetType> types) throws Exception;
+  Set<MetadataSearchResultRecord> search(String namespaceId, String searchQuery, Set<MetadataSearchTargetType> types,
+                                         SortInfo sortInfo) throws Exception;
 }

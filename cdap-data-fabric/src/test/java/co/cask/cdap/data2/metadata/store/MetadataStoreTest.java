@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.metadata.store;
 
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -25,6 +26,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditType;
@@ -38,6 +40,7 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.Metadata;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
+import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -60,6 +63,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -235,7 +239,6 @@ public class MetadataStoreTest {
     boolean auditEnabled = cConf.getBoolean(Constants.Audit.ENABLED);
     cConf.setBoolean(Constants.Audit.ENABLED, false);
     generateMetadataUpdates();
-    String topic = cConf.get(Constants.Audit.KAFKA_TOPIC);
 
     try {
       List<AuditMessage> publishedAuditMessages = auditPublisher.popMessages();
@@ -280,7 +283,7 @@ public class MetadataStoreTest {
     store.setProperties(MetadataScope.USER, dataset1, datasetUserProps);
 
     // Test score and metadata match
-    List<MetadataSearchResultRecord> actual = Lists.newArrayList(store.searchMetadata("ns1", "value1 multiword:av2"));
+    List<MetadataSearchResultRecord> actual = Lists.newArrayList(search("ns1", "value1 multiword:av2"));
 
     Map<MetadataScope, Metadata> expectedFlowMetadata =
       ImmutableMap.of(MetadataScope.USER, new Metadata(flowUserProps, flowUserTags),
@@ -298,7 +301,7 @@ public class MetadataStoreTest {
       );
     Assert.assertEquals(expected, actual);
 
-    actual = Lists.newArrayList(store.searchMetadata("ns1", "value1 sValue*"));
+    actual = Lists.newArrayList(search("ns1", "value1 sValue*"));
     expected = Lists.newArrayList(
       new MetadataSearchResultRecord(stream1,
                                      expectedStreamMetadata),
@@ -309,13 +312,17 @@ public class MetadataStoreTest {
     );
     Assert.assertEquals(expected, actual);
 
-    actual = Lists.newArrayList(store.searchMetadata("ns1", "*"));
+    actual = Lists.newArrayList(search("ns1", "*"));
     Assert.assertTrue(actual.containsAll(expected));
   }
 
   @AfterClass
   public static void teardown() {
     txManager.stopAndWait();
+  }
+
+  private Set<MetadataSearchResultRecord> search(String namespace, String searchQuery) throws BadRequestException {
+    return store.search(namespace, searchQuery, EnumSet.allOf(MetadataSearchTargetType.class), SortInfo.DEFAULT);
   }
 
   private void generateMetadataUpdates() {

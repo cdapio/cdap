@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.metadata.indexer;
 
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 
 import java.util.Collections;
 import java.util.Set;
@@ -28,5 +29,10 @@ public class ValueOnlyIndexer implements Indexer {
   @Override
   public Set<String> getIndexes(MetadataEntry entry) {
     return Collections.singleton(entry.getValue());
+  }
+
+  @Override
+  public SortInfo.SortOrder getSortOrder() {
+    return SortInfo.SortOrder.ASC;
   }
 }
