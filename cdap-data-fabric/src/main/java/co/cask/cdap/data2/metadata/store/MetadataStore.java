@@ -22,12 +22,12 @@ import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Defines operations on {@link MetadataDataset} for both system and user metadata.
@@ -169,10 +169,19 @@ public interface MetadataStore {
    * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
    * @param sortInfo represents sorting information. Use {@link SortInfo#DEFAULT} to return search results without
    *                 sorting (which implies that the sort order is by relevance to the search query)
+   * @param offset the index to start with in the search results. To return results from the beginning, pass {@code 0}
+   * @param limit the number of results to return, starting from #offset. To return all, pass {@link Integer#MAX_VALUE}
+   * @param numCursors the number of cursors to return in the response. A cursor identifies the first index of the
+   *                   next page for pagination purposes
+   * @param cursor the cursor that acts as the starting index for the requested page. This is only applicable when
+   *               #sortInfo is not {@link SortInfo#DEFAULT}. If offset is also specified, it is applied starting at
+   *               the cursor. If {@code null}, the first row is used as the cursor
+   * @return the {@link MetadataSearchResponse} containing search results for the specified search query and filters
    */
-  Set<MetadataSearchResultRecord> search(String namespaceId, String searchQuery,
-                                         Set<MetadataSearchTargetType> types,
-                                         SortInfo sortInfo) throws BadRequestException;
+  MetadataSearchResponse search(String namespaceId, String searchQuery,
+                                Set<MetadataSearchTargetType> types,
+                                SortInfo sortInfo, int offset, int limit,
+                                int numCursors, String cursor) throws BadRequestException;
 
   /**
    * Returns the snapshot of the metadata for entities on or before the given time in both {@link MetadataScope#USER}

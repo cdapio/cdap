@@ -29,8 +29,8 @@ import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
+import co.cask.cdap.data2.metadata.dataset.SearchResults;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
-import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.DatasetId;
@@ -38,14 +38,13 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
-import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionExecutor;
@@ -57,16 +56,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link MetadataStore} used in distributed mode.
@@ -373,41 +370,55 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   @Override
-  public Set<MetadataSearchResultRecord> search(String namespaceId, String searchQuery,
-                                                Set<MetadataSearchTargetType> types,
-                                                SortInfo sortInfo) throws BadRequestException {
+  public MetadataSearchResponse search(String namespaceId, String searchQuery,
+                                       Set<MetadataSearchTargetType> types,
+                                       SortInfo sortInfo, int offset, int limit,
+                                       int numCursors, String cursor) throws BadRequestException {
+    Set<MetadataScope> searchScopes = EnumSet.allOf(MetadataScope.class);
     if ("*".equals(searchQuery)) {
-      if (!SortInfo.DEFAULT.equals(sortInfo)) {
-        return search(MetadataScope.SYSTEM, namespaceId, searchQuery, types, sortInfo);
+      if (SortInfo.DEFAULT.equals(sortInfo)) {
+        // Can't disallow this completely, because it is required for upgrade, but log a warning to indicate that
+        // a full index search should not be done in production.
+        LOG.warn("Attempt to search through all indexes. This query can have an adverse effect on performance and is " +
+                   "not recommended for production use. It is only meant to be used for administrative purposes " +
+                   "such as upgrade. To improve the performance of such queries, please specify sort parameters " +
+                   "as well.");
+      } else {
+        // when it is a known sort (stored sorted in the metadata dataset already), restrict it to system scope only
+        searchScopes = EnumSet.of(MetadataScope.SYSTEM);
       }
-      // Can't disallow this completely, because it is required for upgrade, but log a warning to indicate that
-      // a full index search should not be done in production.
-      LOG.warn("Attempt to search through all indexes. This query can have an adverse effect on performance and is " +
-                 "not recommended for production use. It is only meant to be used for administrative purposes " +
-                 "such as upgrade. To improve the performance of such queries, please specify sort parameters " +
-                 "as well.");
     }
-
-    return ImmutableSet.<MetadataSearchResultRecord>builder()
-      .addAll(search(MetadataScope.USER, namespaceId, searchQuery, types, sortInfo))
-      .addAll(search(MetadataScope.SYSTEM, namespaceId, searchQuery, types, sortInfo))
-      .build();
+    return search(searchScopes, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor);
   }
 
-  private Set<MetadataSearchResultRecord> search(final MetadataScope scope, final String namespaceId,
-                                                 final String searchQuery,
-                                                 final Set<MetadataSearchTargetType> types,
-                                                 final SortInfo sortInfo) throws BadRequestException {
-    // Execute search query
-    List<MetadataEntry> results = execute(
-      new TransactionExecutor.Function<MetadataDataset, List<MetadataEntry>>() {
-        @Override
-        public List<MetadataEntry> apply(MetadataDataset input) throws Exception {
-          return input.search(namespaceId, searchQuery, types, sortInfo);
-        }
-    }, scope);
+  private MetadataSearchResponse search(Set<MetadataScope> scopes, String namespaceId,
+                                        String searchQuery, Set<MetadataSearchTargetType> types,
+                                        SortInfo sortInfo, int offset, int limit,
+                                        int numCursors, String cursor) throws BadRequestException {
+    List<MetadataEntry> results = new ArrayList<>();
+    List<String> cursors = new ArrayList<>();
+    for (MetadataScope scope : scopes) {
+      SearchResults searchResults =
+        getSearchResults(scope, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor);
+      results.addAll(searchResults.getResults());
+      cursors.addAll(searchResults.getCursors());
+    }
 
+    // sort if required
     Set<NamespacedEntityId> sortedEntities = getSortedEntities(results, sortInfo);
+
+    if (SortInfo.DEFAULT.equals(sortInfo)) {
+      // pagination is not performed at the dataset level, because scoring is needed. So perform it here for now.
+      // TODO: Figure out how this can be done server-side as well
+      if (offset > sortedEntities.size()) {
+        sortedEntities = new LinkedHashSet<>();
+      } else {
+        sortedEntities = new LinkedHashSet<>(
+          ImmutableList.copyOf(sortedEntities).subList(offset, Math.min(offset + limit, sortedEntities.size()))
+        );
+      }
+      cursors = Collections.emptyList();
+    }
 
     // Fetch metadata for entities in the result list
     // Note: since the fetch is happening in a different transaction, the metadata for entities may have been
@@ -415,7 +426,24 @@ public class DefaultMetadataStore implements MetadataStore {
     Map<NamespacedEntityId, Metadata> systemMetadata = fetchMetadata(sortedEntities, MetadataScope.SYSTEM);
     Map<NamespacedEntityId, Metadata> userMetadata = fetchMetadata(sortedEntities, MetadataScope.USER);
 
-    return addMetadataToEntities(sortedEntities, systemMetadata, userMetadata);
+    return new MetadataSearchResponse(
+      sortInfo.getSortBy() + " " + sortInfo.getSortOrder(), offset, limit, results.size(),
+      addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors
+    );
+  }
+
+  private SearchResults getSearchResults(final MetadataScope scope, final String namespaceId,
+                                         final String searchQuery, final Set<MetadataSearchTargetType> types,
+                                         final SortInfo sortInfo, final int offset,
+                                         final int limit, final int numCursors,
+                                         final String cursor) throws BadRequestException {
+    return execute(
+      new TransactionExecutor.Function<MetadataDataset, SearchResults>() {
+        @Override
+        public SearchResults apply(MetadataDataset input) throws Exception {
+          return input.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor);
+        }
+      }, scope);
   }
 
   private Set<NamespacedEntityId> getSortedEntities(List<MetadataEntry> results, SortInfo sortInfo) {

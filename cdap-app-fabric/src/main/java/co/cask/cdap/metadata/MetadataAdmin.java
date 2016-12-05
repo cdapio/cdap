@@ -22,6 +22,7 @@ import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
@@ -157,13 +158,21 @@ public interface MetadataAdmin {
    * Executes a search for CDAP entities in the specified namespace with the specified search query and
    * an optional set of {@link MetadataSearchTargetType entity types} in the specified {@link MetadataScope}.
    *
-   * @param namespaceId The namespace id to filter the search by
-   * @param searchQuery The search query
-   * @param types The types of CDAP entity to be searched. If empty all possible types will be searched
+   * @param namespaceId the namespace id to filter the search by
+   * @param searchQuery the search query
+   * @param types the types of CDAP entity to be searched. If empty all possible types will be searched
    * @param sortInfo represents sorting information. Use {@link SortInfo#DEFAULT} to return search results without
    *                 sorting (which implies that the sort order is by relevance to the search query)
-   * @return a {@link Set} containing a {@link MetadataSearchResultRecord} for each matching entity
+   * @param offset the index to start with in the search results. To return results from the beginning, pass {@code 0}
+   * @param limit the number of results to return, starting from #offset. To return all, pass {@link Integer#MAX_VALUE}
+   * @param numCursors the number of cursors to return in the response. A cursor identifies the first index of the
+   *                   next page for pagination purposes
+   * @param cursor the cursor that acts as the starting index for the requested page. This is only applicable when
+   *               #sortInfo is not {@link SortInfo#DEFAULT}. If offset is also specified, it is applied starting at
+   *               the cursor. If {@code null}, the first row is used as the cursor
+   * @return the {@link MetadataSearchResponse} containing search results for the specified search query and filters
    */
-  Set<MetadataSearchResultRecord> search(String namespaceId, String searchQuery, Set<MetadataSearchTargetType> types,
-                                         SortInfo sortInfo) throws Exception;
+  MetadataSearchResponse search(String namespaceId, String searchQuery, Set<MetadataSearchTargetType> types,
+                                SortInfo sortInfo, int offset, int limit, int numCursors,
+                                String cursor) throws Exception;
 }

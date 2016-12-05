@@ -47,6 +47,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -531,65 +532,115 @@ public class MetadataDataset extends AbstractDataset {
    * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value] and can have '*'
    *                    at the end for a prefix search
    * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
+   * @param sortInfo the {@link SortInfo} to sort the results by
+   * @param offset index to start with in the search results. To return results from the beginning, pass {@code 0}.
+   *               Only applies when #sortInfo is not {@link SortInfo#DEFAULT}
+   * @param limit number of results to return, starting from #offset. To return all, pass {@link Integer#MAX_VALUE}.
+   *              Only applies when #sortInfo is not {@link SortInfo#DEFAULT}
+   * @param numCursors number of cursors to return in the response. A cursor identifies the first index of the
+   *                   next page for pagination purposes. Only applies when #sortInfo is not {@link SortInfo#DEFAULT}
+   * @param cursor the cursor that acts as the starting index for the requested page. This is only applicable when
+   *               #sortInfo is not {@link SortInfo#DEFAULT}. If offset is also specified, it is applied starting at
+   *               the cursor. If {@code null}, the first row is used as the cursor
+   * @return a {@link SearchResults} object containing a list of {@link MetadataEntry} containing each matching
+   *         {@link NamespacedEntityId} with its associated metadata. It also optionally contains a list of cursors
+   *         for subsequent queries to start with, if the specified #sortInfo is not {@link SortInfo#DEFAULT}.
    */
-  @VisibleForTesting
-  List<MetadataEntry> search(String namespaceId, String searchQuery, Set<MetadataSearchTargetType> types) {
-    return search(namespaceId, searchQuery, types, SortInfo.DEFAULT);
+  public SearchResults search(String namespaceId, String searchQuery, Set<MetadataSearchTargetType> types,
+                              SortInfo sortInfo, int offset, int limit, int numCursors,
+                              @Nullable String cursor) {
+    if (SortInfo.DEFAULT.equals(sortInfo)) {
+      return searchByDefaultIndex(namespaceId, searchQuery, types);
+    }
+    return searchByCustomIndex(namespaceId, types, sortInfo, offset, limit, numCursors, cursor);
   }
 
-  /**
-   * Searches entities that match the specified search query in the specified namespace and {@link NamespaceId#SYSTEM}
-   * for the specified {@link MetadataSearchTargetType}.
-   *
-   * @param namespaceId the namespace to search in
-   * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value] and can have '*'
-   *                    at the end for a prefix search
-   * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
-   * @param sortInfo the {@link SortInfo} to sort the results by
-   */
-  public List<MetadataEntry> search(String namespaceId, String searchQuery, Set<MetadataSearchTargetType> types,
-                                    SortInfo sortInfo) {
-    boolean includeAllTypes = types.isEmpty() || types.contains(MetadataSearchTargetType.ALL);
+  private SearchResults searchByDefaultIndex(String namespaceId, String searchQuery,
+                                             Set<MetadataSearchTargetType> types) {
     List<MetadataEntry> results = new ArrayList<>();
-    String indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
     for (String searchTerm : getSearchTerms(namespaceId, searchQuery)) {
       Scanner scanner;
       if (searchTerm.endsWith("*")) {
         // if prefixed search get start and stop key
         byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
         byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
-        scanner = indexedTable.scanByIndex(Bytes.toBytes(indexColumn), startKey, stopKey);
+        scanner = indexedTable.scanByIndex(Bytes.toBytes(DEFAULT_INDEX_COLUMN), startKey, stopKey);
       } else {
         byte[] value = Bytes.toBytes(searchTerm);
-        scanner = indexedTable.readByIndex(Bytes.toBytes(indexColumn), value);
+        scanner = indexedTable.readByIndex(Bytes.toBytes(DEFAULT_INDEX_COLUMN), value);
       }
       try {
         Row next;
         while ((next = scanner.next()) != null) {
-          String rowValue = next.getString(indexColumn);
-          if (rowValue == null) {
-            continue;
-          }
-
-          final byte[] rowKey = next.getRow();
-          String targetType = MdsKey.getTargetType(rowKey);
-
-          // Filter on target type if not set to include all types
-          if (!includeAllTypes &&
-            !types.contains(MetadataSearchTargetType.valueOfSerializedForm(targetType))) {
-            continue;
-          }
-
-          NamespacedEntityId targetId = MdsKey.getNamespacedIdFromKey(targetType, rowKey);
-          String key = MdsKey.getMetadataKey(targetType, rowKey);
-          MetadataEntry entry = getMetadata(targetId, key);
-          results.add(entry);
+          processRow(results, next, DEFAULT_INDEX_COLUMN, types);
         }
       } finally {
         scanner.close();
       }
     }
-    return results;
+    return new SearchResults(results, Collections.<String>emptyList());
+  }
+
+  private SearchResults searchByCustomIndex(String namespaceId, Set<MetadataSearchTargetType> types,
+                                            SortInfo sortInfo, int offset, int limit, int numCursors,
+                                            @Nullable String cursor) {
+    List<MetadataEntry> results = new ArrayList<>();
+    String indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
+    int fetchSize = offset + numCursors * limit;
+    List<String> cursors = new ArrayList<>(numCursors);
+    for (String searchTerm : getSearchTerms(namespaceId, "*")) {
+      byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
+      byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+      // if a cursor is provided, then start at the cursor
+      if (!Strings.isNullOrEmpty(cursor)) {
+        String namespaceInStartKey = searchTerm.substring(0, searchTerm.indexOf(KEYVALUE_SEPARATOR));
+        startKey = Bytes.toBytes(namespaceInStartKey + KEYVALUE_SEPARATOR + cursor);
+      }
+      // A cursor is the first element of the a chunk of ordered results. Since its always the first element,
+      // we want to add a key as a cursor, if upon dividing the current number of results by the chunk size,
+      // the remainder is 1. However, this is not true, when the chunk size is 1, since in that case, the
+      // remainder on division can never be 1, it is always 0.
+      int mod = limit == 1 ? 0 : 1;
+      try (Scanner scanner = indexedTable.scanByIndex(Bytes.toBytes(indexColumn), startKey, stopKey)) {
+        Row next;
+        int count = 0;
+        while ((next = scanner.next()) != null && count < fetchSize) {
+          // skip until we reach offset
+          if (count++ < offset) {
+            continue;
+          }
+          processRow(results, next, indexColumn, types);
+          if (results.size() % limit == mod && results.size() > limit) {
+            // add the cursor, with the namespace removed.
+            String cursorWithNamespace = Bytes.toString(next.get(indexColumn));
+            cursors.add(cursorWithNamespace.substring(cursorWithNamespace.indexOf(KEYVALUE_SEPARATOR) + 1));
+          }
+        }
+      }
+    }
+    return new SearchResults(results, cursors);
+  }
+
+  private void processRow(List<MetadataEntry> results, Row rowToProcess, String indexColumn,
+                             Set<MetadataSearchTargetType> entityFilter) {
+    String rowValue = rowToProcess.getString(indexColumn);
+    if (rowValue == null) {
+      return;
+    }
+
+    final byte[] rowKey = rowToProcess.getRow();
+    String targetType = MdsKey.getTargetType(rowKey);
+
+    // Filter on target type if not set to include all types
+    boolean includeAllTypes = entityFilter.isEmpty() || entityFilter.contains(MetadataSearchTargetType.ALL);
+    if (!includeAllTypes && !entityFilter.contains(MetadataSearchTargetType.valueOfSerializedForm(targetType))) {
+      return;
+    }
+
+    NamespacedEntityId targetId = MdsKey.getNamespacedIdFromKey(targetType, rowKey);
+    String key = MdsKey.getMetadataKey(targetType, rowKey);
+    MetadataEntry entry = getMetadata(targetId, key);
+    results.add(entry);
   }
 
   /**

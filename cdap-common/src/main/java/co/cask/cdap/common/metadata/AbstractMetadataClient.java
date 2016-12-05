@@ -99,7 +99,7 @@ public abstract class AbstractMetadataClient {
   public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
                                                Set<MetadataSearchTargetType> targets)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
-    return searchMetadata(namespace, query, targets, null);
+    return searchMetadata(namespace, query, targets, null, null);
   }
 
   /**
@@ -108,11 +108,13 @@ public abstract class AbstractMetadataClient {
    * @param namespace the namespace to search in
    * @param query the query string with which to search
    * @param targets {@link MetadataSearchTargetType}s to search. If empty, all possible types will be searched
-   * @param sort specifies sort field and sort order
+   * @param sort specifies sort field and sort order. If {@code null}, the sort order is by relevance
+   *
    * @return A set of {@link MetadataSearchResultRecord} for the given query.
    */
   public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
-                                               Set<MetadataSearchTargetType> targets, String sort)
+                                               Set<MetadataSearchTargetType> targets, @Nullable String sort,
+                                               @Nullable String cursor)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
 
     String path = String.format("metadata/search?query=%s", query);
@@ -121,6 +123,9 @@ public abstract class AbstractMetadataClient {
     }
     if (sort != null) {
       path += "&sort=" + URLEncoder.encode(sort, "UTF-8");
+    }
+    if (cursor != null) {
+      path += "&cursor=" + cursor;
     }
     URL searchURL = resolve(namespace, path);
     HttpResponse response = execute(HttpRequest.get(searchURL).build(), HttpResponseStatus.BAD_REQUEST.getCode());

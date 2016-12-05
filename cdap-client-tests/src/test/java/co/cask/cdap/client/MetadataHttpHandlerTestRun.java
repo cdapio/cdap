@@ -1155,12 +1155,12 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // create entities so system metadata is annotated
     // also ensure that they are created at least 1 ms apart
-    streamClient.create(stream.toId());
+    streamClient.create(stream);
     TimeUnit.MILLISECONDS.sleep(1);
-    streamViewClient.createOrUpdate(view.toId(), new ViewSpecification(new FormatSpecification("csv", null, null)));
+    streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("csv", null, null)));
     TimeUnit.MILLISECONDS.sleep(1);
     datasetClient.create(
-      dataset.toId(),
+      dataset,
       new DatasetInstanceConfiguration(Table.class.getName(), Collections.<String, String>emptyMap())
     );
 
@@ -1168,6 +1168,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     EnumSet<MetadataSearchTargetType> targets = EnumSet.allOf(MetadataSearchTargetType.class);
     try {
       searchMetadata(namespace, "*", targets, AbstractSystemMetadataWriter.ENTITY_NAME_KEY);
+      Assert.fail();
     } catch (BadRequestException e) {
       // expected
     }
@@ -1175,6 +1176,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // search with bad sort field
     try {
       searchMetadata(namespace, "*", targets, "name asc");
+      Assert.fail();
     } catch (BadRequestException e) {
       // expected
     }
@@ -1182,9 +1184,19 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // search with bad sort order
     try {
       searchMetadata(namespace, "*", targets, AbstractSystemMetadataWriter.ENTITY_NAME_KEY + " unknown");
+      Assert.fail();
     } catch (BadRequestException e) {
       // expected
     }
+
+    // search with cursor for relevance sort
+    try {
+      searchMetadata(NamespaceId.DEFAULT, "search*", EnumSet.allOf(MetadataSearchTargetType.class), null, 1, "cursor");
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
+
     // test ascending order of entity name
     Set<MetadataSearchResultRecord> searchResults =
       searchMetadata(namespace, "*", targets, AbstractSystemMetadataWriter.ENTITY_NAME_KEY + " asc");
@@ -1218,6 +1230,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       new MetadataSearchResultRecord(stream)
     );
     Assert.assertEquals(expected, new ArrayList<>(searchResults));
+
     // cleanup
     namespaceClient.delete(namespace);
   }
