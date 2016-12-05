@@ -42,7 +42,7 @@ export default class Wrangler extends Component {
       skipEmptyLines: false,
       delimiter: '',
       wranglerInput: '',
-      originalData: [],
+      isDataSet: false,
       file: ''
     };
 
@@ -67,6 +67,7 @@ export default class Wrangler extends Component {
   }
 
   onWrangleFile() {
+    this.setState({loading: true});
     this.wrangle(true);
   }
 
@@ -79,8 +80,8 @@ export default class Wrangler extends Component {
 
     // Keeping these for dev purposes
 
-//     let input = `Hakeem Gillespie,91,753,599
-// Arsenio Gardner,683,754,641
+//     input = `Hakeem Gillespie,91,753,599
+// Arsenio Gardner,,754,641
 // Darius Mcdonald,567,473,520
 // Zachary Small,981,271,385
 // Travis Rutledge,468,91,578
@@ -168,12 +169,12 @@ export default class Wrangler extends Component {
     WranglerStore.dispatch({
       type: WranglerActions.setData,
       payload: {
-        data: formattedData
+        data: formattedData,
       }
     });
 
     this.setState({
-      originalData: formattedData,
+      isDataSet: true,
       loading: false
     });
   }
@@ -219,7 +220,7 @@ export default class Wrangler extends Component {
   }
 
   renderWranglerInputBox() {
-    if (this.state.originalData.length !== 0) {
+    if (this.state.isDataSet) {
       return null;
     }
 
@@ -321,7 +322,7 @@ export default class Wrangler extends Component {
         {this.renderWranglerInputBox()}
 
         {
-          this.state.originalData.length ?
+          this.state.isDataSet ?
             <WrangleData data={this.state.originalData} />
           :
             null
