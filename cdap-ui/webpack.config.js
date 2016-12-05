@@ -16,7 +16,9 @@
 
 var cdapWebpackConfig = require('./webpack.config.cdap.js');
 var loginWebpackConfig = require('./webpack.config.login.js');
+var wranglerWebpackConfig = require('./webpack.config.wrangler.js');
 var commonWebpackConfig = require('./webpack.config.common.js');
+
 var multiConfigs = [];
 // Forces dev to use `npm run cdap-dev-build-w` during development,
 // This will prevent repeatedly building the common library shared between webapps
@@ -25,11 +27,13 @@ if (process.env.NODE_ENV === 'development'){
   multiConfigs = [
     cdapWebpackConfig,
     loginWebpackConfig,
+    wranglerWebpackConfig
   ];
 } else {
   multiConfigs = [
     cdapWebpackConfig,
     loginWebpackConfig,
+    wranglerWebpackConfig,
     commonWebpackConfig
   ];
 }

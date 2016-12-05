@@ -46,6 +46,9 @@ var express = require('express'),
     CDAP_DIST_PATH=require('path').normalize(
       __dirname + '/../cdap_dist'
     ),
+    WRANGLER_DIST_PATH=require('path').normalize(
+      __dirname + '/../wrangler_dist'
+    ),
     MARKET_DIST_PATH=require('path').normalize(
       __dirname + '/../common_dist'
     ),
@@ -272,6 +275,14 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
   app.use('/cdap_assets', [
     express.static(CDAP_DIST_PATH + '/cdap_assets', {
+      index: false
+    }),
+    function(req, res) {
+      finalhandler(req, res)(false); // 404
+    }
+  ]);
+  app.use('/wrangler_assets', [
+    express.static(WRANGLER_DIST_PATH + '/wrangler_assets', {
       index: false
     }),
     function(req, res) {
@@ -508,6 +519,12 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         res.cookie('bcookie', req.cookies.bcookie, { expires: date});
       }
      res.sendFile(DIST_PATH + '/tracker.html');
+    }
+  ]);
+
+  app.all(['/wrangler', '/wrangler*'], [
+    function(req, res) {
+      res.sendFile(WRANGLER_DIST_PATH + '/wrangler_assets/wrangler.html');
     }
   ]);
   app.all(['/', '/cask-cdap', '/cask-cdap*'], [
