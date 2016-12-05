@@ -20,7 +20,7 @@ set -e
 
 # Add cdap <service> start as command if needed
 if [ "${1:0:1}" = '-' ]; then
-  set -- cdap ${SERVICE} start --foreground "$@"
+  set -- cdap ${CDAP_SERVICE:-sdk} start --foreground "$@"
 fi
 
 # Drop root privileges if we are running cdap.sh
