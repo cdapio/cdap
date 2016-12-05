@@ -25,16 +25,19 @@ export default function FileDnD({file, onDropHandler, error}) {
       className="file-drop-container"
       onDrop={onDropHandler}>
       <div className="file-metadata-container text-center">
+        <i className="fa fa-upload fa-3x"></i>
         {
           file.name && file.name.length ? (<span>{file.name}</span>)
             :
-            (<span>
-               Drag and Drop the file to be uploaded
-              <br />
-              or
-              <br />
-              Click to select file from your computer
-            </span>)
+            (
+              <span>
+                 Drag and Drop the file to be uploaded
+                <br />
+                or
+                <br />
+                Click to select file from your computer
+              </span>
+            )
         }
         {
           error ?

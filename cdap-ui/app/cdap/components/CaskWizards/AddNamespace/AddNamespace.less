@@ -12,23 +12,18 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
-.threshold-step {
-  &.form-group {
-    text-align: center;
-    padding-top: 30px;
-  }
-  input {
-    height: 120px;
-    font-size: 60px;
-    width: 250px;
-    margin: 0 auto;
-    text-align: center;
-  }
-  h3,
-  p {
-    margin: 0;
-    font-weight: 500;
-  }
-  h3 { margin-top: 10px; }
-}
+ */
+@import '../../WizardModal/WizardModal.less';
+
+ // Specific hack for hydrator.
+ body {
+   .modal {
+     .wizard-modal.create-stream-wizard {
+       &.add-namespace-wizard {
+         &.modal-dialog {
+           margin-top: @wizard-modal-margin-top;
+         }
+       }
+     }
+   }
+ }

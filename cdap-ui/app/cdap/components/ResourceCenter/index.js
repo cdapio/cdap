@@ -102,6 +102,7 @@ export default class ResourceCenter extends Component {
         <AbstractWizard
           wizardType="create_app_rc"
           isOpen={true}
+          input={{headerLabel: T.translate('features.Resource-Center.Application.modalheadertitle')}}
           onClose={this.toggleWizard.bind(this, 'createApplicationWizard')}
         />
       );
@@ -111,7 +112,7 @@ export default class ResourceCenter extends Component {
         <AbstractWizard
           isOpen={true}
           wizardType="create_artifact_rc"
-          backdrop={false}
+          input={{headerLabel: T.translate('features.Resource-Center.Artifact.modalheadertitle')}}
           onClose={this.toggleWizard.bind(this, 'createArtifactWizard')}
         />
       );
@@ -121,7 +122,7 @@ export default class ResourceCenter extends Component {
         <AbstractWizard
           isOpen={true}
           wizardType="create_plugin_artifact_rc"
-          backdrop={false}
+          input={{headerLabel: T.translate('features.Resource-Center.Plugins.modalheadertitle')}}
           onClose={this.toggleWizard.bind(this, 'createPluginArtifactWizard')}
         />
       );

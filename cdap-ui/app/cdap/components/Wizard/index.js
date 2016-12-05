@@ -210,9 +210,9 @@ export default class Wizard extends Component{
     let stepHeaders = this.props
       .wizardConfig
       .steps
-      .map( (step, index) => (
+      .map( (step) => (
         <WizardStepHeader
-          label={`${index + 1} ${step.shorttitle}`}
+          label={`${step.shorttitle}`}
           className={ isStepComplete(step.id) ? 'completed' : null}
           id={step.id}
           key={shortid.generate()}

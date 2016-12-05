@@ -165,6 +165,12 @@ export default class MarketPlaceEntity extends Component {
             onClick={this.openDetailedMode.bind(this)}
             size="LG"
           >
+            {
+              this.props.entity.beta ?
+                <div className="experimental-banner">BETA</div>
+              :
+                null
+            }
             <div className="package-icon-container">
               <img src={MyMarketApi.getIcon(this.props.entity)} />
             </div>
@@ -182,6 +188,12 @@ export default class MarketPlaceEntity extends Component {
             cardStyle={style}
             onClick={this.openDetailedMode.bind(this)}
           >
+            {
+              this.props.entity.beta ?
+                <div className="experimental-banner">BETA</div>
+              :
+                null
+            }
             <div className="clearfix">
               <div
                 className="package-icon-container">
@@ -271,6 +283,7 @@ MarketPlaceEntity.propTypes = {
     description: PropTypes.string,
     org: PropTypes.string,
     created: PropTypes.number,
-    cdapVersion: PropTypes.string
+    cdapVersion: PropTypes.string,
+    beta: PropTypes.bool
   })
 };

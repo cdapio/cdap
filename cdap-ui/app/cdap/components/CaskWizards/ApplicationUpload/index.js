@@ -21,6 +21,7 @@ import ApplicationUploadWizardConfig from 'services/WizardConfigs/ApplicationUpl
 import ApplicationUploadStore from 'services/WizardStores/ApplicationUpload/ApplicationUploadStore';
 import ApplicationUploadActions from 'services/WizardStores/ApplicationUpload/ApplicationUploadActions';
 import {UploadApplication} from 'services/WizardStores/ApplicationUpload/ActionCreator';
+import T from 'i18n-react';
 
 export default class ApplicationUploadWizard extends Component {
   constructor(props) {
@@ -46,9 +47,12 @@ export default class ApplicationUploadWizard extends Component {
     return UploadApplication();
   }
   render() {
+    let input = this.props.input;
+    let headerLabel = input.headerLabel;
+    let wizardModalTitle = (headerLabel ? headerLabel : T.translate('features.Resource-Center.Application.modelheadertitle')) ;
     return (
       <WizardModal
-        title="Application Upload Wizard"
+        title={wizardModalTitle}
         isOpen={this.state.showWizard}
         toggle={this.toggleWizard.bind(this, false)}
         className="artifact-upload-wizard"
@@ -66,5 +70,6 @@ export default class ApplicationUploadWizard extends Component {
 
 ApplicationUploadWizard.propTypes = {
   isOpen: PropTypes.bool,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
+  input: PropTypes.any
 };

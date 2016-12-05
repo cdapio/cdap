@@ -261,6 +261,7 @@ features:
       description: Upload a custom Application artifact or create an instance of Application from existing Artifact.
       actionbtn0: Upload
       actionbtn-1: Create
+      modalheadertitle: Upload Application
     Stream-View:
       label: Stream View
       description: Stream View is non-materialized view over a Stream with schema on read capability. Create a view over existing Stream.
@@ -273,10 +274,12 @@ features:
       label: Artifact
       description: Artifact is a JAR file that contains either a native Application or collection of Plugins.
       actionbtn0: Upload
+      modalheadertitle: Upload Artifact
     Plugins:
       label: Plugins
       description: Plugin is a easy way to extend the functionality of a Application.
       actionbtn0: Upload
+      modalheadertitle: Upload Plugin Artifact
 
   SplashScreen:
     dontShow: Don't show this again

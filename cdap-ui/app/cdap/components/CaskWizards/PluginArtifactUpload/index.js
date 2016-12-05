@@ -57,8 +57,9 @@ export default class PluginArtifactUploadWizard extends Component {
   render() {
     let input = this.props.input;
     let pkg = input.package || {};
+    let headerLabel = input.headerLabel;
 
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.Informational.headerlabel') ;
+    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + (headerLabel ? headerLabel : T.translate('features.Wizard.Informational.headerlabel')) ;
     return (
       <WizardModal
         title={wizardModalTitle}
