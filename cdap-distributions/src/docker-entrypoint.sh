@@ -18,18 +18,16 @@
 
 set -e
 
-export PATH=${PATH}:/opt/cdap/sdk/bin
-
-# Add cdap.sh start as command if needed
+# Add cdap <service> start as command if needed
 if [ "${1:0:1}" = '-' ]; then
-  set -- cdap sdk start --foreground "$@"
+  set -- cdap ${SERVICE} start --foreground "$@"
 fi
 
 # Drop root privileges if we are running cdap.sh
 # allow the container to be started with `--user`
 if [ "${1}" = 'cdap' -a "$(id -u)" = '0' ]; then
-  # Change the ownership of /opt/cdap/sdk to cdap
-  chown -R cdap:cdap /opt/cdap/sdk
+  # Change the ownership of /opt/cdap to cdap
+  chown -R cdap:cdap /opt/cdap
   set -- gosu cdap "$@"
 fi
 

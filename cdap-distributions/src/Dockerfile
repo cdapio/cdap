@@ -53,7 +53,11 @@ RUN curl -vL http://chef.io/chef/install.sh | bash -s -- -v 12.4.3 && \
       /var/lib/apt/lists/* \
       /usr/share/locale/{a,b,c,d,e{l,o,s,t,u},f,g,h,i,j,k,lt,lv,m,n,o,p,r,s,t,u,v,w,x,z}*
 
-ENV PATH /opt/cdap/sdk/bin:${PATH}
+ENV SERVICE sdk
+ENV PATH /opt/cdap/${SERVICE}/bin:${PATH}
+
+# Allow external configuration
+VOLUME /etc/cdap/conf
 
 # Copy entrypoint
 COPY docker-entrypoint.sh /
