@@ -54,6 +54,7 @@ RUN curl -vL http://chef.io/chef/install.sh | bash -s -- -v 12.4.3 && \
       /usr/share/locale/{a,b,c,d,e{l,o,s,t,u},f,g,h,i,j,k,lt,lv,m,n,o,p,r,s,t,u,v,w,x,z}*
 
 ENV CDAP_SERVICE cli
+ENV JAVA_HOME /usr/lib/jvm/java-7-openjdk-amd64
 ENV PATH /opt/cdap/${CDAP_SERVICE}/bin:${PATH}
 
 # Allow external configuration
