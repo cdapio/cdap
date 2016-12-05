@@ -1,0 +1,73 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+.modal {
+  .confirmation-modal {
+    &.stream-send-events {
+      textarea {
+        resize: none;
+      }
+      .events-drop-container {
+        height: 300px;
+        padding: 10px;
+
+        textarea.form-control {
+          border: 1px solid #ccc;
+        }
+
+        .dropzone-container,
+        textarea {
+          height: ~"calc(100% - 42px)";
+          height: ~"-moz-calc(100% - 42px)";
+          height: ~"-webkit-calc(100% - 42px)";
+          display: flex;
+          -webkit-box-orient: vertical;
+          -webkit-box-direction: normal;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 10px;
+
+          &.file-drag-container {
+            background-color: lightblue;
+            opacity: 0.7;
+          }
+          .fa-spinner.fa-spin {
+            margin-right: 5px;
+          }
+          .fa-plus-circle {
+            position: absolute;
+            top: 60px;
+            cursor: pointer;
+          }
+          .fa-upload {
+            display: none;
+          }
+          &.file-dropped {
+            .fa-plus-circle {
+              display: none;
+            }
+          }
+          .upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+        }
+      }
+    }
+  }
+}

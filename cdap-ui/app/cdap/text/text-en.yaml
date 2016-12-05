@@ -85,6 +85,9 @@ features:
   Dashboard:
     Title: Dashboard
 
+  FileDnD:
+    uploadLabel: Drag and Drop the file to be uploaded
+    clickLabel: Click to select file from your computer
   FastAction:
     deleteConfirmation: Are you sure you want to delete *_{entityId}_*?
     deleteLabel: Delete
@@ -92,6 +95,10 @@ features:
     truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
     truncateLabel: Truncate
     truncateFailed: Failed to truncate {entityId}
+    sendEventsLabel: Send Events
+    sendEventsButtonLabel: Send
+    sendEventsClickLabel: Click to input events
+    sendEventsFailed: Error - Send Events Failed
 
   JumpButton:
     buttonLabel: Jump
