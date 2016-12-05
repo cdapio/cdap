@@ -18,10 +18,10 @@ package co.cask.cdap.messaging.store.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.MessagingUtils;
-import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
@@ -58,7 +58,7 @@ final class LevelDBMetadataTable implements MetadataTable {
     try {
       byte[] value = levelDB.get(MessagingUtils.toRowKeyPrefix(topicId));
       if (value == null) {
-        throw new TopicNotFoundException(topicId);
+        throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
       }
 
       Map<String, String> properties = GSON.fromJson(Bytes.toString(value), MAP_TYPE);
@@ -72,11 +72,12 @@ final class LevelDBMetadataTable implements MetadataTable {
   @Override
   public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
     try {
-      byte[] key = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
+      TopicId topicId = topicMetadata.getTopicId();
+      byte[] key = MessagingUtils.toRowKeyPrefix(topicId);
       byte[] value = Bytes.toBytes(GSON.toJson(topicMetadata.getProperties()));
       synchronized (this) {
         if (levelDB.get(key) != null) {
-          throw new TopicAlreadyExistsException(topicMetadata.getTopicId());
+          throw new TopicAlreadyExistsException(topicId.getNamespace(), topicId.getTopic());
         }
         levelDB.put(key, value, WRITE_OPTIONS);
       }
@@ -88,11 +89,12 @@ final class LevelDBMetadataTable implements MetadataTable {
   @Override
   public void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException {
     try {
-      byte[] key = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
+      TopicId topicId = topicMetadata.getTopicId();
+      byte[] key = MessagingUtils.toRowKeyPrefix(topicId);
       byte[] value = Bytes.toBytes(GSON.toJson(topicMetadata.getProperties()));
       synchronized (this) {
         if (levelDB.get(key) == null) {
-          throw new TopicNotFoundException(topicMetadata.getTopicId());
+          throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
         }
         levelDB.put(key, value, WRITE_OPTIONS);
       }
@@ -107,7 +109,7 @@ final class LevelDBMetadataTable implements MetadataTable {
     try {
       synchronized (this) {
         if (levelDB.get(rowKey) == null) {
-          throw new TopicNotFoundException(topicId);
+          throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
         }
         levelDB.delete(rowKey);
       }

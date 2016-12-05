@@ -14,23 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.messaging;
-
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.proto.id.TopicId;
-
 /**
- * Thrown when a topic already exists.
+ * This package contains classes and interfaces for interacting with the Transactional Messaging System.
+ *
+ * Note: The Transactional Messaging System is an experimental feature introduced in CDAP 4.0; all APIs related to it
+ * are subject to change in future CDAP releases until it is out of Beta phase.
  */
-public class TopicAlreadyExistsException extends AlreadyExistsException {
-  private final TopicId id;
+@Beta
+package co.cask.cdap.api.messaging;
 
-  public TopicAlreadyExistsException(TopicId id) {
-    super(id);
-    this.id = id;
-  }
-
-  public TopicId getId() {
-    return id;
-  }
-}
+import co.cask.cdap.api.annotation.Beta;

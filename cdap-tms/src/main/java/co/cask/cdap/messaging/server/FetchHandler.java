@@ -18,6 +18,7 @@ package co.cask.cdap.messaging.server;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -25,7 +26,6 @@ import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.messaging.MessageFetcher;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.Schemas;
-import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;

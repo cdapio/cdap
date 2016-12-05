@@ -19,6 +19,8 @@ package co.cask.cdap.messaging.client;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -29,9 +31,7 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.RollbackDetail;
 import co.cask.cdap.messaging.Schemas;
 import co.cask.cdap.messaging.StoreRequest;
-import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
@@ -120,7 +120,7 @@ public final class ClientMessagingService implements MessagingService {
     HttpResponse response = HttpRequests.execute(request, HTTP_REQUEST_CONFIG);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
-      throw new TopicAlreadyExistsException(topicId);
+      throw new TopicAlreadyExistsException(topicId.getNamespace(), topicId.getTopic());
     }
     handleError(response, "Failed to create topic " + topicId);
   }
@@ -136,7 +136,7 @@ public final class ClientMessagingService implements MessagingService {
     HttpResponse response = HttpRequests.execute(request, HTTP_REQUEST_CONFIG);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new TopicNotFoundException(topicId);
+      throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
     }
     handleError(response, "Failed to update topic " + topicId);
   }
@@ -149,7 +149,7 @@ public final class ClientMessagingService implements MessagingService {
     HttpResponse response = HttpRequests.execute(request, HTTP_REQUEST_CONFIG);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new TopicNotFoundException(topicId);
+      throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
     }
     handleError(response, "Failed to update topic " + topicId);
   }
@@ -162,7 +162,7 @@ public final class ClientMessagingService implements MessagingService {
     HttpResponse response = HttpRequests.execute(request, HTTP_REQUEST_CONFIG);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new TopicNotFoundException(topicId);
+      throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
     }
     handleError(response, "Failed to update topic " + topicId);
 
@@ -227,7 +227,7 @@ public final class ClientMessagingService implements MessagingService {
     HttpResponse response = HttpRequests.execute(httpRequest, HTTP_REQUEST_CONFIG);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new TopicNotFoundException(topicId);
+      throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
     }
     handleError(response, "Failed to rollback message in topic " + topicId
                                       + " with rollback detail " + rollbackDetail);
@@ -269,7 +269,7 @@ public final class ClientMessagingService implements MessagingService {
     HttpResponse response = HttpRequests.execute(httpRequest, HTTP_REQUEST_CONFIG);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new TopicNotFoundException(topicId);
+      throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
     }
     handleError(response, "Failed to " + writeType + " message to topic " + topicId);
     return response;
@@ -446,7 +446,7 @@ public final class ClientMessagingService implements MessagingService {
 
       int responseCode = urlConn.getResponseCode();
       if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-        throw new TopicNotFoundException(topicId);
+        throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
       }
 
       handleError(responseCode, new Supplier<String>() {

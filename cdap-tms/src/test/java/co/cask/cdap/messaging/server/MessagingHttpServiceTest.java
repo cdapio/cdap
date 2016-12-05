@@ -18,6 +18,8 @@ package co.cask.cdap.messaging.server;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -26,9 +28,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.RollbackDetail;
-import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.client.ClientMessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.messaging.data.MessageId;
@@ -36,14 +36,11 @@ import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
-import co.cask.http.HttpHandler;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterators;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
 import org.apache.tephra.Transaction;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
@@ -84,16 +81,6 @@ public class MessagingHttpServiceTest {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).toInstance(new NoOpMetricsCollectionService());
-
-          Multibinder<HttpHandler> handlerBinder =
-            Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                     Names.named(Constants.MessagingSystem.HANDLER_BINDING_NAME));
-
-          handlerBinder.addBinding().to(MetadataHandler.class);
-          handlerBinder.addBinding().to(StoreHandler.class);
-          handlerBinder.addBinding().to(FetchHandler.class);
-
-          bind(MessagingHttpService.class);
         }
       }
     );

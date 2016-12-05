@@ -17,6 +17,7 @@
 package co.cask.cdap.messaging;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.data.RawMessage;
 import org.apache.tephra.Transaction;
 

@@ -14,23 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.messaging;
-
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.id.TopicId;
+package co.cask.cdap.api.messaging;
 
 /**
- * Thrown when a topic is not found.
+ * Exception thrown when trying to create a topic while the topic of that name already exists.
  */
-public class TopicNotFoundException extends NotFoundException {
-  private final TopicId id;
+public class TopicAlreadyExistsException extends MessagingException {
 
-  public TopicNotFoundException(TopicId id) {
-    super(id);
-    this.id = id;
-  }
-
-  public TopicId getId() {
-    return id;
+  public TopicAlreadyExistsException(String namespace, String topic) {
+    super(namespace, topic, "Topic already exists: " + namespace + ":" + topic);
   }
 }
