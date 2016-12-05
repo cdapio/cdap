@@ -298,6 +298,9 @@ public class LogSaverPluginTest extends KafkaTestBase {
     } else if (processor instanceof LogMetricsPlugin) {
       LogMetricsPlugin plugin = (LogMetricsPlugin) processor;
       return plugin.getCheckPointManager();
+    } else if (processor instanceof LogIndexPlugin) {
+      LogIndexPlugin plugin = (LogIndexPlugin) processor;
+    return plugin.getCheckPointManager();
     }
     throw new IllegalArgumentException("Invalid processor");
   }

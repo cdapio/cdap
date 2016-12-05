@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.save;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -48,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 public class LogIndexPlugin extends AbstractKafkaLogProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(LogMetricsPlugin.class);
-  private static final int ROW_KEY_PREFIX = 101;
+  private static final int ROW_KEY_PREFIX = 102;
 
   private final CheckpointManager checkpointManager;
   private final CConfiguration cConfig;
@@ -81,7 +82,8 @@ public class LogIndexPlugin extends AbstractKafkaLogProcessor {
     if (solrUrl == null) {
       throw new IllegalStateException("Solr URL not provided in configuration");
     }
-    solrClient = new HttpSolrClient.Builder(solrUrl).build();
+    LOG.info("Initializing Solr client");
+    solrClient = new HttpSolrClient(solrUrl);
 
     scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
       Threads.createDaemonThreadFactory("log-index-plugin")));
@@ -133,6 +135,7 @@ public class LogIndexPlugin extends AbstractKafkaLogProcessor {
       if (checkPointWriter != null) {
         checkPointWriter.flush();
       }
+      LOG.info("Closing Solr client");
       solrClient.close();
     } catch (Throwable th) {
       LOG.error("Caught exception while closing Log metrics plugin {}", th.getMessage(), th);
@@ -156,6 +159,7 @@ public class LogIndexPlugin extends AbstractKafkaLogProcessor {
   private Map<String, Object> getIndexFields(KafkaLogEvent kafkaLogEvent, LoggingContext context) {
     Map<String, String> tags = LoggingContextHelper.getMetricsTags(context);
     ILoggingEvent event = kafkaLogEvent.getLogEvent();
+    LOG.info("Adding exception to Solr: {}", ThrowableProxyUtil.asString(event.getThrowableProxy()));
     return ImmutableMap.<String, Object>builder()
       .put("timestamp", event.getTimeStamp())
       .put("message", event.getFormattedMessage())
@@ -164,6 +168,7 @@ public class LogIndexPlugin extends AbstractKafkaLogProcessor {
       .put("application", tags.get(Constants.Metrics.Tag.APP))
       .put("program", LoggingContextHelper.getProgramName(context))
       .put("run", tags.get(Constants.Metrics.Tag.RUN_ID))
+      .put("exception", ThrowableProxyUtil.asString(event.getThrowableProxy()))
       .build();
   }
 }

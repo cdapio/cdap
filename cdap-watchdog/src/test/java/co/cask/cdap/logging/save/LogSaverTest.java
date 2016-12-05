@@ -107,6 +107,7 @@ public class LogSaverTest extends KafkaTestBase {
     CConfiguration cConf = KAFKA_TESTER.getCConf();
     logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/" + LogSaverTest.class.getSimpleName();
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
+    cConf.set(LoggingConfiguration.SOLR_URL, "http://146.148.93.232:8983/solr/test");
 
     injector = KAFKA_TESTER.getInjector();
     impersonator = injector.getInstance(Impersonator.class);
@@ -197,6 +198,9 @@ public class LogSaverTest extends KafkaTestBase {
       return plugin.getCheckPointManager();
     } else if (processor instanceof LogMetricsPlugin) {
       LogMetricsPlugin plugin = (LogMetricsPlugin) processor;
+      return plugin.getCheckPointManager();
+    } else if (processor instanceof LogIndexPlugin) {
+      LogIndexPlugin plugin = (LogIndexPlugin) processor;
       return plugin.getCheckPointManager();
     }
     throw new IllegalArgumentException("Invalid processor");
