@@ -706,7 +706,7 @@
     <name>explore.container.yarn.app.classpath.first</name>
     <value>false</value>
     <description>
-      Controls whether the yarn app classpath comes before the query engine classpath or not.
+      Determines if the YARN application classpath precedes the query engine classpath
     </description>
   </property>
 
@@ -1139,15 +1139,17 @@
   <property>
     <name>messaging.hbase.max.scan.threads</name>
     <value>48</value>
-    <description>Maximum number of threads used for scanning HBase tables</description>
+    <description>
+      Maximum number of threads used for scanning HBase tables
+    </description>
   </property>
 
   <property>
     <name>messaging.http.server.executor.threads</name>
     <value>0</value>
     <description>
-      Number of executor threads for the http server in the Messaging System.
-      If set to 0, no executor threads will be used and request is handled directly in the IO thread.
+      Number of executor threads for the HTTP server in the messaging system.
+      If set to 0, no executor threads will be used and requests will be handled directly in the IO thread.
     </description>
   </property>
 
@@ -1155,7 +1157,7 @@
     <name>messaging.http.server.consume.chunk.size</name>
     <value>60000</value>
     <description>
-      The rough size in bytes of each chunk streaming back to consumer.
+      Approximate size in bytes of each chunk streamed back to a consumer
     </description>
   </property>
 
@@ -1163,63 +1165,79 @@
     <name>messaging.http.server.max.request.size.mb</name>
     <value>10</value>
     <description>
-      The maximum request content size in MB for each request to the http server in the Messaging System
+      Maximum request content size in megabytes for each request to the HTTP server in the messaging system
     </description>
   </property>
 
   <property>
     <name>messaging.http.server.worker.threads</name>
     <value>30</value>
-    <description>Number of IO threads used by the http server in the Messaging System.</description>
+    <description>
+      Number of IO threads used by the HTTP server in the messaging system
+    </description>
   </property>
 
   <property>
     <name>messaging.local.data.dir</name>
     <value>${local.data.dir}/messaging</value>
-    <description>Local storage directory for the Messaging System (only used in Standalone CDAP)</description>
+    <description>
+      Local storage directory for the messaging system (used only in Standalone CDAP)
+    </description>
   </property>
 
   <property>
     <name>messaging.message.table.hbase.splits</name>
     <value>16</value>
-    <description>Number of splits to use for the message table in HBase upon table creation</description>
+    <description>
+      Number of splits to use for the message table in HBase upon table creation
+    </description>
   </property>
 
   <property>
     <name>messaging.message.table.name</name>
     <value>tms.message</value>
-    <description>Name of the message table of the Messaging System</description>
+    <description>
+      Name of the message table of the messaging system
+    </description>
   </property>
 
   <property>
     <name>messaging.metadata.table.name</name>
     <value>tms.meta</value>
-    <description>Name of the metadata table of the Messaging System</description>
+    <description>
+      Name of the metadata table of the messaging system
+    </description>
   </property>
 
   <property>
     <name>messaging.payload.table.hbase.splits</name>
     <value>16</value>
-    <description>Number of splits to use for the payload table in HBase on table creation</description>
+    <description>
+      Number of splits to use for the payload table in HBase upon table creation
+    </description>
   </property>
 
   <property>
     <name>messaging.payload.table.name</name>
     <value>tms.payload</value>
-    <description>Name of the payload table of the Messaging System</description>
+    <description>
+      Name of the payload table of the messaging system
+    </description>
   </property>
 
   <property>
     <name>messaging.table.expiration.seconds</name>
     <value>300</value>
-    <description>Number of seconds after which the messaging table cache will expire</description>
+    <description>
+      Number of seconds after which the messaging table cache will expire
+    </description>
   </property>
 
   <property>
     <name>messaging.topic.default.ttl.seconds</name>
     <value>604800</value>
     <description>
-      The default time-to-live in seconds for messages in a topic.
+      The default time-to-live in seconds for messages in a topic
     </description>
   </property>
 
