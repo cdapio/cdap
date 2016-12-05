@@ -366,14 +366,21 @@ public abstract class IntegrationTestBase {
     return new DatasetClient(getClientConfig(), getRestClient());
   }
 
+  @Deprecated
   protected Id.Namespace createNamespace(String name) throws Exception {
-    Id.Namespace namespace = new Id.Namespace(name);
+    Id.Namespace namespace = Id.Namespace.from(name);
     NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespace).build();
-    getTestManager().createNamespace(namespaceMeta);
+    getNamespaceClient().create(namespaceMeta);
     return namespace;
   }
 
   protected ApplicationManager deployApplication(Id.Namespace namespace,
+                                                 Class<? extends Application> applicationClz,
+                                                 File...bundleEmbeddedJars) throws IOException {
+    return deployApplication(namespace.toEntityId(), applicationClz, bundleEmbeddedJars);
+  }
+
+  protected ApplicationManager deployApplication(NamespaceId namespace,
                                                  Class<? extends Application> applicationClz,
                                                  File...bundleEmbeddedJars) throws IOException {
     return getTestManager().deployApplication(namespace, applicationClz, bundleEmbeddedJars);

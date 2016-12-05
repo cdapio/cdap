@@ -22,6 +22,7 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -58,7 +59,9 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
 
   @Test
   public void testDeployApplicationInNamespace() throws Exception {
-    Id.Namespace namespace = createNamespace("Test1");
+    NamespaceId namespace = new NamespaceId("Test1");
+    NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespace).build();
+    getNamespaceClient().create(namespaceMeta);
     ClientConfig clientConfig = new ClientConfig.Builder(getClientConfig()).build();
     deployApplication(namespace, TestApplication.class);
 
@@ -67,9 +70,9 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
     Assert.assertEquals(0, new ApplicationClient(defaultClientConfig).list(Id.Namespace.DEFAULT).size());
 
     ApplicationClient applicationClient = new ApplicationClient(clientConfig);
-    Assert.assertEquals(TestApplication.NAME, applicationClient.list(namespace).get(0).getName());
-    applicationClient.delete(Id.Application.from(namespace, TestApplication.NAME));
-    Assert.assertEquals(0, new ApplicationClient(clientConfig).list(namespace).size());
+    Assert.assertEquals(TestApplication.NAME, applicationClient.list(namespace.toId()).get(0).getName());
+    applicationClient.delete(namespace.app(TestApplication.NAME));
+    Assert.assertEquals(0, new ApplicationClient(clientConfig).list(namespace.toId()).size());
 
   }
 
@@ -85,14 +88,13 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
 
   @Test
   public void testSQLQuery() throws Exception {
-    Id.Namespace testSpace = Id.Namespace.DEFAULT;
+    getTestManager().deployDatasetModule(NamespaceId.DEFAULT.datasetModule("my-kv"), AppUsingCustomModule.Module.class);
 
-    getTestManager().deployDatasetModule(testSpace, "my-kv", AppUsingCustomModule.Module.class);
-
-    DatasetAdmin dsAdmin = getTestManager().addDatasetInstance(testSpace, "myKeyValueTable", "myTable");
+    DatasetAdmin dsAdmin = getTestManager().addDatasetInstance("myKeyValueTable",
+                                                               NamespaceId.DEFAULT.dataset("myTable"));
     Assert.assertTrue(dsAdmin.exists());
 
-    ApplicationManager appManager = deployApplication(testSpace, AppUsingCustomModule.class);
+    ApplicationManager appManager = deployApplication(NamespaceId.DEFAULT, AppUsingCustomModule.class);
     ServiceManager serviceManager = appManager.getServiceManager("MyService").start();
     serviceManager.waitForStatus(true);
 
@@ -101,7 +103,7 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
     put(serviceManager, "c", "1");
 
     try (
-      Connection connection = getTestManager().getQueryClient(testSpace);
+      Connection connection = getTestManager().getQueryClient(NamespaceId.DEFAULT);
       // the value (character) "1" corresponds to the decimal 49. In hex, that is 31.
       ResultSet results = connection.prepareStatement("select key from dataset_mytable where hex(value) = '31'")
         .executeQuery()

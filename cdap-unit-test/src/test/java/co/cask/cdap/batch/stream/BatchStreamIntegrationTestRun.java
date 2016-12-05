@@ -18,6 +18,7 @@ package co.cask.cdap.batch.stream;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -85,10 +86,11 @@ public class BatchStreamIntegrationTestRun extends TestFrameworkTestBase {
                                                            String namespace, String streamWriter, String mapReduceName,
                                                            int timeout) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
-    createNamespace(namespaceId.toId());
-    deployApplication(namespaceId.toId(), appClass);
+    NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespace).build();
+    getNamespaceAdmin().create(namespaceMeta);
+    deployApplication(namespaceId, appClass);
     ApplicationManager applicationManager = deployApplication(appClass);
-    StreamManager streamManager = getStreamManager(namespaceId.toId(), streamWriter);
+    StreamManager streamManager = getStreamManager(namespaceId.stream(streamWriter));
     verifyStreamBatchJob(streamManager, applicationManager, mapReduceName, timeout);
   }
 

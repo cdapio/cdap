@@ -70,9 +70,9 @@ public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
     getNamespaceAdmin().create(streamNSMeta);
     getNamespaceAdmin().create(crossNSDatasetAppNS);
     getNamespaceAdmin().create(outputDatasetNS);
-    addDatasetInstance(outputDatasetNS.getNamespaceId().toId(), "keyValueTable", "finalDataset");
+    addDatasetInstance(outputDatasetNS.getNamespaceId().dataset("finalDataset"), "keyValueTable");
 
-    StreamManager streamManager = getStreamManager(streamNSMeta.getNamespaceId().toId(), "testStream");
+    StreamManager streamManager = getStreamManager(streamNSMeta.getNamespaceId().stream("testStream"));
     streamManager.createStream();
     for (int i = 0; i < 50; i++) {
       streamManager.send(String.valueOf(i));
@@ -95,7 +95,7 @@ public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
     verifyDatasetResult(datasetManager);
 
     // deploy the cross  ns dataset app in datasetNS namespace
-    ApplicationManager spark2 = deployApplication(crossNSDatasetAppNS.getNamespaceId().toId(),
+    ApplicationManager spark2 = deployApplication(crossNSDatasetAppNS.getNamespaceId(),
                                                   TestSparkCrossNSDatasetApp.class);
     args = ImmutableMap.of(
       TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.INPUT_DATASET_NAMESPACE,
@@ -109,7 +109,7 @@ public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
     sparkManager = spark2.getSparkManager("SparkCrossNSDatasetProgram").start(args);
     sparkManager.waitForFinish(120, TimeUnit.SECONDS);
     // Verify the results written in DEFAULT by spark2
-    datasetManager = getDataset(outputDatasetNS.getNamespaceId().toId(), "finalDataset");
+    datasetManager = getDataset(outputDatasetNS.getNamespaceId().dataset("finalDataset"));
     verifyDatasetResult(datasetManager);
   }
 

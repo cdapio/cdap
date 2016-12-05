@@ -129,7 +129,7 @@ public class DataPipelineTest extends HydratorTestBase {
         .build();
 
       // set runtime arguments for macro substitution
-      Map<String, String> runtimeArguments = ImmutableMap.<String, String>of("value", "macroValue");
+      Map<String, String> runtimeArguments = ImmutableMap.of("value", "macroValue");
 
       AppRequest<co.cask.cdap.etl.proto.v2.ETLBatchConfig> appRequest =
         new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -143,8 +143,7 @@ public class DataPipelineTest extends HydratorTestBase {
       DataSetManager<Table> actionTableDS = getDataset("actionTable");
       Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "action1.row", "action1.column"));
 
-      List<RunRecord> history = appManager.getHistory(appId.workflow(SmartWorkflow.NAME).toId(),
-                                                      ProgramRunStatus.FAILED);
+      appManager.getHistory(appId.workflow(SmartWorkflow.NAME).toId(), ProgramRunStatus.FAILED);
   }
 
 
@@ -264,7 +263,7 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
 
     // write records to source
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), sourceTableName);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(sourceTableName));
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -309,7 +308,7 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
 
     // write records to source
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), "singleInput");
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset("singleInput"));
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -369,9 +368,9 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), source1Name);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source1Name));
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel));
-    inputManager = getDataset(NamespaceId.DEFAULT.toId(), source2Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.dataset(source2Name));
     MockSource.writeInput(inputManager, ImmutableList.of(recordBob));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -447,11 +446,11 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), source1Name);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source1Name));
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel));
-    inputManager = getDataset(NamespaceId.DEFAULT.toId(), source2Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.dataset(source2Name));
     MockSource.writeInput(inputManager, ImmutableList.of(recordBob));
-    inputManager = getDataset(NamespaceId.DEFAULT.toId(), source3Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.dataset(source3Name));
     MockSource.writeInput(inputManager, ImmutableList.of(recordJane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -536,7 +535,7 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), sourceName);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(sourceName));
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -597,12 +596,12 @@ public class DataPipelineTest extends HydratorTestBase {
     );
 
     // write few records to each source
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), source1Name);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source1Name));
     MockSource.writeInput(inputManager, ImmutableList.of(
       StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 1L).build(),
       StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 2L).build()));
 
-    inputManager = getDataset(NamespaceId.DEFAULT.toId(), source2Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.dataset(source2Name));
     MockSource.writeInput(inputManager, ImmutableList.of(
       StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 3L).build(),
       StructuredRecord.builder(inputSchema).set("user", "john").set("item", 4L).build(),
@@ -686,14 +685,14 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), "actionInput");
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset("actionInput"));
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 
-    DataSetManager<Table> tokenTableManager = getDataset(NamespaceId.DEFAULT.toId(), "tokenTable");
+    DataSetManager<Table> tokenTableManager = getDataset(NamespaceId.DEFAULT.dataset("tokenTable"));
     Table tokenTable = tokenTableManager.get();
     NodeStatus status = NodeStatus.valueOf(Bytes.toString(
       tokenTable.get(Bytes.toBytes("phase-1"), Bytes.toBytes("status"))));
@@ -734,7 +733,7 @@ public class DataPipelineTest extends HydratorTestBase {
     messagesToWrite.add(new SpamMessage("you won the lottery", 1.0).toStructuredRecord());
 
     // write records to source1
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), "messages1");
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset("messages1"));
     MockSource.writeInput(inputManager, messagesToWrite);
 
     messagesToWrite.clear();
@@ -745,7 +744,7 @@ public class DataPipelineTest extends HydratorTestBase {
     messagesToWrite.add(new SpamMessage("could you send me the report", 0.0).toStructuredRecord());
 
     // write records to source2
-    inputManager = getDataset(NamespaceId.DEFAULT.toId(), "messages2");
+    inputManager = getDataset(NamespaceId.DEFAULT.dataset("messages2"));
     MockSource.writeInput(inputManager, messagesToWrite);
 
     // ingest in some messages to be classified
@@ -806,7 +805,7 @@ public class DataPipelineTest extends HydratorTestBase {
     messagesToWrite.add(new SpamMessage("what are you doing today").toStructuredRecord());
     messagesToWrite.add(new SpamMessage("genuine report").toStructuredRecord());
 
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), NaiveBayesTrainer.TEXTS_TO_CLASSIFY);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(NaiveBayesTrainer.TEXTS_TO_CLASSIFY));
     MockSource.writeInput(inputManager, messagesToWrite);
 
     // manually trigger the pipeline
@@ -936,11 +935,11 @@ public class DataPipelineTest extends HydratorTestBase {
       .set("c_name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), input1Name);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(input1Name));
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
-    inputManager = getDataset(NamespaceId.DEFAULT.toId(), input2Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.dataset(input2Name));
     MockSource.writeInput(inputManager, ImmutableList.of(recordCar, recordBike));
-    inputManager = getDataset(NamespaceId.DEFAULT.toId(), input3Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.dataset(input3Name));
     MockSource.writeInput(inputManager, ImmutableList.of(recordTrasCar, recordTrasBike));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -1068,11 +1067,11 @@ public class DataPipelineTest extends HydratorTestBase {
       .set("c_name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), input1Name);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(input1Name));
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane, recordMartha));
-    inputManager = getDataset(NamespaceId.DEFAULT.toId(), input2Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.dataset(input2Name));
     MockSource.writeInput(inputManager, ImmutableList.of(recordCar, recordBike));
-    inputManager = getDataset(NamespaceId.DEFAULT.toId(), input3Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.dataset(input3Name));
     MockSource.writeInput(inputManager, ImmutableList.of(recordTrasCar, recordTrasPlane, recordTrasBike));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -1225,11 +1224,11 @@ public class DataPipelineTest extends HydratorTestBase {
       .set("i_id", "33").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), source1MulitJoinInput);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source1MulitJoinInput));
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
-    inputManager = getDataset(NamespaceId.DEFAULT.toId(), source2MultiJoinInput);
+    inputManager = getDataset(NamespaceId.DEFAULT.dataset(source2MultiJoinInput));
     MockSource.writeInput(inputManager, ImmutableList.of(recordCar, recordBike));
-    inputManager = getDataset(NamespaceId.DEFAULT.toId(), source3MultiJoinInput);
+    inputManager = getDataset(NamespaceId.DEFAULT.dataset(source3MultiJoinInput));
     MockSource.writeInput(inputManager, ImmutableList.of(recordTrasCar, recordTrasBike, recordTrasPlane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
