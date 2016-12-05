@@ -1,0 +1,69 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@timestampcolumnwidth: 100px;
+@statuscolumnwidth: 100px;
+@sqlquerycolumnwidth: 100px;
+@actionscolumnwidth: 100px;
+@exploremodalwidth: 80vw;
+
+.explore-modal.modal-dialog {
+  width: @exploremodalwidth;
+  .explore-modal-body {
+    padding: 10px;
+    textarea {
+      resize: none;
+      margin: 0;
+      margin-bottom: 10px;
+      width: 100%;
+    }
+    .queries-table-wrapper {
+      margin-top: 10px;
+      // FIXME: MAGIC NUMBER Alert. This is BS and we need to figure out how to nest tables.
+      max-height: ~"calc(80vh - 225px)";
+      max-height: ~"-moz-calc(80vh - 225px)";
+      max-height: ~"-webkit-calc(80vh - 225px)";
+      overflow: auto;
+    }
+    .queries-table {
+      .btn-group {
+        .btn.btn-default {
+          padding: 7px;
+        }
+      }
+      .query-timestamp {
+        width: 165px;
+      }
+      .query-status {
+        width: 80px;
+      }
+      .query-actions {
+        width: 105px;
+      }
+      .preview-cell {
+        .fa.fa-spinner.fa-spin {
+          width: 100%;
+        }
+        > div {
+          width: ~"calc(80vw - 40px)";
+          width: ~"-moz-calc(80vw - 40px)";
+          width: ~"-webkit-calc(80vw - 40px)";
+          overflow: auto;
+        }
+      }
+    }
+  }
+}
