@@ -353,6 +353,7 @@ gulp.task('lint', function() {
     '!./app/login/**/*.js',
     '!./app/lib/**/*.js',
     '!./app/common/**/*.js',
+    '!./app/wrangler/**/*.js',
     './server/*.js'
   ])
     .pipe(plug.plumber())
@@ -416,6 +417,7 @@ gulp.task('watch', ['jshint', 'build'], function() {
     './app/**/*.js',
     '!./app/cdap/**/*.js',
     '!./app/login/**/*.js',
+    '!./app/wrangler/**/*.js',
     '!./app/**/*-test.js'
   ];
   jsAppSource = jsAppSource.concat(getEs6Directives(true));
