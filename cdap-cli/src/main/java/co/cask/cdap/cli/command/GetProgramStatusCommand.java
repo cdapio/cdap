@@ -52,7 +52,7 @@ public class GetProgramStatusCommand extends AbstractAuthCommand {
     String appId = programIdParts[0];
     String programName = programIdParts[1];
     ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(), programName);
-    String status = programClient.getStatus(programId.toId());
+    String status = programClient.getStatus(programId);
     output.println(status);
   }
 

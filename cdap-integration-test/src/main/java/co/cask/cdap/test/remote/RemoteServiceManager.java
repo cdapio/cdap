@@ -55,7 +55,7 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
   @Override
   public void setInstances(int instances) {
     try {
-      programClient.setServiceInstances(serviceId.toId(), instances);
+      programClient.setServiceInstances(serviceId, instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -69,7 +69,7 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
   @Override
   public int getProvisionedInstances() {
     try {
-      return programClient.getServiceInstances(serviceId.toId());
+      return programClient.getServiceInstances(serviceId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -103,6 +103,6 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
 
   @Override
   public RuntimeMetrics getMetrics() {
-    return metricsClient.getServiceMetrics(programId.toId());
+    return metricsClient.getServiceMetrics(programId);
   }
 }

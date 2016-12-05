@@ -47,7 +47,7 @@ public class ListStreamViewsCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
-    List<String> views = client.list(streamId.toId());
+    List<String> views = client.list(streamId);
 
     Table table = Table.builder()
       .setHeader("id")

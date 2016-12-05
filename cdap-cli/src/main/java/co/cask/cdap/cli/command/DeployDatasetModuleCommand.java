@@ -56,7 +56,7 @@ public class DeployDatasetModuleCommand extends AbstractAuthCommand {
     String moduleName = arguments.get(ArgumentName.NEW_DATASET_MODULE.toString());
     String moduleJarClassname = arguments.get(ArgumentName.DATASET_MODULE_JAR_CLASSNAME.toString());
 
-    datasetModuleClient.add(cliConfig.getCurrentNamespace().datasetModule(moduleName).toId(),
+    datasetModuleClient.add(cliConfig.getCurrentNamespace().datasetModule(moduleName),
                             moduleJarClassname, moduleJarFile);
     output.printf("Successfully deployed dataset module '%s'\n", moduleName);
   }

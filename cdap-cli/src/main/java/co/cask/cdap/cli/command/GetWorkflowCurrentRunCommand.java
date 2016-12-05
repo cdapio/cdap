@@ -59,7 +59,7 @@ public class GetWorkflowCurrentRunCommand extends AbstractCommand {
       String workflowId = programIdParts[1];
       String runId = arguments.get(ArgumentName.RUN_ID.toString());
 
-      nodes = programClient.getWorkflowCurrent(appId.toId(), workflowId, runId);
+      nodes = programClient.getWorkflowCurrent(appId.workflow(workflowId), runId);
     } else {
       throw new IllegalArgumentException("Unrecognized program element type for current runs: " + elementType);
     }

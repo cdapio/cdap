@@ -76,7 +76,7 @@ public class UpdateAppCommand extends AbstractAuthCommand {
     }
 
     AppRequest<JsonObject> appRequest = new AppRequest<>(artifact, config);
-    applicationClient.update(appId.toId(), appRequest);
+    applicationClient.update(appId, appRequest);
     output.println("Successfully updated application");
   }
 

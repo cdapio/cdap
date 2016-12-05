@@ -28,8 +28,11 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.DatasetTypeId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import org.junit.After;
@@ -53,8 +56,8 @@ import javax.annotation.Nullable;
 public class DatasetClientTestRun extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetClientTestRun.class);
-  private static final Id.Namespace TEST_NAMESPACE = Id.Namespace.from("testNamespace");
-  private static final Id.Namespace OTHER_NAMESPACE = Id.Namespace.from("otherNamespace");
+  private static final NamespaceId TEST_NAMESPACE = new NamespaceId("testNamespace");
+  private static final NamespaceId OTHER_NAMESPACE = new NamespaceId("otherNamespace");
 
   private DatasetClient datasetClient;
   private DatasetModuleClient moduleClient;
@@ -82,23 +85,23 @@ public class DatasetClientTestRun extends ClientTestBase {
   @After
   public void tearDown() throws Exception {
     NamespaceClient namespaceClient = new NamespaceClient(clientConfig);
-    namespaceClient.delete(TEST_NAMESPACE.toEntityId());
-    namespaceClient.delete(OTHER_NAMESPACE.toEntityId());
+    namespaceClient.delete(TEST_NAMESPACE);
+    namespaceClient.delete(OTHER_NAMESPACE);
   }
 
   @Test
   public void testAll() throws Exception {
-    Id.DatasetModule module = Id.DatasetModule.from(TEST_NAMESPACE, StandaloneDatasetModule.NAME);
-    Id.DatasetType type = Id.DatasetType.from(TEST_NAMESPACE, StandaloneDataset.class.getName());
-    Id.DatasetModule moduleInOtherNamespace = Id.DatasetModule.from(OTHER_NAMESPACE, StandaloneDatasetModule.NAME);
-    Id.DatasetType typeInOtherNamespace = Id.DatasetType.from(OTHER_NAMESPACE, StandaloneDataset.class.getName());
+    DatasetModuleId module = TEST_NAMESPACE.datasetModule(StandaloneDatasetModule.NAME);
+    DatasetTypeId type = TEST_NAMESPACE.datasetType(StandaloneDataset.class.getName());
+    DatasetModuleId moduleInOtherNamespace = OTHER_NAMESPACE.datasetModule(StandaloneDatasetModule.NAME);
+    DatasetTypeId typeInOtherNamespace = OTHER_NAMESPACE.datasetType(StandaloneDataset.class.getName());
 
     int numBaseModules = moduleClient.list(TEST_NAMESPACE).size();
     int numBaseTypes = typeClient.list(TEST_NAMESPACE).size();
 
     LOG.info("Adding Dataset module");
     File moduleJarFile = createAppJarFile(StandaloneDatasetModule.class);
-    moduleClient.add(Id.DatasetModule.from(TEST_NAMESPACE, StandaloneDatasetModule.NAME),
+    moduleClient.add(TEST_NAMESPACE.datasetModule(StandaloneDatasetModule.NAME),
                      StandaloneDatasetModule.class.getName(), moduleJarFile);
     moduleClient.waitForExists(module, 30, TimeUnit.SECONDS);
     Assert.assertEquals(numBaseModules + 1, moduleClient.list(TEST_NAMESPACE).size());
@@ -121,7 +124,7 @@ public class DatasetClientTestRun extends ClientTestBase {
     typeClient.waitForExists(type, 5, TimeUnit.SECONDS);
     DatasetTypeMeta datasetTypeMeta = typeClient.get(type);
     Assert.assertNotNull(datasetTypeMeta);
-    Assert.assertEquals(type.getId(), datasetTypeMeta.getName());
+    Assert.assertEquals(type.getType(), datasetTypeMeta.getName());
 
     datasetTypeMeta = typeClient.get(type);
     Assert.assertNotNull(datasetTypeMeta);
@@ -139,7 +142,7 @@ public class DatasetClientTestRun extends ClientTestBase {
     // Before creating dataset, there are some system datasets already exist
     int numBaseDataset = datasetClient.list(TEST_NAMESPACE).size();
 
-    Id.DatasetInstance instance = Id.DatasetInstance.from(TEST_NAMESPACE, "testDataset");
+    DatasetId instance = TEST_NAMESPACE.dataset("testDataset");
 
     String description = "test description";
     datasetClient.create(instance,
@@ -149,7 +152,7 @@ public class DatasetClientTestRun extends ClientTestBase {
 
     // Assert dataset summary for the newly created dataset
     DatasetSpecificationSummary expectedSpec =
-      new DatasetSpecificationSummary(instance.getId(), StandaloneDataset.TYPE_NAME, description,
+      new DatasetSpecificationSummary(instance.getDataset(), StandaloneDataset.TYPE_NAME, description,
                                       Collections.<String, String>emptyMap());
     Assert.assertEquals(expectedSpec, getSpecForDataset(instance, datasetClient.list(TEST_NAMESPACE)));
     datasetClient.truncate(instance);
@@ -179,11 +182,11 @@ public class DatasetClientTestRun extends ClientTestBase {
 
     LOG.info("Creating and deleting multiple Datasets");
     for (int i = 1; i <= 3; i++) {
-      datasetClient.create(Id.DatasetInstance.from(TEST_NAMESPACE, "testDataset" + i), StandaloneDataset.TYPE_NAME);
+      datasetClient.create(TEST_NAMESPACE.dataset("testDataset" + i), StandaloneDataset.TYPE_NAME);
     }
     Assert.assertEquals(numBaseDataset + 3, datasetClient.list(TEST_NAMESPACE).size());
     for (int i = 1; i <= 3; i++) {
-      datasetClient.delete(Id.DatasetInstance.from(TEST_NAMESPACE, "testDataset" + i));
+      datasetClient.delete(TEST_NAMESPACE.dataset("testDataset" + i));
     }
     Assert.assertEquals(numBaseDataset, datasetClient.list(TEST_NAMESPACE).size());
 
@@ -193,7 +196,7 @@ public class DatasetClientTestRun extends ClientTestBase {
     Assert.assertEquals(numBaseTypes, typeClient.list(TEST_NAMESPACE).size());
 
     LOG.info("Adding Dataset module and then deleting all Dataset modules");
-    moduleClient.add(Id.DatasetModule.from(TEST_NAMESPACE, "testModule1"),
+    moduleClient.add(TEST_NAMESPACE.datasetModule("testModule1"),
                      StandaloneDatasetModule.class.getName(), moduleJarFile);
     Assert.assertEquals(numBaseModules + 1, moduleClient.list(TEST_NAMESPACE).size());
     Assert.assertEquals(numBaseTypes + 2, typeClient.list(TEST_NAMESPACE).size());
@@ -207,8 +210,8 @@ public class DatasetClientTestRun extends ClientTestBase {
   public void testSystemTypes() throws Exception {
     // Tests that a dataset can be created in a namespace, even if the type does not exist in that namespace.
     // The dataset type is being resolved from the system namespace.
-    Id.DatasetType type = Id.DatasetType.from(TEST_NAMESPACE, Table.class.getName());
-    Id.DatasetInstance instance = Id.DatasetInstance.from(TEST_NAMESPACE, "tableTypeDataset");
+    DatasetTypeId type = TEST_NAMESPACE.datasetType(Table.class.getName());
+    DatasetId instance = TEST_NAMESPACE.dataset("tableTypeDataset");
 
     Assert.assertFalse(typeClient.exists(type));
     Assert.assertFalse(datasetClient.exists(instance));
@@ -217,11 +220,11 @@ public class DatasetClientTestRun extends ClientTestBase {
   }
 
   @Nullable
-  private DatasetSpecificationSummary getSpecForDataset(Id.DatasetInstance instance,
+  private DatasetSpecificationSummary getSpecForDataset(DatasetId instance,
                                                         List<DatasetSpecificationSummary> summaries) {
     DatasetSpecificationSummary actualSummary = null;
     for (DatasetSpecificationSummary summary : summaries) {
-      if (StandaloneDataset.TYPE_NAME.equals(summary.getType()) && instance.getId().equals(summary.getName())) {
+      if (StandaloneDataset.TYPE_NAME.equals(summary.getType()) && instance.getDataset().equals(summary.getName())) {
         actualSummary = summary;
       }
     }

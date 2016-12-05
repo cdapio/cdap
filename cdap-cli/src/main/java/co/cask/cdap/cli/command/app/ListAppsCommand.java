@@ -59,7 +59,7 @@ public class ListAppsCommand extends AbstractAuthCommand {
     }
     Table table = Table.builder()
       .setHeader("id", "appVersion", "description", "artifactName", "artifactVersion", "artifactScope")
-      .setRows(appClient.list(cliConfig.getCurrentNamespace().toId(), artifactNames, artifactVersion),
+      .setRows(appClient.list(cliConfig.getCurrentNamespace(), artifactNames, artifactVersion),
         new RowMaker<ApplicationRecord>() {
           @Override
           public List<?> makeRow(ApplicationRecord object) {

@@ -71,7 +71,7 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
   public Collection<String> getMethods(ServiceId serviceId) {
     Collection<String> httpMethods = Lists.newArrayList();
     try {
-      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId.toId())) {
+      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId)) {
         String method = endpoint.getMethod();
         if (!httpMethods.contains(method)) {
           httpMethods.add(method);

@@ -64,7 +64,7 @@ public class CreateOrUpdateStreamViewCommand extends AbstractAuthCommand {
     FormatSpecification formatSpecification = new FormatSpecification(formatName, schema, settings);
     ViewSpecification viewSpecification = new ViewSpecification(formatSpecification);
 
-    boolean created = client.createOrUpdate(viewId.toId(), viewSpecification);
+    boolean created = client.createOrUpdate(viewId, viewSpecification);
     if (created) {
       output.printf("Successfully created stream-view '%s'\n", viewId.getEntityName());
     } else {

@@ -77,7 +77,7 @@ public class LineageTestRun extends MetadataTestBase {
 
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespace.toId()).build());
     try {
-      appClient.deploy(namespace.toId(), createAppJarFile(AllProgramsApp.class));
+      appClient.deploy(namespace, createAppJarFile(AllProgramsApp.class));
 
       // Add metadata to applicaton
       ImmutableMap<String, String> appProperties = ImmutableMap.of("app-key1", "app-value1");
@@ -211,7 +211,7 @@ public class LineageTestRun extends MetadataTestBase {
 
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespace.getNamespace()).build());
     try {
-      appClient.deploy(namespace.toId(), createAppJarFile(AllProgramsApp.class));
+      appClient.deploy(namespace, createAppJarFile(AllProgramsApp.class));
 
       // Add metadata
       ImmutableSet<String> sparkTags = ImmutableSet.of("spark-tag1", "spark-tag2");
@@ -349,22 +349,22 @@ public class LineageTestRun extends MetadataTestBase {
     Tasks.waitFor(state.toString(), new Callable<String>() {
       @Override
       public String call() throws Exception {
-        return programClient.getStatus(program.toId());
+        return programClient.getStatus(program);
       }
     }, 60000, TimeUnit.SECONDS, 1000, TimeUnit.MILLISECONDS);
   }
 
   private RunId runAndWait(final ProgramId program) throws Exception {
     LOG.info("Starting program {}", program);
-    programClient.start(program.toId());
+    programClient.start(program);
     waitState(program, ProgramStatus.RUNNING);
     return getRunId(program);
   }
 
   private void waitForStop(ProgramId program, boolean needsStop) throws Exception {
-    if (needsStop && programClient.getStatus(program.toId()).equals(ProgramRunStatus.RUNNING.toString())) {
+    if (needsStop && programClient.getStatus(program).equals(ProgramRunStatus.RUNNING.toString())) {
       LOG.info("Stopping program {}", program);
-      programClient.stop(program.toId());
+      programClient.stop(program);
     }
     waitState(program, STOPPED);
     LOG.info("Program {} has stopped", program);
@@ -380,7 +380,7 @@ public class LineageTestRun extends MetadataTestBase {
       @Override
       public Integer call() throws Exception {
         runRecords.set(Iterables.filter(
-          programClient.getProgramRuns(program.toId(), "RUNNING", 0, Long.MAX_VALUE, Integer.MAX_VALUE),
+          programClient.getProgramRuns(program, "RUNNING", 0, Long.MAX_VALUE, Integer.MAX_VALUE),
           new Predicate<RunRecord>() {
             @Override
             public boolean apply(RunRecord input) {

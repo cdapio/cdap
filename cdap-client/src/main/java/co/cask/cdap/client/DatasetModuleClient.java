@@ -28,6 +28,8 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -74,8 +76,22 @@ public class DatasetModuleClient {
    * @return list of {@link DatasetModuleMeta}s.
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #list(NamespaceId)} instead.
    */
+  @Deprecated
   public List<DatasetModuleMeta> list(Id.Namespace namespace)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
+    return list(namespace.toEntityId());
+  }
+
+  /**
+   * Lists all dataset modules.
+   *
+   * @return list of {@link DatasetModuleMeta}s.
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public List<DatasetModuleMeta> list(NamespaceId namespace)
     throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(namespace, "data/modules");
     return ObjectResponse.fromJsonBody(restClient.execute(HttpMethod.GET, url, config.getAccessToken()),
@@ -91,11 +107,28 @@ public class DatasetModuleClient {
    * @throws BadRequestException if the moduleJarFile does not exist
    * @throws AlreadyExistsException if a dataset module with the same name already exists
    * @throws IOException if a network error occurred
+   * @deprecated since 4.0.0. Use {@link #add(DatasetModuleId, String, File)} instead.
    */
+  @Deprecated
   public void add(Id.DatasetModule module, String className, File moduleJarFile)
     throws BadRequestException, AlreadyExistsException, IOException, UnauthenticatedException {
+    add(module.toEntityId(), className, moduleJarFile);
+  }
 
-    URL url = config.resolveNamespacedURLV3(module.getNamespace(), String.format("data/modules/%s", module.getId()));
+  /**
+   * Adds a new dataset module.
+   *
+   * @param module the new dataset module
+   * @param className name of the dataset module class within the moduleJarFile
+   * @param moduleJarFile Jar file containing the dataset module class and dependencies
+   * @throws BadRequestException if the moduleJarFile does not exist
+   * @throws AlreadyExistsException if a dataset module with the same name already exists
+   * @throws IOException if a network error occurred
+   */
+  public void add(DatasetModuleId module, String className, File moduleJarFile)
+    throws BadRequestException, AlreadyExistsException, IOException, UnauthenticatedException {
+
+    URL url = config.resolveNamespacedURLV3(module.getParent(), String.format("data/modules/%s", module.getModule()));
     Map<String, String> headers = ImmutableMap.of("X-Class-Name", className);
     HttpRequest request = HttpRequest.put(url).addHeaders(headers).withBody(moduleJarFile).build();
 
@@ -105,7 +138,7 @@ public class DatasetModuleClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(String.format("Module jar file does not exist: %s", moduleJarFile));
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
-      throw new DatasetModuleAlreadyExistsException(module.toEntityId());
+      throw new DatasetModuleAlreadyExistsException(module);
     }
   }
 
@@ -118,19 +151,37 @@ public class DatasetModuleClient {
    * @throws DatasetModuleNotFoundException if the dataset module with the specified name was not found
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #delete(DatasetModuleId)} instead.
    */
+  @Deprecated
   public void delete(Id.DatasetModule module)
     throws DatasetModuleCannotBeDeletedException, DatasetModuleNotFoundException,
     IOException, UnauthenticatedException, UnauthorizedException {
+    delete(module.toEntityId());
+  }
 
-    URL url = config.resolveNamespacedURLV3(module.getNamespace(), String.format("data/modules/%s", module.getId()));
+  /**
+   * Deletes a dataset module.
+   *
+   * @param module the dataset module to delete
+   * @throws DatasetModuleCannotBeDeletedException if the dataset module cannot be deleted,
+   * usually due to other dataset modules or dataset instances using the dataset module
+   * @throws DatasetModuleNotFoundException if the dataset module with the specified name was not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void delete(DatasetModuleId module)
+    throws DatasetModuleCannotBeDeletedException, DatasetModuleNotFoundException,
+    IOException, UnauthenticatedException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(module.getParent(), String.format("data/modules/%s", module.getModule()));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_CONFLICT,
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
-      throw new DatasetModuleCannotBeDeletedException(module.toEntityId());
+      throw new DatasetModuleCannotBeDeletedException(module);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new DatasetModuleNotFoundException(module.toEntityId());
+      throw new DatasetModuleNotFoundException(module);
     }
   }
 
@@ -140,9 +191,22 @@ public class DatasetModuleClient {
    * @param module the dataset module to check
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #exists(DatasetModuleId)} instead.
    */
+  @Deprecated
   public boolean exists(Id.DatasetModule module) throws IOException, UnauthenticatedException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(module.getNamespace(), String.format("data/modules/%s", module.getId()));
+    return exists(module.toEntityId());
+  }
+
+  /**
+   * Checks if a dataset module exists.
+   *
+   * @param module the dataset module to check
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public boolean exists(DatasetModuleId module) throws IOException, UnauthenticatedException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(module.getParent(), String.format("data/modules/%s", module.getModule()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
@@ -158,8 +222,26 @@ public class DatasetModuleClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws TimeoutException if the dataset module was not yet existent before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
+   * @deprecated since 4.0.0. Use {@link #waitForExists(DatasetModuleId, long, TimeUnit)} instead.
    */
+  @Deprecated
   public void waitForExists(final Id.DatasetModule module, long timeout, TimeUnit timeoutUnit)
+    throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
+    waitForExists(module.toEntityId(), timeout, timeoutUnit);
+  }
+
+  /**
+   * Waits for a dataset module to exist.
+   *
+   * @param module the dataset module to check
+   * @param timeout time to wait before timing out
+   * @param timeoutUnit time unit of timeout
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws TimeoutException if the dataset module was not yet existent before {@code timeout} milliseconds
+   * @throws InterruptedException if interrupted while waiting
+   */
+  public void waitForExists(final DatasetModuleId module, long timeout, TimeUnit timeoutUnit)
     throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
 
     try {
@@ -184,8 +266,26 @@ public class DatasetModuleClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws TimeoutException if the dataset module was not yet deleted before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
+   * @deprecated since 4.0.0. Use {@link #waitForDeleted(DatasetModuleId, long, TimeUnit)} instead.
    */
+  @Deprecated
   public void waitForDeleted(final Id.DatasetModule module, long timeout, TimeUnit timeoutUnit)
+    throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
+    waitForDeleted(module.toEntityId(), timeout, timeoutUnit);
+  }
+
+  /**
+   * Waits for a dataset module to be deleted.
+   *
+   * @param module the dataset module to check
+   * @param timeout time to wait before timing out
+   * @param timeoutUnit time unit of timeout
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws TimeoutException if the dataset module was not yet deleted before {@code timeout} milliseconds
+   * @throws InterruptedException if interrupted while waiting
+   */
+  public void waitForDeleted(final DatasetModuleId module, long timeout, TimeUnit timeoutUnit)
     throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
 
     try {
@@ -207,8 +307,23 @@ public class DatasetModuleClient {
    * usually due to existing dataset instances using the dataset module
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #delete(DatasetModuleId)} instead.
    */
+  @Deprecated
   public void deleteAll(Id.Namespace namespace)
+    throws DatasetModuleCannotBeDeletedException, IOException, UnauthenticatedException, UnauthorizedException {
+    deleteAll(namespace.toEntityId());
+  }
+
+  /**
+   * Deletes all dataset modules in a namespace.
+   *
+   * @throws DatasetModuleCannotBeDeletedException if one of the dataset modules cannot be deleted,
+   * usually due to existing dataset instances using the dataset module
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void deleteAll(NamespaceId namespace)
     throws DatasetModuleCannotBeDeletedException, IOException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(namespace, "data/modules");
@@ -228,15 +343,31 @@ public class DatasetModuleClient {
    * @throws DatasetModuleNotFoundException if the dataset module with the specified name was not found
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #get(DatasetModuleId)} instead.
    */
+  @Deprecated
   public DatasetModuleMeta get(Id.DatasetModule module)
     throws DatasetModuleNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+    return get(module.toEntityId());
+  }
 
-    URL url = config.resolveNamespacedURLV3(module.getNamespace(), String.format("data/modules/%s", module.getId()));
+  /**
+   * Gets information about a dataset module.
+   *
+   * @param module the dataset module
+   * @return {@link DatasetModuleMeta} of the dataset module
+   * @throws DatasetModuleNotFoundException if the dataset module with the specified name was not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public DatasetModuleMeta get(DatasetModuleId module)
+    throws DatasetModuleNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(module.getParent(), String.format("data/modules/%s", module.getModule()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new DatasetModuleNotFoundException(module.toEntityId());
+      throw new DatasetModuleNotFoundException(module);
     }
 
     return ObjectResponse.fromJsonBody(response, DatasetModuleMeta.class).getResponseObject();

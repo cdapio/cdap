@@ -67,10 +67,10 @@ public class GetProgramRunsCommand extends AbstractCommand {
       ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(),
                                                                                programName);
       if (arguments.hasArgument(ArgumentName.RUN_STATUS.toString())) {
-        records = programClient.getProgramRuns(programId.toId(), arguments.get(ArgumentName.RUN_STATUS.toString()),
+        records = programClient.getProgramRuns(programId, arguments.get(ArgumentName.RUN_STATUS.toString()),
                                                startTime, endTime, limit);
       } else {
-        records = programClient.getAllProgramRuns(programId.toId(), startTime, endTime, limit);
+        records = programClient.getAllProgramRuns(programId, startTime, endTime, limit);
       }
 
     } else {

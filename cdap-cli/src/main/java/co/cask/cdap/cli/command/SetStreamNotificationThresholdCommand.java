@@ -47,7 +47,7 @@ public class SetStreamNotificationThresholdCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     int notificationThresholdMB = arguments.getInt(ArgumentName.NOTIFICATION_THRESHOLD_MB.toString());
-    streamClient.setStreamProperties(streamId.toId(), new StreamProperties(null, null, notificationThresholdMB));
+    streamClient.setStreamProperties(streamId, new StreamProperties(null, null, notificationThresholdMB));
     output.printf("Successfully set notification threshold of stream '%s' to %dMB\n",
                   streamId.getEntityName(), notificationThresholdMB);
   }

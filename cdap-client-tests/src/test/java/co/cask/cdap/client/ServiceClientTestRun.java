@@ -27,7 +27,6 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -75,9 +74,9 @@ public class ServiceClientTestRun extends ClientTestBase {
   private static final Gson GSON = new Gson();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  private final Id.Namespace namespace = Id.Namespace.DEFAULT;
-  private final Id.Application app = Id.Application.from(namespace, FakeApp.NAME);
-  private final Id.Service service = Id.Service.from(app, PingService.NAME);
+  private final NamespaceId namespace = NamespaceId.DEFAULT;
+  private final ApplicationId app = namespace.app(FakeApp.NAME);
+  private final ServiceId service = app.service(PingService.NAME);
   private static final ServiceId serviceId = new ServiceId(NamespaceId.DEFAULT.getNamespace(), AppReturnsArgs.NAME,
                                                            AppReturnsArgs.SERVICE);
   private static final ArtifactId artifactId = NamespaceId.DEFAULT.artifact("appreturnsArgs", "1.0.0-SNAPSHOT");
@@ -246,7 +245,7 @@ public class ServiceClientTestRun extends ClientTestBase {
         return appJarLoc.getInputStream();
       }
     };
-    artifactClient.add(Id.Namespace.DEFAULT, artifactId.getArtifact(), inputSupplier, artifactId.getVersion());
+    artifactClient.add(NamespaceId.DEFAULT, artifactId.getArtifact(), inputSupplier, artifactId.getVersion());
     appJarLoc.delete();
   }
 

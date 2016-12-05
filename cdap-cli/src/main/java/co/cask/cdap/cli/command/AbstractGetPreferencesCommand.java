@@ -69,15 +69,15 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
         return client.getInstancePreferences();
       case NAMESPACE:
         checkInputLength(programIdParts, 0);
-        return client.getNamespacePreferences(cliConfig.getCurrentNamespace().toId(), resolved);
+        return client.getNamespacePreferences(cliConfig.getCurrentNamespace(), resolved);
       case APP:
-        return client.getApplicationPreferences(parseAppId(programIdParts).toId(), resolved);
+        return client.getApplicationPreferences(parseAppId(programIdParts), resolved);
       case FLOW:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:
       case SPARK:
-        return client.getProgramPreferences(parseProgramId(programIdParts, type.getProgramType()).toId(), resolved);
+        return client.getProgramPreferences(parseProgramId(programIdParts, type.getProgramType()), resolved);
       default:
         throw new IllegalArgumentException("Unrecognized element type for preferences: "  + type.getShortName());
     }

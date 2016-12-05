@@ -29,8 +29,10 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ServiceId;
+import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.DefaultMapReduceManager;
 import co.cask.cdap.test.DefaultSparkManager;
@@ -70,14 +72,14 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
 
   @Override
   public FlowManager getFlowManager(String flowName) {
-    Id.Flow flowId = Id.Flow.from(application.toId(), flowName);
+    FlowId flowId = application.flow(flowName);
     return new RemoteFlowManager(flowId, clientConfig, restClient, this);
   }
 
   @Override
   public MapReduceManager getMapReduceManager(String programName) {
-    Id.Program programId = Id.Program.from(application.toId(), ProgramType.MAPREDUCE, programName);
-    return new DefaultMapReduceManager(programId, this);
+    ProgramId programId = application.mr(programName);
+    return new DefaultMapReduceManager(programId.toId(), this);
   }
 
   @Override
@@ -88,7 +90,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
 
   @Override
   public WorkflowManager getWorkflowManager(String workflowName) {
-    Id.Workflow programId = Id.Workflow.from(application.toId(), workflowName);
+    WorkflowId programId = application.workflow(workflowName);
     return new RemoteWorkflowManager(programId, clientConfig, restClient, this);
   }
 
@@ -100,8 +102,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
 
   @Override
   public WorkerManager getWorkerManager(String workerName) {
-    Id.Worker programId = Id.Worker.from(application.toId(), workerName);
-    return new RemoteWorkerManager(programId, clientConfig, restClient, this);
+    return new RemoteWorkerManager(application.worker(workerName), clientConfig, restClient, this);
   }
 
   @Override
@@ -131,7 +132,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   @Override
   public void stopProgram(Id.Program programId) {
     try {
-      programClient.stop(programId);
+      programClient.stop(programId.toEntityId());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -148,13 +149,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
 
   @Override
   public void startProgram(Id.Program programId, Map<String, String> arguments) {
-    try {
-      String status = programClient.getStatus(programId);
-      Preconditions.checkState("STOPPED".equals(status), "Program %s is already running", programId);
-      programClient.start(programId, false, arguments);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    startProgram(programId.toEntityId(), arguments);
   }
 
   @Override
@@ -170,13 +165,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
 
   @Override
   public boolean isRunning(Id.Program programId) {
-    try {
-      String status = programClient.getStatus(programId);
-      // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
-      return "STARTING".equals(status) || "RUNNING".equals(status);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    return isRunning(programId.toEntityId());
   }
 
   @Override
@@ -192,7 +181,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   @Override
   public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
     try {
-      return programClient.getProgramRuns(programId, status.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE);
+      return programClient.getProgramRuns(programId.toEntityId(), status.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -200,7 +189,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
 
   @Override
   public void update(AppRequest appRequest) throws Exception {
-    applicationClient.update(application.toId(), appRequest);
+    applicationClient.update(application, appRequest);
   }
 
   @Override
@@ -215,6 +204,6 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
 
   @Override
   public void setRuntimeArgs(ProgramId programId, Map<String, String> args) throws Exception {
-    programClient.setRuntimeArgs(programId.toId(), args);
+    programClient.setRuntimeArgs(programId, args);
   }
 }

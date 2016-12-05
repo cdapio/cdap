@@ -18,6 +18,8 @@ package co.cask.cdap.common.metrics;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.FlowletId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
@@ -40,27 +42,43 @@ public final class MetricsTags {
     }
     return tagMap;
   }
+
   // TODO: Use Id.Flow.Flowlet
+  @Deprecated
   public static Map<String, String> flowlet(Id.Program flowId, String flowletId) {
-    return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, flowId.getNamespaceId(),
-      Constants.Metrics.Tag.APP, flowId.getApplicationId(),
-      Constants.Metrics.Tag.FLOW, flowId.getId(),
-      Constants.Metrics.Tag.FLOWLET, flowletId);
+    return flowlet(flowId.toEntityId().flowlet(flowletId));
   }
 
+  public static Map<String, String> flowlet(FlowletId flowletId) {
+    return ImmutableMap.of(
+      Constants.Metrics.Tag.NAMESPACE, flowletId.getNamespace(),
+      Constants.Metrics.Tag.APP, flowletId.getApplication(),
+      Constants.Metrics.Tag.FLOW, flowletId.getFlow(),
+      Constants.Metrics.Tag.FLOWLET, flowletId.getFlowlet());
+  }
+
+  @Deprecated
   public static Map<String, String> service(Id.Program id) {
-    return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, id.getNamespaceId(),
-      Constants.Metrics.Tag.APP, id.getApplicationId(),
-      Constants.Metrics.Tag.SERVICE, id.getId());
+    return service(id.toEntityId());
   }
 
-  public static Map<String, String> serviceHandler(Id.Program id, String handlerId) {
+  public static Map<String, String> service(ProgramId serviceId) {
     return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, id.getNamespaceId(),
-      Constants.Metrics.Tag.APP, id.getApplicationId(),
-      Constants.Metrics.Tag.SERVICE, id.getId(),
+      Constants.Metrics.Tag.NAMESPACE, serviceId.getNamespace(),
+      Constants.Metrics.Tag.APP, serviceId.getApplication(),
+      Constants.Metrics.Tag.SERVICE, serviceId.getProgram());
+  }
+
+  @Deprecated
+  public static Map<String, String> serviceHandler(Id.Program id, String handlerId) {
+    return serviceHandler(id.toEntityId(), handlerId);
+  }
+
+  public static Map<String, String> serviceHandler(ProgramId id, String handlerId) {
+    return ImmutableMap.of(
+      Constants.Metrics.Tag.NAMESPACE, id.getNamespace(),
+      Constants.Metrics.Tag.APP, id.getApplication(),
+      Constants.Metrics.Tag.SERVICE, id.getProgram(),
       Constants.Metrics.Tag.HANDLER, handlerId);
   }
 }

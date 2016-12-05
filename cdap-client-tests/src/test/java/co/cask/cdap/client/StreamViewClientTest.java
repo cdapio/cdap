@@ -81,18 +81,18 @@ public class StreamViewClientTest extends AbstractClientTest {
     StreamId stream = namespace.stream("foo");
     StreamViewId view1 = stream.view("view1");
     LOG.info("Creating stream {}", stream);
-    streamClient.create(stream.toId());
+    streamClient.create(stream);
 
     try {
       LOG.info("Sending events to stream {}", stream);
-      streamClient.sendEvent(stream.toId(), "a,b,c");
-      streamClient.sendEvent(stream.toId(), "d,e,f");
-      streamClient.sendEvent(stream.toId(), "g,h,i");
+      streamClient.sendEvent(stream, "a,b,c");
+      streamClient.sendEvent(stream, "d,e,f");
+      streamClient.sendEvent(stream, "g,h,i");
 
       LOG.info("Verifying that no views exist yet");
-      Assert.assertEquals(ImmutableList.of(), streamViewClient.list(stream.toId()));
+      Assert.assertEquals(ImmutableList.of(), streamViewClient.list(stream));
       try {
-        streamViewClient.get(view1.toId());
+        streamViewClient.get(view1);
         Assert.fail();
       } catch (NotFoundException e) {
         Assert.assertEquals(view1, e.getObject());
@@ -107,11 +107,11 @@ public class StreamViewClientTest extends AbstractClientTest {
           Schema.Field.of("three", Schema.of(Schema.Type.STRING))));
       ViewSpecification viewSpecification = new ViewSpecification(format, "firsttable");
       LOG.info("Creating view {} with config {}", view1, GSON.toJson(viewSpecification));
-      Assert.assertEquals(true, streamViewClient.createOrUpdate(view1.toId(), viewSpecification));
+      Assert.assertEquals(true, streamViewClient.createOrUpdate(view1, viewSpecification));
 
       LOG.info("Verifying that view {} has been created", view1);
-      Assert.assertEquals(new ViewDetail(view1.getView(), viewSpecification), streamViewClient.get(view1.toId()));
-      Assert.assertEquals(ImmutableList.of(view1.getView()), streamViewClient.list(stream.toId()));
+      Assert.assertEquals(new ViewDetail(view1.getView(), viewSpecification), streamViewClient.get(view1));
+      Assert.assertEquals(ImmutableList.of(view1.getView()), streamViewClient.list(stream));
 
       FormatSpecification newFormat = new FormatSpecification(
         "csv",
@@ -122,11 +122,11 @@ public class StreamViewClientTest extends AbstractClientTest {
           Schema.Field.of("three", Schema.of(Schema.Type.STRING))));
       ViewSpecification newViewSpecification = new ViewSpecification(newFormat, "firsttable");
       LOG.info("Updating view {} with config {}", view1, GSON.toJson(newViewSpecification));
-      Assert.assertEquals(false, streamViewClient.createOrUpdate(view1.toId(), newViewSpecification));
+      Assert.assertEquals(false, streamViewClient.createOrUpdate(view1, newViewSpecification));
 
       LOG.info("Verifying that view {} has been updated", view1);
-      Assert.assertEquals(new ViewDetail(view1.getView(), newViewSpecification), streamViewClient.get(view1.toId()));
-      Assert.assertEquals(ImmutableList.of(view1.getView()), streamViewClient.list(stream.toId()));
+      Assert.assertEquals(new ViewDetail(view1.getView(), newViewSpecification), streamViewClient.get(view1));
+      Assert.assertEquals(ImmutableList.of(view1.getView()), streamViewClient.list(stream));
 
       ExploreExecutionResult executionResult = queryClient.execute(
         view1.getParent().getParent(), "select one,two,three from firsttable").get();
@@ -150,23 +150,23 @@ public class StreamViewClientTest extends AbstractClientTest {
       Assert.assertEquals("i", results.get(2).getColumns().get(2));
 
       LOG.info("Deleting view {}", view1);
-      streamViewClient.delete(view1.toId());
+      streamViewClient.delete(view1);
 
       LOG.info("Verifying that view {] has been deleted", view1);
       try {
-        streamViewClient.get(view1.toId());
+        streamViewClient.get(view1);
         Assert.fail();
       } catch (NotFoundException e) {
         Assert.assertEquals(view1, e.getObject());
       }
-      Assert.assertEquals(ImmutableList.of(), streamViewClient.list(stream.toId()));
+      Assert.assertEquals(ImmutableList.of(), streamViewClient.list(stream));
     } finally {
-      streamClient.delete(stream.toId());
+      streamClient.delete(stream);
     }
 
     // test deleting stream with a view
     LOG.info("Creating stream {}", stream);
-    streamClient.create(stream.toId());
+    streamClient.create(stream);
 
     try {
       FormatSpecification format = new FormatSpecification(
@@ -178,10 +178,10 @@ public class StreamViewClientTest extends AbstractClientTest {
           Schema.Field.of("three", Schema.of(Schema.Type.STRING))));
       ViewSpecification viewSpecification = new ViewSpecification(format, "firsttable");
       LOG.info("Creating view {} with config {}", view1, GSON.toJson(viewSpecification));
-      Assert.assertEquals(true, streamViewClient.createOrUpdate(view1.toId(), viewSpecification));
+      Assert.assertEquals(true, streamViewClient.createOrUpdate(view1, viewSpecification));
 
     } finally {
-      streamClient.delete(stream.toId());
+      streamClient.delete(stream);
     }
   }
 }

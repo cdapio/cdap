@@ -47,7 +47,7 @@ public class DeleteDatasetModuleCommand extends AbstractAuthCommand {
     DatasetModuleId module = cliConfig.getCurrentNamespace().datasetModule(
       arguments.get(ArgumentName.DATASET_MODULE.toString()));
 
-    datasetClient.delete(module.toId());
+    datasetClient.delete(module);
     output.printf("Successfully deleted dataset module '%s'\n", module.getEntityName());
   }
 
