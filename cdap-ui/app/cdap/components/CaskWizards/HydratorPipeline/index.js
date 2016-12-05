@@ -58,8 +58,7 @@ export default class HydratorPipeline extends Component {
       <Modal
         isOpen={this.state.isOpen}
         toggle={this.closeHandler.bind(this)}
-        className="wizard-modal create-stream-wizard hydrator-pipeline-modal"
-        backdrop={false}
+        className="wizard-modal create-stream-wizard hydrator-pipeline-wizard-modal"
         size="lg"
       >
         <ModalHeader>

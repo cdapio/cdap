@@ -15,14 +15,14 @@
  */
 
 @import '../../styles/variables.less';
-@wizard-header-color: #262933;
-
+@wizard-header-color: #464a57;
+@wizard-modal-margin-top: 180px;
 .wizard-modal {
   overflow-x: hidden;
   &.modal-dialog {
     height: 65vh;
     width: 60vw;
-    margin-top: 180px;
+    margin-top: @wizard-modal-margin-top;
     max-width: 1050px;
 
     .modal-content {
@@ -45,6 +45,7 @@
         height: ~"-moz-calc(100% - 51px)";
         height: ~"-webkit-calc(100% - 51px)";
         max-height: 400px;
+        overflow: visible;
 
         > div {
           height: 100%;
@@ -54,17 +55,18 @@
         padding: 0;
         background: @wizard-header-color;
         color: white;
-        border-bottom: 0;
+        border: 0;
 
         h4 {
           font-weight: normal;
+          font-size: 14px;
+
           span {
             line-height: 30px;
             padding: 5px 10px;
           }
           .close-section {
             span { padding: 5px 20px; }
-            border-left: 1px solid;
             cursor: pointer;
           }
         }

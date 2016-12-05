@@ -77,7 +77,9 @@ export default class PlusButtonModal extends Component {
           </span>
           <div className="pull-right">
             <button
-              className="btn btn-sm btn-resource-center"
+              className={classNames("btn btn-sm navigation-button", {
+                'resource-center': this.state.viewMode === 'resourcecenter'
+              })}
               onClick={this.toggleView.bind(this)}
             >
               <span

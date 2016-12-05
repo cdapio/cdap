@@ -269,7 +269,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         size: 'lg',
         backdrop: 'static',
         keyboard: false,
-        windowTopClass: 'confirm-modal hydrator-modal',
+        windowTopClass: 'confirm-modal hydrator-modal center',
         controller: ['$scope', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', function($scope, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions) {
           $scope.isSaving = false;
           $scope.discard = () => {
