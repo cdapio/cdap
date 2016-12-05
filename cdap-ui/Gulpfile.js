@@ -237,7 +237,7 @@ gulp.task('js:lib', function() {
       './node_modules/react-dom/dist/react-dom.min.js',
       './node_modules/ngreact/ngReact.min.js',
 
-      './app/lib/avsc-bundle.js'
+      './node_modules/cdap-avsc/dist/cdap-avsc-lib.js'
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
     ], mainBowerFiles({

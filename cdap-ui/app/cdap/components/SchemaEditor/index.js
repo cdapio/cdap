@@ -20,6 +20,7 @@ require('./SchemaEditor.less');
 import {getParsedSchema} from 'components/SchemaEditor/SchemaHelpers';
 import RecordSchemaRow from 'components/SchemaEditor/RecordSchemaRow';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
+import cdapavsc from 'cdap-avsc';
 
 export default class SchemaEditor extends Component {
   constructor(props) {
@@ -27,7 +28,7 @@ export default class SchemaEditor extends Component {
     let state = SchemaStore.getState();
     let rows;
     try {
-      rows = avsc.parse(state.schema, { wrapUnions: true });
+      rows = cdapavsc.parse(state.schema, { wrapUnions: true });
     } catch(e) {
       console.log('Error parsing schema: ', e);
     }

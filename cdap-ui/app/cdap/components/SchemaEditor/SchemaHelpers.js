@@ -15,7 +15,7 @@
  */
 
 import uuid from 'node-uuid';
-
+import cdapavsc from 'cdap-avsc';
 const SCHEMA_TYPES = {
   'types': [
     'boolean',
@@ -48,7 +48,7 @@ function parseType(type) {
 
   if (!type.getTypeName) {
     try {
-      type = avsc.parse(type, {wrapUnions: true});
+      type = cdapavsc.parse(type, {wrapUnions: true});
       storedType = type;
     } catch(e) {
       return;
@@ -98,7 +98,7 @@ function getParsedSchema(schema) {
   let parsed;
 
   try {
-    parsed = avsc.parse(schema, { wrapUnions: true });
+    parsed = cdapavsc.parse(schema, { wrapUnions: true });
   } catch(e) {
     return;
   }
@@ -126,7 +126,7 @@ function checkComplexType(displayType) {
 function checkParsedTypeForError(parsedTypes) {
   let error = '';
   try {
-    avsc.parse(parsedTypes);
+    cdapavsc.parse(parsedTypes);
   } catch(e) {
     error = e.message;
   }
