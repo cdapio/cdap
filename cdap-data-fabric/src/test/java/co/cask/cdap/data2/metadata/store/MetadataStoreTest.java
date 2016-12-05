@@ -64,6 +64,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -316,13 +317,65 @@ public class MetadataStoreTest {
     Assert.assertTrue(actual.containsAll(expected));
   }
 
+  // Tests pagination for search results queries that do not have indexes stored in sorted order
+  // The pagination for these queries is done in DefaultMetadataStore, so adding this test here.
+  @Test
+  public void testSearchPagination() throws BadRequestException {
+    NamespaceId ns = new NamespaceId("ns");
+    ProgramId flow = ns.app("app").flow("flow");
+    StreamId stream = ns.stream("stream");
+    DatasetId dataset = ns.dataset("dataset");
+
+    store.addTags(MetadataScope.USER, flow, "tag", "tag1");
+    store.addTags(MetadataScope.USER, stream, "tag2", "tag3 tag4");
+    store.addTags(MetadataScope.USER, dataset, "tag5 tag6", "tag7 tag8");
+
+    MetadataSearchResultRecord flowSearchResult = new MetadataSearchResultRecord(flow);
+    MetadataSearchResultRecord streamSearchResult = new MetadataSearchResultRecord(stream);
+    MetadataSearchResultRecord datasetSearchResult = new MetadataSearchResultRecord(dataset);
+
+    // relevance order for searchQuery "tag*" is dataset, stream, flow
+
+    Assert.assertEquals(
+      ImmutableList.of(datasetSearchResult, streamSearchResult, flowSearchResult),
+      ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1)))
+    );
+
+    Assert.assertEquals(
+      ImmutableList.of(datasetSearchResult, streamSearchResult),
+      ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 0, 2, 1)))
+    );
+
+    Assert.assertEquals(
+      ImmutableList.of(streamSearchResult, flowSearchResult),
+      ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 1, 2, 1)))
+    );
+
+    Assert.assertEquals(
+      ImmutableList.of(flowSearchResult),
+      ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 2, 2, 1)))
+    );
+
+    Assert.assertEquals(
+      ImmutableList.<MetadataSearchResultRecord>of(),
+      ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 4, 2, 1)))
+    );
+  }
+
   @AfterClass
   public static void teardown() {
     txManager.stopAndWait();
   }
 
-  private Set<MetadataSearchResultRecord> search(String namespace, String searchQuery) throws BadRequestException {
-    return store.search(namespace, searchQuery, EnumSet.allOf(MetadataSearchTargetType.class), SortInfo.DEFAULT);
+  private Set<MetadataSearchResultRecord> search(String ns, String searchQuery) throws BadRequestException {
+    return search(ns, searchQuery, 0, Integer.MAX_VALUE, 1);
+  }
+
+  private Set<MetadataSearchResultRecord> search(String ns, String searchQuery,
+                                                 int offset, int limit, int numCursors) throws BadRequestException {
+    return store.search(
+      ns, searchQuery, EnumSet.allOf(MetadataSearchTargetType.class),
+      SortInfo.DEFAULT, offset, limit, numCursors, null).getResults();
   }
 
   private void generateMetadataUpdates() {
@@ -337,5 +390,13 @@ public class MetadataStoreTest {
     store.removeTags(MetadataScope.USER, dataset, datasetTags.iterator().next());
     store.removeProperties(MetadataScope.USER, stream);
     store.removeMetadata(MetadataScope.USER, app);
+  }
+
+  private Set<MetadataSearchResultRecord> stripMetadata(Set<MetadataSearchResultRecord> searchResultsWithMetadata) {
+    Set<MetadataSearchResultRecord> metadataStrippedResults = new LinkedHashSet<>(searchResultsWithMetadata.size());
+    for (MetadataSearchResultRecord searchResultWithMetadata : searchResultsWithMetadata) {
+      metadataStrippedResults.add(new MetadataSearchResultRecord(searchResultWithMetadata.getEntityId()));
+    }
+    return metadataStrippedResults;
   }
 }

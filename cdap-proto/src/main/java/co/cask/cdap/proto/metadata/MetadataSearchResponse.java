@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto.metadata;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -24,16 +25,19 @@ import java.util.Set;
 public class MetadataSearchResponse {
   private final String sort;
   private final int offset;
-  private final int size;
+  private final int limit;
   private final int total;
   private final Set<MetadataSearchResultRecord> results;
+  private final List<String> cursors;
 
-  public MetadataSearchResponse(String sort, int offset, int size, int total, Set<MetadataSearchResultRecord> results) {
+  public MetadataSearchResponse(String sort, int offset, int limit, int total,
+                                Set<MetadataSearchResultRecord> results, List<String> cursors) {
     this.sort = sort;
     this.offset = offset;
-    this.size = size;
+    this.limit = limit;
     this.total = total;
     this.results = results;
+    this.cursors = cursors;
   }
 
   public String getSort() {
@@ -44,8 +48,8 @@ public class MetadataSearchResponse {
     return offset;
   }
 
-  public int getSize() {
-    return size;
+  public int getLimit() {
+    return limit;
   }
 
   public int getTotal() {
@@ -54,5 +58,9 @@ public class MetadataSearchResponse {
 
   public Set<MetadataSearchResultRecord> getResults() {
     return results;
+  }
+
+  public List<String> getCursors() {
+    return cursors;
   }
 }

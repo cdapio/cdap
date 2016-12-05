@@ -77,11 +77,14 @@ public class MetadataAdminAuthorizationTest {
     SecurityRequestContext.setUserId(ALICE.getName());
     authorizer.grant(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.WRITE));
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, "{}", cConf);
-    Assert.assertFalse(metadataAdmin.search(NamespaceId.DEFAULT.getNamespace(), "*",
-                                            EnumSet.allOf(MetadataSearchTargetType.class), SortInfo.DEFAULT).isEmpty());
+    EnumSet<MetadataSearchTargetType> types = EnumSet.allOf(MetadataSearchTargetType.class);
+    Assert.assertFalse(
+      metadataAdmin.search(NamespaceId.DEFAULT.getNamespace(), "*", types,
+                           SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null).getResults().isEmpty());
     SecurityRequestContext.setUserId("bob");
-    Assert.assertTrue(metadataAdmin.search(NamespaceId.DEFAULT.getNamespace(), "*",
-                                           EnumSet.allOf(MetadataSearchTargetType.class), SortInfo.DEFAULT).isEmpty());
+    Assert.assertTrue(
+      metadataAdmin.search(NamespaceId.DEFAULT.getNamespace(), "*", types,
+                           SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null).getResults().isEmpty());
   }
 
   @AfterClass

@@ -23,6 +23,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
@@ -97,5 +98,25 @@ public class SortInfo {
     }
 
     return new SortInfo(sortBy, SortInfo.SortOrder.valueOf(sortOrder.toUpperCase()));
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    SortInfo that = (SortInfo) o;
+
+    return Objects.equals(sortBy, that.sortBy) &&
+      Objects.equals(sortOrder, that.sortOrder);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(sortBy, sortOrder);
   }
 }

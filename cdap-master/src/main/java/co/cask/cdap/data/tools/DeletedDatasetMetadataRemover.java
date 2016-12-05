@@ -28,11 +28,11 @@ import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -55,8 +55,8 @@ final class DeletedDatasetMetadataRemover {
     List<DatasetId> removedDatasets = new ArrayList<>();
     for (NamespaceMeta namespaceMeta : nsStore.list()) {
       Set<MetadataSearchResultRecord> searchResults =
-        metadataStore.search(namespaceMeta.getName(), "*",
-                             ImmutableSet.of(MetadataSearchTargetType.DATASET), SortInfo.DEFAULT);
+        metadataStore.search(namespaceMeta.getName(), "*", EnumSet.of(MetadataSearchTargetType.DATASET),
+                             SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null).getResults();
       for (MetadataSearchResultRecord searchResult : searchResults) {
         NamespacedEntityId entityId = searchResult.getEntityId();
         Preconditions.checkState(entityId instanceof DatasetId,

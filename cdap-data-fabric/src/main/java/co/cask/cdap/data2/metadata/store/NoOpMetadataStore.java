@@ -19,6 +19,7 @@ import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.collect.ImmutableSet;
@@ -115,9 +116,12 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public Set<MetadataSearchResultRecord> search(String namespaceId, String searchQuery,
-                                                Set<MetadataSearchTargetType> types, SortInfo sort) {
-    return Collections.emptySet();
+  public MetadataSearchResponse search(String namespaceId, String searchQuery,
+                                       Set<MetadataSearchTargetType> types,
+                                       SortInfo sort, int offset, int limit, int numCursors, String cursor) {
+    return new MetadataSearchResponse(sort.toString(), offset, limit, 0,
+                                      Collections.<MetadataSearchResultRecord>emptySet(),
+                                      Collections.<String>emptyList());
   }
 
   @Override

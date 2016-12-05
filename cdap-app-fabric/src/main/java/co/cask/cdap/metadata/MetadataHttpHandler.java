@@ -32,13 +32,11 @@ import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
@@ -56,7 +54,6 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -840,26 +837,21 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @QueryParam("target") List<String> targets,
                              @QueryParam("sort") @DefaultValue("") String sort,
                              @QueryParam("offset") @DefaultValue("0") int offset,
-                             @QueryParam("size") @DefaultValue("") String sizeStr) throws Exception {
+                             // 2147483647 is Integer.MAX_VALUE
+                             @QueryParam("limit") @DefaultValue("2147483647") int limit,
+                             @QueryParam("numCursors") @DefaultValue("1") int numCursors,
+                             @QueryParam("cursor") @DefaultValue("") String cursor) throws Exception {
     Set<MetadataSearchTargetType> types = Collections.emptySet();
     if (targets != null) {
       types = ImmutableSet.copyOf(Iterables.transform(targets, STRING_TO_TARGET_TYPE));
     }
-
-    int size = Integer.MAX_VALUE;
-    if (!sizeStr.isEmpty()) {
-      try {
-        size = Integer.parseInt(sizeStr);
-      } catch (NumberFormatException e) {
-        throw new BadRequestException(String.format("Parameter 'size' should be numeric. Found %s.", sizeStr));
-      }
+    SortInfo sortInfo = SortInfo.of(URLDecoder.decode(sort, "UTF-8"));
+    if (SortInfo.DEFAULT.equals(sortInfo) && !(cursor.isEmpty())) {
+      throw new BadRequestException("Cursors are not supported when sort info is not specified.");
     }
-    Set<MetadataSearchResultRecord> results =
+    MetadataSearchResponse response =
       metadataAdmin.search(namespaceId, URLDecoder.decode(searchQuery, "UTF-8"), types,
-                           SortInfo.of(URLDecoder.decode(sort, "UTF-8")));
-
-    Set<MetadataSearchResultRecord> paginated = paginate(results, offset, size);
-    MetadataSearchResponse response = new MetadataSearchResponse(sort, offset, size, results.size(), paginated);
+                           sortInfo, offset, limit, numCursors, cursor);
     responder.sendJson(HttpResponseStatus.OK, response, MetadataSearchResponse.class, GSON);
   }
 
@@ -891,18 +883,5 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException(String.format("Invalid metadata scope '%s'. Expected '%s' or '%s'",
                                                   scope, MetadataScope.USER, MetadataScope.SYSTEM));
     }
-  }
-
-  private Set<MetadataSearchResultRecord> paginate(Set<MetadataSearchResultRecord> sorted,
-                                                   int offset, int size) {
-    if (sorted.isEmpty()) {
-      return sorted;
-    }
-    int endIndex = offset + size;
-    if (endIndex >= sorted.size()) {
-      // endIndex is exclusive in ImmutableList.subList
-      endIndex = sorted.size();
-    }
-    return new LinkedHashSet<>(ImmutableList.copyOf(sorted).subList(offset, endIndex));
   }
 }
