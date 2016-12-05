@@ -859,14 +859,14 @@ public class CLIMainTest extends CLITestBase {
 
   private static void createHiveDB(String hiveDb) throws Exception {
     ListenableFuture<ExploreExecutionResult> future =
-      queryClient.execute(NamespaceId.DEFAULT.toId(), "create database " + hiveDb);
+      queryClient.execute(NamespaceId.DEFAULT, "create database " + hiveDb);
     assertExploreQuerySuccess(future);
-    future = queryClient.execute(NamespaceId.DEFAULT.toId(), "describe database " + hiveDb);
+    future = queryClient.execute(NamespaceId.DEFAULT, "describe database " + hiveDb);
     assertExploreQuerySuccess(future);
   }
 
   private static void dropHiveDb(String hiveDb) throws Exception {
-    assertExploreQuerySuccess(queryClient.execute(NamespaceId.DEFAULT.toId(), "drop database " + hiveDb));
+    assertExploreQuerySuccess(queryClient.execute(NamespaceId.DEFAULT, "drop database " + hiveDb));
   }
 
   private static void assertExploreQuerySuccess(

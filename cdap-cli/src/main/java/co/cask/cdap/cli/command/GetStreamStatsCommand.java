@@ -103,7 +103,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
     // get a list of stream events and calculates various statistics about the events
     String timestampCol = getTimestampHiveColumn(streamId);
     ListenableFuture<ExploreExecutionResult> resultsFuture = queryClient.execute(
-      streamId.getParent().toId(),
+      streamId.getParent(),
       "SELECT * FROM " + getHiveTableName(streamId)
         + " WHERE " + timestampCol + " BETWEEN " + startTime + " AND " + endTime
         + " LIMIT " + limit);

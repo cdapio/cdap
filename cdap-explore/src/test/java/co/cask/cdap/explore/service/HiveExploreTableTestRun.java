@@ -153,7 +153,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
       new ColumnDesc(MY_TABLE_NAME + ".bytes_field", "BINARY", 6, null),
       new ColumnDesc(MY_TABLE_NAME + ".string_field", "STRING", 7, null)
     );
-    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID.toId(), "select * from " + MY_TABLE_NAME).get();
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
     // check SCHEMA
     Assert.assertEquals(expectedSchema, results.getResultSchema());
     List<Object> columns = results.next().getColumns();
@@ -251,7 +251,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
       new ColumnDesc(MY_TABLE_NAME + ".new_field", "STRING", 6, null),
       new ColumnDesc(MY_TABLE_NAME + ".string_field", "STRING", 7, null)
     );
-    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID.toId(), "select * from " + MY_TABLE_NAME).get();
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
     // check SCHEMA
     Assert.assertEquals(expectedSchema, results.getResultSchema());
     List<Object> columns = results.next().getColumns();
@@ -284,7 +284,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
     try {
       String command = String.format("insert into %s select int_field, string_field from %s",
                                      getDatasetHiveName(otherTable), MY_TABLE_NAME);
-      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID.toId(), command).get();
+      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, command).get();
       Assert.assertEquals(QueryStatus.OpStatus.FINISHED, result.getStatus().getStatus());
 
       command = String.format("select id, value from %s", getDatasetHiveName(otherTable));
@@ -382,7 +382,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
         "insert into table %s select P.purchaseid, P.itemid, P.userid, P.ct, P.price, U.name, U.email from " +
           "%s P join %s U on (P.userid = U.id)",
         getDatasetHiveName(expandedTableID), getDatasetHiveName(purchaseTableID), getDatasetHiveName(userTableID));
-      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID.toId(), command).get();
+      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, command).get();
       Assert.assertEquals(QueryStatus.OpStatus.FINISHED, result.getStatus().getStatus());
 
       command = String.format("select purchaseid, itemid, userid, ct, price, username, email from %s",

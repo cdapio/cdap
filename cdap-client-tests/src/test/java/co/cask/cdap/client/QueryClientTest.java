@@ -24,9 +24,13 @@ import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryResult;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.FlowId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.SingletonExternalResource;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.Lists;
@@ -82,23 +86,23 @@ public class QueryClientTest extends AbstractClientTest {
 
   @Test
   public void testAll() throws Exception {
-    Id.Namespace namespace = Id.Namespace.from("queryClientTestNamespace");
-    Id.Namespace otherNamespace = Id.Namespace.from("queryClientOtherNamespace");
+    NamespaceId namespace = new NamespaceId("queryClientTestNamespace");
+    NamespaceId otherNamespace = new NamespaceId("queryClientOtherNamespace");
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
 
-    Id.Application app = Id.Application.from(namespace, FakeApp.NAME);
-    Id.Flow flow = Id.Flow.from(app, FakeFlow.NAME);
-    Id.DatasetInstance dataset = Id.DatasetInstance.from(namespace, FakeApp.DS_NAME);
+    ApplicationId app = namespace.app(FakeApp.NAME);
+    FlowId flow = app.flow(FakeFlow.NAME);
+    DatasetId dataset = namespace.dataset(FakeApp.DS_NAME);
 
-    appClient.deploy(namespace, createAppJarFile(FakeApp.class));
+    appClient.deploy(namespace.toId(), createAppJarFile(FakeApp.class));
 
     try {
-      programClient.start(flow);
+      programClient.start(flow.toId());
       assertProgramRunning(programClient, flow);
 
-      Id.Stream stream = Id.Stream.from(namespace, FakeApp.STREAM_NAME);
-      streamClient.sendEvent(stream, "bob:123");
-      streamClient.sendEvent(stream, "joe:321");
+      StreamId stream = namespace.stream(FakeApp.STREAM_NAME);
+      streamClient.sendEvent(stream.toId(), "bob:123");
+      streamClient.sendEvent(stream.toId(), "joe:321");
 
       Thread.sleep(3000);
 
@@ -106,7 +110,7 @@ public class QueryClientTest extends AbstractClientTest {
 
       exploreClient.disableExploreDataset(dataset).get();
       try {
-        queryClient.execute(dataset.getNamespace(), "select * from " + FakeApp.DS_NAME).get();
+        queryClient.execute(namespace, "select * from " + FakeApp.DS_NAME).get();
         Assert.fail("Explore Query should have thrown an ExecutionException since explore is disabled");
       } catch (ExecutionException e) {
         // ignored
@@ -133,7 +137,7 @@ public class QueryClientTest extends AbstractClientTest {
     }
   }
 
-  private void executeBasicQuery(Id.Namespace namespace, String instanceName) throws Exception {
+  private void executeBasicQuery(NamespaceId namespace, String instanceName) throws Exception {
     // Hive replaces the periods with underscores
     String query = "select * from dataset_" + instanceName.replace(".", "_");
     ExploreExecutionResult executionResult = queryClient.execute(namespace, query).get();

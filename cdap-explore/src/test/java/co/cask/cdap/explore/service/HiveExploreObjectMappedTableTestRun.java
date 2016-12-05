@@ -142,7 +142,7 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
       new ColumnDesc(MY_TABLE_NAME + ".longfield", "BIGINT", 6, null),
       new ColumnDesc(MY_TABLE_NAME + ".stringfield", "STRING", 7, null)
     );
-    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID.toId(), "select * from " + MY_TABLE_NAME).get();
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
     // check schema
     Assert.assertEquals(expectedSchema, results.getResultSchema());
     List<Object> columns = results.next().getColumns();

@@ -41,6 +41,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.SystemServiceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -252,7 +253,7 @@ public class GenerateClientUsageExample {
 
     // Perform an ad-hoc query using the Purchase example
     ListenableFuture<ExploreExecutionResult> resultFuture = queryClient.execute(
-      Id.Namespace.DEFAULT, "SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')");
+      NamespaceId.DEFAULT, "SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')");
     ExploreExecutionResult results = resultFuture.get();
 
     // Fetch schema

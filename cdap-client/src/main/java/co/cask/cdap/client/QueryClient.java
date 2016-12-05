@@ -21,7 +21,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.SuppliedAddressExploreClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -92,7 +92,7 @@ public class QueryClient {
    *         of the query, when it is done. The {@link ListenableFuture#get()} method will throw exceptions if a
    *         network error occurs, if the query is malformed, or if the query is cancelled.
    */
-  public ListenableFuture<ExploreExecutionResult> execute(Id.Namespace namespace, String query) {
+  public ListenableFuture<ExploreExecutionResult> execute(NamespaceId namespace, String query) {
     return exploreClient.submit(namespace, query);
   }
 

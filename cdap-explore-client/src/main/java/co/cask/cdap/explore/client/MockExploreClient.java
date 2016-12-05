@@ -23,10 +23,12 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -54,6 +56,8 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     this.statementsToResults = Maps.newHashMap(statementsToResults);
   }
 
+  // required by Guice
+  @SuppressWarnings("unused")
   public MockExploreClient() {
     this(ImmutableMap.<String, List<ColumnDesc>>of(), ImmutableMap.<String, List<QueryResult>>of());
   }
@@ -64,48 +68,48 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
-  public ListenableFuture<Void> updateExploreDataset(Id.DatasetInstance datasetInstance,
+  public ListenableFuture<Void> updateExploreDataset(DatasetId datasetInstance,
                                                      DatasetSpecification oldSpec, DatasetSpecification newSpec) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> enableExploreDataset(Id.DatasetInstance datasetInstance) {
+  public ListenableFuture<Void> enableExploreDataset(DatasetId datasetInstance) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> enableExploreDataset(Id.DatasetInstance datasetInstance, DatasetSpecification spec) {
+  public ListenableFuture<Void> enableExploreDataset(DatasetId datasetInstance, DatasetSpecification spec) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> disableExploreDataset(Id.DatasetInstance datasetInstance) {
+  public ListenableFuture<Void> disableExploreDataset(DatasetId datasetInstance) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> enableExploreStream(Id.Stream stream, String tableName, FormatSpecification format) {
+  public ListenableFuture<Void> enableExploreStream(StreamId stream, String tableName, FormatSpecification format) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> disableExploreStream(Id.Stream stream, String tableName) {
+  public ListenableFuture<Void> disableExploreStream(StreamId stream, String tableName) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> addPartition(Id.DatasetInstance datasetInstance, PartitionKey key, String path) {
+  public ListenableFuture<Void> addPartition(DatasetId datasetInstance, PartitionKey key, String path) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> dropPartition(Id.DatasetInstance datasetInstance, PartitionKey key) {
+  public ListenableFuture<Void> dropPartition(DatasetId datasetInstance, PartitionKey key) {
     return null;
   }
 
   @Override
-  public ListenableFuture<ExploreExecutionResult> submit(Id.Namespace namespace, final String statement) {
+  public ListenableFuture<ExploreExecutionResult> submit(NamespaceId namespace, final String statement) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
     futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get(statement).iterator(),
                                                       statementsToMetadata.get(statement)));
@@ -187,7 +191,7 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
-  public ListenableFuture<ExploreExecutionResult> removeNamespace(Id.Namespace namespace) {
+  public ListenableFuture<ExploreExecutionResult> removeNamespace(NamespaceId namespace) {
     return null;
   }
 

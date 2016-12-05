@@ -98,7 +98,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
     deleteLocation(namespaceId);
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      exploreFacade.removeNamespace(namespaceId.toId());
+      exploreFacade.removeNamespace(namespaceId);
     }
   }
 

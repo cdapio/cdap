@@ -188,8 +188,8 @@ public class ReflectionStructObjectInspector extends
     }
     try {
       ArrayList<Object> result = new ArrayList<>(fields.size());
-      for (int i = 0; i < fields.size(); i++) {
-        result.add(fields.get(i).field.get(data));
+      for (MyField myField : fields) {
+        result.add(myField.field.get(data));
       }
       return result;
     } catch (Exception e) {
