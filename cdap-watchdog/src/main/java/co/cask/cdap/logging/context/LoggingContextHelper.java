@@ -73,7 +73,7 @@ public final class LoggingContextHelper {
     return impersonator.doAs(namespaceId, new Callable<Location>() {
       @Override
       public Location call() throws Exception {
-        return namespacedLocationFactory.get(namespaceId.toId()).append(logBaseDir);
+        return namespacedLocationFactory.get(namespaceId).append(logBaseDir);
       }
     });
   }

@@ -36,6 +36,8 @@ import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Futures;
@@ -68,14 +70,14 @@ public final class InMemoryConfigurator implements Configurator {
   private final File baseUnpackDir;
   // this is the namespace that the app will be in, which may be different than the namespace of the artifact.
   // if the artifact is a system artifact, the namespace will be the system namespace.
-  private final Id.Namespace appNamespace;
+  private final NamespaceId appNamespace;
 
   private final ArtifactRepository artifactRepository;
   private final ClassLoader artifactClassLoader;
   private final String appClassName;
-  private final Id.Artifact artifactId;
+  private final ArtifactId artifactId;
 
-  public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
+  public InMemoryConfigurator(CConfiguration cConf, NamespaceId appNamespace, ArtifactId artifactId,
                               String appClassName, ArtifactRepository artifactRepository,
                               ClassLoader artifactClassLoader,
                               @Nullable String applicationName, @Nullable String configString) {
@@ -83,7 +85,7 @@ public final class InMemoryConfigurator implements Configurator {
          ApplicationId.DEFAULT_VERSION, configString);
   }
 
-  public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
+  public InMemoryConfigurator(CConfiguration cConf, NamespaceId appNamespace, ArtifactId artifactId,
                               String appClassName, ArtifactRepository artifactRepository,
                               ClassLoader artifactClassLoader,
                               @Nullable String applicationName, @Nullable String applicationVersion,

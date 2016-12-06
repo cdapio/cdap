@@ -30,6 +30,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.ForwardingLocation;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -145,7 +146,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
         return baseLocation;
       }
     }
-    Id.Namespace namespaceId = Id.Namespace.from(datasetContext.getNamespaceId());
+    NamespaceId namespaceId = new NamespaceId((datasetContext.getNamespaceId()));
     String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
     return namespacedLocationFactory.get(namespaceId).append(dataDir).append(basePath);
   }

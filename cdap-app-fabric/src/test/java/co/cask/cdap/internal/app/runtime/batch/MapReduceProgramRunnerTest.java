@@ -321,7 +321,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
   @Test
   public void testMapreduceWithObjectStore() throws Exception {
     // Deploy apps to another namespace and test cross-namespace access meanwhile
-    final ApplicationWithPrograms app = deployApp(new NamespaceId("someOtherNameSpace").toId(),
+    final ApplicationWithPrograms app = deployApp(new NamespaceId("someOtherNameSpace"),
                                                   AppWithMapReduceUsingObjectStore.class);
 
     final ObjectStore<String> input = datasetCache.getDataset("someOtherNameSpace", "keys");

@@ -26,6 +26,7 @@ import co.cask.cdap.internal.app.runtime.plugin.FindPluginHelper;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 
@@ -42,10 +43,10 @@ public class DefaultEndpointPluginContext implements EndpointPluginContext {
   private final NamespaceId namespace;
 
   private final PluginInstantiator pluginInstantiator;
-  private final Id.Artifact parentArtifactId;
+  private final ArtifactId parentArtifactId;
 
   public DefaultEndpointPluginContext(NamespaceId namespace, ArtifactRepository artifactRepository,
-                                      PluginInstantiator pluginInstantiator, Id.Artifact parentArtifactId) {
+                                      PluginInstantiator pluginInstantiator, ArtifactId parentArtifactId) {
     this.namespace = namespace;
     this.artifactRepository = artifactRepository;
     this.pluginInstantiator = pluginInstantiator;

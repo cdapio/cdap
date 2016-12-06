@@ -181,12 +181,12 @@ public class DFSStreamHeartbeatsTest {
     hostname = streamHttpService.getBindAddress().getHostName();
     port = streamHttpService.getBindAddress().getPort();
 
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NamespaceId.DEFAULT.toId()));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NamespaceId.DEFAULT));
   }
 
   @AfterClass
   public static void afterClass() throws IOException {
-    Locations.deleteQuietly(namespacedLocationFactory.get(NamespaceId.DEFAULT.toId()), true);
+    Locations.deleteQuietly(namespacedLocationFactory.get(NamespaceId.DEFAULT), true);
 
     notificationService.startAndWait();
     datasetService.startAndWait();

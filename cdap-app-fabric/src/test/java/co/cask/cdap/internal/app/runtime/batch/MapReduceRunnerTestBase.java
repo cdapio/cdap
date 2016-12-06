@@ -176,7 +176,7 @@ public class MapReduceRunnerTestBase {
     return AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
   }
 
-  protected ApplicationWithPrograms deployApp(Id.Namespace namespace, Class<?> appClass) throws Exception {
+  protected ApplicationWithPrograms deployApp(NamespaceId namespace, Class<?> appClass) throws Exception {
     return AppFabricTestHelper.deployApplicationWithManager(namespace, appClass, TEMP_FOLDER_SUPPLIER);
   }
 

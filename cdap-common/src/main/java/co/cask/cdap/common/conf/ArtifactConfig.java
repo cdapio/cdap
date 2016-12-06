@@ -16,9 +16,11 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.ArtifactId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
@@ -66,9 +68,10 @@ public class ArtifactConfig  {
     return properties;
   }
 
-  public boolean hasParent(Id.Artifact artifactId) {
+  public boolean hasParent(ArtifactId artifactId) {
     for (ArtifactRange range : parents) {
-      if (range.getName().equals(artifactId.getName()) && range.versionIsInRange(artifactId.getVersion())) {
+      if (range.getName().equals(artifactId.getArtifact())
+        && range.versionIsInRange(new ArtifactVersion(artifactId.getVersion()))) {
         return true;
       }
     }

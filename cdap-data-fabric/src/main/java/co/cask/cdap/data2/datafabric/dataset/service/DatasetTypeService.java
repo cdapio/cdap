@@ -360,7 +360,7 @@ public class DatasetTypeService extends AbstractIdleService {
       namespaceHomeLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
         @Override
         public Location call() throws Exception {
-          return namespacedLocationFactory.get(namespaceId.toId());
+          return namespacedLocationFactory.get(namespaceId);
         }
       });
     } catch (Exception e) {

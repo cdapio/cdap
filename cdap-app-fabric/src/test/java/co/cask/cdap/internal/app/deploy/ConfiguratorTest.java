@@ -33,6 +33,8 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -90,7 +92,7 @@ public class ConfiguratorTest {
   public void testInMemoryConfigurator() throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, WordCountApp.class.getSimpleName(), "1.0.0");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact(WordCountApp.class.getSimpleName(), "1.0.0");
     CConfiguration cConf = CConfiguration.create();
     ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizer,
                                                              new DummyProgramRunnerFactory(),
@@ -100,9 +102,9 @@ public class ConfiguratorTest {
     // Create a configurator that is testable. Provide it a application.
     try (CloseableClassLoader artifactClassLoader =
            artifactRepo.createArtifactClassLoader(
-             appJar, new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
+             appJar, new NamespacedImpersonator(new NamespaceId(artifactId.getNamespace()),
                                                 new DefaultImpersonator(cConf, null, null)))) {
-      Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
+      Configurator configurator = new InMemoryConfigurator(conf, NamespaceId.DEFAULT, artifactId,
                                                            WordCountApp.class.getName(), artifactRepo,
                                                            artifactClassLoader, null, "");
       // Extract response from the configurator.
@@ -123,7 +125,7 @@ public class ConfiguratorTest {
   public void testAppWithConfig() throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, ConfigTestApp.class.getSimpleName(), "1.0.0");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact(ConfigTestApp.class.getSimpleName(), "1.0.0");
     CConfiguration cConf = CConfiguration.create();
     ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizer,
                                                              new DummyProgramRunnerFactory(),
@@ -134,10 +136,10 @@ public class ConfiguratorTest {
     // Create a configurator that is testable. Provide it an application.
     try (CloseableClassLoader artifactClassLoader =
            artifactRepo.createArtifactClassLoader(
-             appJar, new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
+             appJar, new NamespacedImpersonator(new NamespaceId(artifactId.getNamespace()),
                                                 new DefaultImpersonator(cConf, null, null)))) {
       Configurator configuratorWithConfig =
-        new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
+        new InMemoryConfigurator(conf, NamespaceId.DEFAULT, artifactId, ConfigTestApp.class.getName(),
                                  artifactRepo, artifactClassLoader, null, new Gson().toJson(config));
 
       ListenableFuture<ConfigResponse> result = configuratorWithConfig.config();
@@ -153,7 +155,7 @@ public class ConfiguratorTest {
       Assert.assertTrue(specification.getDatasets().containsKey("myTable"));
 
       Configurator configuratorWithoutConfig = new InMemoryConfigurator(
-        conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
+        conf, NamespaceId.DEFAULT, artifactId, ConfigTestApp.class.getName(),
         artifactRepo, artifactClassLoader, null, null);
       result = configuratorWithoutConfig.config();
       response = result.get(10, TimeUnit.SECONDS);

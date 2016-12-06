@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
@@ -51,6 +52,7 @@ import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
@@ -64,7 +66,7 @@ import javax.annotation.Nullable;
 public class DefaultAppConfigurer extends DefaultPluginConfigurer implements ApplicationConfigurer {
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
-  private final Id.Artifact artifactId;
+  private final co.cask.cdap.proto.id.ArtifactId artifactId;
   private final String configuration;
   private final Map<String, FlowSpecification> flows = new HashMap<>();
   private final Map<String, MapReduceSpecification> mapReduces = new HashMap<>();
@@ -78,11 +80,12 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
 
   // passed app to be used to resolve default name and description
   @VisibleForTesting
-  public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app) {
+  public DefaultAppConfigurer(NamespaceId namespace, co.cask.cdap.proto.id.ArtifactId artifactId, Application app) {
     this(namespace, artifactId, app, "", null, null);
   }
 
-  public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
+  public DefaultAppConfigurer(NamespaceId namespace, co.cask.cdap.proto.id.ArtifactId artifactId, Application app,
+                              String configuration,
                               @Nullable ArtifactRepository artifactRepository,
                               @Nullable PluginInstantiator pluginInstantiator) {
     super(namespace, artifactId, artifactRepository, pluginInstantiator);
@@ -208,9 +211,11 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   public ApplicationSpecification createSpecification(@Nullable String applicationName,
                                                       @Nullable String applicationVersion) {
     // applicationName can be null only for apps before 3.2 that were not upgraded
-    ArtifactScope scope = artifactId.getNamespace().equals(Id.Namespace.SYSTEM)
+    ArtifactScope scope = artifactId.getNamespace().equals(NamespaceId.SYSTEM)
       ? ArtifactScope.SYSTEM : ArtifactScope.USER;
-    ArtifactId artifactId = new ArtifactId(this.artifactId.getName(), this.artifactId.getVersion(), scope);
+    ArtifactId artifactId = new ArtifactId(this.artifactId.getEntityName(),
+                                           new ArtifactVersion(this.artifactId.getVersion()),
+                                           scope);
 
     String appName = applicationName == null ? name : applicationName;
     String appVersion = applicationVersion == null ? ApplicationId.DEFAULT_VERSION : applicationVersion;

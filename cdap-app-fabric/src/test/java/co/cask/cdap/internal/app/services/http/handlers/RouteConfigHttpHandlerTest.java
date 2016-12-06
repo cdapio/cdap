@@ -25,6 +25,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
@@ -45,13 +46,13 @@ public class RouteConfigHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testRouteStore() throws Exception {
     // deploy, check the status
-    Id.Artifact artifactId = Id.Artifact.from(new Id.Namespace(TEST_NAMESPACE1), "wordcountapp", VERSION1);
+    ArtifactId artifactId = new ArtifactId(TEST_NAMESPACE1, "wordcountapp", VERSION1);
     addAppArtifact(artifactId, WordCountApp.class).getStatusLine().getStatusCode();
 
     ApplicationId appIdV1 = new ApplicationId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, "v1");
     ApplicationId appIdV2 = new ApplicationId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, "v2");
     AppRequest<ConfigTestApp.ConfigClass> request = new AppRequest<>(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), null);
+      new ArtifactSummary(artifactId.getEntityName(), artifactId.getVersion()), null);
     Assert.assertEquals(200, deploy(appIdV1, request).getStatusLine().getStatusCode());
     Assert.assertEquals(200, deploy(appIdV2, request).getStatusLine().getStatusCode());
 

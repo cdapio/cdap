@@ -51,9 +51,9 @@ public class ListArtifactsCommand extends AbstractAuthCommand {
     List<ArtifactSummary> artifactSummaries;
     String artifactScope = arguments.getOptional(ArgumentName.SCOPE.toString());
     if (artifactScope == null) {
-      artifactSummaries = artifactClient.list(cliConfig.getCurrentNamespace().toId());
+      artifactSummaries = artifactClient.list(cliConfig.getCurrentNamespace());
     } else {
-      artifactSummaries = artifactClient.list(cliConfig.getCurrentNamespace().toId(),
+      artifactSummaries = artifactClient.list(cliConfig.getCurrentNamespace(),
                                               ArtifactScope.valueOf(artifactScope.toUpperCase()));
     }
     Table table = Table.builder()

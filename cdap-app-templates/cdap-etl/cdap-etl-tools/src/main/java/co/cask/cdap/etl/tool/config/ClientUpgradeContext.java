@@ -62,7 +62,7 @@ public class ClientUpgradeContext implements UpgradeContext {
   public ArtifactSelectorConfig getPluginArtifact(String pluginType, String pluginName) {
     try {
       List<PluginInfo> plugins =
-        artifactClient.getPluginInfo(artifactId.toId(), pluginType, pluginName, ArtifactScope.SYSTEM);
+        artifactClient.getPluginInfo(artifactId, pluginType, pluginName, ArtifactScope.SYSTEM);
 
       if (plugins.isEmpty()) {
         return null;

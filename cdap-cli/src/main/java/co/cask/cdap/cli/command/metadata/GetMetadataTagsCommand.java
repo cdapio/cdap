@@ -51,8 +51,8 @@ public class GetMetadataTagsCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
     String scope = arguments.getOptional(ArgumentName.METADATA_SCOPE.toString());
-    Set<String> tags = scope == null ? client.getTags(entity.toId()) :
-      client.getTags(entity.toId(), MetadataScope.valueOf(scope.toUpperCase()));
+    Set<String> tags = scope == null ? client.getTags(entity) :
+      client.getTags(entity, MetadataScope.valueOf(scope.toUpperCase()));
 
     Table table = Table.builder()
       .setHeader("tags")

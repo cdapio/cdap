@@ -40,16 +40,16 @@ public class DefaultArtifactManager implements ArtifactManager {
 
   @Override
   public void writeProperties(Map<String, String> properties) throws Exception {
-    artifactRepository.writeArtifactProperties(artifactId.toId(), properties);
+    artifactRepository.writeArtifactProperties(artifactId, properties);
   }
 
   @Override
   public void removeProperties() throws Exception {
-    artifactRepository.deleteArtifactProperties(artifactId.toId());
+    artifactRepository.deleteArtifactProperties(artifactId);
   }
 
   @Override
   public void delete() throws Exception {
-    artifactRepository.deleteArtifact(artifactId.toId());
+    artifactRepository.deleteArtifact(artifactId);
   }
 }

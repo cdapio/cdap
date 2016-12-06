@@ -425,8 +425,8 @@ public abstract class IntegrationTestBase {
       getDatasetClient().delete(namespace.dataset(datasetSpecSummary.getName()).toId());
     }
     ArtifactClient artifactClient = new ArtifactClient(getClientConfig(), getRestClient());
-    for (ArtifactSummary artifactSummary : artifactClient.list(namespace.toId(), ArtifactScope.USER)) {
-      artifactClient.delete(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()).toId());
+    for (ArtifactSummary artifactSummary : artifactClient.list(namespace, ArtifactScope.USER)) {
+      artifactClient.delete(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()));
     }
 
     assertIsClear(namespace);

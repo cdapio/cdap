@@ -33,12 +33,12 @@ public class ArtifactRange {
   private final boolean isLowerInclusive;
   private final boolean isUpperInclusive;
 
-  public ArtifactRange(Id.Namespace namespace, String name, ArtifactVersion lower, ArtifactVersion upper) {
+  public ArtifactRange(NamespaceId namespace, String name, ArtifactVersion lower, ArtifactVersion upper) {
     this(namespace, name, lower, true, upper, false);
   }
 
-  public ArtifactRange(NamespaceId namespace, String name, ArtifactVersion lower, ArtifactVersion upper) {
-    this(namespace, name, lower, true, upper, false);
+  public ArtifactRange(Id.Namespace namespace, String name, ArtifactVersion lower, ArtifactVersion upper) {
+    this(namespace.toEntityId(), name, lower, true, upper, false);
   }
 
   public ArtifactRange(Id.Namespace namespace, String name, ArtifactVersion lower, boolean isLowerInclusive,

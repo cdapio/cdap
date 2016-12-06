@@ -128,7 +128,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws Exception {
-    return artifactRepository.getArtifact(artifactId.toId());
+    return artifactRepository.getArtifact(artifactId);
   }
 
   /**
@@ -230,7 +230,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       try {
         ArtifactId artifactId = Artifacts.toArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
-        copyArtifact(artifactId, artifactRepository.getArtifact(artifactId.toId()), destFile);
+        copyArtifact(artifactId, artifactRepository.getArtifact(artifactId), destFile);
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
       }

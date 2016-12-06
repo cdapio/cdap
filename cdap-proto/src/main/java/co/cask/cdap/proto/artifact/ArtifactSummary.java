@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.Objects;
 
@@ -32,10 +33,10 @@ public class ArtifactSummary {
   protected final String version;
   protected final ArtifactScope scope;
 
-  public static ArtifactSummary from(Id.Artifact artifactId) {
-    ArtifactScope scope = Id.Namespace.SYSTEM.equals(artifactId.getNamespace()) ?
+  public static ArtifactSummary from(co.cask.cdap.proto.id.ArtifactId artifactId) {
+    ArtifactScope scope = NamespaceId.SYSTEM.equals(artifactId.getNamespace()) ?
       ArtifactScope.SYSTEM : ArtifactScope.USER;
-    return new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(), scope);
+    return new ArtifactSummary(artifactId.getEntityName(), artifactId.getVersion(), scope);
   }
 
   public static ArtifactSummary from(ArtifactId artifactId) {

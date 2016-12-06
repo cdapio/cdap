@@ -43,6 +43,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -364,8 +365,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           ArtifactSummary artifactSummary = appRequest.getArtifact();
           NamespaceId artifactNamespace =
             ArtifactScope.SYSTEM.equals(artifactSummary.getScope()) ? NamespaceId.SYSTEM : appId.getParent();
-          Id.Artifact artifactId =
-            Id.Artifact.from(artifactNamespace.toId(), artifactSummary.getName(), artifactSummary.getVersion());
+          ArtifactId artifactId =
+            new ArtifactId(artifactNamespace.getNamespace(), artifactSummary.getName(), artifactSummary.getVersion());
 
           // if we don't null check, it gets serialized to "null"
           String configString = appRequest.getConfig() == null ? null : GSON.toJson(appRequest.getConfig());
@@ -394,8 +395,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                          final String archiveName,
                                          final String configString) throws IOException {
 
-    Id.Namespace idNamespace = namespace.toId();
-    Location namespaceHomeLocation = namespacedLocationFactory.get(idNamespace);
+    Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found",
                                  namespaceHomeLocation, namespace.getNamespace());
@@ -415,9 +415,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     // TODO: (CDAP-3258) error handling needs to be refactored here, should be able just to throw the exception,
     // but the caller catches all exceptions and responds with a 500
-    final Id.Artifact artifactId;
+    final ArtifactId artifactId;
     try {
-      artifactId = Id.Artifact.parse(idNamespace, archiveName);
+      artifactId = new ArtifactId(namespace.getNamespace(), archiveName);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       return null;

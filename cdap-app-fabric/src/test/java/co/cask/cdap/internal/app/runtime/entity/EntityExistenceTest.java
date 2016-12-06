@@ -70,7 +70,7 @@ public class EntityExistenceTest {
     existenceVerifier = injector.getInstance(EntityExistenceVerifier.class);
     LocalLocationFactory lf = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
     File artifactFile = new File(AppJarHelper.createDeploymentJar(lf, AllProgramsApp.class).toURI());
-    artifactRepository.addArtifact(ARTIFACT.toId(), artifactFile);
+    artifactRepository.addArtifact(ARTIFACT, artifactFile);
     AppFabricTestHelper.deployApplication(NAMESPACE.toId(), AllProgramsApp.class, null, cConf);
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
     streamAdmin.createOrUpdateView(VIEW, new ViewSpecification(new FormatSpecification("csv", null)));

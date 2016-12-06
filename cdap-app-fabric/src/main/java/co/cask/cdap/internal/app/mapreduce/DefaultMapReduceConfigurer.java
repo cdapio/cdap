@@ -27,6 +27,8 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -48,7 +50,7 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
   private Resources mapperResources;
   private Resources reducerResources;
 
-  public DefaultMapReduceConfigurer(MapReduce mapReduce, Id.Namespace deployNamespace, Id.Artifact artifactId,
+  public DefaultMapReduceConfigurer(MapReduce mapReduce, NamespaceId deployNamespace, ArtifactId artifactId,
                                     ArtifactRepository artifactRepository,
                                     PluginInstantiator pluginInstantiator) {
     super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);

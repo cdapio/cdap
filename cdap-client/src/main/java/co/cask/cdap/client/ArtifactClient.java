@@ -37,6 +37,8 @@ import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -97,7 +99,7 @@ public class ArtifactClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the namespace could not be found
    */
-  public List<ArtifactSummary> list(Id.Namespace namespace)
+  public List<ArtifactSummary> list(NamespaceId namespace)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
     return list(namespace, null);
   }
@@ -112,7 +114,7 @@ public class ArtifactClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the namespace could not be found
    */
-  public List<ArtifactSummary> list(Id.Namespace namespace, @Nullable ArtifactScope scope)
+  public List<ArtifactSummary> list(NamespaceId namespace, @Nullable ArtifactScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
 
     URL url = scope == null ? config.resolveNamespacedURLV3(namespace, "artifacts") :
@@ -121,7 +123,7 @@ public class ArtifactClient {
       restClient.execute(HttpMethod.GET, url, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(namespace.toEntityId());
+      throw new NotFoundException(namespace);
     }
     return ObjectResponse.<List<ArtifactSummary>>fromJsonBody(response, ARTIFACT_SUMMARIES_TYPE).getResponseObject();
   }
@@ -136,7 +138,7 @@ public class ArtifactClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the given artifact does not exist
    */
-  public List<ArtifactSummary> listVersions(Id.Namespace namespace, String artifactName)
+  public List<ArtifactSummary> listVersions(NamespaceId namespace, String artifactName)
     throws UnauthenticatedException, IOException, ArtifactNotFoundException, UnauthorizedException {
     return listVersions(namespace, artifactName, null);
   }
@@ -152,7 +154,7 @@ public class ArtifactClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the given artifact does not exist
    */
-  public List<ArtifactSummary> listVersions(Id.Namespace namespace, String artifactName, @Nullable ArtifactScope scope)
+  public List<ArtifactSummary> listVersions(NamespaceId namespace, String artifactName, @Nullable ArtifactScope scope)
     throws UnauthenticatedException, IOException, ArtifactNotFoundException, UnauthorizedException {
 
     URL url = scope == null ? config.resolveNamespacedURLV3(namespace, String.format("artifacts/%s", artifactName)) :
@@ -161,7 +163,7 @@ public class ArtifactClient {
     HttpResponse response = restClient.execute(
       HttpMethod.GET, url, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(namespace.toEntityId(), artifactName);
+      throw new ArtifactNotFoundException(namespace, artifactName);
     }
     return ObjectResponse.<List<ArtifactSummary>>fromJsonBody(response, ARTIFACT_SUMMARIES_TYPE).getResponseObject();
   }
@@ -175,7 +177,7 @@ public class ArtifactClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the given artifact does not exist
    */
-  public ArtifactInfo getArtifactInfo(Id.Artifact artifactId)
+  public ArtifactInfo getArtifactInfo(ArtifactId artifactId)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
     ArtifactInfo info;
     try {
@@ -196,17 +198,17 @@ public class ArtifactClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the given artifact does not exist
    */
-  public ArtifactInfo getArtifactInfo(Id.Artifact artifactId, ArtifactScope scope)
+  public ArtifactInfo getArtifactInfo(ArtifactId artifactId, ArtifactScope scope)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
     
     String path = String.format("artifacts/%s/versions/%s?scope=%s",
-      artifactId.getName(), artifactId.getVersion().getVersion(), scope.name());
+      artifactId.getEntityName(), artifactId.getVersion(), scope.name());
 
-    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
+    URL url = config.resolveNamespacedURLV3(new NamespaceId(artifactId.getNamespace()), path);
     HttpResponse response =
       restClient.execute(HttpMethod.GET, url, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId.toEntityId());
+      throw new ArtifactNotFoundException(artifactId);
     }
     return ObjectResponse.fromJsonBody(response, ArtifactInfo.class, GSON).getResponseObject();
   }
@@ -288,7 +290,7 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<String> getPluginTypes(Id.Artifact artifactId)
+  public List<String> getPluginTypes(ArtifactId artifactId)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
     List<String> pluginTypes;
     try {
@@ -309,17 +311,17 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<String> getPluginTypes(Id.Artifact artifactId, ArtifactScope scope)
+  public List<String> getPluginTypes(ArtifactId artifactId, ArtifactScope scope)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
 
     String path = String.format("artifacts/%s/versions/%s/extensions?scope=%s",
-      artifactId.getName(), artifactId.getVersion().getVersion(), scope.name());
-    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
+      artifactId.getEntityName(), artifactId.getVersion(), scope.name());
+    URL url = config.resolveNamespacedURLV3(new NamespaceId(artifactId.getNamespace()), path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId.toEntityId());
+      throw new ArtifactNotFoundException(artifactId);
     }
     return ObjectResponse.<List<String>>fromJsonBody(response, EXTENSIONS_TYPE).getResponseObject();
   }
@@ -334,7 +336,7 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<PluginSummary> getPluginSummaries(Id.Artifact artifactId, String pluginType)
+  public List<PluginSummary> getPluginSummaries(ArtifactId artifactId, String pluginType)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
     List<PluginSummary> pluginSummary;
     try {
@@ -356,17 +358,17 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<PluginSummary> getPluginSummaries(Id.Artifact artifactId, String pluginType, ArtifactScope scope)
+  public List<PluginSummary> getPluginSummaries(ArtifactId artifactId, String pluginType, ArtifactScope scope)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException, UnauthorizedException {
 
     String path = String.format("artifacts/%s/versions/%s/extensions/%s?scope=%s",
-      artifactId.getName(), artifactId.getVersion().getVersion(), pluginType, scope.name());
-    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
+      artifactId.getEntityName(), artifactId.getVersion(), pluginType, scope.name());
+    URL url = config.resolveNamespacedURLV3(new NamespaceId(artifactId.getNamespace()), path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId.toEntityId());
+      throw new ArtifactNotFoundException(artifactId);
     }
     return ObjectResponse.<List<PluginSummary>>fromJsonBody(response, PLUGIN_SUMMARIES_TYPE).getResponseObject();
   }
@@ -382,7 +384,7 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<PluginInfo> getPluginInfo(Id.Artifact artifactId, String pluginType, String pluginName)
+  public List<PluginInfo> getPluginInfo(ArtifactId artifactId, String pluginType, String pluginName)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
     List<PluginInfo> pluginInfo;
     try {
@@ -405,13 +407,13 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<PluginInfo> getPluginInfo(Id.Artifact artifactId, String pluginType, String pluginName,
+  public List<PluginInfo> getPluginInfo(ArtifactId artifactId, String pluginType, String pluginName,
                                         ArtifactScope scope)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
 
     String path = String.format("artifacts/%s/versions/%s/extensions/%s/plugins/%s?scope=%s",
-      artifactId.getName(), artifactId.getVersion().getVersion(), pluginType, pluginName, scope.name());
-    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
+      artifactId.getEntityName(), artifactId.getVersion(), pluginType, pluginName, scope.name());
+    URL url = config.resolveNamespacedURLV3(new NamespaceId(artifactId.getNamespace()), path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -433,13 +435,13 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public void add(Id.Artifact artifactId, @Nullable Set<ArtifactRange> parentArtifacts,
+  public void add(ArtifactId artifactId, @Nullable Set<ArtifactRange> parentArtifacts,
                   InputSupplier<? extends InputStream> artifactContents)
     throws UnauthenticatedException, BadRequestException, ArtifactRangeNotFoundException,
     ArtifactAlreadyExistsException, IOException, UnauthorizedException {
 
-    add(artifactId.getNamespace(), artifactId.getName(), artifactContents,
-        artifactId.getVersion().getVersion(), parentArtifacts);
+    add(new NamespaceId(artifactId.getNamespace()), artifactId.getEntityName(), artifactContents,
+        artifactId.getVersion(), parentArtifacts);
   }
 
   /**
@@ -456,7 +458,7 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public void add(Id.Namespace namespace, String artifactName,
+  public void add(NamespaceId namespace, String artifactName,
                   InputSupplier<? extends InputStream> artifactContents,
                   @Nullable String artifactVersion)
     throws ArtifactAlreadyExistsException, BadRequestException, IOException,
@@ -480,7 +482,7 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public void add(Id.Namespace namespace, String artifactName, InputSupplier<? extends InputStream> artifactContents,
+  public void add(NamespaceId namespace, String artifactName, InputSupplier<? extends InputStream> artifactContents,
                   @Nullable String artifactVersion, @Nullable Set<ArtifactRange> parentArtifacts)
     throws ArtifactAlreadyExistsException, BadRequestException, IOException,
     UnauthenticatedException, ArtifactRangeNotFoundException, UnauthorizedException {
@@ -507,7 +509,7 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public void add(Id.Namespace namespace, String artifactName,
+  public void add(NamespaceId namespace, String artifactName,
                   InputSupplier<? extends InputStream> artifactContents,
                   @Nullable String artifactVersion,
                   @Nullable Set<ArtifactRange> parentArtifacts,
@@ -550,10 +552,10 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public void delete(Id.Artifact artifactId)
+  public void delete(ArtifactId artifactId)
     throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(),
-      String.format("artifacts/%s/versions/%s", artifactId.getName(), artifactId.getVersion().getVersion()));
+    URL url = config.resolveNamespacedURLV3(new NamespaceId(artifactId.getNamespace()),
+      String.format("artifacts/%s/versions/%s", artifactId.getEntityName(), artifactId.getVersion()));
 
     HttpRequest request = HttpRequest.delete(url).build();
 
@@ -575,13 +577,13 @@ public class ArtifactClient {
    * @throws ArtifactNotFoundException if the artifact does not exist
    * @throws IOException if a network error occurred
    */
-  public void writeProperties(Id.Artifact artifactId, Map<String, String> properties)
+  public void writeProperties(ArtifactId artifactId, Map<String, String> properties)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException,
     BadRequestException, UnauthorizedException {
     String path = String.format("artifacts/%s/versions/%s/properties",
-                                artifactId.getName(),
-                                artifactId.getVersion().getVersion());
-    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
+                                artifactId.getEntityName(),
+                                artifactId.getVersion());
+    URL url = config.resolveNamespacedURLV3(new NamespaceId(artifactId.getNamespace()), path);
     HttpRequest.Builder requestBuilder = HttpRequest.put(url);
     HttpRequest request = requestBuilder.withBody(GSON.toJson(properties)).build();
 
@@ -590,7 +592,7 @@ public class ArtifactClient {
 
     int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId.toEntityId());
+      throw new ArtifactNotFoundException(artifactId);
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
@@ -605,13 +607,13 @@ public class ArtifactClient {
    * @throws ArtifactNotFoundException if the artifact does not exist
    * @throws IOException if a network error occurred
    */
-  public void deleteProperties(Id.Artifact artifactId)
+  public void deleteProperties(ArtifactId artifactId)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException,
     BadRequestException, UnauthorizedException {
     String path = String.format("artifacts/%s/versions/%s/properties",
-                                artifactId.getName(),
-                                artifactId.getVersion().getVersion());
-    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
+                                artifactId.getEntityName(),
+                                artifactId.getVersion());
+    URL url = config.resolveNamespacedURLV3(new NamespaceId(artifactId.getNamespace()), path);
     HttpRequest.Builder requestBuilder = HttpRequest.delete(url);
     HttpRequest request = requestBuilder.build();
 
@@ -620,7 +622,7 @@ public class ArtifactClient {
 
     int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId.toEntityId());
+      throw new ArtifactNotFoundException(artifactId);
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
@@ -638,14 +640,14 @@ public class ArtifactClient {
    * @throws ArtifactNotFoundException if the artifact does not exist
    * @throws IOException if a network error occurred
    */
-  public void writeProperty(Id.Artifact artifactId, String key, String value)
+  public void writeProperty(ArtifactId artifactId, String key, String value)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException,
     BadRequestException, UnauthorizedException {
     String path = String.format("artifacts/%s/versions/%s/properties/%s",
-                                artifactId.getName(),
-                                artifactId.getVersion().getVersion(),
+                                artifactId.getEntityName(),
+                                artifactId.getVersion(),
                                 key);
-    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
+    URL url = config.resolveNamespacedURLV3(new NamespaceId(artifactId.getNamespace()), path);
     HttpRequest.Builder requestBuilder = HttpRequest.put(url);
     HttpRequest request = requestBuilder.withBody(value).build();
 
@@ -654,7 +656,7 @@ public class ArtifactClient {
 
     int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId.toEntityId());
+      throw new ArtifactNotFoundException(artifactId);
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
@@ -670,14 +672,14 @@ public class ArtifactClient {
    * @throws ArtifactNotFoundException if the artifact does not exist
    * @throws IOException if a network error occurred
    */
-  public void deleteProperty(Id.Artifact artifactId, String key)
+  public void deleteProperty(ArtifactId artifactId, String key)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException,
     BadRequestException, UnauthorizedException {
     String path = String.format("artifacts/%s/versions/%s/properties/%s",
-                                artifactId.getName(),
-                                artifactId.getVersion().getVersion(),
+                                artifactId.getEntityName(),
+                                artifactId.getVersion(),
                                 key);
-    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
+    URL url = config.resolveNamespacedURLV3(new NamespaceId(artifactId.getNamespace()), path);
     HttpRequest.Builder requestBuilder = HttpRequest.delete(url);
     HttpRequest request = requestBuilder.build();
 
@@ -686,7 +688,7 @@ public class ArtifactClient {
 
     int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId.toEntityId());
+      throw new ArtifactNotFoundException(artifactId);
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }

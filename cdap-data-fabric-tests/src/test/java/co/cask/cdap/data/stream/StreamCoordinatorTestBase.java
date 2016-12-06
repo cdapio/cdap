@@ -56,7 +56,7 @@ public abstract class StreamCoordinatorTestBase {
   protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
     // FileStreamAdmin expects namespace directory to exist.
     // Simulate namespace create
-    namespacedLocationFactory.get(NamespaceId.DEFAULT.toId()).mkdirs();
+    namespacedLocationFactory.get(NamespaceId.DEFAULT).mkdirs();
   }
 
   @Test

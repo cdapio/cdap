@@ -135,16 +135,6 @@ public interface TestManager {
    *
    * @param artifactId the id of the artifact to add
    * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
-   * @deprecated since 3.4.0 use {@link #addArtifact(ArtifactId, File)}
-   */
-  @Deprecated
-  void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception;
-
-  /**
-   * Adds the specified artifact.
-   *
-   * @param artifactId the id of the artifact to add
-   * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
    * @return an {@link ArtifactManager} to manage the added artifact
    */
   ArtifactManager addArtifact(ArtifactId artifactId, File artifactFile) throws Exception;
@@ -399,7 +389,7 @@ public interface TestManager {
    * @deprecated since 3.4.0. Use {@link ArtifactManager#delete()} instead
    */
   @Deprecated
-  void deleteArtifact(Id.Artifact artifactId) throws Exception;
+  void deleteArtifact(ArtifactId artifactId) throws Exception;
 
   /**
    * Clear the state of app fabric, by removing all deployed applications, Datasets and Streams.

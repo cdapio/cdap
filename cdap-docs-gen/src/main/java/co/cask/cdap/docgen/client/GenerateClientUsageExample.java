@@ -41,6 +41,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.SystemServiceMeta;
+import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -282,7 +283,7 @@ public class GenerateClientUsageExample {
 
     // Fetch the total number of events that have been processed by a flowlet
     RuntimeMetrics metric = metricsClient.getFlowletMetrics(
-      Id.Flow.from("user", "HelloWorld", "someFlow"), "process.events.processed");
+      new FlowId("user", "HelloWorld", "someFlow"), "process.events.processed");
   }
 
   public void monitorClient() throws Exception {

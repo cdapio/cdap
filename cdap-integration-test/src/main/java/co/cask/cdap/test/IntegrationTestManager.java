@@ -206,7 +206,7 @@ public class IntegrationTestManager extends AbstractTestManager {
 
   @Override
   public ArtifactManager addArtifact(ArtifactId artifactId, final File artifactFile) throws Exception {
-    artifactClient.add(artifactId.toId(), null, new InputSupplier<InputStream>() {
+    artifactClient.add(artifactId, null, new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
         return new FileInputStream(artifactFile);
@@ -235,7 +235,7 @@ public class IntegrationTestManager extends AbstractTestManager {
                                         Manifest manifest) throws Exception {
     final Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest, CLASS_ACCEPTOR);
 
-    artifactClient.add(artifactId.toId(), null, new InputSupplier<InputStream>() {
+    artifactClient.add(artifactId, null, new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
         return appJar.getInputStream();
@@ -261,7 +261,7 @@ public class IntegrationTestManager extends AbstractTestManager {
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
     final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
-    artifactClient.add(artifactId.toId(), parents, new InputSupplier<InputStream>() {
+    artifactClient.add(artifactId, parents, new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
         return appJar.getInputStream();
@@ -290,7 +290,7 @@ public class IntegrationTestManager extends AbstractTestManager {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
     final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
     artifactClient.add(
-      Ids.namespace(artifactId.getNamespace()).toId(),
+      Ids.namespace(artifactId.getNamespace()),
       artifactId.getArtifact(),
       new InputSupplier<InputStream>() {
         @Override
@@ -307,7 +307,7 @@ public class IntegrationTestManager extends AbstractTestManager {
   }
 
   @Override
-  public void deleteArtifact(Id.Artifact artifactId) throws Exception {
+  public void deleteArtifact(ArtifactId artifactId) throws Exception {
     artifactClient.delete(artifactId);
   }
 

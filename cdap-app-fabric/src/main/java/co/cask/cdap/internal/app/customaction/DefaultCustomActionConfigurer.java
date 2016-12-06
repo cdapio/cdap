@@ -26,6 +26,8 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
@@ -45,8 +47,8 @@ public final class DefaultCustomActionConfigurer extends DefaultPluginConfigurer
   private String description;
   private Map<String, String> properties;
 
-  private DefaultCustomActionConfigurer(CustomAction customAction, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                       ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
+  private DefaultCustomActionConfigurer(CustomAction customAction, NamespaceId deployNamespace, ArtifactId artifactId,
+                                        ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
     super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.customAction = customAction;
     this.name = customAction.getClass().getSimpleName();
@@ -80,8 +82,8 @@ public final class DefaultCustomActionConfigurer extends DefaultPluginConfigurer
                                                 description, properties, datasets);
   }
 
-  public static CustomActionSpecification configureAction(CustomAction action, Id.Namespace deployNamespace,
-                                                          Id.Artifact artifactId, ArtifactRepository artifactRepository,
+  public static CustomActionSpecification configureAction(CustomAction action, NamespaceId deployNamespace,
+                                                          ArtifactId artifactId, ArtifactRepository artifactRepository,
                                                           PluginInstantiator pluginInstantiator) {
     DefaultCustomActionConfigurer configurer = new DefaultCustomActionConfigurer(action, deployNamespace, artifactId,
                                                                                  artifactRepository,

@@ -35,6 +35,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -64,7 +65,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String DESCRIPTION_FIELD = "description";
   private static final String CONFIG_FIELD = "config";
   private static final String NAME = "test";
-  private static final Id.Namespace NAME_ID = Id.Namespace.from(NAME);
+  private static final NamespaceId NAME_ID = new NamespaceId(NAME);
   private static final String DESCRIPTION = "test description";
   private static final String METADATA_VALID =
     String.format("{\"%s\":\"%s\", \"%s\":\"%s\"}", NAME_FIELD, NAME, DESCRIPTION_FIELD, DESCRIPTION);
@@ -278,7 +279,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(200, getNamespace(OTHER_NAME));
 
     NamespacedLocationFactory namespacedLocationFactory = getInjector().getInstance(NamespacedLocationFactory.class);
-    Location nsLocation = namespacedLocationFactory.get(Id.Namespace.from(NAME));
+    Location nsLocation = namespacedLocationFactory.get(new NamespaceId(NAME));
     Assert.assertTrue(nsLocation.exists());
 
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
@@ -294,7 +295,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
     Assert.assertTrue(dsFramework.hasInstance(myDataset));
     Assert.assertTrue(streamAdmin.exists(myStream));
-    Id.Program program = Id.Program.from(NAME_ID, "AppWithServices", ProgramType.SERVICE, "NoOpService");
+    ProgramId program = new ProgramId(NAME_ID.getNamespace(), "AppWithServices", ProgramType.SERVICE, "NoOpService");
     startProgram(program);
     boolean resetEnabled = cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, false);
@@ -330,7 +331,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(200, getNamespace(NAME));
 
     NamespacedLocationFactory namespacedLocationFactory = getInjector().getInstance(NamespacedLocationFactory.class);
-    Location nsLocation = namespacedLocationFactory.get(Id.Namespace.from(NAME));
+    Location nsLocation = namespacedLocationFactory.get(new NamespaceId(NAME));
     Assert.assertTrue(nsLocation.exists());
 
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
@@ -341,7 +342,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     DatasetId myDataset = new DatasetId(NAME, "myds");
 
     Assert.assertTrue(dsFramework.hasInstance(myDataset));
-    Id.Program program = Id.Program.from(NAME_ID, "AppWithServices", ProgramType.SERVICE, "NoOpService");
+    ProgramId program = new ProgramId(NAME_ID.getNamespace(), "AppWithServices", ProgramType.SERVICE, "NoOpService");
     startProgram(program);
     boolean resetEnabled = cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, false);

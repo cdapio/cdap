@@ -37,6 +37,8 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
@@ -53,8 +55,8 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
   private final String className;
   private final Map<String, DatasetCreationSpec> localDatasetSpecs = new HashMap<>();
   private final DatasetConfigurer datasetConfigurer;
-  private final Id.Namespace deployNamespace;
-  private final Id.Artifact artifactId;
+  private final NamespaceId deployNamespace;
+  private final ArtifactId artifactId;
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
   private final List<WorkflowNode> nodes = Lists.newArrayList();
@@ -65,7 +67,7 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
   private Map<String, String> properties;
 
   public DefaultWorkflowConfigurer(Workflow workflow, DatasetConfigurer datasetConfigurer,
-                                   Id.Namespace deployNamespace, Id.Artifact artifactId,
+                                   NamespaceId deployNamespace, ArtifactId artifactId,
                                    ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
     super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.className = workflow.getClass().getName();
