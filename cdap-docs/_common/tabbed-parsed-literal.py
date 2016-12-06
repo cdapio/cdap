@@ -14,7 +14,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-"""Simple, inelegant Sphinx extension which adds a directive for a
+"""Simple, inelegant Sphinx extension which adds a directive for a set of
 tabbed parsed-literals that may be switched between in HTML.
 
 version: 0.4.1
