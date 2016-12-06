@@ -876,8 +876,8 @@ public class ArtifactRepository {
         dupes.add(parentName);
         isInvalid = true;
       }
-      if (artifactId.getEntityName().equals(parentName) &&
-        artifactId.getNamespace().equals(parent.getNamespace())) {
+      if (artifactId.getArtifact().equals(parentName) &&
+        artifactId.getParent().equals(parent.getNamespace())) {
         throw new InvalidArtifactException(String.format(
           "Invalid parent '%s' for artifact '%s'. An artifact cannot extend itself.", parent, artifactId));
       }
