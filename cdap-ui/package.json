@@ -124,7 +124,7 @@
     "webpack": "1.13.2",
     "whatwg-fetch": "https://registry.npmjs.org/whatwg-fetch/-/whatwg-fetch-1.0.0.tgz",
     "yml-loader": "1.1.0",
-    "cdap-avsc": "4.1.11"
+    "cdap-avsc": "4.1.12"
   },
   "engines": {
     "node": ">= 4.5.0"
