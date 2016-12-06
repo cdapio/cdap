@@ -17,11 +17,11 @@
 """Simple, inelegant Sphinx extension which adds a directive for a
 tabbed parsed-literals that may be switched between in HTML.
 
-version: 0.4
+version: 0.4.1
 
 The directive adds these parameters, both optional:
 
-    :languages: comma-separated list of pygments languages; default "console"
+    :languages: comma-separated list of Pygments languages; default "console"
 
     :tabs: comma-separated list of tabs; default "Linux,Windows"
     
@@ -547,13 +547,15 @@ class TabbedParsedLiteral(ParsedLiteral):
             if not self.options.has_key('languages'):
                 node['languages'] = [DEFAULT_LANGUAGES[1]]
         if tab_count != len(node['languages']):
-            print "Warning: tabs (%s) don't match languages (%s)" % (node['tabs'], node['languages'])
+            if self.options.get('languages',''): # If there was a 'languages' option, and we didn't just use the default:
+                print "Warning: number of tabs (%s) doesn't match number of languages (%s)" % (node['tabs'], node['languages'])
+                print "Using '%s' for all tabs" % DEFAULT_LANGUAGES[0]
             node['languages'] = [DEFAULT_LANGUAGES[0]] * tab_count
         if not node['independent']:
             node['dependent'] = self.cleanup_option('dependent', DEFAULT_TAB_SET)
         node['mapping'] = self.cleanup_options('mapping', node['tabs'], aphanumeric_only=True, lower=True)
         if tab_count != len(node['mapping']):
-            print "Warning: tabs (%s) don't match mapping (%s)" % (node['tabs'], node['mapping'])
+            print "Warning: number of tabs (%s) doesn't match number of elements in the mapping (%s)" % (node['tabs'], node['mapping'])
             if tab_count > 1:
                 node['mapping'] = DEFAULT_TABS + [DEFAULT_TABS[0]] * (tab_count -2)
             else:

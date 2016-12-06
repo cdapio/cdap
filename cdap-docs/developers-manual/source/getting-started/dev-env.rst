@@ -26,7 +26,8 @@ The best way to start developing a CDAP application is by using the Maven archet
   $ mvn archetype:generate \
       -DarchetypeGroupId=co.cask.cdap \
       -DarchetypeArtifactId=cdap-app-archetype \
-      -DarchetypeVersion=\ |release|
+      -DarchetypeVersion=\ |release| \
+      -DgroupId=org.example.app
 
 This creates a Maven project with all required dependencies, Maven plugins, and a simple
 application template for the development of your application. You can import this Maven project
@@ -36,6 +37,31 @@ into your preferred IDE |---| such as `IntelliJ <https://www.jetbrains.com/idea/
 For an application that contains a MapReduce program, set the ``archetypeArtifactId`` to
 ``cdap-mapreduce-archetype``; for Spark, use either ``cdap-spark-java-archetype`` or
 ``cdap-spark-scala-archetype``.
+
+**Note:** Replace the *groupId* parameter (``org.example.app``) with your own organization, but it must not be replaced with ``co.cask.cdap``.
+
+Complete examples for each archetype:
+
+.. tabbed-parsed-literal::
+  :tabs: "CDAP Application","MapReduce Program","Spark Program (Java)","Spark Program (Scala)"
+  :dependent: dev-env-archetype
+
+  .. CDAP Application
+
+  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-app-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.app
+
+  .. MapReduce Program
+
+  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-mapreduce-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.app
+  
+  .. Spark Program (Java)
+
+  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-spark-java-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.app
+  
+  .. Spark Program (Scala)
+  
+  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-spark-scala-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.app
+
 
 Using IntelliJ
 --------------

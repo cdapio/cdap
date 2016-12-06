@@ -48,14 +48,37 @@ This command will create a project from an archetype:
   .. parsed-literal::
 
     |$| mvn archetype:generate \\
-          -DarchetypeGroupId=co.cask.cdap \\
+          -DarchetypeGroupId=org.example \\
           -DarchetypeArtifactId=<archetype> \\
           -DarchetypeVersion=\ |release| \\
           -DgroupId=org.example.plugin
           
 where ``<archetype>`` is one of the archetypes listed above.
 
-You can replace the *archetypeGroupId* parameter with your own organization, but it must not be ``co.cask.cdap``.
+**Note:** Replace the *groupId* parameter (``org.example.plugin``) with your own organization, but it must not be replaced with ``co.cask.cdap``.
+
+Complete examples for each archetype:
+
+.. tabbed-parsed-literal::
+  :tabs: cdap-data-pipeline-plugins,cdap-etl-realtime-source,cdap-etl-realtime-sink,cdap-etl-transform
+  :dependent: hydrator-archetype
+
+  .. cdap-data-pipeline-plugins
+
+  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-data-pipeline-plugins-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.plugin
+
+  .. cdap-etl-realtime-source
+
+  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-etl-realtime-source-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.plugin
+  
+  .. cdap-etl-realtime-sink
+
+  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-etl-realtime-sink-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.plugin
+  
+  .. cdap-etl-transform
+  
+  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-etl-transform-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.plugin
+
 
 Class Annotations
 =================
