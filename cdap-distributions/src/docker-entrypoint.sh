@@ -20,10 +20,10 @@ set -e
 
 # Add cdap <service> start as command if needed
 if [ "${1:0:1}" = '-' ]; then
-  set -- cdap ${CDAP_SERVICE:-sdk} start --foreground "$@"
+  set -- cdap ${CDAP_SERVICE:-sdk} ${CDAP_DEFAULT_ARGS} "$@"
 fi
 
-# Drop root privileges if we are running cdap.sh
+# Drop root privileges if we are running cdap
 # allow the container to be started with `--user`
 if [ "${1}" = 'cdap' -a "$(id -u)" = '0' ]; then
   # Change the ownership of /opt/cdap to cdap
