@@ -48,7 +48,7 @@ This command will create a project from an archetype:
   .. parsed-literal::
 
     |$| mvn archetype:generate \\
-          -DarchetypeGroupId=org.example \\
+          -DarchetypeGroupId=co.cask.cdap \\
           -DarchetypeArtifactId=<archetype> \\
           -DarchetypeVersion=\ |release| \\
           -DgroupId=org.example.plugin
