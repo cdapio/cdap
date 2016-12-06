@@ -14,8 +14,10 @@
  * the License.
  */
 
-import T from 'i18n-react';
-// Initialize i18n
-T.setTexts(require('../cdap/text/text-en.yaml'));
+@import '../../styles/variables.less';
 
-require('./main.js');
+.cask-header.wrangler-header {
+  .navbar.cdap .navbar-list a.active {
+    color: @wrangler-red;
+  }
+}

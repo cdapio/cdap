@@ -49,7 +49,7 @@ angular.module(PKG.name + '.feature.hydrator')
         }
       })
         .state('hydrator.create', {
-          url: '/studio?artifactType&draftId',
+          url: '/studio?artifactType&draftId&configParams',
           onEnter: function() {
             document.title = 'Hydrator Studio';
           },
@@ -76,7 +76,16 @@ angular.module(PKG.name + '.feature.hydrator')
                   });
               } else if ($stateParams.data){
                 defer.resolve($stateParams.data);
-              } else {
+              } else if ($stateParams.configParams) {
+                try {
+                  var config = JSON.parse($stateParams.configParams);
+
+                  defer.resolve(config);
+                } catch (e) {
+                  defer.resolve(false);
+                }
+              }
+              else {
                 defer.resolve(false);
               }
               return defer.promise;

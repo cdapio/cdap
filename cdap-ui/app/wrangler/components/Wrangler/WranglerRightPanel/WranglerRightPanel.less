@@ -14,14 +14,14 @@
  * the License.
  */
 
-@border: 2px solid #dddddd;
+@border: 1px solid #dddddd;
 
 .wrangler-right-panel {
   position: absolute;
   right: 0;
   top: 0;
   height: calc(~"100vh - 103px");
-  width: 250px;
+  width: 400px;
   border-left: @border;
   background-color: white;
   overflow: auto;
@@ -32,17 +32,31 @@
     background-color: #dddddd;
 
     .graph-dropdown,
-    .graph-add-button {
+    .graph-add-button,
+    .hide-button {
       display: inline-block;
     }
 
+    .hide-button {
+      width: 60px;
+      line-height: 60px;
+      margin-top: 0;
+      font-size: 16px;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #efefef;
+      }
+    }
+
     .graph-dropdown {
-      width: 75%;
+      width: 150px;
       margin-top: 13px;
+      margin-left: 10px;
     }
 
     .graph-add-button {
-      width: 25%;
+      width: 50px;
       font-size: 32px;
       margin-top: 5px;
       span { cursor: pointer; }

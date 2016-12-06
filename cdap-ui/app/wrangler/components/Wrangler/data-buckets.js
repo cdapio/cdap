@@ -22,13 +22,13 @@ export function createBucket(array, columnName, columnType) {
   switch (columnType) {
     case 'string':
       data = array.map((row) => {
-        return row[columnName].length;
+        return row[columnName] ? row[columnName].length : 0;
       });
       break;
     case 'float':
     case 'int':
       data = array.map((row) => {
-        return parseInt(row[columnName], 10);
+        return row[columnName] ? parseInt(row[columnName], 10) : 'null';
       });
       break;
     case 'boolean':

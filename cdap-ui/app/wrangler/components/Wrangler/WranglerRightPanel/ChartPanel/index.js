@@ -38,9 +38,13 @@ export default class ChartPanel extends Component {
   }
 
   componentWillMount() {
-    WranglerStore.subscribe(() => {
+    this.sub = WranglerStore.subscribe(() => {
       this.setState({columns: WranglerStore.getState().wrangler.headersList});
     });
+  }
+
+  componentWillUnmount() {
+    this.sub();
   }
 
   onExpandClick() {

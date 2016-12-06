@@ -14,52 +14,64 @@
  * the License.
  */
 
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import WrangleHistory from 'wrangler/components/Wrangler/WrangleHistory';
 import classnames from 'classnames';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import Filter from 'wrangler/components/Wrangler/Filter';
 import WranglerRightPanel from 'wrangler/components/Wrangler/WranglerRightPanel';
-
 import WranglerTable from 'wrangler/components/Wrangler/WranglerTable';
+import AddToHydrator from 'wrangler/components/Wrangler/AddToHydrator';
+import NamespaceStore from 'services/NamespaceStore';
+import Rx from 'rx';
+import {MyArtifactApi} from 'api/artifact';
+import find from 'lodash/find';
 
 export default class WrangleData extends Component {
-  constructor(props) {
-    super(props);
+  constructor(props, context) {
+    super(props, context);
 
     let wrangler = WranglerStore.getState().wrangler;
 
     let stateObj = Object.assign({}, wrangler, {
       loading: false,
       activeSelection: null,
-      showHistogram: false,
+      showVisualization: false,
     });
 
     this.state = stateObj;
 
     this.onSort = this.onSort.bind(this);
-    this.onHistogramDisplayClick = this.onHistogramDisplayClick.bind(this);
+    this.onVisualizationDisplayClick = this.onVisualizationDisplayClick.bind(this);
     this.undo = this.undo.bind(this);
+    this.generateLinks = this.generateLinks.bind(this);
 
     this.tableHeader = null;
     this.tableBody = null;
 
-    WranglerStore.subscribe(() => {
+   this.sub = WranglerStore.subscribe(() => {
       let state = WranglerStore.getState().wrangler;
       this.setState(state);
     });
+
   }
 
   componentDidMount() {
     this.forceUpdate();
 
-    let container = document.getElementsByClassName('data-table');
+    setTimeout(() => {
+      let container = document.getElementsByClassName('data-table');
 
-    let height = container[0].clientHeight;
-    let width = container[0].clientWidth;
+      let height = container[0].clientHeight;
+      let width = container[0].clientWidth;
 
-    this.setState({height, width});
+      this.setState({height, width});
+    });
+  }
+
+  componentWillUnmount() {
+    this.sub();
   }
 
   onColumnClick(column) {
@@ -75,8 +87,8 @@ export default class WrangleData extends Component {
     });
   }
 
-  onHistogramDisplayClick() {
-    this.setState({showHistogram: !this.state.showHistogram});
+  onVisualizationDisplayClick() {
+    this.setState({showVisualization: !this.state.showVisualization});
   }
 
   undo() {
@@ -85,6 +97,79 @@ export default class WrangleData extends Component {
 
   forward() {
     WranglerStore.dispatch({ type: WranglerActions.redo });
+  }
+
+  generateLinks() {
+    let wranglerPluginProperties = this.props.onHydratorApply();
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
+    return Rx.Observable.create((observer) => {
+      MyArtifactApi.list({namespace})
+        .subscribe((res) => {
+          let batchArtifact = find(res, { 'name': 'cdap-data-pipeline' });
+          let realtimeArtifact = find(res, { 'name': 'cdap-data-streams' });
+          let wranglerArtifact = find(res, { 'name': 'wrangler' });
+
+          // Generate hydrator config as URL parameters
+          let config = {
+            config: {
+              source: {},
+              transforms: [{
+                name: 'Wrangler',
+                plugin: {
+                  name: 'Wrangler',
+                  label: 'Wrangler',
+                  artifact: wranglerArtifact,
+                  properties: wranglerPluginProperties
+                }
+              }],
+              sinks:[],
+              connections: []
+            }
+          };
+
+          let realtimeConfig = Object.assign({}, config, {artifact: realtimeArtifact});
+          let batchConfig = Object.assign({}, config, {artifact: batchArtifact});
+
+          let realtimeUrl = window.getHydratorUrl({
+            stateName: 'hydrator.create',
+            stateParams: {
+              namespace: namespace,
+              configParams: realtimeConfig
+            }
+          });
+
+          let batchUrl = window.getHydratorUrl({
+            stateName: 'hydrator.create',
+            stateParams: {
+              namespace: namespace,
+              configParams: batchConfig
+            }
+          });
+
+          observer.onNext({realtimeUrl, batchUrl});
+          observer.onCompleted();
+
+        });
+    });
+  }
+
+  renderHydratorButton () {
+    const applyToHydrator = (
+      <button
+        className="btn btn-primary"
+        onClick={this.props.onHydratorApply}
+      >
+        <span className="fa icon-hydrator" />
+        Apply to Hydrator
+      </button>
+    );
+
+    const jumpToHydrator = (
+      <AddToHydrator linkGenerator={this.generateLinks} />
+    );
+
+    return this.context.source === 'hydrator' ? applyToHydrator : jumpToHydrator;
   }
 
   render() {
@@ -120,7 +205,6 @@ export default class WrangleData extends Component {
               className="fa fa-repeat"
               onClick={this.forward}
             />
-            <span className="fa fa-filter"></span>
           </div>
 
           <div
@@ -141,25 +225,15 @@ export default class WrangleData extends Component {
 
           <Filter column={this.state.activeSelection} />
 
-          <div
-            className="transform-item"
-            onClick={this.onHistogramDisplayClick}
-          >
-            <span className="fa fa-bar-chart"></span>
-            <span className="transform-item-text">
-              <span>{ this.state.showHistogram ? 'Hide' : 'Show'}</span>
-              <span>Histogram</span>
-            </span>
-
-          </div>
-
           <WrangleHistory
             historyArray={this.state.history.slice(0, this.state.historyLocation)}
           />
 
         </div>
 
-        <div className="wrangle-results">
+        <div className={classnames('wrangle-results', {
+          expanded: !this.state.showVisualization
+        })}>
           <div className="wrangler-data-metrics">
             <div className="metric-block">
               <h3 className="text-success">{this.state.data.length}</h3>
@@ -175,6 +249,24 @@ export default class WrangleData extends Component {
               <h3 className="text-danger">{errorCount}</h3>
               <h5>Errors</h5>
             </div>
+
+            <div className="pull-right action-button-container">
+
+              <div className="hydrator-button">
+                {this.renderHydratorButton()}
+              </div>
+
+              {
+                !this.state.showVisualization ? (
+                  <div
+                    className="action-button text-center"
+                    onClick={this.onVisualizationDisplayClick}
+                  >
+                    <span className="fa fa-bar-chart" />
+                  </div>
+                ) : null
+              }
+            </div>
           </div>
 
           <div
@@ -185,7 +277,6 @@ export default class WrangleData extends Component {
                 <WranglerTable
                   onColumnClick={this.onColumnClick.bind(this)}
                   activeSelection={this.state.activeSelection}
-                  showHistogram={this.state.showHistogram}
                   height={this.state.height}
                   width={this.state.width}
                 />
@@ -194,8 +285,20 @@ export default class WrangleData extends Component {
           </div>
         </div>
 
-        <WranglerRightPanel />
+        {
+          this.state.showVisualization ? (
+            <WranglerRightPanel toggle={this.onVisualizationDisplayClick} />
+          ) : null
+        }
       </div>
     );
   }
 }
+
+WrangleData.propTypes = {
+  onHydratorApply: PropTypes.func
+};
+
+WrangleData.contextTypes = {
+  source: PropTypes.oneOf(['wrangler', 'hydrator'])
+};
