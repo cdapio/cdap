@@ -57,7 +57,7 @@ This will return a JSON array that lists each package and its metadata::
       "label": "Access Log Sample",
       "author": "Cask",
       "org": "Cask Data, Inc.",
-      "cdapVersion": "[4.0.0-SNAPSHOT,4.1.0)",
+      "cdapVersion": "[4.1.0-SNAPSHOT,4.2.0)",
       "created": 1473901763,
       "categories": [ "datapack" ]
     },
@@ -70,7 +70,7 @@ This will return a JSON array that lists each package and its metadata::
       "label": "Bulk Data Transfer",
       "author": "Cask",
       "org": "Cask Data, Inc.",
-      "cdapVersion": "[4.0.0-SNAPSHOT,4.1.0)",
+      "cdapVersion": "[4.1.0-SNAPSHOT,4.2.0)",
       "created": 1473901763,
       "categories": [ "usecase" ]
     },
@@ -100,7 +100,7 @@ and a list of actions required to install the package::
     "org": "Cask Data, Inc.",
     "created": 1473901763,
     "categories": [ "usecase" ],
-    "cdapVersion": "[4.0.0-SNAPSHOT,4.1.0)",
+    "cdapVersion": "[4.1.0-SNAPSHOT,4.2.0)",
     "actions": [
       {
         "type": "informational",
@@ -147,7 +147,7 @@ and a list of actions required to install the package::
             "value": {
               "scope": "system",
               "name": "cdap-data-pipeline",
-              "version": "4.0.0-SNAPSHOT"
+              "version": "4.1.0-SNAPSHOT"
             }
           },
           {
@@ -587,7 +587,7 @@ Example action::
         "value": {
           "scope": "system",
           "name": "cdap-data-pipeline",
-          "version": "4.0.0-SNAPSHOT"
+          "version": "4.1.0-SNAPSHOT"
         }
       },
       {
