@@ -19,6 +19,7 @@ package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -35,7 +36,7 @@ public interface NamespacedLocationFactory {
    * @param namespaceId the namespace for which base location is desired
    * @return {@link Location} for the specified namespace on the filesystem
    */
-  Location get(Id.Namespace namespaceId) throws IOException;
+  Location get(NamespaceId namespaceId) throws IOException;
 
   /**
    * Returns the base {@link Location} for the specified namespace on the filesystem
@@ -52,7 +53,7 @@ public interface NamespacedLocationFactory {
    * @param subPath the sub-path under the base location of the specified namespace
    * @return {@link Location} for the specified sub-path in the specified namespace
    */
-  Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException;
+  Location get(NamespaceId namespaceId, @Nullable String subPath) throws IOException;
 
   /**
    * Returns the base {@link Location} for all CDAP data.

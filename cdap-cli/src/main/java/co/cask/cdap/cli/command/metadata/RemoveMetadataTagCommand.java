@@ -43,7 +43,7 @@ public class RemoveMetadataTagCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
     String tag = arguments.get("tag");
-    client.removeTag(entity.toId(), tag);
+    client.removeTag(entity, tag);
     output.println("Successfully removed metadata tag");
   }
 

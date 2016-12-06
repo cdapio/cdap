@@ -27,6 +27,8 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 
 import java.util.HashMap;
@@ -48,7 +50,7 @@ public final class DefaultSparkConfigurer extends DefaultPluginConfigurer implem
   private Resources driverResources;
   private Resources executorResources;
 
-  public DefaultSparkConfigurer(Spark spark, Id.Namespace deployNamespace, Id.Artifact artifactId,
+  public DefaultSparkConfigurer(Spark spark, NamespaceId deployNamespace, ArtifactId artifactId,
                                 ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
     super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.spark = spark;

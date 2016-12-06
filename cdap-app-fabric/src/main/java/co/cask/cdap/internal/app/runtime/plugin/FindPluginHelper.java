@@ -57,10 +57,11 @@ public final class FindPluginHelper {
    * @throws ArtifactNotFoundException
    */
   public static Plugin findPlugin(ArtifactRepository artifactRepository,
-                              PluginInstantiator pluginInstantiator,
-                              NamespaceId namespace,
-                              Id.Artifact parentArtifactId, String pluginType, String pluginName,
-                              PluginProperties properties, PluginSelector selector)
+                                  PluginInstantiator pluginInstantiator,
+                                  NamespaceId namespace,
+                                  co.cask.cdap.proto.id.ArtifactId parentArtifactId,
+                                  String pluginType, String pluginName,
+                                  PluginProperties properties, PluginSelector selector)
     throws PluginNotExistsException, ArtifactNotFoundException {
     Preconditions.checkArgument(properties != null, "Plugin properties cannot be null");
     Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry;

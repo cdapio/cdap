@@ -34,6 +34,8 @@ import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClass;
 import co.cask.cdap.proto.artifact.ArtifactClasses;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
@@ -74,11 +76,11 @@ public class ArtifactInspectorTest {
     File appFile =
       createJar(InvalidConfigApp.class, new File(TMP_FOLDER.newFolder(), "InvalidConfigApp-1.0.0.jar"), manifest);
 
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "InvalidConfigApp", "1.0.0");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("InvalidConfigApp", "1.0.0");
     Location artifactLocation = Locations.toLocation(appFile);
     try (CloseableClassLoader artifactClassLoader =
            classLoaderFactory.createClassLoader(
-             artifactLocation, new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
+             artifactLocation, new NamespacedImpersonator(new NamespaceId(artifactId.getNamespace()),
                                                           new DefaultImpersonator(CConfiguration.create(),
                                                                                   null, null)))) {
       artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader);
@@ -92,11 +94,11 @@ public class ArtifactInspectorTest {
     File appFile =
       createJar(InspectionApp.class, new File(TMP_FOLDER.newFolder(), "InspectionApp-1.0.0.jar"), manifest);
 
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "InspectionApp", "1.0.0");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("InspectionApp", "1.0.0");
     Location artifactLocation = Locations.toLocation(appFile);
     try (CloseableClassLoader artifactClassLoader =
            classLoaderFactory.createClassLoader(
-             artifactLocation, new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
+             artifactLocation, new NamespacedImpersonator(new NamespaceId(artifactId.getNamespace()),
                                                           new DefaultImpersonator(CConfiguration.create(),
                                                                                   null, null)))) {
 

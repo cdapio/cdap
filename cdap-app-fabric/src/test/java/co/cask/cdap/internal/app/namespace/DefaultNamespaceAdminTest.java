@@ -135,7 +135,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     NamespaceId namespaceId = new NamespaceId(namespace);
     // check that root directory for a namespace cannot be updated
     // create the custom directory since the namespace is being created with custom root directory it needs to exist
-    Location customlocation = namespacedLocationFactory.get(namespaceId.toId());
+    Location customlocation = namespacedLocationFactory.get(namespaceId);
     Assert.assertTrue(customlocation.mkdirs());
     NamespaceMeta nsMeta = new NamespaceMeta.Builder().setName(namespaceId)
       .setRootDirectory(customlocation.toString()).build();
@@ -205,7 +205,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
   public void testSameCustomMapping() throws Exception {
 
     String namespace = "custompaceNamespace";
-    Id.Namespace namespaceId = Id.Namespace.from(namespace);
+    NamespaceId namespaceId = new NamespaceId(namespace);
     // check that root directory for a namespace cannot be updated
     // create the custom directory since the namespace is being created with custom root directory it needs to exist
     Location customlocation = namespacedLocationFactory.get(namespaceId);
@@ -252,13 +252,13 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     return ((DefaultNamespaceAdmin) namespaceAdmin).getCache().get(namespaceId);
   }
 
-  private static void verifyAlreadyExist(NamespaceMeta namespaceMeta, Id.Namespace existingNamespace)
+  private static void verifyAlreadyExist(NamespaceMeta namespaceMeta, NamespaceId existingNamespace)
     throws Exception {
     try {
       namespaceAdmin.create(namespaceMeta);
       Assert.fail(String.format("Namespace '%s' should not have been created", namespaceMeta.getName()));
     } catch (BadRequestException e) {
-      Assert.assertTrue(e.getMessage().contains(existingNamespace.getId()));
+      Assert.assertTrue(e.getMessage().contains(existingNamespace.getEntityName()));
     }
   }
 

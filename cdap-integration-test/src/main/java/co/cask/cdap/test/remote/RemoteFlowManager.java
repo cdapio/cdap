@@ -65,6 +65,6 @@ public class RemoteFlowManager extends AbstractProgramManager<FlowManager> imple
 
   @Override
   public RuntimeMetrics getFlowletMetrics(String flowletId) {
-    return metricsClient.getFlowletMetrics(programId.toId(), flowletId);
+    return metricsClient.getFlowletMetrics(programId, flowletId);
   }
 }

@@ -64,6 +64,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.inject.Injector;
+import com.google.inject.name.Names;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
@@ -96,7 +97,8 @@ public class ArtifactRepositoryTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static final String TEST_EMPTY_CLASS = EmptyClass.class.getName();
-  private static final Id.Artifact APP_ARTIFACT_ID = Id.Artifact.from(Id.Namespace.DEFAULT, "PluginTest", "1.0.0");
+  private static final co.cask.cdap.proto.id.ArtifactId APP_ARTIFACT_ID =
+    NamespaceId.DEFAULT.artifact("PluginTest", "1.0.0");
 
   private static CConfiguration cConf;
   private static File tmpDir;
@@ -145,16 +147,17 @@ public class ArtifactRepositoryTest {
 
   @Test
   public void testDeletingArtifact() throws Exception {
-    MetadataRecord record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID.toEntityId());
+    MetadataRecord record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID);
     Assert.assertEquals(1, record.getTags().size());
     artifactRepository.deleteArtifact(APP_ARTIFACT_ID);
-    record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID.toEntityId());
+    record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID);
     Assert.assertEquals(0, record.getTags().size());
   }
 
   @Test(expected = InvalidArtifactException.class)
   public void testMultipleParentVersions() throws InvalidArtifactException {
-    Id.Artifact child = Id.Artifact.from(Id.Namespace.SYSTEM, "abc", "1.0.0");
+    co.cask.cdap.proto.id.ArtifactId child = new co.cask.cdap.proto.id.ArtifactId(NamespaceId.SYSTEM.getNamespace(),
+                                                                                  "abc", "1.0.0");
     ArtifactRepository.validateParentSet(child, ImmutableSet.of(
       new ArtifactRange(NamespaceId.SYSTEM, "r1", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")),
       new ArtifactRange(NamespaceId.SYSTEM, "r1", new ArtifactVersion("3.0.0"), new ArtifactVersion("4.0.0"))));
@@ -162,7 +165,7 @@ public class ArtifactRepositoryTest {
 
   @Test(expected = InvalidArtifactException.class)
   public void testSelfExtendingArtifact() throws InvalidArtifactException {
-    Id.Artifact child = Id.Artifact.from(Id.Namespace.SYSTEM, "abc", "1.0.0");
+    co.cask.cdap.proto.id.ArtifactId child = NamespaceId.SYSTEM.artifact("abc", "1.0.0");
     ArtifactRepository.validateParentSet(child, ImmutableSet.of(
       new ArtifactRange(NamespaceId.SYSTEM, "abc", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))));
   }
@@ -176,13 +179,15 @@ public class ArtifactRepositoryTest {
 
   @Test
   public void testAddSystemArtifacts() throws Exception {
-    Id.Artifact systemAppArtifactId = Id.Artifact.from(Id.Namespace.SYSTEM, "PluginTest", "1.0.0");
+    co.cask.cdap.proto.id.ArtifactId systemAppArtifactId =
+      NamespaceId.SYSTEM.artifact("PluginTest", "1.0.0");
     File systemAppJar = createAppJar(PluginTestApp.class, new File(systemArtifactsDir1, "PluginTest-1.0.0.jar"),
                                      createManifest(ManifestFields.EXPORT_PACKAGE,
                                                     PluginTestRunnable.class.getPackage().getName()));
 
     // write plugins jar
-    Id.Artifact pluginArtifactId1 = Id.Artifact.from(Id.Namespace.SYSTEM, "APlugin", "1.0.0");
+    co.cask.cdap.proto.id.ArtifactId pluginArtifactId1 =
+      NamespaceId.SYSTEM.artifact("APlugin", "1.0.0");
 
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
     File pluginJar1 = createPluginJar(TestPlugin.class, new File(systemArtifactsDir1, "APlugin-1.0.0.jar"), manifest);
@@ -206,7 +211,8 @@ public class ArtifactRepositoryTest {
     }
 
     // write another plugins jar to a different directory, to test that plugins will get picked up from both directories
-    Id.Artifact pluginArtifactId2 = Id.Artifact.from(Id.Namespace.SYSTEM, "BPlugin", "1.0.0");
+    co.cask.cdap.proto.id.ArtifactId pluginArtifactId2 =
+      new co.cask.cdap.proto.id.ArtifactId(NamespaceId.SYSTEM.getNamespace(), "BPlugin", "1.0.0");
 
     manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
     File pluginJar2 = createPluginJar(TestPlugin.class, new File(systemArtifactsDir2, "BPlugin-1.0.0.jar"), manifest);
@@ -245,15 +251,17 @@ public class ArtifactRepositoryTest {
         pluginNames.add(pluginClass.getName());
       }
       Assert.assertEquals(Sets.newHashSet("manual1", "manual2", "TestPlugin", "TestPlugin2"), pluginNames);
-      Assert.assertEquals(systemAppArtifactId.getName(), appArtifactDetail.getDescriptor().getArtifactId().getName());
+      Assert.assertEquals(systemAppArtifactId.getEntityName(),
+                          appArtifactDetail.getDescriptor().getArtifactId().getName());
       Assert.assertEquals(systemAppArtifactId.getVersion(),
-                          appArtifactDetail.getDescriptor().getArtifactId().getVersion());
+                          appArtifactDetail.getDescriptor().getArtifactId().getVersion().getVersion());
 
       // check plugin artifact added correctly
       ArtifactDetail pluginArtifactDetail = artifactRepository.getArtifact(pluginArtifactId1);
-      Assert.assertEquals(pluginArtifactId1.getName(), pluginArtifactDetail.getDescriptor().getArtifactId().getName());
+      Assert.assertEquals(pluginArtifactId1.getEntityName(),
+                          pluginArtifactDetail.getDescriptor().getArtifactId().getName());
       Assert.assertEquals(pluginArtifactId1.getVersion(),
-                          pluginArtifactDetail.getDescriptor().getArtifactId().getVersion());
+                          pluginArtifactDetail.getDescriptor().getArtifactId().getVersion().getVersion());
       // check manually added plugins are there
       Assert.assertTrue(pluginArtifactDetail.getMeta().getClasses().getPlugins().containsAll(manuallyAddedPlugins1));
       // check properties are there
@@ -261,9 +269,10 @@ public class ArtifactRepositoryTest {
 
       // check other plugin artifact added correctly
       pluginArtifactDetail = artifactRepository.getArtifact(pluginArtifactId2);
-      Assert.assertEquals(pluginArtifactId2.getName(), pluginArtifactDetail.getDescriptor().getArtifactId().getName());
+      Assert.assertEquals(pluginArtifactId2.getEntityName(),
+                          pluginArtifactDetail.getDescriptor().getArtifactId().getName());
       Assert.assertEquals(pluginArtifactId2.getVersion(),
-                          pluginArtifactDetail.getDescriptor().getArtifactId().getVersion());
+                          pluginArtifactDetail.getDescriptor().getArtifactId().getVersion().getVersion());
       // check manually added plugins are there
       Assert.assertTrue(pluginArtifactDetail.getMeta().getClasses().getPlugins().containsAll(manuallyAddedPlugins2));
       // check properties are there
@@ -409,13 +418,14 @@ public class ArtifactRepositoryTest {
     File pluginDir = DirUtils.createTempDir(tmpDir);
 
     // Create a plugin jar. It contains two plugins, TestPlugin and TestPlugin2 inside.
-    Id.Artifact artifact1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
+    co.cask.cdap.proto.id.ArtifactId artifact1Id =
+      new co.cask.cdap.proto.id.ArtifactId(NamespaceId.DEFAULT.getNamespace(), "myPlugin", "1.0");
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
     File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
 
     // Build up the plugin repository.
     Set<ArtifactRange> parents = ImmutableSet.of(
-      new ArtifactRange(APP_ARTIFACT_ID.getNamespace().toEntityId(), APP_ARTIFACT_ID.getName(),
+      new ArtifactRange(APP_ARTIFACT_ID.getParent(), APP_ARTIFACT_ID.getArtifact(),
                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     artifactRepository.addArtifact(artifact1Id, jarFile, parents);
 
@@ -430,7 +440,8 @@ public class ArtifactRepositoryTest {
                new File(pluginDir, Artifacts.getFileName(plugin.getKey().getArtifactId())));
 
     // Create another plugin jar with later version and update the repository
-    Id.Artifact artifact2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "2.0");
+    co.cask.cdap.proto.id.ArtifactId artifact2Id =
+      new co.cask.cdap.proto.id.ArtifactId(NamespaceId.DEFAULT.getNamespace(), "myPlugin", "2.0");
     jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-2.0.jar"), manifest);
     artifactRepository.addArtifact(artifact2Id, jarFile, parents);
 
@@ -481,22 +492,24 @@ public class ArtifactRepositoryTest {
   @Test(expected = InvalidArtifactException.class)
   public void testGrandparentsAreInvalid() throws Exception {
     // create child artifact
-    Id.Artifact childId = Id.Artifact.from(Id.Namespace.DEFAULT, "child", "1.0.0");
+    co.cask.cdap.proto.id.ArtifactId childId =
+      new co.cask.cdap.proto.id.ArtifactId(NamespaceId.DEFAULT.getNamespace(), "child", "1.0.0");
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
     File jarFile = createPluginJar(Plugin1.class, new File(tmpDir, "child-1.0.0.jar"), manifest);
 
     // add the artifact
     Set<ArtifactRange> parents = ImmutableSet.of(new ArtifactRange(
-      APP_ARTIFACT_ID.getNamespace().toEntityId(), APP_ARTIFACT_ID.getName(),
+      APP_ARTIFACT_ID.getParent(), APP_ARTIFACT_ID.getArtifact(),
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     artifactRepository.addArtifact(childId, jarFile, parents);
 
     // try and create grandchild, should throw exception
-    Id.Artifact grandchildId = Id.Artifact.from(Id.Namespace.DEFAULT, "grandchild", "1.0.0");
+    co.cask.cdap.proto.id.ArtifactId grandchildId =
+      new co.cask.cdap.proto.id.ArtifactId(NamespaceId.DEFAULT.getNamespace(), "grandchild", "1.0.0");
     manifest = createManifest(ManifestFields.EXPORT_PACKAGE, Plugin2.class.getPackage().getName());
     jarFile = createPluginJar(Plugin2.class, new File(tmpDir, "grandchild-1.0.0.jar"), manifest);
     parents = ImmutableSet.of(new ArtifactRange(
-      childId.getNamespace().toEntityId(), childId.getName(),
+      childId.getParent(), childId.getArtifact(),
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     artifactRepository.addArtifact(grandchildId, jarFile, parents);
   }
@@ -544,7 +557,8 @@ public class ArtifactRepositoryTest {
   @Test
   public void testNamespaceIsolation() throws Exception {
     // create system app artifact
-    Id.Artifact systemAppArtifactId = Id.Artifact.from(Id.Namespace.SYSTEM, "PluginTest", "1.0.0");
+    co.cask.cdap.proto.id.ArtifactId systemAppArtifactId =
+      new co.cask.cdap.proto.id.ArtifactId(NamespaceId.SYSTEM.getNamespace(), "PluginTest", "1.0.0");
     File jar = createAppJar(PluginTestApp.class, new File(systemArtifactsDir1, "PluginTest-1.0.0.jar"),
                             createManifest(ManifestFields.EXPORT_PACKAGE,
                                            PluginTestRunnable.class.getPackage().getName()));
@@ -552,13 +566,15 @@ public class ArtifactRepositoryTest {
     Assert.assertTrue(jar.delete());
 
     Set<ArtifactRange> parents = ImmutableSet.of(
-      new ArtifactRange(systemAppArtifactId.getNamespace().toEntityId(), systemAppArtifactId.getName(),
+      new ArtifactRange(systemAppArtifactId.getParent(), systemAppArtifactId.getArtifact(),
                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     NamespaceId namespace1 = Ids.namespace("ns1");
     NamespaceId namespace2 = Ids.namespace("ns2");
 
-    Id.Artifact pluginArtifactId1 = Id.Artifact.from(namespace1.toId(), "myPlugin", "1.0");
-    Id.Artifact pluginArtifactId2 = Id.Artifact.from(namespace2.toId(), "myPlugin", "1.0");
+    co.cask.cdap.proto.id.ArtifactId pluginArtifactId1 =
+      new co.cask.cdap.proto.id.ArtifactId(namespace1.getNamespace(), "myPlugin", "1.0");
+    co.cask.cdap.proto.id.ArtifactId pluginArtifactId2 =
+      new co.cask.cdap.proto.id.ArtifactId(namespace2.getNamespace(), "myPlugin", "1.0");
 
     try {
       // create plugin artifact in namespace1 that extends the system artifact
@@ -594,9 +610,10 @@ public class ArtifactRepositoryTest {
 
     // add the artifact
     Set<ArtifactRange> parents = ImmutableSet.of(
-      new ArtifactRange(APP_ARTIFACT_ID.getNamespace().toEntityId(), APP_ARTIFACT_ID.getName(),
+      new ArtifactRange(APP_ARTIFACT_ID.getParent(), APP_ARTIFACT_ID.getArtifact(),
                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
+    co.cask.cdap.proto.id.ArtifactId artifactId =
+      new co.cask.cdap.proto.id.ArtifactId(NamespaceId.DEFAULT.getNamespace(), "myPlugin", "1.0");
     artifactRepository.addArtifact(artifactId, jarFile, parents);
     return pluginDir;
   }

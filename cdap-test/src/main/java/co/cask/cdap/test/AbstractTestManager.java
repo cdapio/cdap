@@ -63,8 +63,8 @@ public abstract class AbstractTestManager implements TestManager {
   }
 
   @Override
-  public void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
-    addArtifact(artifactId.toEntityId(), artifactFile);
+  public ArtifactManager addArtifact(ArtifactId artifactId, File artifactFile) throws Exception {
+    return addArtifact(artifactId, artifactFile);
   }
 
   @Override

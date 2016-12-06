@@ -30,6 +30,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.Sets;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
@@ -64,8 +65,8 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    final Id.Program wordcountFlow1 =
-      Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
+    final ProgramId wordcountFlow1 =
+      new ProgramId(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
 
     // flow is stopped initially
     Assert.assertEquals("STOPPED", getProgramStatus(wordcountFlow1));
@@ -91,23 +92,23 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     Assert.assertEquals(ProgramRunStatus.RUNNING, rr.getStatus());
 
     // Lets set the runtime info to off
-    RuntimeInfo runtimeInfo = runtimeService.lookup(wordcountFlow1.toEntityId(), RunIds.fromString(rr.getPid()));
+    RuntimeInfo runtimeInfo = runtimeService.lookup(wordcountFlow1, RunIds.fromString(rr.getPid()));
     ProgramController programController = runtimeInfo.getController();
     programController.stop();
 
     Thread.sleep(2000);
 
     // Verify that the status of that run is KILLED
-    RunRecordMeta runRecordMeta = store.getRun(wordcountFlow1.toEntityId(), rr.getPid());
+    RunRecordMeta runRecordMeta = store.getRun(wordcountFlow1, rr.getPid());
     Assert.assertEquals(ProgramRunStatus.KILLED, runRecordMeta.getStatus());
 
     // Use the store manipulate state to be RUNNING
     long now = System.currentTimeMillis();
     long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
-    store.setStart(wordcountFlow1.toEntityId(), rr.getPid(), nowSecs);
+    store.setStart(wordcountFlow1, rr.getPid(), nowSecs);
 
     // Now check again via Store to assume data store is wrong.
-    runRecordMeta = store.getRun(wordcountFlow1.toEntityId(), rr.getPid());
+    runRecordMeta = store.getRun(wordcountFlow1, rr.getPid());
     Assert.assertEquals(ProgramRunStatus.RUNNING, runRecordMeta.getStatus());
 
     // Verify there is NO FAILED run record for the application

@@ -210,7 +210,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
       namespaceLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
         @Override
         public Location call() throws Exception {
-          return namespacedLocationFactory.get(namespaceId.toId());
+          return namespacedLocationFactory.get(namespaceId);
         }
       });
     } catch (IOException e) {

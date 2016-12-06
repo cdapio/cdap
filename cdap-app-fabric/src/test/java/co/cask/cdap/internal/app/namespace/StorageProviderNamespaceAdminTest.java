@@ -90,7 +90,7 @@ public class StorageProviderNamespaceAdminTest {
     // the create/delete will look up meta so store that too
     namespaceStore.create(myspaceMeta);
     storageProviderNamespaceAdmin.create(myspaceMeta);
-    Location namespaceLocation = namespacedLocationFactory.get(myspace.toId());
+    Location namespaceLocation = namespacedLocationFactory.get(myspace);
     Assert.assertTrue(namespaceLocation.exists());
     storageProviderNamespaceAdmin.delete(myspace);
     Assert.assertFalse(namespaceLocation.exists());

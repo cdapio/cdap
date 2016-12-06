@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsTags;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -71,7 +72,7 @@ public class MetricsManager {
   public RuntimeMetrics getFlowletMetrics(String namespace, String appName,
                                           String flowName, String flowletName) {
 
-    Id.Program id = Id.Program.from(namespace, appName, ProgramType.FLOW, flowName);
+    ProgramId id = new ProgramId(namespace, appName, ProgramType.FLOW, flowName);
     return getMetrics(MetricsTags.flowlet(id, flowletName),
                       Constants.Metrics.Name.Flow.FLOWLET_INPUT,
                       Constants.Metrics.Name.Flow.FLOWLET_PROCESSED,
@@ -86,7 +87,7 @@ public class MetricsManager {
    * @return {@link co.cask.cdap.api.metrics.RuntimeMetrics}
    */
   public RuntimeMetrics getServiceMetrics(String namespace, String applicationId, String serviceId) {
-    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.SERVICE, serviceId);
+    ProgramId id = new ProgramId(namespace, applicationId, ProgramType.SERVICE, serviceId);
     return getMetrics(MetricsTags.service(id),
                       Constants.Metrics.Name.Service.SERVICE_INPUT,
                       Constants.Metrics.Name.Service.SERVICE_PROCESSED,
@@ -103,7 +104,7 @@ public class MetricsManager {
    */
   public RuntimeMetrics getServiceHandlerMetrics(String namespace, String applicationId, String serviceId,
                                                  String handlerId) {
-    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.SERVICE, serviceId);
+    ProgramId id = new ProgramId(namespace, applicationId, ProgramType.SERVICE, serviceId);
     return getMetrics(MetricsTags.serviceHandler(id, handlerId),
                       Constants.Metrics.Name.Service.SERVICE_INPUT,
                       Constants.Metrics.Name.Service.SERVICE_PROCESSED,

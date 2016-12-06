@@ -244,24 +244,24 @@ public class DataMigration {
     }
 
     @Override
-    public Location get(Id.Namespace namespaceId) throws IOException {
+    public Location get(NamespaceId namespaceId) throws IOException {
       return get(namespaceId, null);
     }
 
     @Override
     public Location get(NamespaceMeta namespaceMeta) throws IOException {
-      return get(namespaceMeta.getNamespaceId().toId(), null);
+      return get(namespaceMeta.getNamespaceId(), null);
     }
 
     @Override
-    public Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException {
+    public Location get(NamespaceId namespaceId, @Nullable String subPath) throws IOException {
       // Only allow operates on system namespace
-      if (!Id.Namespace.SYSTEM.equals(namespaceId)) {
+      if (!NamespaceId.SYSTEM.equals(namespaceId)) {
         throw new IllegalArgumentException("Location operation on namespace " + namespaceId +
                                              " is not allowed. Only SYSTEM namespace is supported.");
       }
 
-      Location namespaceLocation = locationFactory.create(namespaceDir).append(namespaceId.getId());
+      Location namespaceLocation = locationFactory.create(namespaceDir).append(namespaceId.getEntityName());
       if (subPath != null) {
         namespaceLocation = namespaceLocation.append(subPath);
       }

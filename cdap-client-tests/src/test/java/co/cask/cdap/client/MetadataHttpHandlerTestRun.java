@@ -114,7 +114,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   @After
   public void after() throws Exception {
     appClient.delete(application.toId());
-    artifactClient.delete(artifactId.toId());
+    artifactClient.delete(artifactId);
     namespaceClient.delete(NamespaceId.DEFAULT);
   }
 
@@ -820,7 +820,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     } finally {
       // cleanup
       appClient.delete(app.toId());
-      artifactClient.delete(artifact.toId());
+      artifactClient.delete(artifact);
     }
   }
 
@@ -874,7 +874,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       ),
       getMetadata(systemId)
     );
-    artifactClient.delete(systemId.toId());
+    artifactClient.delete(systemId);
   }
 
   @Test
@@ -1077,7 +1077,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     streamViewClient.delete(view.toId());
     streamClient.delete(stream.toId());
     datasetClient.delete(datasetInstance.toId());
-    artifactClient.delete(artifact.toId());
+    artifactClient.delete(artifact);
 
     // Assert no metadata
     Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "text"));
@@ -1512,7 +1512,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
    */
   private ArtifactId getArtifactId() throws Exception {
     Iterable<ArtifactSummary> filtered =
-      Iterables.filter(artifactClient.list(NamespaceId.DEFAULT.toId()), new Predicate<ArtifactSummary>() {
+      Iterables.filter(artifactClient.list(NamespaceId.DEFAULT), new Predicate<ArtifactSummary>() {
         @Override
         public boolean apply(ArtifactSummary artifactSummary) {
           return AllProgramsApp.class.getSimpleName().equals(artifactSummary.getName());

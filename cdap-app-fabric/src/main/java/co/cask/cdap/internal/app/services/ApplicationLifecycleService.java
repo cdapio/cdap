@@ -333,7 +333,7 @@ ApplicationLifecycleService extends AbstractIdleService {
     String requestedConfigStr = requestedConfigObj == null ?
       currentSpec.getConfiguration() : new Gson().toJson(requestedConfigObj);
 
-    Id.Artifact artifactId = Artifacts.toArtifactId(appId.getParent(), newArtifactId).toId();
+    co.cask.cdap.proto.id.ArtifactId artifactId = Artifacts.toArtifactId(appId.getParent(), newArtifactId);
     return deployApp(appId.getParent(), appId.getApplication(), null, artifactId, requestedConfigStr,
                      programTerminator);
   }
@@ -355,7 +355,7 @@ ApplicationLifecycleService extends AbstractIdleService {
    * @throws IOException if there was an IO error writing the artifact
    */
   public ApplicationWithPrograms deployAppAndArtifact(NamespaceId namespace, @Nullable String appName,
-                                                      Id.Artifact artifactId, File jarFile,
+                                                      co.cask.cdap.proto.id.ArtifactId artifactId, File jarFile,
                                                       @Nullable String configStr,
                                                       ProgramTerminator programTerminator) throws Exception {
 
@@ -396,7 +396,7 @@ ApplicationLifecycleService extends AbstractIdleService {
    *                   the actual exception
    */
   public ApplicationWithPrograms deployApp(NamespaceId namespace, @Nullable String appName, @Nullable String appVersion,
-                                           Id.Artifact artifactId,
+                                           co.cask.cdap.proto.id.ArtifactId artifactId,
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator) throws Exception {
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
@@ -404,9 +404,9 @@ ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Remove all the applications inside the given {@link Id.Namespace}
+   * Remove all the applications inside the given {@link NamespaceId}
    *
-   * @param namespaceId the {@link Id.Namespace} under which all application should be deleted
+   * @param namespaceId the {@link NamespaceId} under which all application should be deleted
    * @throws Exception
    */
   public void removeAll(final NamespaceId namespaceId) throws Exception {

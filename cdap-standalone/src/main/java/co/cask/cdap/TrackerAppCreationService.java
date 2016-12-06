@@ -122,7 +122,7 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
     LOG.info("Creating and starting Tracker App with config : {}", trackerAppConfig);
     applicationLifecycleService.deployApp(
       TRACKER_APPID.getParent(), TRACKER_APPID.getApplication(), TRACKER_APPID.getVersion(),
-      NamespaceId.SYSTEM.artifact(artifactSummary.getName(), artifactSummary.getVersion()).toId(),
+      NamespaceId.SYSTEM.artifact(artifactSummary.getName(), artifactSummary.getVersion()),
       trackerAppConfig, new TrackerProgramTerminator(programLifecycleService));
     try {
       programLifecycleService.start(AUDIT_FLOWID, ImmutableMap.<String, String>of(), false);

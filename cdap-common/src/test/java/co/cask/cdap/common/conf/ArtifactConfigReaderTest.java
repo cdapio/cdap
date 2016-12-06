@@ -66,7 +66,7 @@ public class ArtifactConfigReaderTest {
       writer.write(validConfig.toString());
     }
 
-    Assert.assertEquals(validConfig, configReader.read(Id.Namespace.DEFAULT, configFile));
+    Assert.assertEquals(validConfig, configReader.read(NamespaceId.DEFAULT, configFile));
   }
 
   @Test(expected = InvalidArtifactException.class)
@@ -82,7 +82,7 @@ public class ArtifactConfigReaderTest {
       writer.write(badConfig.toString());
     }
 
-    configReader.read(Id.Namespace.SYSTEM, configFile);
+    configReader.read(NamespaceId.SYSTEM, configFile);
   }
 
   @Test(expected = InvalidArtifactException.class)
@@ -92,7 +92,7 @@ public class ArtifactConfigReaderTest {
       writer.write("I am invalid.");
     }
 
-    configReader.read(Id.Namespace.SYSTEM, configFile);
+    configReader.read(NamespaceId.SYSTEM, configFile);
   }
 
   @Test(expected = InvalidArtifactException.class)
@@ -102,7 +102,7 @@ public class ArtifactConfigReaderTest {
       writer.write("{ \"plugins\": [ { \"name\": \"something\" } ] }");
     }
 
-    configReader.read(Id.Namespace.SYSTEM, configFile);
+    configReader.read(NamespaceId.SYSTEM, configFile);
   }
 
   @Test(expected = InvalidArtifactException.class)
@@ -112,7 +112,7 @@ public class ArtifactConfigReaderTest {
       writer.write("{ \"parents\": [ \"r2:[1.0.0,2.0.0) \" ] }");
     }
 
-    configReader.read(Id.Namespace.SYSTEM, configFile);
+    configReader.read(NamespaceId.SYSTEM, configFile);
   }
 
   @Test(expected = InvalidArtifactException.class)
@@ -122,7 +122,7 @@ public class ArtifactConfigReaderTest {
       writer.write("{ \"parents\": [ \"r!2[1.0.0,2.0.0) \" ] }");
     }
 
-    configReader.read(Id.Namespace.SYSTEM, configFile);
+    configReader.read(NamespaceId.SYSTEM, configFile);
   }
 
   @Test(expected = InvalidArtifactException.class)
@@ -132,6 +132,6 @@ public class ArtifactConfigReaderTest {
       writer.write("{ \"parents\": [ \"r2(2.0.0,1.0.0) \" ] }");
     }
 
-    configReader.read(Id.Namespace.SYSTEM, configFile);
+    configReader.read(NamespaceId.SYSTEM, configFile);
   }
 }

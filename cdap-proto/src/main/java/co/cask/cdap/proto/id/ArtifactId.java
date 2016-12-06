@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
@@ -134,5 +135,17 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
 
   public static ArtifactId fromString(String string) {
     return EntityId.fromString(string, ArtifactId.class);
+  }
+
+  public co.cask.cdap.api.artifact.ArtifactId toArtifactId() {
+    return new co.cask.cdap.api.artifact.ArtifactId(
+      artifact, new ArtifactVersion(version),
+      NamespaceId.SYSTEM.getEntityName().equals(namespace) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
+  }
+
+  public static ArtifactId from(NamespaceId namespace, co.cask.cdap.api.artifact.ArtifactId id) {
+    return new ArtifactId(ArtifactScope.SYSTEM.equals(
+      id.getScope()) ? NamespaceId.SYSTEM.getNamespace() : namespace.getNamespace(),
+                          id.getName(), id.getVersion().getVersion());
   }
 }

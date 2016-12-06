@@ -127,7 +127,7 @@ public class SystemArtifactsAuthorizationTest {
     SecurityRequestContext.setUserId("bob");
     // deleting a system artifact should fail because bob does not have admin privileges on the artifact
     try {
-      artifactRepository.deleteArtifact(SYSTEM_ARTIFACT.toId());
+      artifactRepository.deleteArtifact(SYSTEM_ARTIFACT);
       Assert.fail("Deleting a system artifact should have failed because alice does not have admin privileges on " +
                     "the CDAP instance.");
     } catch (UnauthorizedException expected) {
@@ -150,11 +150,11 @@ public class SystemArtifactsAuthorizationTest {
     Assert.assertEquals(SYSTEM_ARTIFACT.getNamespace(), artifactSummary.getScope().name().toLowerCase());
 
     // test the getArtifact API
-    ArtifactDetail artifactDetail = artifactRepository.getArtifact(SYSTEM_ARTIFACT.toId());
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(SYSTEM_ARTIFACT);
     co.cask.cdap.api.artifact.ArtifactId artifactId = artifactDetail.getDescriptor().getArtifactId();
     Assert.assertEquals(SYSTEM_ARTIFACT.getArtifact(), artifactId.getName());
     Assert.assertEquals(SYSTEM_ARTIFACT.getVersion(), artifactId.getVersion().getVersion());
-    Assert.assertEquals(SYSTEM_ARTIFACT.getNamespace(), artifactId.getScope().name().toLowerCase());
+    Assert.assertEquals(SYSTEM_ARTIFACT.getParent().getEntityName(), artifactId.getScope().name().toLowerCase());
 
     namespaceAdmin.delete(namespaceId);
     authorizer.enforce(SYSTEM_ARTIFACT, ALICE, EnumSet.allOf(Action.class));
@@ -162,7 +162,7 @@ public class SystemArtifactsAuthorizationTest {
 
     // deleting system artifact should succeed as alice, because alice added the artifacts, so she should have all
     // privileges on it
-    artifactRepository.deleteArtifact(SYSTEM_ARTIFACT.toId());
+    artifactRepository.deleteArtifact(SYSTEM_ARTIFACT);
   }
 
   @AfterClass

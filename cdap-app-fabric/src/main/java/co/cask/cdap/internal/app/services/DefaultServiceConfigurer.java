@@ -31,6 +31,8 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
@@ -52,7 +54,7 @@ import java.util.Map;
 public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements ServiceConfigurer {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceConfigurer.class);
   private final String className;
-  private final Id.Artifact artifactId;
+  private final ArtifactId artifactId;
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
 
@@ -65,7 +67,7 @@ public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements
   /**
    * Create an instance of {@link DefaultServiceConfigurer}
    */
-  public DefaultServiceConfigurer(Service service, Id.Namespace namespace, Id.Artifact artifactId,
+  public DefaultServiceConfigurer(Service service, NamespaceId namespace, ArtifactId artifactId,
                                   ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
     super(namespace, artifactId, artifactRepository, pluginInstantiator);
     this.className = service.getClass().getName();
