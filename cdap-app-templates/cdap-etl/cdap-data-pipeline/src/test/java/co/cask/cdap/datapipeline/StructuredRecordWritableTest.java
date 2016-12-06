@@ -14,10 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch;
+package co.cask.cdap.datapipeline;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.etl.batch.StructuredRecordWritable;
 import org.junit.Assert;
 import org.junit.Test;
 

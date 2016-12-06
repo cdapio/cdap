@@ -24,12 +24,15 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
 import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.mock.action.MockAction;
+import co.cask.cdap.etl.mock.batch.MockExternalSink;
+import co.cask.cdap.etl.mock.batch.MockExternalSource;
 import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSink;
 import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSource;
 import co.cask.cdap.etl.mock.batch.MockSink;
@@ -70,12 +73,14 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -145,7 +150,6 @@ public class DataPipelineTest extends HydratorTestBase {
 
       appManager.getHistory(appId.workflow(SmartWorkflow.NAME).toId(), ProgramRunStatus.FAILED);
   }
-
 
   @Test
   public void testPipelineWithAllActions() throws Exception {
@@ -1302,6 +1306,222 @@ public class DataPipelineTest extends HydratorTestBase {
     // now the datasets should exist
     Assert.assertNotNull(getDataset(prefix + "MockSecureSourceDataset").get());
     Assert.assertNotNull(getDataset(prefix + "MockSecureSinkDataset").get());
+  }
+
+  @Test
+  public void testExternalDatasetTrackingMR() throws Exception {
+    testExternalDatasetTracking(Engine.MAPREDUCE, false);
+  }
+
+  @Test
+  public void testExternalDatasetTrackingSpark() throws Exception {
+    testExternalDatasetTracking(Engine.SPARK, false);
+  }
+
+  @Test
+  public void testBackwardsCompatibleExternalDatasetTrackingMR() throws Exception {
+    testExternalDatasetTracking(Engine.MAPREDUCE, true);
+  }
+
+  @Test
+  public void testBackwardsCompatibleExternalDatasetTrackingSpark() throws Exception {
+    testExternalDatasetTracking(Engine.SPARK, true);
+  }
+
+  private void testExternalDatasetTracking(Engine engine, boolean backwardsCompatible) throws Exception {
+    String suffix = engine.name() + (backwardsCompatible ? "-bc" : "");
+
+    // Define input/output datasets
+    String expectedExternalDatasetInput = "fileInput-" + suffix;
+    String expectedExternalDatasetOutput = "fileOutput-" + suffix;
+
+    // Define input/output directories
+    File inputDir = TMP_FOLDER.newFolder("input-" + suffix);
+    String inputFile = "input-file1.txt";
+    File outputDir = TMP_FOLDER.newFolder("output-" + suffix);
+    File outputSubDir1 = new File(outputDir, "subdir1");
+    File outputSubDir2 = new File(outputDir, "subdir2");
+
+    if (!backwardsCompatible) {
+      // Assert that there are no external datasets
+      Assert.assertNull(getDataset(NamespaceId.DEFAULT.dataset(expectedExternalDatasetInput)).get());
+      Assert.assertNull(getDataset(NamespaceId.DEFAULT.dataset(expectedExternalDatasetOutput)).get());
+    }
+
+    ETLBatchConfig.Builder builder = ETLBatchConfig.builder("* * * * *");
+    ETLBatchConfig etlConfig = builder
+      .setEngine(engine)
+        // TODO: test multiple inputs CDAP-5654
+      .addStage(new ETLStage("source", MockExternalSource.getPlugin(expectedExternalDatasetInput,
+                                                                    inputDir.getAbsolutePath())))
+      .addStage(new ETLStage("sink1", MockExternalSink.getPlugin(
+        backwardsCompatible ? null : expectedExternalDatasetOutput, "dir1", outputSubDir1.getAbsolutePath())))
+      .addStage(new ETLStage("sink2", MockExternalSink.getPlugin(
+        backwardsCompatible ? null : expectedExternalDatasetOutput, "dir2", outputSubDir2.getAbsolutePath())))
+      .addConnection("source", "sink1")
+      .addConnection("source", "sink2")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("ExternalDatasetApp-" + suffix);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
+    ImmutableList<StructuredRecord> allInput = ImmutableList.of(recordSamuel, recordBob, recordJane);
+
+    // Create input files
+    MockExternalSource.writeInput(new File(inputDir, inputFile).getAbsolutePath(), allInput);
+
+    final WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    // make sure the completed run record is stamped, before asserting it.
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return workflowManager.getHistory(ProgramRunStatus.COMPLETED).size();
+      }
+    }, 5, TimeUnit.MINUTES);
+    List<RunRecord> history = workflowManager.getHistory();
+    // there should be only one completed run
+    Assert.assertEquals(1, history.size());
+    Assert.assertEquals(ProgramRunStatus.COMPLETED, history.get(0).getStatus());
+
+    // Assert output
+    Assert.assertEquals(allInput, MockExternalSink.readOutput(outputSubDir1.getAbsolutePath()));
+    Assert.assertEquals(allInput, MockExternalSink.readOutput(outputSubDir2.getAbsolutePath()));
+
+    if (!backwardsCompatible) {
+      // Assert that external datasets got created
+      Assert.assertNotNull(getDataset(NamespaceId.DEFAULT.dataset(expectedExternalDatasetInput)).get());
+      Assert.assertNotNull(getDataset(NamespaceId.DEFAULT.dataset(expectedExternalDatasetOutput)).get());
+    }
+  }
+
+  @Test
+  public void testMacrosMapReducePipeline() throws Exception {
+    /*
+     * Trivial MapReduce pipeline from batch source to batch sink.
+     *
+     * source --------- sink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("mrinput", "${runtime${source}}")))
+      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("mroutput", "${runtime}${sink}")))
+      .addConnection("source", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("MRApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    // set runtime arguments for macro substitution
+    Map<String, String> runtimeArguments = ImmutableMap.of("runtime", "mockRuntime",
+                                                           "sink", "MRSinkDataset",
+                                                           "source", "Source",
+                                                           "runtimeSource",
+                                                           "mockRuntimeMRSourceDataset");
+
+    // make sure the datasets don't exist beforehand
+    Assert.assertNull(getDataset("mockRuntimeMRSourceDataset").get());
+    Assert.assertNull(getDataset("mockRuntimeMRSinkDataset").get());
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.setRuntimeArgs(runtimeArguments);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    // now the datasets should exist
+    Assert.assertNotNull(getDataset("mockRuntimeMRSourceDataset").get());
+    Assert.assertNotNull(getDataset("mockRuntimeMRSinkDataset").get());
+  }
+
+  /**
+   * Tests that if macros are provided
+   */
+  @Test
+  public void testMacrosSparkPipeline() throws Exception {
+    /*
+     * Trivial Spark pipeline from batch source to batch sink.
+     *
+     * source --------- sink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .setEngine(Engine.SPARK)
+      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("sparkinput", "${runtime${source}}")))
+      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("sparkoutput", "${runtime}${sink}")))
+      .addConnection("source", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("SparkApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    // set runtime arguments for macro substitution
+    Map<String, String> runtimeArguments = ImmutableMap.of("runtime", "mockRuntime",
+                                                           "sink", "SparkSinkDataset",
+                                                           "source", "Source",
+                                                           "runtimeSource",
+                                                           "mockRuntimeSparkSourceDataset");
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.setRuntimeArgs(runtimeArguments);
+
+    // make sure the datasets don't exist beforehand
+    Assert.assertNull(getDataset("mockRuntimeSparkSourceDataset").get());
+    Assert.assertNull(getDataset("mockRuntimeSparkSinkDataset").get());
+
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    // now the datasets should exist
+    Assert.assertNotNull(getDataset("mockRuntimeSparkSourceDataset").get());
+    Assert.assertNotNull(getDataset("mockRuntimeSparkSinkDataset").get());
+  }
+
+
+  /**
+   * Tests that if no macro is provided to the dataset name property, datasets will be created at config time.
+   */
+  @Test
+  public void testNoMacroMapReduce() throws Exception {
+    /*
+     * Trivial MapReduce pipeline from batch source to batch sink.
+     *
+     * source --------- sink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("mrinput", "configTimeMockSourceDataset")))
+      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("mroutput", "configTimeMockSinkDataset")))
+      .addConnection("source", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("MRApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    // set runtime arguments for macro substitution
+    Map<String, String> runtimeArguments = ImmutableMap.of("runtime", "mockRuntime",
+                                                           "sink", "SinkDataset",
+                                                           "source", "Source",
+                                                           "runtimeSource", "mockRuntimeSourceDataset");
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+
+    // make sure the datasets were created at configure time
+    Assert.assertNotNull(getDataset("configTimeMockSourceDataset").get());
+    Assert.assertNotNull(getDataset("configTimeMockSinkDataset").get());
+
+    workflowManager.setRuntimeArgs(runtimeArguments);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
   }
 
   private void validateMetric(long expected, ApplicationId appId,
