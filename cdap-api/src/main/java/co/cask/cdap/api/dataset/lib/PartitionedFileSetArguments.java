@@ -52,7 +52,6 @@ public class PartitionedFileSetArguments {
   private static final Type PARTITION_FILTER_LIST_TYPE = new TypeToken<List<PartitionFilter>>() { }.getType();
   private static final Type PARTITION_KEY_LIST_TYPE = new TypeToken<List<PartitionKey>>() { }.getType();
 
-
   /**
    * Set the partition key of the output partition when using PartitionedFileSet as an OutputFormatProvider.
    * This key is used as the partition key for the new file, and also to generate an output file path - if that path
