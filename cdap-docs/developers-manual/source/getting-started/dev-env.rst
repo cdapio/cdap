@@ -62,6 +62,7 @@ Complete examples for each archetype:
   
   $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-spark-scala-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.app
 
+Maven supplies a guide to the naming convention used above at https://maven.apache.org/guides/mini/guide-naming-conventions.html.
 
 Using IntelliJ
 --------------

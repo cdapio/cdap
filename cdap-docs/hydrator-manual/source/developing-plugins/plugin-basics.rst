@@ -79,6 +79,7 @@ Complete examples for each archetype:
   
   $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-etl-transform-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.plugin
 
+Maven supplies a guide to the naming convention used above at https://maven.apache.org/guides/mini/guide-naming-conventions.html.
 
 Class Annotations
 =================
