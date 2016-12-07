@@ -37,7 +37,6 @@ public class UserServiceEndpointStrategy extends AbstractEndpointStrategy {
   private final RouteStore routeStore;
   private final ProgramId serviceId;
   private final String version;
-  private final Random random;
   private final RouteFallbackStrategy fallbackStrategy;
   private final RandomEndpointStrategy versionedRandomEndpointStrategy;
 
@@ -47,7 +46,6 @@ public class UserServiceEndpointStrategy extends AbstractEndpointStrategy {
     this.routeStore = routeStore;
     this.serviceId = serviceId;
     this.version = version;
-    this.random = ThreadLocalRandom.current();
     this.fallbackStrategy = fallbackStrategy;
     this.versionedRandomEndpointStrategy = new RandomEndpointStrategy(
       new VersionFilteredServiceDiscovered(serviceDiscovered, version));
@@ -80,10 +78,11 @@ public class UserServiceEndpointStrategy extends AbstractEndpointStrategy {
     String minMaxVersion = null;
     Iterator<Discoverable> iterator = serviceDiscovered.iterator();
     Discoverable result = null;
-    double resultProbability = 0;
+    int wSum = 0;
     while (iterator.hasNext()) {
       Discoverable candidate = iterator.next();
       String version = Bytes.toString(candidate.getPayload());
+      int sign = 1;
       if (!routeConfig.isValid()) {
         // Fallback strategy is set to smallest/largest, so choose a random endpoint that has smallest/largest version
         if (minMaxVersion == null) {
@@ -100,24 +99,26 @@ public class UserServiceEndpointStrategy extends AbstractEndpointStrategy {
             minMaxVersion = version;
             // Since we found a version smaller/larger than the previously seen minMaxVersion, then reset the pick
             result = null;
-            resultProbability = 0;
+            // Make randomPick to be negative to ensure this version gets picked
+            sign = -1;
           } else if (resetMinMaxVersion < 0) {
             continue;
           }
         }
       }
-
-      double randomPick = random.nextDouble() * fetchWeight(version, routeConfig);
-      // if pick probability is greater, retain the candidate
-      if (randomPick >= resultProbability) {
+      int weight = fetchWeight(version, routeConfig);
+      wSum += weight;
+      // randomWeight is a random number in the range of [1, wSum]
+      int randomWeight = wSum > 0 ? ThreadLocalRandom.current().nextInt(1, wSum + 1) * sign : 1;
+      // pick the current candidate with probability weight/wSum
+      if (randomWeight <= weight) {
         result = candidate;
-        resultProbability = randomPick;
       }
     }
     return result;
   }
 
-  private double fetchWeight(@Nullable String version, RouteConfig routeConfig) {
+  private int fetchWeight(@Nullable String version, RouteConfig routeConfig) {
     if (!routeConfig.isValid() || (version == null)) {
       // If route is not present, then allow some randomness by setting non-zero weight
       return 1;
