@@ -34,7 +34,7 @@ import com.google.gson.JsonSerializationContext;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillSpecification;
-import org.apache.twill.internal.json.TwillSpecificationAdapter;
+import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -50,10 +50,10 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
   // For decoding old spec. Remove later.
   private static final Gson GSON = new Gson();
 
-  private final TwillSpecificationAdapter twillSpecificationAdapter;
+  private final TwillRuntimeSpecificationAdapter twillSpecificationAdapter;
 
   public ServiceSpecificationCodec() {
-    twillSpecificationAdapter = TwillSpecificationAdapter.create();
+    twillSpecificationAdapter = TwillRuntimeSpecificationAdapter.create();
   }
 
   @Override
@@ -94,7 +94,8 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
 
   private ServiceSpecification decodeOldSpec(JsonObject json) {
     String className = json.get("classname").getAsString();
-    TwillSpecification twillSpec = twillSpecificationAdapter.fromJson(json.get("spec").getAsString());
+    TwillSpecification twillSpec =
+      twillSpecificationAdapter.fromJson(json.get("spec").getAsString()).getTwillSpecification();
     Map<String, HttpServiceHandlerSpecification> handlers = Maps.newHashMap();
 
     RuntimeSpecification handlerSpec = twillSpec.getRunnables().get(twillSpec.getName());

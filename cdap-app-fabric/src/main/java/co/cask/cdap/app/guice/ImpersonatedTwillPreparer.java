@@ -167,6 +167,16 @@ final class ImpersonatedTwillPreparer implements TwillPreparer {
   }
 
   @Override
+  public TwillPreparer setLogLevels(Map<String, LogEntry.Level> logLevels) {
+    return delegate.setLogLevels(logLevels);
+  }
+
+  @Override
+  public TwillPreparer setLogLevels(String runnableName, Map<String, LogEntry.Level> logLevelsForRunnable) {
+    return delegate.setLogLevels(runnableName, logLevelsForRunnable);
+  }
+
+  @Override
   public TwillController start() {
     try {
       return impersonator.doAs(programId.getNamespaceId(), new Callable<TwillController>() {
