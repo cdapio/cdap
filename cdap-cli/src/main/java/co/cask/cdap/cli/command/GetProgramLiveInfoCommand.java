@@ -58,7 +58,7 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
     String appId = programIdParts[0];
     String programName = programIdParts[1];
     ProgramId program = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(), programName);
-    DistributedProgramLiveInfo liveInfo = programClient.getLiveInfo(program.toId());
+    DistributedProgramLiveInfo liveInfo = programClient.getLiveInfo(program);
 
     if (liveInfo == null) {
       output.println("No live info found");

@@ -53,7 +53,7 @@ public class DescribeDatasetTypeCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     DatasetTypeId type = cliConfig.getCurrentNamespace().datasetType(
       arguments.get(ArgumentName.DATASET_TYPE.toString()));
-    DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(type.toId());
+    DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(type);
 
     Table table = Table.builder()
       .setHeader("name", "modules")

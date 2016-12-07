@@ -70,7 +70,7 @@ public class CreateStreamCommand extends AbstractAuthCommand {
       }
     }
 
-    streamClient.create(cliConfig.getCurrentNamespace().stream(streamId).toId(), streamProperties);
+    streamClient.create(cliConfig.getCurrentNamespace().stream(streamId), streamProperties);
     output.printf("Successfully created stream with ID '%s'\n", streamId);
   }
 

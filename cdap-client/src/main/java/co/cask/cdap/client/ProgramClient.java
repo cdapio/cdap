@@ -45,7 +45,11 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.FlowletId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ServiceId;
+import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -157,8 +161,23 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with the specified name could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #start(ProgramId, boolean)} instead
    */
+  @Deprecated
   public void start(Id.Program program, boolean debug)
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
+    start(program.toEntityId(), debug);
+  }
+
+  /**
+   * Starts a program using the stored runtime arguments.
+   *
+   * @param program the program to start
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void start(ProgramId program, boolean debug)
     throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     start(program, debug, null);
@@ -171,8 +190,23 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with the specified name could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #start(ProgramId)} instead
    */
+  @Deprecated
   public void start(Id.Program program)
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
+    start(program.toEntityId());
+  }
+
+  /**
+   * Starts a program using the stored runtime arguments.
+   *
+   * @param program the program to start
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void start(ProgramId program)
     throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
     start(program, false, null);
   }
@@ -185,8 +219,24 @@ public class ProgramClient {
    * @return the result of starting each program
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #start(NamespaceId, List)} instead
    */
+  @Deprecated
   public List<BatchProgramResult> start(Id.Namespace namespace, List<BatchProgramStart> programs)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
+    return start(namespace.toEntityId(), programs);
+  }
+
+  /**
+   * Starts a batch of programs in the same call.
+   *
+   * @param namespace the namespace of the programs
+   * @param programs the programs to start, including any runtime arguments to start them with
+   * @return the result of starting each program
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public List<BatchProgramResult> start(NamespaceId namespace, List<BatchProgramStart> programs)
     throws IOException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(namespace, "start");
@@ -225,7 +275,7 @@ public class ProgramClient {
     UnauthorizedException {
     String path = String.format("apps/%s/versions/%s/%s/%s/stop", programId.getApplication(), programId.getVersion(),
                                 programId.getType().getCategoryName(), programId.getProgram());
-    URL url = config.resolveNamespacedURLV3(programId.getNamespaceId().toId(), path);
+    URL url = config.resolveNamespacedURLV3(programId.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -241,8 +291,24 @@ public class ProgramClient {
    * @return the result of stopping each program
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #stop(NamespaceId, List)} instead
    */
+  @Deprecated
   public List<BatchProgramResult> stop(Id.Namespace namespace, List<BatchProgram> programs)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
+    return stop(namespace.toEntityId(), programs);
+  }
+
+  /**
+   * Stops a batch of programs in the same call.
+   *
+   * @param namespace the namespace of the programs
+   * @param programs the programs to stop
+   * @return the result of stopping each program
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public List<BatchProgramResult> stop(NamespaceId namespace, List<BatchProgram> programs)
     throws IOException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(namespace, "stop");
@@ -261,14 +327,25 @@ public class ProgramClient {
    * @throws UnauthenticatedException
    * @throws InterruptedException
    * @throws TimeoutException
+   * @deprecated since 4.0.0. Use {@link #stopAll(NamespaceId)} instead
    */
+  @Deprecated
   public void stopAll(Id.Namespace namespace)
+    throws IOException, UnauthenticatedException, InterruptedException, TimeoutException, UnauthorizedException,
+    ApplicationNotFoundException {
+    stopAll(namespace.toEntityId());
+  }
+
+  /**
+   * Stops all currently running programs.
+   */
+  public void stopAll(NamespaceId namespace)
     throws IOException, UnauthenticatedException, InterruptedException, TimeoutException, UnauthorizedException,
     ApplicationNotFoundException {
 
     List<ApplicationRecord> allApps = applicationClient.list(namespace);
     for (ApplicationRecord applicationRecord : allApps) {
-      ApplicationId appId = new ApplicationId(namespace.getId(), applicationRecord.getName(),
+      ApplicationId appId = new ApplicationId(namespace.getNamespace(), applicationRecord.getName(),
                                               applicationRecord.getAppVersion());
       List<ProgramRecord> programRecords = applicationClient.listPrograms(appId);
       for (ProgramRecord programRecord : programRecords) {
@@ -332,8 +409,22 @@ public class ProgramClient {
    * @param namespace the namespace of the programs
    * @param programs the list of programs to get status for
    * @return the status of each program
+   * @deprecated since 4.0.0. Use {@link #getStatus(NamespaceId, List)} instead
    */
+  @Deprecated
   public List<BatchProgramStatus> getStatus(Id.Namespace namespace, List<BatchProgram> programs)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
+    return getStatus(namespace.toEntityId(), programs);
+  }
+
+  /**
+   * Gets the status of multiple programs.
+   *
+   * @param namespace the namespace of the programs
+   * @param programs the list of programs to get status for
+   * @return the status of each program
+   */
+  public List<BatchProgramStatus> getStatus(NamespaceId namespace, List<BatchProgram> programs)
     throws IOException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(namespace, "status");
@@ -405,17 +496,34 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with the specified name could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #getLiveInfo(ProgramId)} instead
    */
+  @Deprecated
   public DistributedProgramLiveInfo getLiveInfo(Id.Program program)
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
+    return getLiveInfo(program.toEntityId());
+  }
+
+  /**
+   * Gets the live information of a program. In distributed CDAP,
+   * this will contain IDs of the YARN applications that are running the program.
+   *
+   * @param program the program
+   * @return {@link ProgramLiveInfo} of the program
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public DistributedProgramLiveInfo getLiveInfo(ProgramId program)
     throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     String path = String.format("apps/%s/%s/%s/live-info",
-                                program.getApplicationId(), program.getType().getCategoryName(), program.getId());
-    URL url = config.resolveNamespacedURLV3(program.getNamespace(), path);
+                                program.getApplication(), program.getType().getCategoryName(), program.getProgram());
+    URL url = config.resolveNamespacedURLV3(program.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(program.toEntityId());
+      throw new ProgramNotFoundException(program);
     }
 
     return ObjectResponse.fromJsonBody(response, DistributedProgramLiveInfo.class).getResponseObject();
@@ -429,19 +537,35 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application, flow, or flowlet could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #getFlowletInstances(FlowletId)} instead
    */
+  @Deprecated
   public int getFlowletInstances(Id.Flow.Flowlet flowlet)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
+    return getFlowletInstances(flowlet.toEntityId());
+  }
 
-    URL url = config.resolveNamespacedURLV3(flowlet.getNamespace(),
+  /**
+   * Gets the number of instances that a flowlet is currently running on.
+   *
+   * @param flowlet the flowlet
+   * @return number of instances that the flowlet is currently running on
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application, flow, or flowlet could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public int getFlowletInstances(FlowletId flowlet)
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(flowlet.getParent().getNamespaceId(),
                                             String.format("apps/%s/flows/%s/flowlets/%s/instances",
-                                                          flowlet.getFlow().getApplicationId(),
-                                                          flowlet.getFlow().getId(),
-                                                          flowlet.getId()));
+                                                          flowlet.getApplication(),
+                                                          flowlet.getFlow(),
+                                                          flowlet.getFlowlet()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(flowlet.toEntityId());
+      throw new NotFoundException(flowlet);
     }
 
     return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
@@ -455,20 +579,36 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application, flow, or flowlet could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #setFlowletInstances(FlowletId, int)} instead
    */
+  @Deprecated
   public void setFlowletInstances(Id.Flow.Flowlet flowlet, int instances)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
+    setFlowletInstances(flowlet.toEntityId(), instances);
+  }
 
-    URL url = config.resolveNamespacedURLV3(flowlet.getNamespace(),
+  /**
+   * Sets the number of instances that a flowlet will run on.
+   *
+   * @param flowlet the flowlet
+   * @param instances number of instances for the flowlet to run on
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application, flow, or flowlet could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void setFlowletInstances(FlowletId flowlet, int instances)
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(flowlet.getParent().getNamespaceId(),
                                             String.format("apps/%s/flows/%s/flowlets/%s/instances",
-                                                          flowlet.getFlow().getApplicationId(),
-                                                          flowlet.getFlow().getId(),
-                                                          flowlet.getId()));
+                                                          flowlet.getApplication(),
+                                                          flowlet.getFlow(),
+                                                          flowlet.getFlowlet()));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(flowlet.toEntityId());
+      throw new NotFoundException(flowlet);
     }
   }
 
@@ -480,16 +620,32 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or worker could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #getWorkerInstances(ProgramId)} instead
    */
+  @Deprecated
   public int getWorkerInstances(Id.Worker worker) throws IOException, NotFoundException,
     UnauthenticatedException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(worker.getNamespace(),
+    return getWorkerInstances(worker.toEntityId());
+  }
+
+  /**
+   * Gets the number of instances that a worker is currently running on.
+   *
+   * @param worker the worker
+   * @return number of instances that the worker is currently running on
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or worker could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public int getWorkerInstances(ProgramId worker) throws IOException, NotFoundException,
+    UnauthenticatedException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(worker.getNamespaceId(),
                                             String.format("apps/%s/workers/%s/instances",
-                                                          worker.getApplicationId(), worker.getId()));
+                                                          worker.getApplication(), worker.getProgram()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(worker.toEntityId());
+      throw new NotFoundException(worker);
     }
     return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
   }
@@ -501,18 +657,33 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or worker could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #setWorkerInstances(ProgramId, int)} instead
    */
+  @Deprecated
   public void setWorkerInstances(Id.Worker worker, int instances) throws IOException, NotFoundException,
     UnauthenticatedException, UnauthorizedException {
+    setWorkerInstances(worker.toEntityId(), instances);
+  }
 
-    URL url = config.resolveNamespacedURLV3(worker.getNamespace(),
+  /**
+   * Sets the number of instances that a worker will run on.
+   *
+   * @param instances number of instances for the worker to run on
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or worker could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void setWorkerInstances(ProgramId worker, int instances) throws IOException, NotFoundException,
+    UnauthenticatedException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(worker.getNamespaceId(),
                                             String.format("apps/%s/workers/%s/instances",
-                                                          worker.getApplicationId(), worker.getId()));
+                                                          worker.getApplication(), worker.getProgram()));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(worker.toEntityId());
+      throw new NotFoundException(worker);
     }
   }
 
@@ -524,17 +695,33 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or service could not found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #getServiceInstances(ServiceId)} instead
    */
+  @Deprecated
   public int getServiceInstances(Id.Service service)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(service.getNamespace(),
+    return getServiceInstances(service.toEntityId());
+  }
+
+  /**
+   * Gets the number of instances of a service.
+   *
+   * @param service the service
+   * @return number of instances of the service handler
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or service could not found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public int getServiceInstances(ServiceId service)
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(service.getNamespaceId(),
                                             String.format("apps/%s/services/%s/instances",
-                                                          service.getApplicationId(),
-                                                          service.getId()));
+                                                          service.getApplication(),
+                                                          service.getProgram()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(service.toEntityId());
+      throw new NotFoundException(service);
     }
     return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
   }
@@ -547,18 +734,34 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or service could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #setServiceInstances(ServiceId, int)} instead
    */
+  @Deprecated
   public void setServiceInstances(Id.Service service, int instances)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
+    setServiceInstances(service.toEntityId(), instances);
+  }
 
-    URL url = config.resolveNamespacedURLV3(service.getNamespace(),
+  /**
+   * Sets the number of instances of a service.
+   *
+   * @param service the service
+   * @param instances number of instances for the service
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or service could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void setServiceInstances(ServiceId service, int instances)
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(service.getNamespaceId(),
                                             String.format("apps/%s/services/%s/instances",
-                                                          service.getApplicationId(),
-                                                          service.getId()));
+                                                          service.getApplication(),
+                                                          service.getProgram()));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(service.toEntityId());
+      throw new NotFoundException(service);
     }
   }
 
@@ -571,16 +774,34 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application, workflow, or runid could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #getWorkflowCurrent(WorkflowId, String)} instead
    */
+  @Deprecated
   public List<WorkflowActionNode> getWorkflowCurrent(Id.Application appId, String workflowId, String runId)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
-    String path = String.format("/apps/%s/workflows/%s/runs/%s/current", appId.getId(), workflowId, runId);
-    URL url = config.resolveNamespacedURLV3(appId.getNamespace(), path);
+    return getWorkflowCurrent(appId.toEntityId().workflow(workflowId), runId);
+  }
+
+  /**
+   * Get the current run information for the Workflow based on the runid
+   *
+   * @param workflowId ID of the workflow
+   * @param runId ID of the run for which the details are to be returned
+   * @return list of {@link WorkflowActionNode} currently running for the given runid
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application, workflow, or runid could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public List<WorkflowActionNode> getWorkflowCurrent(WorkflowId workflowId, String runId)
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
+    String path = String.format("/apps/%s/workflows/%s/runs/%s/current",
+                                workflowId.getApplication(), workflowId.getProgram(), runId);
+    URL url = config.resolveNamespacedURLV3(workflowId.getNamespaceId(), path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(appId.toEntityId().workflow(workflowId).run(runId));
+      throw new NotFoundException(workflowId.run(runId));
     }
 
     ObjectResponse<List<WorkflowActionNode>> objectResponse = ObjectResponse.fromJsonBody(
@@ -598,8 +819,26 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #getProgramRuns(ProgramId, String, long, long, int)} instead
    */
+  @Deprecated
   public List<RunRecord> getProgramRuns(Id.Program program, String state,
+                                        long startTime, long endTime, int limit)
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
+    return getProgramRuns(program.toEntityId(), state, startTime, endTime, limit);
+  }
+
+  /**
+   * Gets the run records of a program.
+   *
+   * @param program the program
+   * @param state - filter by status of the program
+   * @return the run records of the program
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or program could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public List<RunRecord> getProgramRuns(ProgramId program, String state,
                                         long startTime, long endTime, int limit)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 
@@ -610,15 +849,15 @@ public class ProgramClient {
                                        Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
 
     String path = String.format("apps/%s/%s/%s/runs?%s",
-                                program.getApplicationId(),
+                                program.getApplication(),
                                 program.getType().getCategoryName(),
-                                program.getId(), queryParams);
-    URL url = config.resolveNamespacedURLV3(program.getNamespace(), path);
+                                program.getProgram(), queryParams);
+    URL url = config.resolveNamespacedURLV3(program.getNamespaceId(), path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(program.toEntityId());
+      throw new NotFoundException(program);
     }
 
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() { }).getResponseObject();
@@ -632,12 +871,45 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #getAllProgramRuns(ProgramId, long, long, int)} instead
    */
+  @Deprecated
   public List<RunRecord> getAllProgramRuns(Id.Program program, long startTime, long endTime, int limit)
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
+    return getAllProgramRuns(program.toEntityId(), startTime, endTime, limit);
+  }
+
+  /**
+   * Gets the run records of a program.
+   *
+   * @param program ID of the program
+   * @return the run records of the program
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or program could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public List<RunRecord> getAllProgramRuns(ProgramId program, long startTime, long endTime, int limit)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
     return getProgramRuns(program, ProgramRunStatus.ALL.name(), startTime, endTime, limit);
   }
 
+  /**
+   * Gets the logs of a program.
+   *
+   * @param program the program
+   * @param start start time of the time range of desired logs
+   * @param stop end time of the time range of desired logs
+   * @return the logs of the program
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or program could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #getProgramLogs(ProgramId, long, long)} instead
+   */
+  @Deprecated
+  public String getProgramLogs(Id.Program program, long start, long stop)
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
+    return getProgramLogs(program.toEntityId(), start, stop);
+  }
 
   /**
    * Gets the logs of a program.
@@ -650,16 +922,16 @@ public class ProgramClient {
    * @throws NotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public String getProgramLogs(Id.Program program, long start, long stop)
+  public String getProgramLogs(ProgramId program, long start, long stop)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 
     String path = String.format("apps/%s/%s/%s/logs?start=%d&stop=%d&escape=false",
-                                program.getApplicationId(), program.getType().getCategoryName(),
-                                program.getId(), start, stop);
-    URL url = config.resolveNamespacedURLV3(program.getNamespace(), path);
+                                program.getApplication(), program.getType().getCategoryName(),
+                                program.getProgram(), start, stop);
+    URL url = config.resolveNamespacedURLV3(program.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(program.toEntityId());
+      throw new ProgramNotFoundException(program);
     }
 
     return new String(response.getResponseBody(), Charsets.UTF_8);

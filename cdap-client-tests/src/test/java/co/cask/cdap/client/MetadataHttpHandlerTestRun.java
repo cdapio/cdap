@@ -35,7 +35,6 @@ import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.metadata.MetadataHttpHandler;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamProperties;
@@ -105,16 +104,16 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     AppRequest<Config> appRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()));
 
-    appClient.deploy(application.toId(), appRequest);
+    appClient.deploy(application, appRequest);
     FormatSpecification format = new FormatSpecification("csv", null, null);
     ViewSpecification viewSpec = new ViewSpecification(format, null);
-    streamViewClient.createOrUpdate(myview.toId(), viewSpec);
+    streamViewClient.createOrUpdate(myview, viewSpec);
   }
 
   @After
   public void after() throws Exception {
-    appClient.delete(application.toId());
-    artifactClient.delete(artifactId.toId());
+    appClient.delete(application);
+    artifactClient.delete(artifactId);
     namespaceClient.delete(NamespaceId.DEFAULT);
   }
 
@@ -486,7 +485,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   @Test
   public void testDeleteApplication() throws Exception {
     namespaceClient.create(new NamespaceMeta.Builder().setName(TEST_NAMESPACE1.toId()).build());
-    appClient.deploy(TEST_NAMESPACE1.toId(), createAppJarFile(WordCountApp.class));
+    appClient.deploy(TEST_NAMESPACE1, createAppJarFile(WordCountApp.class));
     ProgramId programId = TEST_NAMESPACE1.app("WordCountApp").flow("WordCountFlow");
 
     // Set some properties metadata
@@ -498,11 +497,11 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(2, properties.size());
 
     // Delete the App after stopping the flow
-    appClient.delete(TEST_NAMESPACE1.app(programId.getApplication()).toId());
+    appClient.delete(TEST_NAMESPACE1.app(programId.getApplication()));
 
     // Delete again should throw not found exception
     try {
-      appClient.delete(TEST_NAMESPACE1.app(programId.getApplication()).toId());
+      appClient.delete(TEST_NAMESPACE1.app(programId.getApplication()));
       Assert.fail("Expected NotFoundException");
     } catch (NotFoundException e) {
       // expected
@@ -570,7 +569,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
   @Test
   public void testDeletedProgramHandlerStage() throws Exception {
-    appClient.deploy(TEST_NAMESPACE1.toId(), createAppJarFile(WordCountApp.class));
+    appClient.deploy(TEST_NAMESPACE1, createAppJarFile(WordCountApp.class));
     ProgramId program = TEST_NAMESPACE1.app("WordCountApp").flow("WordCountFlow");
 
     // Set some properties metadata
@@ -582,19 +581,18 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(2, properties.size());
 
     // Deploy WordCount App without Flow program. No need to start/stop the flow.
-    appClient.deploy(TEST_NAMESPACE1.toId(), createAppJarFile(WordCountMinusFlowApp.class));
+    appClient.deploy(TEST_NAMESPACE1, createAppJarFile(WordCountMinusFlowApp.class));
 
     // Get properties from deleted (flow) program - should return 404
     getPropertiesFromInvalidEntity(program);
 
     // Delete the App after stopping the flow
-    final Id.Application wordCountApp = Id.Application.from(TEST_NAMESPACE1.toId(), "WordCountApp");
-    appClient.delete(wordCountApp);
+    appClient.delete(TEST_NAMESPACE1.app("WordCountApp"));
   }
 
   @Test
   public void testSystemMetadataRetrieval() throws Exception {
-    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(AllProgramsApp.class));
+    appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(AllProgramsApp.class));
     // verify stream system metadata
     StreamId streamId = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
     Set<String> streamSystemTags = getTags(streamId, MetadataScope.SYSTEM);
@@ -627,7 +625,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // Update stream properties and verify metadata got updated (except creation time and description)
     long newTtl = 100000L;
-    streamClient.setStreamProperties(streamId.toId(), new StreamProperties(newTtl, null, null));
+    streamClient.setStreamProperties(streamId, new StreamProperties(newTtl, null, null));
     streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
     Assert.assertEquals(
       ImmutableMap.of(schema,
@@ -650,7 +648,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     StreamViewId view = new StreamViewId(streamId.getNamespace(), streamId.getStream(), "view");
     Schema viewSchema = Schema.recordOf("record",
                                         Schema.Field.of("viewBody", Schema.nullableOf(Schema.of(Schema.Type.BYTES))));
-    streamViewClient.createOrUpdate(view.toId(), new ViewSpecification(new FormatSpecification("format", viewSchema)));
+    streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("format", viewSchema)));
     Set<String> viewSystemTags = getTags(view, MetadataScope.SYSTEM);
     Assert.assertEquals(ImmutableSet.of("view", AllProgramsApp.STREAM_NAME), viewSystemTags);
     Map<String, String> viewSystemProperties = getProperties(view, MetadataScope.SYSTEM);
@@ -692,7 +690,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     );
 
     //Update properties, and make sure that system metadata gets updated (except create time)
-    datasetClient.update(datasetInstance.toId(), ImmutableMap.of(Table.PROPERTY_TTL, "100000"));
+    datasetClient.update(datasetInstance, ImmutableMap.of(Table.PROPERTY_TTL, "100000"));
     dsSystemProperties = getProperties(datasetInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(
       ImmutableMap.of(
@@ -747,7 +745,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     assertProgramSystemMetadata(app.workflow(AllProgramsApp.NoOpWorkflow.NAME), "Batch");
 
     // update dataset properties to add the workflow.local.dataset property to it.
-    datasetClient.update(datasetInstance.toId(), ImmutableMap.of(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY,
+    datasetClient.update(datasetInstance, ImmutableMap.of(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY,
                                                           "true"));
 
     dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
@@ -762,7 +760,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
   @Test
   public void testExploreSystemTags() throws Exception {
-    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(AllProgramsApp.class));
+    appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(AllProgramsApp.class));
 
     //verify stream is explorable
     StreamId streamInstance = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
@@ -805,7 +803,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
   @Test
   public void testSearchUsingSystemMetadata() throws Exception {
-    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(AllProgramsApp.class));
+    appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(AllProgramsApp.class));
     ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     ArtifactId artifact = getArtifactId();
     try {
@@ -819,8 +817,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       assertDataEntitySearch();
     } finally {
       // cleanup
-      appClient.delete(app.toId());
-      artifactClient.delete(artifact.toId());
+      appClient.delete(app);
+      artifactClient.delete(artifact);
     }
   }
 
@@ -874,37 +872,37 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       ),
       getMetadata(systemId)
     );
-    artifactClient.delete(systemId.toId());
+    artifactClient.delete(systemId);
   }
 
   @Test
   public void testScopeQueryParam() throws Exception {
-    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(WordCountApp.class));
-    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, WordCountApp.class.getSimpleName());
+    appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(WordCountApp.class));
+    ApplicationId app = NamespaceId.DEFAULT.app(WordCountApp.class.getSimpleName());
     RESTClient restClient = new RESTClient(clientConfig);
-    URL url = clientConfig.resolveNamespacedURLV3(Id.Namespace.DEFAULT, "apps/WordCountApp/metadata?scope=system");
+    URL url = clientConfig.resolveNamespacedURLV3(NamespaceId.DEFAULT, "apps/WordCountApp/metadata?scope=system");
     Assert.assertEquals(
       HttpResponseStatus.OK.getCode(),
       restClient.execute(HttpRequest.get(url).build(), null).getResponseCode()
     );
-    url = clientConfig.resolveNamespacedURLV3(Id.Namespace.DEFAULT,
+    url = clientConfig.resolveNamespacedURLV3(NamespaceId.DEFAULT,
                                               "datasets/mydataset/metadata/properties?scope=SySTeM");
     Assert.assertEquals(
       HttpResponseStatus.OK.getCode(),
       restClient.execute(HttpRequest.get(url).build(), null).getResponseCode()
     );
-    url = clientConfig.resolveNamespacedURLV3(Id.Namespace.DEFAULT,
+    url = clientConfig.resolveNamespacedURLV3(NamespaceId.DEFAULT,
                                               "apps/WordCountApp/flows/WordCountFlow/metadata/tags?scope=USER");
     Assert.assertEquals(
       HttpResponseStatus.OK.getCode(),
       restClient.execute(HttpRequest.get(url).build(), null).getResponseCode()
     );
-    url = clientConfig.resolveNamespacedURLV3(Id.Namespace.DEFAULT, "streams/text/metadata?scope=user");
+    url = clientConfig.resolveNamespacedURLV3(NamespaceId.DEFAULT, "streams/text/metadata?scope=user");
     Assert.assertEquals(
       HttpResponseStatus.OK.getCode(),
       restClient.execute(HttpRequest.get(url).build(), null).getResponseCode()
     );
-    url = clientConfig.resolveNamespacedURLV3(Id.Namespace.DEFAULT, "streams/text/metadata?scope=blah");
+    url = clientConfig.resolveNamespacedURLV3(NamespaceId.DEFAULT, "streams/text/metadata?scope=blah");
     Assert.assertEquals(
       HttpResponseStatus.BAD_REQUEST.getCode(),
       restClient.execute(HttpRequest.get(url).build(), null, HttpResponseStatus.BAD_REQUEST.getCode()).getResponseCode()
@@ -912,16 +910,16 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     appClient.delete(app);
 
     // deleting the app does not delete the dataset and stream, delete them explicitly to clear their system metadata
-    datasetClient.delete(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "mydataset"));
-    streamClient.delete(Id.Stream.from(Id.Namespace.DEFAULT, "text"));
+    datasetClient.delete(NamespaceId.DEFAULT.dataset("mydataset"));
+    streamClient.delete(NamespaceId.DEFAULT.stream("text"));
   }
 
   @Test
   public void testSearchTargetType() throws Exception {
     NamespaceId namespace = Ids.namespace("testSearchTargetType");
-    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace.toId()).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
 
-    appClient.deploy(namespace.toId(), createAppJarFile(AllProgramsApp.class));
+    appClient.deploy(namespace, createAppJarFile(AllProgramsApp.class));
 
     // Add metadata to app
     Set<String> tags = ImmutableSet.of("utag1", "utag2");
@@ -989,7 +987,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
   @Test
   public void testSearchMetadata() throws Exception {
-    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(AllProgramsApp.class));
+    appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(AllProgramsApp.class));
 
     Map<NamespacedEntityId, Metadata> expectedUserMetadata = new HashMap<>();
 
@@ -1028,10 +1026,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   @Test
   public void testSearchMetadataDelete() throws Exception {
     NamespaceId namespace = new NamespaceId("ns1");
-    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace.toId()).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
 
     // Deploy app
-    appClient.deploy(namespace.toId(), createAppJarFile(WordCountApp.class, WordCountApp.class.getSimpleName(), "1.0"));
+    appClient.deploy(namespace, createAppJarFile(WordCountApp.class, WordCountApp.class.getSimpleName(), "1.0"));
 
     Set<String> tags = ImmutableSet.of("tag1", "tag2");
     ArtifactId artifact = namespace.artifact("WordCountApp", "1.0");
@@ -1041,7 +1039,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     StreamId stream = namespace.stream("text");
     DatasetId datasetInstance = namespace.dataset("mydataset");
     StreamViewId view = stream.view("view");
-    streamViewClient.createOrUpdate(view.toId(), new ViewSpecification(new FormatSpecification("csv", null, null)));
+    streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("csv", null, null)));
 
     // Add metadata
     addTags(app, tags);
@@ -1073,11 +1071,11 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                         searchMetadata(namespace, "tag1"));
 
     // Delete entities
-    appClient.delete(app.toId());
-    streamViewClient.delete(view.toId());
-    streamClient.delete(stream.toId());
-    datasetClient.delete(datasetInstance.toId());
-    artifactClient.delete(artifact.toId());
+    appClient.delete(app);
+    streamViewClient.delete(view);
+    streamClient.delete(stream);
+    datasetClient.delete(datasetInstance);
+    artifactClient.delete(artifact);
 
     // Assert no metadata
     Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "text"));
@@ -1089,10 +1087,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   @Test
   public void testSearchMetadataDeleteNamespace() throws Exception {
     NamespaceId namespace = new NamespaceId("ns2");
-    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace.toId()).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
 
     // Deploy app
-    appClient.deploy(namespace.toId(), createAppJarFile(WordCountApp.class, WordCountApp.class.getSimpleName(), "1.0"));
+    appClient.deploy(namespace, createAppJarFile(WordCountApp.class, WordCountApp.class.getSimpleName(), "1.0"));
 
     Set<String> tags = ImmutableSet.of("tag1", "tag2");
     ArtifactId artifact = namespace.artifact("WordCountApp", "1.0");
@@ -1102,7 +1100,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     StreamId stream = namespace.stream("text");
     DatasetId datasetInstance = namespace.dataset("mydataset");
     StreamViewId view = stream.view("view");
-    streamViewClient.createOrUpdate(view.toId(), new ViewSpecification(new FormatSpecification("csv", null, null)));
+    streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("csv", null, null)));
 
 
     // Add metadata
@@ -1399,7 +1397,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // create a view
     Schema viewSchema = Schema.recordOf("record",
                                         Schema.Field.of("viewBody", Schema.nullableOf(Schema.of(Schema.Type.BYTES))));
-    streamViewClient.createOrUpdate(view.toId(), new ViewSpecification(new FormatSpecification("format", viewSchema)));
+    streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("format", viewSchema)));
 
     // search all entities that have a defined schema
     // add a user property with "schema" as key
@@ -1512,7 +1510,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
    */
   private ArtifactId getArtifactId() throws Exception {
     Iterable<ArtifactSummary> filtered =
-      Iterables.filter(artifactClient.list(NamespaceId.DEFAULT.toId()), new Predicate<ArtifactSummary>() {
+      Iterables.filter(artifactClient.list(NamespaceId.DEFAULT), new Predicate<ArtifactSummary>() {
         @Override
         public boolean apply(ArtifactSummary artifactSummary) {
           return AllProgramsApp.class.getSimpleName().equals(artifactSummary.getName());

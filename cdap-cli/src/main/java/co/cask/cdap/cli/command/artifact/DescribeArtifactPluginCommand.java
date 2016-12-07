@@ -60,9 +60,9 @@ public class DescribeArtifactPluginCommand extends AbstractAuthCommand {
     List<PluginInfo> pluginInfos;
     String scopeStr = arguments.getOptional(ArgumentName.SCOPE.toString());
     if (scopeStr == null) {
-      pluginInfos = artifactClient.getPluginInfo(artifactId.toId(), pluginType, pluginName);
+      pluginInfos = artifactClient.getPluginInfo(artifactId, pluginType, pluginName);
     } else {
-      pluginInfos = artifactClient.getPluginInfo(artifactId.toId(), pluginType, pluginName,
+      pluginInfos = artifactClient.getPluginInfo(artifactId, pluginType, pluginName,
         ArtifactScope.valueOf(scopeStr.toUpperCase()));
     }
     Table table = Table.builder()

@@ -55,7 +55,7 @@ public class GetStreamLineageCommand extends AbstractCommand {
     long end = getTimestamp(arguments.getOptional("end", "max"), currentTime);
     Integer levels = arguments.getIntOptional("levels", null);
 
-    LineageRecord lineage = client.getLineage(stream.toId(), start, end, levels);
+    LineageRecord lineage = client.getLineage(stream, start, end, levels);
     Table table = Table.builder()
       .setHeader("start", "end", "relations", "programs", "data")
       .setRows(

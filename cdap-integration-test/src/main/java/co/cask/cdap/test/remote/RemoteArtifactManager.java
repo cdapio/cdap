@@ -38,16 +38,16 @@ public class RemoteArtifactManager implements ArtifactManager {
 
   @Override
   public void writeProperties(Map<String, String> properties) throws Exception {
-    artifactClient.writeProperties(artifactId.toId(), properties);
+    artifactClient.writeProperties(artifactId, properties);
   }
 
   @Override
   public void removeProperties() throws Exception {
-    artifactClient.deleteProperties(artifactId.toId());
+    artifactClient.deleteProperties(artifactId);
   }
 
   @Override
   public void delete() throws Exception {
-    artifactClient.delete(artifactId.toId());
+    artifactClient.delete(artifactId);
   }
 }

@@ -52,7 +52,7 @@ public class DeployAppCommand extends AbstractAuthCommand {
     Preconditions.checkArgument(file.exists(), "File " + file.getAbsolutePath() + " does not exist");
     Preconditions.checkArgument(file.canRead(), "File " + file.getAbsolutePath() + " is not readable");
     String appConfig = arguments.getOptional(ArgumentName.APP_CONFIG.toString(), "");
-    applicationClient.deploy(cliConfig.getCurrentNamespace().toId(), file, appConfig);
+    applicationClient.deploy(cliConfig.getCurrentNamespace(), file, appConfig);
     output.println("Successfully deployed application");
   }
 

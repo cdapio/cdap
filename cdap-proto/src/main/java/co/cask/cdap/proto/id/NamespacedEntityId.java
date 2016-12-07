@@ -36,4 +36,8 @@ public abstract class NamespacedEntityId extends EntityId {
   public String getNamespace() {
     return namespace;
   }
+
+  public NamespaceId getNamespaceId() {
+    return new NamespaceId(getNamespace());
+  }
 }

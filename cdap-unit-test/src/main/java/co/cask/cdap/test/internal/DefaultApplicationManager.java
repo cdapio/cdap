@@ -132,19 +132,6 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
-  public void stopProgram(Id.Program programId) {
-    String programName = programId.getId();
-    try {
-      if (runningProcesses.remove(programId.toEntityId())) {
-        appFabricClient.stopProgram(application.getNamespace(), application.getApplication(),
-                                    programName, programId.getType());
-      }
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
   public void stopProgram(ProgramId programId) {
     String programName = programId.getProgram();
     try {
@@ -153,23 +140,6 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
                                     programName, programId.getType());
       }
     } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
-  public void startProgram(Id.Program programId, Map<String, String> arguments) {
-    // program can stop by itself, so refreshing info about its state
-    if (!isRunning(programId)) {
-      runningProcesses.remove(programId.toEntityId());
-    }
-
-    Preconditions.checkState(runningProcesses.add(programId.toEntityId()), "Program %s is already running", programId);
-    try {
-      appFabricClient.startProgram(application.getNamespace(), application.getApplication(),
-                                   programId.getId(), programId.getType(), arguments);
-    } catch (Exception e) {
-      runningProcesses.remove(programId.toEntityId());
       throw Throwables.propagate(e);
     }
   }
@@ -191,18 +161,6 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
-  public boolean isRunning(Id.Program programId) {
-    try {
-      String status = appFabricClient.getStatus(application.getNamespace(), programId.getApplicationId(),
-                                                programId.getId(), programId.getType());
-      // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
-      return "STARTING".equals(status) || "RUNNING".equals(status);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
   public boolean isRunning(ProgramId programId) {
     try {
       String status = appFabricClient.getStatus(application.getNamespace(), programId.getApplication(),
@@ -214,9 +172,9 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
-  public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
+  public List<RunRecord> getHistory(ProgramId programId, ProgramRunStatus status) {
     try {
-      return appFabricClient.getHistory(programId, status);
+      return appFabricClient.getHistory(programId.toId(), status);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

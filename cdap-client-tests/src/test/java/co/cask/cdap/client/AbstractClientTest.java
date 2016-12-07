@@ -24,10 +24,10 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.cache.CacheBuilder;
@@ -118,7 +118,7 @@ public abstract class AbstractClientTest {
     verifyProgramNames(expected, Lists.newArrayList(Iterables.concat(map.values())));
   }
 
-  protected void assertFlowletInstances(ProgramClient programClient, Id.Flow.Flowlet flowlet, int numInstances)
+  protected void assertFlowletInstances(ProgramClient programClient, FlowletId flowlet, int numInstances)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 
     int actualInstances;
@@ -129,27 +129,6 @@ public abstract class AbstractClientTest {
       numTries++;
     } while (actualInstances != numInstances && numTries <= maxTries);
     Assert.assertEquals(numInstances, actualInstances);
-  }
-
-  protected void assertProgramRunning(ProgramClient programClient, Id.Program program)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException,
-    InterruptedException, UnauthorizedException {
-
-    assertProgramStatus(programClient, program, ProgramStatus.RUNNING);
-  }
-
-  protected void assertProgramStopped(ProgramClient programClient, Id.Program program)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException,
-    InterruptedException, UnauthorizedException {
-
-    assertProgramStatus(programClient, program, ProgramStatus.STOPPED);
-  }
-  
-  protected void assertProgramStatus(ProgramClient programClient, Id.Program program, ProgramStatus programStatus)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException,
-    InterruptedException, UnauthorizedException {
-
-    assertProgramStatus(programClient, program.toEntityId(), programStatus);
   }
 
   protected void assertProgramRunning(ProgramClient programClient, ProgramId program)

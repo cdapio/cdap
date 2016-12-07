@@ -50,7 +50,7 @@ public class GetDatasetInstancePropertiesCommand extends AbstractCommand {
     DatasetId instance = cliConfig.getCurrentNamespace().dataset(
       arguments.get(ArgumentName.DATASET.toString()));
 
-    Map<String, String> properties = datasetClient.getProperties(instance.toId());
+    Map<String, String> properties = datasetClient.getProperties(instance);
     output.printf(GSON.toJson(properties));
   }
 

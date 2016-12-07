@@ -19,7 +19,7 @@ package co.cask.cdap.test.remote;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.WorkerManager;
 import com.google.common.base.Preconditions;
@@ -31,9 +31,9 @@ import com.google.common.base.Throwables;
 public class RemoteWorkerManager extends AbstractProgramManager<WorkerManager> implements WorkerManager {
 
   private final ProgramClient programClient;
-  private final Id.Worker workerId;
+  private final ProgramId workerId;
 
-  public RemoteWorkerManager(Id.Worker programId, ClientConfig clientConfig, RESTClient restClient,
+  public RemoteWorkerManager(ProgramId programId, ClientConfig clientConfig, RESTClient restClient,
                              RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
     this.workerId = programId;

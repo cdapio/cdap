@@ -94,15 +94,15 @@ public class QueryClientTest extends AbstractClientTest {
     FlowId flow = app.flow(FakeFlow.NAME);
     DatasetId dataset = namespace.dataset(FakeApp.DS_NAME);
 
-    appClient.deploy(namespace.toId(), createAppJarFile(FakeApp.class));
+    appClient.deploy(namespace, createAppJarFile(FakeApp.class));
 
     try {
-      programClient.start(flow.toId());
+      programClient.start(flow);
       assertProgramRunning(programClient, flow);
 
       StreamId stream = namespace.stream(FakeApp.STREAM_NAME);
-      streamClient.sendEvent(stream.toId(), "bob:123");
-      streamClient.sendEvent(stream.toId(), "joe:321");
+      streamClient.sendEvent(stream, "bob:123");
+      streamClient.sendEvent(stream, "joe:321");
 
       Thread.sleep(3000);
 

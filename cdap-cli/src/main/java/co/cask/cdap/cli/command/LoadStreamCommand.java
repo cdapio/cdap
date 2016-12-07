@@ -82,7 +82,7 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
       throw new IllegalArgumentException("Unsupported file format.");
     }
 
-    streamClient.sendFile(streamId.toId(), contentType, file);
+    streamClient.sendFile(streamId, contentType, file);
     output.printf("Successfully loaded file to stream '%s'\n", streamId.getEntityName());
   }
 

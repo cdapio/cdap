@@ -56,7 +56,7 @@ public class DescribeStreamViewCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
-    ViewDetail detail = client.get(streamId.view(arguments.get(ArgumentName.VIEW.toString())).toId());
+    ViewDetail detail = client.get(streamId.view(arguments.get(ArgumentName.VIEW.toString())));
 
     Table table = Table.builder()
       .setHeader("id", "format", "table", "schema", "settings")

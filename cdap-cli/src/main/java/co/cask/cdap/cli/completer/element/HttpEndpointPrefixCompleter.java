@@ -72,7 +72,7 @@ public class HttpEndpointPrefixCompleter extends PrefixCompleter {
   public Collection<String> getEndpoints(ServiceId serviceId, String method) {
     Collection<String> httpEndpoints = new ArrayList<>();
     try {
-      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId.toId())) {
+      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId)) {
         if (endpoint.getMethod().equals(method)) {
           httpEndpoints.add(endpoint.getPath());
         }

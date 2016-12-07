@@ -53,7 +53,7 @@ public class DescribeDatasetInstanceCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     DatasetId instance = cliConfig.getCurrentNamespace().dataset(arguments.get(ArgumentName.DATASET.toString()));
-    DatasetMeta meta = datasetClient.get(instance.toId());
+    DatasetMeta meta = datasetClient.get(instance);
 
     Table table = Table.builder()
       .setHeader("hive table", "spec", "type")

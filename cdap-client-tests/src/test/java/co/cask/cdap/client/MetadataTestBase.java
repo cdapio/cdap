@@ -76,12 +76,12 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected void addAppArtifact(ArtifactId artifactId, Class<?> cls) throws Exception {
-    artifactClient.add(artifactId.toId(), null, Files.newInputStreamSupplier(createAppJarFile(cls)));
+    artifactClient.add(artifactId, null, Files.newInputStreamSupplier(createAppJarFile(cls)));
   }
 
   protected void addPluginArtifact(ArtifactId artifactId, Class<?> cls, Manifest manifest,
                                    @Nullable Set<ArtifactRange> parents) throws Exception {
-    artifactClient.add(artifactId.toId(), parents, Files.newInputStreamSupplier(createArtifactJarFile(cls, manifest)));
+    artifactClient.add(artifactId, parents, Files.newInputStreamSupplier(createArtifactJarFile(cls, manifest)));
   }
 
   protected void addProperties(ApplicationId app, @Nullable Map<String, String> properties) throws Exception {
@@ -553,30 +553,30 @@ public abstract class MetadataTestBase extends ClientTestBase {
 
   protected LineageRecord fetchLineage(DatasetId datasetInstance, long start, long end,
                                        int levels) throws Exception {
-    return lineageClient.getLineage(datasetInstance.toId(), start, end, levels);
+    return lineageClient.getLineage(datasetInstance, start, end, levels);
   }
 
   protected LineageRecord fetchLineage(DatasetId datasetInstance, long start, long end,
                                        Set<CollapseType> collapseTypes, int levels) throws Exception {
-    return lineageClient.getLineage(datasetInstance.toId(), start, end, collapseTypes, levels);
+    return lineageClient.getLineage(datasetInstance, start, end, collapseTypes, levels);
   }
 
   protected LineageRecord fetchLineage(DatasetId datasetInstance, String start, String end,
                                        int levels) throws Exception {
-    return lineageClient.getLineage(datasetInstance.toId(), start, end, levels);
+    return lineageClient.getLineage(datasetInstance, start, end, levels);
   }
 
   protected LineageRecord fetchLineage(StreamId stream, long start, long end, int levels) throws Exception {
-    return lineageClient.getLineage(stream.toId(), start, end, levels);
+    return lineageClient.getLineage(stream, start, end, levels);
   }
 
   protected LineageRecord fetchLineage(StreamId stream, String start, String end, int levels) throws Exception {
-    return lineageClient.getLineage(stream.toId(), start, end, levels);
+    return lineageClient.getLineage(stream, start, end, levels);
   }
 
   protected LineageRecord fetchLineage(StreamId stream, long start, long end, Set<CollapseType> collapseTypes,
                                        int levels) throws Exception {
-    return lineageClient.getLineage(stream.toId(), start, end, collapseTypes, levels);
+    return lineageClient.getLineage(stream, start, end, collapseTypes, levels);
   }
 
   protected Set<MetadataRecord> fetchRunMetadata(ProgramRunId run) throws Exception {

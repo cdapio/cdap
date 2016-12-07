@@ -317,7 +317,7 @@ public class CLIMainTest extends CLITestBase {
     String datasetName = PREFIX + "sdf123lkj";
 
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
-    DatasetTypeMeta datasetType = datasetTypeClient.list(NamespaceId.DEFAULT.toId()).get(0);
+    DatasetTypeMeta datasetType = datasetTypeClient.list(NamespaceId.DEFAULT).get(0);
     testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName + " \"a=1\"",
                               "Successfully created dataset");
     testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
@@ -325,7 +325,7 @@ public class CLIMainTest extends CLITestBase {
 
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     NamespaceId barspace = new NamespaceId("bar");
-    namespaceClient.create(new NamespaceMeta.Builder().setName(barspace.toId()).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(barspace).build());
     cliConfig.setNamespace(barspace);
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
@@ -385,7 +385,7 @@ public class CLIMainTest extends CLITestBase {
         + " POST /echo body \"testBody\"", ":testBody");
     } finally {
       // Stop all running services
-      programClient.stopAll(NamespaceId.DEFAULT.toId());
+      programClient.stopAll(NamespaceId.DEFAULT);
     }
   }
 
@@ -444,7 +444,7 @@ public class CLIMainTest extends CLITestBase {
                                 "bacon:testBody");
     } finally {
       // Stop all running services
-      programClient.stopAll(NamespaceId.DEFAULT.toId());
+      programClient.stopAll(NamespaceId.DEFAULT);
     }
   }
 
@@ -505,7 +505,7 @@ public class CLIMainTest extends CLITestBase {
       testCommandOutputContains(cli, "get route-config for service " + serviceName, GSON.toJson(ImmutableMap.of()));
     } finally {
       // Stop all running services
-      programClient.stopAll(NamespaceId.DEFAULT.toId());
+      programClient.stopAll(NamespaceId.DEFAULT);
     }
   }
 
