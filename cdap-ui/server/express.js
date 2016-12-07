@@ -491,7 +491,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
 
   // any other path, serve index.html
-  app.all(['/cask-hydrator', '/cask-hydrator*'], [
+  app.all(['/hydrator', '/hydrator*'], [
     function (req, res) {
       // BCookie is the browser cookie, that is generated and will live for a year.
       // This cookie is always generated to provide unique id for the browser that
@@ -506,7 +506,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
      res.sendFile(DIST_PATH + '/hydrator.html');
     }
   ]);
-  app.all(['/cask-tracker', '/cask-tracker*'], [
+  app.all(['/tracker', '/tracker*'], [
     function (req, res) {
       // BCookie is the browser cookie, that is generated and will live for a year.
       // This cookie is always generated to provide unique id for the browser that
@@ -527,7 +527,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       res.sendFile(WRANGLER_DIST_PATH + '/wrangler_assets/wrangler.html');
     }
   ]);
-  app.all(['/', '/cask-cdap', '/cask-cdap*'], [
+  app.all(['/', '/cdap', '/cdap*'], [
     function(req, res) {
       res.sendFile(CDAP_DIST_PATH + '/cdap_assets/cdap.html');
     }
