@@ -1873,6 +1873,7 @@
         <package.deb.arch>all</package.deb.arch>
         <package.rpm.arch>all</package.rpm.arch>
         <package.dirs>opt etc</package.dirs>
+        <package.config.dirs>--config-files etc/cdap --config-files etc/logrotate.d --config-files etc/security</package.config.dirs>
       </properties>
       <build>
         <pluginManagement>
