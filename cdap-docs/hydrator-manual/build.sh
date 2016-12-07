@@ -261,6 +261,7 @@ function download_includes() {
   download_md_file core-plugins Twitter-realtimesource.md
   download_md_file core-plugins Validator-transform.md
   download_md_file core-plugins Window-windower.md
+  download_md_file core-plugins WindowsShareCopy-action.md
   download_md_file core-plugins XMLReader-batchsource.md
   download_md_file database-plugins Database-batchsink.md _includes/database-batchsink-append.md.txt
   download_md_file database-plugins Database-batchsource.md _includes/database-batchsource-append.md.txt

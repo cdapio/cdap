@@ -40,7 +40,7 @@ import java.util.Map;
  * @param <K> Type of key
  * @param <V> Type of value
  */
-public class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
+public class MultiInputFormat<K, V> extends InputFormat<K, V> {
 
   @SuppressWarnings("unchecked")
   public List<InputSplit> getSplits(JobContext job) throws IOException, InterruptedException {
@@ -59,14 +59,14 @@ public class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
 
       Class<?> inputFormatClass = confCopy.getClassByNameOrNull(mapperInput.getInputFormatClassName());
       Preconditions.checkNotNull(inputFormatClass, "Class could not be found: ", mapperInput.getInputFormatClassName());
-      InputFormat inputFormat = (InputFormat) ReflectionUtils.newInstance(inputFormatClass, confCopy);
+      InputFormat<K, V> inputFormat = (InputFormat) ReflectionUtils.newInstance(inputFormatClass, confCopy);
 
       // Get splits for each input path and tag with InputFormat
-      // and Mapper types by wrapping in a TaggedInputSplit.
+      // and Mapper types by wrapping in a MultiInputTaggedSplit.
       List<InputSplit> formatSplits = inputFormat.getSplits(jobCopy);
       for (InputSplit split : formatSplits) {
-        splits.add(new TaggedInputSplit(inputName, split, confCopy, mapperInput.getInputFormatConfiguration(),
-                                        inputFormat.getClass(), mapperClassName));
+        splits.add(new MultiInputTaggedSplit(split, confCopy, inputName, mapperInput.getInputFormatConfiguration(),
+                                             inputFormat.getClass(), mapperClassName));
       }
     }
     return splits;
@@ -75,8 +75,14 @@ public class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
   @Override
   public RecordReader<K, V> createRecordReader(InputSplit split,
                                                TaskAttemptContext context) throws IOException, InterruptedException {
-    TaggedInputSplit taggedInputSplit = (TaggedInputSplit) split;
+    MultiInputTaggedSplit taggedInputSplit = (MultiInputTaggedSplit) split;
     ConfigurationUtil.setAll((taggedInputSplit).getInputConfigs(), context.getConfiguration());
-    return new DelegatingRecordReader<>(taggedInputSplit, context);
+    InputFormat<K, V> inputFormat = (InputFormat<K, V>) ReflectionUtils.newInstance(
+      taggedInputSplit.getInputFormatClass(), context.getConfiguration());
+    InputSplit inputSplit = taggedInputSplit.getInputSplit();
+    // we can't simply compute the underlying RecordReader and return it, because we need to override its
+    // initialize method in order to initialize the underlying RecordReader with the underlying InputSplit
+    // Find the InputFormat and then the RecordReader from the MultiInputTaggedSplit.
+    return new DelegatingRecordReader<>(inputFormat.createRecordReader(inputSplit, context));
   }
 }

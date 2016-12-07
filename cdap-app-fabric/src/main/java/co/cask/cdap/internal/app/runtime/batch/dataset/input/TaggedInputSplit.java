@@ -16,8 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset.input;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
@@ -25,7 +23,6 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.SerializationFactory;
 import org.apache.hadoop.io.serializer.Serializer;
-import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringInterner;
@@ -35,66 +32,48 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.Map;
 
 /**
- * An {@link InputSplit} that tags another InputSplit with extra data for use
- * by {@link DelegatingInputFormat}s.
+ * An {@link InputSplit} that tags another InputSplit with extra data.
  */
-public class TaggedInputSplit extends InputSplit implements Configurable, Writable {
-
-  private static final Gson GSON = new Gson();
-  private static final Type STRING_STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-
-  private String name;
-  private Class<? extends InputSplit> inputSplitClass;
+public abstract class TaggedInputSplit extends InputSplit implements Configurable, Writable {
 
   private InputSplit inputSplit;
-
-  @SuppressWarnings("unchecked")
-  private Class<? extends InputFormat<?, ?>> inputFormatClass;
-
-  private String mapperClassName;
-
   private Configuration conf;
-  private Map<String, String> inputConfigs;
 
-  public TaggedInputSplit() {
-  }
+  TaggedInputSplit() { }
 
   /**
    * Creates a new TaggedInputSplit.
    *
-   * @param name name of the InputSplit
    * @param inputSplit The InputSplit to be tagged
    * @param conf The configuration to use
-   * @param inputConfigs configurations to use for the InputFormat
-   * @param inputFormatClass The InputFormat class to use for this job
-   * @param mapperClassName The name of the Mapper class to use for this job
    */
-  @SuppressWarnings("unchecked")
-  public TaggedInputSplit(String name, InputSplit inputSplit, Configuration conf,
-                          Map<String, String> inputConfigs,
-                          Class<? extends InputFormat> inputFormatClass,
-                          String mapperClassName) {
-    this.name = name;
-    this.inputSplitClass = inputSplit.getClass();
+  TaggedInputSplit(InputSplit inputSplit, Configuration conf) {
     this.inputSplit = inputSplit;
     this.conf = conf;
-    this.inputConfigs = inputConfigs;
-    this.inputFormatClass = (Class<? extends InputFormat<?, ?>>) inputFormatClass;
-    this.mapperClassName = mapperClassName;
   }
 
+
   /**
-   * Retrieves the name of this TaggedInputSplit.
+   * Implemented by subclasses to deserialize additional fields from this TaggedInputSplit.
+   * Note that the order of fields read must be the same as they are written
+   * by {@link #writeAdditionalFields(DataOutput)}
    *
-   * @return name of the TaggedInputSplit
+   * @param in the DataInput to read the fields from
+   * @throws IOException
    */
-  public String getName() {
-    return name;
-  }
+  protected abstract void readAdditionalFields(DataInput in) throws IOException;
+
+  /**
+   * Implemented by subclasses to serialize additional fields to this TaggedInputSplit.
+   * Note that the order of fields written must be the same as they are read
+   * by {@link #readAdditionalFields(DataInput)}.
+   *
+   * @param out the DataOutput to write the fields to
+   * @throws IOException
+   */
+  protected abstract void writeAdditionalFields(DataOutput out) throws IOException;
 
   /**
    * Retrieves the original InputSplit.
@@ -103,26 +82,6 @@ public class TaggedInputSplit extends InputSplit implements Configurable, Writab
    */
   public InputSplit getInputSplit() {
     return inputSplit;
-  }
-
-  /**
-   * Retrieves the InputFormat class to use for this split.
-   *
-   * @return The InputFormat class to use
-   */
-  @SuppressWarnings("unchecked")
-  public Class<? extends InputFormat<?, ?>> getInputFormatClass() {
-    return inputFormatClass;
-  }
-
-  /**
-   * Retrieves the name of the Mapper class to use for this split.
-   *
-   * @return The name of the Mapper class to use
-   */
-  @SuppressWarnings("unchecked")
-  public String getMapperClassName() {
-    return mapperClassName;
   }
 
   @Override
@@ -135,18 +94,11 @@ public class TaggedInputSplit extends InputSplit implements Configurable, Writab
     return inputSplit.getLocations();
   }
 
-  Map<String, String> getInputConfigs() {
-    return inputConfigs;
-  }
-
   @SuppressWarnings("unchecked")
   @Override
-  public void readFields(DataInput in) throws IOException {
-    name = Text.readString(in);
-    inputSplitClass = (Class<? extends InputSplit>) readClass(in);
-    inputFormatClass = (Class<? extends InputFormat<?, ?>>) readClass(in);
-    mapperClassName = Text.readString(in);
-    inputConfigs = GSON.fromJson(Text.readString(in), STRING_STRING_MAP_TYPE);
+  public final void readFields(DataInput in) throws IOException {
+    Class<? extends InputSplit> inputSplitClass = (Class<? extends InputSplit>) readClass(in);
+    readAdditionalFields(in);
     inputSplit = ReflectionUtils.newInstance(inputSplitClass, conf);
     SerializationFactory factory = new SerializationFactory(conf);
     Deserializer deserializer = factory.getDeserializer(inputSplitClass);
@@ -154,7 +106,7 @@ public class TaggedInputSplit extends InputSplit implements Configurable, Writab
     inputSplit = (InputSplit) deserializer.deserialize(inputSplit);
   }
 
-  private Class<?> readClass(DataInput in) throws IOException {
+  Class<?> readClass(DataInput in) throws IOException {
     String className = StringInterner.weakIntern(Text.readString(in));
     try {
       return conf.getClassByName(className);
@@ -165,12 +117,10 @@ public class TaggedInputSplit extends InputSplit implements Configurable, Writab
 
   @SuppressWarnings("unchecked")
   @Override
-  public void write(DataOutput out) throws IOException {
-    Text.writeString(out, name);
+  public final void write(DataOutput out) throws IOException {
+    Class<? extends InputSplit> inputSplitClass = inputSplit.getClass();
     Text.writeString(out, inputSplitClass.getName());
-    Text.writeString(out, inputFormatClass.getName());
-    Text.writeString(out, mapperClassName);
-    Text.writeString(out, GSON.toJson(inputConfigs));
+    writeAdditionalFields(out);
     SerializationFactory factory = new SerializationFactory(conf);
     Serializer serializer = factory.getSerializer(inputSplitClass);
     serializer.open((DataOutputStream) out);

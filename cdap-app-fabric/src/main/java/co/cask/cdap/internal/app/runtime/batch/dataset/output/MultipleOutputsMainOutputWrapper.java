@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
-import co.cask.cdap.common.lang.InstantiatorFactory;
-import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -26,6 +24,7 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -41,7 +40,7 @@ import java.util.Map;
 public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
 
   private static final String ROOT_OUTPUT_FORMAT =
-    "co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputsMainOutputWrapper.rootOutputFormat";
+    MultipleOutputsMainOutputWrapper.class.getCanonicalName() + ".rootOutputFormat";
   private OutputFormat<K, V> innerFormat;
   private OutputCommitter committer;
 
@@ -56,10 +55,11 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
     for (String name : MultipleOutputs.getNamedOutputsList(context)) {
       Class<? extends OutputFormat> namedOutputFormatClass =
         MultipleOutputs.getNamedOutputFormatClass(context, name);
-
-      OutputFormat outputFormat = new InstantiatorFactory(false).get(TypeToken.of(namedOutputFormatClass)).create();
-
       JobContext namedContext = MultipleOutputs.getNamedJobContext(context, name);
+
+      OutputFormat<K, V> outputFormat =
+        ReflectionUtils.newInstance(namedOutputFormatClass, namedContext.getConfiguration());
+
       outputFormat.checkOutputSpecs(namedContext);
     }
   }
@@ -87,11 +87,7 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
       @SuppressWarnings("unchecked")
       Class<OutputFormat<K, V>> c = (Class<OutputFormat<K, V>>) conf.getClass(ROOT_OUTPUT_FORMAT,
                                                                               FileOutputFormat.class);
-      try {
-        innerFormat = c.newInstance();
-      } catch (InstantiationException | IllegalAccessException e) {
-        throw new RuntimeException(e);
-      }
+      innerFormat = ReflectionUtils.newInstance(c, conf);
     }
     return innerFormat;
   }
@@ -108,7 +104,8 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
 
         TaskAttemptContext namedContext = MultipleOutputs.getNamedTaskContext(context, name);
 
-        OutputFormat outputFormat = new InstantiatorFactory(false).get(TypeToken.of(namedOutputFormatClass)).create();
+        OutputFormat<K, V> outputFormat =
+          ReflectionUtils.newInstance(namedOutputFormatClass, namedContext.getConfiguration());
         committers.put(name, outputFormat.getOutputCommitter(namedContext));
       }
       committer = new MultipleOutputsCommitter(committers);

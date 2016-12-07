@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch.mapreduce;
 
+import co.cask.cdap.api.data.batch.InputContext;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
@@ -90,9 +91,9 @@ public class TransformRunner<KEY, VALUE> {
     // input alias name -> stage name mapping
     Map<String, String> inputAliasToStage = GSON.fromJson(hConf.get(ETLMapReduce.INPUT_ALIAS_KEY),
                                                           ETLMapReduce.INPUT_ALIAS_TYPE);
-    String inputAliasName = context.getInputName();
-    // inputAliasName can be null (in case of reducers)
-    String sourceStage = (inputAliasName != null) ? inputAliasToStage.get(inputAliasName) : null;
+    InputContext inputContext = context.getInputContext();
+    // inputContext can be null (in case of reducers)
+    String sourceStage = (inputContext != null) ? inputAliasToStage.get(inputContext.getInputName()) : null;
 
     PipelinePhase phase = phaseSpec.getPhase();
     Set<StageInfo> reducers = phase.getStagesOfType(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE);

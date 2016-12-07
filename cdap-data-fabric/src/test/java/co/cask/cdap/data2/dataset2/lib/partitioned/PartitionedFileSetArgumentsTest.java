@@ -17,22 +17,23 @@
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * Tests for {@link PartitionedFileSetArguments}.
@@ -110,23 +111,42 @@ public class PartitionedFileSetArgumentsTest {
 
 
   @Test
-  public void testGetPartitionPaths() throws Exception {
+  public void testGetInputPartitionKeys() throws Exception {
     Map<String, String> arguments = new HashMap<>();
+    Assert.assertEquals(0, PartitionedFileSetArguments.getInputPartitionKeys(arguments).size());
 
-    Collection<String> relativePaths = Lists.newArrayList("path1", "relative/path.part100", "some\\ other*path");
-    List<Partition> partitions = Lists.newArrayList();
-    for (String relativePath : relativePaths) {
-      BasicPartition basicPartition = new BasicPartition(null, relativePath, null);
-      PartitionedFileSetArguments.addInputPartition(arguments, basicPartition);
-      // add the partitions to a list to also test the addInputPartitions(Map, Iterator) method below
-      partitions.add(basicPartition);
+    List<? extends Partition> partitions =
+      Lists.newArrayList(new BasicPartition(null, "path/doesn't/matter/1", generateUniqueKey()),
+                         new BasicPartition(null, "path/doesn't/matter/2", generateUniqueKey()),
+                         new BasicPartition(null, "path/doesn't/matter/3", generateUniqueKey()));
+
+    for (Partition partition : partitions) {
+      PartitionedFileSetArguments.addInputPartition(arguments, partition);
     }
-    Assert.assertEquals(relativePaths, FileSetArguments.getInputPaths(arguments));
+
+    List<PartitionKey> inputPartitionKeys = Lists.transform(partitions, new Function<Partition, PartitionKey>() {
+      @Nullable
+      @Override
+      public PartitionKey apply(Partition input) {
+        return input.getPartitionKey();
+      }
+    });
+
+    Assert.assertEquals(inputPartitionKeys, PartitionedFileSetArguments.getInputPartitionKeys(arguments));
 
     arguments.clear();
     PartitionedFileSetArguments.addInputPartitions(arguments, partitions.iterator());
-    Assert.assertEquals(relativePaths, FileSetArguments.getInputPaths(arguments));
+    Assert.assertEquals(inputPartitionKeys, PartitionedFileSetArguments.getInputPartitionKeys(arguments));
+  }
 
+  private int counter;
+  // generates unique partition keys, where the 'i' field is incrementing from 0 upwards on each returned key
+  private PartitionKey generateUniqueKey() {
+    return PartitionKey.builder()
+      .addIntField("i", counter++)
+      .addLongField("l", 17L)
+      .addStringField("s", UUID.randomUUID().toString())
+      .build();
   }
 
   @Test

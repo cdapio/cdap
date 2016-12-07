@@ -16,16 +16,20 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset.input;
 
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
-
-import java.util.Map;
+import co.cask.cdap.api.data.batch.InputContext;
 
 /**
- * A placeholder class that will be set on the {@link Job} when multiple mappers are to be used.
- *
- * @see MultipleInputs#addInput(Job, String, String, Map, Class)
+ * A basic implementation of {@link InputContext}.
  */
-public class DelegatingMapper extends Mapper {
+class BasicInputContext implements InputContext {
+  private final String inputName;
 
+  BasicInputContext(String inputName) {
+    this.inputName = inputName;
+  }
+
+  @Override
+  public String getInputName() {
+    return inputName;
+  }
 }
