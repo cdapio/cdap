@@ -8107,7 +8107,7 @@ var TYPES = {
 };
 
 // Addition by Ajai
-/ Allow hyphens to be part of field name (including enums)
+// Allow hyphens to be part of field name (including enums)
 // Valid (field, type, and symbol) name regex.
 var NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_-]*$/;
 
