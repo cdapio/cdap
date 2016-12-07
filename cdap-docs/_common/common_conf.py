@@ -335,6 +335,11 @@ if version_tuple:
 """ % version_tuple
 
 if release:
+    # Create release range, such as [4.0.0-SNAPSHOT,4.1.0):
+    version_list = version.split('.')
+    version_list[1] = str(int(version_list[1])+1)
+    release_range = "[%s,%s)" % (release, '.'.join(version_list))
+    
     rst_epilog += """
 .. |literal-release| replace:: ``%(release)s``
 """ % {'release': release}
@@ -347,7 +352,8 @@ if release:
 .. |git-clone-command| replace:: ``$ git clone -b %(source_link)s https://github.com/caskdata/cdap.git``
 .. |source-link| replace:: `GitHub <https://github.com/caskdata/cdap/archive/%(source_link)s.zip>`__
 .. |ui-read-me| replace:: `CDAP UI README <https://github.com/caskdata/cdap/blob/%(source_link)s/cdap-ui/README.rst>`__
-""" % {'source_link': source_link}
+.. |release-range| replace:: %(release_range)s
+""" % {'source_link': source_link, 'release_range': release_range}
 
 if current_year:
     rst_epilog += """
