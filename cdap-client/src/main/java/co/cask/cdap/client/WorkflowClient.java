@@ -181,7 +181,7 @@ public class WorkflowClient {
     String path = String.format("apps/%s/workflows/%s/runs/%s/token",
                                 workflowRunId.getApplication(), workflowRunId.getProgram(),
                                 workflowRunId.getRun());
-    URL url = config.resolveNamespacedURLV3(workflowRunId.getParent().getNamespaceId(),
+    URL url = config.resolveNamespacedURLV3(workflowRunId.getNamespaceId(),
                                             appendScopeAndKeyToUrl(path, scope, key));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -322,7 +322,7 @@ public class WorkflowClient {
     String path = String.format("apps/%s/workflows/%s/runs/%s/nodes/%s/token",
                                 workflowRunId.getApplication(), workflowRunId.getProgram(),
                                 workflowRunId.getRun(), nodeName);
-    URL url = config.resolveNamespacedURLV3(workflowRunId.getParent().getNamespaceId(),
+    URL url = config.resolveNamespacedURLV3(workflowRunId.getNamespaceId(),
                                             appendScopeAndKeyToUrl(path, scope, key));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -335,7 +335,6 @@ public class WorkflowClient {
     }
     return ObjectResponse.fromJsonBody(response, WorkflowTokenNodeDetail.class, GSON).getResponseObject();
   }
-
 
   private String appendScopeAndKeyToUrl(String workflowTokenUrl, @Nullable WorkflowToken.Scope scope, String key) {
     StringBuilder output = new StringBuilder(workflowTokenUrl);
@@ -385,7 +384,7 @@ public class WorkflowClient {
     String path = String.format("apps/%s/workflows/%s/runs/%s/localdatasets", workflowRunId.getApplication(),
                                 workflowRunId.getProgram(), workflowRunId.getRun());
 
-    NamespaceId namespaceId = workflowRunId.getParent().getNamespaceId();
+    NamespaceId namespaceId = workflowRunId.getNamespaceId();
     return config.resolveNamespacedURLV3(namespaceId, path);
   }
 
@@ -401,7 +400,7 @@ public class WorkflowClient {
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
     String path = String.format("apps/%s/workflows/%s/runs/%s/nodes/state", workflowRunId.getApplication(),
                                 workflowRunId.getProgram(), workflowRunId.getRun());
-    NamespaceId namespaceId = workflowRunId.getParent().getNamespaceId();
+    NamespaceId namespaceId = workflowRunId.getNamespaceId();
     URL urlPath = config.resolveNamespacedURLV3(namespaceId, path);
     HttpResponse response = restClient.execute(HttpMethod.GET, urlPath, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);

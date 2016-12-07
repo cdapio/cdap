@@ -46,7 +46,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -103,7 +102,6 @@ public class DatasetClientTestRun extends ClientTestBase {
     File moduleJarFile = createAppJarFile(StandaloneDatasetModule.class);
     moduleClient.add(TEST_NAMESPACE.datasetModule(StandaloneDatasetModule.NAME),
                      StandaloneDatasetModule.class.getName(), moduleJarFile);
-    moduleClient.waitForExists(module, 30, TimeUnit.SECONDS);
     Assert.assertEquals(numBaseModules + 1, moduleClient.list(TEST_NAMESPACE).size());
     Assert.assertEquals(numBaseTypes + 2, typeClient.list(TEST_NAMESPACE).size());
 
@@ -121,7 +119,6 @@ public class DatasetClientTestRun extends ClientTestBase {
     }
 
     LOG.info("Checking that the new Dataset type exists");
-    typeClient.waitForExists(type, 5, TimeUnit.SECONDS);
     DatasetTypeMeta datasetTypeMeta = typeClient.get(type);
     Assert.assertNotNull(datasetTypeMeta);
     Assert.assertEquals(type.getType(), datasetTypeMeta.getName());
@@ -177,7 +174,6 @@ public class DatasetClientTestRun extends ClientTestBase {
     Assert.assertEquals("123", metaAfter.getSpec().getProperties().get("abc"));
 
     datasetClient.delete(instance);
-    datasetClient.waitForDeleted(instance, 10, TimeUnit.SECONDS);
     Assert.assertEquals(numBaseDataset, datasetClient.list(TEST_NAMESPACE).size());
 
     LOG.info("Creating and deleting multiple Datasets");

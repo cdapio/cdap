@@ -49,6 +49,7 @@ import javax.inject.Inject;
 @Beta
 public class StreamViewClient {
 
+  private static final TypeToken<List<String>> LIST_TYPE = new TypeToken<List<String>>() { };
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
@@ -145,7 +146,7 @@ public class StreamViewClient {
   public List<String> list(StreamId stream) throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(stream.getParent(), String.format("streams/%s/views", stream.getStream()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<String>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, LIST_TYPE).getResponseObject();
   }
 
   /**

@@ -130,26 +130,12 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
-  public void stopProgram(Id.Program programId) {
-    try {
-      programClient.stop(programId.toEntityId());
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
   public void stopProgram(ProgramId programId) {
     try {
       programClient.stop(programId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  @Override
-  public void startProgram(Id.Program programId, Map<String, String> arguments) {
-    startProgram(programId.toEntityId(), arguments);
   }
 
   @Override
@@ -164,11 +150,6 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
-  public boolean isRunning(Id.Program programId) {
-    return isRunning(programId.toEntityId());
-  }
-
-  @Override
   public boolean isRunning(ProgramId programId) {
     try {
       String status = programClient.getStatus(programId);
@@ -179,9 +160,9 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
-  public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
+  public List<RunRecord> getHistory(ProgramId programId, ProgramRunStatus status) {
     try {
-      return programClient.getProgramRuns(programId.toEntityId(), status.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE);
+      return programClient.getProgramRuns(programId, status.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

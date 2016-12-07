@@ -168,33 +168,16 @@ public class DatasetTypeClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws TimeoutException if the dataset type was not yet existent before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
-   * @deprecated since 4.0.0. Use {@link #waitForExists(DatasetTypeId, long, TimeUnit)} instead.
+   * @deprecated since 4.0.0.
    */
   @Deprecated
   public void waitForExists(final Id.DatasetType type, long timeout, TimeUnit timeoutUnit)
     throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
-    waitForExists(type.toEntityId(), timeout, timeoutUnit);
-  }
-
-  /**
-   * Waits for a dataset type to exist.
-   *
-   * @param type the dataset type to check
-   * @param timeout time to wait before timing out
-   * @param timeoutUnit time unit of timeout
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @throws TimeoutException if the dataset type was not yet existent before {@code timeout} milliseconds
-   * @throws InterruptedException if interrupted while waiting
-   */
-  public void waitForExists(final DatasetTypeId type, long timeout, TimeUnit timeoutUnit)
-    throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
-
     try {
       Tasks.waitFor(true, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
-          return exists(type);
+          return exists(type.toEntityId());
         }
       }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
@@ -212,33 +195,16 @@ public class DatasetTypeClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws TimeoutException if the dataset type was not yet deleted before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
-   * @deprecated since 4.0.0. Use {@link #waitForDeleted(DatasetTypeId, long, TimeUnit)} instead.
+   * @deprecated since 4.0.0.
    */
   @Deprecated
   public void waitForDeleted(final Id.DatasetType type, long timeout, TimeUnit timeoutUnit)
     throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
-    waitForDeleted(type.toEntityId(), timeout, timeoutUnit);
-  }
-
-  /**
-   * Waits for a dataset type to be deleted.
-   *
-   * @param type the dataset type to check
-   * @param timeout time to wait before timing out
-   * @param timeoutUnit time unit of timeout
-   * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @throws TimeoutException if the dataset type was not yet deleted before {@code timeout} milliseconds
-   * @throws InterruptedException if interrupted while waiting
-   */
-  public void waitForDeleted(final DatasetTypeId type, long timeout, TimeUnit timeoutUnit)
-    throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
-
     try {
       Tasks.waitFor(false, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
-          return exists(type);
+          return exists(type.toEntityId());
         }
       }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {

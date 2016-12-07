@@ -103,6 +103,6 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
 
   @Override
   public RuntimeMetrics getMetrics() {
-    return metricsClient.getServiceMetrics(programId);
+    return metricsClient.getServiceMetrics(serviceId);
   }
 }

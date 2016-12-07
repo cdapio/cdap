@@ -19,7 +19,7 @@ package co.cask.cdap.common.metrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.FlowletId;
-import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ServiceId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
@@ -59,10 +59,10 @@ public final class MetricsTags {
 
   @Deprecated
   public static Map<String, String> service(Id.Program id) {
-    return service(id.toEntityId());
+    return service(id.getApplication().toEntityId().service(id.getId()));
   }
 
-  public static Map<String, String> service(ProgramId serviceId) {
+  public static Map<String, String> service(ServiceId serviceId) {
     return ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, serviceId.getNamespace(),
       Constants.Metrics.Tag.APP, serviceId.getApplication(),
@@ -71,10 +71,10 @@ public final class MetricsTags {
 
   @Deprecated
   public static Map<String, String> serviceHandler(Id.Program id, String handlerId) {
-    return serviceHandler(id.toEntityId(), handlerId);
+    return serviceHandler(id.getApplication().toEntityId().service(id.getId()), handlerId);
   }
 
-  public static Map<String, String> serviceHandler(ProgramId id, String handlerId) {
+  public static Map<String, String> serviceHandler(ServiceId id, String handlerId) {
     return ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, id.getNamespace(),
       Constants.Metrics.Tag.APP, id.getApplication(),

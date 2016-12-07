@@ -338,11 +338,6 @@ public class ProgramClient {
 
   /**
    * Stops all currently running programs.
-   *
-   * @throws IOException
-   * @throws UnauthenticatedException
-   * @throws InterruptedException
-   * @throws TimeoutException
    */
   public void stopAll(NamespaceId namespace)
     throws IOException, UnauthenticatedException, InterruptedException, TimeoutException, UnauthorizedException,
@@ -789,6 +784,7 @@ public class ProgramClient {
 
   /**
    * Get the current run information for the Workflow based on the runid
+   *
    * @param workflowId ID of the workflow
    * @param runId ID of the run for which the details are to be returned
    * @return list of {@link WorkflowActionNode} currently running for the given runid

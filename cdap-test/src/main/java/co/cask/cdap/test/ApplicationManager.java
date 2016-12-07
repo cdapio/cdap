@@ -142,6 +142,12 @@ public interface ApplicationManager {
   List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status);
 
   /**
+   * Gets the history of the program
+   * @return list of {@link RunRecord} history
+   */
+  List<RunRecord> getHistory(ProgramId programId, ProgramRunStatus status);
+
+  /**
    * Updates this application
    *
    * @param appRequest the {@link AppRequest} to update the application with

@@ -73,6 +73,7 @@ public class StreamClient {
 
   private static final Gson GSON = StreamEventTypeAdapter.register(
     new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())).create();
+  private static final TypeToken<List<StreamDetail>> STREAM_DETAIL_LIST_TYPE = new TypeToken<List<StreamDetail>>() { };
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -519,7 +520,7 @@ public class StreamClient {
     throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(namespace, "streams");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<StreamDetail>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, STREAM_DETAIL_LIST_TYPE).getResponseObject();
   }
 
   /**

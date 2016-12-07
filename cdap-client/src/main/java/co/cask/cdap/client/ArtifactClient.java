@@ -141,7 +141,7 @@ public class ArtifactClient {
    * Lists all artifacts in the given namespace, optionally including system artifacts.
    *
    * @param namespace the namespace to list artifacts in
-   * @param scope the scope of the artifacts to get. If null, both user and system artifacts are listed
+   * @param scope the scope of the artifacts to get. If {@code null}, both user and system artifacts are listed
    * @return list of {@link ArtifactSummary}
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server

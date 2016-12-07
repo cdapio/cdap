@@ -380,7 +380,8 @@ public class LineageTestRun extends MetadataTestBase {
       @Override
       public Integer call() throws Exception {
         runRecords.set(Iterables.filter(
-          programClient.getProgramRuns(program, "RUNNING", 0, Long.MAX_VALUE, Integer.MAX_VALUE),
+          programClient.getProgramRuns(program, ProgramRunStatus.RUNNING.toString(),
+                                       0, Long.MAX_VALUE, Integer.MAX_VALUE),
           new Predicate<RunRecord>() {
             @Override
             public boolean apply(RunRecord input) {
