@@ -14,10 +14,11 @@ import os
 import sys
 from optparse import OptionParser
 
-VERSION = "0.0.2"
+VERSION = "0.0.3"
 
 LITERAL = '``'
-SPACES = ' ' * 3
+SPACE = ' '
+SPACES = SPACE * 3
 QUOTE = '\''
 BACKSLASH = '\\'
 SECTION_LINE = SPACES + '**'
@@ -89,14 +90,20 @@ def create_parsed_line(line):
     opening_literal_quote = LITERAL + QUOTE
     closing_literal_quote = QUOTE + LITERAL
     new_line = ''
+    i = -1
     for c in line:
+        i +=1 
         if c == QUOTE:
             if not in_literal:
-                new_line += opening_literal_quote
+                if i and line[i-1] != SPACE: # Preceding character
+                    new_line += c
+                else:
+                    new_line += opening_literal_quote
+                    in_literal = not in_literal
             else:
                 new_line += closing_literal_quote
                 finished_literal = True
-            in_literal = not in_literal
+                in_literal = not in_literal
         else:
             if finished_literal:
                 if c.isalnum():
