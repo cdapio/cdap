@@ -16,7 +16,7 @@
 #  limitations under the License.
 #
 #
-# Reads in the Javadocs page 
+# Reads in the Javadocs pages
 # (at http://docs.cask.co/cdap/<release-version>/en/reference-manual/javadocs/deprecated-list.html);
 # extracts all of the listed deprecated items, and then searches in the Java, text, and
 # ReST files of the examples and the documentation for any usage. 
@@ -25,6 +25,7 @@
 #
 # Requires Python 2.7 and Beautiful Soup.
 
+import ast
 import os
 import sys
 try:
@@ -45,21 +46,59 @@ def parse_options():
         usage="%prog [release]",
         description="Searches for deprecated items in documentation ('cdap-docs') and examples ('cdap-examples'). "
             "If no release is specified, 'current' is used instead. "
-            "Uses the list at 'http://docs.cask.co/cdap/[release]/en/reference-manual/javadocs/deprecated-list.html' ")
+            "Uses the lists at 'http://docs.cask.co/cdap/[release]/en/reference-manual/javadocs/deprecated-list.html' "
+            "and at 'http://docs.cask.co/cdap/json-versions.js'")
 
     (options, args) = parser.parse_args()
 
     return options, args, parser
 
+def load_json_versions(release):
+    json_versions_url = 'http://docs.cask.co/cdap/json-versions.js'
+    page = urllib2.urlopen(json_versions_url).read().strip()
+    if page.startswith(r'versionscallback('):
+        page = page[len(r'versionscallback('):]
+    if page.endswith(r');'):
+        page = page[:-len(r');')]
+    d = ast.literal_eval(page)
+    versions = []
+    for timeline in d['timeline']:
+        versions.append(timeline[1])
+    versions.sort()
+    if release == 'current':
+        versions.append('current')
+    elif release.endswith('SNAPSHOT'):
+        versions.append('current')
+        versions.append(release)
+    elif release in versions:
+        versions = versions[:versions.index(release)+1]
+    return versions
 
 def load_deprecated_items(release):
-    deprecated_url = "http://docs.cask.co/cdap/%s/en/reference-manual/javadocs/deprecated-list.html" % release
+    versions = load_json_versions(release)
+    deprecated_items = dict()
+    longest = 0
+    for version in versions:
+        deprecated_url = "http://docs.cask.co/cdap/%s/en/reference-manual/javadocs/deprecated-list.html" % version
+        deprecated_version = _load_deprecated_items(deprecated_url)
+        for deprecated in deprecated_version:
+            signatures = deprecated_version[deprecated]
+            if deprecated not in deprecated_items:
+                deprecated_items[deprecated] = []
+            for signature in signatures:
+                if signature not in deprecated_items[deprecated]:
+                    deprecated_items[deprecated].append(signature)
+            if len(deprecated) > longest:
+                longest = len(deprecated)
+    return deprecated_items, longest
+
+def _load_deprecated_items(deprecated_url):
+
     print "Loading deprecated info from '%s'" % deprecated_url
     page = urllib2.urlopen(deprecated_url).read()
     soup = BeautifulSoup(page, 'html.parser')
 #     soup.prettify()
     deprecated_items = dict()
-    longest = 0
     i = 0
     for a in soup.select('a[href^="co/cask/cdap"]'):
         line = None
@@ -73,7 +112,6 @@ def load_deprecated_items(release):
                     line = ''
                     for t in a.contents:
                         line += str(t).strip()
-                    print "%3d: %s" % (i, line)
                 except Exception, e:
                     print "%3d: %s" % (i, a.contents)
                     raise e
@@ -91,29 +129,23 @@ def load_deprecated_items(release):
                 deprecated = method[period+1:]
             else:
                 deprecated = method
-            
-            closing_tag = line.find('</')
-            if closing_tag != -1:
-                signature = line[:closing_tag]
-            else:
-                signature = line
-            
+            while line.find('</') != -1:
+                line = line[:line.find('</')]
             if deprecated in deprecated_items:
-                deprecated_items[deprecated].append(signature)
+                if line not in deprecated_items[deprecated]:
+                    deprecated_items[deprecated].append(line)
             else:
-                deprecated_items[deprecated] = [signature]
-            if len(deprecated) > longest:
-                longest = len(deprecated)
+                deprecated_items[deprecated] = [line]
+            print "%3d: %s" % (i, line)
         i += 1
-    return deprecated_items, longest
-
+    return deprecated_items
 
 def search_docs(release):
     script_dir = os.getcwd()
     deprecated_items, longest = load_deprecated_items(release)
-    print "Deprecated: %s" % len(deprecated_items)
     if not deprecated_items:
         return
+    print "Deprecated: %s" % len(deprecated_items)
     
     # Print out sorted list of deprecated items, and where each is from
     deprecated_keys = deprecated_items.keys()
@@ -129,7 +161,6 @@ def search_docs(release):
                 print "  %s : %s" % (' ' * longest, source)
         print
     
-
     # Walk directories
     docs = '..'
     examples = '../../cdap-examples'
