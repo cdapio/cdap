@@ -1873,6 +1873,7 @@
         <package.deb.arch>all</package.deb.arch>
         <package.rpm.arch>all</package.rpm.arch>
         <package.dirs>opt etc</package.dirs>
+        <package.config.dir>etc</package.config.dir>
       </properties>
       <build>
         <pluginManagement>
