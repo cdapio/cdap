@@ -13,117 +13,26 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 @import '../../styles/variables.less';
+@height-off-set: @height-of-header + @height-of-footer;
 
-.entity-overview {
-  position: absolute;
-  z-index: 1;
-  background: white;
-  max-width: 700px;
-  min-height: 500px;
-  max-height: 700px;
-  box-shadow: 0px 4px 10px 1000px rgba(0, 0, 0, 0.3);
+.app-detailed-view {
+  height: ~"calc(100vh - @{height-off-set})";
+  height: ~"-moz-calc(100vh - @{height-off-set})";
+  height: ~"-webkit-calc(100vh - @{height-off-set})";
 
-  &.right,
-  &.left {
-    top: 0;
-    .overview-header {
-      &:before {
-        width: 0;
-        height: 0;
-        border: 12px solid #464a56;
-        position: absolute;
-        content: ' ';
-        border-top-color: transparent;
-        border-bottom-color: transparent;
-      }
-    }
-    &.application {
-      .overview-header {
-        &:before {
-          border-color: @application-entity-header-bg;
-          border-top-color: transparent;
-          border-bottom-color: transparent;
-        }
-      }
-    }
-    &.datapipeline {
-      .overview-header {
-        &:before {
-          border-color: @datapipeline-entity-header-bg;
-          border-top-color: transparent;
-          border-bottom-color: transparent;
-        }
-      }
-    }
-  }
-  &.bottom {
-    margin-top: 12px;
-    .overview-header {
-      &:before {
-        width: 0;
-        height: 0;
-        border: 12px solid #464a56;
-        position: absolute;
-        content: ' ';
-        top: -24px;
-        right: 8px;
-        border-left-color: transparent;
-        border-top-color: transparent;
-        border-right-color: transparent;
-      }
-    }
-    &.application {
-      .overview-header {
-        &:before {
-          border-color: @application-entity-header-bg;
-          border-top-color: transparent;
-          border-left-color: transparent;
-          border-right-color: transparent;
-        }
-      }
-    }
-    &.datapipeline {
-      .overview-header {
-        &:before {
-          border-color: @datapipeline-entity-header-bg;
-          border-top-color: transparent;
-          border-left-color: transparent;
-          border-right-color: transparent;
-        }
-      }
-    }
-  }
-
-  &.right {
-    .overview-header {
-      &:before {
-        left: -12px;
-        top: 8px;
-        border-left: 0;
-      }
-    }
-  }
-  &.left {
-    .overview-header {
-      &:before {
-        right: -12px;
-        top: 8px;
-        border-right: 0;
-      }
-    }
-  }
   &.application {
-    .overview-header {
+    .app-detailed-view-header {
       background-color: @application-entity-header-bg;
     }
   }
   &.datapipeline {
-    .overview-header {
+    .app-detailed-view-header {
       background-color: @datapipeline-entity-header-bg;
     }
   }
-  .overview-header {
+  .app-detailed-view-header {
     border-bottom: 1px solid #ccc;
     background: @navbar-bg;
     color: white;
@@ -164,7 +73,7 @@
       line-height: 2;
     }
   }
-  .overview-description {
+  .app-detailed-view-description {
     padding: 5px;
     font-weight: 500;
     font-size: 12px;
@@ -172,9 +81,28 @@
     background: #ebebeb;
     border-bottom: 1px solid #ccc;
   }
-  .overview-content {
+  .fa.fa-spinner.loading-spinner {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: gray;
+  }
+  .app-detailed-view-content {
     position: relative;
     border-top: 0;
+    height: ~"calc(100% - 75px)";
+    height: ~"-moz-calc(100% - 75px)";
+    height: ~"-webkit-calc(100% - 75px)";
+
+    .empty-message {
+       position: absolute;
+       top: 40%;
+       left: 50%;
+       transform: translate(-50%, -50%);
+       font-size: 20px;
+       font-weight: 500;
+    }
     .cask-tabs {
       &.horizontal {
         > div:first-child {
@@ -188,6 +116,8 @@
         }
         .tab-content {
           .tab-pane {
+            width: 100%;
+            overflow: auto;
             .metrics-container {
               position: static;
             }
@@ -199,8 +129,28 @@
       position: absolute;
       right: 0;
       border-bottom: 0;
+      display: flex;
+
       .metric-item {
+        -webkit-box-flex: 1;
+        flex-grow: 1;
+        text-align: center;
+        border: 0;
         padding: 5px 20px;
+
+        &:not(:last-child) {
+          border-right: 1px solid #cccccc;
+        }
+        p {
+          margin-bottom: 4px;
+          color: #333333;
+        }
+        .metric-header {
+          font-weight: 500;
+          font-size: 11px;
+          margin-bottom: 3px;
+          color: #999999;
+        }
       }
     }
     .metrics-container {
