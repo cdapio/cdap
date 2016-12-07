@@ -38,9 +38,9 @@ Namespace IDs are composed from a limited set of characters; they are restricted
 letters (a-z, A-Z), digits (0-9), and underscores (_). There is no size limit
 on the length of a namespace ID nor on the number of namespaces.
 
-The namespace IDs ``cdap``, ``default``, and ``system`` are reserved. The ``default``
-namespace, however, can be used by anyone, though like all reserved namespaces, it cannot
-be deleted.
+The namespace IDs ``cdap``, ``default``, and ``system`` are reserved and cannot be
+deleted. The ``default`` namespace, however, can be used by anyone, except in the case
+where authorization is required for a secure cluster.
 
 
 Independent and Non-hierarchical
@@ -49,9 +49,10 @@ Independent and Non-hierarchical
 Namespaces are flat, with no hierarchy inside them. (Namespaces are not allowed inside
 another namespace.)
 
-As part of the independence of namespaces, inter-namespace operations are not possible:
+As part of the independence of namespaces, inter-namespace operations are controlled:
 for example, an application from one namespace using datasets from a different namespace.
-Similarly, moving applications or data from one namespace to another is not possible.
+Similarly, moving applications or data from one namespace to another is limited.
+With cross-namespace access, this is allowed, as of CDAP 4.0
 
 Quota management based on namespaces is also not possible in this release, but may be a
 feature in a future release.
