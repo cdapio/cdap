@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.data.schema.Schema;
@@ -49,15 +50,16 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
 
   private final DatumReader<MetricValues> recordReader;
   private final Schema recordSchema;
-  private long recordProcessed;
   private final MetricStore metricStore;
   private final Map<String, String> metricsContext;
+
+  private long lastLoggedMillis;
+  private long recordsProcessed;
 
   public MetricsMessageCallback(DatumReader<MetricValues> recordReader,
                                 Schema recordSchema,
                                 MetricStore metricStore,
-                                @Nullable
-                                MetricsContext metricsContext) {
+                                @Nullable MetricsContext metricsContext) {
     this.recordReader = recordReader;
     this.recordSchema = recordSchema;
     this.metricStore = metricStore;
@@ -67,7 +69,7 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
   @Override
   public void onReceived(Iterator<FetchedMessage> messages) {
     // Decode the metrics records.
-    final ByteBufferInputStream is = new ByteBufferInputStream(null);
+    ByteBufferInputStream is = new ByteBufferInputStream(null);
     List<MetricValues> records = Lists.newArrayList();
 
     while (messages.hasNext()) {
@@ -89,16 +91,16 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
       addProcessingStats(records);
       metricStore.add(records);
     } catch (Exception e) {
-      String msg = "Failed to add metrics data to a store";
-      LOG.error(msg);
-      // todo: will it shut down the whole the metrics processor service??
-      throw new RuntimeException(msg, e);
+      // SimpleKafkaConsumer will log the error, and continue on past these messages
+      throw new RuntimeException("Failed to add metrics data to a store", e);
     }
 
-    recordProcessed += records.size();
-    if (recordProcessed % 1000 == 0) {
-      LOG.info("{} metrics records processed", recordProcessed);
-      LOG.info("Last record time: {}", records.get(records.size() - 1).getTimestamp());
+    recordsProcessed += records.size();
+    // avoid logging more than once a minute
+    if (System.currentTimeMillis() > lastLoggedMillis + TimeUnit.MINUTES.toMillis(1)) {
+      lastLoggedMillis = System.currentTimeMillis();
+      LOG.info("{} metrics records processed. Last record time: {}.",
+               recordsProcessed, records.get(records.size() - 1).getTimestamp());
     }
   }
 
