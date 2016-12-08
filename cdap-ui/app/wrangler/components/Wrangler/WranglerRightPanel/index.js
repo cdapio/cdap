@@ -58,7 +58,7 @@ export default class WranglerRightPanel extends Component {
           id: shortid.generate(),
           type: this.state.graphTypeSelected,
           x: '##',
-          y: []
+          y: [this.state.columns[0]]
         }
       }
     });

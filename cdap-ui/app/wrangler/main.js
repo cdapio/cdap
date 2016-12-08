@@ -64,12 +64,9 @@ class WranglerParent extends Component {
             <Match exactly pattern="/" component={RouteToNamespace} />
             <Match exactly pattern="/ns" component={RouteToNamespace} />
             <Match exactly pattern="/ns/:namespace" history={history} component={Home} />
-
           </div>
         </div>
       </Router>
-
-
     );
   }
 }
