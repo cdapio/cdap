@@ -29,11 +29,7 @@ import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
-<<<<<<< 422b6f78f8c89cb7e8460cee5d2dba034e1afb88
 import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.batch.KVTransformations;
-=======
->>>>>>> Changes to pass records one by one to sink in hydrator
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;

@@ -180,7 +180,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
                       etlPlugin.getType(), etlPlugin.getName(), pluginId));
     }
     try {
-      if (type.equalsIgnoreCase(BatchJoiner.PLUGIN_TYPE)) {
+      if (type.equals(BatchJoiner.PLUGIN_TYPE)) {
         MultiInputPipelineConfigurable multiPlugin = (MultiInputPipelineConfigurable) plugin;
         multiPlugin.configurePipeline(pipelineConfigurer);
       } else {

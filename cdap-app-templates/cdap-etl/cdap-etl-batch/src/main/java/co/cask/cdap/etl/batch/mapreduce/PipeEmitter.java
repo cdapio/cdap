@@ -14,23 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api.batch;
+package co.cask.cdap.etl.batch.mapreduce;
 
-import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.etl.api.Emitter;
 
-import java.util.Map;
-import javax.annotation.Nullable;
-
 /**
- * Batch emitter which is used to emit records one by one to next stages
+ * Pipe emitter which is used to emit records one by one to next stages
  * @param <T> type of transform detail
  */
-@Beta
-public abstract class BatchEmitter<T> implements Emitter<Object> {
-
-  public abstract void addTransformDetail(String stageName, T transformDetail);
-
-  @Nullable
-  public abstract Map<String, T> getNextStages();
+public interface PipeEmitter<T> extends Emitter<Object> {
+  void addTransformDetail(String stageName, T transformDetail);
 }

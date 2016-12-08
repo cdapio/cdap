@@ -18,9 +18,7 @@ package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.etl.api.InvalidEntry;
-import co.cask.cdap.etl.api.batch.BatchEmitter;
-import co.cask.cdap.etl.batch.BatchTransformDetail;
-import com.google.common.annotations.VisibleForTesting;
+import co.cask.cdap.etl.batch.PipeTransformDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,21 +29,15 @@ import javax.annotation.Nullable;
  * Emitter which emits {@link KeyValue} where key is stageName emitting the transformed record and value is
  * transformed record
  */
-public class TransformEmitter extends BatchEmitter<BatchTransformDetail> {
+public class TransformEmitter implements PipeEmitter<PipeTransformDetail> {
   private static final Logger LOG = LoggerFactory.getLogger(TransformEmitter.class);
 
   private final String stageName;
-  private final Map<String, BatchTransformDetail> nextStages;
-  @Nullable
+  private final Map<String, PipeTransformDetail> nextStages;
   private final ErrorOutputWriter<Object, Object> errorOutputWriter;
 
-  @VisibleForTesting
-  public TransformEmitter(String stageName, Map<String, BatchTransformDetail> nextStages) {
-    this(stageName, nextStages, null);
-  }
-
   public TransformEmitter(String stageName,
-                          Map<String, BatchTransformDetail> nextStages,
+                          Map<String, PipeTransformDetail> nextStages,
                           @Nullable ErrorOutputWriter<Object, Object> errorOutputWriter) {
     this.stageName = stageName;
     this.nextStages = nextStages;
@@ -54,8 +46,8 @@ public class TransformEmitter extends BatchEmitter<BatchTransformDetail> {
 
   @Override
   public void emit(Object value) {
-    for (BatchTransformDetail batchTransformDetail : nextStages.values()) {
-      batchTransformDetail.process(new KeyValue<>(stageName, value));
+    for (PipeTransformDetail pipeTransformDetail : nextStages.values()) {
+      pipeTransformDetail.process(new KeyValue<>(stageName, value));
     }
   }
 
@@ -73,13 +65,7 @@ public class TransformEmitter extends BatchEmitter<BatchTransformDetail> {
   }
 
   @Override
-  public void addTransformDetail(String stageName, BatchTransformDetail batchTransformDetail) {
-    nextStages.put(stageName, batchTransformDetail);
-  }
-
-  @Nullable
-  @Override
-  public Map<String, BatchTransformDetail> getNextStages() {
-    return nextStages;
+  public void addTransformDetail(String stageName, PipeTransformDetail pipeTransformDetail) {
+    nextStages.put(stageName, pipeTransformDetail);
   }
 }

@@ -17,21 +17,23 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.etl.api.Destroyable;
 import co.cask.cdap.etl.api.Transformation;
-import co.cask.cdap.etl.api.batch.BatchEmitter;
+import co.cask.cdap.etl.batch.mapreduce.PipeEmitter;
+import co.cask.cdap.etl.common.Destroyables;
 
 
 /**
- * Batch transform detail which wraps stageName, transformation, emitters for output stages
+ * Pipe transform detail which wraps stageName, transformation, emitters for output stages
  */
-public class BatchTransformDetail {
+public class PipeTransformDetail implements Destroyable {
   private final String stageName;
   private final Transformation transformation;
-  private final BatchEmitter<BatchTransformDetail> emitter;
+  private final PipeEmitter<PipeTransformDetail> emitter;
   private final boolean removeStageName;
 
-  public BatchTransformDetail(String stageName, boolean removeStageName,
-                              Transformation transformation, BatchEmitter<BatchTransformDetail> emitter) {
+  public PipeTransformDetail(String stageName, boolean removeStageName,
+                             Transformation transformation, PipeEmitter<PipeTransformDetail> emitter) {
     this.stageName = stageName;
     this.removeStageName = removeStageName;
     this.transformation = transformation;
@@ -50,11 +52,14 @@ public class BatchTransformDetail {
     }
   }
 
-  public BatchEmitter<BatchTransformDetail> getEmitter() {
-    return emitter;
+  public void addTransformation(String stageName, PipeTransformDetail pipeTransformDetail) {
+    emitter.addTransformDetail(stageName, pipeTransformDetail);
   }
 
-  public Transformation getTransformation() {
-    return transformation;
+  @Override
+  public void destroy() {
+    if (transformation instanceof Destroyable) {
+      Destroyables.destroyQuietly((Destroyable) transformation);
+    }
   }
 }

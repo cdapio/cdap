@@ -28,6 +28,7 @@ import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.planner.StageInfo;
@@ -60,7 +61,7 @@ public class TransformRunner<KEY, VALUE> {
     .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
     .create();
   private final Map<String, ErrorOutputWriter<Object, Object>> transformErrorSinkMap;
-  private final BatchTransformExecutor<KeyValue<KEY, VALUE>> transformExecutor;
+  private final PipeTransformExecutor<KeyValue<KEY, VALUE>> transformExecutor;
   private final OutputWriter<Object, Object> outputWriter;
 
   public TransformRunner(MapReduceTaskContext<Object, Object> context,
@@ -155,5 +156,9 @@ public class TransformRunner<KEY, VALUE> {
   public void transform(KEY key, VALUE value) throws Exception {
     KeyValue<KEY, VALUE> input = new KeyValue<>(key, value);
     transformExecutor.runOneIteration(input);
+  }
+
+  public void destroy() {
+    Destroyables.destroyQuietly(transformExecutor);
   }
 }

@@ -23,13 +23,12 @@ import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.etl.api.StageLifecycle;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transformation;
-import co.cask.cdap.etl.api.batch.BatchEmitter;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
-import co.cask.cdap.etl.batch.mapreduce.BatchTransformExecutor;
 import co.cask.cdap.etl.batch.mapreduce.ConnectorSourceEmitter;
 import co.cask.cdap.etl.batch.mapreduce.ErrorOutputWriter;
 import co.cask.cdap.etl.batch.mapreduce.OutputWriter;
+import co.cask.cdap.etl.batch.mapreduce.PipeTransformExecutor;
 import co.cask.cdap.etl.batch.mapreduce.SinkEmitter;
 import co.cask.cdap.etl.batch.mapreduce.TransformEmitter;
 import co.cask.cdap.etl.common.Constants;
@@ -57,7 +56,7 @@ public abstract class TransformExecutorFactory<T> {
   private final MacroEvaluator macroEvaluator;
   protected final PipelinePluginInstantiator pluginInstantiator;
   protected final Metrics metrics;
-  protected Map<String, Schema> outputSchemas;
+  protected final Map<String, Schema> outputSchemas;
   protected boolean isMapPhase;
 
   public TransformExecutorFactory(JobContext hadoopContext, PipelinePluginInstantiator pluginInstantiator,
@@ -85,12 +84,12 @@ public abstract class TransformExecutorFactory<T> {
    * @throws InstantiationException if there was an error instantiating a plugin
    * @throws Exception              if there was an error initializing a plugin
    */
-  public <KEY_OUT, VAL_OUT> BatchTransformExecutor<T> create(PipelinePhase pipeline,
-                                                             OutputWriter<KEY_OUT, VAL_OUT> outputWriter,
-                                                             Map<String, ErrorOutputWriter<Object, Object>>
+  public <KEY_OUT, VAL_OUT> PipeTransformExecutor<T> create(PipelinePhase pipeline,
+                                                            OutputWriter<KEY_OUT, VAL_OUT> outputWriter,
+                                                            Map<String, ErrorOutputWriter<Object, Object>>
                                                                transformErrorSinkMap)
     throws Exception {
-    Map<String, BatchTransformDetail> transformations = new HashMap<>();
+    Map<String, PipeTransformDetail> transformations = new HashMap<>();
     Set<String> sources = pipeline.getSources();
 
     // Set input and output schema for this stage
@@ -102,69 +101,68 @@ public abstract class TransformExecutorFactory<T> {
       }
     }
 
-    // recursively set BatchTransformDetail for all the stages
+    // recursively set PipeTransformDetail for all the stages
     for (String source : sources) {
-      setBatchTransformDetail(pipeline, source, transformations, transformErrorSinkMap, outputWriter);
+      setPipeTransformDetail(pipeline, source, transformations, transformErrorSinkMap, outputWriter);
     }
 
     // sourceStageName will be null in reducers, so need to handle that case
     Set<String> startingPoints = (sourceStageName == null) ? pipeline.getSources() : Sets.newHashSet(sourceStageName);
-    return new BatchTransformExecutor<>(transformations, startingPoints);
+    return new PipeTransformExecutor<>(transformations, startingPoints);
   }
 
-  private <KEY_OUT, VAL_OUT> void setBatchTransformDetail(PipelinePhase pipeline, String stageName,
-                                                          Map<String, BatchTransformDetail> transformations,
-                                                          Map<String, ErrorOutputWriter<Object, Object>>
-                                                            transformErrorSinkMap,
-                                                          OutputWriter<KEY_OUT, VAL_OUT> outputWriter)
+  private <KEY_OUT, VAL_OUT> void setPipeTransformDetail(PipelinePhase pipeline, String stageName,
+                                                         Map<String, PipeTransformDetail> transformations,
+                                                         Map<String, ErrorOutputWriter<Object, Object>>
+                                                           transformErrorSinkMap,
+                                                         OutputWriter<KEY_OUT, VAL_OUT> outputWriter)
     throws Exception {
     if (pipeline.getSinks().contains(stageName)) {
-      String pluginType = pipeline.getStage(stageName).getPluginType();
       // If there is a connector sink/ joiner at the end of pipeline, do not remove stage name. This is needed to save
       // stageName along with the record in connector sink and joiner takes input along with stageName
-      boolean removeStageName = !(pluginType.equalsIgnoreCase(Constants.CONNECTOR_TYPE) ||
-        pluginType.equalsIgnoreCase(BatchJoiner.PLUGIN_TYPE));
-      transformations.put(stageName, new BatchTransformDetail(stageName, removeStageName,
-                                                              getTransformation(pluginType, stageName),
-                                                              new SinkEmitter<>(stageName, outputWriter)));
+      String pluginType = pipeline.getStage(stageName).getPluginType();
+      boolean removeStageName = !(pluginType.equals(Constants.CONNECTOR_TYPE) ||
+        pluginType.equals(BatchJoiner.PLUGIN_TYPE));
+      transformations.put(stageName, new PipeTransformDetail(stageName, removeStageName,
+                                                             getTransformation(pluginType, stageName),
+                                                             new SinkEmitter<>(stageName, outputWriter)));
       return;
     }
 
     for (String output : pipeline.getDag().getNodeOutputs(stageName)) {
-      setBatchTransformDetail(pipeline, output, transformations, transformErrorSinkMap, outputWriter);
+      setPipeTransformDetail(pipeline, output, transformations, transformErrorSinkMap, outputWriter);
 
-      // Add new transformation for output stage if the transfomation for stageName already exists
+      // Add new transformation for output stage if the transformation for stageName already exists
       if (transformations.containsKey(stageName)) {
-        BatchEmitter<BatchTransformDetail> emitter = transformations.get(stageName).getEmitter();
-        Map<String, BatchTransformDetail> nextStages = emitter.getNextStages();
-        if (nextStages != null && !nextStages.containsKey(output)) {
-          emitter.addTransformDetail(output, transformations.get(output));
-        }
+        transformations.get(stageName).addTransformation(output, transformations.get(output));
+        continue;
+      }
+
+      HashMap<String, PipeTransformDetail> map = new HashMap<>();
+      map.put(output, transformations.get(output));
+
+      StageInfo stageInfo = pipeline.getStage(stageName);
+      String pluginType = stageInfo.getPluginType();
+      ErrorOutputWriter<Object, Object> errorOutputWriter = transformErrorSinkMap.containsKey(stageName) ?
+        transformErrorSinkMap.get(stageName) : null;
+
+      // If stageName is a connector source, it will have stageName along with record so use ConnectorSourceEmitter
+      if (pipeline.getSources().contains(stageName) && pluginType.equals(Constants.CONNECTOR_TYPE)) {
+        transformations.put(stageName,
+                            new PipeTransformDetail(stageName, true,
+                                                    getTransformation(pluginType, stageName),
+                                                    new ConnectorSourceEmitter(stageName, map)));
+      } else if (pluginType.equals(BatchJoiner.PLUGIN_TYPE) && isMapPhase) {
+        // Do not remove stageName only for Map phase of BatchJoiner
+        transformations.put(stageName,
+                            new PipeTransformDetail(stageName, false,
+                                                    getTransformation(pluginType, stageName),
+                                                    new TransformEmitter(stageName, map, errorOutputWriter)));
       } else {
-        HashMap<String, BatchTransformDetail> map = new HashMap<>();
-        map.put(output, transformations.get(output));
-        StageInfo stageInfo = pipeline.getStage(stageName);
-        String pluginType = stageInfo.getPluginType();
-        ErrorOutputWriter<Object, Object> errorOutputWriter = transformErrorSinkMap.containsKey(stageName) ?
-          transformErrorSinkMap.get(stageName) : null;
-        // If stageName is a connector source, it will have stageName along with record so use ConnectorSourceEmitter
-        if (pipeline.getSources().contains(stageName) && pluginType.equalsIgnoreCase(Constants.CONNECTOR_TYPE)) {
-          transformations.put(stageName,
-                              new BatchTransformDetail(stageName, true,
-                                                       getTransformation(pluginType, stageName),
-                                                       new ConnectorSourceEmitter(stageName, map)));
-        } else if (pluginType.equalsIgnoreCase(BatchJoiner.PLUGIN_TYPE) && isMapPhase) {
-          // Do not remove stageName only for Map phase of BatchJoiner
-          transformations.put(stageName,
-                              new BatchTransformDetail(stageName, false,
-                                                       getTransformation(pluginType, stageName),
-                                                       new TransformEmitter(stageName, map, errorOutputWriter)));
-        } else {
-          transformations.put(stageName,
-                              new BatchTransformDetail(stageName, true,
-                                                       getTransformation(pluginType, stageName),
-                                                       new TransformEmitter(stageName, map, errorOutputWriter)));
-        }
+        transformations.put(stageName,
+                            new PipeTransformDetail(stageName, true,
+                                                    getTransformation(pluginType, stageName),
+                                                    new TransformEmitter(stageName, map, errorOutputWriter)));
       }
     }
   }

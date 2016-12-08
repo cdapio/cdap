@@ -363,7 +363,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     @Override
     public void destroy() {
-      //no-op
+      transformRunner.destroy();
     }
   }
 
@@ -398,7 +398,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     @Override
     public void destroy() {
-      //no-op
+      transformRunner.destroy();
     }
   }
 }

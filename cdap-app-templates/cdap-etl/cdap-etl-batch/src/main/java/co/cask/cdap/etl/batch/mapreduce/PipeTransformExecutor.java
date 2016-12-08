@@ -17,7 +17,8 @@
 package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.etl.batch.BatchTransformDetail;
+import co.cask.cdap.etl.api.Destroyable;
+import co.cask.cdap.etl.batch.PipeTransformDetail;
 
 import java.util.Map;
 import java.util.Set;
@@ -26,19 +27,26 @@ import java.util.Set;
  * Executes chain of transforms
  * @param <IN> Type of input
  */
-public class BatchTransformExecutor<IN> {
+public class PipeTransformExecutor<IN> implements Destroyable {
   private final Set<String> startingPoints;
-  private final Map<String, BatchTransformDetail> transformDetailMap;
+  private final Map<String, PipeTransformDetail> transformDetailMap;
 
-  public BatchTransformExecutor(Map<String, BatchTransformDetail> transformDetailMap, Set<String> startingPoints) {
+  public PipeTransformExecutor(Map<String, PipeTransformDetail> transformDetailMap, Set<String> startingPoints) {
     this.transformDetailMap = transformDetailMap;
     this.startingPoints = startingPoints;
   }
 
   public void runOneIteration(IN input) throws Exception {
     for (String stageName : startingPoints) {
-      BatchTransformDetail transformDetail = transformDetailMap.get(stageName);
+      PipeTransformDetail transformDetail = transformDetailMap.get(stageName);
         transformDetail.process(new KeyValue<String, Object>(stageName, input));
+    }
+  }
+
+  @Override
+  public void destroy() {
+    for (Map.Entry<String, PipeTransformDetail> entry : transformDetailMap.entrySet()) {
+      entry.getValue().destroy();
     }
   }
 }
