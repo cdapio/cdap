@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
@@ -44,7 +45,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Runs Mapreduce programm in distributed environment
+ * Runs Mapreduce program in distributed environment
  */
 public final class DistributedMapReduceProgramRunner extends AbstractDistributedProgramRunner {
 
@@ -84,11 +85,12 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
 
     List<String> extraClassPaths = MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
 
-    LOG.info("Launching MapReduce program: " + program.getName() + ":" + spec.getName());
+    RunId runId = ProgramRunners.getRunId(options);
+    LOG.info("Launching MapReduce program: {}", program.getId().run(runId));
     TwillController controller = launcher.launch(
       new MapReduceTwillApplication(program, options.getUserArguments(), spec, localizeResources, eventHandler),
       extraClassPaths, Collections.singletonList(YarnClientProtocolProvider.class));
 
-    return createProgramController(controller, program.getId(), ProgramRunners.getRunId(options));
+    return createProgramController(controller, program.getId(), runId);
   }
 }

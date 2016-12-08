@@ -19,6 +19,7 @@ package co.cask.cdap.app.runtime;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
@@ -126,9 +127,9 @@ public interface ProgramController {
   }
 
   /**
-   * Returns the program Id which this controller is controlling.
+   * Returns the program run id which this controller is controlling.
    */
-  ProgramId getProgramId();
+  ProgramRunId getProgramRunId();
 
   /**
    * Returns the run Id which this controller is controlling.

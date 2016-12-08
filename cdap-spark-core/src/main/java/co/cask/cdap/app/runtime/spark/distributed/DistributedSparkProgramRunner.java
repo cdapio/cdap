@@ -100,12 +100,13 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
     // Localize the spark-assembly jar and spark conf zip
     String sparkAssemblyJarName = SparkUtils.prepareSparkResources(tempDir, localizeResources);
 
-    LOG.info("Launching Spark program: {}", program.getId());
+    RunId runId = ProgramRunners.getRunId(options);
+    LOG.info("Launching Spark program: {}", program.getId().run(runId));
     TwillController controller = launcher.launch(
       new SparkTwillApplication(program, options.getUserArguments(),
                                 spec, localizeResources, eventHandler), sparkAssemblyJarName);
 
-    return createProgramController(controller, program.getId(), ProgramRunners.getRunId(options));
+    return createProgramController(controller, program.getId(), runId);
   }
 
   private static YarnConfiguration createConfiguration(YarnConfiguration hConf, CConfiguration cConf,

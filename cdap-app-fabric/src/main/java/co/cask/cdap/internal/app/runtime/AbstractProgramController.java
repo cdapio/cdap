@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -52,6 +53,7 @@ public abstract class AbstractProgramController implements ProgramController {
 
   private final AtomicReference<State> state;
   private final ProgramId programId;
+  private final ProgramRunId programRunId;
   private final RunId runId;
   private final String componentName;
   private final Map<ListenerCaller, Cancellable> listeners;
@@ -68,6 +70,7 @@ public abstract class AbstractProgramController implements ProgramController {
   protected AbstractProgramController(ProgramId programId, RunId runId, @Nullable String componentName) {
     this.state = new AtomicReference<>(State.STARTING);
     this.programId = programId;
+    this.programRunId = programId.run(runId);
     this.runId = runId;
     this.componentName = componentName;
     this.listeners = new HashMap<>();
@@ -87,8 +90,8 @@ public abstract class AbstractProgramController implements ProgramController {
   }
 
   @Override
-  public ProgramId getProgramId() {
-    return programId;
+  public ProgramRunId getProgramRunId() {
+    return programRunId;
   }
 
   @Override

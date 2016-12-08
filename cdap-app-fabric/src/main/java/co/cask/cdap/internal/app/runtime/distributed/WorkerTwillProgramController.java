@@ -56,8 +56,8 @@ public class WorkerTwillProgramController extends AbstractTwillProgramController
 
   private synchronized void changeInstances(String runnableId,
                                             int newInstanceCount, int oldInstanceCount) throws Exception {
-    LOG.info("Changing instances of {} from {} to {}", getProgramId(), oldInstanceCount, newInstanceCount);
+    LOG.info("Changing instances of {} from {} to {}", getProgramRunId(), oldInstanceCount, newInstanceCount);
     getTwillController().changeInstances(runnableId, newInstanceCount).get();
-    LOG.info("Completed changing instances of {} from {} to {}", getProgramId(), oldInstanceCount, newInstanceCount);
+    LOG.info("Completed changing instances of {} from {} to {}", getProgramRunId(), oldInstanceCount, newInstanceCount);
   }
 }
