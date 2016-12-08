@@ -82,7 +82,7 @@ class CDAP extends Component {
     }
 
     return (
-      <Router basename="/cask-cdap" history={history}>
+      <Router basename="/cdap" history={history}>
         <div className="cdap-container">
           <Helmet
             title={T.translate('features.Home.Title')}
