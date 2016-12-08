@@ -111,7 +111,11 @@ module.exports = {
       'papaparse',
       'rx-dom',
       'd3',
-      'chart.js'
+      'chart.js',
+      'reactabular-table',
+      'reactabular-sticky',
+      'reactabular-virtualized',
+      'reactabular-resizable'
     ]
   },
   module: {
