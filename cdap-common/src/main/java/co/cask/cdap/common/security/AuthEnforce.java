@@ -51,9 +51,9 @@ public @interface AuthEnforce {
 
   /**
    * Specifies the entity on which authorization will be enforced. Method parameters should be marked with
-   * {@link Name}(preferred)/{@link QueryParam}/{@link PathParam} annotation with a unique name and those names should be
-   * provided here. if a class field needs to be specified then the field name itself should be specified here. It can
-   * either be an EntityId or an array of Strings from which the EntityId on which enforcement
+   * {@link Name}(preferred)/{@link QueryParam}/{@link PathParam} annotation with a unique name and those names should
+   * be provided here. if a class field needs to be specified then the field name itself should be specified here.
+   * It can either be an EntityId or an array of Strings from which the EntityId on which enforcement
    * is needed (specified through {@link AuthEnforce#enforceOn()}) can be constructed. This will first be looked up
    * in method parameter and if not found it will be looked up in the class member variable. If a class member
    * variable is marked with the same name as a method parameter then the method parameter will take precedence over
