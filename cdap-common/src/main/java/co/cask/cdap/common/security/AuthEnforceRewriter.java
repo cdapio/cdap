@@ -270,10 +270,13 @@ public class AuthEnforceRewriter implements ClassRewriter {
           }
           AuthEnforceAnnotationNodeProcessor nodeProcessor =
                   new AuthEnforceAnnotationNodeProcessor(authEnforceAnnotationNode);
-          Map<String, Integer> paraPositions = processParameterAnnotationNode(parameterDetails);
+          Map<String, Integer> paramPositions = processParameterAnnotationNode(parameterDetails);
 
           List<EntityPartDetail> entityPartDetails = new ArrayList<>();
           for (String name : nodeProcessor.getEntities()) {
+            // just need to check for empty string since it cannot be null as that will be a compilation error
+            Preconditions.checkArgument(!name.isEmpty(), "Found an empty string in entity parts of annotation %s on " +
+                                          "method %s in class %s", nodeProcessor, methodName, className);
             // Make sure that the entities specified in the AuthEnforce annotation are found in method parameters
             // or class fields. Its fine if they exist at both places in that case we will give preference to
             // method parameters unless its been specified with this. in that case its always looked in class field.
@@ -286,7 +289,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
               entityPart = new EntityPartDetail(fieldName, true);
             } else {
               // preference to method parameters
-              if (paraPositions.containsKey(name)) {
+              if (paramPositions.containsKey(name)) {
                 entityPart = new EntityPartDetail(name, false);
               } else if (fieldDetails.containsKey(name)) {
                 entityPart = new EntityPartDetail(name, true);
@@ -302,11 +305,11 @@ public class AuthEnforceRewriter implements ClassRewriter {
             entityPartDetails.add(entityPart);
           }
           // verify that the entity parts specified in annotation is valid to do enforcement on the given enforceOn
-          verifyEntityParts(entityPartDetails, nodeProcessor.getEnforceOn(), parameterDetails, paraPositions);
+          verifyEntityParts(entityPartDetails, nodeProcessor.getEnforceOn(), parameterDetails, paramPositions);
           // Store all the information properly for the second pass
           methodAnnotations.put(new Method(methodName, methodDesc),
                                 new AnnotationDetail(entityPartDetails, nodeProcessor.getEnforceOn(),
-                                                     nodeProcessor.getActions(), paraPositions));
+                                                     nodeProcessor.getActions(), paramPositions));
         }
 
         /** Helper Methods **/
@@ -319,10 +322,10 @@ public class AuthEnforceRewriter implements ClassRewriter {
           // if the first entity part is not string then it should be on same type specified in enforce on
           if (!entityPartType.equals(Type.getType(String.class))) {
             Preconditions.checkArgument(entityPartType.equals(enforceOn), "Found invalid entity type '%s' for " +
-                                                "enforceOn '%s' in annotation on '%s' method in '%s' class.",
-                    entityPartType.getClassName(), enforceOn.getClassName(), methodName, className);
+                                          "enforceOn '%s' in annotation on '%s' method in '%s' class.",
+                                        entityPartType.getClassName(), enforceOn.getClassName(), methodName, className);
             Preconditions.checkArgument(getRequiredSize(enforceOn) != 0, "Invalid enforceOn %s provided.",
-                    enforceOn.getClassName());
+                                        enforceOn.getClassName());
           } else {
             // Since the entity part/parts provided is of String type so validate that we have sufficient part for
             // EntityId creation
@@ -330,18 +333,18 @@ public class AuthEnforceRewriter implements ClassRewriter {
             for (EntityPartDetail entityPartDetail : entityPartDetails) {
               entityPartType = getEntityPartType(parameterAnnotationNode, paramAnnotation, entityPartDetail);
               Preconditions.checkArgument(entityPartType.equals(Type.getType(String.class)),
-                      "Found part %s of type %s in a multiple part entity " +
-                              "specification of AuthEnforce. Only String is supported in multiple " +
-                              "parts.", entityPartDetail.getEntityName(), entityPartType);
+                                          "Found part %s of type %s in a multiple part entity specification of " +
+                                            "AuthEnforce. Only String is supported in multiple parts.",
+                                          entityPartDetail.getEntityName(), entityPartType);
             }
             int requiredSize = getRequiredSize(enforceOn);
             Preconditions.checkArgument(requiredSize != 0, "Failed to determine required number of entity parts " +
-                    "needed for %s. Please make sure its a valid %s class for authorization " +
-                    "enforcement", enforceOn.getClassName(), EntityId.class.getSimpleName());
+              "needed for %s. Please make sure its a valid %s class for authorization enforcement",
+                                        enforceOn.getClassName(), EntityId.class.getSimpleName());
             Preconditions.checkArgument(requiredSize == entityPartDetails.size(), "Found %s entity parts in " +
-                            "AuthEnforce annotation on method %s in class %s to do enforcement on %s " +
-                            "which requires %s entity parts or an %s", entityPartDetails.size(),
-                    methodName, className, enforceOn, requiredSize, enforceOn.getClassName());
+                                          "AuthEnforce annotation on method %s in class %s to do enforcement on %s " +
+                                          "which requires %s entity parts or an %s", entityPartDetails.size(),
+                                        methodName, className, enforceOn, requiredSize, enforceOn.getClassName());
 
           }
         }
@@ -349,7 +352,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
         private Type getEntityPartType(Map<Integer, ParameterDetail> parameterAnnotationNode,
                                        Map<String, Integer> paramAnnotation, EntityPartDetail entityPartDetail) {
           return entityPartDetail.isField() ? fieldDetails.get(entityPartDetail.getEntityName()) :
-                  parameterAnnotationNode.get(paramAnnotation.get(entityPartDetail.getEntityName())).getParameterType();
+            parameterAnnotationNode.get(paramAnnotation.get(entityPartDetail.getEntityName())).getParameterType();
         }
 
         /**
@@ -364,8 +367,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
           if (enforceOn.equals(Type.getType(InstanceId.class)) || enforceOn.equals(Type.getType(NamespaceId.class))) {
             return 1;
           } else if (enforceOn.equals(Type.getType(StreamId.class)) ||
-                  enforceOn.equals(Type.getType(DatasetId.class)) ||
-                  enforceOn.equals(Type.getType(ApplicationId.class))) {
+            enforceOn.equals(Type.getType(DatasetId.class)) || enforceOn.equals(Type.getType(ApplicationId.class))) {
             return 2;
           } else if (enforceOn.equals(Type.getType(ArtifactId.class))) {
             return 3;
@@ -623,6 +625,15 @@ public class AuthEnforceRewriter implements ClassRewriter {
 
     Set<Action> getActions() {
       return actions;
+    }
+
+    @Override
+    public String toString() {
+      return "AuthEnforceAnnotationNodeProcessor{" +
+        "actions=" + actions +
+        ", enforceOn=" + enforceOn +
+        ", entities=" + entities +
+        '}';
     }
   }
 

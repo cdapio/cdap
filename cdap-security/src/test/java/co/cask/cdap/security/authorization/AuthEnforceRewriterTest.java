@@ -135,8 +135,10 @@ public class AuthEnforceRewriterTest {
     testInvalidEntityHelper(DummyAuthEnforce.DuplicateAnnotationName.class);
     // test that class rewrite fails if parameter have QueryParam and PathParam with same name
     testInvalidEntityHelper(DummyAuthEnforce.SameQueryAndPathParam.class);
-    // test that the class rewrite fails if multiple part is specified of some other type than String
-    testInvalidEntityHelper(DummyAuthEnforce.EntitytWithString.class);
+    // test that class rewrite fails if multiple part is specified of some other type than String
+    testInvalidEntityHelper(DummyAuthEnforce.EntityWithString.class);
+    // test that class rewrite fails if a blank string is provided in entity parts
+    testInvalidEntityHelper(DummyAuthEnforce.BlankEntityName.class);
   }
 
   private void testInvalidEntityHelper(Class cls) throws Exception {

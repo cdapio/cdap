@@ -178,6 +178,17 @@ public class DummyAuthEnforce {
   }
 
   /**
+   * Class which has {@link AuthEnforce} annotation without a blank {@link Name} annotated parameter
+   */
+  public class BlankEntityName {
+
+    @AuthEnforce(entities = "", enforceOn = NamespaceId.class, actions = {Action.ADMIN, Action.READ})
+    public void testBlankEntityName(@Name("") NamespaceId namespaceId) throws Exception {
+      // no-op
+    }
+  }
+
+  /**
    * Class which has {@link AuthEnforce} annotation and parameter annotated with invalid annotation {@link Named}
    */
   public class InvalidParameterAnnotationType {
@@ -203,7 +214,7 @@ public class DummyAuthEnforce {
   /**
    * Class which has {@link AuthEnforce} annotation have multiple parts which is not only string type
    */
-  public class EntitytWithString {
+  public class EntityWithString {
 
     @AuthEnforce(entities = {"entity", "string"}, enforceOn = StreamId.class, actions = {Action.ADMIN, Action.READ})
     public void testEntityAndString(@Name("entity") NamespaceId p1, @Name("string") String p2)
