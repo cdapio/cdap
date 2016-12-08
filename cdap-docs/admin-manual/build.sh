@@ -47,7 +47,9 @@ function download_includes() {
   echo "Building rst file from cdap-default.xml..." 
   python "${DEFAULT_TOOL}" --generate --target "${target_includes_dir}/${DEFAULT_RST}"
   echo "Building rst file from cdap-default-deprecated.xml..." 
-  python "${DEFAULT_TOOL}" -g -i -s ${DEFAULT_DEPRECATED_XML} -t "${target_includes_dir}/${DEFAULT_DEPRECATED_RST}"
+  # Ignores the CDAP_DEFAULT_EXCLUSIONS file
+  python "${DEFAULT_TOOL}" --deprecated --ignore --source ${DEFAULT_DEPRECATED_XML} --target "${target_includes_dir}/${DEFAULT_DEPRECATED_RST}"
+
   
   echo "Copying files, changing references..."
   local source_rst="${target_includes_dir}/../../source/_includes/installation"

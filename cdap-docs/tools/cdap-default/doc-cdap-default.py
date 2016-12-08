@@ -345,6 +345,13 @@ def parse_options():
         default=False)
 
     parser.add_option(
+        '-d', '--deprecated',
+        dest='deprecated',
+        action='store_true',
+        help='Loads an XML file, compares it against the CDAP default (%s), removes deleted properties, and creates an RST file describing it' % CDAP_DEFAULT_XML,
+        default=False)
+
+    parser.add_option(
         '-i', '--ignore',
         dest='ignore',
         action='store_true',
@@ -489,7 +496,7 @@ def load_xml_sdl_files():
     print
     return files
 
-def load_xml(source, include_exclusions=False, include_comments=True):
+def load_xml(source='', include_exclusions=False, include_comments=True):
     func = 'load_xml'
     if source:
         print "Loading %s" % source
@@ -524,11 +531,12 @@ def load_xml(source, include_exclusions=False, include_comments=True):
 
     return items, tree
 
-def create_rst(items, ignore):
+def create_rst(items):
     """Create rst from items"""
-    table = ''    
-    for item in items:
-        table += item.rst()
+    table = ''
+    if items: 
+        for item in items:
+            table += item.rst()
     return table
 
 def rebuild(filepath=''):
@@ -624,7 +632,7 @@ def rebuild(filepath=''):
 
 def load_create_rst(filesource='', filepath='', ignore=False):
     defaults, tree = load_xml(filesource, include_exclusions=ignore)
-    table = create_rst(defaults, ignore)
+    table = create_rst(defaults)
     if filepath:
         f = open(filepath, 'w')
         f.write(table)
@@ -854,7 +862,42 @@ def compare_all(update=False, compare_values=False):
     xml_sdl_files = load_xml_sdl_files()
     for xml_sdl_file in xml_sdl_files:
         xml_sdl_file.compare(default, update, compare_values)
-            
+
+def generated_deprecated(filesource='', filepath='', ignore=False):
+    defaults, tree = load_xml('', include_exclusions=ignore, include_comments=False)
+    deprecated_commented, tree = load_xml(filesource, include_exclusions=ignore, include_comments=True)
+    deprecated, tree = load_xml(filesource, include_exclusions=ignore, include_comments=False)
+
+    default_names = []
+    for d in defaults:
+        default_names.append(d.name)
+        
+    deprecated_commented_names = []
+    for d in deprecated_commented:
+        deprecated_commented_names.append(d.name)
+
+    deprecated_names = []
+    for d in deprecated:
+        deprecated_names.append(d.name)
+    deprecated_names.reverse()
+    
+    print "\nDeprecated property checks: %d" % len(deprecated)
+    for d in deprecated_names:
+        if d not in default_names:
+            print " Deprecated property no longer in CDAP defaults: %s" % d
+            del deprecated_commented[deprecated_commented_names.index(d)]
+    
+    print "Final number of Deprecated items (including title): %d\n" % len(deprecated_commented)
+    
+    table = create_rst(deprecated_commented)    
+    if filepath:
+        f = open(filepath, 'w')
+        f.write(table)
+        f.close()
+    else:
+        print table
+    
+    
 def main():
     """ Main program entry point."""
 
@@ -868,6 +911,9 @@ def main():
         if options.compare:
             print "\nComparing Files... "
             compare_files(options.source, options.other_source, options.target, compare_values=options.compare_values)
+        if options.deprecated:
+            print "Generating Deprecated RST..."
+            generated_deprecated(options.source, options.target, options.ignore)
         if options.generate:
             print "Generating RST..."
             load_create_rst(options.source, options.target, options.ignore)
