@@ -1082,28 +1082,28 @@ public class MetadataDatasetTest {
         // ascending sort by name. offset and limit should be respected.
         SortInfo nameAsc = new SortInfo(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, SortInfo.SortOrder.ASC);
         // first 2 in ascending order
-        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 2, 1, null);
+        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 2, 0, null);
         Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry), searchResults.getResults());
         // return 2 with offset 1 in ascending order
-        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 1, 2, 1, null);
+        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 1, 2, 0, null);
         Assert.assertEquals(ImmutableList.of(dsEntry, appEntry), searchResults.getResults());
         // descending sort by name. offset and filter should be respected.
         SortInfo nameDesc = new SortInfo(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, SortInfo.SortOrder.DESC);
         // first 2 in descending order
-        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 0, 2, 1, null);
+        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 0, 2, 0, null);
         Assert.assertEquals(ImmutableList.of(appEntry, dsEntry), searchResults.getResults());
         // last 1 in descending order
-        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 2, 1, 1, null);
+        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 2, 1, 0, null);
         Assert.assertEquals(ImmutableList.of(flowEntry), searchResults.getResults());
         // limit 0 should return empty
-        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 2, 0, 1, null);
+        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 2, 0, 0, null);
         Assert.assertTrue(searchResults.getResults().isEmpty());
-        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 1, 0, 1, null);
+        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 1, 0, 0, null);
         Assert.assertTrue(searchResults.getResults().isEmpty());
         // offset greater than total search results should return empty
-        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 4, 0, 1, null);
+        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 4, 0, 0, null);
         Assert.assertTrue(searchResults.getResults().isEmpty());
-        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 100, 0, 1, null);
+        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 100, 0, 0, null);
         Assert.assertTrue(searchResults.getResults().isEmpty());
 
         // test cursors

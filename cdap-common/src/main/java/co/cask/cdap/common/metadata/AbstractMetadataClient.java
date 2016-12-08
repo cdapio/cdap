@@ -99,7 +99,7 @@ public abstract class AbstractMetadataClient {
   public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
                                                Set<MetadataSearchTargetType> targets)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
-    return searchMetadata(namespace, query, targets, null, null);
+    return searchMetadata(namespace, query, targets, null, 0, Integer.MAX_VALUE, 0, null);
   }
 
   /**
@@ -109,11 +109,18 @@ public abstract class AbstractMetadataClient {
    * @param query the query string with which to search
    * @param targets {@link MetadataSearchTargetType}s to search. If empty, all possible types will be searched
    * @param sort specifies sort field and sort order. If {@code null}, the sort order is by relevance
-   *
+   * @param offset the index to start with in the search results. To return results from the beginning, pass {@code 0}
+   * @param limit the number of results to return, starting from #offset. To return all, pass {@link Integer#MAX_VALUE}
+   * @param numCursors the number of cursors to return in the response. A cursor identifies the first index of the
+   *                   next page for pagination purposes
+   * @param cursor the cursor that acts as the starting index for the requested page. This is only applicable when
+   *               #sortInfo is not default. If offset is also specified, it is applied starting at
+   *               the cursor. If {@code null}, the first row is used as the cursor
    * @return A set of {@link MetadataSearchResultRecord} for the given query.
    */
   public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
                                                Set<MetadataSearchTargetType> targets, @Nullable String sort,
+                                               int offset, int limit, int numCursors,
                                                @Nullable String cursor)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
 
@@ -124,6 +131,9 @@ public abstract class AbstractMetadataClient {
     if (sort != null) {
       path += "&sort=" + URLEncoder.encode(sort, "UTF-8");
     }
+    path += "&offset=" + offset;
+    path += "&limit=" + limit;
+    path += "&numCursors=" + numCursors;
     if (cursor != null) {
       path += "&cursor=" + cursor;
     }

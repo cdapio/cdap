@@ -54,6 +54,7 @@ import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.metadata.Metadata;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.common.http.HttpRequest;
@@ -1145,27 +1146,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   }
 
   @Test
-  public void testSearchResultSorting() throws Exception {
-    NamespaceId namespace = new NamespaceId("ns3");
-    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
-
-    StreamId stream = namespace.stream("text");
-    DatasetId dataset = namespace.dataset("mydataset");
-    StreamViewId view = stream.view("view");
-
-    // create entities so system metadata is annotated
-    // also ensure that they are created at least 1 ms apart
-    streamClient.create(stream);
-    TimeUnit.MILLISECONDS.sleep(1);
-    streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("csv", null, null)));
-    TimeUnit.MILLISECONDS.sleep(1);
-    datasetClient.create(
-      dataset,
-      new DatasetInstanceConfiguration(Table.class.getName(), Collections.<String, String>emptyMap())
-    );
-
-    // search with bad sort param
-    EnumSet<MetadataSearchTargetType> targets = EnumSet.allOf(MetadataSearchTargetType.class);
+  public void testInvalidSearchParams() throws Exception {
+    NamespaceId namespace = new NamespaceId("invalid");
+    Set<MetadataSearchTargetType> targets = EnumSet.allOf(MetadataSearchTargetType.class);
     try {
       searchMetadata(namespace, "*", targets, AbstractSystemMetadataWriter.ENTITY_NAME_KEY);
       Assert.fail();
@@ -1189,13 +1172,45 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       // expected
     }
 
-    // search with cursor for relevance sort
+    // search with numCursors for relevance sort
     try {
-      searchMetadata(NamespaceId.DEFAULT, "search*", EnumSet.allOf(MetadataSearchTargetType.class), null, 1, "cursor");
+      searchMetadata(NamespaceId.DEFAULT, "search*", targets, null, 0, Integer.MAX_VALUE, 1, null);
       Assert.fail();
     } catch (BadRequestException e) {
       // expected
     }
+
+    // search with cursor for relevance sort
+    try {
+      searchMetadata(NamespaceId.DEFAULT, "search*", targets, null, 0, Integer.MAX_VALUE, 0, "cursor");
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testSearchResultSorting() throws Exception {
+    NamespaceId namespace = new NamespaceId("sorting");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
+
+    StreamId stream = namespace.stream("text");
+    DatasetId dataset = namespace.dataset("mydataset");
+    StreamViewId view = stream.view("view");
+
+    // create entities so system metadata is annotated
+    // also ensure that they are created at least 1 ms apart
+    streamClient.create(stream);
+    TimeUnit.MILLISECONDS.sleep(1);
+    streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("csv", null, null)));
+    TimeUnit.MILLISECONDS.sleep(1);
+    datasetClient.create(
+      dataset,
+      new DatasetInstanceConfiguration(Table.class.getName(), Collections.<String, String>emptyMap())
+    );
+
+    // search with bad sort param
+    EnumSet<MetadataSearchTargetType> targets = EnumSet.allOf(MetadataSearchTargetType.class);
 
     // test ascending order of entity name
     Set<MetadataSearchResultRecord> searchResults =
@@ -1230,6 +1245,66 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       new MetadataSearchResultRecord(stream)
     );
     Assert.assertEquals(expected, new ArrayList<>(searchResults));
+
+    // cleanup
+    namespaceClient.delete(namespace);
+  }
+
+  @Test
+  public void testSearchResultPagination() throws Exception {
+    NamespaceId namespace = new NamespaceId("pagination");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
+
+    StreamId stream = namespace.stream("text");
+    DatasetId dataset = namespace.dataset("mydataset");
+    StreamViewId view = stream.view("view");
+
+    // create entities so system metadata is annotated
+    streamClient.create(stream);
+    streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("csv", null, null)));
+    datasetClient.create(
+      dataset,
+      new DatasetInstanceConfiguration(Table.class.getName(), Collections.<String, String>emptyMap())
+    );
+
+    EnumSet<MetadataSearchTargetType> targets = EnumSet.allOf(MetadataSearchTargetType.class);
+    String sort = AbstractSystemMetadataWriter.ENTITY_NAME_KEY + " asc";
+    // no offset, limit 1, no cursors
+    MetadataSearchResponse searchResponse = searchMetadata(namespace, "*", targets, sort, 0, 1, 0, null);
+    List<MetadataSearchResultRecord> expectedResults = ImmutableList.of(new MetadataSearchResultRecord(dataset));
+    List<String> expectedCursors = ImmutableList.of();
+    Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertEquals(expectedCursors, searchResponse.getCursors());
+    // no offset, limit 1, 2 cursors, should return 1st result, with 2 cursors
+    searchResponse = searchMetadata(namespace, "*", targets, sort, 0, 1, 2, null);
+    expectedResults = ImmutableList.of(new MetadataSearchResultRecord(dataset));
+    expectedCursors = ImmutableList.of(stream.getEntityName(), view.getEntityName());
+    Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertEquals(expectedCursors, searchResponse.getCursors());
+    // offset 1, limit 1, 2 cursors, should return 2nd result, with only 1 cursor since we don't have enough data
+    searchResponse = searchMetadata(namespace, "*", targets, sort, 1, 1, 2, null);
+    expectedResults = ImmutableList.of(new MetadataSearchResultRecord(stream));
+    expectedCursors = ImmutableList.of(view.getEntityName());
+    Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertEquals(expectedCursors, searchResponse.getCursors());
+    // offset 2, limit 1, 2 cursors, should return 3rd result, with 0 cursors since we don't have enough data
+    searchResponse = searchMetadata(namespace, "*", targets, sort, 2, 1, 2, null);
+    expectedResults = ImmutableList.of(new MetadataSearchResultRecord(view));
+    Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertTrue(searchResponse.getCursors().isEmpty());
+    // offset 3, limit 1, 2 cursors, should 0 results, with 0 cursors since we don't have enough data
+    searchResponse = searchMetadata(namespace, "*", targets, sort, 3, 1, 2, null);
+    Assert.assertTrue(searchResponse.getResults().isEmpty());
+    Assert.assertTrue(searchResponse.getCursors().isEmpty());
+    // no offset, no limit, should return everything
+    searchResponse = searchMetadata(namespace, "*", targets, sort, 0, Integer.MAX_VALUE, 4, null);
+    expectedResults = ImmutableList.of(
+      new MetadataSearchResultRecord(dataset),
+      new MetadataSearchResultRecord(stream),
+      new MetadataSearchResultRecord(view)
+    );
+    Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertTrue(searchResponse.getCursors().isEmpty());
 
     // cleanup
     namespaceClient.delete(namespace);
@@ -1645,12 +1720,26 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
                                                            Set<MetadataSearchTargetType> targets,
                                                            @Nullable String sort) throws Exception {
-    Set<MetadataSearchResultRecord> results = super.searchMetadata(namespaceId, query, targets, sort);
+    return searchMetadata(namespaceId, query, targets, sort, 0, Integer.MAX_VALUE, 0, null).getResults();
+  }
+
+  /**
+   * strips metadata from search results
+   */
+  @Override
+  protected MetadataSearchResponse searchMetadata(NamespaceId namespaceId, String query,
+                                                  Set<MetadataSearchTargetType> targets,
+                                                  @Nullable String sort, int offset, int limit,
+                                                  int numCursors, @Nullable String cursor) throws Exception {
+    MetadataSearchResponse searchResponse = super.searchMetadata(namespaceId, query, targets, sort, offset,
+                                                                 limit, numCursors, cursor);
     Set<MetadataSearchResultRecord> transformed = new LinkedHashSet<>();
-    for (MetadataSearchResultRecord result : results) {
+    for (MetadataSearchResultRecord result : searchResponse.getResults()) {
       transformed.add(new MetadataSearchResultRecord(result.getEntityId()));
     }
-    return transformed;
+    return new MetadataSearchResponse(searchResponse.getSort(), searchResponse.getOffset(), searchResponse.getLimit(),
+                                      searchResponse.getNumCursors(), searchResponse.getTotal(), transformed,
+                                      searchResponse.getCursors());
   }
 
   private Set<MetadataRecord> removeCreationTime(Set<MetadataRecord> original) {

@@ -119,7 +119,7 @@ public class NoOpMetadataStore implements MetadataStore {
   public MetadataSearchResponse search(String namespaceId, String searchQuery,
                                        Set<MetadataSearchTargetType> types,
                                        SortInfo sort, int offset, int limit, int numCursors, String cursor) {
-    return new MetadataSearchResponse(sort.toString(), offset, limit, 0,
+    return new MetadataSearchResponse(sort.toString(), offset, limit, numCursors, 0,
                                       Collections.<MetadataSearchResultRecord>emptySet(),
                                       Collections.<String>emptyList());
   }

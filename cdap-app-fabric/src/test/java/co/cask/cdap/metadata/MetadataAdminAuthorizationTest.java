@@ -80,11 +80,11 @@ public class MetadataAdminAuthorizationTest {
     EnumSet<MetadataSearchTargetType> types = EnumSet.allOf(MetadataSearchTargetType.class);
     Assert.assertFalse(
       metadataAdmin.search(NamespaceId.DEFAULT.getNamespace(), "*", types,
-                           SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null).getResults().isEmpty());
+                           SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null).getResults().isEmpty());
     SecurityRequestContext.setUserId("bob");
     Assert.assertTrue(
       metadataAdmin.search(NamespaceId.DEFAULT.getNamespace(), "*", types,
-                           SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null).getResults().isEmpty());
+                           SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null).getResults().isEmpty());
   }
 
   @AfterClass

@@ -166,7 +166,7 @@ public interface MetadataAdmin {
    * @param offset the index to start with in the search results. To return results from the beginning, pass {@code 0}
    * @param limit the number of results to return, starting from #offset. To return all, pass {@link Integer#MAX_VALUE}
    * @param numCursors the number of cursors to return in the response. A cursor identifies the first index of the
-   *                   next page for pagination purposes
+   *                   next page for pagination purposes. Defaults to {@code 0}
    * @param cursor the cursor that acts as the starting index for the requested page. This is only applicable when
    *               #sortInfo is not {@link SortInfo#DEFAULT}. If offset is also specified, it is applied starting at
    *               the cursor. If {@code null}, the first row is used as the cursor

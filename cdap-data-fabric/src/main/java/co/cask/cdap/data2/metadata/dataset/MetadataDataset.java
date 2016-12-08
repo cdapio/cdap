@@ -538,7 +538,8 @@ public class MetadataDataset extends AbstractDataset {
    * @param limit number of results to return, starting from #offset. To return all, pass {@link Integer#MAX_VALUE}.
    *              Only applies when #sortInfo is not {@link SortInfo#DEFAULT}
    * @param numCursors number of cursors to return in the response. A cursor identifies the first index of the
-   *                   next page for pagination purposes. Only applies when #sortInfo is not {@link SortInfo#DEFAULT}
+   *                   next page for pagination purposes. Only applies when #sortInfo is not {@link SortInfo#DEFAULT}.
+   *                   Defaults to {@code 0}
    * @param cursor the cursor that acts as the starting index for the requested page. This is only applicable when
    *               #sortInfo is not {@link SortInfo#DEFAULT}. If offset is also specified, it is applied starting at
    *               the cursor. If {@code null}, the first row is used as the cursor
@@ -578,6 +579,7 @@ public class MetadataDataset extends AbstractDataset {
         scanner.close();
       }
     }
+    // cursors are currently not supported for default indexes
     return new SearchResults(results, Collections.<String>emptyList());
   }
 
@@ -586,7 +588,9 @@ public class MetadataDataset extends AbstractDataset {
                                             @Nullable String cursor) {
     List<MetadataEntry> results = new ArrayList<>();
     String indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
-    int fetchSize = offset + numCursors * limit;
+    // we want to return the first chunk of 'limit' elements after offset
+    // in addition, we want to pre-fetch 'numCursors' chunks of size 'limit'
+    int fetchSize = offset + ((numCursors + 1) * limit);
     List<String> cursors = new ArrayList<>(numCursors);
     for (String searchTerm : getSearchTerms(namespaceId, "*")) {
       byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
