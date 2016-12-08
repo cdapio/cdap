@@ -2605,6 +2605,10 @@
               <title>Application Template Packages</title>
               <packages>co.cask.cdap.etl.*</packages>
             </group>
+            <group>
+              <title>Java Client Packages</title>
+              <packages>co.cask.cdap.client:co.cask.cdap.client.*</packages>
+            </group>
           </groups>
         </configuration>
         <reportSets>
@@ -2618,6 +2622,7 @@
               <excludePackageNames>*.internal.*</excludePackageNames>
               <sourceFileIncludes>
                 <include>**/api/**/*.java</include>
+                <include>co/cask/cdap/client/**/*.java</include>
                 <include>co/cask/cdap/test/*.java</include>
               </sourceFileIncludes>
             </configuration>
