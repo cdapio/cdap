@@ -76,19 +76,28 @@ export default class PlusButtonModal extends Component {
             </span>
           </span>
           <div className="pull-right">
-            <button
-              className={classNames("btn btn-sm navigation-button", {
-                'resource-center': this.state.viewMode === 'resourcecenter'
-              })}
-              onClick={this.toggleView.bind(this)}
-            >
-              <span
-                className={classNames("button-icon", this.getIconForView(this.state.viewMode, true))}
-              />
-              <span className="plus-button-modal-toggle-text">
-                { this.state.viewMode === 'resourcecenter' ? market : resourceCenter }
-              </span>
-            </button>
+            <div className="btn-group">
+              <button
+                className={classNames("btn btn-sm navigation-button", {
+                  'active': this.state.viewMode === 'marketplace'
+                })}
+                onClick={this.toggleView.bind(this)}
+              >
+                <span className="plus-button-modal-toggle-text">
+                  {market}
+                </span>
+              </button>
+              <button
+                className={classNames("btn btn-sm navigation-button resource-center", {
+                  'active': this.state.viewMode === 'resourcecenter'
+                })}
+                onClick={this.toggleView.bind(this)}
+              >
+                <span className="plus-button-modal-toggle-text">
+                  {resourceCenter}
+                </span>
+              </button>
+            </div>
           </div>
         </ModalHeader>
         <ModalBody>
