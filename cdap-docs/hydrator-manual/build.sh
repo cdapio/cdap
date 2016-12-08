@@ -214,7 +214,6 @@ function download_includes() {
   download_md_file cassandra-plugins Cassandra-batchsink.md
   download_md_file cassandra-plugins Cassandra-batchsource.md 
   download_md_file cassandra-plugins Cassandra-realtimesink.md 
-  download_md_file copybookreader-plugins CopybookReader-batchsource.md 
   download_md_file core-plugins AmazonSQS-realtimesource.md
   download_md_file core-plugins AzureBlobStore-batchsource.md
   download_md_file core-plugins Cube-batchsink.md
