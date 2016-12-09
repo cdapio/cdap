@@ -159,11 +159,13 @@ features:
         storage: Storage
         queues: Queues
         resources: Resources
+        load: Load
       labels:
         Accepted: Accepted
+        AverageRegionsPerServer: Average Regions Per Server
         RemainingBytes: Available
         CorruptBlocks: Corrupt Blocks
-        deadRegionServers: Dead Region Servers
+        DeadRegionServers: Dead Region Servers
         Failed: Failed
         Finished: Finished
         FreeMemory: Free Memory
@@ -171,25 +173,27 @@ features:
         HealthyNodes: Healthy Nodes
         HealthyContainers: Healthy Containers
         Killed: Killed
-        liveRegionServers: Live Region Servers
-        lost: Lost
         New: New
         NewNodes: New Nodes
         NewContainers: New Containers
-        masters: Masters
+        Masters: Masters
         MissingBlocks: Missing Blocks
         Namenodes: Namenodes
-        namespaces: Namespaces
+        Namespaces: Namespaces
+        RegionServers: Region Servers
+        RegionsInTransition: Regions in Transition
+        NumRequests: No. of Requests
         Running: Running
-        rebooted: Rebooted
+        Snapshots: Snapshots
         Stopped: Stopped
         Submitted: Submitted
-        tables: Tables
+        Tables: Tables
         Total: Total
         TotalBytes: Total
         TotalNodes: Total Nodes
         TotalContainers: Total Containers
         TotalMemory: Total Memory
+        TotalRegions: Total Regions
         TotalVCores: Total Virtual Cores
         totalRegionServers: Total Region Servers
         UnderReplicatedBlocks: Under Replicated Blocks
