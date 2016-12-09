@@ -37,11 +37,9 @@ except Exception, e:
         print "\nMust use python 2.7 or greater.\n"
     raise e
 
-
 def parse_options():
     """ Parses args options.
     """
-
     parser = OptionParser(
         usage="%prog [release]",
         description="Searches for deprecated items in documentation ('cdap-docs') and examples ('cdap-examples'). "
@@ -93,16 +91,13 @@ def load_deprecated_items(release):
     return deprecated_items, longest
 
 def _load_deprecated_items(deprecated_url):
-
     print "Loading deprecated info from '%s'" % deprecated_url
     page = urllib2.urlopen(deprecated_url).read()
     soup = BeautifulSoup(page, 'html.parser')
-#     soup.prettify()
     deprecated_items = dict()
     i = 0
     for a in soup.select('a[href^="co/cask/cdap"]'):
-        line = None
- 
+        line = None 
         if a.contents:
             line = str(a.contents[0]).strip()
             if line.startswith('<code>'):
@@ -190,7 +185,6 @@ def search_docs(release):
                     deprecated_display = "%s%s" % (deprecated, ' ' * (longest - len(deprecated)))
                     deprecated_display = deprecated_display[0:longest+1]
                     print "Found %s in '%s'" % (deprecated_display, file_path)
-            
 
 def main():
     """ Main program entry point.
