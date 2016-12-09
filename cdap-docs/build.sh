@@ -148,7 +148,7 @@ function build_docs_first_pass() {
   local title="Building Docs First Pass"
   display_start_title "${title}"
 
-  build_docs_inner_level build-docs
+  build_docs_inner_level build-docs ${FALSE}
   
   display_end_title ${title}
 }
@@ -157,7 +157,7 @@ function build_docs_second_pass() {
   local title="Building Docs Second Pass"
   display_start_title "${title}"
 
-  build_docs_inner_level build-web
+  build_docs_inner_level build-web ${TRUE}
   build_docs_outer_level ${GOOGLE_TAG_MANAGER_CODE}
   copy_docs_inner_level
 
@@ -237,6 +237,9 @@ function build_docs_cli() {
 function build_docs_inner_level() {
 # Change to each manual, and run the local ./build.sh from there.
 # Each manual can (and does) have a customised build script, using the common-build.sh as a base.
+local build_target=${1}
+local fail_on_error=${2}
+local errors
   for i in ${MANUALS}; do
     echo "========================================================"
     echo "Building \"${i}\", target \"${1}\"..."
@@ -247,7 +250,11 @@ function build_docs_inner_level() {
     errors=$?
     if [[ ${errors} -ne 0 ]]; then
       echo "Error building manual ${i}: ${errors}"
-      return ${errors}
+      if [[ ${fail_on_error} == ${TRUE} ]]; then
+        return ${errors}
+      else
+        echo "Ignoring error as fail_on_error: ${fail_on_error}"
+      fi
     fi
     echo
   done
