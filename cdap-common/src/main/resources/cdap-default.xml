@@ -1685,14 +1685,6 @@
   </property>
 
   <property>
-    <name>router.ssl.webapp.bind.port</name>
-    <value>20443</value>
-    <description>
-      CDAP Router service bind port for webapp for HTTPS (deprecated)
-    </description>
-  </property>
-
-  <property>
     <name>router.userservice.fallback.strategy</name>
     <value>random</value>
     <description>
@@ -1701,23 +1693,6 @@
       "largest", or "drop". A string comparison of the versions of the user service is
       used for "smallest" or "largest". The "drop" option will not route the request to
       any service and will return "service not found".
-    </description>
-  </property>
-
-  <property>
-    <name>router.webapp.bind.port</name>
-    <value>20000</value>
-    <description>
-      CDAP Router service bind port for webapp (deprecated)
-    </description>
-  </property>
-
-  <property>
-    <name>router.webapp.enabled</name>
-    <value>false</value>
-    <description>
-      Determines if the webapp listening service should be started
-      (deprecated)
     </description>
   </property>
 
@@ -2016,14 +1991,6 @@
     <value>false</value>
     <description>
       Determines if SSL for external services is enabled
-    </description>
-  </property>
-
-  <property>
-    <name>ssl.enabled</name>
-    <value>${ssl.external.enabled}</value>
-    <description>
-      Determines if SSL is enabled
     </description>
   </property>
 

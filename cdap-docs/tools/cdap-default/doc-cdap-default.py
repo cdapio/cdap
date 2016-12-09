@@ -864,31 +864,29 @@ def compare_all(update=False, compare_values=False):
         xml_sdl_file.compare(default, update, compare_values)
 
 def generated_deprecated(filesource='', filepath='', ignore=False):
+    func = 'generated_deprecated'
     defaults, tree = load_xml('', include_exclusions=ignore, include_comments=False)
-    deprecated_commented, tree = load_xml(filesource, include_exclusions=ignore, include_comments=True)
     deprecated, tree = load_xml(filesource, include_exclusions=ignore, include_comments=False)
 
     default_names = []
     for d in defaults:
         default_names.append(d.name)
         
-    deprecated_commented_names = []
-    for d in deprecated_commented:
-        deprecated_commented_names.append(d.name)
-
     deprecated_names = []
     for d in deprecated:
         deprecated_names.append(d.name)
     deprecated_names.reverse()
     
-    print "\nDeprecated property checks: %d" % len(deprecated)
+    print "Deprecated property check: %d" % len(deprecated)
+    duplicates = 0
     for d in deprecated_names:
-        if d not in default_names:
-            print " Deprecated property no longer in CDAP defaults: %s" % d
-            del deprecated_commented[deprecated_commented_names.index(d)]
+        if d in default_names:
+            print " Deprecated property is also in CDAP defaults.xml: %s" % d
+            duplicates += 1    
+    if duplicates:
+        raise Exception(func, "Duplicated properties in CDAP defaults.xml: %d" % duplicates)
     
-    print "Final number of Deprecated items (including title): %d\n" % len(deprecated_commented)
-    
+    deprecated_commented, tree = load_xml(filesource, include_exclusions=ignore, include_comments=True)
     table = create_rst(deprecated_commented)    
     if filepath:
         f = open(filepath, 'w')
@@ -896,8 +894,8 @@ def generated_deprecated(filesource='', filepath='', ignore=False):
         f.close()
     else:
         print table
-    
-    
+
+
 def main():
     """ Main program entry point."""
 

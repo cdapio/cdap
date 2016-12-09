@@ -121,6 +121,12 @@ function build_docs() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
+  errors=$?
+  if [[ ${errors} -ne 0 ]]; then
+    echo "Error in check_includes: ${errors}"
+    consolidate_messages
+    return ${errors}
+  fi
   ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_tag} ${SOURCE} ${TARGET}/${HTML}
   build_extras
   consolidate_messages
@@ -163,7 +169,17 @@ function check_includes() {
     rm -rf ${target_includes_dir}
     mkdir ${target_includes_dir}
     download_includes ${target_includes_dir}
+    errors=$?
+    if [[ ${errors} -ne 0 ]]; then
+      echo "Error in download_includes: ${errors}"
+      return ${errors}
+    fi
     test_includes ${target_includes_dir}
+    errors=$?
+    if [[ ${errors} -ne 0 ]]; then
+      echo "Error in test_includes: ${errors}"
+      return ${errors}
+    fi
   else
     echo "No includes to be checked."
   fi
@@ -409,6 +425,12 @@ function set_message() {
   else
     MESSAGES="${MESSAGES}\n\n${*}"
   fi
+}
+
+function echo_set_message() {
+  echo ${2}
+  set_message ${2} ": ${1}"
+  return ${1}
 }
 
 function consolidate_messages() {

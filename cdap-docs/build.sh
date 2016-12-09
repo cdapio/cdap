@@ -244,6 +244,11 @@ function build_docs_inner_level() {
     echo
     cd $SCRIPT_PATH/${i}
     ./build.sh ${1}
+    errors=$?
+    if [[ ${errors} -ne 0 ]]; then
+      echo "Error building manual ${i}: ${errors}"
+      return ${errors}
+    fi
     echo
   done
 }
