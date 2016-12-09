@@ -17,23 +17,29 @@
 package co.cask.cdap.common.security;
 
 import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ClassRewriter;
+import co.cask.cdap.internal.asm.Classes;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ParentedId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -41,9 +47,12 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
 import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
+import org.objectweb.asm.signature.SignatureReader;
+import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +60,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -140,6 +151,9 @@ public class AuthEnforceRewriter implements ClassRewriter {
   private static final Set<String> SUPPORTED_PARAMETER_ANNOTATIONS = Sets.newHashSet(Name.class.getName(),
                                                                                      QueryParam.class.getName(),
                                                                                      PathParam.class.getName());
+  private static final Function<String, URL> resourceLookup =
+    ClassLoaders.createClassResourceLookup(AuthEnforceRewriter.class.getClassLoader());
+  private static final Map<String, Boolean> cache = new HashMap<>();
 
   @Override
   public byte[] rewriteClass(String className, InputStream input) throws IOException {
@@ -147,6 +161,13 @@ public class AuthEnforceRewriter implements ClassRewriter {
     // First pass: Check the class to have a method with AuthEnforce annotation if found store the annotation details
     // and parameters for the method for second pass in which class rewrite will be performed.
     ClassReader cr = new ClassReader(classBytes);
+
+    // We inspect all EntityId class to create a graph of their parentIds
+    if (Classes.isSubTypeOf(className, ParentedId.class.getName(), resourceLookup, cache)) {
+      EntityIdClassVisitor classVisitor = new EntityIdClassVisitor(className);
+      cr.accept(classVisitor, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+      return classBytes;
+    }
 
     // SKIP_CODE SKIP_DEBUG and SKIP_FRAMESto make the first pass faster since in the first pass we just want to
     // process annotations to check if the class has any method with AuthEnforce annotation. If such method is found
@@ -166,6 +187,34 @@ public class AuthEnforceRewriter implements ClassRewriter {
     cr.accept(new AuthEnforceAnnotationRewriter(className, cw, classVisitor.getFieldDetails(), methodAnnotations),
             ClassReader.EXPAND_FRAMES);
     return cw.toByteArray();
+  }
+
+  private static final class EntityIdClassVisitor extends ClassVisitor {
+
+    private final String className;
+
+    EntityIdClassVisitor(String className) {
+      super(Opcodes.ASM5);
+      this.className = className;
+    }
+
+    @Override
+    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+      super.visit(version, access, name, signature, superName, interfaces);
+
+      if (signature == null) {
+        return;
+      }
+
+      new SignatureReader(signature).accept(new SignatureVisitor(Opcodes.ASM5) {
+
+        @Override
+        public void visitClassType(String name) {
+          System.out.println("### visitClassType: " + name);
+          super.visitClassType(name);
+        }
+      });
+    }
   }
 
   /**
