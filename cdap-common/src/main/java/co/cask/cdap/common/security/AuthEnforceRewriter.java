@@ -359,7 +359,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
             getField(classType, entityPart.getEntityName(), fieldDetails.get(entityPart.getEntityName()));
           } else {
             // load method parameter
-            loadArg(0);
+            loadArg(annotationDetail.getParameterAnnotation().get(entityPart.getEntityName()));
           }
 
           // push the authentication context
