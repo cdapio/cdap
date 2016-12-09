@@ -48,18 +48,35 @@ export default class ConfirmationModal extends Component {
 
     let confirmation = this.props.confirmationElem ? this.props.confirmationElem : this.props.confirmationText;
 
+    let actionBtn;
+
+    if(this.props.disableAction){
+      actionBtn = (
+        <button
+          className="btn disabled-btn"
+          disabled
+        >
+          {this.props.confirmButtonText}
+        </button>
+      );
+    } else {
+      actionBtn = (
+        <button
+          className="btn"
+          onClick={this.props.confirmFn}
+        >
+          {this.props.confirmButtonText}
+        </button>
+      );
+    }
+
     return (
       <ModalBody>
         <div className="confirmation">
           {confirmation}
         </div>
         <div className="confirmation-button-options">
-          <button
-            className="btn"
-            onClick={this.props.confirmFn}
-          >
-            {this.props.confirmButtonText}
-          </button>
+          {actionBtn}
           <button
             className="btn"
             onClick={this.props.cancelFn}
@@ -125,5 +142,6 @@ ConfirmationModal.propTypes = {
   toggleModal: PropTypes.func,
   isLoading: PropTypes.bool,
   errorMessage: PropTypes.string,
-  extendedMessage: PropTypes.string
+  extendedMessage: PropTypes.string,
+  disableAction: PropTypes.bool
 };
