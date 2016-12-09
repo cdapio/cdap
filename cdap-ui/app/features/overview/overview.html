@@ -21,7 +21,7 @@
         <div class="text-content">
           <h3 class="banner-title">
             <span>Cask Hydrator</span>
-            <a ui-sref="hydratorplusplus.create({ namespace: $stateParams.namespace })" class="btn btn-hydrator">Go!</a>
+            <a href="{{ OverviewCtrl.getHydratorUrl( { stateParams: { namespace: $stateParams.namespace } } ) }}" class="btn btn-hydrator">Go!</a>
           </h3>
           <p>Self-Service, Extensible Framework for Data Pipelines</p>
         </div>
@@ -32,7 +32,7 @@
         <div class="text-content">
           <h3 class="banner-title">
             <span>Cask Tracker</span>
-            <a ui-sref="tracker.home" class="btn btn-tracker">Go!</a>
+            <a href="{{ OverviewCtrl.getTrackerUrl( { stateParams: { namespace: $stateParams.namespace } } ) }}" class="btn btn-tracker">Go!</a>
           </h3>
           <p>Data Discovery with Metadata, Audit and Lineage</p>
         </div>

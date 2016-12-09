@@ -14,11 +14,12 @@
  * the License.
  */
 
-function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT, myAuth, MY_CONFIG, $cookies) {
+function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT, myAuth, MY_CONFIG, $cookies, getHydratorUrl, getTrackerUrl) {
   'ngInject';
 
   let vm = this;
-
+  vm.getHydratorUrl = getHydratorUrl;
+  vm.getTrackerUrl = getTrackerUrl;
   vm.$cookies = $cookies;
 
   function findActiveProduct() {

@@ -38,4 +38,13 @@ angular.module(`${PKG.name}.commons`)
   })
   .factory('moment', function($window) {
     return $window.moment;
+  })
+  .factory('urlGenerator', function($window) {
+    return $window.getAbsUIUrl;
+  })
+  .factory('getTrackerUrl', function($window) {
+    return $window.getTrackerUrl;
+  })
+  .factory('getHydratorUrl', function($window) {
+    return $window.getHydratorUrl;
   });

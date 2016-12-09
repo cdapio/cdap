@@ -183,7 +183,8 @@ gulp.task('js:lib', function() {
       './bower_components/d3-tip/index.js',
       './bower_components/esprima/esprima.js',
 
-      './app/lib/avsc-bundle.js'
+      './app/lib/avsc-bundle.js',
+      './app/ui-utils/url-generator.js'
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
     ], mainBowerFiles({

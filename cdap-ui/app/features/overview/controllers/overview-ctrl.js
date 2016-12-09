@@ -19,7 +19,7 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelper, MyChartHelpers, MyCDAPDataSource, ServiceStatusFactory) {
+function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelper, MyChartHelpers, MyCDAPDataSource, ServiceStatusFactory, getHydratorUrl, getTrackerUrl) {
 
   var dataSrc = new MyCDAPDataSource($scope);
   if(!$state.params.namespace) {
@@ -29,6 +29,8 @@ function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelpe
     return;
   }
 
+  this.getHydratorUrl = getHydratorUrl;
+  this.getTrackerUrl = getTrackerUrl;
   this.isEnterprise = MY_CONFIG.isEnterprise;
   // this.systemStatus = '#C9C9D1';
   this.systemStatus = ServiceStatusFactory.systemStatus;
