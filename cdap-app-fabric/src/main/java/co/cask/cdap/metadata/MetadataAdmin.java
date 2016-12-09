@@ -23,6 +23,7 @@ import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +44,7 @@ public interface MetadataAdmin {
    *
    * @throws NotFoundException if the specified entity was not found
    * @throws InvalidMetadataException if some of the properties violate metadata validation rules
+   * @throws UnauthorizedException if the requesting user is does not have privileges to get tags for the given
    */
   void addProperties(NamespacedEntityId namespacedEntityId, Map<String, String> properties)
     throws NotFoundException, InvalidMetadataException;
@@ -53,6 +55,7 @@ public interface MetadataAdmin {
    *
    * @throws NotFoundException if the specified entity was not found
    * @throws InvalidMetadataException if some of the properties violate metadata validation rules
+   * @throws UnauthorizedException if the requesting user is does not have privileges to get tags for the given
    */
   void addTags(NamespacedEntityId namespacedEntityId, String... tags)
     throws NotFoundException, InvalidMetadataException;
@@ -62,47 +65,59 @@ public interface MetadataAdmin {
    * {@link NamespacedEntityId} in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
    *
    * @throws NotFoundException if the specified entity was not found
+   * @throws UnauthorizedException if the requesting user is does not have privileges to get tags for the given
    */
-  Set<MetadataRecord> getMetadata(NamespacedEntityId namespacedEntityId) throws NotFoundException;
+  Set<MetadataRecord> getMetadata(NamespacedEntityId namespacedEntityId)
+    throws NotFoundException, UnauthorizedException;
 
   /**
    * Returns a set of {@link MetadataRecord} representing all metadata (including properties and tags) for the specified
    * {@link NamespacedEntityId} in the specified {@link MetadataScope}.
    *
    * @throws NotFoundException if the specified entity was not found
+   * @throws UnauthorizedException if the requesting user is does not have privileges to get tags for the given
    */
   // TODO: Should this return a single metadata record instead or is a set of one record ok?
-  Set<MetadataRecord> getMetadata(MetadataScope scope, NamespacedEntityId namespacedEntityId) throws NotFoundException;
+  Set<MetadataRecord> getMetadata(MetadataScope scope, NamespacedEntityId namespacedEntityId)
+    throws NotFoundException, UnauthorizedException;
 
   /**
    * @return a {@link Map} representing the metadata of the specified {@link NamespacedEntityId} in both
    * {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}
    * @throws NotFoundException if the specified entity was not found
+   * @throws UnauthorizedException if the requesting user is does not have privileges to get tags for the given
    */
   // TODO: This should perhaps return a Map<MetadataScope, Map<String, String>>
-  Map<String, String> getProperties(NamespacedEntityId namespacedEntityId) throws NotFoundException;
+  Map<String, String> getProperties(NamespacedEntityId namespacedEntityId)
+    throws NotFoundException, UnauthorizedException;
 
   /**
    * @return a {@link Map} representing the metadata of the specified {@link NamespacedEntityId} in the specified
    * {@link MetadataScope}
    * @throws NotFoundException if the specified entity was not found
+   * @throws UnauthorizedException if the requesting user is does not have privileges to get tags for the given
    */
   Map<String, String> getProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId)
-    throws NotFoundException;
+    throws NotFoundException, UnauthorizedException;
 
   /**
    * @return all the tags for the specified {@link NamespacedEntityId} in both {@link MetadataScope#USER} and
    * {@link MetadataScope#SYSTEM}
    * @throws NotFoundException if the specified entity was not found
+   * @throws UnauthorizedException if the requesting user is does not have privileges to get tags for the given
+   * namespacedEntityId
    */
   // TODO: This should perhaps return a Map<MetadataScope, Set<String>>
-  Set<String> getTags(NamespacedEntityId namespacedEntityId) throws NotFoundException;
+  Set<String> getTags(NamespacedEntityId namespacedEntityId) throws NotFoundException, UnauthorizedException;
 
   /**
    * @return all the tags for the specified {@link NamespacedEntityId} in the specified {@link MetadataScope}
    * @throws NotFoundException if the specified entity was not found
+   * @throws UnauthorizedException if the requesting user is does not have privileges to get tags for the given
+   * namespacedEntityId
    */
-  Set<String> getTags(MetadataScope scope, NamespacedEntityId namespacedEntityId) throws NotFoundException;
+  Set<String> getTags(MetadataScope scope, NamespacedEntityId namespacedEntityId)
+    throws NotFoundException, UnauthorizedException;
 
   /**
    * Removes all the metadata (including properties and tags) for the specified {@link NamespacedEntityId}. This
@@ -110,6 +125,7 @@ public interface MetadataAdmin {
    *
    * @param namespacedEntityId the {@link NamespacedEntityId} to remove metadata for
    * @throws NotFoundException if the specified entity was not found
+   * @throws UnauthorizedException if the requesting user is does not have privileges to get tags for the given
    */
   void removeMetadata(NamespacedEntityId namespacedEntityId) throws NotFoundException;
 
@@ -119,6 +135,7 @@ public interface MetadataAdmin {
    *
    * @param namespacedEntityId the {@link NamespacedEntityId} to remove properties for
    * @throws NotFoundException if the specified entity was not found
+   * @throws UnauthorizedException if the requesting user is does not have privileges to get tags for the given
    */
   void removeProperties(NamespacedEntityId namespacedEntityId) throws NotFoundException;
 
@@ -129,6 +146,7 @@ public interface MetadataAdmin {
    * @param namespacedEntityId the {@link NamespacedEntityId} to remove the specified properties for
    * @param keys the metadata property keys to remove
    * @throws NotFoundException if the specified entity was not found
+   * @throws UnauthorizedException if the requesting user is does not have privileges to get tags for the given
    */
   void removeProperties(NamespacedEntityId namespacedEntityId, String... keys) throws NotFoundException;
 
@@ -138,6 +156,7 @@ public interface MetadataAdmin {
    *
    * @param namespacedEntityId the {@link NamespacedEntityId} to remove tags for
    * @throws NotFoundException if the specified entity was not found
+   * @throws UnauthorizedException if the requesting user is does not have privileges to get tags for the given
    */
   void removeTags(NamespacedEntityId namespacedEntityId) throws NotFoundException;
 
@@ -148,6 +167,7 @@ public interface MetadataAdmin {
    * @param namespacedEntityId the {@link NamespacedEntityId} to remove the specified tags for
    * @param tags the tags to remove
    * @throws NotFoundException if the specified entity was not found
+   * @throws UnauthorizedException if the requesting user is does not have privileges to get tags for the given
    */
   void removeTags(NamespacedEntityId namespacedEntityId, String ... tags) throws NotFoundException;
 

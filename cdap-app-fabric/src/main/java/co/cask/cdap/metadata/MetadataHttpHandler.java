@@ -36,6 +36,7 @@ import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -153,7 +154,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getAppMetadata(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-id") String appId,
-                             @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                             @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     ApplicationId app = new ApplicationId(namespaceId, appId);
     responder.sendJson(HttpResponseStatus.OK, getMetadata(app, scope), SET_METADATA_RECORD_TYPE, GSON);
   }
@@ -165,7 +167,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                  @PathParam("app-id") String appId,
                                  @PathParam("program-type") String programType,
                                  @PathParam("program-id") String programId,
-                                 @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                                 @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     ProgramId program = new ProgramId(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId);
     responder.sendJson(HttpResponseStatus.OK, getMetadata(program, scope), SET_METADATA_RECORD_TYPE, GSON);
   }
@@ -176,7 +179,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("artifact-name") String artifactName,
                                   @PathParam("artifact-version") String artifactVersionStr,
-                                  @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                                  @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     ArtifactId artifactId = new ArtifactId(namespaceId, artifactName, artifactVersionStr);
     responder.sendJson(HttpResponseStatus.OK, getMetadata(artifactId, scope), SET_METADATA_RECORD_TYPE, GSON);
   }
@@ -186,7 +190,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getDatasetMetadata(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("dataset-id") String datasetId,
-                                 @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                                 @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     DatasetId datasetInstance = new DatasetId(namespaceId, datasetId);
     responder.sendJson(HttpResponseStatus.OK, getMetadata(datasetInstance, scope), SET_METADATA_RECORD_TYPE, GSON);
   }
@@ -196,7 +201,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getStreamMetadata(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("stream-id") String streamId,
-                                @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                                @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     StreamId stream = new StreamId(namespaceId, streamId);
     responder.sendJson(HttpResponseStatus.OK, getMetadata(stream, scope), SET_METADATA_RECORD_TYPE, GSON);
   }
@@ -207,7 +213,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("stream-id") String streamId,
                               @PathParam("view-id") String viewId,
-                              @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                              @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     StreamViewId view = new StreamViewId(namespaceId, streamId, viewId);
     responder.sendJson(HttpResponseStatus.OK, getMetadata(view, scope), SET_METADATA_RECORD_TYPE, GSON);
   }
@@ -217,7 +224,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getAppProperties(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
-                               @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                               @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     ApplicationId app = new ApplicationId(namespaceId, appId);
     responder.sendJson(HttpResponseStatus.OK, getProperties(app, scope));
   }
@@ -228,7 +236,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("artifact-name") String artifactName,
                                     @PathParam("artifact-version") String artifactVersionStr,
-                                    @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                                    @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     ArtifactId artifactId = new ArtifactId(namespaceId, artifactName, artifactVersionStr);
     responder.sendJson(HttpResponseStatus.OK, getProperties(artifactId, scope));
   }
@@ -240,7 +249,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                    @PathParam("app-id") String appId,
                                    @PathParam("program-type") String programType,
                                    @PathParam("program-id") String programId,
-                                   @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                                   @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     ProgramId program = new ProgramId(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId);
     responder.sendJson(HttpResponseStatus.OK, getProperties(program, scope));
   }
@@ -250,7 +260,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getDatasetProperties(HttpRequest request, HttpResponder responder,
                                    @PathParam("namespace-id") String namespaceId,
                                    @PathParam("dataset-id") String datasetId,
-                                   @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                                   @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     DatasetId datasetInstance = new DatasetId(namespaceId, datasetId);
     responder.sendJson(HttpResponseStatus.OK, getProperties(datasetInstance, scope));
   }
@@ -260,7 +271,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getStreamProperties(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("stream-id") String streamId,
-                                  @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                                  @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     StreamId stream = new StreamId(namespaceId, streamId);
     responder.sendJson(HttpResponseStatus.OK, getProperties(stream, scope));
   }
@@ -271,7 +283,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("stream-id") String streamId,
                                 @PathParam("view-id") String viewId,
-                                @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                                @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     StreamViewId view = new StreamViewId(namespaceId, streamId, viewId);
     responder.sendJson(HttpResponseStatus.OK, getProperties(view, scope));
   }
@@ -639,7 +652,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getAppTags(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("app-id") String appId,
-                         @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                         @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     ApplicationId app = new ApplicationId(namespaceId, appId);
     responder.sendJson(HttpResponseStatus.OK, getTags(app, scope));
   }
@@ -651,7 +665,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                               @PathParam("artifact-name") String artifactName,
                               @PathParam("artifact-version") String artifactVersionStr,
                               @QueryParam("scope") String scope)
-    throws BadRequestException, NotFoundException {
+    throws Exception {
     ArtifactId artifactId = new ArtifactId(namespaceId, artifactName, artifactVersionStr);
     responder.sendJson(HttpResponseStatus.OK, getTags(artifactId, scope));
   }
@@ -663,7 +677,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @PathParam("app-id") String appId,
                              @PathParam("program-type") String programType,
                              @PathParam("program-id") String programId,
-                             @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                             @QueryParam("scope") String scope) throws Exception {
     ProgramId program = new ProgramId(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId);
     responder.sendJson(HttpResponseStatus.OK, getTags(program, scope));
   }
@@ -673,7 +687,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getDatasetTags(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("dataset-id") String datasetId,
-                             @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                             @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     DatasetId dataset = new DatasetId(namespaceId, datasetId);
     responder.sendJson(HttpResponseStatus.OK, getTags(dataset, scope));
   }
@@ -683,7 +698,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getStreamTags(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream-id") String streamId,
-                            @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                            @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     StreamId stream = new StreamId(namespaceId, streamId);
     responder.sendJson(HttpResponseStatus.OK, getTags(stream, scope));
   }
@@ -694,7 +710,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                           @PathParam("namespace-id") String namespaceId,
                           @PathParam("stream-id") String streamId,
                           @PathParam("view-id") String viewId,
-                          @QueryParam("scope") String scope) throws NotFoundException, BadRequestException {
+                          @QueryParam("scope") String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     StreamViewId view = new StreamViewId(namespaceId, streamId, viewId);
     responder.sendJson(HttpResponseStatus.OK, getTags(view, scope));
   }
@@ -940,21 +957,22 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   private Set<MetadataRecord> getMetadata(NamespacedEntityId namespacedEntityId,
-                                          @Nullable String scope) throws NotFoundException, BadRequestException {
+                                          @Nullable String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     return  (scope == null) ?
       metadataAdmin.getMetadata(namespacedEntityId) :
       metadataAdmin.getMetadata(validateScope(scope), namespacedEntityId);
   }
 
-  private Map<String, String> getProperties(NamespacedEntityId namespacedEntityId,
-                                            @Nullable String scope) throws NotFoundException, BadRequestException {
+  private Map<String, String> getProperties(NamespacedEntityId namespacedEntityId, @Nullable String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     return  (scope == null) ?
       metadataAdmin.getProperties(namespacedEntityId) :
       metadataAdmin.getProperties(validateScope(scope), namespacedEntityId);
   }
 
-  private Set<String> getTags(NamespacedEntityId namespacedEntityId,
-                              @Nullable String scope) throws NotFoundException, BadRequestException {
+  private Set<String> getTags(NamespacedEntityId namespacedEntityId, @Nullable String scope)
+    throws NotFoundException, BadRequestException, UnauthorizedException {
     return  (scope == null) ?
       metadataAdmin.getTags(namespacedEntityId) :
       metadataAdmin.getTags(validateScope(scope), namespacedEntityId);
