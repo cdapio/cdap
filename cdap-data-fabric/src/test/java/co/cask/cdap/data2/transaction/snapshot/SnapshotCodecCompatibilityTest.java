@@ -222,7 +222,7 @@ public class SnapshotCodecCompatibilityTest {
     assertEquals(1, snapshot2.getInProgress().size());
     Map.Entry<Long, TransactionManager.InProgressTx> inProgressTx =
         snapshot2.getInProgress().entrySet().iterator().next();
-    assertEquals(TransactionType.LONG, inProgressTx.getValue().getType());
+    assertEquals(TransactionManager.InProgressType.LONG, inProgressTx.getValue().getType());
 
     // save a new snapshot
     txManager2.stopAndWait();
