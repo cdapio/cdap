@@ -171,14 +171,12 @@ function check_includes() {
     download_includes ${target_includes_dir}
     errors=$?
     if [[ ${errors} -ne 0 ]]; then
-      echo "Error in download_includes: ${errors}"
-      return ${errors}
+      echo_set_message "Error in download_includes: ${errors}"
     fi
     test_includes ${target_includes_dir}
     errors=$?
     if [[ ${errors} -ne 0 ]]; then
-      echo "Error in test_includes: ${errors}"
-      return ${errors}
+      echo_set_message "Error in test_includes: ${errors}"
     fi
   else
     echo "No includes to be checked."
@@ -428,9 +426,8 @@ function set_message() {
 }
 
 function echo_set_message() {
-  echo ${2}
-  set_message ${2} ": ${1}"
-  return ${1}
+  echo ${*}
+  set_message ${*}
 }
 
 function consolidate_messages() {

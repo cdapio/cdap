@@ -48,7 +48,7 @@ function download_includes() {
   python "${DEFAULT_TOOL}" --generate --target "${target_includes_dir}/${DEFAULT_RST}"
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
-    echo_set_message ${errors} "Error building rst file from cdap-default.xml"
+    echo_set_message "Error building rst file from cdap-default.xml: ${errors}"
   fi
   
   echo "Building rst file from cdap-default-deprecated.xml..." 
@@ -56,7 +56,7 @@ function download_includes() {
   python "${DEFAULT_TOOL}" --deprecated --ignore --source ${DEFAULT_DEPRECATED_XML} --target "${target_includes_dir}/${DEFAULT_DEPRECATED_RST}"
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
-    echo_set_message ${errors} "Error building rst file from cdap-default-deprecated.xml"
+    echo_set_message "Error building rst file from cdap-default-deprecated.xml: ${errors} "
   fi
   
   echo "Copying files, changing references..."

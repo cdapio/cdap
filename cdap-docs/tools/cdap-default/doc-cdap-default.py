@@ -864,6 +864,9 @@ def compare_all(update=False, compare_values=False):
         xml_sdl_file.compare(default, update, compare_values)
 
 def generated_deprecated(filesource='', filepath='', ignore=False):
+    # Loads the CDAP defaults file, and compares it to the deprecated properties
+    # If any deprecated properties are still in the defaults file, prints a warning
+    # Reloads the deprecated file (with comments) to create the rst file output
     func = 'generated_deprecated'
     defaults, tree = load_xml('', include_exclusions=ignore, include_comments=False)
     deprecated, tree = load_xml(filesource, include_exclusions=ignore, include_comments=False)
