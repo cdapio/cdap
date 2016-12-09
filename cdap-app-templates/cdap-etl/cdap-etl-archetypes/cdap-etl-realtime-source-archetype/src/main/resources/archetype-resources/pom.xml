@@ -134,7 +134,7 @@
 
                   var etlRange = project.getProperty("etl.versionRange");
                   var config = {
-                    "parents": [ "system:cdap-etl-batch" + etlRange, "system:cdap-etl-realtime" + etlRange ],
+                    "parents": [ "system:cdap-etl-realtime" + etlRange ],
                     "properties": {}
                   }
 

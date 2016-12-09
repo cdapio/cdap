@@ -34,14 +34,7 @@ are grouped under the Transforms section.
 
 Maven Archetypes
 ================
-To get started on creating a custom plugin, you can use one of these Maven archetypes to create your project: 
-
-- ``cdap-data-pipeline-plugins-archetype`` (contains batch, Spark plugin, and other types)
-- ``cdap-etl-realtime-source-archetype`` (contains a realtime source, deprecated)
-- ``cdap-etl-realtime-sink-archetype`` (contains a realtime sink, deprecated)
-- ``cdap-etl-transform-archetype`` (contains a transform)
-
-This command will create a project from an archetype:
+To get started on creating a custom plugin, you can use the ``cdap-data-pipeline-plugins-archetype`` Maven archetype to create your project. This command will create a project from an archetype:
 
 .. container:: highlight
 
@@ -55,7 +48,7 @@ This command will create a project from an archetype:
           
 where ``<archetype>`` is one of the archetypes listed above.
 
-You can replace the *archetypeGroupId* parameter with your own organization, but it must not be ``co.cask.cdap``.
+You can replace the *groupId* parameter with your own organization, but it must not be ``co.cask.cdap``.
 
 Class Annotations
 =================
