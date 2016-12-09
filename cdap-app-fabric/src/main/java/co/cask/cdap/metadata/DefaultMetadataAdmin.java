@@ -17,11 +17,13 @@
 package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
+import co.cask.cdap.common.security.AuthEnforce;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
@@ -32,10 +34,13 @@ import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
+import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.CharMatcher;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
@@ -79,7 +84,9 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public void addProperties(NamespacedEntityId namespacedEntityId, Map<String, String> properties)
+  @AuthEnforce(entities = "namespacedEntityId", enforceOn = NamespacedEntityId.class, actions = Action.ADMIN)
+  public void addProperties(@Name("namespacedEntityId") NamespacedEntityId namespacedEntityId,
+                            Map<String, String> properties)
     throws NotFoundException, InvalidMetadataException {
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     validateProperties(namespacedEntityId, properties);
@@ -87,7 +94,8 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public void addTags(NamespacedEntityId namespacedEntityId, String... tags)
+  @AuthEnforce(entities = "namespacedEntityId", enforceOn = NamespacedEntityId.class, actions = Action.ADMIN)
+  public void addTags(@Name("namespacedEntityId") NamespacedEntityId namespacedEntityId, String... tags)
     throws NotFoundException, InvalidMetadataException {
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     validateTags(namespacedEntityId, tags);
@@ -95,69 +103,87 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(NamespacedEntityId namespacedEntityId) throws NotFoundException {
+  public Set<MetadataRecord> getMetadata(NamespacedEntityId namespacedEntityId)
+    throws NotFoundException, UnauthorizedException {
+    ensureAccess(namespacedEntityId);
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     return metadataStore.getMetadata(namespacedEntityId);
   }
 
   @Override
   public Set<MetadataRecord> getMetadata(MetadataScope scope, NamespacedEntityId namespacedEntityId)
-    throws NotFoundException {
+    throws NotFoundException, UnauthorizedException {
+    ensureAccess(namespacedEntityId);
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     return ImmutableSet.of(metadataStore.getMetadata(scope, namespacedEntityId));
   }
 
   @Override
-  public Map<String, String> getProperties(NamespacedEntityId namespacedEntityId) throws NotFoundException {
+  public Map<String, String> getProperties(NamespacedEntityId namespacedEntityId)
+    throws NotFoundException, UnauthorizedException {
+    ensureAccess(namespacedEntityId);
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     return metadataStore.getProperties(namespacedEntityId);
   }
 
   @Override
   public Map<String, String> getProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId)
-    throws NotFoundException {
+    throws NotFoundException, UnauthorizedException {
+    ensureAccess(namespacedEntityId);
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     return metadataStore.getProperties(scope, namespacedEntityId);
   }
 
   @Override
-  public Set<String> getTags(NamespacedEntityId namespacedEntityId) throws NotFoundException {
+  public Set<String> getTags(NamespacedEntityId namespacedEntityId) throws NotFoundException, UnauthorizedException {
+    ensureAccess(namespacedEntityId);
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     return metadataStore.getTags(namespacedEntityId);
   }
 
   @Override
-  public Set<String> getTags(MetadataScope scope, NamespacedEntityId namespacedEntityId) throws NotFoundException {
+  public Set<String> getTags(MetadataScope scope, NamespacedEntityId namespacedEntityId)
+    throws NotFoundException, UnauthorizedException {
+    ensureAccess(namespacedEntityId);
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     return metadataStore.getTags(scope, namespacedEntityId);
   }
 
   @Override
-  public void removeMetadata(NamespacedEntityId namespacedEntityId) throws NotFoundException {
+  @AuthEnforce(entities = "namespacedEntityId", enforceOn = NamespacedEntityId.class, actions = Action.ADMIN)
+  public void removeMetadata(@Name("namespacedEntityId") NamespacedEntityId namespacedEntityId)
+    throws NotFoundException {
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     metadataStore.removeMetadata(MetadataScope.USER, namespacedEntityId);
   }
 
   @Override
-  public void removeProperties(NamespacedEntityId namespacedEntityId) throws NotFoundException {
+  @AuthEnforce(entities = "namespacedEntityId", enforceOn = NamespacedEntityId.class, actions = Action.ADMIN)
+  public void removeProperties(@Name("namespacedEntityId") NamespacedEntityId namespacedEntityId)
+    throws NotFoundException {
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     metadataStore.removeProperties(MetadataScope.USER, namespacedEntityId);
   }
 
   @Override
-  public void removeProperties(NamespacedEntityId namespacedEntityId, String... keys) throws NotFoundException {
+  @AuthEnforce(entities = "namespacedEntityId", enforceOn = NamespacedEntityId.class, actions = Action.ADMIN)
+  public void removeProperties(@Name("namespacedEntityId") NamespacedEntityId namespacedEntityId,
+                               String... keys) throws NotFoundException {
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     metadataStore.removeProperties(MetadataScope.USER, namespacedEntityId, keys);
   }
 
   @Override
-  public void removeTags(NamespacedEntityId namespacedEntityId) throws NotFoundException {
+  @AuthEnforce(entities = "namespacedEntityId", enforceOn = NamespacedEntityId.class, actions = Action.ADMIN)
+  public void removeTags(@Name("namespacedEntityId") NamespacedEntityId namespacedEntityId) throws NotFoundException {
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     metadataStore.removeTags(MetadataScope.USER, namespacedEntityId);
   }
 
   @Override
-  public void removeTags(NamespacedEntityId namespacedEntityId, String... tags) throws NotFoundException {
+  @AuthEnforce(entities = "namespacedEntityId", enforceOn = NamespacedEntityId.class, actions = Action.ADMIN)
+  public void removeTags(@Name("namespacedEntityId") NamespacedEntityId namespacedEntityId, String... tags)
+    throws NotFoundException {
     entityExistenceVerifier.ensureExists(namespacedEntityId);
     metadataStore.removeTags(MetadataScope.USER, namespacedEntityId, tags);
   }
@@ -170,6 +196,27 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
     return filterAuthorizedSearchResult(
       metadataStore.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden)
     );
+  }
+
+  /**
+   * Ensures that the principal making the request has privilege to perform any one {@link Action}
+   * on the given namespacedEntityId
+   *
+   * @param namespacedEntityId the {@link NamespacedEntityId} on which privilege needs to be ensured
+   * @throws UnauthorizedException if the principal making the request does not have privilege to
+   * perform even one {@link Action} on the given namespacedEntityId
+   */
+  private void ensureAccess(NamespacedEntityId namespacedEntityId) throws UnauthorizedException {
+    Principal principal = authenticationContext.getPrincipal();
+    Predicate<EntityId> filter = null;
+    try {
+      filter = authorizationEnforcer.createFilter(principal);
+    } catch (Exception e) {
+      Throwables.propagate(e);
+    }
+    if (!filter.apply(namespacedEntityId)) {
+      throw new UnauthorizedException(principal, namespacedEntityId);
+    }
   }
 
   /**
