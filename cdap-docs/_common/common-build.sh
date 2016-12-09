@@ -123,9 +123,7 @@ function build_docs() {
   check_includes
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
-    echo "Error in check_includes: ${errors}"
-    consolidate_messages
-    return ${errors}
+    echo_set_message "Error in check_includes: ${errors}"
   fi
   ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_tag} ${SOURCE} ${TARGET}/${HTML}
   build_extras
