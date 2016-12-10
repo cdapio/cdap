@@ -14,7 +14,7 @@
  * the License.
  */
 
-package org.example.plugin;
+package $package;
 
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
@@ -53,6 +53,7 @@ public class StringCaseTransform extends Transform<StructuredRecord, StructuredR
     public static final String LOWER_FIELDS = "lowerFields";
     private static final Pattern SPLIT_ON = Pattern.compile("\\s*,\\s*");
 
+    // nullable means this property is optional
     @Nullable
     @Name(UPPER_FIELDS)
     @Description("A comma separated list of fields to uppercase. Each field must be of type String.")
@@ -87,6 +88,7 @@ public class StringCaseTransform extends Transform<StructuredRecord, StructuredR
     this.config = config;
   }
 
+  // configurePipeline is called only once, when the pipeline is deployed. Static validation should be done here.
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
@@ -107,12 +109,14 @@ public class StringCaseTransform extends Transform<StructuredRecord, StructuredR
     stageConfigurer.setOutputSchema(inputSchema);
   }
 
+  // initialize is called once at the start of each pipeline run
   @Override
   public void initialize(TransformContext context) throws Exception {
     upperFields = config.getUpperFields();
     lowerFields = config.getLowerFields();
   }
 
+  // transform is called once for each record that goes into this stage
   @Override
   public void transform(StructuredRecord record, Emitter<StructuredRecord> emitter) throws Exception {
     StructuredRecord.Builder builder = StructuredRecord.builder(record.getSchema());

@@ -34,7 +34,13 @@ are grouped under the Transforms section.
 
 Maven Archetypes
 ================
-To get started on creating a custom plugin, you can use the ``cdap-data-pipeline-plugins-archetype`` Maven archetype to create your project. This command will create a project from an archetype:
+To get started on creating a custom plugin, you can use one of these Maven archetypes to create your project:
+
+- ``cdap-data-pipeline-plugins-archetype`` (contains batch, Spark plugin, and other types)
+- ``cdap-etl-realtime-source-archetype`` (contains a realtime source, deprecated)
+- ``cdap-etl-realtime-sink-archetype`` (contains a realtime sink, deprecated)
+
+This command will create a project from an archetype:
 
 .. container:: highlight
 

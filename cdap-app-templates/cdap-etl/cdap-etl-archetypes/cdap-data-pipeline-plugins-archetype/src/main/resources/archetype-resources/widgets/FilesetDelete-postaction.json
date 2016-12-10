@@ -4,22 +4,22 @@
   },
   "configuration-groups": [
     {
-      "label": "Text FileSet Sink Configuration",
+      "label": "Fileset Delete Configuration",
       "properties": [
         {
           "widget-type": "dataset-selector",
           "label": "FileSet Name",
-          "name": "fileSetName"
+          "name": "filesetName"
         },
         {
           "widget-type": "textbox",
-          "label": "Field separator",
-          "name": "fieldSeparator"
+          "label": "FileSet directory",
+          "name": "directory"
         },
         {
           "widget-type": "textbox",
-          "label": "Field separator",
-          "name": "outputDir"
+          "label": "Delete Regex",
+          "name": "deleteRegex"
         }
       ]
     }
