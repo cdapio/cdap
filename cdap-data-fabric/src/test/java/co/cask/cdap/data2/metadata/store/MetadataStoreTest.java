@@ -368,7 +368,7 @@ public class MetadataStoreTest {
   }
 
   private Set<MetadataSearchResultRecord> search(String ns, String searchQuery) throws BadRequestException {
-    return search(ns, searchQuery, 0, Integer.MAX_VALUE, 1);
+    return search(ns, searchQuery, 0, Integer.MAX_VALUE, 0);
   }
 
   private Set<MetadataSearchResultRecord> search(String ns, String searchQuery,

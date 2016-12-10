@@ -839,15 +839,17 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @QueryParam("offset") @DefaultValue("0") int offset,
                              // 2147483647 is Integer.MAX_VALUE
                              @QueryParam("limit") @DefaultValue("2147483647") int limit,
-                             @QueryParam("numCursors") @DefaultValue("1") int numCursors,
+                             @QueryParam("numCursors") @DefaultValue("0") int numCursors,
                              @QueryParam("cursor") @DefaultValue("") String cursor) throws Exception {
     Set<MetadataSearchTargetType> types = Collections.emptySet();
     if (targets != null) {
       types = ImmutableSet.copyOf(Iterables.transform(targets, STRING_TO_TARGET_TYPE));
     }
     SortInfo sortInfo = SortInfo.of(URLDecoder.decode(sort, "UTF-8"));
-    if (SortInfo.DEFAULT.equals(sortInfo) && !(cursor.isEmpty())) {
-      throw new BadRequestException("Cursors are not supported when sort info is not specified.");
+    if (SortInfo.DEFAULT.equals(sortInfo)) {
+      if (!(cursor.isEmpty()) || 0 != numCursors) {
+        throw new BadRequestException("Cursors are not supported when sort info is not specified.");
+      }
     }
     MetadataSearchResponse response =
       metadataAdmin.search(namespaceId, URLDecoder.decode(searchQuery, "UTF-8"), types,

@@ -78,10 +78,14 @@ features:
       sort: Sort
       pagination: Page
       sortOptions:
-        nameAsc:
+        entityNameAsc:
           displayName: A - Z
-        nameDesc:
+        entityNameDesc:
           displayName: Z - A
+        creationTimeDesc:
+          displayName: Most Recently Created
+        creationTimeAsc:
+          displayName: Least Recently Created
   Dashboard:
     Title: Dashboard
 

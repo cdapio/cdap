@@ -26,15 +26,17 @@ public class MetadataSearchResponse {
   private final String sort;
   private final int offset;
   private final int limit;
+  private final int numCursors;
   private final int total;
   private final Set<MetadataSearchResultRecord> results;
   private final List<String> cursors;
 
-  public MetadataSearchResponse(String sort, int offset, int limit, int total,
+  public MetadataSearchResponse(String sort, int offset, int limit, int numCursors, int total,
                                 Set<MetadataSearchResultRecord> results, List<String> cursors) {
     this.sort = sort;
     this.offset = offset;
     this.limit = limit;
+    this.numCursors = numCursors;
     this.total = total;
     this.results = results;
     this.cursors = cursors;
@@ -50,6 +52,10 @@ public class MetadataSearchResponse {
 
   public int getLimit() {
     return limit;
+  }
+
+  public int getNumCursors() {
+    return numCursors;
   }
 
   public int getTotal() {

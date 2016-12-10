@@ -407,18 +407,30 @@ public class DefaultMetadataStore implements MetadataStore {
     // sort if required
     Set<NamespacedEntityId> sortedEntities = getSortedEntities(results, sortInfo);
 
+    // pagination is not performed at the dataset level, because:
+    // 1. scoring is needed for DEFAULT sort info. So perform it here for now.
+    // 2. Even when using custom sorting, we still fetch extra results if numCursors > 1
+    // TODO: Figure out how all of this can be done server (HBase) side
+    int startIndex = 0;
+    int maxEndIndex;
+    int total = results.size();
     if (SortInfo.DEFAULT.equals(sortInfo)) {
-      // pagination is not performed at the dataset level, because scoring is needed. So perform it here for now.
-      // TODO: Figure out how this can be done server-side as well
+      // offset needs to be applied
       if (offset > sortedEntities.size()) {
-        sortedEntities = new LinkedHashSet<>();
+        maxEndIndex = 0;
       } else {
-        sortedEntities = new LinkedHashSet<>(
-          ImmutableList.copyOf(sortedEntities).subList(offset, Math.min(offset + limit, sortedEntities.size()))
-        );
+        startIndex = offset;
+        maxEndIndex = offset + limit;
       }
-      cursors = Collections.emptyList();
+    } else {
+      // offset has already been applied, only apply limit, and update total count
+      maxEndIndex = limit;
+      total += offset;
     }
+    // add 1 to maxIndex because end index is exclusive
+    sortedEntities = new LinkedHashSet<>(
+      ImmutableList.copyOf(sortedEntities).subList(startIndex, Math.min(maxEndIndex, sortedEntities.size()))
+    );
 
     // Fetch metadata for entities in the result list
     // Note: since the fetch is happening in a different transaction, the metadata for entities may have been
@@ -427,7 +439,7 @@ public class DefaultMetadataStore implements MetadataStore {
     Map<NamespacedEntityId, Metadata> userMetadata = fetchMetadata(sortedEntities, MetadataScope.USER);
 
     return new MetadataSearchResponse(
-      sortInfo.getSortBy() + " " + sortInfo.getSortOrder(), offset, limit, results.size(),
+      sortInfo.getSortBy() + " " + sortInfo.getSortOrder(), offset, limit, numCursors, total,
       addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors
     );
   }

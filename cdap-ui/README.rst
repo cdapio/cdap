@@ -28,7 +28,7 @@ Prerequisites
   CDAP UI extensively uses ``bower``, ``gulp``, and ``webpack`` during its build process.
   Even though it's not necessary, it will be useful if they are installed globally::
 
-    $ npm instal gulp bower webpack -g
+    $ npm install gulp bower webpack -g
 
 Install Dependencies
 --------------------
@@ -43,7 +43,7 @@ Building CDAP in React
 ::
 
   $ npm run cdap-dev-build ## build version
-  $ npm run cdap-dev-buil-w ## watch version
+  $ npm run cdap-dev-build-w ## watch version
 
 
 Building Hydrator and Tracker in Angular

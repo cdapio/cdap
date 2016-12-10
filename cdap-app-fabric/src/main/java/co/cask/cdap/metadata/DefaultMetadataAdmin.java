@@ -183,7 +183,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
     Principal principal = authenticationContext.getPrincipal();
     final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     return new MetadataSearchResponse(
-      results.getSort(), results.getOffset(), results.getLimit(), results.getTotal(),
+      results.getSort(), results.getOffset(), results.getLimit(), results.getNumCursors(), results.getTotal(),
       ImmutableSet.copyOf(
         Iterables.filter(results.getResults(), new com.google.common.base.Predicate<MetadataSearchResultRecord>() {
           @Override
