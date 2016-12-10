@@ -66,7 +66,7 @@ import java.util.concurrent.Callable;
 /**
  * Updates system metadata for existing entities.
  */
-public class ExistingEntitySystemMetadataWriter {
+class ExistingEntitySystemMetadataWriter {
   private static final Logger LOG = LoggerFactory.getLogger(ExistingEntitySystemMetadataWriter.class);
 
   private final MetadataStore metadataStore;
@@ -94,7 +94,7 @@ public class ExistingEntitySystemMetadataWriter {
     this.impersonator = impersonator;
   }
 
-  public void write(DatasetFramework dsFramework) throws Exception {
+  void write(DatasetFramework dsFramework) throws Exception {
     for (NamespaceMeta namespaceMeta : nsStore.list()) {
       NamespaceId namespace = new NamespaceId(namespaceMeta.getName());
       writeSystemMetadataForArtifacts(namespace);
@@ -138,7 +138,7 @@ public class ExistingEntitySystemMetadataWriter {
                                               Collection<? extends ProgramSpecification> programSpecs) {
     for (ProgramSpecification programSpec : programSpecs) {
       ProgramId programId = app.program(programType, programSpec.getName());
-      SystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, programSpec);
+      SystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, programSpec, true);
       writer.write();
     }
   }
@@ -188,7 +188,7 @@ public class ExistingEntitySystemMetadataWriter {
                                        streamSpec.getDescription());
       writer.write();
       for (StreamViewId view : streamAdmin.listViews(streamId)) {
-        writer = new ViewSystemMetadataWriter(metadataStore, view, viewAdmin.get(view));
+        writer = new ViewSystemMetadataWriter(metadataStore, view, viewAdmin.get(view), true);
         writer.write();
       }
     }

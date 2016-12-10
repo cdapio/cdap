@@ -16,17 +16,18 @@
 
 package co.cask.cdap.data2.metadata.store;
 
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
-import co.cask.cdap.data2.metadata.indexer.Indexer;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Defines operations on {@link MetadataDataset} for both system and user metadata.
@@ -50,16 +51,14 @@ public interface MetadataStore {
   void setProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId, Map<String, String> properties);
 
   /**
-   * Adds/updates properties for the specified {@link NamespacedEntityId} in the specified {@link MetadataScope}.
+   * Sets the specified property for the specified {@link NamespacedEntityId} in the specified {@link MetadataScope}.
    *
-   * @param scope the {@link MetadataScope} to add/update the properties in
-   * @param namespacedEntityId the {@link NamespacedEntityId} to add the properties to
-   * @param properties the properties to add/update
-   * @param indexer {@link Indexer} to use for creating indexes
+   * @param scope the {@link MetadataScope} to set/update the property in
+   * @param namespacedEntityId the {@link NamespacedEntityId} to set the property for
+   * @param key the property key
+   * @param value the property value
    */
-  void setProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId, Map<String, String> properties,
-                     @Nullable Indexer indexer);
-
+  void setProperty(MetadataScope scope, NamespacedEntityId namespacedEntityId, String key, String value);
 
   /**
    * Adds tags for the specified {@link NamespacedEntityId} in the specified {@link MetadataScope}.
@@ -162,40 +161,27 @@ public interface MetadataStore {
   void removeTags(MetadataScope scope, NamespacedEntityId namespacedEntityId, String ... tagsToRemove);
 
   /**
-   * Search the Metadata Dataset in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
-   */
-  Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery);
-
-  /**
-   * Search the Metadata Dataset in the specified {@link MetadataScope}.
-   *
-   * @param scope the {@link MetadataScope} to restrict the search to
-   * @param namespaceId the namespace to search in
-   * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value]
-   */
-  Set<MetadataSearchResultRecord> searchMetadata(MetadataScope scope, String namespaceId, String searchQuery);
-
-  /**
    * Search the Metadata Dataset for the specified target types in both {@link MetadataScope#USER} and
    * {@link MetadataScope#SYSTEM}.
    *
    * @param namespaceId the namespace to search in
    * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value]
    * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
+   * @param sortInfo represents sorting information. Use {@link SortInfo#DEFAULT} to return search results without
+   *                 sorting (which implies that the sort order is by relevance to the search query)
+   * @param offset the index to start with in the search results. To return results from the beginning, pass {@code 0}
+   * @param limit the number of results to return, starting from #offset. To return all, pass {@link Integer#MAX_VALUE}
+   * @param numCursors the number of cursors to return in the response. A cursor identifies the first index of the
+   *                   next page for pagination purposes. Defaults to {@code 0}
+   * @param cursor the cursor that acts as the starting index for the requested page. This is only applicable when
+   *               #sortInfo is not {@link SortInfo#DEFAULT}. If offset is also specified, it is applied starting at
+   *               the cursor. If {@code null}, the first row is used as the cursor
+   * @return the {@link MetadataSearchResponse} containing search results for the specified search query and filters
    */
-  Set<MetadataSearchResultRecord> searchMetadataOnType(String namespaceId, String searchQuery,
-                                                       Set<MetadataSearchTargetType> types);
-
-  /**
-   * Search the Metadata Dataset for the specified target types in the specified {@link MetadataScope}.
-   *
-   * @param scope the {@link MetadataScope} to restrict the search to
-   * @param namespaceId the namespace to search in
-   * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value]
-   * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
-   */
-  Set<MetadataSearchResultRecord> searchMetadataOnType(MetadataScope scope, String namespaceId, String searchQuery,
-                                                       Set<MetadataSearchTargetType> types);
+  MetadataSearchResponse search(String namespaceId, String searchQuery,
+                                Set<MetadataSearchTargetType> types,
+                                SortInfo sortInfo, int offset, int limit,
+                                int numCursors, String cursor) throws BadRequestException;
 
   /**
    * Returns the snapshot of the metadata for entities on or before the given time in both {@link MetadataScope#USER}

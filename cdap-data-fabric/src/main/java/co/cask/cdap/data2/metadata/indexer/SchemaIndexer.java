@@ -20,6 +20,7 @@ package co.cask.cdap.data2.metadata.indexer;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -35,7 +36,13 @@ public class SchemaIndexer implements Indexer {
 
   @Override
   public Set<String> getIndexes(MetadataEntry entry) {
-    return createIndexes(getSchema(entry.getValue()));
+    Set<String> indexes = createIndexes(getSchema(entry.getValue()));
+    return addKeyValueIndexes(entry.getKey(), indexes);
+  }
+
+  @Override
+  public SortInfo.SortOrder getSortOrder() {
+    return SortInfo.SortOrder.WEIGHTED;
   }
 
   private Schema getSchema(String schemaStr) {
@@ -113,5 +120,14 @@ public class SchemaIndexer implements Indexer {
       schema = schema.getNonNullable();
     }
     return schema.getType().toString();
+  }
+
+
+  private Set<String> addKeyValueIndexes(String key, Set<String> indexes) {
+    Set<String> indexesWithKeyValue = new HashSet<>(indexes);
+    for (String index : indexes) {
+      indexesWithKeyValue.add(key + MetadataDataset.KEYVALUE_SEPARATOR + index);
+    }
+    return indexesWithKeyValue;
   }
 }

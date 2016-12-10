@@ -14,12 +14,25 @@
  * the License.
  */
 
-import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreator} from 'services/resource-helper';
+package co.cask.cdap.data2.metadata.indexer;
 
-let dataSrc = DataSourceConfigurer.getInstance();
-let searchpath = '/namespaces/:namespace/metadata/search';
+import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 
-export const MySearchApi = {
-  search: apiCreator(dataSrc, 'GET', 'REQUEST', searchpath + '?numCursors=10&'),
-};
+import java.util.Collections;
+import java.util.Set;
+
+/**
+ * {@link Indexer} that returns the {@link MetadataEntry} value as the only index.
+ */
+public class ValueOnlyIndexer implements Indexer {
+  @Override
+  public Set<String> getIndexes(MetadataEntry entry) {
+    return Collections.singleton(entry.getValue());
+  }
+
+  @Override
+  public SortInfo.SortOrder getSortOrder() {
+    return SortInfo.SortOrder.ASC;
+  }
+}

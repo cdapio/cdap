@@ -23,11 +23,13 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.proto.security.Principal;
@@ -161,36 +163,36 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery,
-                                                        Set<MetadataSearchTargetType> types) throws Exception {
-
-    return filterAuthorizedSearchResult(metadataStore.searchMetadataOnType(namespaceId, searchQuery, types));
-  }
-
-  @Override
-  public Set<MetadataSearchResultRecord> searchMetadata(MetadataScope scope, String namespaceId, String searchQuery,
-                                                        Set<MetadataSearchTargetType> types) throws Exception {
-    return filterAuthorizedSearchResult(metadataStore.searchMetadataOnType(scope, namespaceId, searchQuery, types));
+  public MetadataSearchResponse search(String namespaceId, String searchQuery,
+                                       Set<MetadataSearchTargetType> types,
+                                       SortInfo sortInfo, int offset, int limit,
+                                       int numCursors, String cursor) throws Exception {
+    return filterAuthorizedSearchResult(
+      metadataStore.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor)
+    );
   }
 
   /**
    * Filter a list of {@link MetadataSearchResultRecord} that ensures the logged-in user has a privilege on
    *
-   * @param results the {@link Set<MetadataSearchResultRecord>} to filter with
-   * @return filtered list of {@link MetadataSearchResultRecord}
+   * @param results the {@link MetadataSearchResponse} to filter
+   * @return filtered {@link MetadataSearchResponse}
    */
-  private Set<MetadataSearchResultRecord> filterAuthorizedSearchResult(Set<MetadataSearchResultRecord> results)
+  private MetadataSearchResponse filterAuthorizedSearchResult(MetadataSearchResponse results)
     throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    return ImmutableSet.copyOf(
-      Iterables.filter(results, new com.google.common.base.Predicate<MetadataSearchResultRecord>() {
-        @Override
-        public boolean apply(MetadataSearchResultRecord metadataSearchResultRecord) {
-          return filter.apply(metadataSearchResultRecord.getEntityId());
-        }
-      })
-    );
+    return new MetadataSearchResponse(
+      results.getSort(), results.getOffset(), results.getLimit(), results.getNumCursors(), results.getTotal(),
+      ImmutableSet.copyOf(
+        Iterables.filter(results.getResults(), new com.google.common.base.Predicate<MetadataSearchResultRecord>() {
+          @Override
+          public boolean apply(MetadataSearchResultRecord metadataSearchResultRecord) {
+            return filter.apply(metadataSearchResultRecord.getEntityId());
+          }
+        })
+      ),
+      results.getCursors());
   }
 
   // Helper methods to validate the metadata entries.
