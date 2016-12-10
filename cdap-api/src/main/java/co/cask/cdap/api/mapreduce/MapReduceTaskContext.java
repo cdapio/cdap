@@ -1,7 +1,5 @@
-package co.cask.cdap.api.mapreduce;
-
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +14,15 @@ package co.cask.cdap.api.mapreduce;
  * the License.
  */
 
+package co.cask.cdap.api.mapreduce;
+
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.batch.InputContext;
+import co.cask.cdap.api.data.batch.PartitionedFileSetInputContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.workflow.Workflow;
@@ -96,7 +98,17 @@ public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends RuntimeContext, 
   /**
    * Returns the name of the input configured for this task.
    * Returns null, if this task is a Reducer or no inputs were configured through CDAP APIs.
+   *
+   * @deprecated Instead, use {@link #getInputContext()}.
    */
+  @Deprecated
   @Nullable
   String getInputName();
+
+  /**
+   * Returns an {@link InputContext} of the input configured for this task. The returned object will be a
+   * {@link PartitionedFileSetInputContext} if the input for this task was configured from the PartitionedFileSet APIs.
+   * Returns null, if this task is a Reducer or no inputs were configured through CDAP APIs.
+   */
+  InputContext getInputContext();
 }

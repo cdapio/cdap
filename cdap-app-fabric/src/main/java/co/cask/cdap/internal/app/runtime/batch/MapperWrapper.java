@@ -22,6 +22,8 @@ import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
+import co.cask.cdap.internal.app.runtime.batch.dataset.input.InputContexts;
+import co.cask.cdap.internal.app.runtime.batch.dataset.input.MultiInputTaggedSplit;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.TaggedInputSplit;
 import co.cask.cdap.internal.lang.Reflections;
 import com.google.common.base.Preconditions;
@@ -81,8 +83,8 @@ public class MapperWrapper extends Mapper {
 
     basicMapReduceContext.setHadoopContext(flushingContext);
     InputSplit inputSplit = context.getInputSplit();
-    if (inputSplit instanceof TaggedInputSplit) {
-      basicMapReduceContext.setInputName(((TaggedInputSplit) inputSplit).getName());
+    if (inputSplit instanceof MultiInputTaggedSplit) {
+      basicMapReduceContext.setInputContext(InputContexts.create((MultiInputTaggedSplit) inputSplit));
     }
 
     ClassLoader programClassLoader = classLoader.getProgramClassLoader();
@@ -183,9 +185,9 @@ public class MapperWrapper extends Mapper {
       @Override
       public Class<? extends InputFormat<?, ?>> getInputFormatClass() throws ClassNotFoundException {
         InputSplit inputSplit = super.getInputSplit();
-        if (inputSplit instanceof TaggedInputSplit) {
+        if (inputSplit instanceof MultiInputTaggedSplit) {
           // expose the delegate InputFormat to the user
-          return ((TaggedInputSplit) inputSplit).getInputFormatClass();
+          return ((MultiInputTaggedSplit) inputSplit).getInputFormatClass();
         }
         return super.getInputFormatClass();
       }
@@ -194,9 +196,9 @@ public class MapperWrapper extends Mapper {
   }
 
   private Mapper createMapperInstance(ClassLoader classLoader, String userMapper, Context context) {
-    if (context.getInputSplit() instanceof TaggedInputSplit) {
-      // Find the delegate Mapper from the TaggedInputSplit.
-      userMapper = ((TaggedInputSplit) context.getInputSplit()).getMapperClassName();
+    if (context.getInputSplit() instanceof MultiInputTaggedSplit) {
+      // Find the delegate Mapper from the MultiInputTaggedSplit.
+      userMapper = ((MultiInputTaggedSplit) context.getInputSplit()).getMapperClassName();
     }
     try {
       return (Mapper) classLoader.loadClass(userMapper).newInstance();
