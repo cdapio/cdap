@@ -214,7 +214,6 @@ function download_includes() {
   download_md_file cassandra-plugins Cassandra-batchsink.md
   download_md_file cassandra-plugins Cassandra-batchsource.md 
   download_md_file cassandra-plugins Cassandra-realtimesink.md 
-  download_md_file copybookreader-plugins CopybookReader-batchsource.md 
   download_md_file core-plugins AmazonSQS-realtimesource.md
   download_md_file core-plugins AzureBlobStore-batchsource.md
   download_md_file core-plugins Cube-batchsink.md
@@ -261,6 +260,7 @@ function download_includes() {
   download_md_file core-plugins Twitter-realtimesource.md
   download_md_file core-plugins Validator-transform.md
   download_md_file core-plugins Window-windower.md
+  download_md_file core-plugins WindowsShareCopy-action.md
   download_md_file core-plugins XMLReader-batchsource.md
   download_md_file database-plugins Database-batchsink.md _includes/database-batchsink-append.md.txt
   download_md_file database-plugins Database-batchsource.md _includes/database-batchsource-append.md.txt

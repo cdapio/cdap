@@ -1,5 +1,3 @@
-package co.cask.cdap.internal.app.runtime.batch;
-
 /*
  * Copyright © 2015-2016 Cask Data, Inc.
  *
@@ -16,6 +14,8 @@ package co.cask.cdap.internal.app.runtime.batch;
  * the License.
  */
 
+package co.cask.cdap.internal.app.runtime.batch;
+
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
@@ -23,6 +23,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.InputContext;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
@@ -107,6 +108,11 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public String getInputName() {
     return delegate.getInputName();
+  }
+
+  @Override
+  public InputContext getInputContext() {
+    return delegate.getInputContext();
   }
 
   @Override

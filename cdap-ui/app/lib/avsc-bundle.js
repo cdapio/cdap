@@ -8106,8 +8106,10 @@ var TYPES = {
   'string': StringType
 };
 
+// Addition by Ajai
+// Allow hyphens to be part of field name (including enums)
 // Valid (field, type, and symbol) name regex.
-var NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+var NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_-]*$/;
 
 // Random generator.
 var RANDOM = new utils.Lcg();
@@ -9926,12 +9928,14 @@ RecordType.prototype._createConstructor = function () {
     name = field._name;
     innerArgs.push('v' + i);
     innerBody += '  ';
+    // Addition by Ajai
+    // Allow hyphens to be part of field name (including enums)
     if (getDefault() === undefined) {
-      innerBody += 'this.' + name + ' = v' + i + ';\n';
+      innerBody += 'this[\'' + name + '\'] = v' + i + ';\n';
     } else {
       innerBody += 'if (v' + i + ' === undefined) { ';
-      innerBody += 'this.' + name + ' = d' + ds.length + '(); ';
-      innerBody += '} else { this.' + name + ' = v' + i + '; }\n';
+      innerBody += 'this[\'' + name + '\'] = d' + ds.length + '(); ';
+      innerBody += '} else { this[\'' + name + '\'] = v' + i + '; }\n';
       outerArgs.push('d' + ds.length);
       ds.push(getDefault);
     }
