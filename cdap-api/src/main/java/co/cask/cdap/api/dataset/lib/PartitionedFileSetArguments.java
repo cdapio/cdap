@@ -18,11 +18,14 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
+import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -40,10 +43,14 @@ public class PartitionedFileSetArguments {
   public static final String DYNAMIC_PARTITIONER_CLASS_NAME = "output.dynamic.partitioner.class.name";
   public static final String DYNAMIC_PARTITIONER_ALLOW_CONCURRENCY = "output.dynamic.partitioner.allow.concurrency";
   public static final String INPUT_PARTITION_FILTER = "input.partition.filter";
+  public static final String INPUT_PARTITION_LIST = "input.partition.list";
 
-  private static final Gson GSON =
-    new GsonBuilder().registerTypeAdapter(PartitionFilter.Condition.class, new ConditionCodec()).create();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(PartitionFilter.Condition.class, new ConditionCodec())
+    .registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec())
+    .create();
   private static final Type PARTITION_FILTER_LIST_TYPE = new TypeToken<List<PartitionFilter>>() { }.getType();
+  private static final Type PARTITION_KEY_LIST_TYPE = new TypeToken<List<PartitionKey>>() { }.getType();
 
   /**
    * Set the partition key of the output partition when using PartitionedFileSet as an OutputFormatProvider.
@@ -157,6 +164,8 @@ public class PartitionedFileSetArguments {
     }
   }
 
+  // TODO: should be able to have a method that just takes in PartitionKey, instead of Partition
+
   /**
    * Sets partitions as input for a PartitionedFileSet. If both a PartitionFilter and Partition(s) are specified, the
    * PartitionFilter takes precedence and the specified Partition(s) will be ignored.
@@ -166,9 +175,11 @@ public class PartitionedFileSetArguments {
    */
   public static void addInputPartitions(Map<String, String> arguments,
                                         Iterator<? extends Partition> partitionIterator) {
+    Collection<PartitionKey> inputPartitionKeys = new ArrayList<>(getInputPartitionKeys(arguments));
     while (partitionIterator.hasNext()) {
-      addInputPartition(arguments, partitionIterator.next());
+      inputPartitionKeys.add(partitionIterator.next().getPartitionKey());
     }
+    arguments.put(INPUT_PARTITION_LIST, GSON.toJson(inputPartitionKeys));
   }
 
   /**
@@ -191,7 +202,21 @@ public class PartitionedFileSetArguments {
    * @param partition the partition to add as input
    */
   public static void addInputPartition(Map<String, String> arguments, Partition partition) {
-    FileSetArguments.addInputPath(arguments, partition.getRelativePath());
+    addInputPartitions(arguments, Collections.singletonList(partition));
+  }
+
+  /**
+   * Get the partition keys to be read for the input.
+   *
+   * @param arguments the runtime arguments for a partitioned dataset
+   * @return a Collection containing the partition keys specified in the arguments. Empty collection if no keys were
+   *         specified.
+   */
+  public static Collection<PartitionKey> getInputPartitionKeys(Map<String, String> arguments) {
+    if (!arguments.containsKey(INPUT_PARTITION_LIST)) {
+      return Collections.emptyList();
+    }
+    return GSON.fromJson(arguments.get(INPUT_PARTITION_LIST), PARTITION_KEY_LIST_TYPE);
   }
 
   /**
