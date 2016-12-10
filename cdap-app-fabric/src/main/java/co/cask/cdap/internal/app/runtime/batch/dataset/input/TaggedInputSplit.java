@@ -54,7 +54,6 @@ public abstract class TaggedInputSplit extends InputSplit implements Configurabl
     this.conf = conf;
   }
 
-
   /**
    * Implemented by subclasses to deserialize additional fields from this TaggedInputSplit.
    * Note that the order of fields read must be the same as they are written
