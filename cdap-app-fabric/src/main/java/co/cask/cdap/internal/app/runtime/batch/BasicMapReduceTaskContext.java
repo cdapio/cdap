@@ -37,6 +37,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext;
@@ -50,6 +51,7 @@ import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -265,7 +267,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Override
   protected <T extends Dataset> T getDataset(String name, Map<String, String> arguments, AccessType accessType)
     throws DatasetInstantiationException {
-    T dataset = super.getDataset(name, arguments, accessType);
+    T dataset = super.getDataset(name, adjustRuntimeArguments(arguments), accessType);
     startDatasetTransaction(dataset);
     return dataset;
   }
@@ -273,9 +275,20 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Override
   protected <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
                                              AccessType accessType) throws DatasetInstantiationException {
-    T dataset = super.getDataset(namespace, name, arguments, accessType);
+    T dataset = super.getDataset(namespace, name, adjustRuntimeArguments(arguments), accessType);
     startDatasetTransaction(dataset);
     return dataset;
+  }
+
+  /**
+   * In MapReduce tasks, table datasets must have the runtime argument HBaseTable.SAFE_INCREMENTS as true.
+   */
+  private Map<String, String> adjustRuntimeArguments(Map<String, String> args) {
+    if (args.containsKey(HBaseTable.SAFE_INCREMENTS)) {
+      return args;
+    }
+    return ImmutableMap.<String, String>builder()
+      .putAll(args).put(HBaseTable.SAFE_INCREMENTS, String.valueOf(true)).build();
   }
 
   /**

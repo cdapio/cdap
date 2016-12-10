@@ -704,6 +704,13 @@ public abstract class HBaseTableUtil {
   }
 
   /**
+   * Creates a {@link IncrementBuilder} for the given row.
+   */
+  public IncrementBuilder buildIncrement(byte[] row) {
+    return new DefaultIncrementBuilder(row);
+  }
+
+  /**
    * Creates a {@link PutBuilder} by copying from another {@link Put} instance.
    */
   public PutBuilder buildPut(Put put) {

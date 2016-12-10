@@ -277,6 +277,11 @@ public class HBase11TableUtil extends HBaseTableUtil {
   }
 
   @Override
+  public IncrementBuilder buildIncrement(byte[] row) {
+    return new HBase11IncrementBuilder(row);
+  }
+
+  @Override
   public PutBuilder buildPut(byte[] row) {
     return new HBase11PutBuilder(row);
   }
