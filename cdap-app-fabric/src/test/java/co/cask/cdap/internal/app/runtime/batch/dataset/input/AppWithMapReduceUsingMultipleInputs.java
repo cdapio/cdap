@@ -20,7 +20,9 @@ import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.InputContext;
 import co.cask.cdap.api.data.batch.Output;
+import co.cask.cdap.api.data.batch.PartitionedFileSetInputContext;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -140,6 +142,12 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
     public void initialize(MapReduceTaskContext context) throws Exception {
       System.setProperty("mapper.initialized", "true");
       source = context.getInputName();
+
+      InputContext inputContext = context.getInputContext();
+      // just want to assert that we're not getting any unexpected type of InputContext
+      Preconditions.checkArgument(!(inputContext instanceof PartitionedFileSetInputContext));
+
+      Preconditions.checkArgument(source.equals(inputContext.getInputName()));
       Preconditions.checkNotNull(source);
       Preconditions.checkArgument(PURCHASES.equals(source) || CUSTOMERS.equals(source));
     }
@@ -151,10 +159,10 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
-      // assert that the user gets FileInputSplit (as opposed to the TaggedInputSplit from the context
+      // assert that the user gets FileInputSplit (as opposed to the MultiInputTaggedSplit) from the context
       Preconditions.checkArgument(context.getInputSplit() instanceof FileSplit);
       try {
-        // assert that the user gets the TextInputFormat, as opposed to the DelegatingInputFormat from the context
+        // assert that the user gets the TextInputFormat, as opposed to the MultiInputFormat from the context
         Preconditions.checkArgument(context.getInputFormatClass() == TextInputFormat.class);
       } catch (ClassNotFoundException e) {
         Throwables.propagate(e);
