@@ -69,16 +69,28 @@ class Home extends Component {
 
     this.sortOptions = [
       {
-        displayName: T.translate('features.Home.Header.sortOptions.nameAsc.displayName'),
-        sort: 'name',
+        displayName: T.translate('features.Home.Header.sortOptions.entityNameAsc.displayName'),
+        sort: 'entity-name',
         order: 'asc',
-        fullSort: 'name asc'
+        fullSort: 'entity-name asc'
       },
       {
-        displayName: T.translate('features.Home.Header.sortOptions.nameDesc.displayName'),
-        sort: 'name',
+        displayName: T.translate('features.Home.Header.sortOptions.entityNameDesc.displayName'),
+        sort: 'entity-name',
         order: 'desc',
-        fullSort: 'name desc'
+        fullSort: 'entity-name desc'
+      },
+      {
+        displayName: T.translate('features.Home.Header.sortOptions.creationTimeAsc.displayName'),
+        sort: 'creation-time',
+        order: 'asc',
+        fullSort: 'creation-time asc'
+      },
+      {
+        displayName: T.translate('features.Home.Header.sortOptions.creationTimeDesc.displayName'),
+        sort: 'creation-time',
+        order: 'desc',
+        fullSort: 'creation-time desc'
       }
     ];
 
@@ -256,7 +268,7 @@ class Home extends Component {
       namespace: namespace,
       query: `${query}*`,
       target: filter,
-      size: this.pageSize,
+      limit: this.pageSize,
       offset: offset,
       sort: sortObj.fullSort
     };

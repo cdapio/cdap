@@ -34,6 +34,7 @@ export default class ExploreModal extends Component {
       queryString: 'SELECT * FROM ' + this.type + '_' + this.props.entity.id + ' LIMIT 500',
       queries: [],
       error: null,
+      loading: false
     };
     // Show any queries that were executed when the modal is open, like `show tables`.
     // This is maintained in the current session and when the modal is opened again it doesn't need to be surfaced.
@@ -90,6 +91,9 @@ export default class ExploreModal extends Component {
   }
   submitQuery() {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
+    this.setState({
+      loading: true
+    });
     let queriesSubscription$ = myExploreApi
       .submitQuery({namespace}, {query: this.state.queryString})
       .flatMap((res) => {
@@ -97,7 +101,10 @@ export default class ExploreModal extends Component {
         return myExploreApi.fetchQueries({namespace});
       })
       .subscribe((res) => {
-        this.updateState({ queries: this.getValidQueries(res) });
+        this.updateState({
+          queries: this.getValidQueries(res),
+          loading: false
+        });
       });
     this.subscriptions.push(queriesSubscription$);
   }
@@ -302,8 +309,15 @@ export default class ExploreModal extends Component {
               <button
                 className="btn btn-primary pull-right"
                 onClick={this.submitQuery}
+                disabled={this.state.loading ? 'disabled': null}
               >
-                Execute
+                {
+                  this.state.loading ?
+                    <span className="fa fa-spinner fa-spin"></span>
+                  :
+                    null
+                }
+                <span>Execute</span>
               </button>
             </div>
             <div className="queries-table-wrapper">

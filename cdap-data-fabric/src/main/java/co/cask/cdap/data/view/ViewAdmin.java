@@ -66,7 +66,7 @@ public class ViewAdmin {
     }
     explore.enableExploreStream(viewId.getParent(), spec.getTableName(), spec.getFormat());
     boolean result = store.createOrUpdate(viewId, spec);
-    ViewSystemMetadataWriter systemMetadataWriter = new ViewSystemMetadataWriter(metadataStore, viewId, spec);
+    ViewSystemMetadataWriter systemMetadataWriter = new ViewSystemMetadataWriter(metadataStore, viewId, spec, !result);
     systemMetadataWriter.write();
     return result;
   }

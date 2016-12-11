@@ -15,10 +15,11 @@
  */
 package co.cask.cdap.data2.metadata.store;
 
-import co.cask.cdap.data2.metadata.indexer.Indexer;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.collect.ImmutableSet;
@@ -39,8 +40,7 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public void setProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId, Map<String, String> properties,
-                            Indexer indexer) {
+  public void setProperty(MetadataScope scope, NamespacedEntityId namespacedEntityId, String key, String value) {
     // NO-OP
   }
 
@@ -116,25 +116,12 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery) {
-    return Collections.emptySet();
-  }
-
-  @Override
-  public Set<MetadataSearchResultRecord> searchMetadata(MetadataScope scope, String namespaceId, String searchQuery) {
-    return Collections.emptySet();
-  }
-
-  @Override
-  public Set<MetadataSearchResultRecord> searchMetadataOnType(String namespaceId, String searchQuery,
-                                                              Set<MetadataSearchTargetType> types) {
-    return Collections.emptySet();
-  }
-
-  @Override
-  public Set<MetadataSearchResultRecord> searchMetadataOnType(MetadataScope scope, String namespaceId,
-                                                              String searchQuery, Set<MetadataSearchTargetType> types) {
-    return Collections.emptySet();
+  public MetadataSearchResponse search(String namespaceId, String searchQuery,
+                                       Set<MetadataSearchTargetType> types,
+                                       SortInfo sort, int offset, int limit, int numCursors, String cursor) {
+    return new MetadataSearchResponse(sort.toString(), offset, limit, numCursors, 0,
+                                      Collections.<MetadataSearchResultRecord>emptySet(),
+                                      Collections.<String>emptyList());
   }
 
   @Override

@@ -49,13 +49,13 @@ import java.util.concurrent.TimeUnit;
 import static co.cask.cdap.internal.app.runtime.batch.AppWithPartitionedFileSet.PARTITIONED;
 import static co.cask.cdap.internal.app.runtime.batch.AppWithTimePartitionedFileSet.TIME_PARTITIONED;
 
-@Category(XSlowTests.class)
 /**
  * This tests that we can read and write time-partitioned file sets with map/reduce, using the partition
  * time to specify input and output partitions. It does not test that the dataset is queryable with Hive,
  * or that its partitions are registered correctly in the Hive meta store. That is because here in the
  * app-fabric tests, explore is disabled.
  */
+@Category(XSlowTests.class)
 public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
 
   static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US);
@@ -88,7 +88,8 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
                                                                           "data.source.type", "table");
     TimePartitionedFileSetArguments.setOutputPartitionMetadata(outputArgs, assignedMetadata);
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, TIME_PARTITIONED, outputArgs));
-    runProgram(app, AppWithTimePartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
+    Assert.assertTrue(
+      runProgram(app, AppWithTimePartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments)));
 
     // this should have created a partition in the tpfs
     final TimePartitionedFileSet tpfs = datasetCache.getDataset(TIME_PARTITIONED);
@@ -120,7 +121,8 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, TIME_PARTITIONED, outputArgs));
     // make the mapreduce add the partition in destroy, to validate that this does not fail the job
     runtimeArguments.put(AppWithTimePartitionedFileSet.COMPAT_ADD_PARTITION, "true");
-    runProgram(app, AppWithTimePartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
+    Assert.assertTrue(
+      runProgram(app, AppWithTimePartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments)));
 
     // this should have created a partition in the tpfs
     Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) tpfs).execute(
@@ -142,7 +144,8 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
     TimePartitionedFileSetArguments.setInputEndTime(inputArgs, time5 + TimeUnit.MINUTES.toMillis(5));
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, TIME_PARTITIONED, inputArgs));
     runtimeArguments.put(AppWithTimePartitionedFileSet.ROW_TO_WRITE, "a");
-    runProgram(app, AppWithTimePartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
+    Assert.assertTrue(
+      runProgram(app, AppWithTimePartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments)));
 
     // this should have read both partitions - and written both x and y to row a
     final Table output = datasetCache.getDataset(AppWithTimePartitionedFileSet.OUTPUT);
@@ -161,7 +164,8 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
     TimePartitionedFileSetArguments.setInputEndTime(inputArgs, time + TimeUnit.MINUTES.toMillis(2));
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, TIME_PARTITIONED, inputArgs));
     runtimeArguments.put(AppWithTimePartitionedFileSet.ROW_TO_WRITE, "b");
-    runProgram(app, AppWithTimePartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
+    Assert.assertTrue(
+      runProgram(app, AppWithTimePartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments)));
 
     // this should have read the first partition only - and written only x to row b
     Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
@@ -179,7 +183,8 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
     TimePartitionedFileSetArguments.setInputEndTime(inputArgs, time - TimeUnit.MINUTES.toMillis(9));
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, TIME_PARTITIONED, inputArgs));
     runtimeArguments.put(AppWithTimePartitionedFileSet.ROW_TO_WRITE, "n");
-    runProgram(app, AppWithTimePartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
+    Assert.assertTrue(
+      runProgram(app, AppWithTimePartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments)));
 
     // this should have read no partitions - and written nothing to row n
     Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
@@ -218,7 +223,8 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
     Map<String, String> outputArgs = Maps.newHashMap();
     PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, keyX);
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, PARTITIONED, outputArgs));
-    runProgram(app, AppWithPartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
+    Assert.assertTrue(
+      runProgram(app, AppWithPartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments)));
 
     // this should have created a partition in the tpfs
     final PartitionedFileSet dataset = datasetCache.getDataset(PARTITIONED);
@@ -253,7 +259,8 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
     // now run the m/r again with a new partition time, say 5 minutes later
     PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, keyY);
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, PARTITIONED, outputArgs));
-    runProgram(app, AppWithPartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
+    Assert.assertTrue(
+      runProgram(app, AppWithPartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments)));
 
     // this should have created a partition in the tpfs
     Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) dataset).execute(
@@ -280,7 +287,8 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
     PartitionedFileSetArguments.setInputPartitionFilter(inputArgs, filterXY);
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, PARTITIONED, inputArgs));
     runtimeArguments.put(AppWithPartitionedFileSet.ROW_TO_WRITE, "a");
-    runProgram(app, AppWithPartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
+    Assert.assertTrue(
+      runProgram(app, AppWithPartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments)));
 
     // this should have read both partitions - and written both x and y to row a
     final Table output = datasetCache.getDataset(AppWithPartitionedFileSet.OUTPUT);
@@ -305,7 +313,8 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
     PartitionedFileSetArguments.setInputPartitionFilter(inputArgs, filterX);
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, PARTITIONED, inputArgs));
     runtimeArguments.put(AppWithPartitionedFileSet.ROW_TO_WRITE, "b");
-    runProgram(app, AppWithPartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
+    Assert.assertTrue(
+      runProgram(app, AppWithPartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments)));
 
     // this should have read the first partition only - and written only x to row b
     Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
@@ -328,7 +337,8 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
     PartitionedFileSetArguments.setInputPartitionFilter(inputArgs, filterMT);
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, PARTITIONED, inputArgs));
     runtimeArguments.put(AppWithPartitionedFileSet.ROW_TO_WRITE, "n");
-    runProgram(app, AppWithPartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
+    Assert.assertTrue(
+      runProgram(app, AppWithPartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments)));
 
     // this should have read no partitions - and written nothing to row n
     Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(

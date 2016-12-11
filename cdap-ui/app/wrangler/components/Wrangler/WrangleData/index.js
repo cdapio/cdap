@@ -14,17 +14,15 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
 import WrangleHistory from 'wrangler/components/Wrangler/WrangleHistory';
 import classnames from 'classnames';
-import shortid from 'shortid';
-import Histogram from 'wrangler/components/Wrangler/Histogram';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
-import ColumnActionsDropdown from 'wrangler/components/Wrangler/ColumnActionsDropdown';
-import orderBy from 'lodash/orderBy';
 import Filter from 'wrangler/components/Wrangler/Filter';
 import WranglerRightPanel from 'wrangler/components/Wrangler/WranglerRightPanel';
+
+import WranglerTable from 'wrangler/components/Wrangler/WranglerTable';
 
 export default class WrangleData extends Component {
   constructor(props) {
@@ -44,10 +42,24 @@ export default class WrangleData extends Component {
     this.onHistogramDisplayClick = this.onHistogramDisplayClick.bind(this);
     this.undo = this.undo.bind(this);
 
+    this.tableHeader = null;
+    this.tableBody = null;
+
     WranglerStore.subscribe(() => {
       let state = WranglerStore.getState().wrangler;
       this.setState(state);
     });
+  }
+
+  componentDidMount() {
+    this.forceUpdate();
+
+    let container = document.getElementsByClassName('data-table');
+
+    let height = container[0].clientHeight;
+    let width = container[0].clientWidth;
+
+    this.setState({height, width});
   }
 
   onColumnClick(column) {
@@ -67,138 +79,12 @@ export default class WrangleData extends Component {
     this.setState({showHistogram: !this.state.showHistogram});
   }
 
-  renderHistogramRow() {
-    if (!this.state.showHistogram) { return null; }
-
-    const headers = this.state.headersList;
-
-    return (
-      <tr>
-        <th className="index-column">
-          <span className="fa fa-bar-chart"></span>
-        </th>
-        {
-          headers.map((head) => {
-            return (
-              <th
-                key={head}
-                className={classnames({
-                  active: this.state.activeSelection === head
-                })}
-              >
-                <Histogram
-                  data={this.state.histogram[head].data}
-                  labels={this.state.histogram[head].labels}
-                />
-              </th>
-            );
-          })
-        }
-      </tr>
-    );
-  }
-
   undo() {
     WranglerStore.dispatch({ type: WranglerActions.undo });
   }
 
   forward() {
     WranglerStore.dispatch({ type: WranglerActions.redo });
-  }
-
-  filterData(data, column, filterBy, ignoreCase) {
-    function _equal(row) {
-      let columnData = row[column];
-      let filterData = filterBy;
-
-      if (ignoreCase) {
-        columnData = columnData.toLowerCase();
-        filterData = filterData.toLowerCase();
-      }
-
-      return columnData === filterData;
-    }
-
-    function _notEqual(row) {
-      let columnData = row[column];
-      let filterData = filterBy;
-
-      if (ignoreCase) {
-        columnData = columnData.toLowerCase();
-        filterData = filterData.toLowerCase();
-      }
-
-      return columnData !== filterData;
-    }
-
-    function _lessThan(row) {
-      return parseFloat(row[column]) < parseFloat(filterBy);
-    }
-
-    function _greaterThan(row) {
-      return parseFloat(row[column]) > parseFloat(filterBy);
-    }
-
-    function _lessEqualThan(row) {
-      return parseFloat(row[column]) <= parseFloat(filterBy);
-    }
-
-    function _greaterEqualThan(row) {
-      return parseFloat(row[column]) >= parseFloat(filterBy);
-    }
-
-    function _startsWith(row) {
-      let columnData = row[column];
-      let filterData = filterBy;
-
-      if (ignoreCase) {
-        columnData = columnData.toLowerCase();
-        filterData = filterData.toLowerCase();
-      }
-
-      return columnData.substr(0, filterData.length) === filterData;
-    }
-
-    function _endsWith(row) {
-      let columnData = row[column];
-      let filterData = filterBy;
-
-      if (ignoreCase) {
-        columnData = columnData.toLowerCase();
-        filterData = filterData.toLowerCase();
-      }
-
-      let position = columnData.length - filterData.length;
-      return columnData.substr(position) === filterData;
-    }
-
-    function _contains(row) {
-      const ignoreCase = this.state.filterIgnoreCase;
-      let columnData = row[column];
-      let filterData = filterBy;
-
-      if (ignoreCase) {
-        columnData = columnData.toLowerCase();
-        filterData = filterData.toLowerCase();
-      }
-
-      return columnData.indexOf(filterData) !== -1;
-    }
-
-    const functionsMap = {
-      '=': _equal,
-      '!=': _notEqual,
-      '<': _lessThan,
-      '>': _greaterThan,
-      '<=': _lessEqualThan,
-      '>=': _greaterEqualThan,
-      'startsWith': _startsWith,
-      'endsWith': _endsWith,
-      'contains': _contains
-    };
-    const filterFunction = this.state.filter.filterFunction;
-
-    return data.filter(functionsMap[filterFunction].bind(this));
   }
 
   render() {
@@ -214,26 +100,13 @@ export default class WrangleData extends Component {
     }
 
     const headers = this.state.headersList;
-    const originalData = this.state.data;
     const errors = this.state.errors;
-
-    let data = originalData;
-    if (this.state.sort) {
-      let sortOrder = this.state.sortAscending ? 'asc' : 'desc';
-      data = orderBy(originalData, [this.state.sort], [sortOrder]);
-    }
-
-    if (this.state.filter) {
-      const filter = this.state.filter;
-      data = this.filterData(data, filter.column, filter.filterBy, filter.filterIgnoreCase);
-    }
 
     const errorCount = headers.reduce((prev, curr) => {
       let count = errors[curr] ? errors[curr].count : 0;
       return prev + count;
     }, 0);
 
-    const errorCircle = <i className="fa fa-circle error"></i>;
 
     return (
       <div className="wrangler-data row">
@@ -304,82 +177,20 @@ export default class WrangleData extends Component {
             </div>
           </div>
 
-          <div className="data-table">
-            <table className="table table-bordered">
-              <thead>
-                <tr>
-                  <th className="index-column text-center">#</th>
-                  {
-                    headers.map((head) => {
-                      return (
-                        <th
-                          className={classnames('top-header', {
-                            active: this.state.activeSelection === head
-                          })}
-                          key={head}
-                        >
-                          <span
-                            className="header-text"
-                            onClick={this.onColumnClick.bind(this, head)}
-                          >
-                            {head}
-                          </span>
-                          <span className="pull-right">
-                            {errors[head] && errors[head].count ? errorCircle : null}
-                            <ColumnActionsDropdown column={head} />
-                          </span>
-                        </th>
-                      );
-                    })
-                  }
-                </tr>
-                <tr className="column-type-row">
-                  <th className="index-column"></th>
-                  {
-                    headers.map((head) => {
-                      return (
-                        <th
-                          className={classnames({
-                            active: this.state.activeSelection === head
-                          })}
-                          key={head}
-                        >
-                          {this.state.columnTypes[head]}
-                        </th>
-                      );
-                    })
-                  }
-                </tr>
-                {this.renderHistogramRow()}
-              </thead>
-
-              <tbody>
-                { data.map((row, index) => {
-                  return (
-                    <tr key={shortid.generate()}>
-                      <td className="index-column text-center">
-                        <span className="content">{index+1}</span>
-                      </td>
-                      {
-                        headers.map((head) => {
-                          return (
-                            <td
-                              key={shortid.generate()}
-                              className={classnames({
-                                active: this.state.activeSelection === head
-                              })}
-                            >
-                              <span className="content">{row[head]}</span>
-                              {errors[head] && errors[head][index] ? errorCircle : null}
-                            </td>
-                          );
-                        })
-                      }
-                    </tr>
-                  );
-                }) }
-              </tbody>
-            </table>
+          <div
+            className="data-table"
+          >
+            {
+              !this.state.height || !this.state.width ? null : (
+                <WranglerTable
+                  onColumnClick={this.onColumnClick.bind(this)}
+                  activeSelection={this.state.activeSelection}
+                  showHistogram={this.state.showHistogram}
+                  height={this.state.height}
+                  width={this.state.width}
+                />
+              )
+            }
           </div>
         </div>
 
@@ -388,11 +199,3 @@ export default class WrangleData extends Component {
     );
   }
 }
-
-WrangleData.defaultProps = {
-  data: []
-};
-
-WrangleData.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.object)
-};

@@ -17,7 +17,10 @@
 package co.cask.cdap.master.startup;
 
 import co.cask.cdap.common.startup.Check;
+import co.cask.cdap.data2.util.hbase.HBaseVersion;
+import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import com.google.inject.Inject;
+import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
@@ -42,6 +45,14 @@ class HBaseCheck extends Check {
 
   @Override
   public void run() {
+    LOG.info("Checking HBase version.");
+    try {
+      new HTableNameConverterFactory().get();
+    } catch (ProvisionException e) {
+      throw new RuntimeException("Unsupported Hbase version " + HBaseVersion.getVersionString());
+    }
+    LOG.info("  HBase version successfully verified.");
+
     LOG.info("Checking HBase availability.");
     try (final HConnection hbaseConnection = HConnectionManager.createConnection(hConf)) {
       hbaseConnection.listTables();

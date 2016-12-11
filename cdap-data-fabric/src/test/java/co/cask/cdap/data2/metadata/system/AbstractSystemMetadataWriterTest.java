@@ -99,10 +99,11 @@ public class AbstractSystemMetadataWriterTest {
 
     MetadataRecord expected =
       new MetadataRecord(dsInstance, MetadataScope.SYSTEM,
-                         ImmutableMap.of(AbstractSystemMetadataWriter.DESCRIPTION, "description1",
-                                         AbstractSystemMetadataWriter.CREATION_TIME, String.valueOf(123456L),
+                         ImmutableMap.of(AppSystemMetadataWriter.ENTITY_NAME_KEY, dsInstance.getEntityName(),
+                                         AbstractSystemMetadataWriter.DESCRIPTION_KEY, "description1",
+                                         AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(123456L),
                                          AbstractSystemMetadataWriter.TTL_KEY, "100"),
-                         ImmutableSet.of(dsInstance.getDataset()));
+                         ImmutableSet.<String>of());
     Assert.assertEquals(expected, store.getMetadata(MetadataScope.SYSTEM, dsInstance));
 
     // Now remove TTL, and add dsType
@@ -112,10 +113,11 @@ public class AbstractSystemMetadataWriterTest {
 
     expected =
       new MetadataRecord(dsInstance, MetadataScope.SYSTEM,
-                         ImmutableMap.of(AbstractSystemMetadataWriter.DESCRIPTION, "description2",
-                                         AbstractSystemMetadataWriter.CREATION_TIME, String.valueOf(123456L),
+                         ImmutableMap.of(AppSystemMetadataWriter.ENTITY_NAME_KEY, dsInstance.getEntityName(),
+                                         AbstractSystemMetadataWriter.DESCRIPTION_KEY, "description2",
+                                         AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(123456L),
                                          DatasetSystemMetadataWriter.TYPE, "dsType"),
-                         ImmutableSet.of(dsInstance.getDataset()));
+                         ImmutableSet.<String>of());
     Assert.assertEquals(expected, store.getMetadata(MetadataScope.SYSTEM, dsInstance));
 
     store.removeMetadata(dsInstance);
