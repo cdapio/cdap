@@ -41,7 +41,8 @@ API Changes
 
 - :cask-issue:`CDAP-6837` - Fixed an issue in ``WorkerContext`` that did not properly
   implement the contract of the Transactional interface. Note that this fix may cause
-  incompatibilities with previous releases in certain cases. See below for more details.
+  incompatibilities with previous releases in certain cases. See below for details on how
+  to handle this change in existing code.
 
   The Transactional API defines::
 
