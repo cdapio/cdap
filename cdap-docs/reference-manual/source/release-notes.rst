@@ -68,7 +68,7 @@ API Changes
     } 
   
   This is ugly and inconsistent with other implementations of Transactional. We have
-  addressed this by altering the ``WorkerContext`` method to directly raise the
+  addressed this by altering the ``WorkerContext`` to directly raise the
   ``TransactionFailureException``. However, code must change to accomodate this.
 
   To address this in existing code, such that it will work both in 4.0.0 and earlier
