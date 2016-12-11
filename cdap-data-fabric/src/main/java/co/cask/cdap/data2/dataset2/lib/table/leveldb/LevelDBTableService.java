@@ -61,6 +61,11 @@ public class LevelDBTableService {
 
   private final ConcurrentMap<String, DB> tables = Maps.newConcurrentMap();
 
+  /**
+   * To avoid database locking issues make sure that the single LevelDBTableService instance
+   * is created for handling one database.
+   */
+  @VisibleForTesting
   public static LevelDBTableService getInstance() {
     return new LevelDBTableService();
   }

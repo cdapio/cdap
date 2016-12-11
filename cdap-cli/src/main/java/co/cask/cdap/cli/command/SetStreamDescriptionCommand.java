@@ -46,7 +46,7 @@ public class SetStreamDescriptionCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     String description = arguments.get(ArgumentName.STREAM_DESCRIPTION.toString());
-    streamClient.setDescription(streamId.toId(), description);
+    streamClient.setDescription(streamId, description);
     output.printf("Successfully set stream description of stream '%s' to '%s'\n", streamId.getEntityName(),
                   description);
   }

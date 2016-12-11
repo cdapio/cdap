@@ -49,7 +49,7 @@ public class GetProgramRuntimeArgsCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     ProgramId programId = parseProgramId(arguments, elementType);
-    Map<String, String> runtimeArgs = programClient.getRuntimeArgs(programId.toId());
+    Map<String, String> runtimeArgs = programClient.getRuntimeArgs(programId);
     output.printf(GSON.toJson(runtimeArgs));
   }
 

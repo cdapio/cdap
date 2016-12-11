@@ -52,12 +52,12 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
 
       case NAMESPACE:
         checkInputLength(programIdParts, 0);
-        client.setNamespacePreferences(cliConfig.getCurrentNamespace().toId(), args);
+        client.setNamespacePreferences(cliConfig.getCurrentNamespace(), args);
         printSuccessMessage(printStream, type);
         break;
 
       case APP:
-        client.setApplicationPreferences(parseAppId(programIdParts).toId(), args);
+        client.setApplicationPreferences(parseAppId(programIdParts), args);
         printSuccessMessage(printStream, type);
         break;
 
@@ -66,7 +66,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
       case WORKFLOW:
       case SERVICE:
       case SPARK:
-        client.setProgramPreferences(parseProgramId(programIdParts, type.getProgramType()).toId(), args);
+        client.setProgramPreferences(parseProgramId(programIdParts, type.getProgramType()), args);
         printSuccessMessage(printStream, type);
         break;
 

@@ -194,6 +194,7 @@ function _setData(payload) {
   const headersList = Object.keys(payload.data[0]);
   const data = payload.data;
   const originalData = cloneDeep(data);
+
   const errors = {};
   let columnTypes = {};
   let histogram = {};

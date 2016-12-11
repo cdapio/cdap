@@ -30,6 +30,8 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
@@ -71,6 +73,7 @@ public class StreamClient {
 
   private static final Gson GSON = StreamEventTypeAdapter.register(
     new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())).create();
+  private static final TypeToken<List<StreamDetail>> STREAM_DETAIL_LIST_TYPE = new TypeToken<List<StreamDetail>>() { };
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -91,15 +94,29 @@ public class StreamClient {
    * @param stream ID of the stream
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream was not found
+   * @deprecated since 4.0.0. Use {@link #getConfig(StreamId)} instead.
    */
+  @Deprecated
   public StreamProperties getConfig(Id.Stream stream)
     throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
+    return getConfig(stream.toEntityId());
+  }
 
-    URL url = config.resolveNamespacedURLV3(stream.getNamespace(), String.format("streams/%s", stream.getId()));
+  /**
+   * Gets the configuration of a stream.
+   *
+   * @param stream ID of the stream
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream was not found
+   */
+  public StreamProperties getConfig(StreamId stream)
+    throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(stream.getParent(), String.format("streams/%s", stream.getStream()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream.toEntityId());
+      throw new StreamNotFoundException(stream);
     }
     return GSON.fromJson(response.getResponseBodyAsString(Charsets.UTF_8), StreamProperties.class);
   }
@@ -113,12 +130,29 @@ public class StreamClient {
    * @throws UnauthenticatedException if the client is unauthorized
    * @throws BadRequestException if the request is bad
    * @throws StreamNotFoundException if the stream was not found
+   * @deprecated since 4.0.0. Use {@link #setStreamProperties(StreamId, StreamProperties)} instead.
    */
+  @Deprecated
   public void setStreamProperties(Id.Stream stream, StreamProperties properties)
     throws IOException, UnauthenticatedException, BadRequestException, StreamNotFoundException, UnauthorizedException {
+    setStreamProperties(stream.toEntityId(), properties);
+  }
 
-    URL url = config.resolveNamespacedURLV3(stream.getNamespace(),
-                                            String.format("streams/%s/properties", stream.getId()));
+  /**
+   * Sets properties of a stream.
+   *
+   * @param stream ID of the stream
+   * @param properties properties to set
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the client is unauthorized
+   * @throws BadRequestException if the request is bad
+   * @throws StreamNotFoundException if the stream was not found
+   */
+  public void setStreamProperties(StreamId stream, StreamProperties properties)
+    throws IOException, UnauthenticatedException, BadRequestException, StreamNotFoundException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(stream.getParent(),
+                                            String.format("streams/%s/properties", stream.getStream()));
 
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(properties)).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(),
@@ -128,7 +162,7 @@ public class StreamClient {
       throw new BadRequestException("Bad request: " + response.getResponseBodyAsString());
     }
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream.toEntityId());
+      throw new StreamNotFoundException(stream);
     }
   }
 
@@ -138,8 +172,22 @@ public class StreamClient {
    * @param newStreamId ID of the new stream to create
    * @throws IOException if a network error occurred
    * @throws BadRequestException if the provided stream ID was invalid
+   * @deprecated since 4.0.0. Use {@link #create(StreamId)} instead.
    */
+  @Deprecated
   public void create(Id.Stream newStreamId)
+    throws IOException, BadRequestException, UnauthenticatedException, UnauthorizedException {
+    create(newStreamId.toEntityId());
+  }
+
+  /**
+   * Creates a stream.
+   *
+   * @param newStreamId ID of the new stream to create
+   * @throws IOException if a network error occurred
+   * @throws BadRequestException if the provided stream ID was invalid
+   */
+  public void create(StreamId newStreamId)
     throws IOException, BadRequestException, UnauthenticatedException, UnauthorizedException {
     create(newStreamId, null);
   }
@@ -151,11 +199,26 @@ public class StreamClient {
    * @param properties {@link StreamProperties} for the new stream
    * @throws IOException if a network error occurred
    * @throws BadRequestException if the provided stream ID was invalid
+   * @deprecated since 4.0.0. Use {@link #create(StreamId, StreamProperties)} instead.
    */
+  @Deprecated
   public void create(Id.Stream newStreamId, @Nullable StreamProperties properties)
     throws IOException, BadRequestException, UnauthenticatedException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(newStreamId.getNamespace(),
-                                            String.format("streams/%s", newStreamId.getId()));
+    create(newStreamId.toEntityId(), properties);
+  }
+
+  /**
+   * Creates a stream with {@link StreamProperties} properties.
+   *
+   * @param newStreamId ID of the new stream to create
+   * @param properties {@link StreamProperties} for the new stream
+   * @throws IOException if a network error occurred
+   * @throws BadRequestException if the provided stream ID was invalid
+   */
+  public void create(StreamId newStreamId, @Nullable StreamProperties properties)
+    throws IOException, BadRequestException, UnauthenticatedException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(newStreamId.getParent(),
+                                            String.format("streams/%s", newStreamId.getStream()));
     HttpRequest.Builder builder = HttpRequest.put(url);
     if (properties != null) {
       builder = builder.withBody(GSON.toJson(properties));
@@ -174,17 +237,32 @@ public class StreamClient {
    * @param description description of the stream
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified ID was not found
+   * @deprecated since 4.0.0. Use {@link #setDescription(StreamId, String)} instead.
    */
+  @Deprecated
   public void setDescription(Id.Stream stream, String description)
     throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(stream.getNamespace(),
-                                            String.format("streams/%s/properties", stream.getId()));
+    setDescription(stream.toEntityId(), description);
+  }
+
+  /**
+   * Sets the description of a stream.
+   *
+   * @param stream ID of the stream
+   * @param description description of the stream
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream with the specified ID was not found
+   */
+  public void setDescription(StreamId stream, String description)
+    throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(stream.getParent(),
+                                            String.format("streams/%s/properties", stream.getStream()));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(
       ImmutableMap.of("description", description))).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream.toEntityId());
+      throw new StreamNotFoundException(stream);
     }
   }
 
@@ -195,10 +273,25 @@ public class StreamClient {
    * @param event event to send to the stream
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified ID was not found
+   * @deprecated since 4.0.0. Use {@link #sendEvent(StreamId, String)} instead.
    */
+  @Deprecated
   public void sendEvent(Id.Stream stream, String event) throws IOException,
     StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(stream.getNamespace(), String.format("streams/%s", stream.getId()));
+    sendEvent(stream.toEntityId(), event);
+  }
+
+  /**
+   * Sends an event to a stream.
+   *
+   * @param stream ID of the stream
+   * @param event event to send to the stream
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream with the specified ID was not found
+   */
+  public void sendEvent(StreamId stream, String event) throws IOException,
+    StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(stream.getParent(), String.format("streams/%s", stream.getStream()));
     writeEvent(url, stream, event);
   }
 
@@ -210,10 +303,26 @@ public class StreamClient {
    * @param event event to send to the stream
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified ID was not found
+   * @deprecated since 4.0.0. Use {@link #asyncSendEvent(StreamId, String)} instead.
    */
+  @Deprecated
   public void asyncSendEvent(Id.Stream stream, String event) throws IOException,
     StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(stream.getNamespace(), String.format("streams/%s/async", stream.getId()));
+    asyncSendEvent(stream.toEntityId(), event);
+  }
+
+  /**
+   * Sends an event to a stream. The write is asynchronous, meaning when this method returns, it only guarantees
+   * the event has been received by the server, but may not get persisted.
+   *
+   * @param stream ID of the stream
+   * @param event event to send to the stream
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream with the specified ID was not found
+   */
+  public void asyncSendEvent(StreamId stream, String event) throws IOException,
+    StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(stream.getParent(), String.format("streams/%s/async", stream.getStream()));
     writeEvent(url, stream, event);
   }
 
@@ -225,8 +334,24 @@ public class StreamClient {
    * @param file the file to upload
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified ID was not found
+   * @deprecated since 4.0.0. Use {@link #sendFile(StreamId, String, File)} instead.
    */
+  @Deprecated
   public void sendFile(Id.Stream stream, String contentType,
+                       File file) throws IOException, StreamNotFoundException, UnauthenticatedException {
+    sendFile(stream.toEntityId(), contentType, file);
+  }
+
+  /**
+   * Sends a file of the given content type to a stream batch endpoint.
+   *
+   * @param stream ID of the stream
+   * @param contentType content type of the file
+   * @param file the file to upload
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream with the specified ID was not found
+   */
+  public void sendFile(StreamId stream, String contentType,
                        File file) throws IOException, StreamNotFoundException, UnauthenticatedException {
     sendBatch(stream, contentType, Files.newInputStreamSupplier(file));
   }
@@ -239,18 +364,36 @@ public class StreamClient {
    * @param inputSupplier provides content for the batch request
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified ID was not found
+   * @deprecated since 4.0.0. Use {@link #sendBatch(StreamId, String, InputSupplier)} instead.
    */
+  @Deprecated
   public void sendBatch(Id.Stream stream, String contentType,
                         InputSupplier<? extends InputStream> inputSupplier)
     throws IOException, StreamNotFoundException, UnauthenticatedException {
+    sendBatch(stream.toEntityId(), contentType, inputSupplier);
+  }
 
-    URL url = config.resolveNamespacedURLV3(stream.getNamespace(), String.format("streams/%s/batch", stream.getId()));
+  /**
+   * Sends a batch request to a stream batch endpoint.
+   *
+   * @param stream ID of the stream
+   * @param contentType content type of the data
+   * @param inputSupplier provides content for the batch request
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream with the specified ID was not found
+   */
+  public void sendBatch(StreamId stream, String contentType,
+                        InputSupplier<? extends InputStream> inputSupplier)
+    throws IOException, StreamNotFoundException, UnauthenticatedException {
+
+    URL url = config.resolveNamespacedURLV3(stream.getParent(),
+                                            String.format("streams/%s/batch", stream.getStream()));
     Map<String, String> headers = ImmutableMap.of("Content-type", contentType);
     HttpRequest request = HttpRequest.post(url).addHeaders(headers).withBody(inputSupplier).build();
 
     HttpResponse response = restClient.upload(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream.toEntityId());
+      throw new StreamNotFoundException(stream);
     }
   }
 
@@ -260,15 +403,29 @@ public class StreamClient {
    * @param stream ID of the stream to truncate
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified name was not found
+   * @deprecated since 4.0.0. Use {@link #truncate(StreamId)} instead.
    */
+  @Deprecated
   public void truncate(Id.Stream stream)
     throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(stream.getNamespace(),
-                                            String.format("streams/%s/truncate", stream.getId()));
+    truncate(stream.toEntityId());
+  }
+
+  /**
+   * Truncates a stream, deleting all stream events belonging to the stream.
+   *
+   * @param stream ID of the stream to truncate
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream with the specified name was not found
+   */
+  public void truncate(StreamId stream)
+    throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(stream.getParent(),
+                                            String.format("streams/%s/truncate", stream.getStream()));
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream.toEntityId());
+      throw new StreamNotFoundException(stream);
     }
   }
 
@@ -278,14 +435,28 @@ public class StreamClient {
    * @param stream ID of the stream to truncate
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified name was not found
+   * @deprecated since 4.0.0. Use {@link #delete(StreamId)} instead.
    */
+  @Deprecated
   public void delete(Id.Stream stream)
     throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(stream.getNamespace(), String.format("streams/%s", stream.getId()));
+    delete(stream.toEntityId());
+  }
+
+  /**
+   * Deletes a stream.
+   *
+   * @param stream ID of the stream to truncate
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream with the specified name was not found
+   */
+  public void delete(StreamId stream)
+    throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(stream.getParent(), String.format("streams/%s", stream.getStream()));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream.toEntityId());
+      throw new StreamNotFoundException(stream);
     }
   }
 
@@ -296,17 +467,33 @@ public class StreamClient {
    * @param ttlInSeconds desired TTL, in seconds
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified name was not found
+   * @deprecated since 4.0.0. Use {@link #setTTL(StreamId, long)} instead.
    */
+  @Deprecated
   public void setTTL(Id.Stream stream, long ttlInSeconds)
     throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
+    setTTL(stream.toEntityId(), ttlInSeconds);
+  }
 
-    URL url = config.resolveNamespacedURLV3(stream.getNamespace(),
-                                            String.format("streams/%s/properties", stream.getId()));
+
+  /**
+   * Sets the Time-to-Live (TTL) of a stream. TTL governs how long stream events are readable.
+   *
+   * @param stream ID of the stream
+   * @param ttlInSeconds desired TTL, in seconds
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream with the specified name was not found
+   */
+  public void setTTL(StreamId stream, long ttlInSeconds)
+    throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(stream.getParent(),
+                                            String.format("streams/%s/properties", stream.getStream()));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(ImmutableMap.of("ttl", ttlInSeconds))).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream.toEntityId());
+      throw new StreamNotFoundException(stream);
     }
   }
 
@@ -315,14 +502,48 @@ public class StreamClient {
    *
    * @return list of {@link StreamDetail}s
    * @throws IOException if a network error occurred
+   * @deprecated since 4.0.0. Use {@link #list(NamespaceId)} instead.
    */
+  @Deprecated
   public List<StreamDetail> list(Id.Namespace namespace)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
+    return list(namespace.toEntityId());
+  }
+
+  /**
+   * Lists all streams.
+   *
+   * @return list of {@link StreamDetail}s
+   * @throws IOException if a network error occurred
+   */
+  public List<StreamDetail> list(NamespaceId namespace)
     throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(namespace, "streams");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<StreamDetail>>() {
-    }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, STREAM_DETAIL_LIST_TYPE).getResponseObject();
   }
+
+  /**
+   * Reads events from a stream
+   *
+   * @param streamId ID of the stream
+   * @param startTime Timestamp in milliseconds to start reading event from (inclusive)
+   * @param endTime Timestamp in milliseconds for the last event to read (exclusive)
+   * @param limit Maximum number of events to read
+   * @param results Collection for storing the resulting stream events
+   * @param <T> Type of the collection for storing results
+   * @return The same collection object as passed in the {@code results} parameter
+   * @throws IOException If fails to read from stream
+   * @throws StreamNotFoundException If the given stream does not exists
+   * @deprecated since 4.0.0. Use {@link #getEvents(StreamId, long, long, int, Collection)} instead.
+   */
+  @Deprecated
+  public <T extends Collection<? super StreamEvent>> T getEvents(Id.Stream streamId, String startTime,
+                                                                 String endTime, int limit, final T results)
+    throws IOException, StreamNotFoundException, UnauthenticatedException {
+    return getEvents(streamId.toEntityId(), startTime, endTime, limit, results);
+  }
+
   /**
    * Reads events from a stream
    *
@@ -336,7 +557,7 @@ public class StreamClient {
    * @throws IOException If fails to read from stream
    * @throws StreamNotFoundException If the given stream does not exists
    */
-  public <T extends Collection<? super StreamEvent>> T getEvents(Id.Stream streamId, String startTime,
+  public <T extends Collection<? super StreamEvent>> T getEvents(StreamId streamId, String startTime,
                                                                  String endTime, int limit, final T results)
     throws IOException, StreamNotFoundException, UnauthenticatedException {
     getEvents(streamId, startTime, endTime, limit, new Function<StreamEvent, Boolean>() {
@@ -361,8 +582,29 @@ public class StreamClient {
    * @return The same collection object as passed in the {@code results} parameter
    * @throws IOException If fails to read from stream
    * @throws StreamNotFoundException If the given stream does not exists
+   * @deprecated since 4.0.0. Use {@link #getEvents(StreamId, long, long, int, Collection)} instead.
    */
+  @Deprecated
   public <T extends Collection<? super StreamEvent>> T getEvents(Id.Stream streamId, long startTime,
+                                                                 long endTime, int limit, final T results)
+    throws IOException, StreamNotFoundException, UnauthenticatedException {
+    return getEvents(streamId.toEntityId(), startTime, endTime, limit, results);
+  }
+
+  /**
+   * Reads events from a stream
+   *
+   * @param streamId ID of the stream
+   * @param startTime Timestamp in milliseconds to start reading event from (inclusive)
+   * @param endTime Timestamp in milliseconds for the last event to read (exclusive)
+   * @param limit Maximum number of events to read
+   * @param results Collection for storing the resulting stream events
+   * @param <T> Type of the collection for storing results
+   * @return The same collection object as passed in the {@code results} parameter
+   * @throws IOException If fails to read from stream
+   * @throws StreamNotFoundException If the given stream does not exists
+   */
+  public <T extends Collection<? super StreamEvent>> T getEvents(StreamId streamId, long startTime,
                                                                  long endTime, int limit, final T results)
     throws IOException, StreamNotFoundException, UnauthenticatedException {
     return getEvents(streamId, String.valueOf(startTime), String.valueOf(endTime), limit, results);
@@ -379,8 +621,29 @@ public class StreamClient {
    *                  upon invocation, it will stops the reading
    * @throws IOException If fails to read from stream
    * @throws StreamNotFoundException If the given stream does not exists
+   * @deprecated since 4.0.0. Use {@link #getEvents(StreamId, long, long, int, Function)} instead.
    */
+  @Deprecated
   public void getEvents(Id.Stream streamId, long startTime, long endTime, int limit,
+                        Function<? super StreamEvent, Boolean> callback)
+    throws IOException, StreamNotFoundException, UnauthenticatedException {
+
+    getEvents(streamId.toEntityId(), startTime, endTime, limit, callback);
+  }
+
+  /**
+   * Reads events from a stream
+   *
+   * @param streamId ID of the stream
+   * @param startTime Timestamp in milliseconds to start reading event from (inclusive)
+   * @param endTime Timestamp in milliseconds for the last event to read (exclusive)
+   * @param limit Maximum number of events to read
+   * @param callback Callback to invoke for each stream event read. If the callback function returns {@code false}
+   *                  upon invocation, it will stops the reading
+   * @throws IOException If fails to read from stream
+   * @throws StreamNotFoundException If the given stream does not exists
+   */
+  public void getEvents(StreamId streamId, long startTime, long endTime, int limit,
                         Function<? super StreamEvent, Boolean> callback)
     throws IOException, StreamNotFoundException, UnauthenticatedException {
 
@@ -398,17 +661,37 @@ public class StreamClient {
    *                 upon invocation, it will stops the reading
    * @throws IOException If fails to read from stream
    * @throws StreamNotFoundException If the given stream does not exists
+   * @deprecated since 4.0.0. Use {@link #getEvents(StreamId, String, String, int, Function)} instead.
    */
+  @Deprecated
   public void getEvents(Id.Stream streamId, String start, String end, int limit,
+                        Function<? super StreamEvent, Boolean> callback)
+    throws IOException, StreamNotFoundException, UnauthenticatedException {
+    getEvents(streamId.toEntityId(), start, end, limit, callback);
+  }
+
+  /**
+   * Reads events from a stream
+   *
+   * @param streamId ID of the stream
+   * @param start Timestamp in milliseconds or now-xs format to start reading event from (inclusive)
+   * @param end Timestamp in milliseconds or now-xs format for the last event to read (exclusive)
+   * @param limit Maximum number of events to read
+   * @param callback Callback to invoke for each stream event read. If the callback function returns {@code false}
+   *                 upon invocation, it will stops the reading
+   * @throws IOException If fails to read from stream
+   * @throws StreamNotFoundException If the given stream does not exists
+   */
+  public void getEvents(StreamId streamId, String start, String end, int limit,
                         Function<? super StreamEvent, Boolean> callback)
     throws IOException, StreamNotFoundException, UnauthenticatedException {
 
     long startTime = TimeMathParser.parseTime(start, TimeUnit.MILLISECONDS);
     long endTime = TimeMathParser.parseTime(end, TimeUnit.MILLISECONDS);
 
-    URL url = config.resolveNamespacedURLV3(streamId.getNamespace(),
+    URL url = config.resolveNamespacedURLV3(streamId.getParent(),
                                             String.format("streams/%s/events?start=%d&end=%d&limit=%d",
-                                                          streamId.getId(), startTime, endTime, limit));
+                                                          streamId.getStream(), startTime, endTime, limit));
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     AccessToken accessToken = config.getAccessToken();
     if (accessToken != null) {
@@ -428,7 +711,7 @@ public class StreamClient {
         throw new UnauthenticatedException("Unauthorized status code received from the server.");
       }
       if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-        throw new StreamNotFoundException(streamId.toEntityId());
+        throw new StreamNotFoundException(streamId);
       }
       if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NO_CONTENT) {
         return;
@@ -454,13 +737,13 @@ public class StreamClient {
   /**
    * Writes stream event using the given URL. The write maybe sync or async, depending on the URL.
    */
-  private void writeEvent(URL url, Id.Stream stream, String event)
+  private void writeEvent(URL url, StreamId stream, String event)
     throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     HttpRequest request = HttpRequest.post(url).withBody(event).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream.toEntityId());
+      throw new StreamNotFoundException(stream);
     }
   }
 

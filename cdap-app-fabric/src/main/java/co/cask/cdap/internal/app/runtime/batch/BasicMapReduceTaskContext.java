@@ -21,6 +21,7 @@ import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.InputContext;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.Dataset;
@@ -87,7 +88,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   private MultipleOutputs multipleOutputs;
   private TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> context;
-  private String inputName;
+  private InputContext inputContext;
 
   // keeps track of all tx-aware datasets to perform the transaction lifecycle for them. Note that
   // the transaction is already started, and it will be committed or aborted outside of this task.
@@ -157,8 +158,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     this.context = context;
   }
 
-  public void setInputName(String inputName) {
-    this.inputName = inputName;
+  public void setInputContext(InputContext inputContext) {
+    this.inputContext = inputContext;
   }
 
   /**
@@ -221,7 +222,15 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Nullable
   @Override
   public String getInputName() {
-    return inputName;
+    if (inputContext == null) {
+      return null;
+    }
+    return inputContext.getInputName();
+  }
+
+  @Override
+  public InputContext getInputContext() {
+    return inputContext;
   }
 
   private static Map<String, String> createMetricsTags(@Nullable String taskId,

@@ -16,11 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset.input;
 
-import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.IOException;
 
@@ -37,20 +35,14 @@ public class DelegatingRecordReader<K, V> extends RecordReader<K, V> {
   /**
    * Constructs the DelegatingRecordReader.
    *
-   * @param taggedInputSplit TaggedInputSplit object
-   * @param context TaskAttemptContext object
+   * @param recordReader the actual RecordReader to delegate operations to.
    *
    * @throws IOException
    * @throws InterruptedException
    */
   @SuppressWarnings("unchecked")
-  public DelegatingRecordReader(TaggedInputSplit taggedInputSplit,
-                                TaskAttemptContext context) throws IOException, InterruptedException {
-    // Find the InputFormat and then the RecordReader from the TaggedInputSplit.
-    InputFormat<K, V> inputFormat = (InputFormat<K, V>) ReflectionUtils.newInstance(
-      taggedInputSplit.getInputFormatClass(), context.getConfiguration());
-    InputSplit inputSplit = taggedInputSplit.getInputSplit();
-    originalRR = inputFormat.createRecordReader(inputSplit, context);
+  public DelegatingRecordReader(RecordReader<K, V> recordReader) throws IOException, InterruptedException {
+    this.originalRR = recordReader;
   }
 
   @Override
@@ -75,6 +67,8 @@ public class DelegatingRecordReader<K, V> extends RecordReader<K, V> {
 
   @Override
   public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+    // We need to be sure not to pass the TaggedInputSplit to the underlying RecordReader. Otherwise, it can result
+    // in ClassCastExceptions
     InputSplit inputSplit = ((TaggedInputSplit) split).getInputSplit();
     originalRR.initialize(inputSplit, context);
   }

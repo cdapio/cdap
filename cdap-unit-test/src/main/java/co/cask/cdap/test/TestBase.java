@@ -564,7 +564,7 @@ public class TestBase {
    *
    * @param namespace the namespace to deploy the application to
    * @param applicationClz the application class
-   * @param appConfig the application config
+   * @param appConfig the application configApp
    * @param bundleEmbeddedJars any extra jars to bundle in the application jar
    * @return An {@link ApplicationManager} to manage the deployed application.
    */

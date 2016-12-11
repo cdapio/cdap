@@ -53,7 +53,7 @@ public class DescribeDatasetModuleCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     DatasetModuleId moduleId = cliConfig.getCurrentNamespace().datasetModule(
       arguments.get(ArgumentName.DATASET_MODULE.toString()));
-    DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(moduleId.toId());
+    DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(moduleId);
 
     Table table = Table.builder()
       .setHeader("name", "className", "jarLocation", "types", "usesModules", "usedByModules")

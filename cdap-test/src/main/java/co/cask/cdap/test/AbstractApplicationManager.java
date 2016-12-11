@@ -17,11 +17,13 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,7 +42,7 @@ public abstract class AbstractApplicationManager implements ApplicationManager {
 
   @Override
   public void startProgram(Id.Program programId) {
-    startProgram(programId, ImmutableMap.<String, String>of());
+    startProgram(programId.toEntityId());
   }
 
   @Override
@@ -48,7 +50,24 @@ public abstract class AbstractApplicationManager implements ApplicationManager {
     startProgram(programId, ImmutableMap.<String, String>of());
   }
 
-  private void startProgram(String programName, Map<String, String> arguments, ProgramType programType) {
-    startProgram(Id.Program.from(application.toId(), programType, programName), arguments);
+  @Override
+  public void startProgram(Id.Program programId, Map<String, String> arguments) {
+    startProgram(programId.toEntityId(), arguments);
   }
+
+  @Override
+  public void stopProgram(Id.Program programId) {
+    stopProgram(programId.toEntityId());
+  }
+
+  @Override
+  public boolean isRunning(Id.Program programId) {
+    return isRunning(programId.toEntityId());
+  }
+
+  @Override
+  public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
+    return getHistory(programId.toEntityId(), status);
+  }
+
 }

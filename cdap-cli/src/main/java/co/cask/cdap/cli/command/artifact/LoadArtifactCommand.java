@@ -70,18 +70,18 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
     String configPath = arguments.getOptional(ArgumentName.ARTIFACT_CONFIG_FILE.toString());
     NamespaceId namespace = artifactId.getParent();
     if (configPath == null) {
-      artifactClient.add(namespace.toId(), artifactId.getEntityName(),
+      artifactClient.add(namespace, artifactId.getEntityName(),
                          Files.newInputStreamSupplier(artifactFile), artifactId.getVersion());
     } else {
       File configFile = resolver.resolvePathToFile(configPath);
       ArtifactConfig artifactConfig = configReader.read(namespace.toId(), configFile);
-      artifactClient.add(namespace.toId(), artifactId.getEntityName(),
+      artifactClient.add(namespace, artifactId.getEntityName(),
                          Files.newInputStreamSupplier(artifactFile), artifactId.getVersion(),
                          artifactConfig.getParents(), artifactConfig.getPlugins());
 
       Map<String, String> properties = artifactConfig.getProperties();
       if (properties != null && !properties.isEmpty()) {
-        artifactClient.writeProperties(artifactId.toId(), properties);
+        artifactClient.writeProperties(artifactId, properties);
       }
     }
 

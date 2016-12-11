@@ -149,13 +149,15 @@ export default class ServiceStatus extends Component {
       circleContent = this.state.provisioned;
     }
 
-    statusCircle = <div className={circleClass}>
+    statusCircle = (<div className={circleClass}>
                     {circleContent}
-                   </div>;
+                   </div>);
 
     let logUrl = this.MyDataSrc.constructUrl({
-      _cdapPath : `/system/services/${this.props.name}/logs/next?&maxSize=50`
+      _cdapPath : `/system/services/${this.props.name}/logs`
     });
+
+    logUrl = `/downloadLogs?type=raw&backendUrl=${encodeURIComponent(logUrl)}`;
 
     let provisionBtnClasses = classNames('btn btn-default btn-primary set-provision-btn', {'provision-btn-with-warning' : this.state.serviceWarning});
 

@@ -1,5 +1,9 @@
 {
   "cdap": {
     "version": "4.0.0-1"
+  },
+  "java": {
+    "install_flavor": "openjdk",
+    "jdk_version": 7
   }
 }

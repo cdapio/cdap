@@ -21,7 +21,7 @@ import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.FlowManager;
 import com.google.common.base.Preconditions;
@@ -34,9 +34,9 @@ public class RemoteFlowManager extends AbstractProgramManager<FlowManager> imple
 
   private final ProgramClient programClient;
   private final MetricsClient metricsClient;
-  private final Id.Flow flowId;
+  private final FlowId flowId;
 
-  public RemoteFlowManager(Id.Flow programId, ClientConfig clientConfig, RESTClient restClient,
+  public RemoteFlowManager(FlowId programId, ClientConfig clientConfig, RESTClient restClient,
                            RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
     this.flowId = programId;
@@ -48,7 +48,7 @@ public class RemoteFlowManager extends AbstractProgramManager<FlowManager> imple
   public void setFlowletInstances(String flowletName, int instances) {
     Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
     try {
-      programClient.setFlowletInstances(Id.Flow.Flowlet.from(flowId, flowletName), instances);
+      programClient.setFlowletInstances(flowId.flowlet(flowletName), instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -57,7 +57,7 @@ public class RemoteFlowManager extends AbstractProgramManager<FlowManager> imple
   @Override
   public int getFlowletInstances(String flowletName) {
     try {
-      return programClient.getFlowletInstances(Id.Flow.Flowlet.from(flowId, flowletName));
+      return programClient.getFlowletInstances(flowId.flowlet(flowletName));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -65,6 +65,6 @@ public class RemoteFlowManager extends AbstractProgramManager<FlowManager> imple
 
   @Override
   public RuntimeMetrics getFlowletMetrics(String flowletId) {
-    return metricsClient.getFlowletMetrics(programId.toId(), flowletId);
+    return metricsClient.getFlowletMetrics(programId.flowlet(flowletId));
   }
 }

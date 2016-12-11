@@ -72,7 +72,7 @@ public class SecureStoreClient {
    */
   public void createKey(SecureKeyId secureKeyId, SecureKeyCreateRequest keyCreateRequest) throws IOException,
     UnauthenticatedException, AlreadyExistsException, NamespaceNotFoundException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(secureKeyId.getParent().toId(), getSecureKeyPath(secureKeyId));
+    URL url = config.resolveNamespacedURLV3(secureKeyId.getParent(), getSecureKeyPath(secureKeyId));
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(keyCreateRequest), null,
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_CONFLICT);
@@ -95,7 +95,7 @@ public class SecureStoreClient {
    */
   public String getData(SecureKeyId secureKeyId) throws IOException, UnauthenticatedException,
     SecureKeyNotFoundException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(secureKeyId.getParent().toId(), getSecureKeyPath(secureKeyId));
+    URL url = config.resolveNamespacedURLV3(secureKeyId.getParent(), getSecureKeyPath(secureKeyId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -115,7 +115,7 @@ public class SecureStoreClient {
    */
   public SecureStoreMetadata getKeyMetadata(SecureKeyId secureKeyId) throws IOException, UnauthenticatedException,
     SecureKeyNotFoundException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(secureKeyId.getParent().toId(),
+    URL url = config.resolveNamespacedURLV3(secureKeyId.getParent(),
                                             String.format("%s/metadata", getSecureKeyPath(secureKeyId)));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -134,7 +134,7 @@ public class SecureStoreClient {
    */
   public void deleteKey(SecureKeyId secureKeyId) throws IOException, UnauthenticatedException,
     SecureKeyNotFoundException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(secureKeyId.getParent().toId(), getSecureKeyPath(secureKeyId));
+    URL url = config.resolveNamespacedURLV3(secureKeyId.getParent(), getSecureKeyPath(secureKeyId));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -152,7 +152,7 @@ public class SecureStoreClient {
    */
   public Map<String, String> listKeys(NamespaceId namespaceId) throws IOException, UnauthenticatedException,
     NamespaceNotFoundException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(namespaceId.toId(), SECURE_KEYS);
+    URL url = config.resolveNamespacedURLV3(namespaceId, SECURE_KEYS);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

@@ -22,6 +22,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactClasses;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -32,27 +33,31 @@ import java.util.Map;
 public class ArtifactSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   private final ArtifactInfo artifactInfo;
+  private final boolean existing;
 
   public ArtifactSystemMetadataWriter(MetadataStore metadataStore, ArtifactId artifactId,
                                       ArtifactInfo artifactInfo) {
     super(metadataStore, artifactId);
     this.artifactInfo = artifactInfo;
+    this.existing = !metadataStore.getProperties(MetadataScope.SYSTEM, artifactId).isEmpty();
   }
 
   @Override
   protected Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
+    properties.put(ENTITY_NAME_KEY, artifactInfo.getName());
     ArtifactClasses classes = artifactInfo.getClasses();
     for (PluginClass pluginClass : classes.getPlugins()) {
       addPlugin(pluginClass, artifactInfo.getVersion(), properties);
+    }
+    if (!existing) {
+      properties.put(CREATION_TIME_KEY, String.valueOf(System.currentTimeMillis()));
     }
     return properties.build();
   }
 
   @Override
   protected String[] getSystemTagsToAdd() {
-    return new String[] {
-      artifactInfo.getName()
-    };
+    return new String[] { };
   }
 }

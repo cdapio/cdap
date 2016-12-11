@@ -92,7 +92,7 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
       String scheduleName = programIdParts[1];
       ScheduleId scheduleId = cliConfig.getCurrentNamespace().app(appId).schedule(scheduleName);
 
-      printStream.println(scheduleClient.getStatus(scheduleId.toId()));
+      printStream.println(scheduleClient.getStatus(scheduleId));
     }
 
     @Override
@@ -130,7 +130,7 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
       String scheduleName = programIdParts[1];
       ScheduleId scheduleId = cliConfig.getCurrentNamespace().app(appId).schedule(scheduleName);
 
-      scheduleClient.suspend(scheduleId.toId());
+      scheduleClient.suspend(scheduleId);
       printStream.printf("Successfully suspended schedule '%s' in app '%s'\n", scheduleName, appId);
     }
 
@@ -169,7 +169,7 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
       String scheduleName = programIdParts[1];
       ScheduleId schedule = cliConfig.getCurrentNamespace().app(appId).schedule(scheduleName);
 
-      scheduleClient.resume(schedule.toId());
+      scheduleClient.resume(schedule);
       printStream.printf("Successfully resumed schedule '%s' in app '%s'\n", scheduleName, appId);
     }
 
@@ -208,7 +208,7 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
       String workflowName = programIdParts[1];
       WorkflowId workflowId = cliConfig.getCurrentNamespace().app(appId).workflow(workflowName);
 
-      List<ScheduleSpecification> list = scheduleClient.list(workflowId.toId());
+      List<ScheduleSpecification> list = scheduleClient.list(workflowId);
       Table table = Table.builder()
         .setHeader("application", "program", "program type", "name", "type", "description", "properties",
                    "runtime args")

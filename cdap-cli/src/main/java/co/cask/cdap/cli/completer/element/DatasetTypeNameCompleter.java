@@ -45,7 +45,7 @@ public class DatasetTypeNameCompleter extends StringsCompleter {
       @Override
       public Collection<String> get() {
         try {
-          List<DatasetTypeMeta> list = datasetTypeClient.list(cliConfig.getCurrentNamespace().toId());
+          List<DatasetTypeMeta> list = datasetTypeClient.list(cliConfig.getCurrentNamespace());
           return Lists.newArrayList(
             Iterables.transform(list, new Function<DatasetTypeMeta, String>() {
               @Override

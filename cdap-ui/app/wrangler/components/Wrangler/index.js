@@ -21,6 +21,8 @@ import WrangleData from 'wrangler/components/Wrangler/WrangleData';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 
+import FileDnD from 'components/FileDnD';
+
 require('./Wrangler.less');
 
 /**
@@ -40,7 +42,8 @@ export default class Wrangler extends Component {
       skipEmptyLines: false,
       delimiter: '',
       wranglerInput: '',
-      originalData: []
+      isDataSet: false,
+      file: ''
     };
 
     this.handleSetHeaders = this.handleSetHeaders.bind(this);
@@ -51,6 +54,7 @@ export default class Wrangler extends Component {
     this.handleTextInput = this.handleTextInput.bind(this);
     this.onPlusButtonClick = this.onPlusButtonClick.bind(this);
     this.onWrangleClick = this.onWrangleClick.bind(this);
+    this.onWrangleFile = this.onWrangleFile.bind(this);
   }
 
   // componentDidMount() {
@@ -62,13 +66,22 @@ export default class Wrangler extends Component {
     this.wrangle();
   }
 
-  wrangle() {
+  onWrangleFile() {
+    this.setState({loading: true});
+    this.wrangle(true);
+  }
+
+  wrangle(isFile) {
     let input = this.state.wranglerInput;
+
+    if (isFile) {
+      input = this.state.file;
+    }
 
     // Keeping these for dev purposes
 
-//     let input = `Hakeem Gillespie,91,753,599
-// Arsenio Gardner,683,754,641
+//     input = `Hakeem Gillespie,91,753,599
+// Arsenio Gardner,,754,641
 // Darius Mcdonald,567,473,520
 // Zachary Small,981,271,385
 // Travis Rutledge,468,91,578
@@ -156,12 +169,12 @@ export default class Wrangler extends Component {
     WranglerStore.dispatch({
       type: WranglerActions.setData,
       payload: {
-        data: formattedData
+        data: formattedData,
       }
     });
 
     this.setState({
-      originalData: formattedData,
+      isDataSet: true,
       loading: false
     });
   }
@@ -207,7 +220,7 @@ export default class Wrangler extends Component {
   }
 
   renderWranglerInputBox() {
-    if (this.state.originalData.length !== 0) {
+    if (this.state.isDataSet) {
       return null;
     }
 
@@ -275,6 +288,30 @@ export default class Wrangler extends Component {
             Wrangle
           </button>
         </div>
+
+        <div className="file-input">
+          <hr/>
+
+          <h4>Upload File</h4>
+          <div>
+            <FileDnD
+              file={this.state.file}
+              onDropHandler={(e) => this.setState({file: e[0]})}
+            />
+          </div>
+
+          <br/>
+
+          <div className="text-center">
+            <button
+              className="btn btn-primary"
+              onClick={this.onWrangleFile}
+            >
+              Wrangle File
+            </button>
+          </div>
+        </div>
+
       </div>
     );
   }
@@ -285,7 +322,7 @@ export default class Wrangler extends Component {
         {this.renderWranglerInputBox()}
 
         {
-          this.state.originalData.length ?
+          this.state.isDataSet ?
             <WrangleData data={this.state.originalData} />
           :
             null

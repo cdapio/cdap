@@ -338,6 +338,12 @@ Kerberos support in CDAP is automatically enabled when enabling Kerberos securit
 cluster via Ambari. Consult the appropriate Ambari documentation for instructions on enabling
 Kerberos support for your cluster.
 
+The ``cdap`` user must be able to launch YARN containers, which can be accomplished by
+adjusting the YARN ``min.user.id`` (to 500) to include the ``cdap`` user. (As Ambari does
+not have a mechanism for setting the YARN ``allowed.system.users`` |---| the preferred
+method of enabling the ``cdap`` user as it is more precise and limited |---| the setting
+of ``min.user.id`` needs to be used instead.)
+
 .. _ambari-configuration-highly-available:
 
 Enabling CDAP HA

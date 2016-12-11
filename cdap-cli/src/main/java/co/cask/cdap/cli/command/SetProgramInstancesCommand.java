@@ -24,7 +24,6 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -61,7 +60,7 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         String flowId = programIdParts[1];
         String flowletName = programIdParts[2];
         FlowletId flowletId = appId.flow(flowId).flowlet(flowletName);
-        programClient.setFlowletInstances(flowletId.toId(), numInstances);
+        programClient.setFlowletInstances(flowletId, numInstances);
         output.printf("Successfully set flowlet '%s' of flow '%s' of app '%s' to %d instances\n",
                       flowId, flowletId, appId.getEntityName(), numInstances);
         break;
@@ -71,7 +70,7 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         }
         String workerName = programIdParts[1];
         ProgramId workerId = appId.worker(workerName);
-        programClient.setWorkerInstances(Id.Worker.from(workerId.getParent().toId(), workerName), numInstances);
+        programClient.setWorkerInstances(workerId, numInstances);
         output.printf("Successfully set worker '%s' of app '%s' to %d instances\n",
                       workerName, appId.getEntityName(), numInstances);
         break;
@@ -81,7 +80,7 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         }
         String serviceName = programIdParts[1];
         ServiceId service = appId.service(serviceName);
-        programClient.setServiceInstances(service.toId(), numInstances);
+        programClient.setServiceInstances(service, numInstances);
         output.printf("Successfully set service '%s' of app '%s' to %d instances\n",
                       serviceName, appId.getEntityName(), numInstances);
         break;

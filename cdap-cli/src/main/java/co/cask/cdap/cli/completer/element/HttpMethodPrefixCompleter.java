@@ -39,8 +39,9 @@ import java.util.Map;
  */
 public class HttpMethodPrefixCompleter extends PrefixCompleter {
 
-  private static final String PROGRAM_ID = "programId";
-  private static final String PATTERN = String.format("call service <%s>", PROGRAM_ID);
+  private static final String SERVICE_ID = "app-id.service-id";
+  private static final String APP_VERSION = "app-version";
+  private static final String PATTERN = String.format("call service <%s> [version <%s>]", SERVICE_ID, APP_VERSION);
 
   private final ServiceClient serviceClient;
   private final EndpointCompleter completer;
@@ -57,10 +58,16 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
   @Override
   public int complete(String buffer, int cursor, List<CharSequence> candidates) {
     Map<String, String> arguments = ArgumentParser.getArguments(buffer, PATTERN);
-    ProgramIdArgument programIdArgument = ArgumentParser.parseProgramId(arguments.get(PROGRAM_ID));
+    ProgramIdArgument programIdArgument = ArgumentParser.parseProgramId(arguments.get(SERVICE_ID));
     if (programIdArgument != null) {
-      ServiceId service = cliConfig.getCurrentNamespace().app(programIdArgument.getAppId()).service(
-        programIdArgument.getProgramId());
+      ServiceId service;
+      if (arguments.get(APP_VERSION) == null) {
+        service = cliConfig.getCurrentNamespace().app(programIdArgument.getAppId()).service(
+          programIdArgument.getProgramId());
+      } else {
+        service = cliConfig.getCurrentNamespace().app(programIdArgument.getAppId(), arguments.get(APP_VERSION)).service(
+          programIdArgument.getProgramId());
+      }
       completer.setEndpoints(getMethods(service));
     } else {
       completer.setEndpoints(Collections.<String>emptyList());
@@ -71,7 +78,7 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
   public Collection<String> getMethods(ServiceId serviceId) {
     Collection<String> httpMethods = Lists.newArrayList();
     try {
-      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId.toId())) {
+      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId)) {
         String method = endpoint.getMethod();
         if (!httpMethods.contains(method)) {
           httpMethods.add(method);

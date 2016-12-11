@@ -52,7 +52,7 @@ public class SetDatasetInstancePropertiesCommand extends AbstractCommand {
     Map<String, String> properties = ArgumentParser.parseMap(
       arguments.get(ArgumentName.DATASET_PROPERTIES.toString()));
 
-    datasetClient.updateExisting(instance.toId(), properties);
+    datasetClient.updateExisting(instance, properties);
     output.printf("Successfully updated properties for dataset instance '%s' to %s",
                   instance.getEntityName(), GSON.toJson(properties));
   }

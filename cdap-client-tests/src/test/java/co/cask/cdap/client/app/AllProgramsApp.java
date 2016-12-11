@@ -80,6 +80,7 @@ public class AllProgramsApp extends AbstractApplication {
   private static final Logger LOG = LoggerFactory.getLogger(AllProgramsApp.class);
 
   public static final String NAME = "App";
+  public static final String DESCRIPTION = "Application which has everything";
   public static final String STREAM_NAME = "stream";
   public static final String DATASET_NAME = "kvt";
   public static final String DATASET_NAME2 = "kvt2";
@@ -172,11 +173,12 @@ public class AllProgramsApp extends AbstractApplication {
   public static class NoOpFlow extends AbstractFlow {
 
     public static final String NAME = "NoOpFlow";
+    public static final String DESCRIPTION = "NoOpflow";
 
     @Override
     protected void configure() {
       setName(NAME);
-      setDescription("NoOpflow");
+      setDescription(DESCRIPTION);
       addFlowlet(A.NAME, new A());
       connectStream(STREAM_NAME, A.NAME);
     }
@@ -300,11 +302,12 @@ public class AllProgramsApp extends AbstractApplication {
   public static class NoOpWorkflow extends AbstractWorkflow {
 
     public static final String NAME = "NoOpWorkflow";
+    public static final String DESCRIPTION = "NoOp Workflow description";
 
     @Override
     public void configure() {
       setName(NAME);
-      setDescription("NoOp Workflow description");
+      setDescription(DESCRIPTION);
       addAction(new NoOpAction());
       addMapReduce(NoOpMR.NAME);
     }

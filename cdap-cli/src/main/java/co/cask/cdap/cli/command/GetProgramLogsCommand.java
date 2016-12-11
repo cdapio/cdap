@@ -61,7 +61,7 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
       String programName = programIdParts[1];
       ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(),
                                                                                programName);
-      logs = programClient.getProgramLogs(programId.toId(), start, stop);
+      logs = programClient.getProgramLogs(programId, start, stop);
     } else {
       throw new IllegalArgumentException("Cannot get logs for " + elementType.getNamePlural());
     }

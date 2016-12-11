@@ -37,11 +37,13 @@ import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.SystemServiceMeta;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -62,17 +64,17 @@ public class GenerateClientUsageExample {
     ApplicationClient appClient = new ApplicationClient(clientConfig);
 
     // Fetch the list of applications
-    List<ApplicationRecord> apps = appClient.list(Id.Namespace.DEFAULT);
+    List<ApplicationRecord> apps = appClient.list(NamespaceId.DEFAULT);
 
     // Deploy an application
     File appJarFile = new File("your-app.jar");
-    appClient.deploy(Id.Namespace.DEFAULT, appJarFile);
+    appClient.deploy(NamespaceId.DEFAULT, appJarFile);
 
     // Delete an application
-    appClient.delete(Id.Application.from(Id.Namespace.DEFAULT, "Purchase"));
+    appClient.delete(NamespaceId.DEFAULT.app("Purchase"));
 
     // List programs belonging to an application
-    appClient.listPrograms(Id.Application.from(Id.Namespace.DEFAULT, "Purchase"));
+    appClient.listPrograms(NamespaceId.DEFAULT.app("Purchase"));
   }
 
   public void preferencesClient() throws Exception {
@@ -86,21 +88,21 @@ public class GenerateClientUsageExample {
     preferencesClient.setInstancePreferences(propMap);
 
     // Get preferences at the Instance level
-    Map<String, String> currentPropMap = preferencesClient.getInstancePreferences();
+    preferencesClient.getInstancePreferences();
 
     // Delete preferences at the Instance level
     preferencesClient.deleteInstancePreferences();
 
     // Set preferences of MyApp application which is deployed in the Dev namespace
-    preferencesClient.setApplicationPreferences(Id.Application.from("Dev", "MyApp"), propMap);
+    preferencesClient.setApplicationPreferences(new ApplicationId("Dev", "MyApp"), propMap);
 
     // Get only the preferences of MyApp application which is deployed in the Dev namespace
     Map<String, String> appPrefs = preferencesClient.getApplicationPreferences(
-      Id.Application.from("Dev", "MyApp"), false);
+      new ApplicationId("Dev", "MyApp"), false);
 
     // Get the resolved preferences (collapsed with higher level(s) of preferences)
     Map<String, String> resolvedAppPrefs = preferencesClient.getApplicationPreferences(
-      Id.Application.from("Dev", "MyApp"), true);
+      new ApplicationId("Dev", "MyApp"), true);
   }
 
   public void programClient() throws Exception {
@@ -108,39 +110,35 @@ public class GenerateClientUsageExample {
     ProgramClient programClient = new ProgramClient(clientConfig);
 
     // Start a service in the WordCount example
-    programClient.start(Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.SERVICE, "RetrieveCounts"));
+    programClient.start(NamespaceId.DEFAULT.app("WordCount").service("RetrieveCounts"));
 
     // Fetch live information from the HelloWorld example
     // Live info includes the address of an component’s container host and the container’s debug port,
     // formatted in JSON
-    programClient.getLiveInfo(Id.Program.from(Id.Namespace.DEFAULT, "HelloWorld", ProgramType.SERVICE, "greet"));
+    programClient.getLiveInfo(NamespaceId.DEFAULT.app("HelloWorld").service("greet"));
 
     // Fetch program logs in the WordCount example
-    programClient.getProgramLogs(
-      Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.SERVICE, "RetrieveCounts"),
-      0, Long.MAX_VALUE);
+    programClient.getProgramLogs(NamespaceId.DEFAULT.app("WordCount").service("RetrieveCounts"), 0, Long.MAX_VALUE);
 
     // Scale a service in the HelloWorld example
-    programClient.setServiceInstances(Id.Service.from(Id.Namespace.DEFAULT, "HelloWorld", "greet"), 3);
+    programClient.setServiceInstances(NamespaceId.DEFAULT.app("HelloWorld").service("greet"), 3);
 
     // Stop a service in the HelloWorld example
-    programClient.stop(Id.Program.from(Id.Namespace.DEFAULT, "HelloWorld", ProgramType.SERVICE, "greet"));
+    programClient.stop(NamespaceId.DEFAULT.app("HelloWorld").service("greet"));
 
     // Start, scale, and stop a flow in the WordCount example
-    programClient.start(Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.FLOW, "WordCountFlow"));
+    programClient.start(NamespaceId.DEFAULT.app("WordCount").flow("WordCountFlow"));
 
     // Fetch the last 10 flow runs in the WordCount example
-    programClient.getAllProgramRuns(
-      Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.FLOW, "WordCountFlow"),
-      0, Long.MAX_VALUE, 10);
+    programClient.getAllProgramRuns(NamespaceId.DEFAULT.app("WordCount").flow("WordCountFlow"), 0, Long.MAX_VALUE, 10);
 
     // Scale a flowlet in the WordCount example
     programClient.setFlowletInstances(
-      Id.Flow.Flowlet.from(Id.Application.from(Id.Namespace.DEFAULT, "WordCount"), "WordCountFlow", "Tokenizer"),
+      NamespaceId.DEFAULT.app("WordCount").flow("WordCountFlow").flowlet("Tokenizer"),
       3);
 
     // Stop a flow in the WordCount example
-    programClient.stop(Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.FLOW, "WordCountFlow"));
+    programClient.stop(NamespaceId.DEFAULT.app("WordCount").flow("WordCountFlow"));
   }
 
   public void streamClient() throws Exception {
@@ -148,10 +146,10 @@ public class GenerateClientUsageExample {
     StreamClient streamClient = new StreamClient(clientConfig);
 
     // Fetch the stream list
-    List streams = streamClient.list(Id.Namespace.DEFAULT);
+    List streams = streamClient.list(NamespaceId.DEFAULT);
 
     // Create a stream, using the Purchase example
-    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, "purchases");
+    StreamId streamId = NamespaceId.DEFAULT.stream("purchases");
     streamClient.create(streamId);
 
     // Fetch a stream's properties
@@ -175,7 +173,7 @@ public class GenerateClientUsageExample {
     streamClient.getEvents(streamId, startTime, endTime, Integer.MAX_VALUE, events);
 
     // Write asynchronously to a stream
-    streamId = Id.Stream.from(Id.Namespace.DEFAULT, "testAsync");
+    streamId = NamespaceId.DEFAULT.stream("testAsync");
     events = Lists.newArrayList();
 
     streamClient.create(streamId);
@@ -206,10 +204,10 @@ public class GenerateClientUsageExample {
     DatasetClient datasetClient = new DatasetClient(clientConfig);
 
     // Fetch the list of datasets
-    List<DatasetSpecificationSummary> datasets = datasetClient.list(Id.Namespace.DEFAULT);
+    List<DatasetSpecificationSummary> datasets = datasetClient.list(NamespaceId.DEFAULT);
 
     // Create a dataset
-    Id.DatasetInstance datasetId = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "someDataset");
+    DatasetId datasetId = NamespaceId.DEFAULT.dataset("someDataset");
     datasetClient.create(datasetId, "someDatasetType");
 
     // Truncate a dataset
@@ -225,14 +223,14 @@ public class GenerateClientUsageExample {
 
     // Add a dataset module
     File moduleJarFile = createAppJarFile(SomeDatasetModule.class);
-    Id.DatasetModule datasetModuleId = Id.DatasetModule.from(Id.Namespace.DEFAULT, "someDatasetModule");
+    DatasetModuleId datasetModuleId = NamespaceId.DEFAULT.datasetModule("someDatasetModule");
     datasetModuleClient.add(datasetModuleId, SomeDatasetModule.class.getName(), moduleJarFile);
 
     // Fetch the dataset module information
     DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(datasetModuleId);
 
     // Delete all dataset modules
-    datasetModuleClient.deleteAll(Id.Namespace.DEFAULT);
+    datasetModuleClient.deleteAll(NamespaceId.DEFAULT);
   }
 
   public void datasetTypeClient() throws Exception {
@@ -240,11 +238,10 @@ public class GenerateClientUsageExample {
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(clientConfig);
 
     // Fetch the dataset type information using the type name
-    DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(
-      Id.DatasetType.from(Id.Namespace.DEFAULT, "someDatasetType"));
+    DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(NamespaceId.DEFAULT.datasetType("someDatasetType"));
 
     // Fetch the dataset type information using the classname
-    datasetTypeMeta = datasetTypeClient.get(Id.DatasetType.from(Id.Namespace.DEFAULT, SomeDataset.class.getName()));
+    datasetTypeClient.get(NamespaceId.DEFAULT.datasetType(SomeDataset.class.getName()));
   }
 
   public void queryClient() throws Exception {
@@ -273,7 +270,7 @@ public class GenerateClientUsageExample {
 
     // Fetch service information using the service in the PurchaseApp example
     ServiceSpecification serviceSpec = serviceClient.get(
-      Id.Service.from(Id.Namespace.DEFAULT, "PurchaseApp", "CatalogLookup"));
+      NamespaceId.DEFAULT.app("PurchaseApp").service("CatalogLookup"));
   }
 
   public void metricsClient() throws Exception {
@@ -282,7 +279,7 @@ public class GenerateClientUsageExample {
 
     // Fetch the total number of events that have been processed by a flowlet
     RuntimeMetrics metric = metricsClient.getFlowletMetrics(
-      Id.Flow.from("user", "HelloWorld", "someFlow"), "process.events.processed");
+      new NamespaceId("user").app("HelloWorld").flow("someFlow").flowlet("process.events.processed"));
   }
 
   public void monitorClient() throws Exception {

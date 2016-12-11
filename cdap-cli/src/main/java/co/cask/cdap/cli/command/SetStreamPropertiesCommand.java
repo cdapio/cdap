@@ -67,7 +67,7 @@ public class SetStreamPropertiesCommand extends AbstractAuthCommand {
       throw new IllegalArgumentException("Stream properties are malformed.", e);
     }
 
-    streamClient.setStreamProperties(streamId.toId(), streamProperties);
+    streamClient.setStreamProperties(streamId, streamProperties);
     output.printf("Successfully set properties of stream '%s'\n", streamId.getEntityName());
   }
 

@@ -57,7 +57,7 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
-    StreamProperties currentProperties = streamClient.getConfig(streamId.toId());
+    StreamProperties currentProperties = streamClient.getConfig(streamId);
 
     String formatName = arguments.get(ArgumentName.FORMAT.toString());
     Schema schema = getSchema(arguments);
@@ -70,7 +70,7 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
                                                              formatSpecification,
                                                              currentProperties.getNotificationThresholdMB(),
                                                              currentProperties.getDescription());
-    streamClient.setStreamProperties(streamId.toId(), streamProperties);
+    streamClient.setStreamProperties(streamId, streamProperties);
     output.printf("Successfully set format of stream '%s'\n", streamId.getEntityName());
   }
 

@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -67,12 +66,12 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
 
     // Check the default namespaces applications to see whether the application wasnt made in the default namespace
     ClientConfig defaultClientConfig = new ClientConfig.Builder(getClientConfig()).build();
-    Assert.assertEquals(0, new ApplicationClient(defaultClientConfig).list(Id.Namespace.DEFAULT).size());
+    Assert.assertEquals(0, new ApplicationClient(defaultClientConfig).list(NamespaceId.DEFAULT).size());
 
     ApplicationClient applicationClient = new ApplicationClient(clientConfig);
-    Assert.assertEquals(TestApplication.NAME, applicationClient.list(namespace.toId()).get(0).getName());
+    Assert.assertEquals(TestApplication.NAME, applicationClient.list(namespace).get(0).getName());
     applicationClient.delete(namespace.app(TestApplication.NAME));
-    Assert.assertEquals(0, new ApplicationClient(clientConfig).list(namespace.toId()).size());
+    Assert.assertEquals(0, new ApplicationClient(clientConfig).list(namespace).size());
 
   }
 

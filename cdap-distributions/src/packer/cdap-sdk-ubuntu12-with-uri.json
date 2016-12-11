@@ -122,11 +122,8 @@
           "distribution_version": "2.1.7.0"
         },
         "java": {
-          "install_flavor": "oracle",
-          "jdk_version": 7,
-          "oracle": {
-            "accept_oracle_download_terms": true
-          }
+          "install_flavor": "openjdk",
+          "jdk_version": 7
         }
       },
       "only": ["cdap-sdk-vm"]
@@ -155,6 +152,10 @@
             "comment": "COPY SDK ZIP TO files/cdap-sdk.zip BEFORE RUNNING ME",
             "url": "file:///tmp/cdap-sdk.zip"
           }
+        },
+        "java": {
+          "install_flavor": "openjdk",
+          "jdk_version": 7
         },
         "openssh": {
           "server": {
