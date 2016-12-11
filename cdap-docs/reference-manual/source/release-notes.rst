@@ -17,11 +17,105 @@
 Cask Data Application Platform Release Notes
 ============================================
 
+.. Known Issues
+.. API Changes
+.. Deprecated and Removed Features
+.. New Features
+.. Improvements
+.. Bug Fixes
+
 .. contents::
    :local:
    :class: faq
    :backlinks: none
    :depth: 2
+
+`Release 4.0.0 <http://docs.cask.co/cdap/4.0.0/index.html>`__
+=============================================================
+
+Known Issues
+------------
+
+API Changes
+-----------
+
+- :cask-issue:`CDAP-6837` - Fixed an issue in ``WorkerContext`` that did not properly
+  implement the contract of the Transactional interface. Note that this fix may cause
+  incompatibilities with previous releases in certain cases. See below for more details.
+
+  The Transactional API defines::
+
+    void execute(TxRunnable runnable) throws TransactionFailureException;
+  
+  and ``WorkerContext`` implements ``Transactional``. However, it declares this method to
+  not throw checked exceptions::
+
+    void execute(TxRunnable runnable);
+  
+  That means that any ``TransactionFailureException`` thrown from a
+  ``WorkerContext.execute()`` is wrapped into a ``RuntimeException``, and callers must
+  write code similar to this to handle the exception::
+
+    try {
+      getContext().execute(...);
+    } catch (Exception e) {
+      if (e.getCause() instanceof TransactionFailureException) {
+        // handle it
+      } else {
+        // what to expect else? not clear
+        throw Throwables.propagate(e);
+      } 
+    } 
+  
+  This is ugly and inconsistent with other implementations of Transactional. We have
+  addressed this by altering the ``WorkerContext`` method to directly raise the
+  ``TransactionFailureException``. However, code must change to accomodate this.
+
+  To address this in existing code, such that it will work both in 4.0.0 and earlier
+  versions of CDAP, use code similar to this::
+
+      @Override
+      public void run() {
+        try {
+          getContext().execute(new TxRunnable() {
+            @Override
+            public void run(DatasetContext context) throws Exception {
+              if (getContext().getRuntimeArguments().containsKey("fail")) {
+                throw new RuntimeException("fail");
+              }
+            }
+          });
+        } catch (Exception e) {
+          if (e instanceof TransactionFailureException) {
+            LOG.error("transaction failure");
+          } else if (e.getCause() != null && e.getCause() instanceof TransactionFailureException) {
+            LOG.error("exception with cause transaction failure");
+          } else {
+            LOG.error("other failure");
+          }
+        }
+      }
+    }
+  
+  This code will succeed because it handles both the "new style" of the ``WorkerContext``
+  directly throwing a ``TransactionFailureException`` and at the same time handle the
+  previous style of the ``TransactionFailureException`` being wrapped in a
+  ``RuntimeException``.
+
+
+Deprecated and Removed Features
+-------------------------------
+
+New Features
+------------
+
+Improvements
+------------
+
+Bug Fixes
+---------
+
+
 
 `Release 3.6.0 <http://docs.cask.co/cdap/3.6.0/index.html>`__
 =============================================================
