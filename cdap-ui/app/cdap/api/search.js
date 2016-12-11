@@ -21,5 +21,5 @@ let dataSrc = DataSourceConfigurer.getInstance();
 let searchpath = '/namespaces/:namespace/metadata/search';
 
 export const MySearchApi = {
-  search: apiCreator(dataSrc, 'GET', 'REQUEST', searchpath),
+  search: apiCreator(dataSrc, 'GET', 'REQUEST', searchpath + '?numCursors=10&'),
 };

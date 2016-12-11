@@ -20,7 +20,7 @@ source ../vars
 source ../_common/common-build.sh
 
 DEFAULT_XML="../../cdap-common/src/main/resources/cdap-default.xml"
-DEFAULT_XML_MD5_HASH="2d4832e9f5037536eb6345dafcf44bfd"
+DEFAULT_XML_MD5_HASH="755430052a01ac129b56ab71cf1e5598"
 
 DEFAULT_TOOL="../tools/cdap-default/doc-cdap-default.py"
 DEFAULT_DEPRECATED_XML="../tools/cdap-default/cdap-default-deprecated.xml"
@@ -46,18 +46,8 @@ function download_includes() {
 
   echo "Building rst file from cdap-default.xml..." 
   python "${DEFAULT_TOOL}" --generate --target "${target_includes_dir}/${DEFAULT_RST}"
-  errors=$?
-  if [[ ${errors} -ne 0 ]]; then
-    echo_set_message "Error building rst file from cdap-default.xml: ${errors}"
-  fi
-  
   echo "Building rst file from cdap-default-deprecated.xml..." 
-  # Ignores the CDAP_DEFAULT_EXCLUSIONS file
-  python "${DEFAULT_TOOL}" --deprecated --ignore --source ${DEFAULT_DEPRECATED_XML} --target "${target_includes_dir}/${DEFAULT_DEPRECATED_RST}"
-  errors=$?
-  if [[ ${errors} -ne 0 ]]; then
-    echo_set_message "Error building rst file from cdap-default-deprecated.xml: ${errors} "
-  fi
+  python "${DEFAULT_TOOL}" -g -i -s ${DEFAULT_DEPRECATED_XML} -t "${target_includes_dir}/${DEFAULT_DEPRECATED_RST}"
   
   echo "Copying files, changing references..."
   local source_rst="${target_includes_dir}/../../source/_includes/installation"

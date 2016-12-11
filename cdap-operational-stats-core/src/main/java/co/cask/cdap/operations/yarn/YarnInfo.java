@@ -77,7 +77,7 @@ public class YarnInfo extends AbstractYarnStats implements YarnInfoMXBean {
   }
 
   private URL getResourceManager() throws IOException {
-    if (HAUtil.isHAEnabled(conf)) {
+    if (conf.getBoolean(YarnConfiguration.RM_HA_ENABLED, YarnConfiguration.DEFAULT_RM_HA_ENABLED)) {
       return getHAWebURL();
     }
     return getNonHAWebURL();

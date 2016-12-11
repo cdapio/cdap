@@ -29,6 +29,7 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
@@ -458,7 +459,23 @@ public abstract class MetadataTestBase extends ClientTestBase {
 
   protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
                                                            Set<MetadataSearchTargetType> targets) throws Exception {
+    // Note: Can't delegate this to the next method. This is because MetadataHttpHandlerTestRun overrides these two
+    // methods, to strip out metadata from search results for easier assertions.
     return metadataClient.searchMetadata(namespaceId.toId(), query, targets).getResults();
+  }
+
+  protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
+                                                           Set<MetadataSearchTargetType> targets,
+                                                           @Nullable String sort) throws Exception {
+    return metadataClient.searchMetadata(namespaceId.toId(), query, targets,
+                                         sort, 0, Integer.MAX_VALUE, 0, null).getResults();
+  }
+
+  protected MetadataSearchResponse searchMetadata(NamespaceId namespaceId, String query,
+                                                  Set<MetadataSearchTargetType> targets,
+                                                  @Nullable String sort, int offset, int limit, int numCursors,
+                                                  @Nullable String cursor) throws Exception {
+    return metadataClient.searchMetadata(namespaceId.toId(), query, targets, sort, offset, limit, numCursors, cursor);
   }
 
   protected Set<String> getTags(ApplicationId app, MetadataScope scope) throws Exception {

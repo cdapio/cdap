@@ -25,7 +25,6 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Hashtable;
 import java.util.Map;
@@ -71,7 +70,6 @@ public class OperationalStatsService extends AbstractScheduledService {
    */
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting Operational Stats Service...");
     MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
     for (Map.Entry<OperationalExtensionId, OperationalStats> entry : operationalStatsLoader.getAll().entrySet()) {
       ObjectName objectName = getObjectName(entry.getValue());
@@ -84,6 +82,7 @@ public class OperationalStatsService extends AbstractScheduledService {
       // register MBean
       mbs.registerMBean(entry.getValue(), objectName);
     }
+    LOG.info("Successfully started Operational Stats Service...");
   }
 
   /**
@@ -98,9 +97,9 @@ public class OperationalStatsService extends AbstractScheduledService {
                 entry.getValue().getServiceName());
       try {
         entry.getValue().collect();
-      } catch (IOException e) {
-        LOG.warn("Exception while collecting stats for service: {}; type: {}", entry.getValue().getServiceName(),
-                 entry.getValue().getStatType(), e);
+      } catch (Throwable t) {
+        LOG.warn("Error while collecting stats for service: {}; type: {}", entry.getValue().getServiceName(),
+                 entry.getValue().getStatType(), t);
       }
     }
   }

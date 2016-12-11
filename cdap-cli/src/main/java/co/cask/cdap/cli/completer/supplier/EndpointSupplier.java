@@ -31,7 +31,10 @@ import jline.console.completer.Completer;
 public class EndpointSupplier implements CompleterSupplier {
 
   private static final String METHOD_PREFIX = "call service <>";
+  private static final String METHOD_PREFIX_WITH_APP_VERSION = "call service <> version <>";
+
   private static final String ENDPOINT_PREFIX = "call service <> <>";
+  private static final String ENDPOINT_PREFIX_WITH_APP_VERSION = "call service <> version <> <>";
 
   private final ServiceClient serviceClient;
   private final CLIConfig cliConfig;
@@ -46,9 +49,16 @@ public class EndpointSupplier implements CompleterSupplier {
   public Completer getCompleter(String prefix, Completer completer) {
     if (prefix != null && !prefix.isEmpty()) {
       String prefixMatch = prefix.replaceAll("<.+?>", "<>");
-      if (METHOD_PREFIX.equals(prefixMatch)) {
+      // Matches prefix "call service <app-id.service-id>" unless completer is a DefaultStringsCompleter containing
+      // the non-argument token "version" (Referring to the method call
+      // "getCompleter(childPrefix, new DefaultStringsCompleter(nonArgumentTokens)" in co.cask.common.cli.CLI.java).
+      // Also matches "call service <app-id.service-id> version <app-version>".
+      if ((METHOD_PREFIX.equals(prefixMatch) || METHOD_PREFIX_WITH_APP_VERSION.equals(prefixMatch))
+        && completer instanceof EndpointCompleter) {
         return new HttpMethodPrefixCompleter(serviceClient, cliConfig, prefix, (EndpointCompleter) completer);
-      } else if (ENDPOINT_PREFIX.equals(prefixMatch)) {
+        // Matches prefix "call service <app-id.service-id> <http-method>" and
+        // "call service <app-id.service-id> version <app-version> <http-method>".
+      } else if (ENDPOINT_PREFIX.equals(prefixMatch) || ENDPOINT_PREFIX_WITH_APP_VERSION.equals(prefixMatch)) {
         return new HttpEndpointPrefixCompleter(serviceClient, cliConfig, prefix, (EndpointCompleter) completer);
       }
     }

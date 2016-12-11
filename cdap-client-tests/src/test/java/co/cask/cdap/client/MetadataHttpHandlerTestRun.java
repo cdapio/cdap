@@ -35,6 +35,7 @@ import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.metadata.MetadataHttpHandler;
+import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamProperties;
@@ -53,11 +54,13 @@ import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.metadata.Metadata;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.common.http.HttpRequest;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -71,9 +74,12 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -596,29 +602,26 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // verify stream system metadata
     StreamId streamId = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
     Set<String> streamSystemTags = getTags(streamId, MetadataScope.SYSTEM);
-    Assert.assertEquals(ImmutableSet.of(AllProgramsApp.STREAM_NAME, AbstractSystemMetadataWriter.EXPLORE_TAG),
+    Assert.assertEquals(ImmutableSet.of(AbstractSystemMetadataWriter.EXPLORE_TAG),
                         streamSystemTags);
 
     Map<String, String> streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
     // Verify create time exists, and is within the past hour
-    final String creationTime = "creation-time";
-    String description = "description";
-    String schema = "schema";
-    String ttl = "ttl";
     Assert.assertTrue("Expected creation time to exist but it does not",
-                      streamSystemProperties.containsKey(creationTime));
-    long createTime = Long.parseLong(streamSystemProperties.get(creationTime));
+                      streamSystemProperties.containsKey(AbstractSystemMetadataWriter.CREATION_TIME_KEY));
+    long createTime = Long.parseLong(streamSystemProperties.get(AbstractSystemMetadataWriter.CREATION_TIME_KEY));
     Assert.assertTrue("Stream create time should be within the last hour - " + createTime,
                       createTime > System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
 
     Assert.assertEquals(
-      ImmutableMap.of(schema,
+      ImmutableMap.of(AbstractSystemMetadataWriter.SCHEMA_KEY,
                       Schema.recordOf("stringBody",
                                       Schema.Field.of("body",
                                                       Schema.of(Schema.Type.STRING))).toString(),
-                      ttl, String.valueOf(Long.MAX_VALUE),
-                      description, "test stream",
-                      creationTime, String.valueOf(createTime)
+                      AbstractSystemMetadataWriter.TTL_KEY, String.valueOf(Long.MAX_VALUE),
+                      AbstractSystemMetadataWriter.DESCRIPTION_KEY, "test stream",
+                      AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(createTime),
+                      AbstractSystemMetadataWriter.ENTITY_NAME_KEY, streamId.getEntityName()
       ),
       streamSystemProperties
     );
@@ -628,13 +631,14 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     streamClient.setStreamProperties(streamId, new StreamProperties(newTtl, null, null));
     streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
     Assert.assertEquals(
-      ImmutableMap.of(schema,
+      ImmutableMap.of(AbstractSystemMetadataWriter.SCHEMA_KEY,
                       Schema.recordOf("stringBody",
                                       Schema.Field.of("body",
                                                       Schema.of(Schema.Type.STRING))).toString(),
-                      ttl, String.valueOf(newTtl * 1000),
-                      description, "test stream",
-                      creationTime, String.valueOf(createTime)
+                      AbstractSystemMetadataWriter.TTL_KEY, String.valueOf(newTtl * 1000),
+                      AbstractSystemMetadataWriter.DESCRIPTION_KEY, "test stream",
+                      AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(createTime),
+                      AbstractSystemMetadataWriter.ENTITY_NAME_KEY, streamId.getEntityName()
       ),
       streamSystemProperties
     );
@@ -649,33 +653,32 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Schema viewSchema = Schema.recordOf("record",
                                         Schema.Field.of("viewBody", Schema.nullableOf(Schema.of(Schema.Type.BYTES))));
     streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("format", viewSchema)));
-    Set<String> viewSystemTags = getTags(view, MetadataScope.SYSTEM);
-    Assert.assertEquals(ImmutableSet.of("view", AllProgramsApp.STREAM_NAME), viewSystemTags);
-    Map<String, String> viewSystemProperties = getProperties(view, MetadataScope.SYSTEM);
-    Assert.assertEquals(viewSchema.toString(), viewSystemProperties.get(schema));
     ImmutableSet<String> viewUserTags = ImmutableSet.of("viewTag");
     addTags(view, viewUserTags);
     Assert.assertEquals(
-      ImmutableSet.of(new MetadataRecord(view, MetadataScope.USER, ImmutableMap.<String, String>of(),
-                                         viewUserTags),
-                      new MetadataRecord(view, MetadataScope.SYSTEM, viewSystemProperties,
-                                         viewSystemTags)),
-      getMetadata(view)
+      ImmutableSet.of(
+        new MetadataRecord(view, MetadataScope.USER, ImmutableMap.<String, String>of(), viewUserTags),
+        new MetadataRecord(view, MetadataScope.SYSTEM,
+                           ImmutableMap.of(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, view.getEntityName(),
+                                           AbstractSystemMetadataWriter.SCHEMA_KEY, viewSchema.toString()),
+                           ImmutableSet.of(AllProgramsApp.STREAM_NAME))
+      ),
+      removeCreationTime(getMetadata(view))
     );
 
     // verify dataset system metadata
     DatasetId datasetInstance = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME);
     Set<String> dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(
-      ImmutableSet.of(AllProgramsApp.DATASET_NAME,
-                      DatasetSystemMetadataWriter.BATCH_TAG,
+      ImmutableSet.of(DatasetSystemMetadataWriter.BATCH_TAG,
                       AbstractSystemMetadataWriter.EXPLORE_TAG),
       dsSystemTags);
 
     Map<String, String> dsSystemProperties = getProperties(datasetInstance, MetadataScope.SYSTEM);
     // Verify create time exists, and is within the past hour
-    Assert.assertTrue("Expected creation time to exist but it does not", dsSystemProperties.containsKey(creationTime));
-    createTime = Long.parseLong(dsSystemProperties.get(creationTime));
+    Assert.assertTrue("Expected creation time to exist but it does not",
+                      dsSystemProperties.containsKey(AbstractSystemMetadataWriter.CREATION_TIME_KEY));
+    createTime = Long.parseLong(dsSystemProperties.get(AbstractSystemMetadataWriter.CREATION_TIME_KEY));
     Assert.assertTrue("Dataset create time should be within the last hour - " + createTime,
                       createTime > System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
 
@@ -683,8 +686,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(
       ImmutableMap.of(
         "type", KeyValueTable.class.getName(),
-        description, "test dataset",
-        creationTime, String.valueOf(createTime)
+        AbstractSystemMetadataWriter.DESCRIPTION_KEY, "test dataset",
+        AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(createTime),
+        AbstractSystemMetadataWriter.ENTITY_NAME_KEY, datasetInstance.getEntityName()
       ),
       dsSystemProperties
     );
@@ -695,9 +699,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(
       ImmutableMap.of(
         "type", KeyValueTable.class.getName(),
-        description, "test dataset",
-        ttl, "100000",
-        creationTime, String.valueOf(createTime)
+        AbstractSystemMetadataWriter.DESCRIPTION_KEY, "test dataset",
+        AbstractSystemMetadataWriter.TTL_KEY, "100000",
+        AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(createTime),
+        AbstractSystemMetadataWriter.ENTITY_NAME_KEY, datasetInstance.getEntityName()
       ),
       dsSystemProperties
     );
@@ -706,10 +711,11 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     ArtifactId artifactId = getArtifactId();
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataRecord(artifactId, MetadataScope.SYSTEM, ImmutableMap.<String, String>of(),
-                           ImmutableSet.of(AllProgramsApp.class.getSimpleName()))
+        new MetadataRecord(artifactId, MetadataScope.SYSTEM,
+                           ImmutableMap.of(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, artifactId.getEntityName()),
+                           ImmutableSet.<String>of())
       ),
-      getMetadata(artifactId, MetadataScope.SYSTEM)
+      removeCreationTime(getMetadata(artifactId, MetadataScope.SYSTEM))
     );
     // verify app system metadata
     ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
@@ -729,30 +735,31 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
              AllProgramsApp.NoOpWorker.NAME)
         .put(ProgramType.WORKFLOW.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR
                + AllProgramsApp.NoOpWorkflow.NAME, AllProgramsApp.NoOpWorkflow.NAME)
+        .put(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, app.getEntityName())
+        .put(AbstractSystemMetadataWriter.VERSION_KEY, ApplicationId.DEFAULT_VERSION)
+        .put(AbstractSystemMetadataWriter.DESCRIPTION_KEY, AllProgramsApp.DESCRIPTION)
         .put("schedule" + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.SCHEDULE_NAME,
              AllProgramsApp.SCHEDULE_NAME + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.SCHEDULE_DESCRIPTION)
-        .put("version", ApplicationId.DEFAULT_VERSION)
         .build(),
-      getProperties(app, MetadataScope.SYSTEM));
-    Assert.assertEquals(ImmutableSet.of(AllProgramsApp.class.getSimpleName(), AllProgramsApp.NAME),
+      removeCreationTime(getProperties(app, MetadataScope.SYSTEM)));
+    Assert.assertEquals(ImmutableSet.of(AllProgramsApp.class.getSimpleName()),
                         getTags(app, MetadataScope.SYSTEM));
     // verify program system metadata
-    assertProgramSystemMetadata(app.flow(AllProgramsApp.NoOpFlow.NAME), "Realtime");
-    assertProgramSystemMetadata(app.worker(AllProgramsApp.NoOpWorker.NAME), "Realtime");
-    assertProgramSystemMetadata(app.service(AllProgramsApp.NoOpService.NAME), "Realtime");
-    assertProgramSystemMetadata(app.mr(AllProgramsApp.NoOpMR.NAME), "Batch");
-    assertProgramSystemMetadata(app.spark(AllProgramsApp.NoOpSpark.NAME), "Batch");
-    assertProgramSystemMetadata(app.workflow(AllProgramsApp.NoOpWorkflow.NAME), "Batch");
+    assertProgramSystemMetadata(app.flow(AllProgramsApp.NoOpFlow.NAME), "Realtime",
+                                AllProgramsApp.NoOpFlow.DESCRIPTION);
+    assertProgramSystemMetadata(app.worker(AllProgramsApp.NoOpWorker.NAME), "Realtime", null);
+    assertProgramSystemMetadata(app.service(AllProgramsApp.NoOpService.NAME), "Realtime", null);
+    assertProgramSystemMetadata(app.mr(AllProgramsApp.NoOpMR.NAME), "Batch", null);
+    assertProgramSystemMetadata(app.spark(AllProgramsApp.NoOpSpark.NAME), "Batch", null);
+    assertProgramSystemMetadata(app.workflow(AllProgramsApp.NoOpWorkflow.NAME), "Batch",
+                                AllProgramsApp.NoOpWorkflow.DESCRIPTION);
 
     // update dataset properties to add the workflow.local.dataset property to it.
-    datasetClient.update(datasetInstance, ImmutableMap.of(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY,
-                                                          "true"));
+    datasetClient.update(datasetInstance, ImmutableMap.of(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY, "true"));
 
     dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
-    System.out.println(dsSystemTags);
     Assert.assertEquals(
-      ImmutableSet.of(AllProgramsApp.DATASET_NAME,
-                      DatasetSystemMetadataWriter.BATCH_TAG,
+      ImmutableSet.of(DatasetSystemMetadataWriter.BATCH_TAG,
                       AbstractSystemMetadataWriter.EXPLORE_TAG,
                       DatasetSystemMetadataWriter.LOCAL_DATASET_TAG),
       dsSystemTags);
@@ -766,16 +773,14 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     StreamId streamInstance = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
     Set<String> streamSystemTags = getTags(streamInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(
-      ImmutableSet.of(AllProgramsApp.STREAM_NAME,
-                      AbstractSystemMetadataWriter.EXPLORE_TAG),
+      ImmutableSet.of(AbstractSystemMetadataWriter.EXPLORE_TAG),
       streamSystemTags);
 
     // verify fileSet is explorable
     DatasetId datasetInstance = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME4);
     Set<String> dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(
-      ImmutableSet.of(AllProgramsApp.DATASET_NAME4,
-                      DatasetSystemMetadataWriter.BATCH_TAG,
+      ImmutableSet.of(DatasetSystemMetadataWriter.BATCH_TAG,
                       AbstractSystemMetadataWriter.EXPLORE_TAG),
       dsSystemTags);
 
@@ -783,8 +788,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     DatasetId datasetInstance2 = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME5);
     Set<String> dsSystemTags2 = getTags(datasetInstance2, MetadataScope.SYSTEM);
     Assert.assertEquals(
-      ImmutableSet.of(AllProgramsApp.DATASET_NAME5,
-                      DatasetSystemMetadataWriter.BATCH_TAG,
+      ImmutableSet.of(DatasetSystemMetadataWriter.BATCH_TAG,
                       AbstractSystemMetadataWriter.EXPLORE_TAG),
       dsSystemTags2);
 
@@ -826,8 +830,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   public void testSystemScopeArtifacts() throws Exception {
     // add a system artifact. currently can't do this through the rest api (by design)
     // so bypass it and use the repository directly
-    ArtifactId systemId = ArtifactId.fromIdParts(
-      Arrays.asList(NamespaceId.SYSTEM.getNamespace(), "wordcount", "1.0.0"));
+    ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
     File systemArtifact = createArtifactJarFile(WordCountApp.class, "wordcount", "1.0.0", new Manifest());
 
     StandaloneTester tester = STANDALONE.get();
@@ -835,7 +838,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // verify that user metadata can be added for system-scope artifacts
     Map<String, String> userProperties = ImmutableMap.of("systemArtifactKey", "systemArtifactValue");
-    ImmutableSet<String> userTags = ImmutableSet.of("systemArtifactTag");
+    Set<String> userTags = ImmutableSet.of();
     addProperties(systemId, userProperties);
     addTags(systemId, userTags);
 
@@ -844,9 +847,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       ImmutableSet.of(
         new MetadataRecord(systemId, MetadataScope.USER, userProperties, userTags),
         new MetadataRecord(systemId, MetadataScope.SYSTEM,
-                           ImmutableMap.<String, String>of(), ImmutableSet.of("wordcount"))
+                           ImmutableMap.of(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, systemId.getEntityName()),
+                           ImmutableSet.<String>of())
       ),
-      getMetadata(systemId)
+      removeCreationTime(getMetadata(systemId))
     );
 
     // verify that system scope artifacts can be returned by a search in the default namespace
@@ -868,9 +872,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
         new MetadataRecord(systemId, MetadataScope.USER, ImmutableMap.<String, String>of(),
                            ImmutableSet.<String>of()),
         new MetadataRecord(systemId, MetadataScope.SYSTEM,
-                           ImmutableMap.<String, String>of(), ImmutableSet.of("wordcount"))
+                           ImmutableMap.of(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, systemId.getEntityName()),
+                           ImmutableSet.<String>of())
       ),
-      getMetadata(systemId)
+      removeCreationTime(getMetadata(systemId))
     );
     artifactClient.delete(systemId);
   }
@@ -1102,7 +1107,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     StreamViewId view = stream.view("view");
     streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("csv", null, null)));
 
-
     // Add metadata
     addTags(app, tags);
     addTags(flow, tags);
@@ -1141,6 +1145,171 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "tag1"));
   }
 
+  @Test
+  public void testInvalidSearchParams() throws Exception {
+    NamespaceId namespace = new NamespaceId("invalid");
+    Set<MetadataSearchTargetType> targets = EnumSet.allOf(MetadataSearchTargetType.class);
+    try {
+      searchMetadata(namespace, "*", targets, AbstractSystemMetadataWriter.ENTITY_NAME_KEY);
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
+
+    // search with bad sort field
+    try {
+      searchMetadata(namespace, "*", targets, "name asc");
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
+
+    // search with bad sort order
+    try {
+      searchMetadata(namespace, "*", targets, AbstractSystemMetadataWriter.ENTITY_NAME_KEY + " unknown");
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
+
+    // search with numCursors for relevance sort
+    try {
+      searchMetadata(NamespaceId.DEFAULT, "search*", targets, null, 0, Integer.MAX_VALUE, 1, null);
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
+
+    // search with cursor for relevance sort
+    try {
+      searchMetadata(NamespaceId.DEFAULT, "search*", targets, null, 0, Integer.MAX_VALUE, 0, "cursor");
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testSearchResultSorting() throws Exception {
+    NamespaceId namespace = new NamespaceId("sorting");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
+
+    StreamId stream = namespace.stream("text");
+    DatasetId dataset = namespace.dataset("mydataset");
+    StreamViewId view = stream.view("view");
+
+    // create entities so system metadata is annotated
+    // also ensure that they are created at least 1 ms apart
+    streamClient.create(stream);
+    TimeUnit.MILLISECONDS.sleep(1);
+    streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("csv", null, null)));
+    TimeUnit.MILLISECONDS.sleep(1);
+    datasetClient.create(
+      dataset,
+      new DatasetInstanceConfiguration(Table.class.getName(), Collections.<String, String>emptyMap())
+    );
+
+    // search with bad sort param
+    EnumSet<MetadataSearchTargetType> targets = EnumSet.allOf(MetadataSearchTargetType.class);
+
+    // test ascending order of entity name
+    Set<MetadataSearchResultRecord> searchResults =
+      searchMetadata(namespace, "*", targets, AbstractSystemMetadataWriter.ENTITY_NAME_KEY + " asc");
+    List<MetadataSearchResultRecord> expected = ImmutableList.of(
+      new MetadataSearchResultRecord(dataset),
+      new MetadataSearchResultRecord(stream),
+      new MetadataSearchResultRecord(view)
+    );
+    Assert.assertEquals(expected, new ArrayList<>(searchResults));
+    // test descending order of entity name
+    searchResults = searchMetadata(namespace, "*", targets, AbstractSystemMetadataWriter.ENTITY_NAME_KEY + " desc");
+    expected = ImmutableList.of(
+      new MetadataSearchResultRecord(view),
+      new MetadataSearchResultRecord(stream),
+      new MetadataSearchResultRecord(dataset)
+    );
+    Assert.assertEquals(expected, new ArrayList<>(searchResults));
+    // test ascending order of creation time
+    searchResults = searchMetadata(namespace, "*", targets, AbstractSystemMetadataWriter.CREATION_TIME_KEY + " asc");
+    expected = ImmutableList.of(
+      new MetadataSearchResultRecord(stream),
+      new MetadataSearchResultRecord(view),
+      new MetadataSearchResultRecord(dataset)
+    );
+    Assert.assertEquals(expected, new ArrayList<>(searchResults));
+    // test descending order of creation time
+    searchResults = searchMetadata(namespace, "*", targets, AbstractSystemMetadataWriter.CREATION_TIME_KEY + " desc");
+    expected = ImmutableList.of(
+      new MetadataSearchResultRecord(dataset),
+      new MetadataSearchResultRecord(view),
+      new MetadataSearchResultRecord(stream)
+    );
+    Assert.assertEquals(expected, new ArrayList<>(searchResults));
+
+    // cleanup
+    namespaceClient.delete(namespace);
+  }
+
+  @Test
+  public void testSearchResultPagination() throws Exception {
+    NamespaceId namespace = new NamespaceId("pagination");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
+
+    StreamId stream = namespace.stream("text");
+    DatasetId dataset = namespace.dataset("mydataset");
+    StreamViewId view = stream.view("view");
+
+    // create entities so system metadata is annotated
+    streamClient.create(stream);
+    streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("csv", null, null)));
+    datasetClient.create(
+      dataset,
+      new DatasetInstanceConfiguration(Table.class.getName(), Collections.<String, String>emptyMap())
+    );
+
+    EnumSet<MetadataSearchTargetType> targets = EnumSet.allOf(MetadataSearchTargetType.class);
+    String sort = AbstractSystemMetadataWriter.ENTITY_NAME_KEY + " asc";
+    // no offset, limit 1, no cursors
+    MetadataSearchResponse searchResponse = searchMetadata(namespace, "*", targets, sort, 0, 1, 0, null);
+    List<MetadataSearchResultRecord> expectedResults = ImmutableList.of(new MetadataSearchResultRecord(dataset));
+    List<String> expectedCursors = ImmutableList.of();
+    Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertEquals(expectedCursors, searchResponse.getCursors());
+    // no offset, limit 1, 2 cursors, should return 1st result, with 2 cursors
+    searchResponse = searchMetadata(namespace, "*", targets, sort, 0, 1, 2, null);
+    expectedResults = ImmutableList.of(new MetadataSearchResultRecord(dataset));
+    expectedCursors = ImmutableList.of(stream.getEntityName(), view.getEntityName());
+    Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertEquals(expectedCursors, searchResponse.getCursors());
+    // offset 1, limit 1, 2 cursors, should return 2nd result, with only 1 cursor since we don't have enough data
+    searchResponse = searchMetadata(namespace, "*", targets, sort, 1, 1, 2, null);
+    expectedResults = ImmutableList.of(new MetadataSearchResultRecord(stream));
+    expectedCursors = ImmutableList.of(view.getEntityName());
+    Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertEquals(expectedCursors, searchResponse.getCursors());
+    // offset 2, limit 1, 2 cursors, should return 3rd result, with 0 cursors since we don't have enough data
+    searchResponse = searchMetadata(namespace, "*", targets, sort, 2, 1, 2, null);
+    expectedResults = ImmutableList.of(new MetadataSearchResultRecord(view));
+    Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertTrue(searchResponse.getCursors().isEmpty());
+    // offset 3, limit 1, 2 cursors, should 0 results, with 0 cursors since we don't have enough data
+    searchResponse = searchMetadata(namespace, "*", targets, sort, 3, 1, 2, null);
+    Assert.assertTrue(searchResponse.getResults().isEmpty());
+    Assert.assertTrue(searchResponse.getCursors().isEmpty());
+    // no offset, no limit, should return everything
+    searchResponse = searchMetadata(namespace, "*", targets, sort, 0, Integer.MAX_VALUE, 4, null);
+    expectedResults = ImmutableList.of(
+      new MetadataSearchResultRecord(dataset),
+      new MetadataSearchResultRecord(stream),
+      new MetadataSearchResultRecord(view)
+    );
+    Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertTrue(searchResponse.getCursors().isEmpty());
+
+    // cleanup
+    namespaceClient.delete(namespace);
+  }
+
   private Set<NamespacedEntityId> getEntities(Set<MetadataSearchResultRecord> results) {
     return Sets.newHashSet(
       Iterables.transform(results, new Function<MetadataSearchResultRecord, NamespacedEntityId>() {
@@ -1152,12 +1321,18 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     );
   }
 
-  private void assertProgramSystemMetadata(ProgramId programId, String mode) throws Exception {
-    Assert.assertEquals(ImmutableMap.of("version", ApplicationId.DEFAULT_VERSION),
-                        getProperties(programId, MetadataScope.SYSTEM));
-    Set<String> expected = ImmutableSet.of(programId.getProgram(), programId.getType().getPrettyName(), mode);
+  private void assertProgramSystemMetadata(ProgramId programId, String mode,
+                                           @Nullable String description) throws Exception {
+    ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
+      .put(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, programId.getEntityName())
+      .put(AbstractSystemMetadataWriter.VERSION_KEY, ApplicationId.DEFAULT_VERSION);
+    if (description != null) {
+      properties.put(AbstractSystemMetadataWriter.DESCRIPTION_KEY, description);
+    }
+    Assert.assertEquals(properties.build(), removeCreationTime(getProperties(programId, MetadataScope.SYSTEM)));
+    Set<String> expected = ImmutableSet.of(programId.getType().getPrettyName(), mode);
     if (ProgramType.WORKFLOW == programId.getType()) {
-      expected = ImmutableSet.of(programId.getProgram(), programId.getType().getPrettyName(), mode,
+      expected = ImmutableSet.of(programId.getType().getPrettyName(), mode,
                                  AllProgramsApp.NoOpAction.class.getSimpleName(), AllProgramsApp.NoOpMR.NAME);
     }
     Assert.assertEquals(expected, getTags(programId, MetadataScope.SYSTEM));
@@ -1532,13 +1707,59 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   /**
    * strips metadata from search results
    */
+  @Override
   protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
                                                            Set<MetadataSearchTargetType> targets) throws Exception {
-    Set<MetadataSearchResultRecord> results = super.searchMetadata(namespaceId, query, targets);
-    Set<MetadataSearchResultRecord> transformed = new HashSet<>();
-    for (MetadataSearchResultRecord result : results) {
+    return searchMetadata(namespaceId, query, targets, null);
+  }
+
+  /**
+   * strips metadata from search results
+   */
+  @Override
+  protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
+                                                           Set<MetadataSearchTargetType> targets,
+                                                           @Nullable String sort) throws Exception {
+    return searchMetadata(namespaceId, query, targets, sort, 0, Integer.MAX_VALUE, 0, null).getResults();
+  }
+
+  /**
+   * strips metadata from search results
+   */
+  @Override
+  protected MetadataSearchResponse searchMetadata(NamespaceId namespaceId, String query,
+                                                  Set<MetadataSearchTargetType> targets,
+                                                  @Nullable String sort, int offset, int limit,
+                                                  int numCursors, @Nullable String cursor) throws Exception {
+    MetadataSearchResponse searchResponse = super.searchMetadata(namespaceId, query, targets, sort, offset,
+                                                                 limit, numCursors, cursor);
+    Set<MetadataSearchResultRecord> transformed = new LinkedHashSet<>();
+    for (MetadataSearchResultRecord result : searchResponse.getResults()) {
       transformed.add(new MetadataSearchResultRecord(result.getEntityId()));
     }
-    return transformed;
+    return new MetadataSearchResponse(searchResponse.getSort(), searchResponse.getOffset(), searchResponse.getLimit(),
+                                      searchResponse.getNumCursors(), searchResponse.getTotal(), transformed,
+                                      searchResponse.getCursors());
+  }
+
+  private Set<MetadataRecord> removeCreationTime(Set<MetadataRecord> original) {
+    MetadataRecord systemRecord = null;
+    for (MetadataRecord record : original) {
+      if (MetadataScope.SYSTEM == record.getScope()) {
+        systemRecord = record;
+      }
+    }
+    Assert.assertNotNull(systemRecord);
+    removeCreationTime(systemRecord.getProperties());
+    return original;
+  }
+
+  private Map<String, String> removeCreationTime(Map<String, String> systemProperties) {
+    Assert.assertTrue(systemProperties.containsKey(AbstractSystemMetadataWriter.CREATION_TIME_KEY));
+    long createTime = Long.parseLong(systemProperties.get(AbstractSystemMetadataWriter.CREATION_TIME_KEY));
+    Assert.assertTrue("Create time should be within the last hour - " + createTime,
+                      createTime > System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
+    systemProperties.remove(AbstractSystemMetadataWriter.CREATION_TIME_KEY);
+    return systemProperties;
   }
 }

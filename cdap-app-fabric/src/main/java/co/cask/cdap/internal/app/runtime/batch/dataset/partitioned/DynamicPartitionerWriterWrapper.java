@@ -34,6 +34,7 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
+import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.IOException;
 
@@ -110,7 +111,7 @@ abstract class DynamicPartitionerWriterWrapper<K, V> extends RecordWriter<K, V> 
 
       @SuppressWarnings("unchecked")
       FileOutputFormat<K, V> fileOutputFormat =
-        new InstantiatorFactory(false).get(TypeToken.of(delegateOutputFormat)).create();
+        ReflectionUtils.newInstance(delegateOutputFormat, job.getConfiguration());
       this.fileOutputFormat = fileOutputFormat;
     }
     return fileOutputFormat;

@@ -332,6 +332,10 @@ A. In order to configure **CDAP for Kerberos authentication:**
         $ echo "grant 'cdap', 'RWCA'" | hbase shell
 
    #. When CDAP Master is started, it will login using the configured keytab file and principal.
+   
+#. In order to configure **YARN for secure Hadoop:** the ``<cdap-principal>`` user must be 
+   able to launch YARN containers, either by adding it to the YARN ``allowed.system.users``
+   whitelist (preferred) or by adjusting the YARN ``min.user.id`` to include the ``<cdap-principal>`` user.
 
 #. In order to configure **CDAP Explore Service for secure Hadoop:**
 

@@ -19,6 +19,7 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.audit.payload.builder.MetadataPayloadBuilder;
@@ -26,8 +27,10 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
-import co.cask.cdap.data2.metadata.indexer.Indexer;
+import co.cask.cdap.data2.metadata.dataset.SearchResults;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.DatasetId;
@@ -35,9 +38,11 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -51,6 +56,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -58,7 +64,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link MetadataStore} used in distributed mode.
@@ -97,18 +102,12 @@ public class DefaultMetadataStore implements MetadataStore {
     this.auditPublisher = auditPublisher;
   }
 
-  @Override
-  public void setProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId,
-                            Map<String, String> properties) {
-    setProperties(scope, namespacedEntityId, properties, null);
-  }
-
   /**
    * Adds/updates metadata for the specified {@link NamespacedEntityId}.
    */
   @Override
   public void setProperties(final MetadataScope scope, final NamespacedEntityId namespacedEntityId,
-                            final Map<String, String> properties, @Nullable final Indexer indexer) {
+                            final Map<String, String> properties) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
@@ -117,7 +116,7 @@ public class DefaultMetadataStore implements MetadataStore {
         Set<String> existingTags = input.getTags(namespacedEntityId);
         previousRef.set(new MetadataRecord(namespacedEntityId, scope, existingProperties, existingTags));
         for (Map.Entry<String, String> entry : properties.entrySet()) {
-          input.setProperty(namespacedEntityId, entry.getKey(), entry.getValue(), indexer);
+          input.setProperty(namespacedEntityId, entry.getKey(), entry.getValue());
         }
       }
     }, scope);
@@ -143,6 +142,24 @@ public class DefaultMetadataStore implements MetadataStore {
                  new MetadataRecord(namespacedEntityId, scope, propDeletions.build(), EMPTY_TAGS));
   }
 
+  @Override
+  public void setProperty(final MetadataScope scope, final NamespacedEntityId namespacedEntityId, final String key,
+                          final String value) {
+    final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
+    execute(new TransactionExecutor.Procedure<MetadataDataset>() {
+      @Override
+      public void apply(MetadataDataset input) throws Exception {
+        Map<String, String> existingProperties = input.getProperties(namespacedEntityId);
+        Set<String> existingTags = input.getTags(namespacedEntityId);
+        previousRef.set(new MetadataRecord(namespacedEntityId, scope, existingProperties, existingTags));
+        input.setProperty(namespacedEntityId, key, value);
+      }
+    }, scope);
+    publishAudit(previousRef.get(),
+                 new MetadataRecord(namespacedEntityId, scope, ImmutableMap.of(key, value), EMPTY_TAGS),
+                 new MetadataRecord(namespacedEntityId, scope));
+  }
+
   /**
    * Adds tags for the specified {@link NamespacedEntityId}.
    */
@@ -159,8 +176,8 @@ public class DefaultMetadataStore implements MetadataStore {
         input.addTags(namespacedEntityId, tagsToAdd);
       }
     }, scope);
-    publishAudit(previousRef.get(), new MetadataRecord(namespacedEntityId, scope, EMPTY_PROPERTIES,
-                                                       Sets.newHashSet(tagsToAdd)),
+    publishAudit(previousRef.get(),
+                 new MetadataRecord(namespacedEntityId, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToAdd)),
                  new MetadataRecord(namespacedEntityId, scope));
   }
 
@@ -353,40 +370,108 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   @Override
-  public Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery) {
-    return ImmutableSet.<MetadataSearchResultRecord>builder()
-      .addAll(searchMetadata(MetadataScope.USER, namespaceId, searchQuery))
-      .addAll(searchMetadata(MetadataScope.SYSTEM, namespaceId, searchQuery))
-      .build();
-  }
-
-  @Override
-  public Set<MetadataSearchResultRecord> searchMetadata(MetadataScope scope, String namespaceId, String searchQuery) {
-    return searchMetadataOnType(scope, namespaceId, searchQuery, ImmutableSet.of(MetadataSearchTargetType.ALL));
-  }
-
-  @Override
-  public Set<MetadataSearchResultRecord> searchMetadataOnType(String namespaceId, String searchQuery,
-                                                              Set<MetadataSearchTargetType> types) {
-    return ImmutableSet.<MetadataSearchResultRecord>builder()
-      .addAll(searchMetadataOnType(MetadataScope.USER, namespaceId, searchQuery, types))
-      .addAll(searchMetadataOnType(MetadataScope.SYSTEM, namespaceId, searchQuery, types))
-      .build();
-  }
-
-  @Override
-  public Set<MetadataSearchResultRecord> searchMetadataOnType(final MetadataScope scope, final String namespaceId,
-                                                              final String searchQuery,
-                                                              final Set<MetadataSearchTargetType> types) {
-    // Execute search query
-    Iterable<MetadataEntry> results = execute(new TransactionExecutor.Function<MetadataDataset,
-      Iterable<MetadataEntry>>() {
-      @Override
-      public Iterable<MetadataEntry> apply(MetadataDataset input) throws Exception {
-        return input.search(namespaceId, searchQuery, types);
+  public MetadataSearchResponse search(String namespaceId, String searchQuery,
+                                       Set<MetadataSearchTargetType> types,
+                                       SortInfo sortInfo, int offset, int limit,
+                                       int numCursors, String cursor) throws BadRequestException {
+    Set<MetadataScope> searchScopes = EnumSet.allOf(MetadataScope.class);
+    if ("*".equals(searchQuery)) {
+      if (SortInfo.DEFAULT.equals(sortInfo)) {
+        // Can't disallow this completely, because it is required for upgrade, but log a warning to indicate that
+        // a full index search should not be done in production.
+        LOG.warn("Attempt to search through all indexes. This query can have an adverse effect on performance and is " +
+                   "not recommended for production use. It is only meant to be used for administrative purposes " +
+                   "such as upgrade. To improve the performance of such queries, please specify sort parameters " +
+                   "as well.");
+      } else {
+        // when it is a known sort (stored sorted in the metadata dataset already), restrict it to system scope only
+        searchScopes = EnumSet.of(MetadataScope.SYSTEM);
       }
-    }, scope);
+    }
+    return search(searchScopes, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor);
+  }
 
+  private MetadataSearchResponse search(Set<MetadataScope> scopes, String namespaceId,
+                                        String searchQuery, Set<MetadataSearchTargetType> types,
+                                        SortInfo sortInfo, int offset, int limit,
+                                        int numCursors, String cursor) throws BadRequestException {
+    List<MetadataEntry> results = new ArrayList<>();
+    List<String> cursors = new ArrayList<>();
+    for (MetadataScope scope : scopes) {
+      SearchResults searchResults =
+        getSearchResults(scope, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor);
+      results.addAll(searchResults.getResults());
+      cursors.addAll(searchResults.getCursors());
+    }
+
+    // sort if required
+    Set<NamespacedEntityId> sortedEntities = getSortedEntities(results, sortInfo);
+
+    // pagination is not performed at the dataset level, because:
+    // 1. scoring is needed for DEFAULT sort info. So perform it here for now.
+    // 2. Even when using custom sorting, we still fetch extra results if numCursors > 1
+    // TODO: Figure out how all of this can be done server (HBase) side
+    int startIndex = 0;
+    int maxEndIndex;
+    int total = results.size();
+    if (SortInfo.DEFAULT.equals(sortInfo)) {
+      // offset needs to be applied
+      if (offset > sortedEntities.size()) {
+        maxEndIndex = 0;
+      } else {
+        startIndex = offset;
+        maxEndIndex = offset + limit;
+      }
+    } else {
+      // offset has already been applied, only apply limit, and update total count
+      maxEndIndex = limit;
+      total += offset;
+    }
+    // add 1 to maxIndex because end index is exclusive
+    sortedEntities = new LinkedHashSet<>(
+      ImmutableList.copyOf(sortedEntities).subList(startIndex, Math.min(maxEndIndex, sortedEntities.size()))
+    );
+
+    // Fetch metadata for entities in the result list
+    // Note: since the fetch is happening in a different transaction, the metadata for entities may have been
+    // removed. It is okay not to have metadata for some results in case this happens.
+    Map<NamespacedEntityId, Metadata> systemMetadata = fetchMetadata(sortedEntities, MetadataScope.SYSTEM);
+    Map<NamespacedEntityId, Metadata> userMetadata = fetchMetadata(sortedEntities, MetadataScope.USER);
+
+    return new MetadataSearchResponse(
+      sortInfo.getSortBy() + " " + sortInfo.getSortOrder(), offset, limit, numCursors, total,
+      addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors
+    );
+  }
+
+  private SearchResults getSearchResults(final MetadataScope scope, final String namespaceId,
+                                         final String searchQuery, final Set<MetadataSearchTargetType> types,
+                                         final SortInfo sortInfo, final int offset,
+                                         final int limit, final int numCursors,
+                                         final String cursor) throws BadRequestException {
+    return execute(
+      new TransactionExecutor.Function<MetadataDataset, SearchResults>() {
+        @Override
+        public SearchResults apply(MetadataDataset input) throws Exception {
+          return input.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor);
+        }
+      }, scope);
+  }
+
+  private Set<NamespacedEntityId> getSortedEntities(List<MetadataEntry> results, SortInfo sortInfo) {
+    // if sort order is not weighted, return entities in the order received.
+    // in this case, the backing storage is expected to return results in the expected order.
+    if (SortInfo.SortOrder.WEIGHTED != sortInfo.getSortOrder()) {
+      Set<NamespacedEntityId> entities = new LinkedHashSet<>(results.size());
+      for (MetadataEntry metadataEntry : results) {
+        //TODO Remove this null check after CDAP-7228 resolved. Since previous CDAP version may have null value.
+        if (metadataEntry != null) {
+          entities.add(metadataEntry.getTargetId());
+        }
+      }
+      return entities;
+    }
+    // if sort order is weighted, score results by weight, and return in descending order of weights
     // Score results
     final Map<NamespacedEntityId, Integer> weightedResults = new HashMap<>();
     for (MetadataEntry metadataEntry : results) {
@@ -401,14 +486,11 @@ public class DefaultMetadataStore implements MetadataStore {
     // Sort the results by score
     List<Map.Entry<NamespacedEntityId, Integer>> resultList = new ArrayList<>(weightedResults.entrySet());
     Collections.sort(resultList, SEARCH_RESULT_DESC_SCORE_COMPARATOR);
-
-    // Fetch metadata for entities in the result list
-    // Note: since the fetch is happening in a different transaction, the metadata for entities may have been
-    // removed. It is okay not to have metadata for some results in case this happens.
-    Map<NamespacedEntityId, Metadata> systemMetadata = fetchMetadata(weightedResults.keySet(), MetadataScope.SYSTEM);
-    Map<NamespacedEntityId, Metadata> userMetadata = fetchMetadata(weightedResults.keySet(), MetadataScope.USER);
-
-    return addMetadataToResults(resultList, systemMetadata, userMetadata);
+    Set<NamespacedEntityId> result = new LinkedHashSet<>(resultList.size());
+    for (Map.Entry<NamespacedEntityId, Integer> entry : resultList) {
+      result.add(entry.getKey());
+    }
+    return result;
   }
 
   private Map<NamespacedEntityId, Metadata> fetchMetadata(final Set<NamespacedEntityId> namespacedEntityIds,
@@ -427,28 +509,28 @@ public class DefaultMetadataStore implements MetadataStore {
     return metadataMap;
   }
 
-  Set<MetadataSearchResultRecord> addMetadataToResults(List<Map.Entry<NamespacedEntityId, Integer>> results,
-                                                       Map<NamespacedEntityId, Metadata> systemMetadata,
-                                                       Map<NamespacedEntityId, Metadata> userMetadata) {
+  private Set<MetadataSearchResultRecord> addMetadataToEntities(Set<NamespacedEntityId> entities,
+                                                                Map<NamespacedEntityId, Metadata> systemMetadata,
+                                                                Map<NamespacedEntityId, Metadata> userMetadata) {
     Set<MetadataSearchResultRecord> result = new LinkedHashSet<>();
-    for (Map.Entry<NamespacedEntityId, Integer> entry : results) {
+    for (NamespacedEntityId entity : entities) {
       ImmutableMap.Builder<MetadataScope, co.cask.cdap.proto.metadata.Metadata> builder = ImmutableMap.builder();
       // Add system metadata
-      Metadata metadata = systemMetadata.get(entry.getKey());
+      Metadata metadata = systemMetadata.get(entity);
       if (metadata != null) {
         builder.put(MetadataScope.SYSTEM,
                     new co.cask.cdap.proto.metadata.Metadata(metadata.getProperties(), metadata.getTags()));
       }
 
       // Add user metadata
-      metadata = userMetadata.get(entry.getKey());
+      metadata = userMetadata.get(entity);
       if (metadata != null) {
         builder.put(MetadataScope.USER,
                     new co.cask.cdap.proto.metadata.Metadata(metadata.getProperties(), metadata.getTags()));
       }
 
       // Create result
-      result.add(new MetadataSearchResultRecord(entry.getKey(), builder.build()));
+      result.add(new MetadataSearchResultRecord(entity, builder.build()));
     }
     return result;
   }
@@ -545,7 +627,8 @@ public class DefaultMetadataStore implements MetadataStore {
     try {
       return DatasetsUtil.getOrCreateDataset(
         dsFramework, getMetadataDatasetInstance(scope), MetadataDataset.class.getName(),
-        DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
+        DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build(),
+        DatasetDefinition.NO_ARGUMENTS, null);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

@@ -23,7 +23,7 @@
       appropriate context is available.
 
   O/P: Absolute Url of the form:
-    <protocol>//<host>/cask-:uiApp/:namespaceId/apps/:appId/:entityType/:entityId/runs/:runId
+    <protocol>//<host>/:uiApp/:namespaceId/apps/:appId/:entityType/:entityId/runs/:runId
 
   The absolute URL will be generated based on the available context.
 
@@ -34,7 +34,7 @@
     as a proper utility function in es6 module system.
 */
 window.getAbsUIUrl = function(navigationObj = {}) {
-  let {uiApp = 'cask-cdap', redirectUrl, clientId, namespaceId, appId, entityType, entityId, runId} = navigationObj;
+  let {uiApp = 'cdap', redirectUrl, clientId, namespaceId, appId, entityType, entityId, runId} = navigationObj;
   let baseUrl = `${location.protocol}//${location.host}/${uiApp}`;
   if (uiApp === 'login') {
     baseUrl += `?`;
@@ -132,7 +132,7 @@ function addCustomQueryParams(url, params = {}) {
 
 window.getTrackerUrl = function(navigationObj = {}) {
   let {stateName, stateParams} = navigationObj;
-  let uiApp = 'cask-tracker';
+  let uiApp = 'tracker';
   let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
   let stateToUrlMap = {
     'tracker': '',
@@ -146,7 +146,7 @@ window.getTrackerUrl = function(navigationObj = {}) {
 };
 window.getHydratorUrl = function(navigationObj = {}) {
   let {stateName, stateParams} = navigationObj;
-  let uiApp = 'cask-hydrator';
+  let uiApp = 'hydrator';
   let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
   let stateToUrlMap = {
     'hydrator': '',

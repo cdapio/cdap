@@ -129,8 +129,8 @@ public class SnapshotCodecCompatibilityTest {
     TreeMap<Long, TransactionManager.InProgressTx> inProgress = Maps.newTreeMap(ImmutableSortedMap.of(
         tLong, new TransactionManager.InProgressTx(readPtr,
             TransactionManager.getTxExpirationFromWritePointer(tLong, TxConstants.Manager.DEFAULT_TX_LONG_TIMEOUT),
-            TransactionType.LONG),
-        tShort, new TransactionManager.InProgressTx(readPtr, now + 1000, TransactionType.SHORT)));
+            TransactionManager.InProgressType.LONG),
+        tShort, new TransactionManager.InProgressTx(readPtr, now + 1000, TransactionManager.InProgressType.SHORT)));
 
     TransactionSnapshot snapshot = new TransactionSnapshot(now, readPtr, nowWritePointer,
         Lists.newArrayList(tInvalid), // invalid
@@ -222,7 +222,7 @@ public class SnapshotCodecCompatibilityTest {
     assertEquals(1, snapshot2.getInProgress().size());
     Map.Entry<Long, TransactionManager.InProgressTx> inProgressTx =
         snapshot2.getInProgress().entrySet().iterator().next();
-    assertEquals(TransactionType.LONG, inProgressTx.getValue().getType());
+    assertEquals(TransactionManager.InProgressType.LONG, inProgressTx.getValue().getType());
 
     // save a new snapshot
     txManager2.stopAndWait();
