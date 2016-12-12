@@ -57,4 +57,12 @@ public class OperationalExtensionId {
   public int hashCode() {
     return Objects.hash(serviceName, statType);
   }
+
+  @Override
+  public String toString() {
+    return "OperationalExtensionId{" +
+      "serviceName='" + serviceName + '\'' +
+      ", statType='" + statType + '\'' +
+      '}';
+  }
 }
