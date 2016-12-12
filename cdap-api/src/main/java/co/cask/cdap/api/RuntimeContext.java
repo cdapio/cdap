@@ -27,7 +27,7 @@ import java.util.Map;
 public interface RuntimeContext {
 
   /**
-   * @return The application specification
+   * @return The application specification.
    */
   ApplicationSpecification getApplicationSpecification();
 
@@ -37,12 +37,17 @@ public interface RuntimeContext {
   Map<String, String> getRuntimeArguments();
 
   /**
-   * @return The application namespace
+   * @return The cluster name.
+   */
+  String getClusterName();
+
+  /**
+   * @return The application namespace.
    */
   String getNamespace();
 
   /**
-   * @return The {@link RunId} of the current run
+   * @return The {@link RunId} of the current run.
    */
   RunId getRunId();
 

@@ -29,7 +29,7 @@ import co.cask.cdap.api.dataset.Dataset
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
-import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData, SecureStoreMetadata}
+import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData}
 import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
@@ -122,6 +122,8 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   }
 
   override def getApplicationSpecification: ApplicationSpecification = runtimeContext.getApplicationSpecification
+
+  override def getClusterName: String = runtimeContext.getClusterName
 
   override def getRuntimeArguments: util.Map[String, String] = runtimeContext.getRuntimeArguments
 

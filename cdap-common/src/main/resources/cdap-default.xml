@@ -56,6 +56,17 @@
   </property>
 
   <property>
+    <name>cluster.name</name>
+    <value></value>
+    <description>
+      A cluster based name for CDAP. It is being used for preferences and runtime arguments scope
+      resolution. For example, a preference key "cluster.[cluster.name].my.key" will be resolved
+      to "my.key" at runtime, hence for a program, it can get the preference value by using "my.key" only.
+      The administrator can use this property to setup different preferences per cluster.
+    </description>
+  </property>
+
+  <property>
     <name>local.data.dir</name>
     <value>data</value>
     <description>
