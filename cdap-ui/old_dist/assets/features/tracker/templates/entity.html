@@ -1,0 +1,49 @@
+
+
+<div class="tracker-entity-top-bar">
+  <div class="back-button text-center" ng-click="EntityController.goBack()" ng-if="$state.params.searchTerm" uib-tooltip="Back to search results" tooltip-popup-delay="300" tooltip-placement="right">
+    <span class="fa fa-caret-left"></span>
+  </div>
+
+  <div class="entity-detail" ng-class="{ 'offset': !$state.params.searchTerm }">
+    <h3 uib-tooltip="{{ $state.params.entityId }}" tooltip-enable="$state.params.entityId.length > 50" tooltip-popup-delay="300">
+      {{ ::$state.params.entityId | myEllipsis: 50 }}
+    </h3>
+    <div class="entity-type">
+      <span class="{{EntityController.entityInfo.icon}}"></span>
+      <span>{{ ::EntityController.entityInfo.name }}</span>
+    </div>
+  </div>
+
+  <div class="truth-meter-container">
+    <my-truth-meter score="EntityController.truthMeterMap[$state.params.entityType][$state.params.entityId]" show-info-icon="true" show-beta-text="true" width="125"></my-truth-meter>
+  </div>
+
+  <div class="tab-options">
+    <ul class="list-inline">
+      <li ng-class="{'active': $state.is('tracker.detail.entity.metadata')}">
+        <a ui-sref="tracker.detail.entity.metadata">Metadata</a>
+      </li>
+      <li ng-class="{'active': $state.is('tracker.detail.entity.lineage')}">
+        <a ui-sref="tracker.detail.entity.lineage">Lineage</a>
+      </li>
+      <li ng-class="{'active': $state.is('tracker.detail.entity.audit')}">
+        <a ui-sref="tracker.detail.entity.audit">Audit Log</a>
+      </li>
+      <li ng-class="{'active': $state.is('tracker.detail.entity.preview')}" ng-if="::($state.params.entityType === 'streams' || EntityController.datasetExplorable)">
+        <a ui-sref="tracker.detail.entity.preview">Preview</a>
+      </li>
+      <li ng-class="{'active': $state.is('tracker.detail.entity.usage')}">
+        <a ui-sref="tracker.detail.entity.usage">Usage</a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="action-button text-right">
+    <my-jump-button entity-type="$state.params.entityType" entity-id="$state.params.entityId" dataset-type="EntityController.datasetType" dataset-explorable="EntityController.datasetExplorable">
+    </my-jump-button>
+  </div>
+
+</div>
+
+<ui-view></ui-view>

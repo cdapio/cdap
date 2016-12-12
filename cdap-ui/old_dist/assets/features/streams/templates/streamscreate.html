@@ -1,0 +1,27 @@
+
+
+<div class="modal-header">
+    <h3 class="modal-title">Create a Stream</h3>
+</div>
+<div class="modal-body">
+  <form class="form-horizontal">
+    <div class="text-center bg-danger" ng-show="CreateController.error">
+      <p><i class="fa fa-exclamation-circle"></i>  {{CreateController.error}}</p>
+    </div>
+    <label class="col-sm-2 control-label">
+      <span>Stream ID</span>
+      <span class="fa fa-asterisk"></span>
+    </label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" ng-model="CreateController.streamId" placeholder="Stream ID" name="streamId" cask-focus="streamId">
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-default" ng-click="CreateController.closeModal()">
+      Cancel
+    </button>
+    <button class="btn" ng-click="CreateController.createStream()" ng-class="{'btn-success': streamId.length > 0}">
+      Create
+    </button>
+</div>

@@ -1,0 +1,87 @@
+ 
+
+<my-breadcrumbs data-hide-ns-dropdown="true"></my-breadcrumbs>
+<div class="row">
+  <div class="col-sm-3 sidebar">
+
+    <ul class="list-group list-unstyled">
+      <li class="list-group-item">
+        <a href="" class="abstract" ng-click="submenu.system=!submenu.system" ng-class="{ current: $state.includes('admin.system.**') }">
+          System Configuration
+        </a>
+        <ul class="list-unstyled" ng-show="submenu.system">
+          <li>
+            <a ui-sref="admin.system.configuration" ng-class="{ current: $state.includes('admin.system.configuration.**') }">
+              <span class="icon-configuration"></span>
+              Configuration
+            </a>
+          </li>
+
+          <li>
+            <a ui-sref="admin.system.services" ng-class="{ current: $state.includes('admin.system.services.**') }">
+              <span class="icon-service"></span>
+              Services
+            </a>
+          </li>
+
+          <li>
+            <a ui-sref="admin.system.preferences" ng-class="{ current: $state.includes('admin.system.preferences.**') }">
+              <span class="icon-systempreferences"></span>
+              Preferences
+            </a>
+          </li>
+        </ul>
+      </li>
+
+      <li class="list-group-item">
+        <a href="" class="abstract pull-left" ng-click="submenu.namespaces=!submenu.namespaces" ng-class="{ current: $state.includes('admin.namespace.**') }">
+          Namespaces
+        </a>
+        <a ui-sref="admin.namespace.create" class="text-center">
+          <span class="fa fa-plus text-center"></span>
+        </a>
+        
+        <ul class="list-unstyled" ng-show="submenu.namespaces">
+          <li ng-repeat="ns in nsList">
+            <a href="" ng-click="submenu.perNs[ns.name]=!submenu.perNs[ns.name]">
+              <span ng-bind="ns.name | myEllipsis: 12"></span>
+              <span ng-class="{ 'fa-caret-down': submenu.perNs[ns.name], 'fa-caret-right': !submenu.perNs[ns.name] }" class="fa pull-right"></span>
+            </a>
+            <ul class="list-unstyled" ng-show="submenu.perNs[ns.name]">
+              <li>
+                <a ui-sref-active="current" ui-sref="admin.namespace.detail.apps({nsadmin: ns.name})">
+                  Applications
+                </a>
+              </li>
+              <li>
+                <a ui-sref-active="current" ui-sref="admin.namespace.detail.data({nsadmin: ns.name})">
+                  Datasets
+                </a>
+              </li>
+              <li>
+                <a ui-sref-active="current" ui-sref="admin.namespace.detail.preferences({nsadmin: ns.name})">
+                  Preferences
+                </a>
+              </li>
+              <li>
+                <a ui-sref-active="current" ui-sref="admin.namespace.detail.settings({nsadmin: ns.name})">
+                  Settings
+                </a>
+              </li>
+              <li>
+                <a ui-sref-active="current" ui-sref="admin.namespace.detail.templateslist({nsadmin: ns.name})">
+                  Templates
+                </a>
+              </li>
+            </ul>
+          </li>
+
+        </ul>
+      </li>
+    </ul>
+
+  </div>
+  <div class="col-sm-9">
+    <div ui-view></div>
+  </div>
+</div>

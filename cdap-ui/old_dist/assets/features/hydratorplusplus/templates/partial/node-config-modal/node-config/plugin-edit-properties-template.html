@@ -1,0 +1,72 @@
+
+
+<form plugin-property-edit-view>
+  <div class="form-group">
+    <label class="control-label">
+      Label
+      <span class="fa fa-asterisk"></span>
+      <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError">{{HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError}}</small>
+    </label>
+    <input type="text" class="form-control" ng-disabled="isDisabled" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label">
+  </div>
+
+  <div ng-repeat="group in HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.groups">
+    <div class="widget-group-container">
+      <h4>{{::group.display}}</h4>
+      <div ng-repeat="field in group.fields">
+        <div ng-if="field.name !== HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperty">
+
+          <div class="form-group">
+            <label class="control-label">
+              <span>{{::field.label}}</span>
+
+              <span class="fa fa-info-circle" uib-tooltip="{{::field.description}}" tooltip-placement="right" tooltip-append-to-body="true">
+              </span>
+              <span class="fa fa-asterisk" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].required"></span>
+              <small class="text-danger" ng-if="!HydratorPlusPlusNodeConfigCtrl.state.node.warning && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].required && !HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]">{{::HydratorPlusPlusNodeConfigCtrl.requiredPropertyError}}</small>
+            </label>
+
+            <span ng-if="field['plugin-function'] && (!field['plugin-function']['position'] || field['plugin-function']['position'] === 'top') && !isDisabled">
+              <plugin-functions fn-config="field['plugin-function']" node="HydratorPlusPlusNodeConfigCtrl.state.node">
+              </plugin-functions>
+            </span>
+
+            <div>
+              
+              <fieldset ng-disabled="isDisabled" ng-if="(['javascript-editor', 'python-editor'].indexOf(field['widget-type']) === -1)">
+                <div data-name="field" class="my-widget-container" ng-class="{'select-wrapper': field.widget === 'select'}" data-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]" data-myconfig="field" disabled="isDisabled" data-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties" widget-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name]" input-schema="HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema" widget-container>
+                </div>
+              </fieldset>
+
+              
+              <div ng-if="(['javascript-editor', 'python-editor'].indexOf(field['widget-type']) !== -1)">
+                <div data-name="field" class="my-widget-container" ng-class="{'select-wrapper': field.widget === 'select'}" data-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]" data-myconfig="field" disabled="isDisabled" data-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties" widget-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name]" widget-container>
+                </div>
+              </div>
+
+              <span class="badge macro-indicator pull-right" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].macroSupported" uib-tooltip="A placeholder that will be substituted at runtime. eg. ${placeholder} or ${secure(key)}" tooltip-append-to-body="true" tooltip-popup-delay="300" tooltip-placement="left">
+                Macro
+              </span>
+
+              <span class="plugin-function-bottom" ng-if="field['plugin-function'] && field['plugin-function']['position'] === 'bottom' && !isDisabled">
+                <plugin-functions fn-config="field['plugin-function']" node="HydratorPlusPlusNodeConfigCtrl.state.node">
+                </plugin-functions>
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <br>
+
+  <div class="form-group" ng-if="HydratorPlusPlusNodeConfigCtrl.state.showErrorDataset">
+    <label class="control-label">
+      Error Dataset
+      <span class="fa fa-info-circle" ng-if="HydratorPlusPlusNodeConfigCtrl.state.errorDatasetTooltip" uib-tooltip="{{HydratorPlusPlusNodeConfigCtrl.state.errorDatasetTooltip}}" tooltip-placement="right"></span>
+    </label>
+    <input type="text" class="form-control" ng-disabled="isDisabled" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.errorDatasetName">
+  </div>
+</form>

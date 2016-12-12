@@ -1,0 +1,102 @@
+
+
+<my-breadcrumbs></my-breadcrumbs>
+
+<div class="levels">
+  <div class="program-level">
+    <div class="container">
+      <div class="row" cdap-object-heading>
+        <div class="col-sm-4 col-md-6">
+          <div class="type-block">
+            <span class="icon-mapreduce pull-left" uib-tooltip="Type: Mapreduce" tooltip-placement="top" tooltip-append-to-body="true"></span>
+            <h2 ng-bind="$state.params.programId"></h2>
+          </div>
+          <p ng-bind="RunsController.description | myEllipsis: 144"></p>
+          <my-metadata-tags tag-limit="5" params="RunsController.metadataParams" type="programs"></my-metadata-tags>
+        </div>
+        <div class="col-sm-8 col-md-6">
+          <div class="button-bar text-right">
+            <my-start-stop-button type="mapreduce" is-stoppable="true">
+            </my-start-stop-button>
+            <div class="btn-group dropdown" uib-dropdown>
+              <div class="btn btn-lg btn-default dropdown-toggle" uib-dropdown-toggle>
+                <span class="fa fa-ellipsis-h"></span>
+                <span> More </span>
+              </div>
+              <ul class="dropdown-menu" role="menu">
+                <li>
+                  <div ng-click="RunsController.openHistory()" class="btn btn-lg btn-default">
+                    <span class="fa fa-clock-o"></span>
+                    <span> History </span>
+                  </div>
+                </li>
+                <li ui-sref="admin.namespace.detail.apps.metadata({nsadmin: $state.params.namespace, appId: $state.params.appId})">
+                  <div class="btn btn-lg btn-default">
+                    <span class="fa fa-cogs"></span>
+                    <span> Manage </span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="run-level">
+    <div class="container">
+      <div class="run-level-inner">
+        <div uib-dropdown is-open="dropdown.isopen" class="flex-item">
+          <a class="btn btn-default dropdown-toggle" uib-dropdown-toggle ng-disabled="RunsController.runs.length === 0">
+             <span class="fa fa-circle" ng-class="{'text-primary': RunsController.runs.selected.status === 'COMPLETED', 'text-success': RunsController.runs.selected.status === 'STARTED' || RunsController.runs.selected.status === 'RUNNING', 'text-danger': RunsController.runs.selected.status === 'FAILED' || RunsController.runs.selected.status === 'KILLED', 'text-muted': RunsController.runs.selected.status === 'STOPPED', 'text-warning': RunsController.runs.selected.status === 'SUSPENDED'}"></span>
+             <span class="runid-text text-left">
+               <span>{{ RunsController.runs.selected.runid }}</span>
+               <span ng-if="RunsController.runs.selected.start">
+                 {{(RunsController.runs.selected.start*1000) | amDateFormat: 'MM/DD/YY hh:mm:ss'}}
+               </span>
+               <span ng-if="!RunsController.runs.selected.start">
+                 &mdash;
+               </span>
+             </span>
+            <span class="fa fa-caret-down"></span>
+          </a>
+          <ul class="dropdown-menu" role="menu">
+            <li ng-repeat="run in RunsController.runs">
+              <a ui-sref="mapreduce.detail.run({runid: run.runid})">
+                <span class="fa fa-circle" ng-class="{'text-primary': run.status === 'COMPLETED', 'text-success': run.status === 'STARTED' || run.status === 'RUNNING', 'text-danger': run.status === 'FAILED' || run.status === 'KILLED', 'text-muted': run.status === 'STOPPED', 'text-warning': run.status === 'SUSPENDED'}"></span>
+                <span class="runid-text">
+                  <span>{{ run.runid }}</span>
+                  <span ng-if="run.start">
+                    {{(run.start *1000) | amDateFormat: 'MM/DD/YY hh:mm:ss'}}
+                  </span>
+                  <span ng-if="!run.start">
+                    &mdash;
+                  </span>
+                </span>
+              </a>
+            </li>
+          </ul>
+        </div>
+        <my-program-status data-type="mapreduce" data-runid="RunsController.runs.selected.runid" data-runs="RunsController.runs" class="flex-item"></my-program-status>
+      </div>
+    </div>
+  </div>
+  <div class="tabs-level">
+    <div class="container">
+      <ul class="nav nav-tabs slanted-tabs" role="tablist">
+        <li role="presentation" ng-repeat="tab in RunsController.tabs" ng-class="{'active': tab.title == RunsController.activeTab.title}">
+          <a role="tab" ng-click="RunsController.selectTab(tab)">
+            {{ tab.title }}
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="tab-view">
+    <div ng-if="!$state.params.runid" ng-include="RunsController.activeTab.template"></div>
+    <ui-view ng-if="$state.params.runid" role="tabpanel">
+  </div>
+</div>

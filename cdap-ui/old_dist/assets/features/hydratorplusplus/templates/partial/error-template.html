@@ -1,0 +1,15 @@
+
+<div class="alert" ng-class="[type ? 'alert-' + type : null]">
+  <button type="button" class="close" ng-if="dismissable" ng-click="$hide()">&times;</button>
+  <span ng-if="title">
+    <strong ng-bind="title"></strong>&nbsp;
+    <span ng-bind-html="content"></span>
+  </span>
+  
+  <span ng-if="templateScope.content.length > 1">
+    <span class="fa fa-arrow-left fa-fw" ng-if="templateScope.currentIndex > 0" ng-click="templateScope.moveToPrevIndex()"></span>
+    <span class="fa fa-arrow-right fa-fw" ng-click="templateScope.moveToNextIndex()" ng-if="templateScope.content.length - 1 > templateScope.currentIndex"></span>
+  </span>
+  <span ng-if="!title && templateScope.currentIndex == $index" class="message-content" ng-repeat="message in templateScope.content" ng-bind="message">
+  </span>
+</div>

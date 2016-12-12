@@ -1,0 +1,87 @@
+
+
+<div class="well well-lg" ng-if="unknownBoard">
+  <h3 class="text-center"> This dashboard is either deleted or not found.</h3>
+</div>
+
+<div class="well well-lg" ng-if="currentBoard.isEmpty">
+  <h3 class="text-center"> No widgets on this board: <a ng-click="addWidget()"> Add one </a>  </h3>
+</div>
+
+<div class="row" ng-if="!currentBoard.isEmpty">
+
+    <div class="form-inline">
+
+      <div ng-if="currentTab == 0" class="form-group">
+        <my-timestamp-picker data-label="From" ng-model="timeOptions.startMs"></my-timestamp-picker>
+
+        <my-timestamp-picker data-label="To" ng-model="timeOptions.endMs"></my-timestamp-picker>
+
+        <div class="form-group">
+          <div uib-dropdown is-open="dropdown.isopen">
+            <button type="button" class="btn btn-default dropdown-toggle" uib-dropdown-toggle>
+              {{ tabs[currentTab] }}
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu metric-timeselector" role="menu">
+              <li ng-repeat="tab in tabs" ng-click="activateTab($index)"><a>{{tab}}</a></li>
+            </ul>
+          </div>
+          <button class="btn btn-success" ng-click="updateWithTimeRange()">
+            Make Request
+          </button>
+        </div>
+      </div>
+
+      <div ng-if="currentTab == 1" class="form-group">
+
+        <my-duration-picker ng-model="timeOptions.durationMs">
+        </my-duration-picker>
+
+        <div class="input-group">
+
+          <button type="button" class="btn btn-default form-control mp-dropdown-toggle" ng-model="timeOptions.refreshInterval" ng-change="updateRefreshInterval()" bs-options="t.name for t in refreshIntervals" bs-select>
+            <strong ng-bind="timeOptions.refreshInterval.name"></strong>
+            <span class="caret"></span>
+          </button>
+          <span class="input-group-addon">
+            <span class="addon-label">Frequency</span>
+          </span>
+        </div>
+
+        <div class="form-group">
+          <div uib-dropdown is-open="dropdown.isopen">
+            <button type="button" class="btn btn-default dropdown-toggle" uib-dropdown-toggle>
+              {{ tabs[currentTab] }}
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu metric-timeselector" role="menu">
+              <li ng-repeat="tab in tabs" ng-click="activateTab($index)"><a>{{tab}}</a></li>
+            </ul>
+          </div>
+          <button ng-if="!liveDashboard" class="btn btn-success" ng-click="updateWithFrequency()">
+            Start Polling
+          </button>
+          <button ng-if="liveDashboard" class="btn btn-danger" ng-click="stopPolling()">
+            Stop Polling
+          </button>
+        </div>
+      </div>
+    </div>
+
+</div>
+
+<div ng-if="!unknownBoard">
+  <div gridster="gridsterOpts">
+    <ul>
+      <li gridster-item="wdgt" ng-repeat="wdgt in currentBoard.columns">
+        <div class="panel panel-default widget" style="margin:0">
+          <div class="panel-heading" ng-include="'old_assetsfeatures/dashboard/templates/partials/wdgt-head.html'">
+          </div>
+          <div class="panel-body" ng-include="wdgt.getPartial()"></div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+</div>

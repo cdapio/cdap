@@ -1,0 +1,40 @@
+
+
+
+<div ng-if="HydratorPlusPlusNodeConfigCtrl.state.configfetched">
+  <div ng-class="{'modal-sink': HydratorPlusPlusNodeConfigCtrl.state.node.type === 'sink'}">
+    <div ng-show="!showinfo">
+      <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.configfetched">
+
+        <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noproperty !== 0">
+          <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noconfig" ng-include="'old_assetsfeatures/hydratorplusplus/templates/partial/node-config-modal/node-config/plugin-edit-noconfig-form.html'"></div>
+
+          <div ng-if="(HydratorPlusPlusNodeConfigCtrl.state.configfetched && !HydratorPlusPlusNodeConfigCtrl.state.noconfig)">
+            <div ng-include="'old_assetsfeatures/hydratorplusplus/templates/partial/node-config-modal/node-config/plugin-edit-config-form.html'"></div>
+          </div>
+        </div>
+
+        <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noproperty === 0" class="no-plugin-properties-message">
+          <div class="well well-lg text-center">
+            <h4>No Properties found for Plugin '{{::HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name}}'</h4>
+          </div>
+        </div>
+      </div>
+
+      <div ng-if="!HydratorPlusPlusNodeConfigCtrl.state.configfetched">
+        <h3>
+          <span class="fa fa-spinner fa-spin"></span>
+          <span>Loading...</span>
+        </h3>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+<div ng-if="!HydratorPlusPlusNodeConfigCtrl.state.configfetched" class="loading-message">
+  <h3>
+    <small class="fa fa-spin fa-spinner"></small>
+    Loading...
+  </h3>
+</div>
