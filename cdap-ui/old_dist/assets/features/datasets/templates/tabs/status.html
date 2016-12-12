@@ -1,0 +1,63 @@
+
+
+<div class="container">
+  <div ng-if="StatusController.explorable">
+    <div class="row">
+      <div class="col-xs-8 h2">
+        <h3>Schema</h3>
+      </div>
+      <div class="col-xs-4">
+        <table class="table table-curved table-status">
+          <thead>
+            <th> Storage </th>
+            <th> Writes </th>
+            <th>  Reads </th>
+          </thead>
+          <tbody>
+            <td>
+              <em ng-if="StatusController.storage"> {{StatusController.storage | bytes}} </em>
+              <em ng-if="!StatusController.storage"> 0b </em>
+            </td>
+            <td>
+              <em ng-if="StatusController.writes"> {{StatusController.writes | bytes}}/s </em>
+              <em ng-if="!StatusController.writes"> 0b/s </em>
+            </td>
+            <td>
+              <em ng-if="StatusController.reads"> {{StatusController.reads | bytes}}/s </em>
+              <em ng-if="!StatusController.reads"> 0b/s </em>
+            </td>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="table responsive">
+          <table class="table table-curved" cask-sortable no-initial-sort="true" ng-show="StatusController.schema.length > 0">
+            <thead>
+              <tr ng-class="{'sort-enabled': StatusController.schema.length > 1}">
+                <th data-predicate="name"> Name </th>
+                <th data-predicate="type"> Type </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="field in StatusController.schema | orderBy:sortable.predicate:sortable.reverse">
+                <td ng-bind="field.name"> </td>
+                <td ng-bind="field.type"> </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div ng-show="StatusController.schema.length == 0" class="well well-lg text-center">
+          <span> No Schema defined for this Dataset </span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div ng-if="StatusController.explorable === false">
+    <div ng-include="'old_assetsfeatures/datasets/templates/tabs/programs.html'"></div>
+  </div>
+
+</div>

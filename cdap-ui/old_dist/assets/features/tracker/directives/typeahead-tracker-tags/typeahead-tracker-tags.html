@@ -1,0 +1,3 @@
+
+
+<input type="text" class="form-control" placeholder="Enter a tag" max-length="50" cask-focus="tagInput" ng-model="TypeaheadTrackerTagsCtrl.model" ng-click="$event.stopPropagation()" typeahead-popup-template-url="old_assetsfeatures/tracker/directives/typeahead-tracker-tags/popup.html" typeahead-min-length="0" typeahead-show-hint="true" typeahead-select-on-exact="false" typeahead-focus-on-select="false" typeahead-on-select="TypeaheadTrackerTagsCtrl.onTagsSelect($item, $model, $label, $event)" uib-typeahead="data.label as data.label for data in TypeaheadTrackerTagsCtrl.list  | filter:{name:$viewValue}" ng-change="TypeaheadTrackerTagsCtrl.onChange()" ng-keypress="$event.keyCode === 13 && TypeaheadTrackerTagsCtrl.onTagsSelect({ name: TypeaheadTrackerTagsCtrl.model })">

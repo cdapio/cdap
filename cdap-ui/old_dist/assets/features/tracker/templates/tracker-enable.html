@@ -1,0 +1,12 @@
+
+
+<div class="enable-tracker-container text-center">
+  <h3>Tracker application is not enabled. Please enable Tracker.</h3>
+  <button class="btn btn-success" ng-click="EnableController.enableTracker()" ng-disabled="EnableController.enableTrackerLoading">
+    <span ng-if="!EnableController.enableTrackerLoading">Enable Tracker</span>
+    <span ng-if="EnableController.enableTrackerLoading">
+      <span class="fa fa-spin fa-refresh"></span>
+      <span>Enabling</span>
+    </span>
+  </button>
+</div>

@@ -1,0 +1,95 @@
+
+
+<div class="row">
+    <div class="col-xs-6">
+        <h2> Applications: {{ ::$state.params.nsadmin }} </h2>
+    </div>
+    <div class="col-xs-6 text-right" ng-if="apps.length > 0">
+        <div class="btn-group dropdown-right" uib-dropdown>
+          <button type="button" class="btn btn-default dropdown-toggle white-dropdown" uib-dropdown-toggle>
+            Add Application <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-right" role="menu">
+            <li>
+              <my-file-select dropdown="true" data-button-icon="__" data-button-label="Custom App" on-file-select="onFileSelected($files)">
+              </my-file-select>
+            </li>
+            <li>
+              <a href="{{getHydratorUrl( { stateParams: { namespace: $stateParams.nsadmin } } )}}" class="clearfix">
+                <span class="pull-left">{{GLOBALS.en.hydrator.appLabel}}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+    </div>
+</div>
+
+<div ng-if="apps.length > 0">
+    <div class="table-responsive">
+        <table class="table table-curved" cask-sortable>
+            <thead>
+              <tr ng-class="{'sort-enabled': apps.length>0}">
+                <th data-predicate="name">Name</th>
+                <th data-predicate="type">Type</th>
+                <th data-predicate="version">Version</th>
+                <th data-predicate="description">Description</th>
+                <th> </th>
+              </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
+                    <td>
+                      <a ui-sref="admin.namespace.detail.apps.metadata({appId: app.id})">
+                          <strong uib-tooltip="{{app.name}}" tooltip-enable="app.name.length > 25" tooltip-append-to-body="true">
+                            {{ ::app.name | myEllipsis:25 }}
+                          </strong>
+                      </a>
+                    </td>
+                    <td>
+                      <span ng-if="myHydratorFactory.isCustomApp(app.artifact.name)">
+                        <span class="icon-fist"></span>
+                        <span>App</span>
+                      </span>
+                      <span ng-if="myHydratorFactory.isETLApp(app.artifact.name)">
+                        <span class="icon-{{ GLOBALS.iconArtifact[app.artifact.name] }}"></span>
+                        <span>{{ GLOBALS.artifactConvert[app.artifact.name] }}</span>
+                      </span>
+                    </td>
+                    <td>
+                      {{ ::app.version }}
+                    </td>
+                    <td>
+                      <span uib-tooltip="{{app.description}}" tooltip-enable="app.description.length > 25" tooltip-append-to-body="true">
+                        {{ ::app.description | myEllipsis:25 }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <a href="" ng-click="caskConfirm()" cask-confirmable="deleteApp(app.id)" data-confirmable-content="Are you sure you want to delete the application '<strong>{{app.name}}</strong>'?">
+                        <span class="fa fa-trash text-danger"></span>
+                      </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="well text-center" ng-if="apps.length === 0">
+    <p> You haven't deployed any applications </p>
+    <div class="btn-group dropdown-right" uib-dropdown>
+      <button type="button" class="btn btn-default dropdown-toggle white-dropdown" uib-dropdown-toggle>
+        Add Application <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-right" role="menu">
+        <li>
+          <my-file-select dropdown="true" data-button-label="Custom App" data-button-icon="__" on-file-select="onFileSelected($files)">
+          </my-file-select>
+        </li>
+        <li>
+          <a href="{{getHydratorUrl( { stateParams: { namespace: $stateParams.nsadmin } } )}}" class="clearfix">
+            <span class="pull-left">{{GLOBALS.en.hydrator.appLabel}}</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+</div>

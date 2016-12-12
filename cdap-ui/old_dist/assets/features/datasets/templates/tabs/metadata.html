@@ -1,0 +1,101 @@
+ 
+
+<div class="container">
+  
+  <table class="table table-curved">
+    <tr>
+      <td>Table</td>
+      <td>{{ MetadataController.metadata.table_name }}</td>
+    </tr>
+
+    <tr>
+      <td>Database</td>
+      <td>{{ MetadataController.metadata.db_name }}</td>
+    </tr>
+
+    <tr>
+      <td>Owner</td>
+      <td>{{ MetadataController.metadata.owner }}</td>
+    </tr>
+
+    <tr>
+      <td>Creation Time</td>
+      <td>
+        {{ MetadataController.metadata.creation_time  | amDateFormat:'dddd, MMMM Do YYYY, h:mm:ss a' }}
+      </td>
+    </tr>
+
+    <tr>
+      <td>Compressed</td>
+      <td>{{ MetadataController.metadata.compressed }}</td>
+    </tr>
+
+    <tr>
+      <td>Is Dataset</td>
+      <td>{{ MetadataController.metadata.from_dataset }}</td>
+    </tr>
+
+    <tr>
+      <td>Input Format</td>
+      <td>{{ MetadataController.metadata.input_format }}</td>
+    </tr>
+
+    <tr>
+      <td>Last Accessed Time</td>
+      <td>{{ MetadataController.metadata.last_access_time }}</td>
+    </tr>
+
+    <tr>
+      <td>Location</td>
+      <td>{{ MetadataController.metadata.location }}</td>
+    </tr>
+
+    <tr>
+      <td>Number of Buckets</td>
+      <td>{{ MetadataController.metadata.num_buckets }}</td>
+    </tr>
+
+    <tr>
+      <td>Output Format</td>
+      <td>{{ MetadataController.metadata.output_format }}</td>
+    </tr>
+
+    <tr>
+      <td>Parameters</td>
+      <td>
+        <table class="table table-curved">
+          <tbody>
+            <tr ng-repeat="(key, value) in MetadataController.metadata.parameters">
+              <td>{{ key }}</td>
+              <td>{{ value }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+
+    <tr>
+      <td>Retention</td>
+      <td>{{ MetadataController.metadata.retention }}</td>
+    </tr>
+
+    <tr>
+      <td>SerDe</td>
+      <td>{{ MetadataController.metadata.serde }}</td>
+    </tr>
+
+    <tr>
+      <td>SerDe Parameters</td>
+      <td>
+        <table class="table table-curved">
+          <tbody>
+            <tr ng-repeat="(key, value) in MetadataController.metadata.serde_parameters">
+              <td>{{ key }}</td>
+              <td>{{ value }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>

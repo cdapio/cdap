@@ -1,0 +1,70 @@
+
+
+<my-breadcrumbs></my-breadcrumbs>
+<div class="row" cdap-object-heading>
+  <div class="col-sm-6">
+    <div class="type-block">
+      <span class="icon-datasets pull-left" uib-tooltip="Type: Dataset" tooltip-placement="top" tooltip-append-to-body="true"></span>
+      <h2 ng-bind="$state.params.datasetId"></h2>
+    </div>
+    <my-metadata-tags tag-limit="5" params="DetailController.metadataParams" type="datasets"></my-metadata-tags>
+  </div>
+  <div class="col-sm-6 text-right">
+
+    <div class="btn-group dropdown-right" uib-dropdown>
+      <button type="button" class="btn btn-default dropdown-toggle" uib-dropdown-toggle>
+        Actions <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-right" role="menu">
+        <li>
+          <a href="" ng-click="caskConfirm()" cask-confirmable="DetailController.truncate()" data-confirmable-content="Are you sure you want to truncate the dataset '<strong>{{$state.params.datasetId}}</strong>'?">
+            Truncate
+          </a>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div class="cdap-subnav-end"></div>
+
+<ul class="nav nav-tabs slanted-tabs" role="tablist" ng-if="DetailController.explorable">
+
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="datasets.detail.overview.status" ui-sref-opts="{reload: true}" role="tab">Status</a>
+  </li>
+
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="datasets.detail.overview.explore" ui-sref-opts="{reload: true}" role="tab">Explore</a>
+  </li>
+
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="datasets.detail.overview.programs" ui-sref-opts="{reload: true}" role="tab">Programs</a>
+  </li>
+
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="datasets.detail.overview.metadata" ui-sref-opts="{reload: true}" role="tab">Metadata</a>
+  </li>
+
+</ul>
+
+
+<div ng-if="DetailController.explorable === false">
+  <ul class="nav nav-tabs slanted-tabs" role="tablist">
+    <li role="presentation" ng-class="{'active': $state.is('datasets.detail.overview.status') }">
+      <a href role="tab">
+        Programs
+      </a>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <div role="tabpanel" class="tab-pane active">
+      <div ng-controller="DatasetDetailProgramsController as ProgramsController" ng-include="'old_assetsfeatures/datasets/templates/tabs/programs.html'"></div>
+    </div>
+  </div>
+</div>
+
+<br>
+<ui-view role="tabpanel">

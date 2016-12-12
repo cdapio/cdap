@@ -1,0 +1,86 @@
+
+
+<div ng-if="$state.current.name === 'admin.namespace.detail.apps.metadata'">
+  <div class="row">
+      <div class="col-xs-6">
+          <h2 ng-bind="app.name"></h2>
+      </div>
+      <div class="col-xs-6 text-right">
+        <div class="btn-group dropdown-right" uib-dropdown>
+          <a class="btn btn-default dropdown-toggle" uib-dropdown-toggle="" aria-haspopup="true" aria-expanded="false">
+              Actions
+              <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-right" role="menu">
+            <li role="presentation">
+              <a role="menuitem" ui-sref="admin.namespace.detail.apps.metadata.preference">
+                <span class="fa fa-fw fa-cog pull-right"></span>
+                <span> Preferences </span>
+              </a>
+            </li>
+            <li role="presentation">
+              <a role="menuitem" href="" ng-click="caskConfirm()" cask-confirmable="deleteApp(app.id)" data-confirmable-content="Are you sure you want to delete the application '<strong>{{app.name}}</strong>'?">
+                <span class="fa fa-fw fa-trash pull-right"></span>
+                <span> Delete </span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+  </div>
+
+  <div class="table-responsive">
+      <table class="table table-curved" cask-sortable>
+          <thead>
+              <tr>
+                <th>Name</th>
+                <th>Version</th>
+                <th>Description</th>
+              </tr>
+          </thead>
+          <tbody>
+              <td>
+                <a ng-if="myHydratorFactory.isCustomApp(app.artifact.name)" ui-sref="apps.detail.overview.programs({namespace: $state.params.nsadmin, appId: app.name})">
+                  <strong>{{ ::app.name }}</strong>
+                </a>
+                <a ng-if="myHydratorFactory.isETLApp(app.artifact.name)" ui-sref="apps.detail.overview.status({namespace: $state.params.nsadmin, appId: app.name})">
+                  <strong>{{ ::app.name }}</strong>
+                </a>
+              </td>
+              <td>{{ ::app.version}}</td>
+              <td>{{ ::app.description }}</td>
+          </tbody>
+      </table>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12">
+      <h3>Programs</h3>
+
+      <table class="table table-curved" cask-sortable>
+        <thead>
+          <tr ng-class="{'sort-enabled': app.programs.length > 0}">
+            <th data-predicate="name">Name</th>
+            <th data-predicate="type">Type</th>
+            <th data-predicate="description">Description</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="program in app.programs | orderBy:sortable.predicate:sortable.reverse">
+            <td>
+
+              <my-program-link type="program.type" namespace="$state.params.nsadmin" app="app.name" program="program.name" bold="true">
+              </my-program-link>
+
+            </td>
+            <td>{{ ::program.type }}</td>
+            <td>{{ ::program.description }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div ui-view></div>

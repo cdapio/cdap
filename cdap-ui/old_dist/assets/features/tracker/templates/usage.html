@@ -1,0 +1,118 @@
+
+
+<div class="container usage-container">
+
+  <div class="row">
+    <div class="col-xs-12">
+      <h3 class="pull-left">Audit Messages</h3>
+
+      <div class="datetime-usage">
+
+        <div ng-if="UsageController.serviceUnavailable === false" class="btn-group time-range-picker-group" uib-dropdown>
+          <button class="btn" uib-dropdown-toggle>
+            {{ UsageController.selectedTimeRange.label }} <span class="caret"></span>
+          </button>
+          <ul uib-dropdown-menu role="menu" aria-labelledby="single-button">
+            <li role="menuitem">
+              <a href="" ng-click="UsageController.selectCustom()">Custom</a>
+            </li>
+            <li role="menuitem" ng-repeat="time in UsageController.timeRangeOptions">
+              <a ui-sref="tracker.detail.entity.usage({ startTime: time.startTime, endTime: time.endTime })">{{ time.label }}</a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="datetime-picker-container">
+          <my-datetime-range date-range="UsageController.customTimeRange" on-done="UsageController.goToCustomTimeRangeEntityDetailView()" ng-if="UsageController.serviceUnavailable === false && UsageController.isCustom">
+          </my-datetime-range>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div ng-if="UsageController.serviceUnavailable === false" class="histogram-container">
+    <my-histogram start-time="{{UsageController.timeRange.startTime}}" end-time="{{UsageController.timeRange.endTime}}" model="UsageController.auditHistogram">
+    </my-histogram>
+  </div>
+  <div ng-if="UsageController.serviceUnavailable === true" class="well">
+    <p>Service unavailable</p>
+  </div>
+
+  <div class="tracker-metrics">
+    <div class="row text-center">
+      <div class="col-md-4">
+        <div class="metric-heading">
+          <p>Most Active Applications</p>
+          <p>All time</p>
+        </div>
+        <div class="metric-container">
+          <my-top-entity-graph type="applications" limit="5">
+          </my-top-entity-graph>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="metric-heading">
+          <p>Most Active Programs</p>
+          <p>All time</p>
+        </div>
+        <div class="metric-container">
+          <my-top-entity-graph type="programs" limit="5">
+          </my-top-entity-graph>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="metric-heading">
+          <p>Recent Activity</p>
+        </div>
+        <div class="metric-container">
+          <table ng-if="UsageController.serviceUnavailable === false" class="table">
+            <thead>
+              <th>Activity</th>
+              <th>Time Since</th>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Read</td>
+                <td ng-if="UsageController.timeSince.read">
+                  {{ ::UsageController.timeSince.read | amDurationFormat : 'second' }}
+                </td>
+                <td ng-if="!UsageController.timeSince.read">-</td>
+              </tr>
+              <tr>
+                <td>Write</td>
+                <td ng-if="UsageController.timeSince.write">
+                  {{ ::UsageController.timeSince.write | amDurationFormat : 'second' }}
+                </td>
+                <td ng-if="!UsageController.timeSince.write">-</td>
+              </tr>
+              <tr>
+                <td>Truncate</td>
+                <td ng-if="UsageController.timeSince.truncate">
+                  {{ ::UsageController.timeSince.truncate | amDurationFormat : 'second' }}
+                </td>
+                <td ng-if="!UsageController.timeSince.truncate">-</td>
+              </tr>
+              <tr>
+                <td>Update</td>
+                <td ng-if="UsageController.timeSince.update">
+                  {{ ::UsageController.timeSince.update | amDurationFormat : 'second' }}
+                </td>
+                <td ng-if="!UsageController.timeSince.update">-</td>
+              </tr>
+              <tr>
+                <td>Metadata change</td>
+                <td ng-if="UsageController.timeSince.metadata_change">
+                  {{ ::UsageController.timeSince.metadata_change | amDurationFormat : 'second' }}
+                </td>
+                <td ng-if="!UsageController.timeSince.metadata_change">-</td>
+              </tr>
+            </tbody>
+          </table>
+          <div ng-if="UsageController.serviceUnavailable === true" class="well">
+            <p>Service unavailable</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

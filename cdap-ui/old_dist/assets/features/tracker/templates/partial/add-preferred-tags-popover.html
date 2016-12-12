@@ -1,0 +1,54 @@
+
+<div class="modal-header clearfix">
+  <h3 class="modal-title pull-left">
+    <span ng-if="!AddTags.proceedToNextStep">Add Preferred Tags</span>
+    <span ng-if="AddTags.proceedToNextStep">Preview</span>
+  </h3>
+  <span class="fa fa-times pull-right" ng-click="$dismiss('cancel')"></span>
+</div>
+<div class="modal-body">
+  <div ng-if="!AddTags.proceedToNextStep" class="flex-box">
+    <div class="flex-item">
+      <textarea class="form-control" ng-class="{ empty: !AddTags.tags.length }" ng-model="AddTags.tags" placeholder="Enter preferred tags here separated by comma or newline."></textarea>
+    </div>
+    <div class="flex-item">
+      <div>
+        <span>or</span>
+      </div>
+    </div>
+    <div class="flex-item">
+      <div>
+        <span class="fa fa-cloud-upload" aria-hidden="true"></span>
+        <div>
+          <a class="file-import-link" ng-click="AddTags.importTags()">Browse</a> CSV, TXT
+        </div>
+        <my-file-select class="sr-only" id="file-select" data-button-icon="fa-upload" on-file-select="AddTags.importFiles($files)" data-button-label="Import">
+        </my-file-select>
+      </div>
+    </div>
+  </div>
+  <div ng-if="AddTags.proceedToNextStep" class="text-left">
+    <div class="valid-tags">
+      <p>
+        <span>{{ AddTags.tagList.validTags.length }}</span>
+        <ng-pluralize data-count="AddTags.tagList.validTags.length" data-when="{'one': ' tag ', 'other': ' tags '}"></ng-pluralize>
+        <span>loaded.</span>
+      </p>
+      <span ng-repeat="(key, value) in AddTags.tagList.validTags track by $index" class="tag preferred">{{ value }}
+    </span></div>
+    <div ng-if="AddTags.tagList.invalidTags.length" class="invalid-tags">
+      <p class="text-danger">
+        <span>{{ AddTags.tagList.invalidTags.length }}</span>
+        <ng-pluralize data-count="AddTags.tagList.invalidTags.length" data-when="{'one': ' tag ', 'other': ' tags '}"></ng-pluralize>
+        <span>failed to load.</span></p>
+      <span ng-repeat="(key, value) in AddTags.tagList.invalidTags track by $index">{{ value }}</span>
+    </div>
+  </div>
+</div>
+<div class="modal-footer text-right">
+  <p class="pull-left text-danger" ng-if="!AddTags.proceedToNextStep && AddTags.tagList.invalidTags.length">No special characters allowed in tags.</p>
+  <p class="pull-left text-danger" ng-if="AddTags.invalidFormat">Only .csv, .txt files allowed.</p>
+  <button class="btn btn-default" ng-click="$dismiss('cancel')">Cancel</button>
+  <button ng-if="!AddTags.proceedToNextStep" class="btn btn-success" ng-click="AddTags.validatePreferredTags()" ng-disabled="!AddTags.tags.length">Next</button>
+  <button ng-if="AddTags.proceedToNextStep" class="btn btn-success" ng-click="AddTags.promoteUserTags(AddTags.tagList.validTags)">Add</button>
+</div>

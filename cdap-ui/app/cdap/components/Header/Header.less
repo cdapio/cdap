@@ -53,35 +53,6 @@
       font-size: 14px;
     }
 
-    .navbar-list {
-      margin-left: 15px;
-      float: left;
-      margin-bottom: 0;
-      height: 50px;
-
-      li {
-        display: inline-block;
-        line-height: 50px;
-        &.disabled {
-          cursor: not-allowed;
-          padding-left: 0;
-          padding-right: 40px;
-          color: #cccccc;
-          font-size: 14px;
-        }
-      }
-      a {
-        padding-left: 0;
-        padding-right: 40px;
-        text-decoration: none;
-        font-size: 14px;
-        &:hover,
-        &:focus {
-          color: @cdap-orange;
-        }
-      }
-    }
-
     .environment {
       display: inline-block;
       line-height: @height-of-header;
@@ -159,6 +130,9 @@
         color: @active-link-color;
       }
       color: #ccc;
+      &.old-ui-link {
+        color: white;
+      }
     }
   }
 }

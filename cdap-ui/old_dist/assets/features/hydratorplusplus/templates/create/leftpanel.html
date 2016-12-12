@@ -1,0 +1,23 @@
+
+<div class="left-top-section">
+
+  <select class="form-control" ng-change="HydratorPlusPlusLeftPanelCtrl.onArtifactChange()" ng-model="HydratorPlusPlusLeftPanelCtrl.selectedArtifact" ng-options="artifact as artifact.label for artifact in HydratorPlusPlusLeftPanelCtrl.artifacts">
+  </select>
+
+  <div class="import-section">
+    <a class="btn btn-default" href="" ng-click="HydratorPlusPlusLeftPanelCtrl.showTemplates()">Template Gallery</a>
+    <a class="btn btn-default" href="" ng-click="HydratorPlusPlusLeftPanelCtrl.openFileBrowser()">Import Pipeline</a>
+  </div>
+</div>
+<my-side-panel data-panel-groups="HydratorPlusPlusLeftPanelCtrl.pluginsMap" data-placement="left" data-is-sub-menu="true" data-item-generic-name="plugins" data-group-generic-name="artifacts" data-on-panel-item-click-context="HydratorPlusPlusLeftPanelCtrl" data-on-panel-item-click="HydratorPlusPlusLeftPanelCtrl.onLeftSidePanelItemClicked">
+</my-side-panel>
+
+<div class="btn btn-default btn-left-panel-toggle btn-sm pull-right" ng-click="HydratorPlusPlusStudioCtrl.toggleSidebar();">
+  <span ng-class="{'fa-angle-double-left': HydratorPlusPlusStudioCtrl.isExpanded === true, 'fa-angle-double-right': HydratorPlusPlusStudioCtrl.isExpanded === false}" class="fa"></span>
+</div>
+<div class="btn btn-default btn-left-panel-add-plugin btn-sm pull-right" ng-click="HydratorPlusPlusLeftPanelCtrl.loadArtifact();">
+  <span class="fa fa-plus"></span>
+</div>
+
+<my-file-select class="sr-only" id="pipeline-import-config-link" data-button-icon="fa-upload" on-file-select="HydratorPlusPlusLeftPanelCtrl.importFile($files)" data-button-label="Import">
+</my-file-select>

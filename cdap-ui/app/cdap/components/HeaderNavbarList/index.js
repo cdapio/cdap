@@ -18,18 +18,44 @@ import { connect } from 'react-redux';
 import {Link} from 'react-router';
 import shortid from 'shortid';
 
+require('./HeaderNavbarList.less');
+
 const mapStateToProps = (state) => {
   return {
     namespace : state.selectedNamespace
   };
 };
 
-function HeaderNavbarList({list}){
+function HeaderNavbarList({list, store}){
   return (
     <ul className="navbar-list">
         {
           Array.isArray(list) ?
-            list.map(item => {
+            list.map((item, index) => {
+              if (index === 0) {
+                return (
+                  <li
+                    key={shortid.generate()}
+                    className={item.className}
+                  >
+                    <a href={`/oldcdap/ns/${store.getState().selectedNamespace}`}
+                       className="old-ui-link">
+                      Switch to old UI
+                    </a>
+                    {
+                      item.disabled ?
+                        item.title
+                      :
+                        <Link
+                          to={item.linkTo}
+                          activeClassName="active"
+                        >
+                          {item.title}
+                        </Link>
+                      }
+                  </li>
+                );
+              }
               return (
                 <li
                   key={shortid.generate()}

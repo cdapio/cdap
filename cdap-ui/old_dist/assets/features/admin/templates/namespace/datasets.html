@@ -1,0 +1,69 @@
+
+
+<div ng-if="$state.is('admin.namespace.detail.data')">
+  <div class="row">
+    <div class="col-xs-6">
+      <h2> Datasets: {{ ::$state.params.nsadmin }} </h2>
+    </div>
+    <div class="col-xs-6" ng-if="dataList.length > 0">
+      <button class="btn btn-default pull-right" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})"><span class="fa fa-plus"></span> Add Stream</button>
+    </div>
+  </div>
+
+  <div ng-if="dataList.length > 0">
+    <div class="row">
+      <div class="col-xs-4 text-right">
+        <div class="input-group pull-right h2">
+          <input type="text" class="form-control" ng-model="searchText" placeholder="search...">
+          <div class="input-group-addon">
+            <i class="fa fa-search"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div datasets-list>
+      <div class="table-responsive">
+        <table class="table table-curved" cask-sortable>
+          <thead>
+            <tr ng-class="{'sort-enabled': dataList.length>0}">
+              <th class="col-xs-5" data-predicate="name">Name</th>
+              <th class="col-xs-7" data-predicate="type">Type</th>
+
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="data in filtered = (dataList | filter: searchText )| orderBy:sortable.predicate:sortable.reverse | myPaginate:currentPage">
+              <td class="col-xs-5" ng-if="data.type === 'Stream'">
+                <strong class="icon-streams"></strong>
+                <a ui-sref="admin.namespace.detail.data.streammetadata({streamId: data.name})">
+                  <strong ng-bind="data.name"></strong>
+                </a>
+              </td>
+              <td class="col-xs-5" ng-if="data.type !== 'Stream'">
+                <strong class="icon-datasets"></strong>
+                <a ui-sref="admin.namespace.detail.data.datasetmetadata({datasetId: data.name})">
+                  <strong ng-bind="data.name"></strong>
+                </a>
+              </td>
+              <td class="col-xs-7">
+                <span> {{data.type}} </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      
+      <div class="text-center" ng-show="filtered.length > 10">
+        <uib-pagination total-items="dataList.length" ng-model="currentPage"></uib-pagination>
+      </div>
+    </div>
+  </div>
+
+  <div class="well text-center" ng-if="dataList.length === 0">
+    <p> Start by creating a Stream to ingest data </p>
+    <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})"><span class="fa fa-plus"></span> Add Stream</a>
+  </div>
+</div>
+
+<div ui-view ng-if="$state.includes('admin.namespace.detail.data.*')"></div>
