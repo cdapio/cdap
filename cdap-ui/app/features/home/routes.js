@@ -38,7 +38,7 @@ angular.module(PKG.name+'.feature.home')
 
       .state('home', {
         url: '/',
-        templateUrl: '/assets/features/home/home.html',
+        templateUrl: '/old_assets/features/home/home.html',
         onEnter: function(MY_CONFIG, myAuth, $state, myLoadingService, $rootScope, MYAUTH_EVENT) {
           if (!MY_CONFIG.securityEnabled) {
             // Skip even the login view. Don't show login if security is disabled.
@@ -74,11 +74,11 @@ angular.module(PKG.name+'.feature.home')
       })
 
       .state('404', {
-        templateUrl: '/assets/features/home/404.html'
+        templateUrl: '/old_assets/features/home/404.html'
       })
 
       .state('unauthorized', {
-        templateUrl: '/assets/features/home/unauthorized-namespace.html'
+        templateUrl: '/old_assets/features/home/unauthorized-namespace.html'
       })
 
       ;

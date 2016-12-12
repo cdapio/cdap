@@ -21,11 +21,11 @@ angular.module(PKG.name+'.feature.experimental')
         parent: 'ns',
         url: '/experimental',
         abstract: true,
-        templateUrl: '/assets/features/experimental/templates/experimental.html',
+        templateUrl: '/old_assets/features/experimental/templates/experimental.html',
       })
         .state('experimental.home', {
           url: '',
-          templateUrl: '/assets/features/experimental/templates/experiments-home.html',
+          templateUrl: '/old_assets/features/experimental/templates/experiments-home.html',
           ncyBreadcrumb: {
             label: 'Experiments',
             parent: 'experimental'
@@ -33,7 +33,7 @@ angular.module(PKG.name+'.feature.experimental')
         })
         .state('experimental.uitemplate', {
           url: '/uitemplate',
-          templateUrl: '/assets/features/experimental/templates/ui-template.html',
+          templateUrl: '/old_assets/features/experimental/templates/ui-template.html',
           ncyBreadcrumb: {
             label: 'UI Templates',
             parent: 'experimental.home'
@@ -41,7 +41,7 @@ angular.module(PKG.name+'.feature.experimental')
         })
         .state('experimental.directivesPlayground', {
           url: '/experimental-directives',
-          templateUrl: '/assets/features/experimental/templates/directives-playground.html',
+          templateUrl: '/old_assets/features/experimental/templates/directives-playground.html',
           controller: 'DirectivePlayGround',
           controllerAs: 'DirectivePlayGround',
           ncyBreadcrumb: {
@@ -51,7 +51,7 @@ angular.module(PKG.name+'.feature.experimental')
         })
         .state('experimental.datetime', {
           url: '/datetime',
-          templateUrl: '/assets/features/experimental/templates/datetime.html',
+          templateUrl: '/old_assets/features/experimental/templates/datetime.html',
           controller: 'DateCtrl',
           controllerAs: 'Date',
           ncyBreadcrumb: {
@@ -61,7 +61,7 @@ angular.module(PKG.name+'.feature.experimental')
         })
         .state('experimental.schema', {
           url: '/schema',
-          templateUrl: '/assets/features/experimental/templates/schema.html',
+          templateUrl: '/old_assets/features/experimental/templates/schema.html',
           controller: 'SchemaController',
           controllerAs: 'vm',
           ncyBreadcrumb: {
@@ -71,7 +71,7 @@ angular.module(PKG.name+'.feature.experimental')
         })
         .state('experimental.logs', {
           url: '/logs',
-          templateUrl: '/assets/features/experimental/templates/logs.html',
+          templateUrl: '/old_assets/features/experimental/templates/logs.html',
           controller: 'LogsController',
           controllerAs: 'LogsController',
           ncyBreadcrumb: {
@@ -81,7 +81,7 @@ angular.module(PKG.name+'.feature.experimental')
         })
         .state('experimental.complexSchema', {
           url: '/complex-schema',
-          templateUrl: '/assets/features/experimental/templates/complex-schema.html',
+          templateUrl: '/old_assets/features/experimental/templates/complex-schema.html',
           controller: 'ComplexSchemaController',
           controllerAs: 'vm',
           ncyBreadcrumb: {

@@ -73,7 +73,7 @@ angular.module(`${PKG.name}.feature.workflows`)
 
         .state('workflows.detail', {
           url: '/runs',
-          templateUrl: '/assets/features/workflows/templates/detail.html',
+          templateUrl: '/old_assets/features/workflows/templates/detail.html',
           controller: 'WorkflowsRunsController',
           controllerAs: 'RunsController',
           data: {
@@ -91,7 +91,7 @@ angular.module(`${PKG.name}.feature.workflows`)
 
           .state('workflows.detail.run', {
             url: '/:runid',
-            templateUrl: '/assets/features/workflows/templates/tabs/runs/run-detail.html',
+            templateUrl: '/old_assets/features/workflows/templates/tabs/runs/run-detail.html',
             controller: 'WorkflowsRunsDetailController',
             controllerAs: 'RunsDetailController',
             ncyBreadcrumb: {

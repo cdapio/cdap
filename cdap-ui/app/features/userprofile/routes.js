@@ -23,7 +23,7 @@ angular.module(PKG.name + '.feature.userprofile')
           highlightTab: 'development'
         },
         url: '/profile',
-        templateUrl: '/assets/features/userprofile/templates/profile.html',
+        templateUrl: '/old_assets/features/userprofile/templates/profile.html',
         controller: 'UserProfileController'
       });
   });

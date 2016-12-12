@@ -75,7 +75,7 @@ angular.module(PKG.name + '.feature.mapreduce')
 
       .state('mapreduce.detail', {
         url: '/runs',
-        templateUrl: '/assets/features/mapreduce/templates/detail.html',
+        templateUrl: '/old_assets/features/mapreduce/templates/detail.html',
         controller: 'MapreduceRunsController',
         controllerAs: 'RunsController',
         data: {
@@ -89,7 +89,7 @@ angular.module(PKG.name + '.feature.mapreduce')
       })
         .state('mapreduce.detail.run', {
           url: '/:runid?sourceId&sourceRunId&destinationType',
-          templateUrl: '/assets/features/mapreduce/templates/tabs/runs/run-detail.html',
+          templateUrl: '/old_assets/features/mapreduce/templates/tabs/runs/run-detail.html',
           controller: 'MapreduceRunsDetailController',
           controllerAs: 'RunsDetailController',
           ncyBreadcrumb: {

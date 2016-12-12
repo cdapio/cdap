@@ -34,8 +34,15 @@
     as a proper utility function in es6 module system.
 */
 window.getAbsUIUrl = function(navigationObj = {}) {
-  let {uiApp = 'cdap', redirectUrl, clientId, namespaceId, appId, entityType, entityId, runId} = navigationObj;
-  let baseUrl = `${location.protocol}//${location.host}/${uiApp}`;
+  var uiApp = navigationObj.uiApp || 'cdap',
+      redirectUrl = navigationObj.navigationObj,
+      clientId = navigationObj.clientId,
+      namespaceId = navigationObj.namepsaceId,
+      appId = navigationObj.appId,
+      entityType = navigationObj.entityType,
+      entityId = navigationObj.entityId,
+      runId = navigationObj.runId;
+  var baseUrl = `${location.protocol}//${location.host}/${uiApp}`;
   if (uiApp === 'login') {
     baseUrl += `?`;
   }
@@ -60,18 +67,18 @@ window.getAbsUIUrl = function(navigationObj = {}) {
   return baseUrl;
 };
 function buildCustomUrl(url, params = {}) {
-  let queryParams = {};
+  var queryParams = {};
   const regUrlFn = function(val, match, p1) {
     return val + p1;
   };
 
-  for (let key in params) {
+  for (var key in params) {
     if (!params.hasOwnProperty(key)) {
       continue;
     }
-    let val = params[key];
+    var val = params[key];
 
-    let regexp = new RegExp(':' + key + '(\\W|$)', 'g');
+    var regexp = new RegExp(':' + key + '(\\W|$)', 'g');
     if (regexp.test(url)) {
       url = url.replace(regexp, regUrlFn.bind(null, val));
     } else {
@@ -133,30 +140,34 @@ function addCustomQueryParams(url, params = {}) {
 }
 
 window.getTrackerUrl = function(navigationObj = {}) {
-  let {stateName, stateParams} = navigationObj;
-  let uiApp = 'tracker';
-  let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
-  let stateToUrlMap = {
+  var stateName, stateParams;
+  stateName = navigationObj.stateName;
+  stateParams = navigationObj.stateParams;
+  var uiApp = 'tracker';
+  var baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
+  var stateToUrlMap = {
     'tracker': '',
     'tracker.detail': '',
     'tracker.detail.entity': '/entity/:entityType/:entityId',
     'tracker.detail.entity.metadata': '/entity/:entityType/:entityId/metadata'
   };
-  let url = baseUrl + stateToUrlMap[stateName || 'tracker'];
+  var url = baseUrl + stateToUrlMap[stateName || 'tracker'];
   url = buildCustomUrl(url, stateParams);
   return url;
 };
 window.getHydratorUrl = function(navigationObj = {}) {
-  let {stateName, stateParams} = navigationObj;
-  let uiApp = 'hydrator';
-  let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
-  let stateToUrlMap = {
+  var stateName, stateParams;
+  stateName = navigationObj.stateName;
+  stateParams = navigationObj.stateParams;
+  var uiApp = 'hydrator';
+  var baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
+  var stateToUrlMap = {
     'hydrator': '',
     'hydrator.create': '/studio',
     'hydrator.detail': '/view/:pipelineId',
     'hydrator.list': '?page'
   };
-  let url = baseUrl + stateToUrlMap[stateName || 'hydrator'];
+  var url = baseUrl + stateToUrlMap[stateName || 'hydrator'];
   url = buildCustomUrl(url, stateParams);
   return url;
 };

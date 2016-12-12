@@ -59,7 +59,7 @@ angular.module(PKG.name + '.feature.streams')
               return defer.promise;
             }
           },
-          templateUrl: '/assets/features/streams/templates/detail.html',
+          templateUrl: '/old_assets/features/streams/templates/detail.html',
           controller: 'CdapStreamDetailController',
           controllerAs: 'DetailController',
           ncyBreadcrumb: {
@@ -70,7 +70,7 @@ angular.module(PKG.name + '.feature.streams')
 
         .state('streams.detail.overview.status', {
           url: '/status',
-          templateUrl: '/assets/features/streams/templates/tabs/status.html',
+          templateUrl: '/old_assets/features/streams/templates/tabs/status.html',
           ncyBreadcrumb: {
             parent: 'data.list',
             label: '{{$state.params.streamId}}'
@@ -81,7 +81,7 @@ angular.module(PKG.name + '.feature.streams')
 
         .state('streams.detail.overview.explore', {
           url: '/explore',
-          templateUrl: '/assets/features/streams/templates/tabs/explore.html',
+          templateUrl: '/old_assets/features/streams/templates/tabs/explore.html',
           controller: 'StreamExploreController',
           controllerAs: 'ExploreController',
           ncyBreadcrumb: {
@@ -92,7 +92,7 @@ angular.module(PKG.name + '.feature.streams')
 
         .state('streams.detail.overview.programs', {
           url: '/programs',
-          templateUrl: '/assets/features/streams/templates/tabs/programs.html',
+          templateUrl: '/old_assets/features/streams/templates/tabs/programs.html',
           controller: 'StreamProgramsController',
           controllerAs: 'ProgramsController',
           ncyBreadcrumb: {
@@ -103,7 +103,7 @@ angular.module(PKG.name + '.feature.streams')
 
         .state('streams.detail.overview.metadata', {
           url: '/metadata',
-          templateUrl: '/assets/features/streams/templates/tabs/metadata.html',
+          templateUrl: '/old_assets/features/streams/templates/tabs/metadata.html',
           controller: 'StreamMetadataController',
           controllerAs: 'MetadataController',
           ncyBreadcrumb: {

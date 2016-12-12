@@ -29,7 +29,7 @@ angular.module(PKG.name+'.feature.overview')
         },
         parent: 'ns',
         url: '',
-        templateUrl: '/assets/features/overview/overview.html',
+        templateUrl: '/old_assets/features/overview/overview.html',
         controller: 'OverviewCtrl',
         controllerAs: 'OverviewCtrl',
         ncyBreadcrumb: {

@@ -77,7 +77,7 @@ angular.module(PKG.name + '.feature.worker')
 
       .state('worker.detail', {
         url: '/runs',
-        templateUrl: '/assets/features/workers/templates/detail.html',
+        templateUrl: '/old_assets/features/workers/templates/detail.html',
         controller: 'WorkersRunsController',
         controllerAs: 'RunsController',
         data: {
@@ -92,7 +92,7 @@ angular.module(PKG.name + '.feature.worker')
 
       .state('worker.detail.run', {
         url: '/:runid',
-        templateUrl: '/assets/features/workers/templates/tabs/runs/run-detail.html',
+        templateUrl: '/old_assets/features/workers/templates/tabs/runs/run-detail.html',
         controller: 'WorkersRunDetailController',
         controllerAs: 'RunsDetailController',
         ncyBreadcrumb: {

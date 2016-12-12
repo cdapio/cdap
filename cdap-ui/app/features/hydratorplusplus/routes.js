@@ -158,20 +158,20 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
           },
           views: {
             '': {
-              templateUrl: '/assets/features/hydratorplusplus/templates/create/studio.html',
+              templateUrl: '/old_assets/features/hydratorplusplus/templates/create/studio.html',
               controller: 'HydratorPlusPlusStudioCtrl as HydratorPlusPlusStudioCtrl'
             },
             'canvas@hydratorplusplus.create': {
-              templateUrl: '/assets/features/hydratorplusplus/templates/create/canvas.html',
+              templateUrl: '/old_assets/features/hydratorplusplus/templates/create/canvas.html',
               controller: 'HydratorPlusPlusCreateCanvasCtrl',
               controllerAs: 'CanvasCtrl'
             },
             'leftpanel@hydratorplusplus.create': {
-              templateUrl: '/assets/features/hydratorplusplus/templates/create/leftpanel.html',
+              templateUrl: '/old_assets/features/hydratorplusplus/templates/create/leftpanel.html',
               controller: 'HydratorPlusPlusLeftPanelCtrl as HydratorPlusPlusLeftPanelCtrl'
             },
             'toppanel@hydratorplusplus.create': {
-              templateUrl: '/assets/features/hydratorplusplus/templates/create/toppanel.html',
+              templateUrl: '/old_assets/features/hydratorplusplus/templates/create/toppanel.html',
               controller: 'HydratorPlusPlusTopPanelCtrl as HydratorPlusPlusTopPanelCtrl'
             }
           },
@@ -234,16 +234,16 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
           },
           views: {
             '': {
-              templateUrl: '/assets/features/hydratorplusplus/templates/detail.html',
+              templateUrl: '/old_assets/features/hydratorplusplus/templates/detail.html',
               controller: 'HydratorPlusPlusDetailCtrl'
             },
             'toppanel@hydratorplusplus.detail': {
-              templateUrl: '/assets/features/hydratorplusplus/templates/detail/top-panel.html',
+              templateUrl: '/old_assets/features/hydratorplusplus/templates/detail/top-panel.html',
               controller: 'HydratorDetailTopPanelController',
               controllerAs: 'TopPanelCtrl'
             },
             'canvas@hydratorplusplus.detail': {
-              templateUrl: '/assets/features/hydratorplusplus/templates/detail/canvas.html',
+              templateUrl: '/old_assets/features/hydratorplusplus/templates/detail/canvas.html',
               controller: 'HydratorPlusPlusDetailCanvasCtrl',
               controllerAs: 'CanvasCtrl'
             }
@@ -259,7 +259,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'hydratorList'
           },
-          templateUrl: '/assets/features/hydratorplusplus/templates/list.html',
+          templateUrl: '/old_assets/features/hydratorplusplus/templates/list.html',
           controller: 'HydratorPlusPlusListController',
           controllerAs: 'ListController'
         });

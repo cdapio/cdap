@@ -25,13 +25,13 @@ angular.module(PKG.name + '.feature.admin')
           highlightTab: 'management'
         },
         url: '/admin',
-        templateUrl: '/assets/features/admin/templates/admin.html',
+        templateUrl: '/old_assets/features/admin/templates/admin.html',
         controller: 'AdminController'
       })
 
         .state('admin.overview', {
           url: '',
-          templateUrl: '/assets/features/admin/templates/overview.html',
+          templateUrl: '/old_assets/features/admin/templates/overview.html',
           controller: 'OverviewController',
           ncyBreadcrumb: {
             label: 'Management'
@@ -45,11 +45,11 @@ angular.module(PKG.name + '.feature.admin')
         })
           .state('admin.system.overview', {
             url: '',
-            templateUrl: '/assets/features/admin/templates/system.html'
+            templateUrl: '/old_assets/features/admin/templates/system.html'
           })
           .state('admin.system.configuration', {
             url: '/configuration',
-            templateUrl: '/assets/features/admin/templates/system/configuration.html',
+            templateUrl: '/old_assets/features/admin/templates/system/configuration.html',
             controller: 'SystemConfigurationController',
             ncyBreadcrumb: {
               label: 'Configuration',
@@ -59,7 +59,7 @@ angular.module(PKG.name + '.feature.admin')
 
           .state('admin.system.services', {
             url: '/services',
-            templateUrl: '/assets/features/admin/templates/system/services.html',
+            templateUrl: '/old_assets/features/admin/templates/system/services.html',
             controller: 'SystemServicesController',
             ncyBreadcrumb: {
               label: 'Services',
@@ -69,12 +69,12 @@ angular.module(PKG.name + '.feature.admin')
             .state('admin.system.services.detail', {
               parent: 'admin.system',
               url: '/services/detail/:serviceName',
-              templateUrl: '/assets/features/admin/templates/system/service-detail.html',
+              templateUrl: '/old_assets/features/admin/templates/system/service-detail.html',
               controller: 'SystemServiceDetailController'
             })
               .state('admin.system.services.detail.metadata', {
                 url: '/metadata',
-                templateUrl: '/assets/features/admin/templates/partials/service-detail-metadata.html',
+                templateUrl: '/old_assets/features/admin/templates/partials/service-detail-metadata.html',
                 ncyBreadcrumb: {
                   label: 'Metadata',
                   parent: 'admin.system.services'
@@ -82,7 +82,7 @@ angular.module(PKG.name + '.feature.admin')
               })
               .state('admin.system.services.detail.logs', {
                 url: '/logs',
-                templateUrl: '/assets/features/admin/templates/partials/service-detail-log.html',
+                templateUrl: '/old_assets/features/admin/templates/partials/service-detail-log.html',
                 controller: 'SystemServiceLogController',
                 ncyBreadcrumb: {
                   label: 'Logs',
@@ -92,7 +92,7 @@ angular.module(PKG.name + '.feature.admin')
 
           .state('admin.system.preferences', {
             url: '/preferences',
-            templateUrl: '/assets/features/admin/templates/preferences.html',
+            templateUrl: '/old_assets/features/admin/templates/preferences.html',
             controller: 'PreferencesController',
             ncyBreadcrumb: {
               label: 'Preferences',
@@ -121,7 +121,7 @@ angular.module(PKG.name + '.feature.admin')
             url: '/create',
             onEnter: function($uibModal, $state) {
               $uibModal.open({
-                templateUrl: '/assets/features/admin/templates/namespace/create.html',
+                templateUrl: '/old_assets/features/admin/templates/namespace/create.html',
                 size: 'lg',
                 backdrop: true,
                 keyboard: true,
@@ -140,11 +140,11 @@ angular.module(PKG.name + '.feature.admin')
 
           .state('admin.namespace.detail', {
             url: '/detail/:nsadmin',
-            templateUrl: '/assets/features/admin/templates/namespace.html'
+            templateUrl: '/old_assets/features/admin/templates/namespace.html'
           })
             .state('admin.namespace.detail.preferences', {
               url: '/preferences',
-              templateUrl: '/assets/features/admin/templates/preferences.html',
+              templateUrl: '/old_assets/features/admin/templates/preferences.html',
               controller: 'PreferencesController',
               resolve: {
                 rSource: function () {
@@ -159,7 +159,7 @@ angular.module(PKG.name + '.feature.admin')
 
             .state('admin.namespace.detail.templateslist', {
               url: '/templates',
-              templateUrl: '/assets/features/admin/templates/namespace/templates-list.html',
+              templateUrl: '/old_assets/features/admin/templates/namespace/templates-list.html',
               controller: 'NamespaceTemplatesListController',
               controllerAs: 'TemplatesListController',
               ncyBreadcrumb: {
@@ -170,7 +170,7 @@ angular.module(PKG.name + '.feature.admin')
 
             .state('admin.namespace.detail.templates', {
               url: '/templates/create',
-              templateUrl: '/assets/features/admin/templates/namespace/templates.html',
+              templateUrl: '/old_assets/features/admin/templates/namespace/templates.html',
               controller: 'NamespaceTemplatesController',
               controllerAs: 'TemplatesController',
               ncyBreadcrumb: {
@@ -181,7 +181,7 @@ angular.module(PKG.name + '.feature.admin')
 
             .state('admin.namespace.detail.templateedit', {
               url: '/templates/edit/:templateType/:pluginType/:pluginTemplate',
-              templateUrl: '/assets/features/admin/templates/namespace/templates.html',
+              templateUrl: '/old_assets/features/admin/templates/namespace/templates.html',
               controller: 'NamespaceTemplatesController',
               controllerAs: 'TemplatesController',
               ncyBreadcrumb: {
@@ -192,7 +192,7 @@ angular.module(PKG.name + '.feature.admin')
 
             .state('admin.namespace.detail.settings', {
               url: '/settings',
-              templateUrl: '/assets/features/admin/templates/namespace/settings.html',
+              templateUrl: '/old_assets/features/admin/templates/namespace/settings.html',
               controller: 'NamespaceSettingsController',
               ncyBreadcrumb: {
                 label: '{{$state.params.nsadmin}}',
@@ -202,7 +202,7 @@ angular.module(PKG.name + '.feature.admin')
 
             .state('admin.namespace.detail.data', {
               url: '/data',
-              templateUrl: '/assets/features/admin/templates/namespace/datasets.html',
+              templateUrl: '/old_assets/features/admin/templates/namespace/datasets.html',
               controller: 'NamespaceDatasetsController',
               ncyBreadcrumb: {
                 label: 'Datasets',
@@ -212,7 +212,7 @@ angular.module(PKG.name + '.feature.admin')
               .state('admin.namespace.detail.data.datasetmetadata', {
                 url: '/datasets/:datasetId',
                 controller: 'NamespaceDatasetMetadataController',
-                templateUrl: '/assets/features/admin/templates/namespace/dataset-metadata.html',
+                templateUrl: '/old_assets/features/admin/templates/namespace/dataset-metadata.html',
                 ncyBreadcrumb: {
                   label: '{{$state.params.datasetId}}',
                   parent: 'admin.namespace.detail.data'
@@ -223,7 +223,7 @@ angular.module(PKG.name + '.feature.admin')
                 url:'/streams/create',
                 onEnter: function($uibModal) {
                   $uibModal.open({
-                    templateUrl: '/assets/features/admin/templates/namespace/streamscreate.html',
+                    templateUrl: '/old_assets/features/admin/templates/namespace/streamscreate.html',
                     size: 'lg',
                     backdrop: true,
                     keyboard: true,
@@ -241,7 +241,7 @@ angular.module(PKG.name + '.feature.admin')
               .state('admin.namespace.detail.data.streammetadata', {
                 url: '/streams/detail/:streamId',
                 controller: 'NamespaceStreamMetadataController',
-                templateUrl: '/assets/features/admin/templates/namespace/stream-metadata.html',
+                templateUrl: '/old_assets/features/admin/templates/namespace/stream-metadata.html',
                 ncyBreadcrumb: {
                   label: '{{$state.params.streamId}}',
                   parent: 'admin.namespace.detail.data'
@@ -250,7 +250,7 @@ angular.module(PKG.name + '.feature.admin')
 
             .state('admin.namespace.detail.apps', {
               url: '/apps',
-              templateUrl: '/assets/features/admin/templates/namespace/apps.html',
+              templateUrl: '/old_assets/features/admin/templates/namespace/apps.html',
               controller: 'NamespaceAppController',
               ncyBreadcrumb: {
                 label: 'Applications',
@@ -260,7 +260,7 @@ angular.module(PKG.name + '.feature.admin')
               .state('admin.namespace.detail.apps.metadata', {
                 parent: 'admin.namespace.detail',
                 url: '/:appId',
-                templateUrl: '/assets/features/admin/templates/namespace/app-metadata.html',
+                templateUrl: '/old_assets/features/admin/templates/namespace/app-metadata.html',
                 controller: 'NamespaceAppMetadataController',
                 ncyBreadcrumb: {
                   label: 'Metadata',
@@ -269,7 +269,7 @@ angular.module(PKG.name + '.feature.admin')
               })
                 .state('admin.namespace.detail.apps.metadata.preference', {
                   url: '/preferences',
-                  templateUrl: '/assets/features/admin/templates/preferences.html',
+                  templateUrl: '/old_assets/features/admin/templates/preferences.html',
                   controller: 'PreferencesController',
                   ncyBreadcrumb: {
                     label: 'Preferences',

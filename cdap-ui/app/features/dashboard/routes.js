@@ -29,7 +29,7 @@ angular.module(PKG.name+'.feature.dashboard')
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'dashboard'
         },
-        templateUrl: '/assets/features/dashboard/templates/dashboard.html',
+        templateUrl: '/old_assets/features/dashboard/templates/dashboard.html',
         resolve: {
           rDashboardsModel: function ($stateParams, MyDashboardsModel) {
             return (new MyDashboardsModel($stateParams.namespace)).$promise;
@@ -46,13 +46,13 @@ angular.module(PKG.name+'.feature.dashboard')
 
       .state('dashboard.standard.cdap', {
         url: '/cdap',
-        templateUrl: '/assets/features/dashboard/templates/staticdashboard.html',
+        templateUrl: '/old_assets/features/dashboard/templates/staticdashboard.html',
         controller: 'OpsCdapCtrl'
       })
 
       .state('dashboard.user', {
         url: '/user/:tab',
-        templateUrl: '/assets/features/dashboard/templates/userdashboard.html',
+        templateUrl: '/old_assets/features/dashboard/templates/userdashboard.html',
         controller: 'UserDashboardCtrl',
         resolve: {
           tab: function($stateParams) {
@@ -71,7 +71,7 @@ angular.module(PKG.name+'.feature.dashboard')
           scope.metricsSlotsFilled = currentBoard.columns.length;
 
           $uibModal.open({
-            templateUrl: '/assets/features/dashboard/templates/partials/addwdgt.html',
+            templateUrl: '/old_assets/features/dashboard/templates/partials/addwdgt.html',
             size: 'lg',
             backdrop: true,
             windowClass: 'cdap-modal',

@@ -269,7 +269,8 @@ gulp.task('watch:js:app', function() {
     './app/features/*/module.js',
     './app/**/*.js',
     '!./app/**/*-test.js',
-    './app/lib/global-lib.js'
+    './app/lib/global-lib.js',
+    '!./app/ui-utils/url-generator.js'
   ];
   source = source.concat(getEs6Features(true));
   source = source.concat(getEs6Directives(true));
@@ -377,7 +378,7 @@ gulp.task('tpl', function() {
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.features',
         base: __dirname + '/app',
-        root: '/assets/'
+        root: '/old_assets/'
       }))
 
   )
@@ -416,7 +417,7 @@ gulp.task('html:main', function() {
 gulp.task('html:main.dev', function () {
   return gulp.src('./app/*.html')
       .pipe(plug.replace('<!-- DEV DEPENDENCIES -->',
-        '<script type="text/javascript" src="/assets/bundle/app.es6.js"></script>' +
+        '<script type="text/javascript" src="/old_assets/bundle/app.es6.js"></script>' +
         '<script src="http://localhost:35729/livereload.js"></script>'))
       .pipe(gulp.dest('./dist'));
     });
@@ -488,7 +489,7 @@ gulp.task('rev:manifest', ['minify', 'tpl'], function() {
 gulp.task('rev:replace', ['html:main', 'rev:manifest'], function() {
   var rev = require('./dist/assets/bundle/manifest.json'),
       out = gulp.src('./dist/*.html'),
-      p = '/assets/bundle/';
+      p = '/old_assets/bundle/';
   for (var f in rev) {
     out = out.pipe(plug.replace(p+f, p+rev[f]));
   };

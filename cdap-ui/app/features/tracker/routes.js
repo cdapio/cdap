@@ -21,7 +21,7 @@ angular.module(PKG.name + '.feature.tracker')
       .state('tracker-enable', {
         url: '/enable-tracker',
         parent: 'ns',
-        templateUrl: '/assets/features/tracker/templates/tracker-enable.html',
+        templateUrl: '/old_assets/features/tracker/templates/tracker-enable.html',
         controller: 'TrackerEnableController',
         controllerAs: 'EnableController',
         data: {
@@ -153,14 +153,14 @@ angular.module(PKG.name + '.feature.tracker')
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'search'
         },
-        templateUrl: '/assets/features/tracker/templates/main.html',
+        templateUrl: '/old_assets/features/tracker/templates/main.html',
         controller: 'TrackerMainController',
         controllerAs: 'MainController'
       })
 
       .state('tracker.integrations', {
         url: '/integrations',
-        templateUrl: '/assets/features/tracker/templates/integrations.html',
+        templateUrl: '/old_assets/features/tracker/templates/integrations.html',
         controller: 'TrackerIntegrationsController',
         controllerAs: 'IntegrationsController',
         data: {
@@ -171,7 +171,7 @@ angular.module(PKG.name + '.feature.tracker')
 
       .state('tracker.tags', {
         url: '/tags',
-        templateUrl: '/assets/features/tracker/templates/tags.html',
+        templateUrl: '/old_assets/features/tracker/templates/tags.html',
         controller: 'TrackerTagsController',
         controllerAs: 'TagsController',
         data: {
@@ -186,14 +186,14 @@ angular.module(PKG.name + '.feature.tracker')
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'search'
         },
-        templateUrl: '/assets/features/tracker/templates/container.html',
+        templateUrl: '/old_assets/features/tracker/templates/container.html',
         controller: 'TrackerContainerController',
         controllerAs: 'ContainerController'
       })
 
         .state('tracker.detail.result', {
           url: '/search/:searchQuery/result',
-          templateUrl: '/assets/features/tracker/templates/results.html',
+          templateUrl: '/old_assets/features/tracker/templates/results.html',
           controller: 'TrackerResultsController',
           controllerAs: 'ResultsController',
           data: {
@@ -204,7 +204,7 @@ angular.module(PKG.name + '.feature.tracker')
 
         .state('tracker.detail.entity', {
           url: '/entity/:entityType/:entityId?searchTerm',
-          templateUrl: '/assets/features/tracker/templates/entity.html',
+          templateUrl: '/old_assets/features/tracker/templates/entity.html',
           controller: 'TrackerEntityController',
           controllerAs: 'EntityController',
           data: {
@@ -256,7 +256,7 @@ angular.module(PKG.name + '.feature.tracker')
         })
           .state('tracker.detail.entity.metadata', {
             url: '/metadata',
-            templateUrl: '/assets/features/tracker/templates/metadata.html',
+            templateUrl: '/old_assets/features/tracker/templates/metadata.html',
             controller: 'TrackerMetadataController',
             controllerAs: 'MetadataController',
             data: {
@@ -266,7 +266,7 @@ angular.module(PKG.name + '.feature.tracker')
           })
           .state('tracker.detail.entity.lineage', {
             url: '/lineage?start&end&method',
-            templateUrl: '/assets/features/tracker/templates/lineage.html',
+            templateUrl: '/old_assets/features/tracker/templates/lineage.html',
             controller: 'TrackerLineageController',
             controllerAs: 'LineageController',
             data: {
@@ -276,7 +276,7 @@ angular.module(PKG.name + '.feature.tracker')
           })
           .state('tracker.detail.entity.audit', {
             url: '/audit?start&end',
-            templateUrl: '/assets/features/tracker/templates/audit.html',
+            templateUrl: '/old_assets/features/tracker/templates/audit.html',
             controller: 'TrackerAuditController',
             controllerAs: 'AuditController',
             data: {
@@ -286,7 +286,7 @@ angular.module(PKG.name + '.feature.tracker')
           })
           .state('tracker.detail.entity.usage', {
             url: '/usage?startTime&endTime',
-            templateUrl: '/assets/features/tracker/templates/usage.html',
+            templateUrl: '/old_assets/features/tracker/templates/usage.html',
             controller: 'TrackerUsageController',
             controllerAs: 'UsageController',
             data: {
@@ -296,7 +296,7 @@ angular.module(PKG.name + '.feature.tracker')
           })
           .state('tracker.detail.entity.preview', {
             url: '/preview',
-            templateUrl: '/assets/features/tracker/templates/preview.html',
+            templateUrl: '/old_assets/features/tracker/templates/preview.html',
             controller: 'TrackerPreviewController',
             controllerAs: 'PreviewController',
             data: {

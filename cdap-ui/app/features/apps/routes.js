@@ -35,7 +35,7 @@ angular.module(`${PKG.name}.feature.apps`)
 
       .state('apps.list', {
         url: '',
-        templateUrl: '/assets/features/apps/templates/list.html',
+        templateUrl: '/old_assets/features/apps/templates/list.html',
         controller: 'AppListController',
         controllerAs: 'ListController',
         ncyBreadcrumb: {
@@ -51,7 +51,7 @@ angular.module(`${PKG.name}.feature.apps`)
       })
         .state('apps.detail.overview', {
           url: '/overview',
-          templateUrl: '/assets/features/apps/templates/detail.html',
+          templateUrl: '/old_assets/features/apps/templates/detail.html',
           resolve: {
             rAppData: function(MyCDAPDataSource, $stateParams, $q, $state) {
               var datasrc = new MyCDAPDataSource();
@@ -85,7 +85,7 @@ angular.module(`${PKG.name}.feature.apps`)
             },
             controller: 'AppDetailStatusController',
             controllerAs: 'StatusController',
-            templateUrl: '/assets/features/apps/templates/tabs/status.html',
+            templateUrl: '/old_assets/features/apps/templates/tabs/status.html',
             resolve : {
               rPipelineDetail: function($stateParams, $q, myPipelineApi) {
                 var params = {
@@ -106,7 +106,7 @@ angular.module(`${PKG.name}.feature.apps`)
             },
             controller: 'AppDetailProgramsController',
             controllerAs: 'ProgramsController',
-            templateUrl: '/assets/features/apps/templates/tabs/programs.html'
+            templateUrl: '/old_assets/features/apps/templates/tabs/programs.html'
           })
 
           .state('apps.detail.overview.datasets', {
@@ -115,7 +115,7 @@ angular.module(`${PKG.name}.feature.apps`)
               label: 'Datasets',
               parent: 'apps.detail.overview.status'
             },
-            templateUrl: '/assets/features/apps/templates/tabs/datasets.html'
+            templateUrl: '/old_assets/features/apps/templates/tabs/datasets.html'
           });
 
   });

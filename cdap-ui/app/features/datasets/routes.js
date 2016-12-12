@@ -66,7 +66,7 @@ angular.module(PKG.name + '.feature.datasets')
       })
         .state('datasets.detail.overview', {
           url: '/overview',
-          templateUrl: '/assets/features/datasets/templates/detail.html',
+          templateUrl: '/old_assets/features/datasets/templates/detail.html',
           controller: 'DatasetsDetailController',
           controllerAs: 'DetailController',
           ncyBreadcrumb: {
@@ -76,7 +76,7 @@ angular.module(PKG.name + '.feature.datasets')
 
           .state('datasets.detail.overview.status', {
             url: '/status',
-            templateUrl: '/assets/features/datasets/templates/tabs/status.html',
+            templateUrl: '/old_assets/features/datasets/templates/tabs/status.html',
             controller: 'DatasetDetailStatusController',
             controllerAs: 'StatusController',
             ncyBreadcrumb: {
@@ -87,7 +87,7 @@ angular.module(PKG.name + '.feature.datasets')
 
           .state('datasets.detail.overview.explore', {
             url: '/explore',
-            templateUrl: '/assets/features/datasets/templates/tabs/explore.html',
+            templateUrl: '/old_assets/features/datasets/templates/tabs/explore.html',
             controller: 'DatasetExploreController',
             controllerAs: 'ExploreController',
             ncyBreadcrumb: {
@@ -98,7 +98,7 @@ angular.module(PKG.name + '.feature.datasets')
 
           .state('datasets.detail.overview.programs', {
             url: '/programs',
-            templateUrl: '/assets/features/datasets/templates/tabs/programs.html',
+            templateUrl: '/old_assets/features/datasets/templates/tabs/programs.html',
             ncyBreadcrumb: {
               label: 'Programs',
               parent: 'datasets.detail.overview.status'
@@ -109,7 +109,7 @@ angular.module(PKG.name + '.feature.datasets')
 
           .state('datasets.detail.overview.metadata', {
             url: '/metadata',
-            templateUrl: '/assets/features/datasets/templates/tabs/metadata.html',
+            templateUrl: '/old_assets/features/datasets/templates/tabs/metadata.html',
             ncyBreadcrumb: {
               label: 'Metadata',
               parent: 'datasets.detail.overview.status'

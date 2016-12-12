@@ -209,7 +209,7 @@
     <h5>Extensions:</h5>
 
     <!-- HYDRATOR -->
-    <a href="{{Navbar.getHydratorUrl({ stateName: 'tracker', stateParams: { namespace: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default' } })}}"
+    <a href="{{Navbar.getHydratorUrl({ stateParams: { namespace: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default' } })}}"
        class="brand sidebar-item">
       <div class="brand-icon text-center hydrator">
         <span class="icon-hydrator"></span>
@@ -221,7 +221,7 @@
     </a>
 
     <!-- TRACKER -->
-    <a href="{{Navbar.getTrackerUrl({ statename: 'tracker', stateParams: { namespace: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default' } })}}"
+    <a href="{{Navbar.getTrackerUrl({ stateParams: { namespace: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default' } })}}"
        class="brand sidebar-item">
       <div class="brand-icon text-center tracker">
         <span class="icon-tracker"></span>

@@ -77,7 +77,7 @@ angular.module(`${PKG.name}.feature.flows`)
 
       .state('flows.detail', {
         url: '/runs',
-        templateUrl: '/assets/features/flows/templates/detail.html',
+        templateUrl: '/old_assets/features/flows/templates/detail.html',
         controller: 'FlowsRunsController',
         controllerAs: 'RunsController',
         data: {
@@ -92,7 +92,7 @@ angular.module(`${PKG.name}.feature.flows`)
 
       .state('flows.detail.run', {
         url: '/:runid',
-        templateUrl: '/assets/features/flows/templates/tabs/runs/run-detail.html',
+        templateUrl: '/old_assets/features/flows/templates/tabs/runs/run-detail.html',
         controller: 'FlowsRunDetailController',
         ncyBreadcrumb: {
           label: '{{$state.params.runid}}',

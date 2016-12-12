@@ -23,7 +23,7 @@ angular.module(PKG.name + '.feature.explore')
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'development'
         },
-        templateUrl: '/assets/features/explore/explore.html',
+        templateUrl: '/old_assets/features/explore/explore.html',
         controller: 'GlobalExploreController',
         controllerAs: 'GlobalExploreController',
         parent: 'ns',

@@ -74,7 +74,7 @@ angular.module(PKG.name + '.feature.services')
       })
       .state('services.detail', {
         url: '/runs',
-        templateUrl: '/assets/features/services/templates/detail.html',
+        templateUrl: '/old_assets/features/services/templates/detail.html',
         controller: 'ServicesRunsController',
         controllerAs: 'RunsController',
         ncyBreadcrumb: {
@@ -84,7 +84,7 @@ angular.module(PKG.name + '.feature.services')
       })
         .state('services.detail.run', {
           url: '/:runid',
-          templateUrl: '/assets/features/services/templates/tabs/runs/run-detail.html',
+          templateUrl: '/old_assets/features/services/templates/tabs/runs/run-detail.html',
           controller: 'ServicesRunsDetailController',
           controllerAs: 'RunsDetailController',
           ncyBreadcrumb: {

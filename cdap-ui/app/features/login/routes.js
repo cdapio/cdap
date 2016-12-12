@@ -24,7 +24,7 @@ angular.module(PKG.name+'.feature.login')
 
       .state('login', {
         url: '/login?next&nextParams',
-        templateUrl: '/assets/features/login/login.html',
+        templateUrl: '/old_assets/features/login/login.html',
         controller: 'LoginCtrl',
         onEnter: function(MY_CONFIG, myLoadingService, myAuth, $rootScope, MYAUTH_EVENT) {
           if(!MY_CONFIG.securityEnabled) {

@@ -30,7 +30,7 @@ angular.module(PKG.name + '.feature.data')
 
       .state('data.list', {
         url: '',
-        templateUrl: '/assets/features/data/list.html',
+        templateUrl: '/old_assets/features/data/list.html',
         controller: 'CdapDataListController as dataCtrl',
         ncyBreadcrumb: {
           label: 'Data',

@@ -15,8 +15,9 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceAppController',
-function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, myAlertOnValium, GLOBALS, myHydratorFactory, myLoadingService) {
+function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, myAlertOnValium, GLOBALS, myHydratorFactory, myLoadingService, getHydratorUrl) {
 
+  $scope.getHydratorUrl = getHydratorUrl;
   $scope.apps = [];
   $scope.GLOBALS = GLOBALS;
   $scope.myHydratorFactory = myHydratorFactory;

@@ -15,7 +15,8 @@
 */
 
 class AppDetailController {
-  constructor(rAppData, GLOBALS, myHydratorFactory, $state) {
+  constructor(rAppData, GLOBALS, myHydratorFactory, $state, getHydratorUrl) {
+    this.getHydratorUrl = getHydratorUrl;
     this.myHydratorFactory = myHydratorFactory;
 
     this.isHydrator = [
@@ -35,7 +36,7 @@ class AppDetailController {
   }
 }
 
-AppDetailController.$inject = ['rAppData', 'GLOBALS', 'myHydratorFactory', '$state'];
+AppDetailController.$inject = ['rAppData', 'GLOBALS', 'myHydratorFactory', '$state', 'getHydratorUrl'];
 
 angular.module(`${PKG.name}.feature.apps`)
   .controller('AppDetailController', AppDetailController);

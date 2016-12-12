@@ -21,11 +21,11 @@ angular.module(`${PKG.name}.feature.search`)
         parent: 'ns',
         url: '/search',
         abstract: true,
-        templateUrl: '/assets/features/search/templates/search.html'
+        templateUrl: '/old_assets/features/search/templates/search.html'
       })
         .state('search.objectswithtags', {
           url: '/:tag',
-          templateUrl: '/assets/features/search/templates/search-objects-with-tags.html',
+          templateUrl: '/old_assets/features/search/templates/search-objects-with-tags.html',
           controller: 'SearchObjectWithTagsController',
           controllerAs: 'SearchObjectWithTagsController',
           ncyBreadcrumb: {
