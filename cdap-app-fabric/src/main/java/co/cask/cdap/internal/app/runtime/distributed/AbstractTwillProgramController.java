@@ -119,7 +119,7 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
     Futures.getUnchecked(twillController.terminate());
   }
 
-  protected final TwillController getTwillController() {
+  public final TwillController getTwillController() {
     return twillController;
   }
 }
