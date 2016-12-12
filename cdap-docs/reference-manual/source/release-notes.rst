@@ -40,9 +40,9 @@ API Changes
 -----------
 
 - :cask-issue:`CDAP-6837` - Fixed an issue in ``WorkerContext`` that did not properly
-  implement the contract of the Transactional interface. Note that this fix may cause
-  incompatibilities with previous releases in certain cases. See below for details on how
-  to handle this change in existing code.
+  implement the contract of the Transactional interface. **Note that this fix may cause
+  incompatibilities with previous releases in certain cases.** See below for details on
+  how to handle this change in existing code.
 
   The Transactional API defines::
 
@@ -61,16 +61,16 @@ API Changes
       getContext().execute(...);
     } catch (Exception e) {
       if (e.getCause() instanceof TransactionFailureException) {
-        // handle it
+        // Handle it
       } else {
-        // what to expect else? not clear
+        // What else to expect? It's not clear...
         throw Throwables.propagate(e);
       } 
     } 
   
   This is ugly and inconsistent with other implementations of Transactional. We have
   addressed this by altering the ``WorkerContext`` to directly raise the
-  ``TransactionFailureException``. However, code must change to accomodate this.
+  ``TransactionFailureException``. **However, code must change to accomodate this.**
 
   To address this in existing code, such that it will work both in 4.0.0 and earlier
   versions of CDAP, use code similar to this::
@@ -102,6 +102,30 @@ API Changes
   directly throwing a ``TransactionFailureException`` and at the same time handle the
   previous style of the ``TransactionFailureException`` being wrapped in a
   ``RuntimeException``.
+
+  Code that is only used in CDAP 4.0.0 and higher can use a simpler version of this::
+
+      @Override
+      public void run() {
+        try {
+          getContext().execute(new TxRunnable() {
+            @Override
+            public void run(DatasetContext context) throws Exception {
+              if (getContext().getRuntimeArguments().containsKey("fail")) {
+                throw new RuntimeException("fail");
+              }
+            }
+          });
+        } catch (Exception e) {
+          if (e instanceof TransactionFailureException) {
+            LOG.error("transaction failure");
+          } else {
+            LOG.error("other failure");
+          }
+        }
+      }
+    }
+  
 
 
 Deprecated and Removed Features
