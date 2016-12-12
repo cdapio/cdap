@@ -16,21 +16,12 @@
 
 package co.cask.cdap.etl.batch.mapreduce;
 
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
+import co.cask.cdap.etl.api.Emitter;
 
 /**
- * Writes to a single output.
- *
- * @param <KEY_OUT> the output key type
- * @param <VAL_OUT> the output value type
+ * Pipe emitter which is used to emit records one by one to next stages
+ * @param <T> type of transform detail
  */
-public class SingleOutputWriter<KEY_OUT, VAL_OUT> extends OutputWriter<KEY_OUT, VAL_OUT> {
-  public SingleOutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context) {
-    super(context);
-  }
-
-  public void write(String sinkName, KeyValue<KEY_OUT, VAL_OUT> output) throws Exception {
-    context.write(output.getKey(), output.getValue());
-  }
+public interface PipeEmitter<T> extends Emitter<Object> {
+  void addTransformDetail(String stageName, T transformDetail);
 }
