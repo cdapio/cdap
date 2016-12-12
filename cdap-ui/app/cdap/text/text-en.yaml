@@ -64,10 +64,12 @@ commons:
   schemaLabel: Schema
   wrangler: Cask Wrangler
 features:
+  AppDetailedView:
+    Title: Application - {appId}
   ConfirmationModal:
     confirmDefaultText: OK
     cancelDefaultText: Cancel
-  Home:
+  EntityListView:
     Title: CDAP - Home
     emptyMessage: No entities found in the system.
     Cards:
@@ -76,7 +78,6 @@ features:
       filters: Filters
       search-placeholder: Search entities ...
       sort: Sort
-      pagination: Page
       sortOptions:
         entityNameAsc:
           displayName: A - Z
@@ -266,6 +267,8 @@ features:
     Sidebar:
       extension: "Extensions:"
 
+  Pagination:
+    dropdown-label: Page
   Resource-Center:
     Stream:
       label: Stream

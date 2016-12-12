@@ -55,7 +55,7 @@ export default class EntityCard extends Component {
       case 'datasetinstance':
         return <DatasetMetrics entity={this.props.entity} />;
       case 'program':
-        return <ProgramMetrics entity={this.props.entity} />;
+        return <ProgramMetrics entity={this.props.entity} poll={this.props.poll}/>;
       case 'stream':
         return <StreamMetrics entity={this.props.entity} />;
       case 'view':
@@ -96,6 +96,7 @@ export default class EntityCard extends Component {
     }
     const header = (
       <EntityCardHeader
+        onClick={this.toggleOverviewMode.bind(this)}
         className={this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type}
         entity={this.props.entity}
         systemTags={this.props.entity.metadata.metadata.SYSTEM.tags}
@@ -135,11 +136,10 @@ export default class EntityCard extends Component {
       <div
         className={
           classnames(
-            'home-cards',
+            'entity-cards',
             this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type,
             this.props.className)
         }
-        onClick={this.toggleOverviewMode.bind(this)}
         ref={(ref) => this.cardRef = ref}
       >
         <Card
@@ -147,8 +147,8 @@ export default class EntityCard extends Component {
           id={
             classnames(
               this.props.entity.isHydrator ?
-              `home-cards-datapipeline` :
-              `home-cards-${this.props.entity.type}`
+              `entity-cards-datapipeline` :
+              `entity-cards-${this.props.entity.type}`
             )
           }
         >
@@ -195,11 +195,13 @@ export default class EntityCard extends Component {
 }
 
 EntityCard.defaultProps = {
-  onClick: () => {}
+  onClick: () => {},
+  poll: false
 };
 
 EntityCard.propTypes = {
   entity: PropTypes.object,
+  poll: PropTypes.bool,
   onUpdate: PropTypes.func,
   className: PropTypes.string,
   onClick: PropTypes.func,

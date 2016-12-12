@@ -25,6 +25,7 @@ import ApplicationMetrics from 'components/EntityCard/ApplicationMetrics';
 import shortid from 'shortid';
 import Rx from 'rx';
 import {isDescendant} from 'services/helpers';
+import Link from 'react-router/Link';
 
 export default class AppOverview extends Component {
   constructor(props) {
@@ -133,6 +134,7 @@ export default class AppOverview extends Component {
         style.width = left + 300 - 30;
       }
     }
+    let namespace = objectQuery(this.props.entity, 'metadata', 'entityId', 'id', 'namespace', 'id');
     return (
       <div
         className={
@@ -154,8 +156,16 @@ export default class AppOverview extends Component {
               <small>1.0.0</small>
             </span>
             <span className="text-right">
-              <i className="fa fa-info fa-lg"></i>
-              <i className="fa fa-arrows-alt"></i>
+              <i className="fa fa-info fa-lg hidden"></i>
+              <Link to={{
+                  pathname: `/ns/${namespace}/apps/${this.props.entity.id}`,
+                  state: {
+                    entityDetail: this.state.entityDetail,
+                    entityMetadata: this.props.entity
+                  }
+                }}>
+                <i className="fa fa-arrows-alt"></i>
+              </Link>
               <i
                 className="fa fa-times fa-lg"
                 onClick={this.props.onClose}

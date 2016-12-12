@@ -20,17 +20,36 @@ import T from 'i18n-react';
 import debounce from 'lodash/debounce';
 import PaginationDropdown from 'components/Pagination/PaginationDropdown';
 
-require('./HomeHeader.less');
+require('./EntityListHeader.less');
 
-export default class HomeHeader extends Component {
+export default class EntityListHeader extends Component {
   constructor(props) {
     super(props);
     this.state = {
       isFilterExpanded: false,
-      isSortExpanded: false
+      isSortExpanded: false,
+      searchText: props.searchText,
+      sortOptions: props.sortOptions,
+      filterOptions: props.filterOptions,
+      numberOfPages: props.numberOfPages,
+      currentPage: props.currentPage,
+      activeFilter: props.activeFilter,
+      activeSort: props.activeSort
     };
 
     this.debouncedHandleSearch = debounce(this.handleSearch.bind(this), 500);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      searchText: nextProps.searchText,
+      sortOptions: nextProps.sortOptions,
+      filterOptions: nextProps.filterOptions,
+      numberOfPages: nextProps.numberOfPages,
+      currentPage: nextProps.currentPage,
+      activeFilter: nextProps.activeFilter,
+      activeSort: nextProps.activeSort
+    });
   }
 
   handleFilterToggle() {
@@ -41,13 +60,20 @@ export default class HomeHeader extends Component {
     this.setState({isSortExpanded: !this.state.isSortExpanded});
   }
 
+  onSearchChange(e) {
+    this.setState({
+      searchText: e.target.value
+    });
+    this.debouncedHandleSearch();
+  }
+
   handleSearch() {
-    this.props.onSearch(this.searchBox.value);
+    this.props.onSearch(this.state.searchText);
   }
 
   render() {
 
-    const placeholder = T.translate('features.Home.Header.search-placeholder');
+    const placeholder = T.translate('features.EntityListView.Header.search-placeholder');
 
     const sortDropdown = (
       <Dropdown
@@ -56,14 +82,14 @@ export default class HomeHeader extends Component {
       >
         <DropdownToggle tag='div'>
           {this.state.isSortExpanded ?
-            <span>{T.translate('features.Home.Header.sort')}</span> :
-            <span>{this.props.activeSort.displayName}</span>
+            <span>{T.translate('features.EntityListView.Header.sort')}</span> :
+            <span>{this.state.activeSort.displayName}</span>
           }
           <span className="fa fa-caret-down pull-right"></span>
         </DropdownToggle>
         <DropdownMenu>
           {
-            this.props.sortOptions.map((option, index) => {
+            this.state.sortOptions.map((option, index) => {
               return (
                 <DropdownItem
                   key={index}
@@ -71,9 +97,10 @@ export default class HomeHeader extends Component {
                 >
                   {option.displayName}
                   {
-                    this.props.activeSort.fullSort === option.fullSort ?
-                    <span className="fa fa-check pull-right"></span> :
-                    null
+                    this.state.activeSort.fullSort === option.fullSort ?
+                      <span className="fa fa-check pull-right"></span>
+                    :
+                      null
                   }
                 </DropdownItem>
               );
@@ -89,12 +116,12 @@ export default class HomeHeader extends Component {
         toggle={this.handleFilterToggle.bind(this)}
       >
         <DropdownToggle tag='div'>
-          <span>{T.translate('features.Home.Header.filters')}</span>
+          <span>{T.translate('features.EntityListView.Header.filters')}</span>
           <span className="fa fa-filter pull-right"></span>
         </DropdownToggle>
-        <DropdownMenu onClick={e => e.stopPropagation()}>
+        <DropdownMenu onClick={e => e.stopPropagation()} left>
           {
-            this.props.filterOptions.map((option) => {
+            this.state.filterOptions.map((option) => {
               return (
                 <DropdownItem
                   key={option.id}
@@ -103,7 +130,7 @@ export default class HomeHeader extends Component {
                     <label onClick={e => e.stopPropagation()}>
                       <input
                         type="checkbox"
-                        checked={this.props.activeFilter.includes(option.id)}
+                        checked={this.state.activeFilter.includes(option.id)}
                         onChange={this.props.onFilterClick.bind(this, option)}
                       />
                       {option.displayName}
@@ -118,19 +145,18 @@ export default class HomeHeader extends Component {
     );
 
     return (
-      <div className="home-header">
+      <div className="entity-list-header">
         <div className="search-box">
           <div className="form-group has-feedback">
             <label className="control-label sr-only">
-              {T.translate('features.Home.Header.search-placeholder')}
+              {T.translate('features.EntityListView.Header.search-placeholder')}
             </label>
             <input
               type="text"
               className="form-control"
               placeholder={placeholder}
-              defaultValue={this.props.searchText}
-              onChange={this.debouncedHandleSearch}
-              ref={ref => this.searchBox = ref}
+              value={this.state.searchText}
+              onChange={this.onSearchChange.bind(this)}
             />
             <span className="fa fa-search form-control-feedback"></span>
           </div>
@@ -144,8 +170,8 @@ export default class HomeHeader extends Component {
           </div>
           <div className="pagination-dropdown">
             <PaginationDropdown
-              numberOfPages={this.props.numberOfPages}
-              currentPage={this.props.currentPage}
+              numberOfPages={this.state.numberOfPages}
+              currentPage={this.state.currentPage}
               onPageChange={this.props.onPageChange}
             />
           </div>
@@ -157,7 +183,7 @@ export default class HomeHeader extends Component {
   }
 }
 
-HomeHeader.propTypes = {
+EntityListHeader.propTypes = {
   filterOptions: PropTypes.arrayOf(
     PropTypes.shape({
       displayName : PropTypes.string,
