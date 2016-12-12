@@ -14,8 +14,27 @@
  * the License.
  */
 
-import T from 'i18n-react';
-// Initialize i18n
-T.setTexts(require('../cdap/text/text-en.yaml'));
+import React, { Component, PropTypes } from 'react';
+import Wrangler from 'wrangler/components/Wrangler';
+import NamespaceStore from 'services/NamespaceStore';
 
-require('./main.js');
+export default class Home extends Component {
+  componentWillMount() {
+    NamespaceStore.dispatch({
+      type: 'SELECT_NAMESPACE',
+      payload: {
+        selectedNamespace: this.props.params.namespace
+      }
+    });
+  }
+
+  render() {
+    return <Wrangler source='wrangler' />;
+  }
+}
+
+Home.propTypes = {
+  params: PropTypes.shape({
+    namespace : PropTypes.string
+  }),
+};

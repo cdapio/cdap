@@ -14,14 +14,14 @@
  * the License.
  */
 
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import Papa from 'papaparse';
 import WrangleData from 'wrangler/components/Wrangler/WrangleData';
-
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
-
-import FileDnD from 'components/FileDnD';
+import shortid from 'shortid';
+import Dropzone from 'react-dropzone';
+import {convertHistoryToDml} from 'wrangler/components/Wrangler/dml-converter';
 
 require('./Wrangler.less');
 
@@ -43,7 +43,8 @@ export default class Wrangler extends Component {
       delimiter: '',
       wranglerInput: '',
       isDataSet: false,
-      file: ''
+      file: '',
+      errors: []
     };
 
     this.handleSetHeaders = this.handleSetHeaders.bind(this);
@@ -55,11 +56,22 @@ export default class Wrangler extends Component {
     this.onPlusButtonClick = this.onPlusButtonClick.bind(this);
     this.onWrangleClick = this.onWrangleClick.bind(this);
     this.onWrangleFile = this.onWrangleFile.bind(this);
+    this.getWranglerOutput = this.getWranglerOutput.bind(this);
+  }
+
+  getChildContext() {
+    return {source: this.props.source};
   }
 
   // componentDidMount() {
   //   this.wrangle();
   // }
+
+  componentWillUnmount() {
+    WranglerStore.dispatch({
+      type: WranglerActions.reset
+    });
+  }
 
   onWrangleClick() {
     this.setState({loading: true});
@@ -71,16 +83,17 @@ export default class Wrangler extends Component {
     this.wrangle(true);
   }
 
-  wrangle(isFile) {
+  wrangle() {
     let input = this.state.wranglerInput;
 
-    if (isFile) {
+    if (this.state.file) {
       input = this.state.file;
     }
 
     // Keeping these for dev purposes
 
-//     input = `Hakeem Gillespie,91,753,599
+//     input = `name,num1,num2,num3
+// Hakeem Gillespie,91,753,599,a
 // Arsenio Gardner,,754,641
 // Darius Mcdonald,567,473,520
 // Zachary Small,981,271,385
@@ -150,15 +163,26 @@ export default class Wrangler extends Component {
   }
 
   handleData(papa) {
+    if (papa.errors.length > 0) {
+      this.setState({errors: papa.errors, loading: false});
+      return;
+    }
+
     let formattedData;
     if (Array.isArray(papa.data[0])) {
+      // Get length of the longest column
+      let numColumns = papa.data.reduce((prev, curr) => {
+        return prev > curr.length ? prev : curr.length;
+      }, 0);
+
       formattedData = papa.data.map((row) => {
         let obj = {};
+        for (let i = 0; i < numColumns; i++) {
+          let key = `column${i+1}`;
+          let value = row[i];
 
-        row.forEach((col, index) => {
-          let key = `column${index+1}`;
-          obj[key] = col;
-        });
+          obj[key] = !value ? '' : value;
+        }
 
         return obj;
       });
@@ -175,7 +199,8 @@ export default class Wrangler extends Component {
 
     this.setState({
       isDataSet: true,
-      loading: false
+      loading: false,
+      delimiter: papa.meta.delimiter
     });
   }
 
@@ -193,18 +218,86 @@ export default class Wrangler extends Component {
     this.setState({wranglerInput: e.target.value});
   }
 
+  renderErrors() {
+    if (this.state.errors.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="wrangler-error-container">
+        <h4 className="error text-center">Errors:</h4>
+        <table className="table table-bordered error-table">
+          <thead>
+            <tr>
+              <th>Row</th>
+              <th>Error</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              this.state.errors.map((error) => {
+                return (
+                  <tr key={shortid.generate()}>
+                    <td>{error.row}</td>
+                    <td>{error.message}</td>
+                  </tr>
+                );
+              })
+            }
+          </tbody>
+        </table>
+      </div>
+    );
+
+  }
+
+  preventPropagation (e) {
+    e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
+  }
+
   renderWranglerCopyPaste() {
-    if (!this.state.textarea) {
+    if (!this.state.textarea || this.state.file.name) {
       return (
         <div
           className="wrangler-plus-button text-center"
           onClick={this.onPlusButtonClick}
         >
-          <div className="plus-button">
-            <i className="fa fa-plus-circle"></i>
+          <div
+            className="dropzone-container"
+            onClick={(e) => this.preventPropagation(e)}
+          >
+            <Dropzone
+              activeClassName="wrangler-file-drag-container"
+              className="wrangler-file-drop-container"
+              onDrop={(e) => this.setState({file: e[0], textarea: false})}
+            >
+              {
+                this.state.file.name && this.state.file.name.length ?
+                  null
+                :
+                  (
+                    <div className="plus-button">
+                      <i className="fa fa-plus-circle"></i>
+                    </div>
+                  )
+              }
+            </Dropzone>
           </div>
+
           <div className="plus-button-helper-text">
-            <h4>Copy-paste data here</h4>
+            {
+              this.state.file.name && this.state.file.name.length ?
+              (<h4>{this.state.file.name}</h4>)
+                :
+              (
+                <div>
+                  <h4>Click <span className="fa fa-plus-circle" /> to upload a file</h4>
+                  <h5>or</h5>
+                  <h4>Click anywhere else to copy paste data</h4>
+                </div>
+              )
+            }
           </div>
         </div>
       );
@@ -217,6 +310,49 @@ export default class Wrangler extends Component {
         autoFocus={true}
       />
     );
+  }
+
+  getWranglerOutput() {
+    let state = WranglerStore.getState().wrangler;
+
+    // prepare specifications
+    let dml = convertHistoryToDml(state.history.slice(0, state.historyLocation));
+
+    let setFormat = `set format csv ${this.state.delimiter} ${this.state.skipEmptyLines}`;
+    let initialColumns = state.initialHeaders.join(',');
+    let setColumns = `set columns ${initialColumns}`;
+
+    let spec = [setFormat, setColumns].concat(dml).join('\n');
+
+
+    // prepare schema
+    let fields = [];
+
+    state.headersList.forEach((column) => {
+      let hasError = state.errors[column] && state.errors[column].count > 0;
+
+      fields.push({
+        name: column,
+        type: hasError ? [state.columnTypes[column], 'null'] : state.columnTypes[column]
+      });
+    });
+
+    let schema = {
+      name: 'etlSchemaBody',
+      type: 'record',
+      fields
+    };
+
+    let properties = {
+      specification: spec,
+      schema: JSON.stringify(schema)
+    };
+
+    if (typeof this.props.hydrator === 'function') {
+      this.props.hydrator(properties);
+    }
+
+    return properties;
   }
 
   renderWranglerInputBox() {
@@ -289,28 +425,7 @@ export default class Wrangler extends Component {
           </button>
         </div>
 
-        <div className="file-input">
-          <hr/>
-
-          <h4>Upload File</h4>
-          <div>
-            <FileDnD
-              file={this.state.file}
-              onDropHandler={(e) => this.setState({file: e[0]})}
-            />
-          </div>
-
-          <br/>
-
-          <div className="text-center">
-            <button
-              className="btn btn-primary"
-              onClick={this.onWrangleFile}
-            >
-              Wrangle File
-            </button>
-          </div>
-        </div>
+        {this.renderErrors()}
 
       </div>
     );
@@ -323,7 +438,9 @@ export default class Wrangler extends Component {
 
         {
           this.state.isDataSet ?
-            <WrangleData data={this.state.originalData} />
+            <WrangleData
+              onHydratorApply={this.getWranglerOutput}
+            />
           :
             null
         }
@@ -332,3 +449,12 @@ export default class Wrangler extends Component {
     );
   }
 }
+
+Wrangler.propTypes = {
+  source: PropTypes.oneOf(['wrangler', 'hydrator']),
+  hydrator: PropTypes.any
+};
+
+Wrangler.childContextTypes = {
+  source: PropTypes.oneOf(['wrangler', 'hydrator'])
+};
