@@ -22,6 +22,8 @@ import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import org.apache.spark.api.java.function.Function;
 
+import javax.annotation.Nullable;
+
 /**
  * Function that doesn't transform anything, but just emits counts for the number of records from that stage.
  *
@@ -34,7 +36,8 @@ public class CountingFunction<T> implements Function<T, T> {
   private final DataTracer dataTracer;
   private transient StageMetrics stageMetrics;
 
-  public CountingFunction(String stageName, Metrics metrics, String metricName, DataTracer dataTracer) {
+  // DataTracer is null for records.in
+  public CountingFunction(String stageName, Metrics metrics, String metricName, @Nullable DataTracer dataTracer) {
     this.stageName = stageName;
     this.metrics = metrics;
     this.metricName = metricName;
@@ -46,7 +49,8 @@ public class CountingFunction<T> implements Function<T, T> {
     if (stageMetrics == null) {
       stageMetrics = new DefaultStageMetrics(metrics, stageName);
     }
-    if (dataTracer.isEnabled()) {
+    // we only want to trace the data for records.out
+    if (dataTracer != null && dataTracer.isEnabled()) {
       dataTracer.info(metricName, in);
     }
     stageMetrics.count(metricName, 1);
