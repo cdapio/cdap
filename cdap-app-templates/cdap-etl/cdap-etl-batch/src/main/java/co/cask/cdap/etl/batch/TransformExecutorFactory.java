@@ -87,7 +87,7 @@ public abstract class TransformExecutorFactory<T> {
   public <KEY_OUT, VAL_OUT> PipeTransformExecutor<T> create(PipelinePhase pipeline,
                                                             OutputWriter<KEY_OUT, VAL_OUT> outputWriter,
                                                             Map<String, ErrorOutputWriter<Object, Object>>
-                                                               transformErrorSinkMap)
+                                                              transformErrorSinkMap)
     throws Exception {
     Map<String, PipeTransformDetail> transformations = new HashMap<>();
     Set<String> sources = pipeline.getSources();
@@ -129,41 +129,39 @@ public abstract class TransformExecutorFactory<T> {
       return;
     }
 
+    addTransformation(pipeline, stageName, transformations, transformErrorSinkMap);
+
     for (String output : pipeline.getDag().getNodeOutputs(stageName)) {
       setPipeTransformDetail(pipeline, output, transformations, transformErrorSinkMap, outputWriter);
+      transformations.get(stageName).addTransformation(output, transformations.get(output));
+    }
+  }
 
-      // Add new transformation for output stage if the transformation for stageName already exists
-      if (transformations.containsKey(stageName)) {
-        transformations.get(stageName).addTransformation(output, transformations.get(output));
-        continue;
-      }
+  private void addTransformation(PipelinePhase pipeline, String stageName,
+                                 Map<String, PipeTransformDetail> transformations,
+                                 Map<String, ErrorOutputWriter<Object, Object>> transformErrorSinkMap)
+    throws Exception {
+    String pluginType = pipeline.getStage(stageName).getPluginType();
+    ErrorOutputWriter<Object, Object> errorOutputWriter = transformErrorSinkMap.containsKey(stageName) ?
+      transformErrorSinkMap.get(stageName) : null;
 
-      HashMap<String, PipeTransformDetail> map = new HashMap<>();
-      map.put(output, transformations.get(output));
-
-      StageInfo stageInfo = pipeline.getStage(stageName);
-      String pluginType = stageInfo.getPluginType();
-      ErrorOutputWriter<Object, Object> errorOutputWriter = transformErrorSinkMap.containsKey(stageName) ?
-        transformErrorSinkMap.get(stageName) : null;
-
-      // If stageName is a connector source, it will have stageName along with record so use ConnectorSourceEmitter
-      if (pipeline.getSources().contains(stageName) && pluginType.equals(Constants.CONNECTOR_TYPE)) {
-        transformations.put(stageName,
-                            new PipeTransformDetail(stageName, true,
-                                                    getTransformation(pluginType, stageName),
-                                                    new ConnectorSourceEmitter(stageName, map)));
-      } else if (pluginType.equals(BatchJoiner.PLUGIN_TYPE) && isMapPhase) {
-        // Do not remove stageName only for Map phase of BatchJoiner
-        transformations.put(stageName,
-                            new PipeTransformDetail(stageName, false,
-                                                    getTransformation(pluginType, stageName),
-                                                    new TransformEmitter(stageName, map, errorOutputWriter)));
-      } else {
-        transformations.put(stageName,
-                            new PipeTransformDetail(stageName, true,
-                                                    getTransformation(pluginType, stageName),
-                                                    new TransformEmitter(stageName, map, errorOutputWriter)));
-      }
+    // If stageName is a connector source, it will have stageName along with record so use ConnectorSourceEmitter
+    if (pipeline.getSources().contains(stageName) && pluginType.equals(Constants.CONNECTOR_TYPE)) {
+      transformations.put(stageName,
+                          new PipeTransformDetail(stageName, true,
+                                                  getTransformation(pluginType, stageName),
+                                                  new ConnectorSourceEmitter(stageName)));
+    } else if (pluginType.equals(BatchJoiner.PLUGIN_TYPE) && isMapPhase) {
+      // Do not remove stageName only for Map phase of BatchJoiner
+      transformations.put(stageName,
+                          new PipeTransformDetail(stageName, false,
+                                                  getTransformation(pluginType, stageName),
+                                                  new TransformEmitter(stageName, errorOutputWriter)));
+    } else {
+      transformations.put(stageName,
+                          new PipeTransformDetail(stageName, true,
+                                                  getTransformation(pluginType, stageName),
+                                                  new TransformEmitter(stageName, errorOutputWriter)));
     }
   }
 

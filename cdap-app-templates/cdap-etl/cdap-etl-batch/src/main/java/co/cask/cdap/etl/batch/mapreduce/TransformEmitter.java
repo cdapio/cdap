@@ -22,6 +22,7 @@ import co.cask.cdap.etl.batch.PipeTransformDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -36,11 +37,9 @@ public class TransformEmitter implements PipeEmitter<PipeTransformDetail> {
   private final Map<String, PipeTransformDetail> nextStages;
   private final ErrorOutputWriter<Object, Object> errorOutputWriter;
 
-  public TransformEmitter(String stageName,
-                          Map<String, PipeTransformDetail> nextStages,
-                          @Nullable ErrorOutputWriter<Object, Object> errorOutputWriter) {
+  public TransformEmitter(String stageName, @Nullable ErrorOutputWriter<Object, Object> errorOutputWriter) {
     this.stageName = stageName;
-    this.nextStages = nextStages;
+    this.nextStages = new HashMap<>();
     this.errorOutputWriter = errorOutputWriter;
   }
 

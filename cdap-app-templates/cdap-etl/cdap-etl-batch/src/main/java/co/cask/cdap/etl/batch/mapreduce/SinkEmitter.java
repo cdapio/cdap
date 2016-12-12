@@ -54,6 +54,7 @@ public class SinkEmitter<KEY_OUT, VAL_OUT> implements PipeEmitter<PipeTransformD
 
   @Override
   public void addTransformDetail(String stageName, PipeTransformDetail pipeTransformDetail) {
-    throw new IllegalStateException(String.format("Sink emitter does not have {} as output", stageName));
+    throw new IllegalStateException(String.format("Sink {} should not have any output, but it has output {}",
+                                                  this.stageName, stageName));
   }
 }

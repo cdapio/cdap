@@ -22,6 +22,7 @@ import co.cask.cdap.etl.batch.PipeTransformDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -34,9 +35,9 @@ public class ConnectorSourceEmitter implements PipeEmitter<PipeTransformDetail> 
   private final String stageName;
   private final Map<String, PipeTransformDetail> nextStages;
 
-  public ConnectorSourceEmitter(String stageName, Map<String, PipeTransformDetail> nextStages) {
+  public ConnectorSourceEmitter(String stageName) {
     this.stageName = stageName;
-    this.nextStages = nextStages;
+    this.nextStages = new HashMap<>();
   }
 
   @Override
