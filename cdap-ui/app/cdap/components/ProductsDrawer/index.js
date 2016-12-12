@@ -67,7 +67,13 @@ export default class ProductsDrawer extends Component {
     });
   }
   updateNSLinks(){
-    this.namespace = NamespaceStore.getState().selectedNamespace;
+    let NamespaceState = NamespaceStore.getState();
+    this.namespace = NamespaceState.selectedNamespace || localStorage.getItem('DefaultNamespace');
+
+    // If the user directly loads Management page without opening anything else.
+    if (!this.namespace && Array.isArray(NamespaceState.namespaces) && NamespaceState.namespaces.length) {
+      this.namespace = NamespaceState.namespaces[0].name;
+    }
     let products = this.state.products.map((product) => {
 
       switch(product.name) {
