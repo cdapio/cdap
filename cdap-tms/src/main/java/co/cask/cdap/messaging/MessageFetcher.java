@@ -17,8 +17,8 @@
 package co.cask.cdap.messaging;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.messaging.data.Message;
-import co.cask.cdap.messaging.data.MessageId;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.messaging.data.RawMessage;
 import org.apache.tephra.Transaction;
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
  */
 public abstract class MessageFetcher {
 
-  private MessageId startOffset;
+  private byte[] startOffset;
   private boolean includeStart = true;
   private Long startTime;
   private Transaction transaction;
@@ -40,15 +40,15 @@ public abstract class MessageFetcher {
   private int limit = Integer.MAX_VALUE;
 
   /**
-   * Setup the message fetching starting point based on the given {@link MessageId}. Calling this method
+   * Setup the message fetching starting point based on the given message id. Calling this method
    * will clear the start time set by the {@link #setStartTime(long)} method.
    *
    * @param startOffset the message id to start fetching from.
-   * @param inclusive if {@code true}, it will include the message identified by the given {@link MessageId} as the
+   * @param inclusive if {@code true}, it will include the message identified by the given message id as the
    *                  first message (if still available in the system); otherwise it won't be included.
    * @return this instance
    */
-  public MessageFetcher setStartMessage(MessageId startOffset, boolean inclusive) {
+  public MessageFetcher setStartMessage(byte[] startOffset, boolean inclusive) {
     this.startOffset = startOffset;
     this.includeStart = inclusive;
     this.startTime = null;
@@ -57,7 +57,7 @@ public abstract class MessageFetcher {
 
   /**
    * Setup the message fetching start time (publish time). Calling this method will clear the
-   * start offset set by the {@link #setStartMessage(MessageId, boolean)} method.
+   * start offset set by the {@link #setStartMessage(byte[], boolean)} method.
    *
    * @param startTime timestamp in milliseconds
    * @return this instance
@@ -97,7 +97,7 @@ public abstract class MessageFetcher {
   }
 
   @Nullable
-  protected MessageId getStartOffset() {
+  protected byte[] getStartOffset() {
     return startOffset;
   }
 
@@ -125,5 +125,5 @@ public abstract class MessageFetcher {
    * @throws TopicNotFoundException if the topic does not exist
    * @throws IOException if it fails to create the iterator
    */
-  public abstract CloseableIterator<Message> fetch() throws TopicNotFoundException, IOException;
+  public abstract CloseableIterator<RawMessage> fetch() throws TopicNotFoundException, IOException;
 }

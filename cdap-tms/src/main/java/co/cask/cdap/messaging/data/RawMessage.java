@@ -14,23 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.messaging;
-
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.id.TopicId;
+package co.cask.cdap.messaging.data;
 
 /**
- * Thrown when a topic is not found.
+ * Represents a unique message in the messaging system. It contains the message id and the payload
  */
-public class TopicNotFoundException extends NotFoundException {
-  private final TopicId id;
+public class RawMessage {
+  private final byte[] id;
+  private final byte[] payload;
 
-  public TopicNotFoundException(TopicId id) {
-    super(id);
+  public RawMessage(byte[] id, byte[] payload) {
     this.id = id;
+    this.payload = payload;
   }
 
-  public TopicId getId() {
+  /**
+   * Returns the unique id of this message.
+   */
+  public byte[] getId() {
     return id;
+  }
+
+  /**
+   * Returns the published content of this message.
+   */
+  public byte[] getPayload() {
+    return payload;
   }
 }

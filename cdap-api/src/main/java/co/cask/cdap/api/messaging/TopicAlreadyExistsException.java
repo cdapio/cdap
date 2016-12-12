@@ -14,31 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.data;
+package co.cask.cdap.api.messaging;
 
 /**
- * Represents a unique message in the messaging system. It contains the {@link MessageId} and the payload
+ * Exception thrown when trying to create a topic while the topic of that name already exists.
  */
-public class Message {
-  private final MessageId id;
-  private final byte[] payload;
+public class TopicAlreadyExistsException extends MessagingException {
 
-  public Message(MessageId id, byte[] payload) {
-    this.id = id;
-    this.payload = payload;
-  }
-
-  /**
-   * Returns the unique {@link MessageId} of this message.
-   */
-  public MessageId getId() {
-    return id;
-  }
-
-  /**
-   * Returns the published content of this message.
-   */
-  public byte[] getPayload() {
-    return payload;
+  public TopicAlreadyExistsException(String namespace, String topic) {
+    super(namespace, topic, "Topic already exists: " + namespace + ":" + topic);
   }
 }
