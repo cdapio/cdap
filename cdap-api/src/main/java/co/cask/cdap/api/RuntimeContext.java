@@ -27,32 +27,32 @@ import java.util.Map;
 public interface RuntimeContext {
 
   /**
-   * @return The application specification.
+   * @return The application specification
    */
   ApplicationSpecification getApplicationSpecification();
 
   /**
-   * @return A map of argument key and value.
+   * @return A map of argument key and value
    */
   Map<String, String> getRuntimeArguments();
 
   /**
-   * @return The cluster name.
+   * @return The cluster name
    */
   String getClusterName();
 
   /**
-   * @return The application namespace.
+   * @return The application namespace
    */
   String getNamespace();
 
   /**
-   * @return The {@link RunId} of the current run.
+   * @return The {@link RunId} of the current run
    */
   RunId getRunId();
 
   /**
-   * @return an {@link Admin} to perform admin operations.
+   * @return an {@link Admin} to perform admin operations
    */
   Admin getAdmin();
 }
