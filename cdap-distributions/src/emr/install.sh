@@ -139,9 +139,6 @@ sudo rm -f /opt/cdap/kafka/lib/log4j.log4j-1.2.14.jar
 ### TODO: Ensure Kafka directory is available until caskdata/cdap_cookbook#187 is merged and released
 sudo su - -c "mkdir -p /mnt/cdap/kafka-logs && chown -R cdap /mnt/cdap"
 
-### TODO: Temporary Hack to workaround CDAP-7648
-sudo rm -f /opt/cdap/master/lib/org.apache.httpcomponents.httpc*.jar
-
 # Start CDAP Services
 for i in /etc/init.d/cdap-*; do
   __svc=$(basename ${i})

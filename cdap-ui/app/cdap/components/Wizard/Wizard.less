@@ -17,7 +17,8 @@
   height: 100%;
   .wizard-body {
     display: flex;
-    height: 100%;
+    height: 90%;
+    border: 0;
 
     .wizard-steps-header {
       width: 150px;
@@ -28,6 +29,8 @@
       width: ~"-moz-calc(100% - 150px)";
       width: ~"-webkit-calc(100% - 150px)";
       background-color: #fff;
+      height: 100%;
+
       .form-horizontal {
         // wizard-navigation height = 32px. This is to ensure that the previous and next buttons remain in the same position to start with while switching the tabs.
         height: ~"calc(100% - 32px)";
@@ -38,11 +41,6 @@
         overflow-x: hidden;
       }
       .wizard-navigation {
-
-        position: absolute;
-        bottom: 10px;
-        right: 10px;
-
         .btn {
           padding: 6px 20px;
           margin: 0 5px;
@@ -56,15 +54,13 @@
   }
   .wizard-footer {
     width: 100%;
-    position: fixed;
-    left: 0;
-    right: 0;
+    height: 20%;
 
     .card-action-feedback {
       &.DANGER,
       &.SUCCESS,
       &.LOADING {
-        border: 1px solid black;
+        height: 100%;
       }
       &.LOADING {
         border-top-color: gray;

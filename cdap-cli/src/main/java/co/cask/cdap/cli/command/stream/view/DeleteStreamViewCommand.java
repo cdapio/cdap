@@ -45,7 +45,7 @@ public class DeleteStreamViewCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     StreamViewId view = streamId.view(arguments.get(ArgumentName.VIEW.toString()));
-    client.delete(view.toId());
+    client.delete(view);
     output.printf("Successfully deleted stream-view '%s'\n", view.getEntityName());
   }
 

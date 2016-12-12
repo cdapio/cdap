@@ -110,18 +110,6 @@ public class MetaDataInfo {
     this.stringValue = stringValue;
   }
 
-  public MetaDataInfo(short shortValue) {
-    this.shortValue = shortValue;
-  }
-
-  public MetaDataInfo(int intValue) {
-    this.intValue = intValue;
-  }
-
-  public MetaDataInfo(long longValue) {
-    this.longValue = longValue;
-  }
-
   public String getStringValue() {
     return stringValue;
   }

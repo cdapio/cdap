@@ -36,7 +36,6 @@ import co.cask.cdap.etl.mock.test.HydratorTestBase;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -110,7 +109,7 @@ public class PipelineTest extends HydratorTestBase {
       .build();
 
     // create the pipeline
-    Id.Application pipelineId = Id.Application.from(Id.Namespace.DEFAULT, "textSourceTestPipeline");
+    ApplicationId pipelineId = NamespaceId.DEFAULT.app("textSourceTestPipeline");
     ApplicationManager appManager = deployApplication(pipelineId, new AppRequest<>(APP_ARTIFACT, pipelineConfig));
 
     // write some data to the input fileset
@@ -177,7 +176,7 @@ public class PipelineTest extends HydratorTestBase {
       .build();
 
     // create the pipeline
-    Id.Application pipelineId = Id.Application.from(Id.Namespace.DEFAULT, "textSinkTestPipeline");
+    ApplicationId pipelineId = NamespaceId.DEFAULT.app("textSinkTestPipeline");
     ApplicationManager appManager = deployApplication(pipelineId, new AppRequest<>(APP_ARTIFACT, pipelineConfig));
 
     // write some data to the input fileset
@@ -253,7 +252,7 @@ public class PipelineTest extends HydratorTestBase {
       .build();
 
     // create the pipeline
-    Id.Application pipelineId = Id.Application.from(Id.Namespace.DEFAULT, "sparkSinkTestPipeline");
+    ApplicationId pipelineId = NamespaceId.DEFAULT.app("sparkSinkTestPipeline");
     ApplicationManager appManager = deployApplication(pipelineId, new AppRequest<>(APP_ARTIFACT, pipelineConfig));
 
     // write the input
@@ -303,7 +302,7 @@ public class PipelineTest extends HydratorTestBase {
       .build();
 
     // create the pipeline
-    Id.Application pipelineId = Id.Application.from(Id.Namespace.DEFAULT, "transformTestPipeline");
+    ApplicationId pipelineId = NamespaceId.DEFAULT.app("transformTestPipeline");
     ApplicationManager appManager = deployApplication(pipelineId, new AppRequest<>(APP_ARTIFACT, pipelineConfig));
 
     // write the input
@@ -357,7 +356,7 @@ public class PipelineTest extends HydratorTestBase {
       .build();
 
     // create the pipeline
-    Id.Application pipelineId = Id.Application.from(Id.Namespace.DEFAULT, "wcTestPipeline-" + pluginType);
+    ApplicationId pipelineId = NamespaceId.DEFAULT.app("wcTestPipeline-" + pluginType);
     ApplicationManager appManager = deployApplication(pipelineId, new AppRequest<>(APP_ARTIFACT, pipelineConfig));
 
     // write the input

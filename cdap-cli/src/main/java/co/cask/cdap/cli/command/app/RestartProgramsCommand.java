@@ -52,14 +52,14 @@ public class RestartProgramsCommand extends BaseBatchCommand<BatchProgram> {
     NamespaceId namespace = args.appId.getParent();
 
     printStream.print("Stopping programs...\n");
-    programClient.stop(namespace.toId(), args.programs);
+    programClient.stop(namespace, args.programs);
 
     printStream.print("Starting programs...\n");
     List<BatchProgramStart> startList = new ArrayList<>(args.programs.size());
     for (BatchProgram program : args.programs) {
       startList.add(new BatchProgramStart(program));
     }
-    programClient.start(namespace.toId(), startList);
+    programClient.start(namespace, startList);
   }
 
   @Override

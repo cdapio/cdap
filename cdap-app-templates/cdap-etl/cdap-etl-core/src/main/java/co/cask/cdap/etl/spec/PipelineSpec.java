@@ -38,15 +38,18 @@ public class PipelineSpec {
   private final Set<Connection> connections;
   private final Resources resources;
   private final boolean stageLoggingEnabled;
+  private final int numOfRecordsPreview;
 
   protected PipelineSpec(Set<StageSpec> stages,
                          Set<Connection> connections,
                          Resources resources,
-                         boolean stageLoggingEnabled) {
+                         boolean stageLoggingEnabled,
+                         int numOfRecordsPreview) {
     this.stages = ImmutableSet.copyOf(stages);
     this.connections = ImmutableSet.copyOf(connections);
     this.resources = resources;
     this.stageLoggingEnabled = stageLoggingEnabled;
+    this.numOfRecordsPreview = numOfRecordsPreview;
   }
 
   public Set<StageSpec> getStages() {
@@ -63,6 +66,10 @@ public class PipelineSpec {
 
   public boolean isStageLoggingEnabled() {
     return stageLoggingEnabled;
+  }
+
+  public int getNumOfRecordsPreview() {
+    return numOfRecordsPreview;
   }
 
   @Override
@@ -115,6 +122,7 @@ public class PipelineSpec {
     protected Set<Connection> connections;
     protected Resources resources;
     protected boolean stageLoggingEnabled;
+    protected int numOfRecordsPreview;
 
     protected Builder() {
       this.stages = new HashSet<>();
@@ -153,8 +161,13 @@ public class PipelineSpec {
       return (T) this;
     }
 
+    public T setNumOfRecordsPreview(int numOfRecordsPreview) {
+      this.numOfRecordsPreview = numOfRecordsPreview;
+      return (T) this;
+    }
+
     public PipelineSpec build() {
-      return new PipelineSpec(stages, connections, resources, stageLoggingEnabled);
+      return new PipelineSpec(stages, connections, resources, stageLoggingEnabled, numOfRecordsPreview);
     }
   }
 }

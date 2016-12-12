@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.CompositeDatasetAdmin;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.inject.Provider;
 
 import java.io.IOException;
@@ -56,7 +56,7 @@ public class PartitionedFileSetAdmin extends CompositeDatasetAdmin {
     if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
-        Id.DatasetInstance instanceId = Id.DatasetInstance.from(context.getNamespaceId(), spec.getName());
+        DatasetId instanceId = new DatasetId(context.getNamespaceId(), spec.getName());
         try {
           exploreFacade.disableExploreDataset(instanceId);
           exploreFacade.enableExploreDataset(instanceId);

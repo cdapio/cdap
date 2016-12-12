@@ -17,24 +17,38 @@
 import React, {PropTypes} from 'react';
 import Dropzone from 'react-dropzone';
 require('./FileDnD.less');
+import T from 'i18n-react';
 
-export default function FileDnD({file, onDropHandler, error}) {
+export default function FileDnD({file, onDropHandler, error, uploadLabel, clickLabel}) {
   return (
     <Dropzone
       activeClassName="file-drag-container"
       className="file-drop-container"
       onDrop={onDropHandler}>
       <div className="file-metadata-container text-center">
+        <i className="fa fa-upload fa-3x"></i>
         {
           file.name && file.name.length ? (<span>{file.name}</span>)
             :
-            (<span>
-               Drag and Drop the file to be uploaded
-              <br />
-              or
-              <br />
-              Click to select file from your computer
-            </span>)
+            (
+              <span>
+                  {
+                    uploadLabel ?
+                      uploadLabel
+                    :
+                      T.translate('features.FileDnD.uploadLabel')
+                  }
+                <br />
+                or
+                <br />
+                {
+                  clickLabel ?
+                    clickLabel
+                  :
+                    T.translate('features.FileDnD.clickLabel')
+                }
+              </span>
+            )
         }
         {
           error ?
@@ -50,6 +64,8 @@ export default function FileDnD({file, onDropHandler, error}) {
 }
 FileDnD.propTypes = {
   file: PropTypes.any,
+  uploadLabel: PropTypes.string,
+  clickLabel: PropTypes.string,
   error: PropTypes.any,
   onDropHandler: PropTypes.func
 };

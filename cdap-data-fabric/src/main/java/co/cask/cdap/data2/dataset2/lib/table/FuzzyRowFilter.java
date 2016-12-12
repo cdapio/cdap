@@ -155,8 +155,8 @@ public final class FuzzyRowFilter implements Filter {
     NO_NEXT
   }
 
-  static SatisfiesCode satisfies(byte[] row,
-                                 byte[] fuzzyKeyBytes, byte[] fuzzyKeyMeta) {
+  private static SatisfiesCode satisfies(byte[] row,
+                                         byte[] fuzzyKeyBytes, byte[] fuzzyKeyMeta) {
     return satisfies(row, 0, row.length, fuzzyKeyBytes, fuzzyKeyMeta);
   }
 
@@ -204,7 +204,7 @@ public final class FuzzyRowFilter implements Filter {
     return (fuzzyKeyByte & 0xFF) == 255;
   }
 
-  static byte[] getNextForFuzzyRule(byte[] row, byte[] fuzzyKeyBytes, byte[] fuzzyKeyMeta) {
+  private static byte[] getNextForFuzzyRule(byte[] row, byte[] fuzzyKeyBytes, byte[] fuzzyKeyMeta) {
     return getNextForFuzzyRule(row, 0, row.length, fuzzyKeyBytes, fuzzyKeyMeta);
   }
 

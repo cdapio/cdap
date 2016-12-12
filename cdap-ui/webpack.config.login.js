@@ -88,7 +88,8 @@ module.exports = {
           /bower_components/,
           /dist/,
           /cdap_dist/,
-          /common_dist/
+          /common_dist/,
+          /wrangler_dist/
         ]
       }
     ],

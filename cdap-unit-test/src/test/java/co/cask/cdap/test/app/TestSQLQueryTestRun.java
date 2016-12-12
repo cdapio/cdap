@@ -110,11 +110,11 @@ public class TestSQLQueryTestRun extends TestFrameworkTestBase {
 
   private void testSQLQuery() throws Exception {
     // Deploying app makes sure that the default namespace is available.
-    deployApplication(testSpace.toId(), DummyApp.class);
-    deployDatasetModule(testSpace.toId(), "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    deployApplication(testSpace.toId(), AppsWithDataset.AppWithAutoCreate.class);
+    deployApplication(testSpace, DummyApp.class);
+    deployDatasetModule(testSpace.datasetModule("my-kv"), AppsWithDataset.KeyValueTableDefinition.Module.class);
+    deployApplication(testSpace, AppsWithDataset.AppWithAutoCreate.class);
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
-      getDataset(testSpace.toId(), "myTable");
+      getDataset(testSpace.dataset("myTable"));
     AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = myTableManager.get();
     kvTable.put("a", "1");
     kvTable.put("b", "2");
@@ -122,7 +122,7 @@ public class TestSQLQueryTestRun extends TestFrameworkTestBase {
     myTableManager.flush();
 
     try (
-      Connection connection = getQueryClient(testSpace.toId());
+      Connection connection = getQueryClient(testSpace);
       ResultSet results = connection.prepareStatement("select first from dataset_mytable where second = '1'")
         .executeQuery()
     ) {

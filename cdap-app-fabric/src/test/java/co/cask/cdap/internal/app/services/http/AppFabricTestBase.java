@@ -47,8 +47,6 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.StreamProperties;
-import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -862,30 +860,6 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
     return GSON.fromJson(json, LIST_RUNRECORD_TYPE);
-  }
-
-  protected boolean createOrUpdateView(Id.Stream.View viewId, ViewSpecification spec) throws Exception {
-    return streamViewClient.createOrUpdate(viewId, spec);
-  }
-
-  protected void deleteStream(Id.Stream stream) throws Exception {
-    streamClient.delete(stream);
-  }
-
-  protected void deleteView(Id.Stream.View view) throws Exception {
-    streamViewClient.delete(view);
-  }
-
-  protected void setStreamProperties(Id.Stream stream, StreamProperties props) throws Exception {
-    streamClient.setStreamProperties(stream, props);
-  }
-
-  protected void updateDatasetProperties(Id.DatasetInstance dataset, Map<String, String> properties) throws Exception {
-    datasetClient.updateExisting(dataset, properties);
-  }
-
-  protected void deleteDataset(Id.DatasetInstance datasetInstance) throws Exception {
-    datasetClient.delete(datasetInstance);
   }
 
   protected HttpResponse createNamespace(String id) throws Exception {

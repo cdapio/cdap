@@ -105,7 +105,7 @@ public class UpgradeTool {
   private Set<ApplicationId> upgrade(NamespaceId namespace) throws Exception {
     Set<ApplicationId> upgraded = new HashSet<>();
     Set<String> artifactNames = ImmutableSet.of(BATCH_NAME, REALTIME_NAME, DATA_PIPELINE_NAME);
-    for (ApplicationRecord appRecord : appClient.list(namespace.toId(), artifactNames, null)) {
+    for (ApplicationRecord appRecord : appClient.list(namespace, artifactNames, null)) {
       ApplicationId appId = namespace.app(appRecord.getName());
       if (upgrade(appId)) {
         upgraded.add(appId);
@@ -115,7 +115,7 @@ public class UpgradeTool {
   }
 
   private boolean upgrade(ApplicationId appId) throws Exception {
-    ApplicationDetail appDetail = appClient.get(appId.toId());
+    ApplicationDetail appDetail = appClient.get(appId);
 
     if (!shouldUpgrade(appDetail.getArtifact())) {
       return false;
@@ -149,7 +149,7 @@ public class UpgradeTool {
                                              T config) throws IOException {
     AppRequest<T> updateRequest = new AppRequest<>(appArtifact, config);
     try {
-      appClient.update(appId.toId(), updateRequest);
+      appClient.update(appId, updateRequest);
     } catch (Exception e) {
       LOG.error("Error upgrading pipeline {}.", appId, e);
       if (errorDir != null) {

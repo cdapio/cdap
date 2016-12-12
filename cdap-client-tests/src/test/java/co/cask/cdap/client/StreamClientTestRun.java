@@ -23,11 +23,12 @@ import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
@@ -56,7 +57,7 @@ import java.util.concurrent.TimeUnit;
 public class StreamClientTestRun extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamClientTestRun.class);
-  private static final Id.Namespace namespaceId = Id.Namespace.from("myspace");
+  private static final NamespaceId namespaceId = new NamespaceId("myspace");
 
   private NamespaceClient namespaceClient;
   private StreamClient streamClient;
@@ -71,7 +72,7 @@ public class StreamClientTestRun extends ClientTestBase {
 
   @Test
   public void testAll() throws Exception {
-    Id.Stream streamId = Id.Stream.from(namespaceId, "testAll");
+    StreamId streamId = namespaceId.stream("testAll");
 
     LOG.info("Getting stream list");
     int baseStreamCount = streamClient.list(namespaceId).size();
@@ -89,7 +90,7 @@ public class StreamClientTestRun extends ClientTestBase {
     String description = "Good Stream";
     Long ttl = 10L;
     Integer notifMB = 300;
-    Id.Stream streamId = Id.Stream.from(namespaceId, "testDesc");
+    StreamId streamId = namespaceId.stream("testDesc");
     StreamProperties properties = new StreamProperties(ttl, null, notifMB, description);
     streamClient.create(streamId, properties);
     StreamProperties actual = streamClient.getConfig(streamId);
@@ -111,7 +112,7 @@ public class StreamClientTestRun extends ClientTestBase {
   public void testStreamEvents() throws IOException, BadRequestException,
     StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
 
-    Id.Stream streamId = Id.Stream.from(namespaceId, "testEvents");
+    StreamId streamId = namespaceId.stream("testEvents");
     streamClient.create(streamId);
 
     // Send 5000 events
@@ -157,7 +158,7 @@ public class StreamClientTestRun extends ClientTestBase {
    */
   @Test
   public void testAsyncWrite() throws Exception {
-    Id.Stream streamId = Id.Stream.from(namespaceId, "testAsync");
+    StreamId streamId = namespaceId.stream("testAsync");
     streamClient.create(streamId);
 
     // Send 10 async writes
@@ -210,7 +211,7 @@ public class StreamClientTestRun extends ClientTestBase {
 
   @Test
   public void testDelete() throws Exception {
-    Id.Stream streamId = Id.Stream.from(namespaceId, "testDelete");
+    StreamId streamId = namespaceId.stream("testDelete");
     streamClient.create(streamId);
 
     // Send an event and get it back
@@ -248,12 +249,12 @@ public class StreamClientTestRun extends ClientTestBase {
 
   @Test
   public void testStreamDeleteAfterCreatingView() throws Exception {
-    Id.Stream testStream = Id.Stream.from(Id.Namespace.DEFAULT, "testStream");
+    StreamId testStream = NamespaceId.DEFAULT.stream("testStream");
     streamClient.create(testStream);
     // should throw StreamNotFoundException if the stream has not been successfully created in the previous step
     streamClient.getConfig(testStream);
     StreamViewClient streamViewClient = new StreamViewClient(clientConfig);
-    Id.Stream.View testView = Id.Stream.View.from(testStream, "testView");
+    StreamViewId testView = testStream.view("testView");
     ViewSpecification testViewSpec = new ViewSpecification(new FormatSpecification("csv", null, null));
     Assert.assertTrue(streamViewClient.createOrUpdate(testView, testViewSpec));
     // test stream delete
@@ -269,7 +270,7 @@ public class StreamClientTestRun extends ClientTestBase {
 
 
   private void testSendFile(String msgPrefix, int msgCount) throws Exception {
-    Id.Stream streamId = Id.Stream.from(namespaceId, "testSendFile");
+    StreamId streamId = namespaceId.stream("testSendFile");
     streamClient.create(streamId);
 
     // Generate msgCount lines of events
@@ -297,6 +298,6 @@ public class StreamClientTestRun extends ClientTestBase {
 
   @After
   public void tearDown() throws Exception {
-    namespaceClient.delete(namespaceId.toEntityId());
+    namespaceClient.delete(namespaceId);
   }
 }

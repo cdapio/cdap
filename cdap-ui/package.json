@@ -34,6 +34,7 @@
     "copy-webpack-plugin": "https://registry.npmjs.org/copy-webpack-plugin/-/copy-webpack-plugin-3.0.1.tgz",
     "css-loader": "0.23.1",
     "del": "2.2.0",
+    "enzyme": "2.6.0",
     "es6-promise": "3.0.2",
     "eslint": "3.3.1",
     "eslint-loader": "1.5.0",
@@ -68,11 +69,10 @@
     "main-bower-files": "2.11.1",
     "merge-stream": "1.0.0",
     "postcss-loader": "1.1.1",
+    "react-addons-test-utils": "15.3.2",
     "style-loader": "0.13.1",
     "url-loader": "0.5.7",
-    "webpack-livereload-plugin": "0.9.0",
-    "react-addons-test-utils": "15.3.2",
-    "enzyme": "2.6.0"
+    "webpack-livereload-plugin": "0.9.0"
   },
   "dependencies": {
     "angular": "1.5.8",
@@ -82,7 +82,7 @@
     "classnames": "2.2.5",
     "compression": "1.6.1",
     "cookie-parser": "1.4.1",
-    "d3": "4.3.0",
+    "d3": "3.5.17",
     "express": "4.13.4",
     "finalhandler": "0.4.1",
     "font-awesome": "4.6.3",
@@ -111,6 +111,11 @@
     "react-redux": "4.4.5",
     "react-router": "4.0.0-alpha.4",
     "react-youtube": "7.1.1",
+    "reactabular": "8.3.0",
+    "reactabular-resizable": "8.4.0",
+    "reactabular-sticky": "8.2.0",
+    "reactabular-table": "8.1.0",
+    "reactabular-virtualized": "8.0.0",
     "reactstrap": "3.9.1",
     "redux": "https://registry.npmjs.org/redux/-/redux-3.5.2.tgz",
     "redux-thunk": "2.0.1",
@@ -121,9 +126,11 @@
     "shortid": "2.2.6",
     "sockjs": "0.3.15",
     "sockjs-client": "1.1.1",
+    "table-resolver": "2.0.3",
     "webpack": "1.13.2",
     "whatwg-fetch": "https://registry.npmjs.org/whatwg-fetch/-/whatwg-fetch-1.0.0.tgz",
-    "yml-loader": "1.1.0"
+    "yml-loader": "1.1.0",
+    "cdap-avsc": "4.1.12"
   },
   "engines": {
     "node": ">= 4.5.0"
@@ -140,6 +147,7 @@
       "^components": "<rootDir>/components",
       "^services": "<rootDir>/services",
       "^api": "<rootDir>/api",
+      "^lib": "<rootDir>/../lib",
       "^mocks": "<rootDir>/__mocks__",
       "^.+\\.less$": "<rootDir>/__mocks__/styleMocks.js"
     }

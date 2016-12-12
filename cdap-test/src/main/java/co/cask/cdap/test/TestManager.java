@@ -31,7 +31,10 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 
 import java.io.File;
 import java.sql.Connection;
@@ -52,8 +55,22 @@ public interface TestManager {
    * @param namespace The namespace to deploy to
    * @param applicationClz The application class
    * @return An {@link ApplicationManager} to manage the deployed application.
+   * @deprecated since 4.0.0. Please use {@link #deployApplication(NamespaceId, Class, File...)} instead
    */
+  @Deprecated
   ApplicationManager deployApplication(Id.Namespace namespace,
+                                       Class<? extends Application> applicationClz, File... bundleEmbeddedJars);
+
+  /**
+   * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
+   * other programs defined in the application
+   * must be in the same or children package as the application.
+   *
+   * @param namespace The namespace to deploy to
+   * @param applicationClz The application class
+   * @return An {@link ApplicationManager} to manage the deployed application.
+   */
+  ApplicationManager deployApplication(NamespaceId namespace,
                                        Class<? extends Application> applicationClz, File... bundleEmbeddedJars);
 
   /**
@@ -64,9 +81,24 @@ public interface TestManager {
    * @param configObject Configuration object to be used during deployment and can be accessed
    *                     in {@link Application#configure} via {@link AbstractApplication#getConfig}
    * @return An {@link ApplicationManager} to manage the deployed application.
+   * @deprecated since 4.0.0. Please use {@link #deployApplication(NamespaceId, Class, Config, File...)} instead
    */
+  @Deprecated
   ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,
                                        @Nullable Config configObject, File... bundleEmbeddedJars);
+
+  /**
+   * Deploys an {@link Application}.
+   *
+   * @param namespace The namespace to deploy to
+   * @param applicationClz The application class
+   * @param configObject Configuration object to be used during deployment and can be accessed
+   *                     in {@link Application#configure} via {@link AbstractApplication#getConfig}
+   * @return An {@link ApplicationManager} to manage the deployed application.
+   */
+  ApplicationManager deployApplication(NamespaceId namespace, Class<? extends Application> applicationClz,
+                                       @Nullable Config configObject, File... bundleEmbeddedJars);
+
 
   /**
    * Deploys an {@link Application}.
@@ -75,7 +107,9 @@ public interface TestManager {
    * @param appRequest the app create or update request that includes the artifact to create the app from and any config
    *                   to pass to the application.
    * @return An {@link ApplicationManager} to manage the deployed application.
+   * @deprecated since 4.0.0. Use {@link #deployApplication(ApplicationId, AppRequest)} instead.
    */
+  @Deprecated
   ApplicationManager deployApplication(Id.Application appId, AppRequest appRequest) throws Exception;
 
   /**
@@ -238,6 +272,7 @@ public interface TestManager {
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @deprecated since 3.4.0. Use {@link #addPluginArtifact(ArtifactId, Set, Class, Class[])}
    */
+  @Deprecated
   void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
@@ -379,9 +414,21 @@ public interface TestManager {
    * @param moduleName name of the module
    * @param datasetModule module class
    * @throws Exception
+   * @deprecated since 4.0.0. Use {@link #deployDatasetModule(DatasetModuleId, Class)} instead.
+   */
+  @Deprecated
+  void deployDatasetModule(Id.Namespace namespace, String moduleName, Class<? extends DatasetModule> datasetModule)
+    throws Exception;
+
+  /**
+   * Deploys {@link DatasetModule}.
+   *
+   * @param datasetModuleId the dataset module id
+   * @param datasetModule module class
+   * @throws Exception
    */
   @Beta
-  void deployDatasetModule(Id.Namespace namespace, String moduleName, Class<? extends DatasetModule> datasetModule)
+  void deployDatasetModule(DatasetModuleId datasetModuleId, Class<? extends DatasetModule> datasetModule)
     throws Exception;
 
   /**
@@ -392,10 +439,24 @@ public interface TestManager {
    * @param datasetInstanceName instance name
    * @param props properties
    * @param <T> type of the dataset admin
+   * @return a DatasetAdmin to manage the dataset instance
+   * @deprecated since 4.0.0. Use {@link #addDatasetInstance(String, DatasetId, DatasetProperties)} instead.
    */
-  @Beta
+  @Deprecated
   <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
                                                 String datasetTypeName, String datasetInstanceName,
+                                                DatasetProperties props) throws Exception;
+
+  /**
+   * Adds an instance of a dataset.
+   *
+   * @param datasetType the dataset type, like "table" or "fileset"
+   * @param datasetId the dataset id
+   * @param props the dataset properties
+   * @param <T> type of the dataset admin
+   * @return a DatasetAdmin to manage the dataset instance
+   */
+  <T extends DatasetAdmin> T addDatasetInstance(String datasetType, DatasetId datasetId,
                                                 DatasetProperties props) throws Exception;
 
   /**
@@ -405,10 +466,22 @@ public interface TestManager {
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param <T> type of the dataset admin
+   * @return a DatasetAdmin to manage the dataset instance
+   * @deprecated since 4.0.0. Use {@link #addDatasetInstance(String, DatasetId)} instead.
    */
-  @Beta
+  @Deprecated
   <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
                                                 String datasetTypeName, String datasetInstanceName) throws Exception;
+
+  /**
+   * Adds an instance of dataset.
+   *
+   * @param datasetType the dataset type, like "table" or "fileset"
+   * @param datasetId the dataset id
+   * @param <T> type of the dataset admin
+   * @return a DatasetAdmin to manage the dataset instance
+   */
+  <T extends DatasetAdmin> T addDatasetInstance(String datasetType, DatasetId datasetId) throws Exception;
 
   /**
    * Deletes an instance of dataset
@@ -416,9 +489,18 @@ public interface TestManager {
    * @param namespaceId namespace of the dataset
    * @param datasetInstanceName instance name
    * @throws Exception
+   * @deprecated since 4.0.0. Use {@link #deleteDatasetInstance(DatasetId)} instead
    */
-  @Beta
+  @Deprecated
   void deleteDatasetInstance(NamespaceId namespaceId, String datasetInstanceName) throws Exception;
+
+  /**
+   * Deletes an instance of dataset
+   *
+   * @param datasetId the dataset to delete
+   * @throws Exception
+   */
+  void deleteDatasetInstance(DatasetId datasetId) throws Exception;
 
   /**
    * Gets Dataset manager of Dataset instance of type {@literal <}T>.
@@ -427,16 +509,33 @@ public interface TestManager {
    * @param datasetInstanceName instance name of dataset
    * @return Dataset Manager of Dataset instance of type {@literal <}T>
    * @throws Exception
+   * @deprecated since 4.0.0. Use {@link #getDataset(DatasetId)} instead.
    */
-  @Beta
+  @Deprecated
   <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName) throws Exception;
+
+  /**
+   * Gets Dataset manager of Dataset instance of type {@literal <}T>.
+   *
+   * @param datasetId the id of the dataset
+   * @return Dataset Manager of Dataset instance of type {@literal <}T>
+   * @throws Exception
+   */
+  <T> DataSetManager<T> getDataset(DatasetId datasetId) throws Exception;
+
+  /**
+   * @param namespace namespace to interact within
+   * @return a JDBC connection that allows the running of SQL queries over data sets
+   * @deprecated since 4.0.0. Use {@link #getQueryClient(NamespaceId)} instead.
+   */
+  @Deprecated
+  Connection getQueryClient(Id.Namespace namespace) throws Exception;
 
   /**
    * @param namespace namespace to interact within
    * @return a JDBC connection that allows the running of SQL queries over data sets
    */
-  @Beta
-  Connection getQueryClient(Id.Namespace namespace) throws Exception;
+  Connection getQueryClient(NamespaceId namespace) throws Exception;
 
   /**
    * Creates a namespace.
@@ -458,8 +557,15 @@ public interface TestManager {
 
   /**
    * Returns a {@link StreamManager} for the specified {@link Id.Stream}.
+   * @deprecated since 4.0.0. Use {@link #getStreamManager(StreamId)} instead.
    */
+  @Deprecated
   StreamManager getStreamManager(Id.Stream streamId);
+
+  /**
+   * Returns a {@link StreamManager} for the specified {@link Id.Stream}.
+   */
+  StreamManager getStreamManager(StreamId streamId);
 
   /**
    * Removes all apps in the specified namespace.

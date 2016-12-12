@@ -237,7 +237,7 @@ gulp.task('js:lib', function() {
       './node_modules/react-dom/dist/react-dom.min.js',
       './node_modules/ngreact/ngReact.min.js',
 
-      './app/lib/avsc-bundle.js'
+      './node_modules/cdap-avsc/dist/cdap-avsc-lib.js'
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
     ], mainBowerFiles({
@@ -353,6 +353,7 @@ gulp.task('lint', function() {
     '!./app/login/**/*.js',
     '!./app/lib/**/*.js',
     '!./app/common/**/*.js',
+    '!./app/wrangler/**/*.js',
     './server/*.js'
   ])
     .pipe(plug.plumber())
@@ -416,6 +417,7 @@ gulp.task('watch', ['jshint', 'build'], function() {
     './app/**/*.js',
     '!./app/cdap/**/*.js',
     '!./app/login/**/*.js',
+    '!./app/wrangler/**/*.js',
     '!./app/**/*-test.js'
   ];
   jsAppSource = jsAppSource.concat(getEs6Directives(true));

@@ -29,22 +29,28 @@ export default class ProductsDrawer extends Component {
     this.namespace;
     let products = [
       {
-        link: '/cask-cdap/',
+        link: '/cdap/',
         label: T.translate('commons.cdap'),
         name: 'cdap',
         icon: 'icon-fist'
       },
       {
-        link: '/cask-hydrator/',
+        link: '/hydrator/',
         label: T.translate('commons.hydrator'),
         name: 'hydrator',
         icon: 'icon-hydrator'
       },
       {
-        link: '/cask-tracker/',
+        link: '/tracker/',
         label: T.translate('commons.tracker'),
         name: 'tracker',
         icon: 'icon-tracker'
+      },
+      {
+        link: '/wrangler/',
+        label: T.translate('commons.wrangler'),
+        name: 'wrangler',
+        icon: 'icon-DataWrangler'
       }
     ];
     let currentChoice = head(products.filter(product => product.name === props.currentChoice));
@@ -66,13 +72,13 @@ export default class ProductsDrawer extends Component {
 
       switch(product.name) {
         case 'cdap' :
-          product.link = `/cask-cdap/ns/${this.namespace}`;
+          product.link = `/cdap/ns/${this.namespace}`;
           break;
         case 'hydrator' :
-          product.link = `/cask-hydrator/ns/${this.namespace}`;
+          product.link = `/hydrator/ns/${this.namespace}`;
           break;
         case 'tracker' :
-          product.link = `/cask-tracker/ns/${this.namespace}`;
+          product.link = `/tracker/ns/${this.namespace}`;
           break;
         default:
           break;

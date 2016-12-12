@@ -42,117 +42,11 @@ const schema = (state = defaultState, action = defaultAction) => {
   }
 };
 
-var initialFields = [
-    {
-        "name": "email",
-        "type": "string"
-    },
-    {
-        "name": "phone",
-        "type": "int"
-    },
-    {
-        "name": "age",
-        "type": "long"
-    },
-    {
-        "name": "addresses",
-        "type": {
-            "type": "array",
-            "items": "string"
-        }
-    },
-    {
-        "name": "userid",
-        "type": {
-            "type": "record",
-            "name": "a2b2e0a4c40984f5f852fc9ca3546c325",
-            "fields": [
-                {
-                    "name": "FK_USERID",
-                    "type": "string"
-                },
-                {
-                    "name": "FK_EMAIL",
-                    "type": "string"
-                }
-            ]
-        }
-    },
-    {
-        "name": "userpref",
-        "type": {
-            "type": "enum",
-            "symbols": [
-                "NOEMAIL",
-                "SOMEEMAIL",
-                "PROMOEMAIL"
-            ]
-        }
-    },
-    {
-        "name": "FK1",
-        "type": {
-            "type": "map",
-            "keys": {
-                "type": "map",
-                "keys": {
-                    "type": "array",
-                    "items": "string"
-                },
-                "values": {
-                    "type": "enum",
-                    "symbols": [
-                        "EANUM1"
-                    ]
-                }
-            },
-            "values": "string"
-        }
-    },
-    {
-        "name": "SOmeKey",
-        "type": {
-            "type": "array",
-            "items": {
-                "type": "array",
-                "items": {
-                    "type": "map",
-                    "keys": "string",
-                    "values": {
-                        "type": "record",
-                        "name": "a4c29a28e180043f49d41d3eff679506b",
-                        "fields": [
-                            {
-                                "name": "username",
-                                "type": "string"
-                            },
-                            {
-                                "name": "password",
-                                "type": "string"
-                            }
-                        ]
-                    }
-                }
-            }
-        }
-    }
-];
-
-var initialState = {
-  "schema": {
-    "name": "etlSchemabody",
-    "type": "record",
-    "fields": initialFields
-  }
-};
-
 let createStoreInstance = () => {
   return createStore(
     combineReducers({
       schema
     }),
-    initialState,
     window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
   );
 };

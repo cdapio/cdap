@@ -23,8 +23,10 @@ import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.MetaDataInfo;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.Closeable;
@@ -52,7 +54,7 @@ public interface ExploreClient extends Closeable {
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the enable operation.
    */
-  ListenableFuture<Void> enableExploreDataset(Id.DatasetInstance datasetInstance);
+  ListenableFuture<Void> enableExploreDataset(DatasetId datasetInstance);
 
   /**
    * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
@@ -63,7 +65,7 @@ public interface ExploreClient extends Closeable {
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the enable operation.
    */
-  ListenableFuture<Void> enableExploreDataset(Id.DatasetInstance datasetInstance, DatasetSpecification spec);
+  ListenableFuture<Void> enableExploreDataset(DatasetId datasetInstance, DatasetSpecification spec);
 
   /**
    * Updates ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
@@ -74,7 +76,7 @@ public interface ExploreClient extends Closeable {
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the update operation.
    */
-  ListenableFuture<Void> updateExploreDataset(Id.DatasetInstance datasetInstance,
+  ListenableFuture<Void> updateExploreDataset(DatasetId datasetInstance,
                                               DatasetSpecification oldSpec,
                                               DatasetSpecification newSpec);
 
@@ -85,7 +87,7 @@ public interface ExploreClient extends Closeable {
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the disable operation.
    */
-  ListenableFuture<Void> disableExploreDataset(Id.DatasetInstance datasetInstance);
+  ListenableFuture<Void> disableExploreDataset(DatasetId datasetInstance);
 
   /**
    * Enables ad-hoc exploration of the given stream.
@@ -96,7 +98,7 @@ public interface ExploreClient extends Closeable {
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the enable operation.
    */
-  ListenableFuture<Void> enableExploreStream(Id.Stream stream, String tableName, FormatSpecification format);
+  ListenableFuture<Void> enableExploreStream(StreamId stream, String tableName, FormatSpecification format);
 
   /**
    * Disable ad-hoc exploration of the given stream.
@@ -106,7 +108,7 @@ public interface ExploreClient extends Closeable {
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the enable operation.
    */
-  ListenableFuture<Void> disableExploreStream(Id.Stream stream, String tableName);
+  ListenableFuture<Void> disableExploreStream(StreamId stream, String tableName);
 
   /**
    * Add a partition to a dataset's table.
@@ -117,7 +119,7 @@ public interface ExploreClient extends Closeable {
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the operation.
    */
-  ListenableFuture<Void> addPartition(Id.DatasetInstance datasetInstance, PartitionKey key, String path);
+  ListenableFuture<Void> addPartition(DatasetId datasetInstance, PartitionKey key, String path);
 
   /**
    * Drop a partition from a dataset's table.
@@ -127,7 +129,7 @@ public interface ExploreClient extends Closeable {
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the operation.
    */
-  ListenableFuture<Void> dropPartition(Id.DatasetInstance datasetInstance, PartitionKey key);
+  ListenableFuture<Void> dropPartition(DatasetId datasetInstance, PartitionKey key);
 
   /**
    * Execute a Hive SQL statement asynchronously. The returned {@link ListenableFuture} can be used to get the
@@ -137,7 +139,7 @@ public interface ExploreClient extends Closeable {
    * @param statement SQL statement.
    * @return {@link ListenableFuture} eventually containing the results of the statement execution.
    */
-  ListenableFuture<ExploreExecutionResult> submit(Id.Namespace namespace, String statement);
+  ListenableFuture<ExploreExecutionResult> submit(NamespaceId namespace, String statement);
 
   ///// METADATA
 
@@ -262,5 +264,5 @@ public interface ExploreClient extends Closeable {
    * @param namespace namespace to delete.
    * @return {@link ListenableFuture} eventually deleting the namespace (database in Hive).
    */
-  ListenableFuture<ExploreExecutionResult> removeNamespace(Id.Namespace namespace);
+  ListenableFuture<ExploreExecutionResult> removeNamespace(NamespaceId namespace);
 }

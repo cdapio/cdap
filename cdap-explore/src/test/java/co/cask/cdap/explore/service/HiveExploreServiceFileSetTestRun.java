@@ -112,7 +112,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     // insert data into the table
 
     ExploreExecutionResult result = exploreClient.submit(
-      NAMESPACE_ID.toId(), String.format("insert into table %s values (1, 'samuel'), (2, 'dwayne')", tableName)).get();
+      NAMESPACE_ID, String.format("insert into table %s values (1, 'samuel'), (2, 'dwayne')", tableName)).get();
     result.close();
 
     // verify that we can query the key-values in the file with Hive

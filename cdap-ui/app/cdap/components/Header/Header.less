@@ -17,11 +17,10 @@
 @import "../../styles/variables.less";
 
 @navbar-brand-bg: #363945;
-@navbar-height: 50px;
 
 .cask-header {
   .navbar {
-    height: @navbar-height;
+    height: @height-of-header;
     background-color: @navbar-bg;
     color: white;
     border: 0;
@@ -45,8 +44,8 @@
     .menu-item,
     .navbar-item {
       display: inline-block;
-      line-height: @navbar-height;
-      height: @navbar-height;
+      line-height: @height-of-header;
+      height: @height-of-header;
       text-decoration: none;
     }
 
@@ -85,7 +84,7 @@
 
     .environment {
       display: inline-block;
-      line-height: @navbar-height;
+      line-height: @height-of-header;
       position: absolute;
       right: 335px;
       color: rgba(117, 117, 117, 0.7);

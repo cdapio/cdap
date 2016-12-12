@@ -90,6 +90,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Override
   protected Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
+    properties.put(ENTITY_NAME_KEY, dsInstance.getDataset());
     Map<String, String> datasetProperties = dsProperties.getProperties();
     if (dsType != null) {
       properties.put(TYPE, dsType);
@@ -98,10 +99,10 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
       properties.put(TTL_KEY, datasetProperties.get(Table.PROPERTY_TTL));
     }
     if (description != null) {
-      properties.put(DESCRIPTION, description);
+      properties.put(DESCRIPTION_KEY, description);
     }
     if (createTime > 0) {
-      properties.put(CREATION_TIME, String.valueOf(createTime));
+      properties.put(CREATION_TIME_KEY, String.valueOf(createTime));
     }
     return properties.build();
   }
@@ -109,7 +110,6 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Override
   protected String[] getSystemTagsToAdd() {
     List<String> tags = new ArrayList<>();
-    tags.add(dsInstance.getEntityName());
     if (dataset instanceof RecordScannable) {
       tags.add(EXPLORE_TAG);
     }

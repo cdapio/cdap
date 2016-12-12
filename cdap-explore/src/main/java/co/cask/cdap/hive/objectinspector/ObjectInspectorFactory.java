@@ -140,14 +140,14 @@ public final class ObjectInspectorFactory {
     objectInspectorCache.put(t, oi);
     Field[] fields = ObjectInspectorUtils.getDeclaredNonStaticFields(c);
     List<ObjectInspector> structFieldObjectInspectors = new ArrayList<>(fields.length);
-    for (int i = 0; i < fields.length; i++) {
+    for (Field field : fields) {
       // Exclude transient fields and synthetic fields. The latter has the effect of excluding the implicit
       // "this" pointer present in nested classes and that references the parent.
-      if (Modifier.isTransient(fields[i].getModifiers()) || fields[i].isSynthetic()) {
+      if (Modifier.isTransient(field.getModifiers()) || field.isSynthetic()) {
         continue;
       }
-      if (!oi.shouldIgnoreField(fields[i].getName())) {
-        Type newType = fields[i].getGenericType();
+      if (!oi.shouldIgnoreField(field.getName())) {
+        Type newType = field.getGenericType();
         if (newType instanceof TypeVariable) {
           Preconditions.checkNotNull(genericTypes, "Type was not recognized as a parameterized type.");
           Preconditions.checkNotNull(genericTypes.get(newType),

@@ -23,7 +23,6 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -60,7 +59,7 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
         String flowId = programIdParts[1];
         String flowletName = programIdParts[2];
         FlowletId flowlet = appId.flow(flowId).flowlet(flowletName);
-        instances = programClient.getFlowletInstances(flowlet.toId());
+        instances = programClient.getFlowletInstances(flowlet);
         break;
       case WORKER:
         if (programIdParts.length < 2)  {
@@ -68,14 +67,14 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
         }
         String workerId = programIdParts[1];
         ProgramId worker = appId.worker(workerId);
-        instances = programClient.getWorkerInstances(Id.Worker.from(worker.getParent().toId(), workerId));
+        instances = programClient.getWorkerInstances(worker);
         break;
       case SERVICE:
         if (programIdParts.length < 2) {
           throw new CommandInputError(this);
         }
         String serviceName = programIdParts[1];
-        instances = programClient.getServiceInstances(appId.service(serviceName).toId());
+        instances = programClient.getServiceInstances(appId.service(serviceName));
         break;
       default:
         // TODO: remove this

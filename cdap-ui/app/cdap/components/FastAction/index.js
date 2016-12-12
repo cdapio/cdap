@@ -15,9 +15,11 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import DeleteAction from './DeleteAction';
-import TruncateAction from './TruncateAction';
-import StartStopAction from './StartStopAction';
+import DeleteAction from 'components/FastAction/DeleteAction';
+import TruncateAction from 'components/FastAction/TruncateAction';
+import StartStopAction from 'components/FastAction/StartStopAction';
+import ExploreAction from 'components/FastAction/ExploreAction';
+import SendEventAction from 'components/FastAction/SendEventAction';
 
 export default class FastAction extends Component {
   constructor(props) {
@@ -50,6 +52,19 @@ export default class FastAction extends Component {
             onSuccess={this.props.onSuccess}
           />
         );
+      case 'explore':
+        return (
+          <ExploreAction
+            entity={this.props.entity}
+          />
+        );
+      case 'sendEvents':
+        return (
+          <SendEventAction
+            entity={this.props.entity}
+            onSuccess={this.props.onSuccess}
+          />
+        );
     }
   }
 
@@ -59,7 +74,7 @@ export default class FastAction extends Component {
 }
 
 FastAction.propTypes = {
-  type: PropTypes.oneOf(['delete', 'truncate', 'startStop']),
+  type: PropTypes.oneOf(['delete', 'truncate', 'startStop', 'sendEvents', 'explore']),
   entity: PropTypes.object,
   onSuccess: PropTypes.func
 };

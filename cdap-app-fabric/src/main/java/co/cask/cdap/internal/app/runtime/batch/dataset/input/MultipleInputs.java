@@ -65,7 +65,7 @@ public final class MultipleInputs {
     map.put(namedInput, new MapperInput(inputFormatClass, inputConfigs, mapperClass));
     conf.set(INPUT_CONFIGS, GSON.toJson(map));
 
-    job.setInputFormatClass(DelegatingInputFormat.class);
+    job.setInputFormatClass(MultiInputFormat.class);
   }
 
   /**

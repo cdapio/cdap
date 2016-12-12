@@ -57,9 +57,9 @@ public class ListArtifactPluginsCommand extends AbstractAuthCommand {
     final List<PluginSummary> pluginSummaries;
     String scopeStr = arguments.getOptional(ArgumentName.SCOPE.toString());
     if (scopeStr == null) {
-      pluginSummaries = artifactClient.getPluginSummaries(artifactId.toId(), pluginType);
+      pluginSummaries = artifactClient.getPluginSummaries(artifactId, pluginType);
     } else {
-      pluginSummaries = artifactClient.getPluginSummaries(artifactId.toId(), pluginType,
+      pluginSummaries = artifactClient.getPluginSummaries(artifactId, pluginType,
         ArtifactScope.valueOf(scopeStr.toUpperCase()));
     }
     Table table = Table.builder()

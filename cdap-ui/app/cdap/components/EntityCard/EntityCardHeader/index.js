@@ -44,7 +44,10 @@ export default class EntityCardHeader extends Component {
 
   render() {
     return (
-      <div className={classnames("entity-card-header", this.props.className)}>
+      <div
+        onClick={this.props.onClick}
+        className={classnames("entity-card-header", this.props.className)}
+      >
         <h4>
           <span className={classNames('entity-icon', this.props.entity.icon)}></span>
           <span className="entity-type">
@@ -63,5 +66,6 @@ EntityCardHeader.defaultProps = {
 EntityCardHeader.propTypes = {
   entity: PropTypes.object,
   systemTags: PropTypes.array,
-  className: PropTypes.string
+  className: PropTypes.string,
+  onClick: PropTypes.func
 };

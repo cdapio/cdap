@@ -83,8 +83,8 @@ public class UnionStructObjectInspector extends StructObjectInspector {
     this.unionObjectInspectors = unionObjectInspectors;
 
     int totalSize = 0;
-    for (int i = 0; i < unionObjectInspectors.size(); i++) {
-      totalSize += unionObjectInspectors.get(i).getAllStructFieldRefs().size();
+    for (StructObjectInspector structObjectInspector : unionObjectInspectors) {
+      totalSize += structObjectInspector.getAllStructFieldRefs().size();
     }
 
     fields = new ArrayList<>(totalSize);

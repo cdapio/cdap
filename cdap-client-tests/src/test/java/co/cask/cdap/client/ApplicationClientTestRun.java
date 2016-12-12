@@ -30,11 +30,13 @@ import co.cask.cdap.common.DatasetNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -80,16 +82,14 @@ public class ApplicationClientTestRun extends ClientTestBase {
     // Delete FakeApp's dataset and module so that DatasetClientTestRun works when running both inside a test suite
     // This is due to DatasetClientTestRun assuming that it is using a blank CDAP instance
 
-    Id.Namespace namespace = Id.Namespace.DEFAULT;
-
     try {
-      datasetClient.delete(Id.DatasetInstance.from(namespace, FakeApp.DS_NAME));
+      datasetClient.delete(NamespaceId.DEFAULT.dataset(FakeApp.DS_NAME));
     } catch (DatasetNotFoundException e) {
       // NO-OP
     }
 
     try {
-      datasetModuleClient.delete(Id.DatasetModule.from(namespace, FakeDatasetModule.NAME));
+      datasetModuleClient.delete(NamespaceId.DEFAULT.datasetModule(FakeDatasetModule.NAME));
     } catch (DatasetModuleNotFoundException e) {
       // NO-OP
     }
@@ -97,22 +97,22 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
   @Test(expected = IOException.class)
   public void testInvalidAppConfig() throws Exception {
-    Id.Application appid = Id.Application.from(Id.Namespace.DEFAULT, ConfigTestApp.NAME);
-    appClient.deploy(appid.getNamespace(),
+    ApplicationId appid = NamespaceId.DEFAULT.app(ConfigTestApp.NAME);
+    appClient.deploy(appid.getParent(),
                      createAppJarFile(ConfigTestApp.class, ConfigTestApp.NAME, "1.0.0-SNAPSHOT"), "adad");
   }
 
   @Test
   public void testAll() throws Exception {
-    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
+    ApplicationId app = NamespaceId.DEFAULT.app(FakeApp.NAME);
 
-    Assert.assertEquals(0, appClient.list(Id.Namespace.DEFAULT).size());
+    Assert.assertEquals(0, appClient.list(NamespaceId.DEFAULT).size());
 
     // deploy app
     LOG.info("Deploying app");
-    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(FakeApp.class, FakeApp.NAME, "1.0.0-SNAPSHOT"));
+    appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class, FakeApp.NAME, "1.0.0-SNAPSHOT"));
     appClient.waitForDeployed(app, 30, TimeUnit.SECONDS);
-    Assert.assertEquals(1, appClient.list(Id.Namespace.DEFAULT).size());
+    Assert.assertEquals(1, appClient.list(NamespaceId.DEFAULT).size());
 
     try {
       // check program list
@@ -128,12 +128,12 @@ public class ApplicationClientTestRun extends ClientTestBase {
       verifyProgramNames(FakeApp.WORKFLOWS, appClient.listPrograms(app, ProgramType.WORKFLOW));
       verifyProgramNames(FakeApp.SERVICES, appClient.listPrograms(app, ProgramType.SERVICE));
 
-      verifyProgramNames(FakeApp.FLOWS, appClient.listAllPrograms(Id.Namespace.DEFAULT, ProgramType.FLOW));
-      verifyProgramNames(FakeApp.MAPREDUCES, appClient.listAllPrograms(Id.Namespace.DEFAULT, ProgramType.MAPREDUCE));
-      verifyProgramNames(FakeApp.WORKFLOWS, appClient.listAllPrograms(Id.Namespace.DEFAULT, ProgramType.WORKFLOW));
-      verifyProgramNames(FakeApp.SERVICES, appClient.listAllPrograms(Id.Namespace.DEFAULT, ProgramType.SERVICE));
+      verifyProgramNames(FakeApp.FLOWS, appClient.listAllPrograms(NamespaceId.DEFAULT, ProgramType.FLOW));
+      verifyProgramNames(FakeApp.MAPREDUCES, appClient.listAllPrograms(NamespaceId.DEFAULT, ProgramType.MAPREDUCE));
+      verifyProgramNames(FakeApp.WORKFLOWS, appClient.listAllPrograms(NamespaceId.DEFAULT, ProgramType.WORKFLOW));
+      verifyProgramNames(FakeApp.SERVICES, appClient.listAllPrograms(NamespaceId.DEFAULT, ProgramType.SERVICE));
 
-      verifyProgramRecords(FakeApp.ALL_PROGRAMS, appClient.listAllPrograms(Id.Namespace.DEFAULT));
+      verifyProgramRecords(FakeApp.ALL_PROGRAMS, appClient.listAllPrograms(NamespaceId.DEFAULT));
 
       ApplicationDetail appDetail = appClient.get(app);
       ArtifactSummary expected = new ArtifactSummary(FakeApp.NAME, "1.0.0-SNAPSHOT");
@@ -143,37 +143,37 @@ public class ApplicationClientTestRun extends ClientTestBase {
       LOG.info("Deleting app");
       appClient.delete(app);
       appClient.waitForDeleted(app, 30, TimeUnit.SECONDS);
-      Assert.assertEquals(0, appClient.list(Id.Namespace.DEFAULT).size());
+      Assert.assertEquals(0, appClient.list(NamespaceId.DEFAULT).size());
     }
   }
 
   @Test
   public void testAppConfig() throws Exception {
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("testStream", "testDataset");
-    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(ConfigTestApp.class), config);
-    Assert.assertEquals(1, appClient.list(Id.Namespace.DEFAULT).size());
+    appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(ConfigTestApp.class), config);
+    Assert.assertEquals(1, appClient.list(NamespaceId.DEFAULT).size());
 
-    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, ConfigTestApp.NAME);
+    ApplicationId app = NamespaceId.DEFAULT.app(ConfigTestApp.NAME);
     try {
       appClient.exists(app);
     } finally {
       appClient.delete(app);
       appClient.waitForDeleted(app, 30, TimeUnit.SECONDS);
-      Assert.assertEquals(0, appClient.list(Id.Namespace.DEFAULT).size());
+      Assert.assertEquals(0, appClient.list(NamespaceId.DEFAULT).size());
     }
   }
 
   @Test
   public void testAppUpdate() throws Exception {
     String artifactName = "cfg-programs";
-    Id.Artifact artifactIdV1 = Id.Artifact.from(Id.Namespace.DEFAULT, artifactName, "1.0.0");
-    Id.Artifact artifactIdV2 = Id.Artifact.from(Id.Namespace.DEFAULT, artifactName, "2.0.0");
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ProgramsApp");
+    ArtifactId artifactIdV1 = NamespaceId.DEFAULT.artifact(artifactName, "1.0.0");
+    ArtifactId artifactIdV2 = NamespaceId.DEFAULT.artifact(artifactName, "2.0.0");
+    ApplicationId appId = NamespaceId.DEFAULT.app("ProgramsApp");
 
-    artifactClient.add(Id.Namespace.DEFAULT, artifactName,
+    artifactClient.add(NamespaceId.DEFAULT, artifactName,
       Files.newInputStreamSupplier(createAppJarFile(ConfigurableProgramsApp.class)),
       "1.0.0");
-    artifactClient.add(Id.Namespace.DEFAULT, artifactName,
+    artifactClient.add(NamespaceId.DEFAULT, artifactName,
       Files.newInputStreamSupplier(createAppJarFile(ConfigurableProgramsApp2.class)),
       "2.0.0");
 
@@ -182,7 +182,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
       ConfigurableProgramsApp.Programs conf =
         new ConfigurableProgramsApp.Programs(null, "worker1", "stream1", "dataset1");
       AppRequest<ConfigurableProgramsApp.Programs> request = new AppRequest<>(
-        new ArtifactSummary(artifactIdV1.getName(), artifactIdV1.getVersion().getVersion()), conf);
+        new ArtifactSummary(artifactIdV1.getArtifact(), artifactIdV1.getVersion()), conf);
       appClient.deploy(appId, request);
 
       // should only have the worker
@@ -192,7 +192,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
       // update to use just the flow
       conf = new ConfigurableProgramsApp.Programs("flow1", null, "stream1", "dataset1");
       request = new AppRequest<>(
-        new ArtifactSummary(artifactIdV1.getName(), artifactIdV1.getVersion().getVersion()), conf);
+        new ArtifactSummary(artifactIdV1.getArtifact(), artifactIdV1.getVersion()), conf);
       appClient.update(appId, request);
 
       // should only have the flow
@@ -201,7 +201,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
       // check nonexistent app is not found
       try {
-        appClient.update(Id.Application.from(Id.Namespace.DEFAULT, "ghost"), request);
+        appClient.update(NamespaceId.DEFAULT.app("ghost"), request);
         Assert.fail();
       } catch (NotFoundException e) {
         // expected
@@ -209,7 +209,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
       // check different artifact name is invalid
       request = new AppRequest<>(
-        new ArtifactSummary("ghost", artifactIdV1.getVersion().getVersion()), conf);
+        new ArtifactSummary("ghost", artifactIdV1.getVersion()), conf);
       try {
         appClient.update(appId, request);
         Assert.fail();
@@ -219,7 +219,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
       // check nonexistent artifact is not found
       request = new AppRequest<>(
-        new ArtifactSummary(artifactIdV1.getName(), "0.0.1"), conf);
+        new ArtifactSummary(artifactIdV1.getArtifact(), "0.0.1"), conf);
       try {
         appClient.update(appId, request);
         Assert.fail();
@@ -231,7 +231,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
       ConfigurableProgramsApp2.Programs conf2 =
         new ConfigurableProgramsApp2.Programs(null, null, "stream1", "dataset1", "service2");
       AppRequest<ConfigurableProgramsApp2.Programs> request2 = new AppRequest<>(
-        new ArtifactSummary(artifactIdV2.getName(), artifactIdV2.getVersion().getVersion()), conf2);
+        new ArtifactSummary(artifactIdV2.getArtifact(), artifactIdV2.getVersion()), conf2);
       appClient.update(appId, request2);
 
       // should only have a single service
@@ -248,15 +248,15 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
   @Test
   public void testArtifactFilter() throws Exception {
-    Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
-    Id.Application appId2 = Id.Application.from(Id.Namespace.DEFAULT, "fake2");
-    Id.Application appId3 = Id.Application.from(Id.Namespace.DEFAULT, "fake3");
+    ApplicationId appId1 = NamespaceId.DEFAULT.app(FakeApp.NAME);
+    ApplicationId appId2 = NamespaceId.DEFAULT.app("fake2");
+    ApplicationId appId3 = NamespaceId.DEFAULT.app("fake3");
     try {
       // app1 should use fake-1.0.0-SNAPSHOT
-      appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(FakeApp.class, "otherfake", "1.0.0-SNAPSHOT"));
-      appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(FakeApp.class, "fake", "0.1.0-SNAPSHOT"));
+      appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class, "otherfake", "1.0.0-SNAPSHOT"));
+      appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class, "fake", "0.1.0-SNAPSHOT"));
       // app1 should end up with fake-1.0.0-SNAPSHOT
-      appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(FakeApp.class, "fake", "1.0.0-SNAPSHOT"));
+      appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class, "fake", "1.0.0-SNAPSHOT"));
       // app2 should use fake-0.1.0-SNAPSHOT
       appClient.deploy(appId2, new AppRequest<Config>(new ArtifactSummary("fake", "0.1.0-SNAPSHOT")));
       // app3 should use otherfake-1.0.0-SNAPSHOT
@@ -267,68 +267,68 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
       // check calls that should return nothing
       // these don't match anything
-      Assert.assertTrue(appClient.list(Id.Namespace.DEFAULT, "ghost", null).isEmpty());
-      Assert.assertTrue(appClient.list(Id.Namespace.DEFAULT, (String) null, "1.0.0").isEmpty());
-      Assert.assertTrue(appClient.list(Id.Namespace.DEFAULT, "ghost", "1.0.0").isEmpty());
+      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, "ghost", null).isEmpty());
+      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, (String) null, "1.0.0").isEmpty());
+      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, "ghost", "1.0.0").isEmpty());
       // these match one but not the other
-      Assert.assertTrue(appClient.list(Id.Namespace.DEFAULT, "otherfake", "0.1.0-SNAPSHOT").isEmpty());
-      Assert.assertTrue(appClient.list(Id.Namespace.DEFAULT, "fake", "1.0.0").isEmpty());
+      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, "otherfake", "0.1.0-SNAPSHOT").isEmpty());
+      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, "fake", "1.0.0").isEmpty());
 
       // check filter by name only
-      Set<ApplicationRecord> apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, "fake", null));
+      Set<ApplicationRecord> apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "fake", null));
       Set<ApplicationRecord> expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.toEntityId(), ""),
-        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.toEntityId(), "")
+        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1, ""),
+        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2, "")
       );
       Assert.assertEquals(expected, apps);
 
-      apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, "otherfake", null));
+      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "otherfake", null));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.toEntityId(), ""));
+        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3, ""));
       Assert.assertEquals(expected, apps);
 
       // check filter by multiple names
-      apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, ImmutableSet.of("fake", "otherfake"), null));
+      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, ImmutableSet.of("fake", "otherfake"), null));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.toEntityId(), ""),
-        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.toEntityId(), ""),
-        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.toEntityId(), ""));
+        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3, ""),
+        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1, ""),
+        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2, ""));
       Assert.assertEquals(expected, apps);
 
       // check filter by version only
-      apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, (String) null, "0.1.0-SNAPSHOT"));
+      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, (String) null, "0.1.0-SNAPSHOT"));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.toEntityId(), "")
+        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2, "")
       );
       Assert.assertEquals(expected, apps);
 
-      apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, (String) null, "1.0.0-SNAPSHOT"));
+      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, (String) null, "1.0.0-SNAPSHOT"));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.toEntityId(), ""),
-        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.toEntityId(), "")
+        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1, ""),
+        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3, "")
       );
       Assert.assertEquals(expected, apps);
 
       // check filter by both
-      apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, "fake", "0.1.0-SNAPSHOT"));
+      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "fake", "0.1.0-SNAPSHOT"));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.toEntityId(), "")
+        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2, "")
       );
       Assert.assertEquals(expected, apps);
     } finally {
-      appClient.deleteAll(Id.Namespace.DEFAULT);
+      appClient.deleteAll(NamespaceId.DEFAULT);
       appClient.waitForDeleted(appId1, 30, TimeUnit.SECONDS);
       appClient.waitForDeleted(appId2, 30, TimeUnit.SECONDS);
       appClient.waitForDeleted(appId3, 30, TimeUnit.SECONDS);
-      Assert.assertEquals(0, appClient.list(Id.Namespace.DEFAULT).size());
+      Assert.assertEquals(0, appClient.list(NamespaceId.DEFAULT).size());
     }
   }
 
   @Test
   public void testDeleteAll() throws Exception {
-    Id.Namespace namespace = Id.Namespace.DEFAULT;
-    Id.Application app = Id.Application.from(namespace, FakeApp.NAME);
-    Id.Application app2 = Id.Application.from(namespace, AppReturnsArgs.NAME);
+    NamespaceId namespace = NamespaceId.DEFAULT;
+    ApplicationId app = namespace.app(FakeApp.NAME);
+    ApplicationId app2 = namespace.app(AppReturnsArgs.NAME);
 
     Assert.assertEquals(0, appClient.list(namespace).size());
 

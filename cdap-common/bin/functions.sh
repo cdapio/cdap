@@ -617,7 +617,7 @@ cdap_start_java() {
       __defines+=" -Djava.library.path=${JAVA_LIBRARY_PATH}"
     fi
     __startup_checks=${CDAP_STARTUP_CHECKS:-$(cdap_get_conf "master.startup.checks.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
-    if [[ {__startup_checks} == true ]]; then
+    if [[ ${__startup_checks} == true ]]; then
       logecho "$(date) Running CDAP Master startup checks -- this may take a few minutes"
       "${JAVA}" ${JAVA_HEAPMAX} ${__explore} ${OPTS} -cp ${CLASSPATH} co.cask.cdap.master.startup.MasterStartupTool </dev/null >>${__logfile} 2>&1
       if [ $? -ne 0 ]; then
