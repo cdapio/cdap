@@ -33,7 +33,8 @@
     without any side effects. Moving forward once we have everything in react we should use this
     as a proper utility function in es6 module system.
 */
-window.getAbsUIUrl = function(navigationObj = {}) {
+window.getAbsUIUrl = function(navigationObj) {
+  navigationObj = navigationObj || {};
   var uiApp = navigationObj.uiApp || 'cdap',
       redirectUrl = navigationObj.navigationObj,
       clientId = navigationObj.clientId,
@@ -42,31 +43,32 @@ window.getAbsUIUrl = function(navigationObj = {}) {
       entityType = navigationObj.entityType,
       entityId = navigationObj.entityId,
       runId = navigationObj.runId;
-  var baseUrl = `${location.protocol}//${location.host}/${uiApp}`;
+  var baseUrl = location.protocol + '//' + location.host + '/' + uiApp;
   if (uiApp === 'login') {
-    baseUrl += `?`;
+    baseUrl += '?';
   }
   if (redirectUrl) {
-    baseUrl += `redirectUrl=${encodeURIComponent(redirectUrl)}`;
+    baseUrl += 'redirectUrl=' + encodeURIComponent(redirectUrl);
   }
   if (clientId) {
-    baseUrl += `&clientId=${clientId}`;
+    baseUrl += '&clientId=' + clientId;
   }
   if (namespaceId) {
-    baseUrl += `/ns/${namespaceId}`;
+    baseUrl += '/ns/' + namespaceId;
   }
   if (appId) {
-    baseUrl += `/apps/${appId}`;
+    baseUrl += '/apps/' + appId;
   }
   if (entityType && entityId) {
-    baseUrl += `/${entityType}/${entityId}`;
+    baseUrl += '/' + entityType + '/' + entityId;
   }
   if (runId) {
-    baseUrl += `/runs/${runId}`;
+    baseUrl += '/' + runs + '/' + runId;
   }
   return baseUrl;
 };
-function buildCustomUrl(url, params = {}) {
+function buildCustomUrl(url, params) {
+  params = params || {};
   var queryParams = {};
   const regUrlFn = function(val, match, p1) {
     return val + p1;
@@ -90,7 +92,8 @@ function buildCustomUrl(url, params = {}) {
 
   return url;
 }
-function addCustomQueryParams(url, params = {}) {
+function addCustomQueryParams(url, params) {
+  params = params || {};
   if (!params) {
     return url;
   }
@@ -98,7 +101,7 @@ function addCustomQueryParams(url, params = {}) {
 
   function forEachSorted(obj, iterator, context) {
     var keys = Object.keys(params).sort();
-    keys.forEach((key) => {
+    keys.forEach(function(key) {
       iterator.call(context, obj[key], key);
     });
     return keys;
@@ -122,7 +125,7 @@ function addCustomQueryParams(url, params = {}) {
       value = [value];
     }
 
-    value.forEach((v) => {
+    value.forEach(function(v) {
       if (typeof v === 'object' && v !== null) {
         if (value.toString() === '[object Date]') {
           v = v.toISOString();
@@ -139,12 +142,13 @@ function addCustomQueryParams(url, params = {}) {
   return url;
 }
 
-window.getTrackerUrl = function(navigationObj = {}) {
+window.getTrackerUrl = function(navigationObj) {
+  navigationObj = navigationObj || {};
   var stateName, stateParams;
   stateName = navigationObj.stateName;
   stateParams = navigationObj.stateParams;
   var uiApp = 'tracker';
-  var baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
+  var baseUrl = location.protocol + '//' + location.host + '/' + uiApp + '/ns/:namespace';
   var stateToUrlMap = {
     'tracker': '',
     'tracker.detail': '',
@@ -155,12 +159,13 @@ window.getTrackerUrl = function(navigationObj = {}) {
   url = buildCustomUrl(url, stateParams);
   return url;
 };
-window.getHydratorUrl = function(navigationObj = {}) {
+window.getHydratorUrl = function(navigationObj) {
+  navigationObj = navigationObj || {};
   var stateName, stateParams;
   stateName = navigationObj.stateName;
   stateParams = navigationObj.stateParams;
   var uiApp = 'hydrator';
-  var baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
+  var baseUrl = location.protocol + '//' + location.host + '/' + uiApp + '/ns/:namespace';
   var stateToUrlMap = {
     'hydrator': '',
     'hydrator.create': '/studio',
