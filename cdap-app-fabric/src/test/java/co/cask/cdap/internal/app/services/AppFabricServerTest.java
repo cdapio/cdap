@@ -90,7 +90,7 @@ public class AppFabricServerTest {
     });
     Discoverable discoverable = endpointStrategySupplier.get().pick(3, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
-    Assert.assertArrayEquals(Constants.Security.SSL_DISCOVERABLE_KEY.getBytes(), discoverable.getPayload());
+    Assert.assertArrayEquals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload());
     InetSocketAddress addr = discoverable.getSocketAddress();
     // Since the server uses a self signed certificate we need a client that trusts all certificates
     SSLSocket socket = (SSLSocket) LDAPLoginModule.TrustAllSSLSocketFactory.getDefault()

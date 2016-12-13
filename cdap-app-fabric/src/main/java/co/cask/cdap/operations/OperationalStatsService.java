@@ -78,7 +78,7 @@ public class OperationalStatsService extends AbstractScheduledService {
                  OperationalStats.class.getName());
         continue;
       }
-      LOG.debug("Registering operational extension: {}", entry.getValue());
+      LOG.debug("Registering operational extension: {}; extension id: {}", entry.getValue(), entry.getKey());
       // register MBean
       mbs.registerMBean(entry.getValue(), objectName);
     }

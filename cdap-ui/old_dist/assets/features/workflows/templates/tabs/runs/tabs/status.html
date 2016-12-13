@@ -1,0 +1,94 @@
+
+
+<div class="sr-only" id="sidepanel-anchor"></div>
+<div ng-controller="WorkflowsRunsStatusController as StatusController">
+  <my-workflow-graph data-model="StatusController.data" data-on-change-flag="StatusController.onChangeFlag" data-click-context="StatusController" data-click="StatusController.workflowProgramClick" data-token-click="StatusController.workflowTokenClick" data-workflow-status="StatusController.runStatus"></my-workflow-graph>
+
+
+  <my-pageslide open="StatusController.showSidepanel" width="600">
+    <div class="left-column" ng-class="{ 'hidden': !StatusController.showSidepanel }" ng-click="StatusController.showSidepanel = !StatusController.showSidepanel">
+      <h3 class="vertical">
+        <span class="fa fa-angle-double-up"></span>
+        <span class="token-title">WORKFLOW TOKEN</span>
+      </h3>
+    </div>
+
+    <div class="right-column" ng-if="StatusController.showSidepanel">
+
+      <div class="sidepanel" ng-if="StatusController.showSidepanel && StatusController.selectedNode">
+        <div class="sidepanel-heading">
+          <h3>{{ StatusController.selectedNode }}</h3>
+        </div>
+
+        <div class="sidepanel-tabs">
+          <div class="btn-group btn-group-justified">
+            <a class="btn btn-default" ng-class="{'active': StatusController.activeTab === 0}" ng-click="StatusController.activeTab = 0">
+              User
+            </a>
+            <a class="btn btn-default" ng-class="{'active': StatusController.activeTab === 1}" ng-click="StatusController.activeTab = 1">
+              System
+            </a>
+          </div>
+
+          <div class="tab-content" ng-if="StatusController.activeTab === 0">
+            <div ng-if="StatusController.usertokens.length > 0">
+              <table class="table table-bordered" cask-sortable>
+                <thead>
+                  <tr ng-class="{'sort-enabled': StatusController.usertokens.length > 0}">
+                    <th data-predicate="key">Key</th>
+                    <th data-predicate="value">Value</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr ng-repeat="token in StatusController.usertokens | orderBy:sortable.predicate:sortable.reverse">
+                    <td>{{ token.key }}</td>
+                    <td>{{ token.value }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="well text-center" ng-if="StatusController.usertokens.length === 0">
+              <h4>No token data</h4>
+            </div>
+          </div>
+
+          <div class="tab-content" ng-if="StatusController.activeTab === 1">
+            <div ng-if="StatusController.systemtokens.length > 0">
+              <table class="table table-bordered" cask-sortable>
+                <thead>
+                  <tr ng-class="{'sort-enabled': StatusController.systemtokens.length > 0}">
+                    <th data-predicate="key">Key</th>
+                    <th data-predicate="value">Value</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr ng-repeat="token in StatusController.systemtokens | orderBy:sortable.predicate:sortable.reverse">
+                    <td>{{ token.key }}</td>
+                    <td>{{ token.value }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="well text-center" ng-if="StatusController.systemtokens.length === 0">
+              <h4>No token data</h4>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+
+      <div class="sidepanel" ng-if="!StatusController.selectedNode">
+        <div class="sidepanel-heading text-center" ng-if="StatusController.showSidepanel">
+          <h3>No workflow node selected</h3>
+        </div>
+      </div>
+    </div>
+
+  </my-pageslide>
+
+</div>

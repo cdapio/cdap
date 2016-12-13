@@ -39,6 +39,7 @@ const defaultAction = {
 const defaultInitialState = {
   wrangler: {
     headersList: [],
+    initialHeaders: [],
     originalData: [],
     data: [],
     errors: {},
@@ -192,6 +193,7 @@ const visualization = (state = defaultInitialState.visualization, action = defau
 
 function _setData(payload) {
   const headersList = Object.keys(payload.data[0]);
+  const initialHeaders = Object.keys(payload.data[0]);
   const data = payload.data;
   const originalData = cloneDeep(data);
 
@@ -209,6 +211,7 @@ function _setData(payload) {
 
   return {
     data,
+    initialHeaders,
     originalData,
     headersList,
     errors,

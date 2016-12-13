@@ -19,6 +19,8 @@ Properties
 
 **deleteInputOnSuccess:** Whether to delete the data read if the pipeline run succeeded. Defaults to false.
 
+**files:** A comma separated list of files in the FileSet to read. Macro enabled.
+
 Example
 -------
 
@@ -29,10 +31,9 @@ This example reads from a FileSet named 'users' and deletes the data it read if 
         "type": "batchsource",
         "properties": {
             "fileSetName": "users",
-            "deleteInputOnSuccess": "true"
+            "deleteInputOnSuccess": "true",
+            "files": "${inputFiles}"
         }
     }
 
-In order to properly read from the FileSet, the runtime argument 'dataset.<name>.input.paths' should be set.
-In the example above, setting 'dataset.users.output.path' to 'run10' will configure the pipeline run to read from
-to the 'run10' directory in the FileSet.
+Before running the pipeline, the 'inputFiles' runtime argument must be specified.

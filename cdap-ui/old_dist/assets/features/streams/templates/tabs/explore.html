@@ -1,0 +1,69 @@
+ 
+
+<section class="panel-group explore" ng-model="ExploreController.activePanel" data-allow-multiple="true" bs-collapse>
+
+  
+  <div class="panel panel-explore">
+    <div class="panel-heading" bs-collapse-toggle>
+      <h3 class="panel-title">
+        <span ng-class="{'fa-chevron-right': ExploreController.activePanel.indexOf(0) === -1,
+                     'fa-chevron-down': ExploreController.activePanel.indexOf(0) !== -1}" class="fa fa-fw"></span>View Data
+      </h3>
+    </div>
+    <div class="panel-collapse" bs-collapse-target>
+      <div class="panel-body">
+
+        <form ng-submit="ExploreController.doEventSearch()">
+          <div class="row">
+            <div class="col-xs-4">
+              <my-timestamp-picker data-label="From:" ng-model="ExploreController.eventSearch.startMs"></my-timestamp-picker>
+
+            </div>
+            <div class="col-xs-4">
+              <my-timestamp-picker data-label="To:" ng-model="ExploreController.eventSearch.endMs"></my-timestamp-picker>
+            </div>
+            <div class="col-xs-2">
+              <div class="input-group">
+                <label class="input-group-addon" for="exploreEventsLimit">Limit</label>
+                <input type="number" class="form-control" id="exploreEventsLimit" ng-model="ExploreController.eventSearch.limit" min="1" max="100">
+              </div>
+            </div>
+            <div class="col-xs-2">
+              <button class="btn btn-default btn-block" type="submit">
+                <span class="fa fa-search"></span>
+                Find events
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <table class="table" ng-if="ExploreController.eventSearch.results.length">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Event Time</th>
+              <th>Body</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="event in ExploreController.eventSearch.results | orderBy:'-timestamp'">
+              <td>
+                {{event.timestamp | amDateFormat: 'MM/DD/YY h:mm:ss a'}}
+              </td>
+              <td>{{event.timestamp | amTimeAgo}}</td>
+              <td>{{event.body | myEllipsis: 80 }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p ng-hide="ExploreController.eventSearch.results.length">
+          (no events)
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <my-explore data-type="'stream'" data-name="ExploreController.name">
+  </my-explore>
+
+
+</section>

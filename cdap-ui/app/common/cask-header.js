@@ -19,4 +19,5 @@
  var HeaderActions = require('../cdap/components/HeaderActions').default;
  var HeaderBrand = require('../cdap/components/HeaderBrand').default;
  var Store = require('../cdap/services/NamespaceStore').default;
- export {Store, HeaderBrand, HeaderActions};
+ var Wrangler = require('../wrangler/components/Wrangler').default;
+ export {Store, HeaderBrand, HeaderActions, Wrangler};

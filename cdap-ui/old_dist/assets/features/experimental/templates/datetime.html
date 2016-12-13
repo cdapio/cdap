@@ -1,0 +1,10 @@
+
+
+<div>
+  <my-datetime-range date-range="dateObj" on-done="test()"></my-datetime-range>
+</div>
+
+<div>
+  <pre>Start: {{ dateObj.startTime | amDateFormat:'MM/DD/YYYY  h:mm:ss a' }}</pre>
+  <pre>End: {{ dateObj.endTime | amDateFormat:'MM/DD/YYYY  h:mm:ss a' }}</pre>
+</div>

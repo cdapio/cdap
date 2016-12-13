@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import com.google.common.base.Charsets;
 import com.google.inject.Inject;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 
 /**
  * Client to make calls to workflow http service and return the status.
@@ -66,7 +68,9 @@ public class WorkflowClient {
     // make HTTP call to workflow service.
     InetSocketAddress endpoint = discoverable.getSocketAddress();
     // Construct request
-    String url = String.format("http://%s:%d/status", endpoint.getHostName(), endpoint.getPort());
+    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
+      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
+    String url = String.format("%s%s:%d/status", scheme, endpoint.getHostName(), endpoint.getPort());
     Request workflowRequest = new RequestBuilder("GET").setUrl(url).build();
 
     httpClient.executeRequest(workflowRequest, new AsyncCompletionHandler<Void>() {

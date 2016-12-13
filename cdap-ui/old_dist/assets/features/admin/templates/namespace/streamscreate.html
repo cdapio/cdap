@@ -1,0 +1,35 @@
+
+
+<div class="modal-header clearfix">
+    <h3 class="modal-title pull-left">Create a Stream</h3>
+    <a class="btn pull-right" ng-click="closeModal()">
+      <span class="fa fa-remove"></span>
+      <span class="sr-only"> Close </span>
+    </a>
+</div>
+<div class="modal-body">
+  <div class="alerts">
+    <div class="alert alert-danger" ng-show="error" role="alert">
+      <button type="button" class="close" ng-click="error=null" aria-label="Close">x</button>
+      <span>{{error}}</span>
+    </div>
+  </div>
+  <form class="form-horizontal">
+    <label class="col-sm-2 control-label">
+      <span>Stream ID</span>
+      <span class="fa fa-asterisk"></span>
+    </label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" ng-model="streamId" ng-keypress="enter($event)" placeholder="Stream ID" name="streamId" cask-focus="streamId">
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-default" ng-click="closeModal()">Cancel</button>
+    <button class="btn" ng-disabled="isSaving == true || !streamId.length" ng-click="createStream()" ng-class="{'btn-success': streamId.length > 0}">
+      <span ng-if="isSaving == true">
+        <span class="fa fa-spin fa-refresh"></span>
+      </span>
+      <span>Create</span>
+    </button>
+</div>

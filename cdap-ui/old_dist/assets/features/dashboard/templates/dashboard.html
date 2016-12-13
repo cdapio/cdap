@@ -1,0 +1,25 @@
+
+
+<aside role="toolbar" ng-init="dashboardNumber = dashboards.length + 1">
+  <a class="btn btn-xs btn-info" title="add dashboard" ng-click="caskPrompt('New Dashboard Name', 'Dashboard ' + dashboardNumber )" cask-promptable="addDashboard($value)">
+    <span class="fa fa-plus"></span>
+  </a>
+</aside>
+
+<div class="cdap-subnav-end"></div>
+<ul class="nav nav-tabs slanted-tabs" role="tablist">
+  <li role="presentation" ng-class="{'active': dashboards.activeIndex == 'system'}">
+    <a href="" ng-click="activeTabClick($event, 'system')" role="tab" data-toggle="tab" class="dtab">System</a>
+  </li>
+  <li role="presentation" ng-class="{'active': dashboards.activeIndex === $index, 'bottom-border-tab': dashboard.columns.length !== 0}" ng-repeat="dashboard in dashboards | orderBy:$index">
+    <a role="tab" href="" ng-click="activeTabClick($event, $index)" class="dtab">
+        <span class="fa fa-caret-down"></span>
+        <span class="dtitle" uib-tooltip="{{dashboard.title}}" tooltip-ellipsis="{{dashboard.title}}" data-ellipsis="isEllipsis" data-offset-value="40" tooltip-enable="isEllipsis" tooltip-placement="top" tooltip-append-to-body="true">{{dashboard.title}}</span>
+    </a>
+    <div is-open="dashboard.isopen" uib-dropdown>
+        <tab-dd-menu></tab-dd-menu>
+    </div>
+  </li>
+</ul>
+<ui-view role="tabpanel">
+

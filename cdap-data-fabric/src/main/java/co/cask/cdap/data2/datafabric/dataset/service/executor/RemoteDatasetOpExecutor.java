@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -81,7 +82,7 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
         return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_EXECUTOR));
       }
     });
-    this.httpRequestConfig = new DefaultHttpRequestConfig();
+    this.httpRequestConfig = new DefaultHttpRequestConfig(false);
   }
 
   @Override
@@ -183,8 +184,10 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
     if (endpoint == null) {
       throw new IllegalStateException("No endpoint for " + Constants.Service.DATASET_EXECUTOR);
     }
-    InetSocketAddress addr = endpoint.getSocketAddress();
-    return new URL(String.format("http://%s:%s%s/%s", addr.getHostName(), addr.getPort(),
+    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), endpoint.getPayload()) ?
+      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
+    InetSocketAddress address = endpoint.getSocketAddress();
+    return new URL(String.format("%s%s:%s%s/%s", scheme, address.getHostName(), address.getPort(),
                                  Constants.Gateway.API_VERSION_3, path));
   }
 

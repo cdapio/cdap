@@ -54,7 +54,7 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
       }
     });
 
-    this.httpRequestConfig = new DefaultHttpRequestConfig();
+    this.httpRequestConfig = new DefaultHttpRequestConfig(false);
     this.authenticationContext = authenticationContext;
   }
 

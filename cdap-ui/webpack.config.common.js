@@ -80,6 +80,7 @@ module.exports = {
           /node_modules/,
           /bower_components/,
           /dist/,
+          /old_dist/,
           /cdap_dist/,
           /login_dist/
         ]
@@ -126,7 +127,8 @@ module.exports = {
     alias: {
       components: __dirname + '/app/cdap/components',
       services: __dirname + '/app/cdap/services',
-      api: __dirname + '/app/cdap/api'
+      api: __dirname + '/app/cdap/api',
+      wrangler: __dirname + '/app/wrangler'
     }
   },
   plugins

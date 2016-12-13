@@ -17,11 +17,11 @@
 package co.cask.cdap.messaging.store.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.messaging.MessagingUtils;
-import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
@@ -74,7 +74,7 @@ final class HBaseMetadataTable implements MetadataTable {
     Result result = hTable.get(get);
     byte[] value = result.getValue(columnFamily, COL);
     if (value == null) {
-      throw new TopicNotFoundException(topicId);
+      throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
     }
 
     Map<String, String> properties = GSON.fromJson(Bytes.toString(value), MAP_TYPE);
@@ -83,13 +83,14 @@ final class HBaseMetadataTable implements MetadataTable {
 
   @Override
   public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
-    byte[] rowKey = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
+    TopicId topicId = topicMetadata.getTopicId();
+    byte[] rowKey = MessagingUtils.toRowKeyPrefix(topicId);
     Put put = tableUtil.buildPut(rowKey)
       .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(new TreeMap<>(topicMetadata.getProperties()), MAP_TYPE)))
       .build();
 
     if (!hTable.checkAndPut(rowKey, columnFamily, COL, null, put)) {
-      throw new TopicAlreadyExistsException(topicMetadata.getTopicId());
+      throw new TopicAlreadyExistsException(topicId.getNamespace(), topicId.getTopic());
     }
   }
 

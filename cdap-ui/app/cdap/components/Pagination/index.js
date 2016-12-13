@@ -28,7 +28,9 @@ export default class Pagination extends Component {
     this.state = {
       numResults : 0,
       leftPressed: false,
-      rightPressed: false
+      rightPressed: false,
+      currentPage: props.currentPage,
+      totalPages: props.totalPages
     };
     this.goToNext = this.goToNext.bind(this);
     this.goToPrev = this.goToPrev.bind(this);
@@ -39,13 +41,19 @@ export default class Pagination extends Component {
     Mousetrap.bind('left', this.goToPrev);
   }
 
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      currentPage: nextProps.currentPage,
+      totalPages: nextProps.totalPages
+    });
+  }
   componentWillUnmount(){
     Mousetrap.unbind('left');
     Mousetrap.unbind('right');
   }
 
   goToPrev() {
-    if (this.props.currentPage - 1 === 0) {
+    if (this.state.currentPage - 1 === 0) {
       return;
     }
     //Highlight the side that is pressed
@@ -62,11 +70,11 @@ export default class Pagination extends Component {
     if(this.props.setDirection){
       this.props.setDirection('prev');
     }
-    this.props.setCurrentPage(this.props.currentPage-1);
+    this.props.setCurrentPage(this.state.currentPage-1);
   }
 
   goToNext(){
-    if (this.props.currentPage + 1 > this.props.totalPages) {
+    if (this.state.currentPage + 1 > this.state.totalPages) {
       return;
     }
     //Highlight the side that is pressed
@@ -83,7 +91,7 @@ export default class Pagination extends Component {
     if(this.props.setDirection){
       this.props.setDirection('next');
     }
-    this.props.setCurrentPage(this.props.currentPage+1);
+    this.props.setCurrentPage(this.state.currentPage+1);
   }
 
   render() {
@@ -92,7 +100,7 @@ export default class Pagination extends Component {
       'change-page-panel-right',
       {
         'pressed' : this.state.rightPressed,
-        'last-page': this.props.currentPage + 1 > this.props.totalPages
+        'last-page': this.state.currentPage + 1 > this.state.totalPages
       }
     );
     let pageChangeLeftClass = classNames(
@@ -100,7 +108,7 @@ export default class Pagination extends Component {
       'change-page-panel-left',
       {
         'pressed' : this.state.leftPressed,
-        'first-page': this.props.currentPage - 1 === 0,
+        'first-page': this.state.currentPage - 1 === 0,
       }
     );
     Mousetrap.bind('right', this.goToNext);

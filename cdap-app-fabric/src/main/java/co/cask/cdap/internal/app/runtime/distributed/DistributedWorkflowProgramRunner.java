@@ -42,6 +42,7 @@ import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.mapred.YarnClientProtocolProvider;
@@ -120,6 +121,11 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
     // Adds the extra classes that MapReduce needs
     extraDependencies.add(YarnClientProtocolProvider.class);
+
+    // Add cdap-kms jars if kms is enabled and supported
+    if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
+      extraDependencies.add(SecureStoreUtils.getKMSSecureStore());
+    }
 
     // See if the Workflow has Spark or MapReduce in it
     DriverMeta driverMeta = findDriverResources(program.getApplicationSpecification().getSpark(),

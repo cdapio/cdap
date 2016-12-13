@@ -66,7 +66,7 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalMTLSAuthentica
     cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, "127.0.0.1");
 
     // enables SSL
-    cConf.set(Constants.Security.SSL_ENABLED, "true");
+    cConf.set(Constants.Security.SSL.EXTERNAL_ENABLED, "true");
     cConf.set(Constants.Security.AuthenticationServer.SSL_PORT, "0");
 
     // set up port for non-ssl endpoints

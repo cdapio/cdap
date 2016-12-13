@@ -13,15 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.example.plugin;
+
+package $package;
 
 import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -37,6 +40,8 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -64,6 +69,7 @@ public class TextFileSetSource extends BatchSource<LongWritable, Text, Structure
    */
   public static class Conf extends PluginConfig {
     public static final String FILESET_NAME = "fileSetName";
+    public static final String FILES = "files";
     public static final String CREATE_IF_NOT_EXISTS = "createIfNotExists";
     public static final String DELETE_INPUT_ON_SUCCESS = "deleteInputOnSuccess";
 
@@ -72,6 +78,13 @@ public class TextFileSetSource extends BatchSource<LongWritable, Text, Structure
     @Name(FILESET_NAME)
     @Description("The name of the FileSet to read from.")
     private String fileSetName;
+
+    // Macro enabled properties can be set to a placeholder value ${key} when the pipeline is deployed.
+    // At runtime, the value for 'key' can be given and substituted in.
+    @Macro
+    @Name(FILES)
+    @Description("A comma separated list of files in the FileSet to read.")
+    private String files;
 
     // A nullable fields tells CDAP that this is an optional field.
     @Nullable
@@ -86,7 +99,6 @@ public class TextFileSetSource extends BatchSource<LongWritable, Text, Structure
 
     // Use a no-args constructor to set field defaults.
     public Conf() {
-      fileSetName = "";
       createIfNotExists = false;
       deleteInputOnSuccess = false;
     }
@@ -122,7 +134,9 @@ public class TextFileSetSource extends BatchSource<LongWritable, Text, Structure
   // as well as any arguments the input should use. It is called by the client that is submitting the batch job.
   @Override
   public void prepareRun(BatchSourceContext context) throws IOException {
-    context.setInput(Input.ofDataset(config.fileSetName));
+    Map<String, String> arguments = new HashMap<>();
+    FileSetArguments.setInputPaths(arguments, config.files);
+    context.setInput(Input.ofDataset(config.fileSetName, arguments));
   }
 
   // onRunFinish is called at the end of the pipeline run by the client that submitted the batch job.
@@ -131,7 +145,9 @@ public class TextFileSetSource extends BatchSource<LongWritable, Text, Structure
     // perform any actions that should happen at the end of the run.
     // in our case, we want to delete the data read during this run if the run succeeded.
     if (succeeded && config.deleteInputOnSuccess) {
-      FileSet fileSet = context.getDataset(config.fileSetName);
+      Map<String, String> arguments = new HashMap<>();
+      FileSetArguments.setInputPaths(arguments, config.files);
+      FileSet fileSet = context.getDataset(config.fileSetName, arguments);
       for (Location inputLocation : fileSet.getInputLocations()) {
         try {
           inputLocation.delete(true);
@@ -170,5 +186,3 @@ public class TextFileSetSource extends BatchSource<LongWritable, Text, Structure
     );
   }
 }
-
-

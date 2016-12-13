@@ -260,14 +260,6 @@
   </property>
 
   <property>
-    <name>ssl.internal.enabled</name>
-    <value>false</value>
-    <description>
-      Enable SSL between Router and App Fabric
-    </description>
-  </property>
-
-  <property>
     <name>app.ssl.bind.port</name>
     <value>30443</value>
     <description>
@@ -2006,7 +1998,15 @@
     <name>ssl.external.enabled</name>
     <value>false</value>
     <description>
-      Determines if SSL for external services is enabled
+      Enable SSL for external services
+    </description>
+  </property>
+
+  <property>
+    <name>ssl.internal.enabled</name>
+    <value>false</value>
+    <description>
+      Enable SSL between Router and App Fabric
     </description>
   </property>
 

@@ -21,7 +21,7 @@ import sortBy from 'lodash/sortBy';
  * one of integer, float, boolean, string
  **/
 export function inferType(val) {
-  if (typeof val !== 'string') {
+  if (typeof val !== 'string' && typeof val !==  'undefined') {
     throw 'Input is not a string: ' + typeof val;
   }
 

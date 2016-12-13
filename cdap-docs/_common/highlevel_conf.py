@@ -137,12 +137,11 @@ def file_to_be_removed(file):
 # - merge all new.titleterms to master.titleterms, converting filenumbers by adding offset
 def merge(master, new, manual):
     offset = len(master[FILENAMES])
-    
-    # Append all new.titles to master.titles
+
     if new:
+        # Append all new.titles to master.titles
         master[FILENAMES] = master[FILENAMES] + [ "%s/%s" % (manual, filename) for filename in new[FILENAMES]]
         master[TITLES] = master[TITLES] + new[TITLES]
-    
         # Merge to terms
         merger(master[TERMS], new[TERMS], offset)
         # Merge to titleterms

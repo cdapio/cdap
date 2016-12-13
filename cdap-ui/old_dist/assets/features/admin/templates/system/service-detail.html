@@ -1,0 +1,24 @@
+ 
+
+<h2> Services </h2>
+
+<div class="row">
+    <div class="col-xs-6">
+        <h3>{{$state.params.serviceName}}</h3>
+    </div>
+    <div class="col-xs-6 text-right h3">
+
+      <div class="text-right">
+        <div class="btn-group">
+
+          <a class="btn btn-default" ui-sref="admin.system.services.detail.metadata" ui-sref-active="active"> Metadata</a>
+          <a class="btn btn-default" ui-sref="admin.system.services.detail.logs" ui-sref-active="active"> Logs</a>
+
+        </div>
+      </div>
+    </div>
+</div>
+
+<br>
+
+<ui-view role="tabpanel"></ui-view>

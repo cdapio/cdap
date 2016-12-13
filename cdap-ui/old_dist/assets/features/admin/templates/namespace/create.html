@@ -1,0 +1,46 @@
+
+
+<div class="modal-header clearfix">
+  <h3 class="modal-title pull-left"> Add a Namespace </h3>
+  <a class="btn pull-right" ng-click="closeModal()">
+    <span class="fa fa-remove"></span>
+    <span class="sr-only"> Close </span>
+  </a>
+</div>
+<div class="modal-body">
+  <div class="alerts">
+    <div class="alert alert-danger" ng-show="error" role="alert">
+      <button type="button" class="close" ng-click="error=null" aria-label="Close">×</button>
+      <span>{{error}}</span>
+    </div>
+  </div>
+  <form class="form-horizontal" role="form" name="namespaceCreateForm" no-validate>
+    <div class="form-group">
+      <label class="col-xs-12 col-sm-2 control-label" for="namespaceDisplayName">
+        <span>Name</span>
+        <span class="fa fa-asterisk"></span>
+      </label>
+      <div class="col-xs-12 col-sm-10">
+        <input type="text" id="namespaceDisplayName" ng-model="model.name" class="form-control" ng-keypress="enter($event)" autofocus required>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="col-xs-12 col-sm-2 control-label" for="namespaceDescription"> Description </label>
+      <div class="col-xs-12 col-sm-10">
+        <textarea type="text" id="namespaceDescription" ng-model="model.description" class="form-control"></textarea>
+      </div>
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="form-group">
+    <a ui-sref="admin.overview" class="btn btn-default" ng-click="closeModal()">Cancel</a>
+    <a ng-disabled="isSaving == true || !model.name.length" class="btn" ng-class="{'btn-success': isSaving == false && model.name.length > 0}" ng-disabled="namespaceCreateForm.$invalid" ng-click="submitHandler()">
+      <span ng-if="isSaving == true">
+       <span class="fa fa-spin fa-refresh"></span>
+      </span>
+      <span>Create</span>
+    </a>
+  </div>
+</div>

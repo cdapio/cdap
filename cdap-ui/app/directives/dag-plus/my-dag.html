@@ -81,7 +81,8 @@
         <div ng-repeat="node in nodes" class="box {{node.type}}" ng-style="node._uiPosition"
                data-type="{{node.type}}"
                id="{{node.name}}"
-               ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
+               ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)"
+               ng-class="{'wrangler': node.plugin.name === 'Wrangler'}">
           <div class="node"
                 ng-mouseenter="DAGPlusPlusCtrl.nodeMouseEnter(node)"
                 ng-mouseleave="DAGPlusPlusCtrl.nodeMouseLeave(node)">

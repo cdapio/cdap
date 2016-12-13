@@ -116,7 +116,7 @@
     "reactabular-sticky": "8.2.0",
     "reactabular-table": "8.1.0",
     "reactabular-virtualized": "8.0.0",
-    "reactstrap": "3.9.1",
+    "reactstrap": "3.9.3",
     "redux": "https://registry.npmjs.org/redux/-/redux-3.5.2.tgz",
     "redux-thunk": "2.0.1",
     "request": "2.69.0",
