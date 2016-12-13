@@ -13,15 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.example.plugin;
+
+package $package;
 
 import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -35,7 +38,9 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -57,13 +62,21 @@ public class TextFileSetSink extends BatchSink<StructuredRecord, NullWritable, T
    */
   public static class Conf extends PluginConfig {
     public static final String FILESET_NAME = "fileSetName";
+    public static final String OUTPUT_DIR = "outputDir";
     public static final String FIELD_SEPARATOR = "fieldSeparator";
 
     // The name annotation tells CDAP what the property name is. It is optional, and defaults to the variable name.
     // Note:  only primitives (including boxed types) and string are the types that are supported
     @Name(FILESET_NAME)
-    @Description("The name of the FileSet to read from.")
+    @Description("The name of the FileSet to write to.")
     private String fileSetName;
+
+    // Macro enabled properties can be set to a placeholder value ${key} when the pipeline is deployed.
+    // At runtime, the value for 'key' can be given and substituted in.
+    @Macro
+    @Name(OUTPUT_DIR)
+    @Description("The FileSet directory to write to.")
+    private String outputDir;
 
     @Nullable
     @Name(FIELD_SEPARATOR)
@@ -103,7 +116,9 @@ public class TextFileSetSink extends BatchSink<StructuredRecord, NullWritable, T
   // as well as any arguments the input should use. It is called by the client that is submitting the batch job.
   @Override
   public void prepareRun(BatchSinkContext context) throws Exception {
-    context.addOutput(Output.ofDataset(config.fileSetName));
+    Map<String, String> arguments = new HashMap<>();
+    FileSetArguments.setOutputPath(arguments, config.outputDir);
+    context.addOutput(Output.ofDataset(config.fileSetName, arguments));
   }
 
   // onRunFinish is called at the end of the pipeline run by the client that submitted the batch job.
@@ -153,5 +168,3 @@ public class TextFileSetSink extends BatchSink<StructuredRecord, NullWritable, T
   }
 
 }
-
-
