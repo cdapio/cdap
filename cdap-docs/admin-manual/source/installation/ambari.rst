@@ -420,4 +420,4 @@ CDAP Authentication Server
 .. -------------------------------
 .. _ambari-configuration-enabling-hive-execution-engines:
 
-.. include:: /_includes/installation/hive-execution-engines.rst
+.. include:: /_includes/installation/hive-execution-engines.txt

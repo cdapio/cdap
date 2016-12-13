@@ -222,4 +222,4 @@ Kerberos is currently not supported by CDAP on secure MapR clusters.
 .. -------------------------------
 .. _mapr-configuration-enabling-hive-execution-engines:
 
-.. include:: /_includes/installation/hive-execution-engines.rst
+.. include:: /_includes/installation/hive-execution-engines.txt

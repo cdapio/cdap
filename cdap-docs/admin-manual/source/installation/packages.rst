@@ -129,4 +129,4 @@ Advanced Topics
 .. -------------------------------
 .. _packages-configuration-enabling-hive-execution-engines:
 
-.. include:: /_includes/installation/hive-execution-engines.rst
+.. include:: /_includes/installation/hive-execution-engines.txt

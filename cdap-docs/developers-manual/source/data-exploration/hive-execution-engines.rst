@@ -3,6 +3,7 @@
     :copyright: Copyright © 2016 Cask Data, Inc.
 
 .. _hive-execution-engines:
+.. _hive-ee:
 
 ======================
 Hive Execution Engines
