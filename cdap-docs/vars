@@ -29,8 +29,8 @@ BUILD_RST_HASH="4c1ca5e0c734664c010c5b574f1669a0"
 # All "GIT_" variables are loaded by the Sphinx build and need to be static as they are not sourced
 #
 
-GIT_NODE_JS_MIN_VERSION="beginning with v0.10.36"
-GIT_NODE_JS_MAX_VERSION="v4.4.0"
+GIT_NODE_JS_MIN_VERSION="v4.5.0"
+# GIT_NODE_JS_MAX_VERSION="v4.4.0" # not currently known
 
 # This needs to be explicitly set as Git has trouble identifying it
 GIT_BRANCH_PARENT="release/4.0"
