@@ -241,7 +241,7 @@ cdap_check_node_version() {
   local readonly __min=$(echo ${__node/v/} | cut -d. -f2)
   local readonly __pat=$(echo ${__node/v/} | cut -d. -f3)
   if [[ ${__maj} -lt $((__ver_maj + 1)) ]] && [[ ${__min} -lt $((__ver_min + 1)) ]] && [[ ${__pat} -lt $((__ver_pat + 1)) ]]; then
-    die "Node.js ${__node} is not supported. The minimum version supported is ${__ver}"
+    echo "Node.js ${__node} is not supported. The minimum version supported is ${__ver}"
     return 1
   fi
   return 0
@@ -776,7 +776,7 @@ cdap_sdk_stop() { cdap_stop_pidfile ${__pidfile} "CDAP Standalone (SDK)"; };
 #
 cdap_sdk_check_before_start() {
   cdap_check_pidfile ${__pidfile} || return ${?}
-  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v0.10.36} || return ${?}
+  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v4.5.0} || return ${?}
   local __node_pid=$(ps | grep ${CDAP_UI_PATH:-ui/server.js} | grep -v grep | awk '{ print $1 }')
   if [[ -z ${__node_pid} ]]; then
     : # continue
