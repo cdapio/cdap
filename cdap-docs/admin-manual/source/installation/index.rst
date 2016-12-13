@@ -23,14 +23,14 @@ Installation and configuration instructions for either **specific distributions*
 - :ref:`Installation using Cloudera Manager <admin-installation-cloudera>`
 
   - :ref:`Advanced Topics: <cloudera-installation-advanced-topics>`
-    enabling perimeter security, Kerberos, and CDAP high availability
+    enabling perimeter security, Kerberos, CDAP high availability, and CDAP Explore engines
 
 ..
 
 - :ref:`Installation using Apache Ambari <admin-installation-ambari>`
 
   - :ref:`Advanced Topics: <ambari-installation-advanced-topics>`
-    enabling Kerberos; enabling perimeter security and CDAP high availability
+    enabling Kerberos; enabling perimeter security, CDAP high availability, and CDAP Explore engines
     are currently not available for Ambari
 
 ..
@@ -38,7 +38,7 @@ Installation and configuration instructions for either **specific distributions*
 - :ref:`Installation for MapR <admin-installation-mapr>`
 
   - :ref:`Advanced Topics: <mapr-installation-advanced-topics>`
-    enabling perimeter security and CDAP high availability;
+    enabling perimeter security, CDAP high availability, and CDAP Explore engines;
     enabling Kerberos is currently not available for MapR
 
 ..
@@ -46,7 +46,7 @@ Installation and configuration instructions for either **specific distributions*
 - :ref:`Manual Installation using Packages <admin-installation-packages>`
 
   - :ref:`Advanced Topics: <packages-installation-advanced-topics>`
-    enabling perimeter security, Kerberos, and CDAP high availability
+    enabling perimeter security, Kerberos, CDAP high availability, and CDAP Explore engines
 
 ..
 

@@ -55,7 +55,7 @@ Hive on Tez
 -----------
 Using this feature, you can configure CDAP Explore to use `Apache Tez <http://tez.apache.org/>`__ 
 as the execution engine. To use this feature, you should `configure Hive to use Tez as the execution engine 
-<https://cwiki.apache.org/confluence/display/Hive/Hive+on+Tez>`__.
+<https://cwiki.apache.org/confluence/display/Hive/Hive+on+Tez>`__ in the ``hive-site.xml`` file that is used by CDAP.
 
 In addition, you should set these environment variables in ``cdap-env.sh``:
 

@@ -320,6 +320,11 @@ the address of the node running the CDAP UI service at port 11011.
 Advanced Topics
 ===============
 
+- :ref:`Enabling Security <ambari-configuration-security>`
+- :ref:`Enabling Kerberos <ambari-configuration-enabling-kerberos>`
+- :ref:`Enabling CDAP High Availability <ambari-configuration-highly-available>`
+- :ref:`Enabling Hive Execution Engines <ambari-configuration-enabling-hive-execution-engines>`
+
 .. _ambari-configuration-security:
 
 .. Enabling Perimeter Security
@@ -410,3 +415,9 @@ CDAP Authentication Server
   Service`` (the CDAP Authentication Server) to additional machines.
 - Note that when an unauthenticated request is made in a secure HA setup, a list of all
   running authentication endpoints will be returned in the body of the request.
+
+.. Enabling Hive Execution Engines
+.. -------------------------------
+.. _ambari-configuration-enabling-hive-execution-engines:
+
+.. include:: /_includes/installation/hive-execution-engines.rst
