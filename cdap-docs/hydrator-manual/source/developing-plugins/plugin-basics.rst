@@ -37,8 +37,6 @@ Maven Archetypes
 To get started on creating a custom plugin, you can use one of these Maven archetypes to create your project: 
 
 - ``cdap-data-pipeline-plugins-archetype`` (contains batch, Spark plugin, and other types)
-- ``cdap-etl-realtime-source-archetype`` (contains a realtime source, deprecated)
-- ``cdap-etl-realtime-sink-archetype`` (contains a realtime sink, deprecated)
 - ``cdap-etl-transform-archetype`` (contains a transform)
 
 This command will create a project from an archetype:
@@ -66,14 +64,6 @@ Complete examples for each archetype:
   .. cdap-data-pipeline-plugins
 
   $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-data-pipeline-plugins-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.plugin
-
-  .. cdap-etl-realtime-source
-
-  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-etl-realtime-source-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.plugin
-  
-  .. cdap-etl-realtime-sink
-
-  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-etl-realtime-sink-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.plugin
   
   .. cdap-etl-transform
   
