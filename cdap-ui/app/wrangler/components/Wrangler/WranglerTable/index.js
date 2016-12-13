@@ -53,7 +53,6 @@ export default class WranglerTable extends Component {
 
     this.tableHeader = null;
     this.tableBody = null;
-    this.typesBody = null;
   }
 
   componentWillMount() {
@@ -193,6 +192,8 @@ export default class WranglerTable extends Component {
       };
     });
 
+
+    // Adding index column
     columns.unshift({
       property: '_index',
       header: {

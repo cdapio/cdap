@@ -18,6 +18,7 @@ import React, { Component, PropTypes } from 'react';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import classnames from 'classnames';
+import {Tooltip} from 'reactstrap';
 
 export default class Filter extends Component {
   constructor(props) {
@@ -26,16 +27,29 @@ export default class Filter extends Component {
     this.state = {
       showFilter: false,
       filterIgnoreCase: false,
-      filterFunction: '='
+      filterFunction: '=',
+      tooltipOpen: false
     };
 
     this.onFilterClick = this.onFilterClick.bind(this);
     this.onFilter = this.onFilter.bind(this);
+    this.toggleTooltip = this.toggleTooltip.bind(this);
+    this.handleKeyPress = this.handleKeyPress.bind(this);
+  }
+
+  toggleTooltip() {
+    this.setState({tooltipOpen: !this.state.tooltipOpen});
   }
 
   onFilterClick() {
     if (!this.props.column) { return; }
     this.setState({showFilter: !this.state.showFilter});
+  }
+
+  handleKeyPress(e) {
+    if (e.nativeEvent.keyCode === 13) {
+      this.onFilter();
+    }
   }
 
   renderFilter() {
@@ -63,11 +77,12 @@ export default class Filter extends Component {
         </select>
 
         <div>
-          <label className="label-control">Filter by</label>
           <input
             type="text"
             className="form-control"
             onChange={(e) => this.filterByText = e.target.value}
+            onKeyPress={this.handleKeyPress}
+            placeholder="Filter"
           />
         </div>
 
@@ -84,7 +99,7 @@ export default class Filter extends Component {
         <br/>
         <div className="text-right">
           <button
-            className="btn btn-primary"
+            className="btn btn-wrangler"
             onClick={this.onFilter}
           >
             Apply
@@ -125,6 +140,8 @@ export default class Filter extends Component {
   }
 
   render() {
+    const id = 'wrangler-filter-transform';
+
     return (
       <div
         className={classnames('transform-item', {
@@ -134,7 +151,29 @@ export default class Filter extends Component {
         onClick={this.onFilterClick}
       >
         <span className="fa fa-font"></span>
-        <span className="transform-item-text">Filter</span>
+        <span
+          id={id}
+          className="transform-item-text"
+        >
+          Filter
+        </span>
+
+        {
+          !this.props.column ? (
+            <Tooltip
+              placement="right"
+              isOpen={this.state.tooltipOpen}
+              toggle={this.toggleTooltip}
+              target={id}
+              className="wrangler-tooltip"
+              delay={{show: 300, hide: 0}}
+              tether={{offset: '0 -10px'}}
+            >
+              Select a column to enable filter
+            </Tooltip>
+          ) : null
+        }
+
 
         {this.renderFilter()}
       </div>

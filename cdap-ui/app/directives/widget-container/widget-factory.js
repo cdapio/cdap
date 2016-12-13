@@ -192,6 +192,14 @@ angular.module(PKG.name + '.commons')
           'disabled': 'disabled',
           'input-schema': 'inputSchema'
         }
+      },
+      'input-field-selector': {
+        element: '<my-input-field-selector></my-input-field-selector>',
+        attributes: {
+          'ng-model': 'model',
+          'disabled': 'disabled',
+          'input-schema': 'inputSchema'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];

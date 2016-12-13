@@ -24,57 +24,84 @@ import TableItem from 'wrangler/components/Explore/TableItem';
 require('./Explore.less');
 
 export default class Explore extends Component {
-	constructor(props) {
-		super(props);
+  constructor(props) {
+    super(props);
 
-		this.state = {
-			list: []
-		};
+    this.state = {
+      list: [],
+      isExpanded: false
+    };
 
-		this.renderTable = this.renderTable.bind(this);
-	}
+    this.renderTable = this.renderTable.bind(this);
+    this.toggleExpanded = this.toggleExpanded.bind(this);
+  }
 
-	componentWillMount() {
-		myExploreApi.fetchTables({
-			namespace: NamespaceStore.getState().selectedNamespace
-		}).subscribe((res) => {
-			let list = res.map((exploreTable) => {
-				let table = exploreTable.table.split('_');
-				return {
-					id: shortid.generate(),
-					type: table[0],
-					name: table.slice(1).join('_')
-				};
-			});
+  componentWillMount() {
+    myExploreApi.fetchTables({
+      namespace: NamespaceStore.getState().selectedNamespace
+    }).subscribe((res) => {
+      let list = res.map((exploreTable) => {
+        let table = exploreTable.table.split('_');
+        return {
+          id: shortid.generate(),
+          type: table[0],
+          name: table.slice(1).join('_')
+        };
+      });
 
-			this.setState({
-				list: sortBy(list, ['name'])
-			});
-		});
-	}
+      this.setState({
+        list: sortBy(list, ['name'])
+      });
+    });
+  }
 
-	renderTable(table) {
-		return (
-			<TableItem
-				key={table.id}
-				table={table}
-				wrangle={this.props.wrangle}
-			/>
-		);
-	}
+  toggleExpanded() {
+    this.setState({isExpanded: !this.state.isExpanded});
+  }
 
-	render() {
-		return (
-			<div className="wrangler-explore-container">
-				<h4 className="text-center">Browse Dataset</h4>
-				<div className="text-center">
-					{this.state.list.map(this.renderTable)}
-				</div>
-			</div>
-		);
-	}
+  renderTable(table) {
+    return (
+      <TableItem
+        key={table.id}
+        table={table}
+        wrangle={this.props.wrangle}
+      />
+    );
+  }
+
+  render() {
+    let tableList = this.state.list;
+    const VIEW_LIMIT = 18;
+
+    if (!this.state.isExpanded) {
+      tableList = tableList.slice(0, VIEW_LIMIT);
+    }
+
+    const showMoreLink = (
+      <div className="text-right">
+        <a
+          href="#"
+          onClick={this.toggleExpanded}
+        >
+          {this.state.isExpanded ? 'Show Less' : 'Show More'}
+        </a>
+      </div>
+    );
+
+
+    return (
+      <div className="wrangler-explore-container">
+        <h4 className="text-center">Browse Dataset ({this.state.list.length})</h4>
+        <div className="text-center">
+          {tableList.map(this.renderTable)}
+        </div>
+
+        {this.state.list.length > VIEW_LIMIT ? showMoreLink : null}
+      </div>
+    );
+  }
 }
 
 Explore.propTypes = {
-	wrangle: PropTypes.func
+  wrangle: PropTypes.func
 };

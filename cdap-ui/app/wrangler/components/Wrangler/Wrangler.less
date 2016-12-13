@@ -14,11 +14,23 @@
  * the License.
  */
 
+@import '../../styles/variables.less';
 @error-color: #e74c3c;
 @wrangler-left-panel-width: 175px;
 @border: 1px solid #dddddd;
 
 .error-text { color: @error-color; }
+
+.btn.btn-wrangler {
+  color: @wrangler-dark-color;
+  background-color: @wrangler-yellow;
+  font-weight: 500;
+
+  &:hover {
+    background-color: darken(@wrangler-yellow, 7%);
+    color: @wrangler-dark-color;
+  }
+}
 
 .wrangler-container {
   height: 100%;
@@ -100,8 +112,8 @@
 
     textarea {
       max-width: 100%;
-      min-height: 240px;
-      max-height: 240px;
+      min-height: calc(~"100% - 100px");
+      max-height: calc(~"100% - 100px");
       border: 0;
 
       &:focus { box-shadow: none; }
@@ -172,10 +184,18 @@
         display: flex;
         justify-content: space-around;
 
-        span {
+        & > span {
           line-height: 60px;
           vertical-align: middle;
-          cursor: pointer;
+
+          span.fa {
+            cursor: pointer;
+
+            &.disabled {
+              cursor: not-allowed;
+              color: #999999;
+            }
+          }
         }
       }
 
@@ -185,7 +205,7 @@
         cursor: pointer;
 
         &.expanded {
-          border-left: 4px solid #ff6600;
+          border-left: 4px solid @wrangler-yellow;
           .filter-input {
             margin-top: 10px;
             font-size: 13px;
@@ -258,16 +278,14 @@
       background-color: #cccccc;
     }
     .active {
-      @active-border: 2px solid #f39c12;
+      @active-border: 2px solid @wrangler-yellow;
 
       border-right: @active-border;
       border-left: @active-border;
 
-      &.top-header { border-top: @active-border; }
-    }
-
-    .top-header.active {
-      border-top: 2px solid #f39c12;
+      &.top-header {
+        border-top: @active-border;
+      }
     }
 
     .header-content-container {

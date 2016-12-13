@@ -14,10 +14,24 @@
  * the License.
  */
 
-@import '../../styles/variables.less';
+import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 
-.cask-header.wrangler-header {
-  .navbar.cdap .navbar-list a.active {
-    color: @wrangler-yellow;
+/**
+ *  Validations for column:
+ *    1. Valid Name -> has to be the same as a Hydrator schema field name validation
+ *    2. Unique Name
+ **/
+export default function validateColumnName(columnName) {
+  const NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+
+  if (!NAME_PATTERN.test(columnName)) {
+    return 'INVALID_NAME';
   }
+
+  let columnList = WranglerStore.getState().wrangler.headersList;
+  if (columnList.indexOf(columnName) > -1) {
+    return 'DUPLICATE_NAME';
+  }
+
+  return false;
 }
