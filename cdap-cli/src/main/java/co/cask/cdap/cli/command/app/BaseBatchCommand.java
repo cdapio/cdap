@@ -87,7 +87,7 @@ public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractA
     }
 
     List<T> programs = new ArrayList<>();
-    Map<ProgramType, List<ProgramRecord>> appPrograms = appClient.listProgramsByType(appId.toId());
+    Map<ProgramType, List<ProgramRecord>> appPrograms = appClient.listProgramsByType(appId);
     for (ProgramType programType : programTypes) {
       List<ProgramRecord> programRecords = appPrograms.get(programType);
       if (programRecords != null) {

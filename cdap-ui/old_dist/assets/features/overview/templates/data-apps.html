@@ -1,0 +1,142 @@
+
+
+<div class="row" ng-controller="AppsSectionCtrl as AppsSectionCtrl">
+  <div class="col-xs-12 col-md-6">
+    <div ng-if="AppsSectionCtrl.dataList.length > 0">
+      <h3> Data </h3>
+      <div class="row">
+        <div class="col-xs-12 col-sm-3">
+          <p ng-if="AppsSectionCtrl.dataList.length < 5"> Showing {{ AppsSectionCtrl.dataList.length }} of {{ AppsSectionCtrl.dataList.length }}</p>
+          <p ng-if="AppsSectionCtrl.dataList.length >= 5"> Showing 5 of {{ AppsSectionCtrl.dataList.length }}</p>
+        </div>
+        <div class="col-xs-12 col-sm-9">
+          <div class="btn-group">
+            <a ui-sref="data.list" class="btn btn-default">
+              <span class="fa fa-list-ul"></span>
+              <span>All Datasets</span>
+            </a>
+            <a ui-sref="explore" class="btn btn-default">
+              <span class="fa fa-eye"></span>
+              <span>Explore</span>
+            </a>
+            <a ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})" class="btn btn-default">
+              <span class="fa fa-plus"></span>
+              <span>Add Stream</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <ul class="list-group">
+        <li class="list-group-item" ng-repeat="data in AppsSectionCtrl.dataList | orderBy:MyOrderings.dataOrdering | limitTo: 5 track by $index ">
+          <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview.status({streamId: data.name})" ng-click="AppsSectionCtrl.MyOrderings.dataClicked(data.name)">
+            <p ng-bind="data.name"> </p>
+            <div class="title-type-image">
+              <span class="icon-streams"></span>
+              <span> Stream </span>
+            </div>
+          </a>
+          <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview.status({datasetId: data.name})" ng-click="AppsSectionCtrl.MyOrderings.dataClicked(data.name)">
+            <p ng-bind="data.name"> </p>
+            <div class="title-type-image">
+              <span class="icon-datasets"></span>
+              <span> Dataset </span>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div ng-if="AppsSectionCtrl.dataList.length === 0">
+      <div class="clearfix">
+        <h3> Datasets </h3>
+        <p> You haven't deployed any datasets. </p>
+      </div>
+      <hr>
+      <div class="text-left">
+        <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})">
+          <span class="fa fa-plus"></span>
+          <span>Add Stream</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="col-xs-12 col-md-6">
+    <div ng-if="AppsSectionCtrl.apps.length > 0">
+      <h3> Applications </h3>
+      <div class="row">
+        <div class="col-xs-12 col-sm-3">
+          <p ng-if="AppsSectionCtrl.apps.length < 5"> Showing {{ AppsSectionCtrl.apps.length }} of {{ AppsSectionCtrl.apps.length }}</p>
+          <p ng-if="AppsSectionCtrl.apps.length >= 5"> Showing 5 of {{ AppsSectionCtrl.apps.length }}</p>
+        </div>
+        <div class="col-xs-12 col-sm-9">
+          <div class="btn-group">
+            <a ui-sref="apps.list" class="btn btn-default">
+              <span class="fa fa-list-ul"></span>
+               <span>All Applications</span>
+            </a>
+            <div class="btn-group dropdown-right" uib-dropdown>
+              <button type="button" class="btn btn-default dropdown-toggle white-dropdown" uib-dropdown-toggle>
+                Add Application <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                <li>
+                  <my-file-select dropdown="true" data-button-icon="__" data-button-label="Custom Application" on-file-select="AppsSectionCtrl.onFileSelected($files)">
+                  </my-file-select>
+                </li>
+                <li>
+                  <a href="{{AppsSectionCtrl.getHydratorUrl( { stateParams: { namespace: $stateParams.namespace } } )}}" class="clearfix">
+                    <span class="pull-left">{{AppsSectionCtrl.GLOBALS.en.hydrator.appLabel}}</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ul class="list-group">
+        <li class="list-group-item" ng-repeat="app in AppsSectionCtrl.apps | orderBy:AppsSectionCtrl.MyOrderings.appOrdering | limitTo:5" ng-if="!app.name.startsWith('_')">
+          <a ui-sref="apps.detail.overview.programs({appId: app.id})" ng-if="AppsSectionCtrl.myHydratorFactory.isCustomApp(app.artifact.name)" ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
+            <p ng-bind="app.name"> </p>
+            <div class="title-type-image">
+              <span class="icon-fist"></span>
+              <span> Application </span>
+            </div>
+          </a>
+          <a ui-sref="apps.detail.overview.status({appId: app.id})" ng-if="AppsSectionCtrl.myHydratorFactory.isETLApp(app.artifact.name)" ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
+            <p ng-bind="app.name"> </p>
+            <div class="title-type-image">
+              <span class="icon-{{ AppsSectionCtrl.GLOBALS.iconArtifact[app.artifact.name] }}"></span>
+              <span>{{ AppsSectionCtrl.GLOBALS.artifactConvert[app.artifact.name] }}</span>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div ng-if="AppsSectionCtrl.apps.length === 0">
+      <div class="clearfix">
+        <h3> Applications </h3>
+        <p> You haven't deployed any applications. </p>
+      </div>
+      <hr>
+      <div class="btn-group dropdown-right" uib-dropdown>
+        <button type="button" class="btn btn-default dropdown-toggle white-dropdown" uib-dropdown-toggle>
+          Add Application <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+          <li>
+            <my-file-select dropdown="true" data-button-label="Custom Application" data-button-icon="__" on-file-select="AppsSectionCtrl.onFileSelected($files)">
+            </my-file-select>
+          </li>
+          <li>
+            <a href="{{AppsSectionCtrl.getHydratorUrl( { stateParams: { namespace: $stateParams.namespace } } )}}" class="clearfix">
+              <span class="pull-left">{{AppsSectionCtrl.GLOBALS.en.hydrator.appLabel}}</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

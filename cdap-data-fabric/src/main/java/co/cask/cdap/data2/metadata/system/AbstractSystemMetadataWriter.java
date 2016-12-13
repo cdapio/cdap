@@ -18,11 +18,10 @@ package co.cask.cdap.data2.metadata.system;
 
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
-import co.cask.cdap.data2.metadata.indexer.SchemaIndexer;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -33,28 +32,35 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * A class to write {@link MetadataScope#SYSTEM} metadata for an {@link Id.NamespacedId entity}.
+ * A class to write {@link MetadataScope#SYSTEM} metadata for an {@link NamespacedEntityId entity}.
  */
 public abstract class AbstractSystemMetadataWriter implements SystemMetadataWriter {
 
+  @VisibleForTesting
+  public static final String SCHEMA_KEY = "schema";
+  @VisibleForTesting
+  public static final String TTL_KEY = "ttl";
+  @VisibleForTesting
+  public static final String DESCRIPTION_KEY = "description";
+  @VisibleForTesting
+  public static final String ENTITY_NAME_KEY = "entity-name";
+  @VisibleForTesting
+  public static final String CREATION_TIME_KEY = "creation-time";
+  @VisibleForTesting
+  public static final String VERSION_KEY = "version";
+  @VisibleForTesting
   public static final String EXPLORE_TAG = "explore";
-
-  protected static final String SCHEMA_FIELD_PROPERTY_PREFIX = "schema";
-  protected static final String PLUGIN_KEY_PREFIX = "plugin";
-  protected static final String PLUGIN_VERSION_KEY_PREFIX = "plugin-version";
-  protected static final String TTL_KEY = "ttl";
-  protected static final String DESCRIPTION = "description";
-  protected static final String CREATION_TIME = "creation-time";
-  protected static final String VERSION = "version";
 
   // The following system properties should not get removed on metadata update
   // since they are not part of entity properties
-  protected static final Set<String> PRESERVE_PROPERTIES = ImmutableSet.of(CREATION_TIME, DESCRIPTION);
+  private static final Set<String> PRESERVE_PROPERTIES = ImmutableSet.of(CREATION_TIME_KEY, DESCRIPTION_KEY);
+  private static final String PLUGIN_KEY_PREFIX = "plugin";
+  private static final String PLUGIN_VERSION_KEY_PREFIX = "plugin-version";
 
   private final MetadataStore metadataStore;
   private final NamespacedEntityId entityId;
 
-  public AbstractSystemMetadataWriter(MetadataStore metadataStore, NamespacedEntityId entityId) {
+  AbstractSystemMetadataWriter(MetadataStore metadataStore, NamespacedEntityId entityId) {
     this.metadataStore = metadataStore;
     this.entityId = entityId;
   }
@@ -62,14 +68,15 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
   /**
    * Define the {@link MetadataScope#SYSTEM system} metadata properties to add for this entity.
    *
-   * @return A {@link Map} of properties to add to this {@link Id.NamespacedId entity} in {@link MetadataScope#SYSTEM}
+   * @return A {@link Map} of properties to add to this {@link NamespacedEntityId entity} in
+   * {@link MetadataScope#SYSTEM}
    */
   protected abstract Map<String, String> getSystemPropertiesToAdd();
 
   /**
    * Define the {@link MetadataScope#SYSTEM system} tags to add for this entity.
    *
-   * @return an array of tags to add to this {@link Id.NamespacedId entity} in {@link MetadataScope#SYSTEM}
+   * @return an array of tags to add to this {@link NamespacedEntityId entity} in {@link MetadataScope#SYSTEM}
    */
   protected abstract String[] getSystemTagsToAdd();
 
@@ -84,7 +91,7 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
   }
 
   /**
-   * Updates the {@link MetadataScope#SYSTEM} metadata for this {@link Id.NamespacedId entity}.
+   * Updates the {@link MetadataScope#SYSTEM} metadata for this {@link NamespacedEntityId entity}.
    */
   @Override
   public void write() {
@@ -106,15 +113,16 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
     if (tags.length > 0) {
       metadataStore.addTags(MetadataScope.SYSTEM, entityId, tags);
     }
+    // store additional properties that we want to index separately
     // if there is schema property then set that while providing schema indexer
-    if (!Strings.isNullOrEmpty(getSchemaToAdd())) {
-      metadataStore.setProperties(MetadataScope.SYSTEM, entityId,
-                                  ImmutableMap.of(SCHEMA_FIELD_PROPERTY_PREFIX, getSchemaToAdd()), new SchemaIndexer());
+    String schema = getSchemaToAdd();
+    if (!Strings.isNullOrEmpty(schema)) {
+      metadataStore.setProperty(MetadataScope.SYSTEM, entityId, SCHEMA_KEY, schema);
     }
   }
 
-  protected void addPlugin(PluginClass pluginClass, @Nullable String version,
-                         ImmutableMap.Builder<String, String> properties) {
+  void addPlugin(PluginClass pluginClass, @Nullable String version,
+                 ImmutableMap.Builder<String, String> properties) {
     String name = pluginClass.getName();
     String type = pluginClass.getType();
     // Need both name and type in the key because two plugins of different types could have the same name.

@@ -276,6 +276,9 @@ function link (scope, element) {
   };
 
   scope.updatePin = function () {
+    if (typeof xScale === 'undefined') {
+      return;
+    }
     let xPositionVal = xScale(scope.pinScrollingPosition);
 
     if(typeof pinHandle !== 'undefined'){

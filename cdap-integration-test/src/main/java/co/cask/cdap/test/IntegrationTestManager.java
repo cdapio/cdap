@@ -155,7 +155,6 @@ public class IntegrationTestManager extends AbstractTestManager {
     Preconditions.checkNotNull(appClassURL, "Cannot find class %s from the classloader", applicationClz);
 
     String appConfig = "";
-    TypeToken typeToken = TypeToken.of(applicationClz);
     Type configType = Artifacts.getConfigType(applicationClz);
 
     try {
@@ -175,7 +174,7 @@ public class IntegrationTestManager extends AbstractTestManager {
                                                              CLASS_ACCEPTOR, bundleEmbeddedJars);
           Files.copy(Locations.newInputSupplier(appJar), appJarFile);
         }
-        applicationClient.deploy(namespace.toId(), appJarFile, appConfig);
+        applicationClient.deploy(namespace, appJarFile, appConfig);
       } finally {
         if (!appJarFile.delete()) {
           LOG.warn("Failed to delete temporary app jar {}", appJarFile.getAbsolutePath());
@@ -187,7 +186,7 @@ public class IntegrationTestManager extends AbstractTestManager {
       MockAppConfigurer configurer = new MockAppConfigurer(application);
       application.configure(configurer, new DefaultApplicationContext<>(configObject));
       String applicationId = configurer.getName();
-      return new RemoteApplicationManager(namespace.app(applicationId).toId(), clientConfig, restClient);
+      return new RemoteApplicationManager(namespace.app(applicationId), clientConfig, restClient);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -201,12 +200,12 @@ public class IntegrationTestManager extends AbstractTestManager {
 
   @Override
   public ApplicationManager getApplicationManager(ApplicationId applicationId) {
-    return new RemoteApplicationManager(applicationId.toId(), clientConfig, restClient);
+    return new RemoteApplicationManager(applicationId, clientConfig, restClient);
   }
 
   @Override
   public ArtifactManager addArtifact(ArtifactId artifactId, final File artifactFile) throws Exception {
-    artifactClient.add(artifactId.toId(), null, new InputSupplier<InputStream>() {
+    artifactClient.add(artifactId, null, new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
         return new FileInputStream(artifactFile);
@@ -235,7 +234,7 @@ public class IntegrationTestManager extends AbstractTestManager {
                                         Manifest manifest) throws Exception {
     final Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest, CLASS_ACCEPTOR);
 
-    artifactClient.add(artifactId.toId(), null, new InputSupplier<InputStream>() {
+    artifactClient.add(artifactId, null, new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
         return appJar.getInputStream();
@@ -261,7 +260,7 @@ public class IntegrationTestManager extends AbstractTestManager {
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
     final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
-    artifactClient.add(artifactId.toId(), parents, new InputSupplier<InputStream>() {
+    artifactClient.add(artifactId, parents, new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
         return appJar.getInputStream();
@@ -290,7 +289,7 @@ public class IntegrationTestManager extends AbstractTestManager {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
     final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
     artifactClient.add(
-      Ids.namespace(artifactId.getNamespace()).toId(),
+      Ids.namespace(artifactId.getNamespace()),
       artifactId.getArtifact(),
       new InputSupplier<InputStream>() {
         @Override
@@ -308,13 +307,13 @@ public class IntegrationTestManager extends AbstractTestManager {
 
   @Override
   public void deleteArtifact(Id.Artifact artifactId) throws Exception {
-    artifactClient.delete(artifactId);
+    artifactClient.delete(artifactId.toEntityId());
   }
 
   @Override
   public void clear() throws Exception {
     for (NamespaceMeta namespace : namespaceClient.list()) {
-      programClient.stopAll(Id.Namespace.from(namespace.getName()));
+      programClient.stopAll(namespace.getNamespaceId());
     }
     namespaceClient.deleteAll();
   }
@@ -322,7 +321,7 @@ public class IntegrationTestManager extends AbstractTestManager {
   @Override
   public void deployDatasetModule(DatasetModuleId datasetModuleId,
                                   Class<? extends DatasetModule> datasetModule) throws Exception {
-    datasetModuleClient.add(datasetModuleId.toId(),
+    datasetModuleClient.add(datasetModuleId,
                             datasetModule.getName(),
                             createModuleJarFile(datasetModule));
   }
@@ -341,13 +340,13 @@ public class IntegrationTestManager extends AbstractTestManager {
     DatasetInstanceConfiguration dsConf = new DatasetInstanceConfiguration(datasetType, props.getProperties(),
                                                                            props.getDescription());
 
-    datasetClient.create(datasetId.toId(), dsConf);
-    return (T) new RemoteDatasetAdmin(datasetClient, datasetId.toId(), dsConf);
+    datasetClient.create(datasetId, dsConf);
+    return (T) new RemoteDatasetAdmin(datasetClient, datasetId, dsConf);
   }
 
   @Override
   public void deleteDatasetInstance(DatasetId datasetId) throws Exception {
-    datasetClient.delete(datasetId.toId());
+    datasetClient.delete(datasetId);
   }
 
   @Override
@@ -386,12 +385,12 @@ public class IntegrationTestManager extends AbstractTestManager {
 
   @Override
   public StreamManager getStreamManager(StreamId streamId) {
-    return new RemoteStreamManager(clientConfig, restClient, streamId.toId());
+    return new RemoteStreamManager(clientConfig, restClient, streamId);
   }
 
   @Override
   public void deleteAllApplications(NamespaceId namespaceId) throws Exception {
-    applicationClient.deleteAll(namespaceId.toId());
+    applicationClient.deleteAll(namespaceId);
   }
 
   /**

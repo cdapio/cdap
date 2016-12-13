@@ -46,7 +46,7 @@ public class SetStreamTTLCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     long ttlInSeconds = arguments.getLong(ArgumentName.TTL_IN_SECONDS.toString());
-    streamClient.setTTL(streamId.toId(), ttlInSeconds);
+    streamClient.setTTL(streamId, ttlInSeconds);
     output.printf("Successfully set TTL of stream '%s' to %d\n", streamId.getEntityName(), ttlInSeconds);
   }
 

@@ -1,0 +1,216 @@
+
+
+<my-breadcrumbs></my-breadcrumbs>
+
+<h2>Explore</h2>
+
+<div class="explore-table">
+
+  <div class="table-list">
+
+    <div class="list-group">
+      <p class="list-group-item list-group-heading">
+        Tables ({{GlobalExploreController.dataList.length}})
+      </p>
+      <div class="list-group-content">
+        <a href="" class="list-group-item" ng-repeat="data in GlobalExploreController.dataList" ng-click="GlobalExploreController.selectTable(data)" ng-class="{'selected': data.name === GlobalExploreController.name }">
+          <span class="icon-streams" ng-if="data.type === 'stream'"></span>
+          <span class="icon-datasets" ng-if="data.type === 'dataset'"></span>
+          <span>{{ ::data.name }}</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="explore-content">
+
+    
+    <div class="tab">
+      <div class="tab-heading" ng-class="{ 'active': GlobalExploreController.activeTab === 0 }" ng-click="GlobalExploreController.activeTab = 0">
+        <div class="heading-rotate">
+          <h3>General</h3>
+        </div>
+      </div>
+
+      <div class="tab-content" ng-if="GlobalExploreController.activeTab === 0">
+        <div class="table-responsive">
+          <table class="table">
+            <tr>
+              <td>Table</td>
+              <td>{{ GlobalExploreController.selectedInfo.table_name }}</td>
+            </tr>
+
+            <tr>
+              <td>Database</td>
+              <td>{{ GlobalExploreController.selectedInfo.db_name }}</td>
+            </tr>
+
+            <tr>
+              <td>Owner</td>
+              <td>{{ GlobalExploreController.selectedInfo.owner }}</td>
+            </tr>
+
+            <tr>
+              <td>Creation Time</td>
+              <td>
+                {{ GlobalExploreController.selectedInfo.creation_time  | amDateFormat:'dddd, MMMM Do YYYY, h:mm:ss a' }}
+              </td>
+            </tr>
+
+            <tr>
+              <td>Compressed</td>
+              <td>{{ GlobalExploreController.selectedInfo.compressed }}</td>
+            </tr>
+
+            <tr>
+              <td>Is Dataset</td>
+              <td>{{ GlobalExploreController.selectedInfo.from_dataset }}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="tab">
+      <div class="tab-heading" ng-class="{ 'active': GlobalExploreController.activeTab === 1 }" ng-click="GlobalExploreController.activeTab = 1">
+        <div class="heading-rotate">
+          <h3>Schema</h3>
+        </div>
+      </div>
+
+      <div class="tab-content" ng-if="GlobalExploreController.activeTab === 1">
+        <div class="table-responsive">
+          <table class="table" cask-sortable>
+            <thead>
+              <tr ng-class="{'sort-enabled': GlobalExploreController.selectedInfo.schema.length > 0 }">
+                <th data-predicate="name">Name</th>
+                <th data-predicate="type">Type</th>
+              </tr>
+            </thead>
+            <tr ng-repeat="schema in GlobalExploreController.selectedInfo.schema | orderBy:sortable.predicate:sortable.reverse">
+              <td>{{ schema.name }}</td>
+              <td>{{ schema.type }}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="tab">
+      <div class="tab-heading" ng-class="{ 'active': GlobalExploreController.activeTab === 2 }" ng-click="GlobalExploreController.activeTab = 2">
+        <div class="heading-rotate">
+          <h3>Partition Keys</h3>
+        </div>
+      </div>
+
+      <div class="tab-content" ng-if="GlobalExploreController.activeTab === 2">
+        <div class="table-responsive" ng-if="GlobalExploreController.selectedInfo.partitioned_keys.length > 0">
+          <table class="table" cask-sortable>
+            <thead>
+              <tr ng-class="{'sort-enabled': GlobalExploreController.selectedInfo.partitioned_keys.length > 0 }">
+                <th data-predicate="name">Name</th>
+                <th data-predicate="type">Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="partition in GlobalExploreController.selectedInfo.partitioned_keys | orderBy:sortable.predicate:sortable.reverse">
+                <td>{{ partition.name }}</td>
+                <td>{{ partition.type }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="well text-center" ng-if="GlobalExploreController.selectedInfo.partitioned_keys.length === 0">
+          No Partition Keys
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="tab">
+      <div class="tab-heading" ng-class="{ 'active': GlobalExploreController.activeTab === 3 }" ng-click="GlobalExploreController.activeTab = 3">
+        <div class="heading-rotate">
+          <h3>Advanced</h3>
+        </div>
+      </div>
+
+      <div class="tab-content" ng-if="GlobalExploreController.activeTab === 3">
+        <div class="table-responsive">
+          <table class="table">
+            <tr>
+              <td>Input Format</td>
+              <td>{{ GlobalExploreController.selectedInfo.input_format }}</td>
+            </tr>
+
+            <tr>
+              <td>Last Accessed Time</td>
+              <td>{{ GlobalExploreController.selectedInfo.last_access_time }}</td>
+            </tr>
+
+            <tr>
+              <td>Location</td>
+              <td>{{ GlobalExploreController.selectedInfo.location }}</td>
+            </tr>
+
+            <tr>
+              <td>Number of Buckets</td>
+              <td>{{ GlobalExploreController.selectedInfo.num_buckets }}</td>
+            </tr>
+
+            <tr>
+              <td>Output Format</td>
+              <td>{{ GlobalExploreController.selectedInfo.output_format }}</td>
+            </tr>
+
+            <tr>
+              <td>Parameters</td>
+              <td>
+                <table class="table table-bordered">
+                  <tbody>
+                    <tr ng-repeat="(key, value) in GlobalExploreController.selectedInfo.parameters">
+                      <td>{{ key }}</td>
+                      <td>{{ value }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td>Retention</td>
+              <td>{{ GlobalExploreController.selectedInfo.retention }}</td>
+            </tr>
+
+            <tr>
+              <td>SerDe</td>
+              <td>{{ GlobalExploreController.selectedInfo.serde }}</td>
+            </tr>
+
+            <tr>
+              <td>SerDe Parameters</td>
+              <td>
+                <table class="table table-bordered">
+                  <tbody>
+                    <tr ng-repeat="(key, value) in GlobalExploreController.selectedInfo.serde_parameters">
+                      <td>{{ key }}</td>
+                      <td>{{ value }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  
+
+</div>
+
+<my-explore data-type="GlobalExploreController.type" data-name="GlobalExploreController.name">
+</my-explore>

@@ -1,0 +1,62 @@
+
+
+<div class="modal-header clearfix">
+  <h3 class="modal-title pull-left">Add Plugin</h3>
+  <div class="btn-group pull-right">
+    <a class="btn" ng-click="$close()">
+      <span class="fa fa-times"></span>
+    </a>
+  </div>
+</div>
+<div class="modal-body config-modal">
+  <div class="row">
+    <div class="col-xs-6">
+      <strong>Step 1: Upload Plugin JAR</strong>
+      <button class="btn inner-section text-center" ng-click="LoadArtifactCtrl.openJARFileDialog()">
+        <span class="fa fa-cloud-upload" ng-class="{'text-success': LoadArtifactCtrl.jarStatus === 1, 'text-danger': LoadArtifactCtrl.jarStatus === 2}">
+        </span>
+        <div class="upload-message">
+          Click to add JAR file
+          <div>
+          or <a href=""> browse </a>
+          </div>
+          <div ng-if="LoadArtifactCtrl.jarStatus === 2" class="text-danger">
+            {{LoadArtifactCtrl.jarLoadFailMessage}}
+          </div>
+         </div>
+      </button>
+    </div>
+    <div class="col-xs-6">
+      <strong>Step 2: Upload Plugin JSON</strong>
+      <button class="btn inner-section text-center" ng-disabled="LoadArtifactCtrl.jarStatus !== 1" ng-click="LoadArtifactCtrl.openJsonFileDialog()">
+        <span class="fa fa-cloud-upload" ng-class="{'text-success': LoadArtifactCtrl.jsonStatus === 1, 'text-danger': LoadArtifactCtrl.jsonStatus === 2}">
+        </span>
+        <div class="upload-message">
+          <div>
+            Click to add JSON file
+            <div>
+            or <a href=""> browse </a>
+            </div>
+          </div>
+          <div ng-if="LoadArtifactCtrl.jsonStatus === 2" class="text-danger">
+            {{LoadArtifactCtrl.jsonLoadFailMessage}}
+          </div>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-footer">
+  <button class="btn btn-grey-cancel" ng-click="$close()">Cancel</button>
+  <button class="btn btn-blue" ng-click="LoadArtifactCtrl.upload()" ng-disabled="LoadArtifactCtrl.jsonStatus !== 1 || LoadArtifactCtrl.jarStatus !== 1">Upload</button>
+  <div class="text-danger text-left" ng-if="LoadArtifactCtrl.errorMessage">
+    <strong>Upload Failed </strong>
+    {{LoadArtifactCtrl.errorMessage}}
+  </div>
+</div>
+
+<my-file-select class="sr-only" id="jar-import-config-link" on-file-select="LoadArtifactCtrl.loadJAR($files)">
+</my-file-select>
+<my-file-select class="sr-only" id="json-import-config-link" on-file-select="LoadArtifactCtrl.loadJSON($files)">
+</my-file-select>

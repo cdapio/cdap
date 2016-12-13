@@ -80,6 +80,7 @@ export default class SplitAction extends Component {
         isOpen={this.state.isOpen}
         toggle={this.toggle}
         className="wrangler-actions"
+        zIndex="1070"
       >
         <ModalHeader>Split Column: {this.props.column}</ModalHeader>
         <ModalBody>

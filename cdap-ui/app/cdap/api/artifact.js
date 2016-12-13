@@ -25,5 +25,6 @@ export const MyArtifactApi = {
   get: apiCreator(dataSrc, 'GET', 'REQUEST', baseArtifactPath ),
   listExtensions: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseArtifactPath}/extensions` ),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', baseArtifactPath),
-  loadPluginConfiguration: apiCreator(dataSrc, 'PUT', 'REQUEST', basePluginArtifactJSON)
+  loadPluginConfiguration: apiCreator(dataSrc, 'PUT', 'REQUEST', basePluginArtifactJSON),
+  list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath)
 };

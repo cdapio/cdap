@@ -55,7 +55,7 @@ public class GetDatasetLineageCommand extends AbstractCommand {
     long end = getTimestamp(arguments.getOptional("end", "max"), currentTime);
     Integer levels = arguments.getIntOptional("levels", null);
 
-    LineageRecord lineage = client.getLineage(dataset.toId(), start, end, levels);
+    LineageRecord lineage = client.getLineage(dataset, start, end, levels);
     Table table = Table.builder()
       .setHeader("start", "end", "relations", "programs", "data")
       .setRows(

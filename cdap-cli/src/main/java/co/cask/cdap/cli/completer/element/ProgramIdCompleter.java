@@ -42,7 +42,7 @@ public class ProgramIdCompleter extends StringsCompleter {
       @Override
       public Collection<String> get() {
         try {
-          List<ProgramRecord> programs = appClient.listAllPrograms(cliConfig.getCurrentNamespace().toId(), programType);
+          List<ProgramRecord> programs = appClient.listAllPrograms(cliConfig.getCurrentNamespace(), programType);
           List<String> programIds = new ArrayList<>();
           for (ProgramRecord programRecord : programs) {
             programIds.add(programRecord.getApp() + "." + programRecord.getName());

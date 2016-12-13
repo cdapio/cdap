@@ -38,23 +38,29 @@ public class ViewSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private static final Logger LOG = LoggerFactory.getLogger(ViewSystemMetadataWriter.class);
   private final StreamViewId viewId;
   private final ViewSpecification viewSpec;
+  private final boolean existing;
 
-  public ViewSystemMetadataWriter(MetadataStore metadataStore, StreamViewId viewId, ViewSpecification viewSpec) {
+  public ViewSystemMetadataWriter(MetadataStore metadataStore, StreamViewId viewId, ViewSpecification viewSpec,
+                                  boolean existing) {
     super(metadataStore, viewId);
     this.viewId = viewId;
     this.viewSpec = viewSpec;
+    this.existing = existing;
   }
 
   @Override
-  protected  Map<String, String> getSystemPropertiesToAdd() {
+  protected Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
+    properties.put(ENTITY_NAME_KEY, viewId.getEntityName());
+    if (!existing) {
+      properties.put(CREATION_TIME_KEY, String.valueOf(System.currentTimeMillis()));
+    }
     return properties.build();
   }
 
   @Override
   protected String[] getSystemTagsToAdd() {
     return new String[] {
-      viewId.getEntityName(),
       viewId.getStream()
     };
   }
@@ -65,7 +71,7 @@ public class ViewSystemMetadataWriter extends AbstractSystemMetadataWriter {
     Schema schema = viewSpec.getFormat().getSchema();
     if (schema == null) {
       FormatSpecification format = viewSpec.getFormat();
-      RecordFormat<Object, Object> initializedFormat = null;
+      RecordFormat<Object, Object> initializedFormat;
       try {
         initializedFormat = RecordFormats.createInitializedFormat(format);
         schema = initializedFormat.getSchema();

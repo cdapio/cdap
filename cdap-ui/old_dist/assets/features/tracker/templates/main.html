@@ -1,0 +1,94 @@
+
+
+<div class="tracker-content">
+  <div class="tracker-banner">
+    <div class="tracker-title"></div>
+    <p class="text-right">
+      Powered by <span>CDAP</span>
+    </p>
+  </div>
+
+  <div class="tracker-search">
+    <div class="form-group has-feedback" ng-keypress="MainController.search($event)">
+      <input type="text" class="form-control" ng-model="MainController.searchQuery" pattern="^(?![*]).*$">
+      <span class="fa fa-search form-control-feedback"></span>
+    </div>
+  </div>
+
+  <div class="tracker-metrics">
+    <div class="row text-center">
+      <div class="col-md-4">
+        <div class="metric-heading">
+          <p>Most Active Applications</p>
+          <p>Last 7 days</p>
+        </div>
+        <div class="metric-container">
+          <my-top-entity-graph type="applications" start="'now-7d'" end="'now'" limit="5">
+          </my-top-entity-graph>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="metric-heading">
+          <p>Most Active Programs</p>
+          <p>Last 7 days</p>
+        </div>
+        <div class="metric-container">
+          <my-top-entity-graph type="programs" start="'now-7d'" end="'now'" limit="5">
+          </my-top-entity-graph>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="metric-heading">
+          <p>Most Active Datasets</p>
+          <p>Last 7 days</p>
+        </div>
+        <div class="metric-container">
+          <table ng-if="MainController.serviceUnavailable === false && MainController.topDatasets.length > 0" class="table">
+            <thead>
+              <th class="text-center">Dataset</th>
+              <th colspan="2" class="text-center">
+                Programs
+                <div class="clearfix">
+                  <span class="pull-left">Reading</span>
+                  <span class="pull-right">Writing</span>
+                </div>
+              </th>
+            </thead>
+            <tbody>
+              <tr ng-repeat="metric in ::MainController.topDatasets">
+                <td class="text-left">
+
+                  <a ng-if="metric.entityType === 'dataset'" ui-sref="tracker.detail.entity.metadata({entityType: 'datasets', entityId: metric.entityName})">
+                    <span uib-tooltip="{{ ::metric.entityName }}" tooltip-ellipsis="{{ ::metric.entityName }}" tooltip-enable="metric.entityName.length > 15" tooltip-append-to-body="true" tooltip-class="tracker-tooltip" tooltip-placement="top">
+                      <i class="icon-datasets"></i>
+                      {{ ::metric.entityName }}
+                    </span>
+                  </a>
+                  <a ng-if="metric.entityType === 'stream'" ui-sref="tracker.detail.entity.metadata({entityType: 'streams', entityId: metric.entityName})">
+                    <span uib-tooltip="{{ ::metric.entityName }}" tooltip-ellipsis="{{ ::metric.entityName }}" tooltip-enable="metric.entityName.length > 15" tooltip-append-to-body="true" tooltip-class="tracker-tooltip" tooltip-placement="top">
+                      <i class="icon-streams"></i>
+                      {{ ::metric.entityName }}
+                    </span>
+                  </a>
+                </td>
+                <td class="text-center">{{ ::metric.read }}</td>
+                <td class="text-center">{{ ::metric.write }}</td>
+              </tr>
+              <tr ng-if="MainController.emptyRows === true" ng-repeat="row in MainController.totalEmptyRows" class="empty-row">
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+          <div ng-if="MainController.topDatasets.length === 0" class="well">
+            <p>No datasets to display</p>
+          </div>
+          <div ng-if="MainController.serviceUnavailable === true" class="well">
+            <p>Service unavailable</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

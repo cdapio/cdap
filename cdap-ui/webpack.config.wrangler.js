@@ -111,7 +111,11 @@ module.exports = {
       'papaparse',
       'rx-dom',
       'd3',
-      'chart.js'
+      'chart.js',
+      'reactabular-table',
+      'reactabular-sticky',
+      'reactabular-virtualized',
+      'reactabular-resizable'
     ]
   },
   module: {
@@ -123,6 +127,7 @@ module.exports = {
           /node_modules/,
           /bower_components/,
           /dist/,
+          /old_dist/,
           /cdap_dist/,
           /common_dist/,
           /login_dist/,

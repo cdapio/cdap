@@ -23,27 +23,6 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
-`Release 3.6.1 <http://docs.cask.co/cdap/3.6.1/index.html>`__
-=============================================================
-
-Improvements
-------------
-
-- :cask-issue:`CDAP-7404` - Added authorization for schedules in CDAP.
-
-- :cask-issue:`HYDRATOR-997` - The SSH hostname and the command to be executed are now
-  macro-enabled for the SSH action plugin.
-
-Bug Fixes
----------
-
-- :cask-issue:`CDAP-7318` - Fixed an issue that would cause MapReduce and Spark programs
-  to fail if too many macros were being used.
-
-- :cask-issue:`CDAP-7438`, :cask-issue:`CDAP-7439` - Removed the requirement of running
-  "kinit" prior to running either the Upgrade or Transaction Debugger tools of CDAP on a
-  secure Hadoop cluster.
-
 `Release 3.6.0 <http://docs.cask.co/cdap/3.6.0/index.html>`__
 =============================================================
 
@@ -154,7 +133,7 @@ Known Issues
   properties such as ``kafka.log.dir``, as described in the :ref:`Administration Manual: 
   Appendices: cdap-site.xml <appendix-cdap-default-deprecated-properties>`. 
   
-  If you are upgrading from CDAP 3.4.x to 3.5.x, and you have set a value for
+  **If you are upgrading from CDAP 3.4.x to 3.5.x** and you have set a value for
   ``kafka.log.dir`` by using Cloudera Manager's :ref:`safety-valve mechanism
   <cloudera-installation-add-service-wizard-configuration>`, you need to change to the new
   property ``kafka.server.log.dirs``, as the deprecated ``kafka.log.dir`` is being ignored

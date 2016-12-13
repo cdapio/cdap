@@ -436,6 +436,21 @@ class HydratorPlusPlusNodeConfigCtrl {
   }
 
 
+  // Wrangler
+  openWranglerModal() {
+    this.$uibModal.open({
+      controller: 'WranglerModalController',
+      controllerAs: 'Wrangler',
+      windowClass: 'wrangler-modal',
+      templateUrl: '/assets/features/hydrator/templates/create/Wrangler/wrangler-modal.html',
+      resolve: {
+        rPlugin: () => {
+          return this.state.node;
+        }
+      }
+    });
+  }
+
 }
 
 angular.module(PKG.name + '.feature.hydrator')

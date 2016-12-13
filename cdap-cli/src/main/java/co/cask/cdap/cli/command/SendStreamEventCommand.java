@@ -48,7 +48,7 @@ public class SendStreamEventCommand extends AbstractAuthCommand implements Categ
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     String streamEvent = arguments.get(ArgumentName.STREAM_EVENT.toString());
-    streamClient.sendEvent(streamId.toId(), streamEvent);
+    streamClient.sendEvent(streamId, streamEvent);
     output.printf("Successfully sent stream event to stream '%s'\n", streamId.getEntityName());
   }
 

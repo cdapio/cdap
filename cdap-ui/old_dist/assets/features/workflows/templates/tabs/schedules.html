@@ -1,0 +1,20 @@
+
+
+<div class="modal-header clearfix">
+  <h3 class="pull-left">Schedules</h3>
+  <a class="btn pull-right" ng-click="$close()">
+    <span class="fa fa-remove"></span>
+    <span class="sr-only"> Close </span>
+  </a>
+</div>
+<div class="modal-body">
+  <div ng-if="SchedulesController.schedules.length > 0">
+
+    <my-schedules-view data-schedules="SchedulesController.schedules" data-on-schedule-action="SchedulesController.scheduleActionsMediator" data-schedule-context="SchedulesController" data-error="SchedulesController.error">
+    </my-schedules-view>
+  </div>
+
+  <div ng-if="SchedulesController.schedules.length === 0" class="well well-lg text-center">
+    <h4>No schedule for this workflow</h4>
+  </div>
+</div>

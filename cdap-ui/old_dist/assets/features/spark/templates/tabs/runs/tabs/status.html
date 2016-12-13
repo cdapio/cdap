@@ -1,0 +1,38 @@
+
+
+<div ng-controller="SparkRunsDetailStatusController as StatusController" class="container">
+    <div class="sparks-metrics row clearfix">
+      <div class="spark-metrics-storage col-sm-3">
+        <div class="title-storage">
+          STORAGE
+        </div>
+
+        <div class="metric-row">{{StatusController.data.blockRemainingMemory}} MB Remaining</div>
+
+        <div class="metric-row">{{StatusController.data.blockMaxMemory}} MB Max Available</div>
+
+        <div class="metric-row">{{StatusController.data.blockUsedMemory}} MB Used</div>
+
+        <div class="metric-row">{{StatusController.data.blockDiskSpaceUsed}} MB Used on disk</div>
+      </div>
+
+      <div class="spark-metrics-stages col-sm-offset-1 col-sm-7">
+        <div class="title-stage">
+          STAGES
+        </div>
+        <div class="progress stage-status-line">
+          <div class="progress-bar running" data-animation="am-flip-x" bs-tooltip="runningTooltip" ng-style="{ 'width': StatusController.getStagePercentage('running') + '%' }" title="">
+            {{StatusController.data.schedulerRunningStages}}
+          </div>
+
+          <div class="progress-bar failed" data-animation="am-flip-x" bs-tooltip="failedTooltip" ng-style="{ 'width': StatusController.getStagePercentage('failed') + '%' }" title="">
+            {{StatusController.data.schedulerFailedStages}}
+          </div>
+
+          <div class="progress-bar waiting" data-animation="am-flip-x" bs-tooltip="waitingTooltip" ng-style="{ 'width': StatusController.getStagePercentage('waiting') + '%' }" title="">
+            {{StatusController.data.schedulerWaitingStages}}
+          </div>
+        </div>
+      </div>
+    </div>
+</div>

@@ -374,6 +374,7 @@ public abstract class IntegrationTestBase {
     return namespace;
   }
 
+  @Deprecated
   protected ApplicationManager deployApplication(Id.Namespace namespace,
                                                  Class<? extends Application> applicationClz,
                                                  File...bundleEmbeddedJars) throws IOException {
@@ -387,7 +388,7 @@ public abstract class IntegrationTestBase {
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz) throws IOException {
-    return deployApplication(getConfiguredNamespace().toId(), applicationClz);
+    return deployApplication(getConfiguredNamespace(), applicationClz);
   }
 
 
@@ -405,7 +406,7 @@ public abstract class IntegrationTestBase {
 
   private void doClear(NamespaceId namespace, boolean deleteNamespace) throws Exception {
     // stop all programs in the namespace
-    getProgramClient().stopAll(namespace.toId());
+    getProgramClient().stopAll(namespace);
 
     if (deleteNamespace) {
       getNamespaceClient().delete(namespace);
@@ -413,37 +414,37 @@ public abstract class IntegrationTestBase {
     }
 
     // delete all apps in the namespace
-    for (ApplicationRecord app : getApplicationClient().list(namespace.toId())) {
+    for (ApplicationRecord app : getApplicationClient().list(namespace)) {
       getApplicationClient().delete(namespace.app(app.getName(), app.getAppVersion()));
     }
     // delete all streams
-    for (StreamDetail streamDetail : getStreamClient().list(namespace.toId())) {
-      getStreamClient().delete(namespace.stream(streamDetail.getName()).toId());
+    for (StreamDetail streamDetail : getStreamClient().list(namespace)) {
+      getStreamClient().delete(namespace.stream(streamDetail.getName()));
     }
     // delete all dataset instances
-    for (DatasetSpecificationSummary datasetSpecSummary : getDatasetClient().list(namespace.toId())) {
-      getDatasetClient().delete(namespace.dataset(datasetSpecSummary.getName()).toId());
+    for (DatasetSpecificationSummary datasetSpecSummary : getDatasetClient().list(namespace)) {
+      getDatasetClient().delete(namespace.dataset(datasetSpecSummary.getName()));
     }
     ArtifactClient artifactClient = new ArtifactClient(getClientConfig(), getRestClient());
-    for (ArtifactSummary artifactSummary : artifactClient.list(namespace.toId(), ArtifactScope.USER)) {
-      artifactClient.delete(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()).toId());
+    for (ArtifactSummary artifactSummary : artifactClient.list(namespace, ArtifactScope.USER)) {
+      artifactClient.delete(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()));
     }
 
     assertIsClear(namespace);
   }
 
   private void assertIsClear(NamespaceId namespaceId) throws Exception {
-    assertNoApps(namespaceId.toId());
-    assertNoUserDatasets(namespaceId.toId());
-    assertNoStreams(namespaceId.toId());
+    assertNoApps(namespaceId);
+    assertNoUserDatasets(namespaceId);
+    assertNoStreams(namespaceId);
   }
 
   private boolean isUserDataset(DatasetSpecificationSummary specification) {
     final DefaultDatasetNamespace dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
-    return !dsNamespace.contains(specification.getName(), Id.Namespace.SYSTEM.getId());
+    return !dsNamespace.contains(specification.getName(), NamespaceId.SYSTEM.getNamespace());
   }
 
-  private void assertNoUserDatasets(Id.Namespace namespace) throws Exception {
+  private void assertNoUserDatasets(NamespaceId namespace) throws Exception {
     DatasetClient datasetClient = getDatasetClient();
     List<DatasetSpecificationSummary> datasets = datasetClient.list(namespace);
 
@@ -467,7 +468,7 @@ public abstract class IntegrationTestBase {
                          + Joiner.on(", ").join(userDatasetNames), userDatasets.iterator().hasNext());
   }
 
-  private void assertNoApps(Id.Namespace namespace) throws Exception {
+  private void assertNoApps(NamespaceId namespace) throws Exception {
     ApplicationClient applicationClient = getApplicationClient();
     List<ApplicationRecord> applicationRecords = applicationClient.list(namespace);
     List<String> applicationIds = Lists.newArrayList();
@@ -479,7 +480,7 @@ public abstract class IntegrationTestBase {
                         + Joiner.on(", ").join(applicationIds), applicationRecords.isEmpty());
   }
 
-  private void assertNoStreams(Id.Namespace namespace) throws Exception {
+  private void assertNoStreams(NamespaceId namespace) throws Exception {
     List<StreamDetail> streams = getStreamClient().list(namespace);
     List<String> streamNames = Lists.newArrayList();
     for (StreamDetail stream : streams) {

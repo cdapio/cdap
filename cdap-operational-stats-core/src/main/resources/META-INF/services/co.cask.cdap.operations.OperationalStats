@@ -22,3 +22,7 @@ co.cask.cdap.operations.yarn.YarnApps
 co.cask.cdap.operations.yarn.YarnNodes
 co.cask.cdap.operations.yarn.YarnQueues
 co.cask.cdap.operations.yarn.YarnResources
+co.cask.cdap.operations.hbase.HBaseInfo
+co.cask.cdap.operations.hbase.HBaseNodes
+co.cask.cdap.operations.hbase.HBaseLoad
+co.cask.cdap.operations.hbase.HBaseEntities

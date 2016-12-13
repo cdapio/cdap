@@ -1,0 +1,44 @@
+
+
+<ul class="dropdown-menu" role="menu">
+
+  <li role="presentation">
+    <a role="menuitem" href="" tabindex="-1" ng-click="addWidget()">
+      <span class="fa fa-fw fa-dashboard pull-right"></span>
+      Add Widget
+    </a>
+  </li>
+
+  <li role="presentation" class="divider"></li>
+
+  <li role="presentation">
+    <a role="menuitem" tabindex="-1" href="" ng-click="caskPrompt('Dashboard name', dashboards[dashboards.activeIndex].title)" cask-promptable="dashboards[dashboards.activeIndex].rename($value)">
+      <span class="fa fa-fw fa-pencil pull-right"></span>
+      Rename
+    </a>
+  </li>
+
+  <li role="presentation" ng-class="{disabled: dashboards.length<2}">
+    <a role="menuitem" tabindex="-1" href="" ng-click="dashboards.length>1 && reorderDashboard(-1)">
+      <span class="fa fa-fw fa-arrow-left pull-right"></span>
+      Move Left
+    </a>
+  </li>
+
+  <li role="presentation" ng-class="{disabled: dashboards.length<2}">
+    <a role="menuitem" tabindex="-1" href="" ng-click="dashboards.length>1 && reorderDashboard()">
+      <span class="fa fa-fw fa-arrow-right pull-right"></span>
+      Move Right
+    </a>
+  </li>
+
+  <li role="presentation" class="divider"></li>
+
+  <li role="presentation">
+    <a role="menuitem" tabindex="-1" href="" ng-click="caskConfirm()" cask-confirmable="removeDashboard()" data-confirmable-content="Are you sure you want to delete the dashboard '<strong>{{dashboards[dashboards.activeIndex].title}}</strong>'?">
+      <span class="fa fa-fw fa-trash pull-right"></span>
+      Delete
+    </a>
+  </li>
+
+</ul>

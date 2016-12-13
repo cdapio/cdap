@@ -111,7 +111,12 @@
     "react-redux": "4.4.5",
     "react-router": "4.0.0-alpha.4",
     "react-youtube": "7.1.1",
-    "reactstrap": "3.9.1",
+    "reactabular": "8.3.0",
+    "reactabular-resizable": "8.4.0",
+    "reactabular-sticky": "8.2.0",
+    "reactabular-table": "8.1.0",
+    "reactabular-virtualized": "8.0.0",
+    "reactstrap": "3.9.3",
     "redux": "https://registry.npmjs.org/redux/-/redux-3.5.2.tgz",
     "redux-thunk": "2.0.1",
     "request": "2.69.0",
@@ -121,10 +126,11 @@
     "shortid": "2.2.6",
     "sockjs": "0.3.15",
     "sockjs-client": "1.1.1",
+    "table-resolver": "2.0.3",
     "webpack": "1.13.2",
     "whatwg-fetch": "https://registry.npmjs.org/whatwg-fetch/-/whatwg-fetch-1.0.0.tgz",
     "yml-loader": "1.1.0",
-    "cdap-avsc": "4.1.11"
+    "cdap-avsc": "4.1.12"
   },
   "engines": {
     "node": ">= 4.5.0"

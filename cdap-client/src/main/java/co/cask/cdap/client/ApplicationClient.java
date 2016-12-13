@@ -93,8 +93,23 @@ public class ApplicationClient {
    * @return list of {@link ApplicationRecord ApplicationRecords}.
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Please use {@link #list(NamespaceId)} instead
    */
+  @Deprecated
   public List<ApplicationRecord> list(Id.Namespace namespace)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
+    return list(namespace.toEntityId());
+  }
+
+  /**
+   * Lists all applications currently deployed.
+   *
+   * @param namespace the namespace to list applications from
+   * @return list of {@link ApplicationRecord ApplicationRecords}.
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public List<ApplicationRecord> list(NamespaceId namespace)
     throws IOException, UnauthenticatedException, UnauthorizedException {
     HttpResponse response = restClient.execute(HttpMethod.GET,
                                                config.resolveNamespacedURLV3(namespace, "apps"),
@@ -112,9 +127,28 @@ public class ApplicationClient {
    * @return list of {@link ApplicationRecord ApplicationRecords}.
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #list(NamespaceId, String, String)}.
    */
+  @Deprecated
   public List<ApplicationRecord> list(
     Id.Namespace namespace, @Nullable String artifactName,
+    @Nullable String artifactVersion) throws IOException, UnauthenticatedException, UnauthorizedException {
+    return list(namespace.toEntityId(), artifactName, artifactVersion);
+  }
+
+  /**
+   * Lists all applications currently deployed, optionally filtering to only include applications that use the
+   * specified artifact name and version.
+   *
+   * @param namespace the namespace to list applications from
+   * @param artifactName the name of the artifact to filter by. If null, no filtering will be done
+   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done
+   * @return list of {@link ApplicationRecord ApplicationRecords}.
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public List<ApplicationRecord> list(
+    NamespaceId namespace, @Nullable String artifactName,
     @Nullable String artifactVersion) throws IOException, UnauthenticatedException, UnauthorizedException {
     Set<String> names = new HashSet<>();
     if (artifactName != null) {
@@ -133,9 +167,28 @@ public class ApplicationClient {
    * @return list of {@link ApplicationRecord ApplicationRecords}.
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #list(NamespaceId, Set, String)} instead.
    */
+  @Deprecated
   public List<ApplicationRecord> list(
     Id.Namespace namespace, Set<String> artifactNames, @Nullable String artifactVersion)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
+    return list(namespace.toEntityId(), artifactNames, artifactVersion);
+  }
+
+  /**
+   * Lists all applications currently deployed, optionally filtering to only include applications that use one of
+   * the specified artifact names and the specified artifact version.
+   *
+   * @param namespace the namespace to list applications from
+   * @param artifactNames the set of artifact names to allow. If empty, no filtering will be done
+   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done
+   * @return list of {@link ApplicationRecord ApplicationRecords}.
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public List<ApplicationRecord> list(
+    NamespaceId namespace, Set<String> artifactNames, @Nullable String artifactVersion)
     throws IOException, UnauthenticatedException, UnauthorizedException {
     if (artifactNames.isEmpty() && artifactVersion == null) {
       return list(namespace);
@@ -152,8 +205,8 @@ public class ApplicationClient {
     }
 
     HttpResponse response = restClient.execute(HttpMethod.GET,
-      config.resolveNamespacedURLV3(namespace, path),
-      config.getAccessToken());
+                                               config.resolveNamespacedURLV3(namespace, path),
+                                               config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
   }
 
@@ -283,8 +336,20 @@ public class ApplicationClient {
    *
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #deleteAll(NamespaceId)} instead.
    */
+  @Deprecated
   public void deleteAll(Id.Namespace namespace) throws IOException, UnauthenticatedException, UnauthorizedException {
+    deleteAll(namespace.toEntityId());
+  }
+
+  /**
+   * Deletes all applications in a namespace.
+   *
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void deleteAll(NamespaceId namespace) throws IOException, UnauthenticatedException, UnauthorizedException {
     restClient.execute(HttpMethod.DELETE, config.resolveNamespacedURLV3(namespace, "apps"), config.getAccessToken());
   }
 
@@ -295,11 +360,26 @@ public class ApplicationClient {
    * @return true if the application exists
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #exists(ApplicationId)} instead.
    */
+  @Deprecated
   public boolean exists(Id.Application app) throws IOException, UnauthenticatedException, UnauthorizedException {
-    HttpResponse response = restClient.execute(HttpMethod.GET,
-                                               config.resolveNamespacedURLV3(app.getNamespace(), "apps/" + app.getId()),
-                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    return exists(app.toEntityId());
+  }
+
+  /**
+   * Checks if an application exists.
+   *
+   * @param app the application to check
+   * @return true if the application exists
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public boolean exists(ApplicationId app) throws IOException, UnauthenticatedException, UnauthorizedException {
+    HttpResponse response = restClient.execute(
+      HttpMethod.GET,
+      config.resolveNamespacedURLV3(app.getParent(), "apps/" + app.getApplication()),
+      config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
   }
 
@@ -313,8 +393,26 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws TimeoutException if the application was not yet deployed before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
+   * @deprecated since 4.0.0. Use {@link #waitForDeployed(ApplicationId, long, TimeUnit)} instead.
    */
+  @Deprecated
   public void waitForDeployed(final Id.Application app, long timeout, TimeUnit timeoutUnit)
+    throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
+    waitForDeployed(app.toEntityId(), timeout, timeoutUnit);
+  }
+
+  /**
+   * Waits for an application to be deployed.
+   *
+   * @param app the application to check
+   * @param timeout time to wait before timing out
+   * @param timeoutUnit time unit of timeout
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws TimeoutException if the application was not yet deployed before {@code timeout} milliseconds
+   * @throws InterruptedException if interrupted while waiting
+   */
+  public void waitForDeployed(final ApplicationId app, long timeout, TimeUnit timeoutUnit)
     throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
 
     try {
@@ -339,8 +437,26 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws TimeoutException if the application was not yet deleted before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
+   * @deprecated since 4.0.0. Use {@link #waitForDeleted(ApplicationId, long, TimeUnit)} instead.
    */
+  @Deprecated
   public void waitForDeleted(final Id.Application app, long timeout, TimeUnit timeoutUnit)
+    throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
+    waitForDeleted(app.toEntityId(), timeout, timeoutUnit);
+  }
+
+  /**
+   * Waits for an application to be deleted.
+   *
+   * @param app the application to check
+   * @param timeout time to wait before timing out
+   * @param timeoutUnit time unit of timeout
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws TimeoutException if the application was not yet deleted before {@code timeout} milliseconds
+   * @throws InterruptedException if interrupted while waiting
+   */
+  public void waitForDeleted(final ApplicationId app, long timeout, TimeUnit timeoutUnit)
     throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
 
     try {
@@ -360,8 +476,20 @@ public class ApplicationClient {
    *
    * @param jarFile jar file of the application to deploy
    * @throws IOException if a network error occurred
+   * @deprecated since 4.0.0. Use {@link #deploy(NamespaceId, File)} instead.
    */
+  @Deprecated
   public void deploy(Id.Namespace namespace, File jarFile) throws IOException, UnauthenticatedException {
+    deploy(namespace.toEntityId(), jarFile);
+  }
+
+  /**
+   * Deploys an application.
+   *
+   * @param jarFile jar file of the application to deploy
+   * @throws IOException if a network error occurred
+   */
+  public void deploy(NamespaceId namespace, File jarFile) throws IOException, UnauthenticatedException {
     Map<String, String> headers = ImmutableMap.of("X-Archive-Name", jarFile.getName());
     deployApp(namespace, jarFile, headers);
   }
@@ -374,8 +502,24 @@ public class ApplicationClient {
    * @param appConfig serialized application configuration
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #deploy(NamespaceId, File, String)} instead.
    */
+  @Deprecated
   public void deploy(Id.Namespace namespace, File jarFile,
+                     String appConfig) throws IOException, UnauthenticatedException {
+    deploy(namespace.toEntityId(), jarFile, appConfig);
+  }
+
+  /**
+   * Deploys an application with a serialized application configuration string.
+   *
+   * @param namespace namespace to which the application should be deployed
+   * @param jarFile jar file of the application to deploy
+   * @param appConfig serialized application configuration
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void deploy(NamespaceId namespace, File jarFile,
                      String appConfig) throws IOException, UnauthenticatedException {
     Map<String, String> headers = ImmutableMap.of("X-Archive-Name", jarFile.getName(),
                                                   "X-App-Config", appConfig);
@@ -390,8 +534,24 @@ public class ApplicationClient {
    * @param appConfig application configuration object
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #deploy(NamespaceId, File, Config)} instead.
    */
+  @Deprecated
   public void deploy(Id.Namespace namespace, File jarFile,
+                     Config appConfig) throws IOException, UnauthenticatedException {
+    deploy(namespace.toEntityId(), jarFile, appConfig);
+  }
+
+  /**
+   * Deploys an application with an application configuration object.
+   *
+   * @param namespace namespace to which the application should be deployed
+   * @param jarFile jar file of the application to deploy
+   * @param appConfig application configuration object
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void deploy(NamespaceId namespace, File jarFile,
                      Config appConfig) throws IOException, UnauthenticatedException {
     deploy(namespace, jarFile, GSON.toJson(appConfig));
   }
@@ -438,16 +598,34 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or requested artifact could not be found
    * @throws BadRequestException if the request is invalid
+   * @deprecated since 4.0.0. Use {@link #update(ApplicationId, AppRequest)} instead.
    */
+  @Deprecated
   public void update(Id.Application appId, AppRequest<?> updateRequest)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
+    update(appId.toEntityId(), updateRequest);
+  }
 
-    URL url = config.resolveNamespacedURLV3(appId.getNamespace(), String.format("apps/%s/update", appId.getId()));
+
+  /**
+   * Update an existing app to use a different artifact version or config.
+   *
+   * @param appId the id of the application to update
+   * @param updateRequest the request to update the application with
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws NotFoundException if the app or requested artifact could not be found
+   * @throws BadRequestException if the request is invalid
+   */
+  public void update(ApplicationId appId, AppRequest<?> updateRequest)
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(appId.getParent(), String.format("apps/%s/update", appId.getApplication()));
     HttpRequest request = HttpRequest.post(url)
       .withBody(GSON.toJson(updateRequest))
       .build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(),
-      HttpURLConnection.HTTP_NOT_FOUND, HttpURLConnection.HTTP_BAD_REQUEST);
+                                               HttpURLConnection.HTTP_NOT_FOUND, HttpURLConnection.HTTP_BAD_REQUEST);
 
     int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -458,7 +636,7 @@ public class ApplicationClient {
     }
   }
 
-  private void deployApp(Id.Namespace namespace, File jarFile, Map<String, String> headers)
+  private void deployApp(NamespaceId namespace, File jarFile, Map<String, String> headers)
     throws IOException, UnauthenticatedException {
     URL url = config.resolveNamespacedURLV3(namespace, "apps");
     HttpRequest request = HttpRequest.post(url)
@@ -475,8 +653,23 @@ public class ApplicationClient {
    * @return list of {@link ProgramRecord}s
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #listAllPrograms(NamespaceId, ProgramType)} instead.
    */
+  @Deprecated
   public List<ProgramRecord> listAllPrograms(Id.Namespace namespace, ProgramType programType)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
+    return listAllPrograms(namespace.toEntityId(), programType);
+  }
+
+  /**
+   * Lists all programs of some type.
+   *
+   * @param programType type of the programs to list
+   * @return list of {@link ProgramRecord}s
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public List<ProgramRecord> listAllPrograms(NamespaceId namespace, ProgramType programType)
     throws IOException, UnauthenticatedException, UnauthorizedException {
 
     Preconditions.checkArgument(programType.isListable());
@@ -497,8 +690,22 @@ public class ApplicationClient {
    * @return list of {@link ProgramRecord}s
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #listAllPrograms(NamespaceId)} instead.
    */
+  @Deprecated
   public Map<ProgramType, List<ProgramRecord>> listAllPrograms(Id.Namespace namespace)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
+    return listAllPrograms(namespace.toEntityId());
+  }
+
+  /**
+   * Lists all programs.
+   *
+   * @return list of {@link ProgramRecord}s
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public Map<ProgramType, List<ProgramRecord>> listAllPrograms(NamespaceId namespace)
     throws IOException, UnauthenticatedException, UnauthorizedException {
 
     ImmutableMap.Builder<ProgramType, List<ProgramRecord>> allPrograms = ImmutableMap.builder();
@@ -521,8 +728,25 @@ public class ApplicationClient {
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #listPrograms(ApplicationId, ProgramType)} instead.
    */
+  @Deprecated
   public List<ProgramRecord> listPrograms(Id.Application app, ProgramType programType)
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+    return listPrograms(app.toEntityId(), programType);
+  }
+
+  /**
+   * Lists programs of some type belonging to an application.
+   *
+   * @param app the application
+   * @param programType type of the programs to list
+   * @return list of {@link ProgramRecord}s
+   * @throws ApplicationNotFoundException if the application with the given ID was not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public List<ProgramRecord> listPrograms(ApplicationId app, ProgramType programType)
     throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     Preconditions.checkArgument(programType.isListable());
@@ -544,8 +768,24 @@ public class ApplicationClient {
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Use {@link #listProgramsByType(ApplicationId)} instead.
    */
+  @Deprecated
   public Map<ProgramType, List<ProgramRecord>> listProgramsByType(Id.Application app)
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+    return listProgramsByType(app.toEntityId());
+  }
+
+  /**
+   * Lists programs of some type belonging to an application.
+   *
+   * @param app the application
+   * @return Map of {@link ProgramType} to list of {@link ProgramRecord}s
+   * @throws ApplicationNotFoundException if the application with the given ID was not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public Map<ProgramType, List<ProgramRecord>> listProgramsByType(ApplicationId app)
     throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     Map<ProgramType, List<ProgramRecord>> result = Maps.newHashMap();

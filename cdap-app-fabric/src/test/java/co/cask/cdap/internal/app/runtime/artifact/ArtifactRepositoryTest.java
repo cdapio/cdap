@@ -146,10 +146,10 @@ public class ArtifactRepositoryTest {
   @Test
   public void testDeletingArtifact() throws Exception {
     MetadataRecord record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID.toEntityId());
-    Assert.assertEquals(1, record.getTags().size());
+    Assert.assertFalse(record.getProperties().isEmpty());
     artifactRepository.deleteArtifact(APP_ARTIFACT_ID);
     record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID.toEntityId());
-    Assert.assertEquals(0, record.getTags().size());
+    Assert.assertTrue(record.getProperties().isEmpty());
   }
 
   @Test(expected = InvalidArtifactException.class)

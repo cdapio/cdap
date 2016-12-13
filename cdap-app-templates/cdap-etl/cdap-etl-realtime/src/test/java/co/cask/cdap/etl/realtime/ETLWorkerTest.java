@@ -29,9 +29,9 @@ import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.IntValueFilterTransform;
 import co.cask.cdap.etl.proto.v2.ETLRealtimeConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
@@ -104,7 +104,7 @@ public class ETLWorkerTest extends HydratorTestBase {
       .addConnection("source", "sink")
       .build();
 
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "simpleApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("simpleApp");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
@@ -133,7 +133,7 @@ public class ETLWorkerTest extends HydratorTestBase {
       .setInstances(2)
       .build();
 
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "emptyTest");
+    ApplicationId appId = NamespaceId.DEFAULT.app("emptyTest");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationManager appManager = deployApplication(appId, appRequest);
     Assert.assertNotNull(appManager);
@@ -162,7 +162,7 @@ public class ETLWorkerTest extends HydratorTestBase {
       .addConnection("source", "sink")
       .build();
 
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "lookupTestApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("lookupTestApp");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
@@ -220,7 +220,7 @@ public class ETLWorkerTest extends HydratorTestBase {
       .addConnection("identity", "sink2")
       .build();
 
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "dagTest");
+    ApplicationId appId = NamespaceId.DEFAULT.app("dagTest");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationManager appManager = deployApplication(appId, appRequest);
     Assert.assertNotNull(appManager);
@@ -260,10 +260,10 @@ public class ETLWorkerTest extends HydratorTestBase {
     }
   }
 
-  private void validateMetric(long expected, Id.Application appId,
+  private void validateMetric(long expected, ApplicationId appId,
                               String metric) throws TimeoutException, InterruptedException {
-    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, appId.getNamespaceId(),
-                                               Constants.Metrics.Tag.APP, appId.getId(),
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, appId.getNamespace(),
+                                               Constants.Metrics.Tag.APP, appId.getApplication(),
                                                Constants.Metrics.Tag.WORKER, ETLWorker.NAME);
     getMetricsManager().waitForTotalMetricCount(tags, "user." + metric, expected, 20, TimeUnit.SECONDS);
     // wait for won't throw an exception if the metric count is greater than expected

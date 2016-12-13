@@ -91,7 +91,7 @@ abstract class ExploreHttpClient implements Explore {
   private static final Type ROW_LIST_TYPE = new TypeToken<List<QueryResult>>() { }.getType();
 
   protected HttpRequestConfig getHttpRequestConfig() {
-    return new DefaultHttpRequestConfig();
+    return new DefaultHttpRequestConfig(false);
   }
 
   protected abstract InetSocketAddress getExploreServiceAddress();

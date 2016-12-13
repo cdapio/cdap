@@ -45,6 +45,7 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -70,7 +71,7 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
       }
     });
     this.locationFactory = locationFactory;
-    this.httpRequestConfig = new DefaultHttpRequestConfig();
+    this.httpRequestConfig = new DefaultHttpRequestConfig(false);
   }
 
   @Override
@@ -99,9 +100,10 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
     if (discoverable == null) {
       throw new IOException(String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP));
     }
-    InetSocketAddress addr = discoverable.getSocketAddress();
-
-    URI baseURI = URI.create(String.format("http://%s:%d", addr.getHostName(), addr.getPort()));
+    InetSocketAddress address = discoverable.getSocketAddress();
+    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
+      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
+    URI baseURI = URI.create(String.format("%s%s:%d", scheme, address.getHostName(), address.getPort()));
     return baseURI.resolve("/v1/" + resource).toURL();
   }
 

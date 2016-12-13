@@ -84,7 +84,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
     long endTime = getTimestamp(arguments.getOptional(ArgumentName.END_TIME.toString(), "max"), currentTime);
 
     // hack to validate streamId
-    StreamProperties config = streamClient.getConfig(streamId.toId());
+    StreamProperties config = streamClient.getConfig(streamId);
     if (config.getFormat().getName().equals("text")) {
       output.printf("No schema found for stream '%s'", streamId.getEntityName());
       output.println();

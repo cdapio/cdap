@@ -107,6 +107,13 @@ my-dag-plus {
         .node {
           border: 3px solid #4586f3;
         }
+
+        &.wrangler {
+          color: @wrangler-red;
+          .node {
+            border-color: @wrangler-red;
+          }
+        }
       }
       &.realtimesink,
       &.batchsink,
@@ -343,8 +350,16 @@ my-dag-plus {
           stroke: #48c038;
         }
       }
-      &-anchor-transformAnchor circle {
-        stroke: #4586f3;
+      &-anchor-transformAnchor {
+        circle {
+          stroke: #4586f3;
+        }
+
+        &.wrangler-anchor {
+          circle {
+            stroke: @wrangler-red;
+          }
+        }
       }
       &-anchor-sinkAnchor {
         circle,

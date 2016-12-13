@@ -58,7 +58,7 @@ export default class PaginationDropdown extends Component {
         toggle={this.handleExpansionToggle}
       >
         <DropdownToggle tag="div">
-          <span>{T.translate('features.Home.Header.pagination')}</span>
+          <span>{T.translate('features.Pagination.dropdown-label')}</span>
           <span className="current-page">{this.props.currentPage}</span>
           <span className="fa fa-caret-down pull-right"></span>
         </DropdownToggle>

@@ -41,15 +41,33 @@ public class HttpExceptionHandler extends ExceptionHandler {
     if (Iterables.size(Iterables.filter(Throwables.getCausalChain(t), ServiceUnavailableException.class)) > 0) {
       // no need to log ServiceUnavailableException because at master startup we are waiting for services to come up
       responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, t.getMessage());
-    } else if (t instanceof HttpErrorStatusProvider) {
+      return;
+    }
+
+    // If the exception provides http status, response with it
+    if (t instanceof HttpErrorStatusProvider) {
       logWithTrace(request, t);
       responder.sendString(HttpResponseStatus.valueOf(((HttpErrorStatusProvider) t).getStatusCode()),
                            t.getMessage());
-    } else {
-      LOG.error("Unexpected error: request={} {} user={}:", request.getMethod().getName(), request.getUri(),
-                Objects.firstNonNull(SecurityRequestContext.getUserId(), "<null>"), t);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, Throwables.getRootCause(t).getMessage());
+      return;
     }
+
+    // For some known exception naming convention, response with 4xx
+    if (t.getClass().getName().endsWith("NotFoundException")) {
+      logWithTrace(request, t);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, t.getMessage());
+      return;
+    }
+    if (t.getClass().getName().endsWith("AlreadyExistsException")) {
+      logWithTrace(request, t);
+      responder.sendString(HttpResponseStatus.CONFLICT, t.getMessage());
+      return;
+    }
+
+    // If it is not some known exception type, response with 500.
+    LOG.error("Unexpected error: request={} {} user={}:", request.getMethod().getName(), request.getUri(),
+              Objects.firstNonNull(SecurityRequestContext.getUserId(), "<null>"), t);
+    responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, Throwables.getRootCause(t).getMessage());
   }
 
   private void logWithTrace(HttpRequest request, Throwable t) {

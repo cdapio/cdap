@@ -214,7 +214,6 @@ function download_includes() {
   download_md_file cassandra-plugins Cassandra-batchsink.md
   download_md_file cassandra-plugins Cassandra-batchsource.md 
   download_md_file cassandra-plugins Cassandra-realtimesink.md 
-  download_md_file copybookreader-plugins CopybookReader-batchsource.md 
   download_md_file core-plugins AmazonSQS-realtimesource.md
   download_md_file core-plugins AzureBlobStore-batchsource.md
   download_md_file core-plugins Cube-batchsink.md
@@ -261,6 +260,7 @@ function download_includes() {
   download_md_file core-plugins Twitter-realtimesource.md
   download_md_file core-plugins Validator-transform.md
   download_md_file core-plugins Window-windower.md
+  download_md_file core-plugins WindowsShareCopy-action.md
   download_md_file core-plugins XMLReader-batchsource.md
   download_md_file database-plugins Database-batchsink.md _includes/database-batchsink-append.md.txt
   download_md_file database-plugins Database-batchsource.md _includes/database-batchsource-append.md.txt
@@ -281,10 +281,18 @@ function download_includes() {
   download_md_file mongodb-plugins MongoDB-batchsink.md
   download_md_file mongodb-plugins MongoDB-batchsource.md
   download_md_file mongodb-plugins MongoDB-realtimesink.md
+  download_md_file solrsearch-plugins SolrSearch-batchsink.md
+  download_md_file solrsearch-plugins SolrSearch-realtimesink.md
+  download_md_file spark-plugins DecisionTreePredictor-sparkcompute.md '' "analytic"
+  download_md_file spark-plugins DecisionTreeTrainer-sparksink.md '' "analytic"
   download_md_file spark-plugins Kafka-streamingsource.md
-  download_md_file spark-plugins Twitter-streamingsource.md
+  download_md_file spark-plugins LogisticRegressionClassifier-sparkcompute.md '' "analytic"
+  download_md_file spark-plugins LogisticRegressionTrainer-sparksink.md '' "analytic"
   download_md_file spark-plugins NaiveBayesClassifier-sparkcompute.md '' "analytic"
   download_md_file spark-plugins NaiveBayesTrainer-sparksink.md       '' "analytic" "DPB-naivebayestrainer-sparksink.md" # Currently only for batch
+  download_md_file spark-plugins NGramTransform-sparkcompute.md '' "analytic"
+  download_md_file spark-plugins Tokenizer-sparkcompute.md '' "analytic"
+  download_md_file spark-plugins Twitter-streamingsource.md
   download_md_file transform-plugins CloneRecord-transform.md
   download_md_file transform-plugins Compressor-transform.md
   download_md_file transform-plugins CSVFormatter-transform.md

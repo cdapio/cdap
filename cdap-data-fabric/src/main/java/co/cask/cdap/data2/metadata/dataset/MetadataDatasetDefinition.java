@@ -24,6 +24,8 @@ import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
+import co.cask.cdap.proto.metadata.MetadataScope;
+import com.google.common.base.Joiner;
 
 import java.io.IOException;
 import java.util.Map;
@@ -36,10 +38,11 @@ public class MetadataDatasetDefinition
   implements Reconfigurable {
 
   private static final String METADATA_INDEX_TABLE_NAME = "metadata_index";
+  public static final String SCOPE_KEY = "scope";
 
   private final DatasetDefinition<? extends IndexedTable, ?> indexedTableDef;
 
-  public MetadataDatasetDefinition(String name, DatasetDefinition<? extends IndexedTable, ?> indexedTableDef) {
+  MetadataDatasetDefinition(String name, DatasetDefinition<? extends IndexedTable, ?> indexedTableDef) {
     super(name);
     this.indexedTableDef = indexedTableDef;
   }
@@ -50,8 +53,16 @@ public class MetadataDatasetDefinition
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(indexedTableDef.configure(METADATA_INDEX_TABLE_NAME,
-                                          addIndexColumn(properties, MetadataDataset.INDEX_COLUMN)))
+      .datasets(
+        indexedTableDef.configure(
+          METADATA_INDEX_TABLE_NAME,
+          addIndexColumns(
+            properties, MetadataDataset.DEFAULT_INDEX_COLUMN, MetadataDataset.ENTITY_NAME_INDEX_COLUMN,
+            MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN, MetadataDataset.CREATION_TIME_INDEX_COLUMN,
+            MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN
+          )
+        )
+      )
       .build();
   }
 
@@ -61,20 +72,21 @@ public class MetadataDatasetDefinition
                                           DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     // extract the column to index from the indexed table spec
     DatasetSpecification indexSpec = currentSpec.getSpecification(METADATA_INDEX_TABLE_NAME);
+    // this should return a comma-separated string if there are multiple index columns
     String indexColumn = indexSpec.getProperty(IndexedTable.INDEX_COLUMNS_CONF_KEY);
     return DatasetSpecification.builder(instanceName, getName())
       .properties(newProperties.getProperties())
       .datasets(AbstractDatasetDefinition.reconfigure(indexedTableDef, METADATA_INDEX_TABLE_NAME,
-                                                      addIndexColumn(newProperties, indexColumn),
+                                                      addIndexColumns(newProperties, indexColumn),
                                                       indexSpec))
       .build();
   }
 
-  private DatasetProperties addIndexColumn(DatasetProperties properties, String indexColumn) {
+  private DatasetProperties addIndexColumns(DatasetProperties properties, String... indexColumns) {
     return DatasetProperties
       .builder()
       .addAll(properties.getProperties())
-      .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, indexColumn)
+      .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, Joiner.on(",").join(indexColumns))
       .build();
   }
 
@@ -89,8 +101,10 @@ public class MetadataDatasetDefinition
   @Override
   public MetadataDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                     Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+    String scope = spec.getProperty(SCOPE_KEY);
     return new MetadataDataset(indexedTableDef.getDataset(datasetContext,
                                                           spec.getSpecification(METADATA_INDEX_TABLE_NAME),
-                                                          arguments, classLoader));
+                                                          arguments, classLoader),
+                               scope == null ? MetadataScope.USER : MetadataScope.valueOf(scope));
   }
 }

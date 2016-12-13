@@ -1,0 +1,21 @@
+ 
+
+<section>
+
+  <div class="cdap-subnav-end slanted-tabs"></div>
+  <ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" ui-sref-active="active">
+      <a ui-sref="operations.cdap" role="tab">System</a>
+    </li>
+    <li role="presentation" class="pull-right">
+      <a ui-sref="dashboard">
+        <span class="fa fa-bar-chart"></span>
+        <span class="sr-only">Dashboard</span>
+      </a>
+    </li>
+  </ul>
+
+  <br>
+  <ui-view role="tabpanel"></ui-view>
+
+</section>

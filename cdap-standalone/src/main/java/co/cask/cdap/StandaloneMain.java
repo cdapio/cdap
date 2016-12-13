@@ -62,6 +62,7 @@ import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
+import co.cask.cdap.messaging.server.MessagingHttpService;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -195,7 +196,7 @@ public class StandaloneMain {
       userInterfaceService = injector.getInstance(UserInterfaceService.class);
     }
 
-    sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
+    sslEnabled = cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED);
     securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
@@ -269,6 +270,8 @@ public class StandaloneMain {
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
+    // TODO: CDAP-7688, remove next line after the issue is resolved
+    injector.getInstance(MessagingHttpService.class).startAndWait();
 
     // Authorization bootstrapping is a blocking call, because CDAP will not start successfully if it does not
     // succeed on an authorization-enabled cluster
@@ -360,6 +363,8 @@ public class StandaloneMain {
         externalAuthenticationServer.stopAndWait();
       }
 
+      // TODO: CDAP-7688, remove next line after the issue is resolved
+      injector.getInstance(MessagingHttpService.class).startAndWait();
       if (messagingService instanceof Service) {
         ((Service) messagingService).stopAndWait();
       }

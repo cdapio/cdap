@@ -1193,7 +1193,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   // no new methods should use this directly. Instead, use openHiveSession
   protected SessionHandle doOpenHiveSession(Map<String, String> sessionConf) throws HiveSQLException {
-    return cliService.openSession("", "", sessionConf);
+    try {
+      return cliService.openSession(UserGroupInformation.getCurrentUser().getShortUserName(), "", sessionConf);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   private void closeHiveSession(SessionHandle sessionHandle) {

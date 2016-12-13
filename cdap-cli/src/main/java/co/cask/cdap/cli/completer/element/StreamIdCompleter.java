@@ -44,7 +44,7 @@ public class StreamIdCompleter extends StringsCompleter {
       @Override
       public Collection<String> get() {
         try {
-          List<StreamDetail> list = streamClient.list(cliConfig.getCurrentNamespace().toId());
+          List<StreamDetail> list = streamClient.list(cliConfig.getCurrentNamespace());
           return Lists.newArrayList(
             Iterables.transform(list, new Function<StreamDetail, String>() {
               @Override

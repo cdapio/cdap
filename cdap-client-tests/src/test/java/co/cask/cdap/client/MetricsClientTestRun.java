@@ -21,10 +21,13 @@ import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsTags;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.MetricTagValue;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.FlowletId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -58,11 +61,11 @@ public class MetricsClientTestRun extends ClientTestBase {
 
   @Test
   public void testAll() throws Exception {
-    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(FakeApp.class));
+    appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class));
 
-    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
-    Id.Program flow = Id.Program.from(app, ProgramType.FLOW, FakeFlow.NAME);
-    Id.Stream stream = Id.Stream.from(Id.Namespace.DEFAULT, FakeApp.STREAM_NAME);
+    ApplicationId app = NamespaceId.DEFAULT.app(FakeApp.NAME);
+    ProgramId flow = app.flow(FakeFlow.NAME);
+    StreamId stream = NamespaceId.DEFAULT.stream(FakeApp.STREAM_NAME);
 
     try {
       programClient.start(flow);
@@ -71,29 +74,27 @@ public class MetricsClientTestRun extends ClientTestBase {
       // TODO: remove arbitrary sleep
       TimeUnit.SECONDS.sleep(5);
 
-      Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
-      Id.Program programId = Id.Program.from(appId, ProgramType.FLOW, FakeFlow.NAME);
-      String flowlet = FakeFlow.FLOWLET_NAME;
+      FlowletId flowletId = flow.flowlet(FakeFlow.FLOWLET_NAME);
 
-      MetricQueryResult result = metricsClient.query(MetricsTags.flowlet(programId, flowlet),
+      MetricQueryResult result = metricsClient.query(MetricsTags.flowlet(flowletId),
                                                      Constants.Metrics.Name.Flow.FLOWLET_INPUT);
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
-      result = metricsClient.query(MetricsTags.flowlet(programId, flowlet),
+      result = metricsClient.query(MetricsTags.flowlet(flowletId),
                                    ImmutableList.of(Constants.Metrics.Name.Flow.FLOWLET_INPUT),
                                    ImmutableList.<String>of(), ImmutableMap.of("aggregate", "true"));
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
-      result = metricsClient.query(MetricsTags.flowlet(programId, flowlet),
+      result = metricsClient.query(MetricsTags.flowlet(flowletId),
                                    ImmutableList.of(Constants.Metrics.Name.Flow.FLOWLET_INPUT),
                                    ImmutableList.<String>of(), ImmutableMap.of("start", "now-20s", "end", "now"));
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
-      List<MetricTagValue> tags = metricsClient.searchTags(MetricsTags.flowlet(programId, flowlet));
+      List<MetricTagValue> tags = metricsClient.searchTags(MetricsTags.flowlet(flowletId));
       Assert.assertEquals(1, tags.size());
       Assert.assertEquals("run", tags.get(0).getName());
 
-      List<String> metrics = metricsClient.searchMetrics(MetricsTags.flowlet(programId, flowlet));
+      List<String> metrics = metricsClient.searchMetrics(MetricsTags.flowlet(flowletId));
       Assert.assertTrue(metrics.contains(Constants.Metrics.Name.Flow.FLOWLET_INPUT));
     } finally {
       programClient.stop(flow);

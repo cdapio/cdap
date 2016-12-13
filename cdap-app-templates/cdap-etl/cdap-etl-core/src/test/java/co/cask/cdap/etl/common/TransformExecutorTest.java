@@ -51,7 +51,7 @@ public class TransformExecutorTest {
     Assert.assertTrue(sinkResult.containsKey("sink"));
     Collection<Object> sinkResultList = sinkResult.get("sink");
     Assert.assertEquals(1, sinkResultList.size());
-    // note : sink transform would have exectued, so the expected is string and not integer
+    // note : sink transform would have executed, so the expected is string and not integer
     Assert.assertEquals("1.0", sinkResultList.iterator().next());
     executor.resetEmitter();
   }

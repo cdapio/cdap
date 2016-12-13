@@ -201,7 +201,7 @@ public class AppFabricServer extends AbstractIdleService {
       httpServiceBuilder.modifyChannelPipeline(new Function<ChannelPipeline, ChannelPipeline>() {
         @Override
         public ChannelPipeline apply(ChannelPipeline input) {
-          LOG.info("Adding ssl handler to the pipeline.");
+          LOG.debug("Adding ssl handler to the pipeline.");
           SslHandler sslHandler = sslHandlerFactory.create();
           // SSL handler needs to be the first handler in the pipeline.
           input.addFirst("ssl", sslHandler);
@@ -229,7 +229,7 @@ public class AppFabricServer extends AbstractIdleService {
         LOG.info("AppFabric HTTP Service announced at {}", socketAddress);
 
         // Tag the discoverable's payload to mark it as supporting ssl.
-        byte[] sslPayload = sslEnabled ? Constants.Security.SSL_DISCOVERABLE_KEY.getBytes() : Bytes.EMPTY_BYTE_ARRAY;
+        byte[] sslPayload = sslEnabled ? Constants.Security.SSL_URI_SCHEME.getBytes() : Bytes.EMPTY_BYTE_ARRAY;
         // TODO accept a list of services, and start them here
         // When it is running, register it with service discovery
         for (final String serviceName : servicesNames) {

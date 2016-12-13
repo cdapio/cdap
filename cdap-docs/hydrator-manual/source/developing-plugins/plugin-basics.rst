@@ -34,7 +34,7 @@ are grouped under the Transforms section.
 
 Maven Archetypes
 ================
-To get started on creating a custom plugin, you can use one of these Maven archetypes to create your project: 
+To get started on creating a custom plugin, you can use one of these Maven archetypes to create your project:
 
 - ``cdap-data-pipeline-plugins-archetype`` (contains batch, Spark plugin, and other types)
 - ``cdap-etl-transform-archetype`` (contains a transform)

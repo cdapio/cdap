@@ -50,7 +50,7 @@ public class ListAllProgramsCommand extends AbstractAuthCommand implements Categ
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     Map<ProgramType, List<ProgramRecord>> allPrograms =
-      appClient.listAllPrograms(cliConfig.getCurrentNamespace().toId());
+      appClient.listAllPrograms(cliConfig.getCurrentNamespace());
     List<ProgramRecord> allProgramsList = Lists.newArrayList();
     for (List<ProgramRecord> subList : allPrograms.values()) {
       allProgramsList.addAll(subList);

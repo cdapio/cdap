@@ -1,0 +1,110 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+ /* Animation - Slide in direction of Next */
+.entity-animation--next-enter {
+  &:not(h3) {
+    transform: translate(500%,0);
+    opacity: 0.1;
+    &.entity-animation--next-enter-active {
+      transform: translate(0,0);
+      opacity: 1;
+      transition: transform 1000ms, opacity 1000ms;
+    }
+  }
+}
+
+.entity-animation--next-appear {
+  &:not(h3) {
+    &.animation--next-appear-active {
+      opacity: 1;
+      transition: opacity 1000ms ease-in;
+    }
+  }
+}
+
+.entity-animation--next-leave {
+  opacity: 0;
+  &.entity-animation--next-leave-active {
+    transition: opacity 1000ms ease-in;
+  }
+}
+
+ /* Animation - Slide in direction of Prev */
+.entity-animation--prev-enter {
+  &:not(h3) {
+    transform: translate(-500%,0);
+    opacity: 0.1;
+    &.entity-animation--prev-enter-active {
+      transform: translate(0,0);
+      transition: transform 1000ms, opacity 1000ms;
+      opacity: 1;
+    }
+  }
+}
+
+.entity-animation--prev-appear {
+  &:not(h3) {
+    opacity: 0;
+    &.animation--prev-appear-active {
+      opacity: 1;
+      transition: opacity 1000ms ease-in;
+    }
+  }
+}
+
+.entity-animation--prev-leave {
+  opacity: 0;
+  &.entity-animation--prev-leave-active {
+    transition: opacity 1000ms ease-in;
+  }
+}
+
+
+.entity-list-view {
+  height: ~"calc(100vh - 132px)";
+  height: ~"-moz-calc(100vh - 132px)";
+  height: ~"-webkit-calc(100vh - 132px)";
+  align-items: flex-start;
+
+  .entities-container {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10px 30px;
+
+    > div {
+      display: flex;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+  }
+  .loading-spinner {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: gray;
+  }
+  .empty-message {
+     position: absolute;
+     top: 40%;
+     left: 50%;
+     transform: translate(-50%, -50%);
+     font-size: 20px;
+     font-weight: 500;
+  }
+
+}

@@ -141,6 +141,21 @@ function removeAt(arr, index) {
   ];
 }
 
+function getIcon(entity) {
+  switch(entity) {
+    case 'application':
+    case 'app':
+      return 'icon-fist';
+    case 'datasetinstance':
+    case 'dataset':
+      return 'icon-datasets';
+    case 'stream':
+      return 'icon-streams';
+    default:
+      return 'fa-exclamation-triangle';
+  }
+}
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -150,5 +165,6 @@ export {
   insertAt,
   removeAt,
   humanReadableDate,
-  contructUrl
+  contructUrl,
+  getIcon
 };

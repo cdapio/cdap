@@ -44,13 +44,13 @@ import javax.annotation.Nullable;
 /**
  * {@link OperationalStats} representing HDFS information.
  */
-@SuppressWarnings("unused")
 public class HDFSInfo extends AbstractHDFSStats implements HDFSInfoMXBean {
   private static final Logger LOG = LoggerFactory.getLogger(HDFSInfo.class);
 
   @VisibleForTesting
   static final String STAT_TYPE = "info";
 
+  @SuppressWarnings("unused")
   public HDFSInfo() {
     this(new Configuration());
   }

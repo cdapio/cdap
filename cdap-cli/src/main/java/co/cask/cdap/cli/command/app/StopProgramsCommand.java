@@ -50,7 +50,7 @@ public class StopProgramsCommand extends BaseBatchCommand<BatchProgram> {
 
   @Override
   protected void runBatchCommand(PrintStream printStream, Args<BatchProgram> args) throws Exception {
-    List<BatchProgramResult> results = programClient.stop(args.appId.getParent().toId(), args.programs);
+    List<BatchProgramResult> results = programClient.stop(args.appId.getParent(), args.programs);
 
     Table table = Table.builder()
       .setHeader("name", "type", "error")

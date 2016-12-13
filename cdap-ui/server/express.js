@@ -27,7 +27,7 @@ module.exports = {
       .spread(makeApp);
   }
 };
-
+var pkg = require('../package.json');
 var express = require('express'),
     cookieParser = require('cookie-parser'),
     compression = require('compression'),
@@ -39,6 +39,9 @@ var express = require('express'),
     bodyParser = require('body-parser'),
     DIST_PATH = require('path').normalize(
       __dirname + '/../dist'
+    ),
+    OLD_DIST_PATH = require('path').normalize(
+      __dirname + '/../old_dist'
     ),
     LOGIN_DIST_PATH= require('path').normalize(
       __dirname + '/../login_dist'
@@ -264,6 +267,14 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         });
   });
 
+  app.use('/old_assets', [
+    express.static(OLD_DIST_PATH + '/assets', {
+      index: false
+    }),
+    function(req, res) {
+      finalhandler(req, res)(false); // 404
+    }
+  ]);
   // serve static assets
   app.use('/assets', [
     express.static(DIST_PATH + '/assets', {
@@ -491,7 +502,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
 
   // any other path, serve index.html
-  app.all(['/cask-hydrator', '/cask-hydrator*'], [
+  app.all(['/hydrator', '/hydrator*'], [
     function (req, res) {
       // BCookie is the browser cookie, that is generated and will live for a year.
       // This cookie is always generated to provide unique id for the browser that
@@ -506,7 +517,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
      res.sendFile(DIST_PATH + '/hydrator.html');
     }
   ]);
-  app.all(['/cask-tracker', '/cask-tracker*'], [
+  app.all(['/tracker', '/tracker*'], [
     function (req, res) {
       // BCookie is the browser cookie, that is generated and will live for a year.
       // This cookie is always generated to provide unique id for the browser that
@@ -527,12 +538,57 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       res.sendFile(WRANGLER_DIST_PATH + '/wrangler_assets/wrangler.html');
     }
   ]);
-  app.all(['/', '/cask-cdap', '/cask-cdap*'], [
+  app.all(['/', '/cdap', '/cdap*'], [
     function(req, res) {
       res.sendFile(CDAP_DIST_PATH + '/cdap_assets/cdap.html');
     }
   ]);
 
+  app.get('/ui-config-old.js', function (req, res) {
+    var path = __dirname + '/config/cdap-ui-config.json';
+
+    var fileConfig = {};
+
+    fileConfig = fs.readFileSync(path, 'utf8');
+    res.header({
+      'Content-Type': 'text/javascript',
+      'Cache-Control': 'no-store, must-revalidate'
+    });
+    res.send('angular.module("'+pkg.name+'.config")' +
+              '.constant("UI_CONFIG",'+fileConfig+');');
+  });
+  app.get('/config-old.js', function (req, res) {
+
+    var data = JSON.stringify({
+      // the following will be available in angular via the "MY_CONFIG" injectable
+
+      authorization: req.headers.authorization,
+      cdap: {
+        routerServerUrl: cdapConfig['router.server.address'],
+        routerServerPort: cdapConfig['router.server.port'],
+        routerSSLServerPort: cdapConfig['router.ssl.bind.port']
+      },
+      hydrator: {
+        previewEnabled: cdapConfig['enable.alpha.preview'] === 'true'
+      },
+      sslEnabled: cdapConfig['ssl.enabled'] === 'true',
+      securityEnabled: authAddress.enabled,
+      isEnterprise: process.env.NODE_ENV === 'production'
+    });
+
+    res.header({
+      'Content-Type': 'text/javascript',
+      'Cache-Control': 'no-store, must-revalidate'
+    });
+    res.send('angular.module("'+pkg.name+'.config", [])' +
+              '.constant("MY_CONFIG",'+data+');');
+  });
+
+  app.all(['/oldcdap', '/oldcdap*'], [
+    function (req, res) {
+      res.sendFile(OLD_DIST_PATH + '/index.html');
+    }
+  ]);
   return app;
 
 }

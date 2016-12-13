@@ -25,6 +25,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
@@ -34,6 +35,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import org.junit.After;
@@ -67,12 +69,12 @@ public class WorkflowClientTestRun extends ClientTestBase {
     appClient = new ApplicationClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
     workflowClient = new WorkflowClient(clientConfig);
-    appClient.deploy(NamespaceId.DEFAULT.toId(), createAppJarFile(AppWithWorkflow.class));
+    appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(AppWithWorkflow.class));
   }
 
   @After
   public void tearDown() throws Exception {
-    appClient.delete(appId.toId());
+    appClient.delete(appId);
   }
 
   @Test
@@ -83,21 +85,21 @@ public class WorkflowClientTestRun extends ClientTestBase {
     String outputPath = new File(TMP_FOLDER.newFolder(), "output").getAbsolutePath();
     Map<String, String> runtimeArgs = ImmutableMap.of("inputPath", createInput("input"),
                                                       "outputPath", outputPath, "dataset.*.keep.local", "true");
-    final ProgramId workflowId = new ProgramId(NamespaceId.DEFAULT.getNamespace(), AppWithWorkflow.NAME,
-                                               ProgramType.WORKFLOW, AppWithWorkflow.SampleWorkflow.NAME);
+    final WorkflowId workflowId =
+      NamespaceId.DEFAULT.app(AppWithWorkflow.NAME).workflow(AppWithWorkflow.SampleWorkflow.NAME);
 
-    programClient.start(workflowId.toId(), false, runtimeArgs);
-    programClient.waitForStatus(workflowId.toId(), "STOPPED", 60, TimeUnit.SECONDS);
+    programClient.start(workflowId, false, runtimeArgs);
+    programClient.waitForStatus(workflowId, ProgramStatus.STOPPED, 60, TimeUnit.SECONDS);
 
     Tasks.waitFor(1, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return programClient.getProgramRuns(workflowId.toId(),
+        return programClient.getProgramRuns(workflowId,
                                             ProgramRunStatus.COMPLETED.name(), 0, Long.MAX_VALUE, 10).size();
       }
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-    List<RunRecord> workflowRuns = programClient.getProgramRuns(workflowId.toId(), ProgramRunStatus.COMPLETED.name(), 0,
+    List<RunRecord> workflowRuns = programClient.getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name(), 0,
                                                                 Long.MAX_VALUE, 10);
     Assert.assertEquals(1, workflowRuns.size());
 
@@ -109,46 +111,46 @@ public class WorkflowClientTestRun extends ClientTestBase {
       ProgramId nonExistentWorkflowId = new ProgramId(NamespaceId.DEFAULT.getNamespace(), AppWithWorkflow.NAME,
                                                       ProgramType.WORKFLOW, "NonExistentWorkflow");
       ProgramRunId nonExistentWorkflowRun = nonExistentWorkflowId.run(runId);
-      workflowClient.getWorkflowToken(nonExistentWorkflowRun.toId());
+      workflowClient.getWorkflowToken(nonExistentWorkflowRun);
       Assert.fail("Should not find a workflow token for a non-existing workflow");
     } catch (NotFoundException expected) {
       // expected
     }
     try {
       ProgramRunId invalidRunId = workflowId.run(RunIds.generate().getId());
-      workflowClient.getWorkflowToken(invalidRunId.toId());
+      workflowClient.getWorkflowToken(invalidRunId);
       Assert.fail("Should not find a workflow token for a random run id");
     } catch (NotFoundException expected) {
       // expected
     }
 
     // Valid test scenarios
-    WorkflowTokenDetail workflowToken = workflowClient.getWorkflowToken(workflowRunId.toId());
+    WorkflowTokenDetail workflowToken = workflowClient.getWorkflowToken(workflowRunId);
     Assert.assertEquals(5, workflowToken.getTokenData().size());
-    workflowToken = workflowClient.getWorkflowToken(workflowRunId.toId(), WorkflowToken.Scope.SYSTEM);
+    workflowToken = workflowClient.getWorkflowToken(workflowRunId, WorkflowToken.Scope.SYSTEM);
     Assert.assertTrue(workflowToken.getTokenData().size() > 0);
-    workflowToken = workflowClient.getWorkflowToken(workflowRunId.toId(), "start_time");
+    workflowToken = workflowClient.getWorkflowToken(workflowRunId, "start_time");
     Map<String, List<WorkflowTokenDetail.NodeValueDetail>> tokenData = workflowToken.getTokenData();
     Assert.assertEquals(AppWithWorkflow.WordCountMapReduce.NAME, tokenData.get("start_time").get(0).getNode());
     Assert.assertTrue(Long.parseLong(tokenData.get("start_time").get(0).getValue()) < System.currentTimeMillis());
-    workflowToken = workflowClient.getWorkflowToken(workflowRunId.toId(), WorkflowToken.Scope.USER, "action_type");
+    workflowToken = workflowClient.getWorkflowToken(workflowRunId, WorkflowToken.Scope.USER, "action_type");
     tokenData = workflowToken.getTokenData();
     Assert.assertEquals(AppWithWorkflow.WordCountMapReduce.NAME, tokenData.get("action_type").get(0).getNode());
     Assert.assertEquals("MapReduce", tokenData.get("action_type").get(0).getValue());
     String nodeName = AppWithWorkflow.SampleWorkflow.FIRST_ACTION;
     WorkflowTokenNodeDetail workflowTokenAtNode =
-      workflowClient.getWorkflowTokenAtNode(workflowRunId.toId(), nodeName);
+      workflowClient.getWorkflowTokenAtNode(workflowRunId, nodeName);
     Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE,
                         workflowTokenAtNode.getTokenDataAtNode().get(AppWithWorkflow.DummyAction.TOKEN_KEY));
-    workflowTokenAtNode = workflowClient.getWorkflowTokenAtNode(workflowRunId.toId(), nodeName,
+    workflowTokenAtNode = workflowClient.getWorkflowTokenAtNode(workflowRunId, nodeName,
                                                                 WorkflowToken.Scope.SYSTEM);
     Assert.assertEquals(0, workflowTokenAtNode.getTokenDataAtNode().size());
-    workflowTokenAtNode = workflowClient.getWorkflowTokenAtNode(workflowRunId.toId(), nodeName,
+    workflowTokenAtNode = workflowClient.getWorkflowTokenAtNode(workflowRunId, nodeName,
                                                                 AppWithWorkflow.DummyAction.TOKEN_KEY);
     Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE,
                         workflowTokenAtNode.getTokenDataAtNode().get(AppWithWorkflow.DummyAction.TOKEN_KEY));
     String reduceOutputRecordsCounter = "org.apache.hadoop.mapreduce.TaskCounter.REDUCE_OUTPUT_RECORDS";
-    workflowTokenAtNode = workflowClient.getWorkflowTokenAtNode(workflowRunId.toId(),
+    workflowTokenAtNode = workflowClient.getWorkflowTokenAtNode(workflowRunId,
                                                                 AppWithWorkflow.WordCountMapReduce.NAME,
                                                                 WorkflowToken.Scope.SYSTEM, reduceOutputRecordsCounter);
     Assert.assertEquals(6, Integer.parseInt(workflowTokenAtNode.getTokenDataAtNode().get(reduceOutputRecordsCounter)));

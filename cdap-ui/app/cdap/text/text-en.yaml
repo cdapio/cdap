@@ -64,10 +64,12 @@ commons:
   schemaLabel: Schema
   wrangler: Cask Wrangler
 features:
+  AppDetailedView:
+    Title: Application - {appId}
   ConfirmationModal:
     confirmDefaultText: OK
     cancelDefaultText: Cancel
-  Home:
+  EntityListView:
     Title: CDAP - Home
     emptyMessage: No entities found in the system.
     Cards:
@@ -76,15 +78,21 @@ features:
       filters: Filters
       search-placeholder: Search entities ...
       sort: Sort
-      pagination: Page
       sortOptions:
-        nameAsc:
+        entityNameAsc:
           displayName: A - Z
-        nameDesc:
+        entityNameDesc:
           displayName: Z - A
+        creationTimeDesc:
+          displayName: Most Recently Created
+        creationTimeAsc:
+          displayName: Least Recently Created
   Dashboard:
     Title: Dashboard
 
+  FileDnD:
+    uploadLabel: Drag and Drop the file to be uploaded
+    clickLabel: Click to select file from your computer
   FastAction:
     deleteConfirmation: Are you sure you want to delete *_{entityId}_*?
     deleteLabel: Delete
@@ -92,6 +100,10 @@ features:
     truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
     truncateLabel: Truncate
     truncateFailed: Failed to truncate {entityId}
+    sendEventsLabel: Send Events
+    sendEventsButtonLabel: Send
+    sendEventsClickLabel: Click to input events
+    sendEventsFailed: Error - Send Events Failed
 
   JumpButton:
     buttonLabel: Jump
@@ -148,11 +160,13 @@ features:
         storage: Storage
         queues: Queues
         resources: Resources
+        load: Load
       labels:
         Accepted: Accepted
+        AverageRegionsPerServer: Average Regions Per Server
         RemainingBytes: Available
         CorruptBlocks: Corrupt Blocks
-        deadRegionServers: Dead Region Servers
+        DeadRegionServers: Dead Region Servers
         Failed: Failed
         Finished: Finished
         FreeMemory: Free Memory
@@ -160,25 +174,27 @@ features:
         HealthyNodes: Healthy Nodes
         HealthyContainers: Healthy Containers
         Killed: Killed
-        liveRegionServers: Live Region Servers
-        lost: Lost
         New: New
         NewNodes: New Nodes
         NewContainers: New Containers
-        masters: Masters
+        Masters: Masters
         MissingBlocks: Missing Blocks
         Namenodes: Namenodes
-        namespaces: Namespaces
+        Namespaces: Namespaces
+        RegionServers: Region Servers
+        RegionsInTransition: Regions in Transition
+        NumRequests: No. of Requests
         Running: Running
-        rebooted: Rebooted
+        Snapshots: Snapshots
         Stopped: Stopped
         Submitted: Submitted
-        tables: Tables
+        Tables: Tables
         Total: Total
         TotalBytes: Total
         TotalNodes: Total Nodes
         TotalContainers: Total Containers
         TotalMemory: Total Memory
+        TotalRegions: Total Regions
         TotalVCores: Total Virtual Cores
         totalRegionServers: Total Region Servers
         UnderReplicatedBlocks: Under Replicated Blocks
@@ -251,6 +267,8 @@ features:
     Sidebar:
       extension: "Extensions:"
 
+  Pagination:
+    dropdown-label: Page
   Resource-Center:
     Stream:
       label: Stream

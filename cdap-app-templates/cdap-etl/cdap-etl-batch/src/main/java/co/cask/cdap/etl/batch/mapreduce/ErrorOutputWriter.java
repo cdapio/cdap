@@ -41,22 +41,26 @@ import java.util.Collection;
  * @param <KEY_OUT> output key type
  * @param <VAL_OUT> output value type
  */
-class ErrorOutputWriter<KEY_OUT, VAL_OUT> {
+public class ErrorOutputWriter<KEY_OUT, VAL_OUT> {
   private static final org.apache.avro.Schema AVRO_ERROR_SCHEMA =
     new org.apache.avro.Schema.Parser().parse(Constants.ERROR_SCHEMA.toString());
   private final MapReduceTaskContext<KEY_OUT, VAL_OUT> context;
   private final String errorDatasetName;
 
-  ErrorOutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context, String errorDatasetName) {
+  public ErrorOutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context, String errorDatasetName) {
     this.context = context;
     this.errorDatasetName = errorDatasetName;
   }
 
-  void write(Collection<InvalidEntry<Object>> input) throws Exception {
-    for (InvalidEntry entry : input) {
-      context.write(errorDatasetName, new AvroKey<>(getGenericRecordForInvalidEntry(entry)),
-                    NullWritable.get());
+  public void write(Collection<InvalidEntry<Object>> input) throws Exception {
+    for (InvalidEntry<Object> entry : input) {
+      write(entry);
     }
+  }
+
+  public void write(InvalidEntry<Object> input) throws Exception {
+    context.write(errorDatasetName, new AvroKey<>(getGenericRecordForInvalidEntry(input)),
+                  NullWritable.get());
   }
 
   private GenericRecord getGenericRecordForInvalidEntry(InvalidEntry invalidEntry) {

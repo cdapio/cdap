@@ -27,10 +27,15 @@ import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.BatchProgramStart;
 import co.cask.cdap.proto.BatchProgramStatus;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.FlowId;
+import co.cask.cdap.proto.id.FlowletId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -67,8 +72,8 @@ public class ProgramClientTestRun extends ClientTestBase {
 
   @Test
   public void testBatchProgramCalls() throws Exception {
-    Id.Namespace namespace = Id.Namespace.DEFAULT;
-    Id.Application appId = Id.Application.from(namespace, FakeApp.NAME);
+    NamespaceId namespace = NamespaceId.DEFAULT;
+    ApplicationId appId = namespace.app(FakeApp.NAME);
     BatchProgram flow = new BatchProgram(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
     BatchProgram service = new BatchProgram(FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
     BatchProgram missing = new BatchProgram(FakeApp.NAME, ProgramType.FLOW, "not" + FakeFlow.NAME);
@@ -92,12 +97,10 @@ public class ProgramClientTestRun extends ClientTestBase {
       }
 
       // wait for all programs to be in RUNNING status
-      programClient.waitForStatus(
-        Id.Program.from(namespace, flow.getAppId(), flow.getProgramType(), flow.getProgramId()),
-        "RUNNING", 2, TimeUnit.MINUTES);
-      programClient.waitForStatus(
-        Id.Program.from(namespace, service.getAppId(), service.getProgramType(), service.getProgramId()),
-        "RUNNING", 2, TimeUnit.MINUTES);
+      programClient.waitForStatus(namespace.app(flow.getAppId()).flow(flow.getProgramId()),
+                                  ProgramStatus.RUNNING, 2, TimeUnit.MINUTES);
+      programClient.waitForStatus(namespace.app(service.getAppId()).service(service.getProgramId()),
+                                  ProgramStatus.RUNNING, 2, TimeUnit.MINUTES);
 
       // make a batch call for status of programs, one of which does not exist
       List<BatchProgram> programs = ImmutableList.of(flow, service, missing);
@@ -141,10 +144,10 @@ public class ProgramClientTestRun extends ClientTestBase {
 
   @Test
   public void testAll() throws Exception {
-    Id.Namespace namespace = Id.Namespace.DEFAULT;
-    Id.Application app = Id.Application.from(namespace, FakeApp.NAME);
-    Id.Flow flow = Id.Flow.from(app, FakeFlow.NAME);
-    Id.Flow.Flowlet flowlet = Id.Flow.Flowlet.from(flow, FakeFlow.FLOWLET_NAME);
+    NamespaceId namespace = NamespaceId.DEFAULT;
+    ApplicationId app = namespace.app(FakeApp.NAME);
+    FlowId flow = app.flow(FakeFlow.NAME);
+    FlowletId flowlet = flow.flowlet(FakeFlow.FLOWLET_NAME);
 
     appClient.deploy(namespace, createAppJarFile(FakeApp.class));
 
@@ -181,7 +184,7 @@ public class ProgramClientTestRun extends ClientTestBase {
       programClient.stop(flow);
       assertProgramStopped(programClient, flow);
 
-      testWorkflowCommand(Id.Program.from(app, ProgramType.WORKFLOW, FakeWorkflow.NAME));
+      testWorkflowCommand(app.workflow(FakeWorkflow.NAME));
 
       LOG.info("Starting flow with debug");
       programClient.start(flow, true);
@@ -197,7 +200,7 @@ public class ProgramClientTestRun extends ClientTestBase {
     }
   }
 
-  private void testWorkflowCommand(final Id.Program workflow) throws Exception {
+  private void testWorkflowCommand(final WorkflowId workflow) throws Exception {
     // File is used to synchronized between the test case and the FakeWorkflow
     File doneFile = TMP_FOLDER.newFile();
     Assert.assertTrue(doneFile.delete());
@@ -220,7 +223,7 @@ public class ProgramClientTestRun extends ClientTestBase {
       @Override
       public Integer call() throws Exception {
         try {
-          return programClient.getWorkflowCurrent(workflow.getApplication(), workflow.getId(), pid).size();
+          return programClient.getWorkflowCurrent(workflow, pid).size();
         } catch (NotFoundException e) {
           // try again if the 'current' endpoint is not discoverable yet
           return 0;
