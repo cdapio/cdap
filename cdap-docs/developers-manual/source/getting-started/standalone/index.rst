@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Index document
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -28,7 +28,7 @@ The CDAP SDK runs on Linux, MacOS, and Windows, and has these requirements:
 - `JDK 7 or 8 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ 
   (required to run CDAP; note that $JAVA_HOME should be set)
 - `Node.js <https://nodejs.org>`__ (required to run the CDAP UI; we recommend any 
-  version |node-js-min-version|. We support Node.js up to |node-js-max-version|.
+  version beginning with |node-js-min-version|.
   Different versions of Node.js `are available <https://nodejs.org/dist/>`__.)
 - `Apache Maven 3.0+ <http://maven.apache.org>`__ (required to build CDAP applications)
 
@@ -46,7 +46,9 @@ platforms.
 
 You can download an appropriate version of Node.js from `nodejs.org
 <https://nodejs.org>`__. We recommend any version of `Node.js <https://nodejs.org/>`__
-|node-js-min-version|. We support Node.js up to |node-js-max-version|.
+beginning with |node-js-min-version|.
+
+.. We support Node.js up to |node-js-max-version|.
    
 You can check if ``node.js`` is installed, in your path, and an appropriate version by running the command:
 

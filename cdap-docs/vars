@@ -26,33 +26,37 @@ BUILD_RST_HASH_LOCATION="cdap-docs/vars"
 BUILD_RST_HASH="4c1ca5e0c734664c010c5b574f1669a0"
 
 #
-# These GIT_ variables are loaded by Sphinx build and need to be static as they are not sourced
+# All "GIT_" variables are loaded by the Sphinx build and need to be static as they are not sourced
 #
 
+GIT_NODE_JS_MIN_VERSION="v4.5.0"
+# GIT_NODE_JS_MAX_VERSION="" # not currently known
+
 # This needs to be explicitly set as Git has trouble identifying it
-GIT_BRANCH_PARENT="develop"
+GIT_BRANCH_PARENT="release/4.0"
 
 # Used by admin-manual
-GIT_BRANCH_CDAP_SECURITY_EXTN="develop"
+GIT_BRANCH_CDAP_SECURITY_EXTN="release/0.3"
 
 # Used by developers-manual
-GIT_BRANCH_CDAP_CLIENTS="1.2.0"
-GIT_BRANCH_CDAP_INGEST="1.3.0"
+GIT_BRANCH_CDAP_CLIENTS="release/1.3.0"
+GIT_BRANCH_CDAP_INGEST="release/1.4.0"
 
-GIT_BRANCH_CDAP_APPS="develop"
+GIT_BRANCH_CDAP_APPS="release/cdap-4.0-compatible"
 GIT_VERSION_CDAP_APPS="0.8.0"
 
 # Used by examples manual
-GIT_BRANCH_CDAP_GUIDES="develop"
+GIT_BRANCH_CDAP_GUIDES="release/cdap-4.0-compatible"
 
 # Used by integrations-manual
-GIT_BRANCH_CDAP_PACKS="develop"
+GIT_BRANCH_CDAP_PACKS="release/cdap-4.0-compatible"
+GIT_VERSION_NAVIGATOR="0.1.0"
 
 # Used for Hydrator documentation
-GIT_BRANCH_CASK_HYDRATOR="develop"
+GIT_BRANCH_CASK_HYDRATOR="release/1.5"
 
 # Used for Tracker documentation
-GIT_BRANCH_CASK_TRACKER="develop"
+GIT_BRANCH_CASK_TRACKER="release/0.3"
 
 # Google Analytics Code
 GOOGLE_TAG_MANAGER_CODE="GTM-KWLFGH"

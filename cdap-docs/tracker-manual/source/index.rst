@@ -410,6 +410,6 @@ connecting to a Navigator instance:
   :align: center
   :class: bordered-image
 
-Details on completing this form are described in CDAP's documentation on
+Details on completing this form are described in CDAP's documentation on the
 :ref:`Navigator Integration Application <navigator-integration>`.
 

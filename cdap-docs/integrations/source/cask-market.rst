@@ -2,9 +2,66 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
+.. :hide-toc: true
+
+.. _cask-market:
+
+===========
+Cask Market
+===========
+
+Overview
+========
+
+The Cask Market allows CDAP users to create and update CDAP artifacts, applications, and
+datasets using simple wizards. Instead of building code, deploying artifacts, and
+configuring applications, users can simply point and click. This allows users of varying
+technical skill the ability to deploy and run common use-cases in a self-service manner.
+
+The Cask Market allows system administrators to distribute re-usable applications, data,
+and code to all CDAP users in their organization. Though there is currently no method for
+publishing packages to the public Cask-hosted market, administrators can host their own
+market and then configure their CDAP instances to use their own market instead of the
+public Cask Market.
+
+.. rubric:: Terminology
+
+**Package:** A collection of entities (artifacts, applications, datasets, streams,
+configuration) to add to CDAP. A package is identified by a name and version, and can be
+tagged with one or more categories. Each package must contain a specification, and may
+contain resources.
+
+**Package Specification:** Defines metadata about the package, such as display label,
+description, creation time, and CDAP compatibilities. It contains a list of actions that
+must be performed to install the package. Each action corresponds to a wizard in the
+installation process.
+
+**Package Resource:** A file that can be used during the installation process. It can be a
+configuration file, a JAR, or data that should be loaded into a dataset. Resources are
+referenced by name in the actions defined in the package specification.
+
+**Catalog:** The catalog is a list of all the packages in the Cask Market. The catalog
+contains metadata about each package.
+
+.. rubric:: Architecture
+
+The Cask Market is a service that is separate from a CDAP instance. Each CDAP UI instance
+can be configured to read from a separate Cask Market instance. By default, the UI points
+to the public Cask-hosted market. During package installation, the UI will make calls to
+the Cask Market and to a CDAP Router instance to create or update various CDAP entities.
+For example, a package may contain an action to create a stream, and then load data to a
+stream. The Cask Market UI will interact with the CDAP RESTful APIs to create the stream,
+then fetch the data from the Cask Market and add it to the CDAP stream through the CDAP
+RESTful APIs.
+
+A market is essentially just a server that serves static package specifications and
+resources. As such, administrators can easily set up their own markets in the same way
+they would serve any static content. For example, an Apache web server can be placed on
+top of a local directory structure that matches the expected market directory structure.
+
+
 .. _cask-market-api:
 
-============================
 Cask Market HTTP RESTful API
 ============================
 
@@ -32,12 +89,12 @@ The directory structure must be::
 
 .. Base URL explanation
 .. --------------------
-.. include:: ../../../reference-manual/source/http-restful-api/base-url.txt
+.. include:: ../../reference-manual/source/http-restful-api/base-url.txt
 
 .. _cask-market-get-catalog:
 
 Get Market Catalog
-==================
+------------------
 
 .. highlight:: console
 
@@ -47,38 +104,45 @@ To retrieve a list of available packages, submit an HTTP GET request::
 
 .. highlight:: json-ellipsis
 
-This will return a JSON array that lists each package and its metadata::
+This will return a JSON array that lists each package and its metadata:
 
-  [
-    {
-      "name": "access-log",
-      "version": "1.0.0",
-      "description": "Sample access logs in Combined Log Format (CLF)",
-      "label": "Access Log Sample",
-      "author": "Cask",
-      "org": "Cask Data, Inc.",
-      "cdapVersion": "[4.0.0-SNAPSHOT,4.1.0)",
-      "created": 1473901763,
-      "categories": [ "datapack" ]
-    },
-    {
-      "name": "bulk-data-transfer",
-      "version": "1.0.0",
-      "description": "Moving data from structured data source such as a traditional relational database into Hadoop is very common in building Data Lakes.
-                    This data application allows you to set-up periodic full data dumps from RDBMS into Hadoop cluster.
-                    Data on Hadoop is stored as DB table snapshot. Supports other relational databases.",
-      "label": "Bulk Data Transfer",
-      "author": "Cask",
-      "org": "Cask Data, Inc.",
-      "cdapVersion": "[4.0.0-SNAPSHOT,4.1.0)",
-      "created": 1473901763,
-      "categories": [ "usecase" ]
-    },
-    ...
-  ]
+.. container:: highlight
+
+  .. parsed-literal::
+
+    [
+      {
+        "name": "access-log",
+        "version": "1.0.0",
+        "description": "Sample access logs in Combined Log Format (CLF)",
+        "label": "Access Log Sample",
+        "author": "Cask",
+        "org": "Cask Data, Inc.",
+        "cdapVersion": "|release-range|",
+        "created": 1473901763,
+        "categories": [ "datapack" ]
+      },
+      {
+        "name": "bulk-data-transfer",
+        "version": "1.0.0",
+        "description": "Moving data from structured data source such as a traditional relational
+                      database into Hadoop is very common in building Data Lakes. This
+                      data application allows you to set-up periodic full data dumps from
+                      RDBMS into Hadoop cluster. Data on Hadoop is stored as DB table
+                      snapshot. Supports other relational databases.",
+        "label": "Bulk Data Transfer",
+        "author": "Cask",
+        "org": "Cask Data, Inc.",
+        "cdapVersion": "|release-range|",
+        "created": 1473901763,
+        "categories": [ "usecase" ]
+      },
+      ...
+    ]
+
 
 Get Package Specification
-=========================
+-------------------------
 
 .. highlight:: console
 
@@ -89,84 +153,90 @@ To retrieve a package specification, submit an HTTP GET request::
 .. highlight:: json-ellipsis
 
 This will return a JSON object that contains metadata about the package,
-and a list of actions required to install the package::
+and a list of actions required to install the package:
 
-  {
-    "label": "Bulk Data Transfer",
-    "description": "Moving data from structured data source such as a traditional relational database into Hadoop is very common in building Data Lakes.
-                    This data application allows you to set-up periodic full data dumps from RDBMS into Hadoop cluster.
-                    Data on Hadoop is stored as DB table snapshot. Supports other relational databases.",
-    "author": "Cask",
-    "org": "Cask Data, Inc.",
-    "created": 1473901763,
-    "categories": [ "usecase" ],
-    "cdapVersion": "[4.0.0-SNAPSHOT,4.1.0)",
-    "actions": [
-      {
-        "type": "informational",
-        "label": "Download MySQL JDBC Driver",
-        "arguments": [
-          {
-            "name": "steps",
-            "value": [
-              "Download the ZIP file from MySQL at https://dev.mysql.com/downloads/file/?id=462850",
-              "Unzip the file",
-              "In the next step, upload the 'mysql-connector-java-5.1.39-bin.jar' file from the ZIP"
-            ]
-          }
-        ]
-      },
-      {
-        "type": "create_artifact",
-        "label": "MySQL Driver Plugin",
-        "arguments": [
-          {
-            "name": "name",
-            "value": "mysql-connector-java"
-          },
-          {
-            "name": "version",
-            "value": "5.1.39"
-          },
-          {
-            "name": "scope",
-            "value": "user"
-          },
-          {
-            "name": "config",
-            "value": "mysql-connector-java.json"
-          }
-        ]
-      },
-      {
-        "type": "create_pipeline",
-        "label": "Bulk Data Transfer Pipeline",
-        "arguments": [
-          {
-            "name": "artifact",
-            "value": {
-              "scope": "system",
-              "name": "cdap-data-pipeline",
-              "version": "4.0.0-SNAPSHOT"
+.. container:: highlight
+
+  .. parsed-literal::
+
+    {
+      "label": "Bulk Data Transfer",
+      "description": "Moving data from structured data source such as a traditional relational
+                    database into Hadoop is very common in building Data Lakes. This data
+                    application allows you to set-up periodic full data dumps from RDBMS
+                    into Hadoop cluster. Data on Hadoop is stored as DB table snapshot.
+                    Supports other relational databases.",
+      "author": "Cask",
+      "org": "Cask Data, Inc.",
+      "created": 1473901763,
+      "categories": [ "usecase" ],
+      "cdapVersion": "|release-range|",
+      "actions": [
+        {
+          "type": "informational",
+          "label": "Download MySQL JDBC Driver",
+          "arguments": [
+            {
+              "name": "steps",
+              "value": [
+                "Download the ZIP file from MySQL at https://dev.mysql.com/downloads/file/?id=462850",
+                "Unzip the file",
+                "In the next step, upload the 'mysql-connector-java-5.1.39-bin.jar' file from the ZIP"
+              ]
             }
-          },
-          {
-            "name": "name",
-            "value": "bulkDataTransfer",
-            "canModify": true
-          },
-          {
-            "name": "config",
-            "value": "pipeline.json"
-          }
-        ]
-      }
-    ]
-  }
+          ]
+        },
+        {
+          "type": "create_artifact",
+          "label": "MySQL Driver Plugin",
+          "arguments": [
+            {
+              "name": "name",
+              "value": "mysql-connector-java"
+            },
+            {
+              "name": "version",
+              "value": "5.1.39"
+            },
+            {
+              "name": "scope",
+              "value": "user"
+            },
+            {
+              "name": "config",
+              "value": "mysql-connector-java.json"
+            }
+          ]
+        },
+        {
+          "type": "create_pipeline",
+          "label": "Bulk Data Transfer Pipeline",
+          "arguments": [
+            {
+              "name": "artifact",
+              "value": {
+                "scope": "system",
+                "name": "cdap-data-pipeline",
+                "version": "|release|"
+              }
+            },
+            {
+              "name": "name",
+              "value": "bulkDataTransfer",
+              "canModify": true
+            },
+            {
+              "name": "config",
+              "value": "pipeline.json"
+            }
+          ]
+        }
+      ]
+    }
+
 
 Action Specification
 --------------------
-
 There are several supported actions, each with its own specification.
 If an action fails for any reason, actions completed before it are
 not rolled back. However, each action is idempotent, which means the
@@ -191,7 +261,7 @@ Each action contains a label, type, and arguments::
 The label is a short description that will be displayed to users during the install process.
 Some arguments will reference package resources.
 
-Descriptions of each action type and their supported arguments are listed below:
+These actions are available:
 
 - `informational`_
 - `create_artifact`_
@@ -200,6 +270,8 @@ Descriptions of each action type and their supported arguments are listed below:
 - `create_app`_
 - `create_pipeline`_
 - `create_pipeline_draft`_
+
+Descriptions of each action type and their supported arguments follow.
 
 informational
 .............
@@ -272,7 +344,7 @@ Creates a CDAP artifact.
      -
 
 If the artifact is a plugin artifact, the config argument is used to specify its
-parent artifacts, any 3rd-party plugins contained in the artifact, and any properties
+parent artifacts, any third-party plugins contained in the artifact, and any properties
 of the artifact.
 
 .. highlight:: json-ellipsis
@@ -302,7 +374,7 @@ Example action::
     ]
   }
 
-where mysql-connector-java.json is a package resource with content::
+where ``mysql-connector-java.json`` is a package resource with content such as::
 
   {
     "parents": [
@@ -455,31 +527,35 @@ Creates a CDAP application from an existing CDAP artifact.
 
 .. highlight:: json-ellipsis
 
-Example action::
+Example action:
 
-  {
-    "type": "create_app",
-    "label": "Word Count Example App",
-    "arguments": [
-      {
-        "name": "artifact",
-        "value": {
-          "scope": "user",
-          "name": "WordCount",
-          "version": "4.0.0"
+.. container:: highlight
+
+  .. parsed-literal::
+
+    {
+      "type": "create_app",
+      "label": "Word Count Example App",
+      "arguments": [
+        {
+          "name": "artifact",
+          "value": {
+            "scope": "user",
+            "name": "WordCount",
+            "version": "|release|"
+          }
+        },
+        {
+          "name": "name",
+          "value": "WordCount",
+          "canModify": true
+        },
+        {
+          "name": "config",
+          "value": "config.json"
         }
-      },
-      {
-        "name": "name",
-        "value": "WordCount",
-        "canModify": true
-      },
-      {
-        "name": "config",
-        "value": "config.json"
-      }
-    ]
-  }
+      ]
+    }
 
 where ``config.json`` is a package resource that contains the application configuration::
 
@@ -493,7 +569,7 @@ where ``config.json`` is a package resource that contains the application config
 
 create_pipeline
 ...............
-Creates a Hydrator pipeline. Very similar to the ``create_app`` pipeline,
+Creates a Hydrator pipeline. Very similar to the `create_app`_ pipeline,
 except that the config is required and the UI will take the user to the Hydrator UI
 instead of the CDAP UI after installation is complete.
 
@@ -520,37 +596,41 @@ instead of the CDAP UI after installation is complete.
 
 .. highlight:: json-ellipsis
 
-Example action::
+Example action:
 
-  {
-    "type": "create_pipeline",
-    "label": "Omniture Hits Pipeline",
-    "arguments": [
-      {
-        "name": "artifact",
-        "value": {
-          "scope": "system",
-          "name": "cdap-data-pipeline",
-          "version": "4.0.0"
+.. container:: highlight
+
+  .. parsed-literal::
+
+    {
+      "type": "create_pipeline",
+      "label": "Omniture Hits Pipeline",
+      "arguments": [
+        {
+          "name": "artifact",
+          "value": {
+            "scope": "system",
+            "name": "cdap-data-pipeline",
+            "version": "|release|"
+          }
+        },
+        {
+          "name": "name",
+          "value": "omnitureHitsPipeline",
+          "canModify": true
+        },
+        {
+          "name": "config",
+          "value": "pipeline.json"
         }
-      },
-      {
-        "name": "name",
-        "value": "omnitureHitsPipeline",
-        "canModify": true
-      },
-      {
-        "name": "config",
-        "value": "pipeline.json"
-      }
-    ]
-  }
+      ]
+    }
 
 where ``pipeline.json`` is a package resource containing the pipeline config.
 
 create_pipeline_draft
 .....................
-Creates a Hydrator pipeline draft. Similar to ``create_pipeline``, except that the pipeline
+Creates a Hydrator pipeline draft. Similar to `create_pipeline`_, except that the pipeline
 will not be published. Instead, a draft will be created that the user can then modify.
 
 .. list-table::
@@ -576,34 +656,40 @@ will not be published. Instead, a draft will be created that the user can then m
 
 .. highlight:: json-ellipsis
 
-Example action::
+Example action:
 
-  {
-    "type": "create_pipeline",
-    "label": "Omniture Hits Pipeline",
-    "arguments": [
-      {
-        "name": "artifact",
-        "value": {
-          "scope": "system",
-          "name": "cdap-data-pipeline",
-          "version": "4.0.0-SNAPSHOT"
+.. container:: highlight
+
+  .. parsed-literal::
+
+    {
+      "type": "create_pipeline_draft",
+      "label": "Omniture Hits Pipeline",
+      "arguments": [
+        {
+          "name": "artifact",
+          "value": {
+            "scope": "system",
+            "name": "cdap-data-pipeline",
+            "version": "|release|"
+          }
+        },
+        {
+          "name": "name",
+          "value": "omnitureHitsPipeline",
+          "canModify": true
+        },
+        {
+          "name": "config",
+          "value": "pipeline.json"
         }
-      },
-      {
-        "name": "name",
-        "value": "omnitureHitsPipeline",
-        "canModify": true
-      },
-      {
-        "name": "config",
-        "value": "pipeline.json"
-      }
-    ]
-  }
+      ]
+    }
+
+where ``pipeline.json`` is a package resource containing the pipeline config.
 
 Get Package Specification Signature
-===================================
+-----------------------------------
 
 .. highlight:: console
 
@@ -617,7 +703,7 @@ then be used in conjunction with the publisher's public key to validate that the
 was signed by the publisher.
 
 Get Package Resource
-====================
+--------------------
 
 .. highlight:: console
 
@@ -629,7 +715,7 @@ The resource can contain arbitrary data. They can be artifact JARs, configuratio
 sample data, or anything else that a package action may require.
 
 Get Package Resource Signature
-==============================
+------------------------------
 
 .. highlight:: console
 
@@ -643,7 +729,7 @@ then be used in conjunction with the publisher's public key to validate that a p
 resource was signed by the publisher.
 
 Get Package Icon
-================
+----------------
 
 .. highlight:: console
 
@@ -651,3 +737,27 @@ To retrieve the icon for a package, submit an HTTP GET request::
 
   GET /v1/packages/<package-name>/<version>/icon.png
 
+
+Hosting a Custom Cask Market
+============================
+
+.. highlight:: console
+
+The Cask Market APIs are simply a contract about the directory structure of the marketplace.
+
+.. Directory structure
+.. --------------------
+.. include:: cask-market.rst
+    :start-after: .. directory-structure-start
+    :end-before: .. directory-structure-end
+
+As such, hosting a custom market can be done by setting up a server that follows the same
+path structure.
+
+One possible setup is to keep your packages in a source control repository whose directory
+structure matches the one required by the market. The repository can be checked out onto one or
+more machines, with an Apache server configured to serve content from that directory. A tool
+can be run to create the catalog file from all the package specifications, and to create all
+the signature files.
+
+Another possible setup is to serve the market catalog and packages from Amazon S3.
