@@ -272,15 +272,17 @@ rst_epilog = """
 .. |non-breaking-space| unicode:: U+00A0 .. non-breaking space
 """
 
-if git_build_vars.has_key('GIT_NODE_JS_MIN_VERSION') and git_build_vars.has_key('GIT_NODE_JS_MAX_VERSION'):
+if git_build_vars.has_key('GIT_NODE_JS_MIN_VERSION'):
     rst_epilog += """
 .. |node-js-min-version| replace:: %(node_js_min_version)s
 
+""" % {'node_js_min_version': git_build_vars['GIT_NODE_JS_MIN_VERSION']}
+
+if git_build_vars.has_key('GIT_NODE_JS_MAX_VERSION'):
+    rst_epilog += """
 .. |node-js-max-version| replace:: %(node_js_max_version)s
 
-""" % {'node_js_min_version': git_build_vars['GIT_NODE_JS_MIN_VERSION'],
-       'node_js_max_version': git_build_vars['GIT_NODE_JS_MAX_VERSION'],
-      }
+""" % {'node_js_max_version': git_build_vars['GIT_NODE_JS_MAX_VERSION']}
 
 if version:
     rst_epilog += """
