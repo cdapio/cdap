@@ -227,23 +227,15 @@ cdap_check_pidfile() {
 # returns: 1 if not found or not high enough version, 0 otherwise
 #
 cdap_check_node_version() {
-  local readonly __ver=${1} __ret
-  program_is_installed node
-  __ret=${?}
-  if [[ ${__ret} -ne 0 ]]; then
-    die "Cannot locate node, is Node.js installed?"
-  fi
-  local readonly __node=$(node -v 2>/dev/null)
-  local readonly __ver_maj=$(echo ${__ver/v/} | cut -d. -f1)
-  local readonly __ver_min=$(echo ${__ver/v/} | cut -d. -f2)
-  local readonly __ver_pat=$(echo ${__ver/v/} | cut -d. -f3)
-  local readonly __maj=$(echo ${__node/v/} | cut -d. -f1)
-  local readonly __min=$(echo ${__node/v/} | cut -d. -f2)
-  local readonly __pat=$(echo ${__node/v/} | cut -d. -f3)
-  if [[ ${__maj} -lt $((__ver_maj + 1)) ]] && [[ ${__min} -lt $((__ver_min + 1)) ]] && [[ ${__pat} -lt $((__ver_pat + 1)) ]]; then
-    echo "Node.js ${__node} is not supported. The minimum version supported is ${__ver}"
-    return 1
-  fi
+  local readonly __ver=${1/v/} __ret
+  program_is_installed node || die "Cannot locate node, is Node.js installed?"
+  local readonly __node=$(node -v 2>/dev/null | sed -e 's/v//g')
+  compare_versions ${__node} ${__ver}
+  __ret=$?
+  case ${__ret} in
+    0|1) return 0 ;;
+    *) echo "Node.js ${__node} is not supported. The minimum version supported is ${__ver}" ; return 1 ;;
+  esac
   return 0
 }
 
