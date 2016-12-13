@@ -50,7 +50,7 @@ public class ComputeTransformFunction<T, U> implements Function2<JavaRDD<T>, Tim
       new SparkStreamingExecutionContext(sec, JavaSparkContext.fromSparkContext(data.context()),
                                          stageName, batchTime.milliseconds());
 
-    data = data.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", sec.getDataTracer(stageName)));
+    data = data.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
     return compute.transform(sparkPluginContext, data)
       .map(new CountingFunction<U>(stageName, sec.getMetrics(), "records.out", sec.getDataTracer(stageName)));
   }

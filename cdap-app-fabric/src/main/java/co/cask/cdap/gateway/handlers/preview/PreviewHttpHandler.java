@@ -29,7 +29,9 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -38,6 +40,10 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -51,6 +57,7 @@ import javax.ws.rs.PathParam;
 public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
+  private static final Type STRING_LIST_MAP_TYPE = new TypeToken<Map<String, List<String>>>() { }.getType();
 
   private final PreviewManager previewManager;
 
@@ -109,4 +116,34 @@ public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationId application = namespace.app(previewId);
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewManager.getRunner(application).getData(tracerId)));
   }
+
+  @POST
+  @Path("/previews/{preview-id}/tracers")
+  public void getTracersData(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("preview-id") String previewId) throws Exception {
+    NamespaceId namespace = new NamespaceId(namespaceId);
+    ApplicationId application = namespace.app(previewId);
+    Map<String, List<String>> previewRequest;
+    try {
+      previewRequest = parseBody(request, STRING_LIST_MAP_TYPE);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Request body is invalid json: " + e.getMessage());
+    }
+
+    if (previewRequest == null) {
+      throw new BadRequestException("The body is not provided.");
+    }
+    List<String> tracerNames = previewRequest.get("tracers");
+    if (tracerNames == null || tracerNames.isEmpty()) {
+      throw new BadRequestException("Tracer names cannot be empty.");
+    }
+
+    Map<String, Map<String, List<JsonElement>>> result = new HashMap<>();
+    for (String tracerName : tracerNames) {
+      result.put(tracerName, previewManager.getRunner(application).getData(tracerName));
+    }
+    responder.sendString(HttpResponseStatus.OK, GSON.toJson(result));
+  }
+
 }
