@@ -191,6 +191,11 @@ Verification
 Advanced Topics
 ===============
 
+- :ref:`Enabling Security <mapr-configuration-security>`
+- :ref:`Enabling Kerberos <mapr-configuration-enabling-kerberos>`
+- :ref:`Enabling CDAP High Availability <mapr-configuration-highly-available>`
+- :ref:`Enabling Hive Execution Engines <mapr-configuration-enabling-hive-execution-engines>`
+
 .. _mapr-configuration-security:
 
 .. Enabling Perimeter Security
@@ -209,4 +214,12 @@ Kerberos is currently not supported by CDAP on secure MapR clusters.
 ..     :start-after: .. configuration-enabling-kerberos:
 ..     :end-before: .. _mapr-configuration-eps:
 
+.. Enabling CDAP HA
+.. ----------------
 .. include:: /../target/_includes/mapr-ha-installation.rst
+
+.. Enabling Hive Execution Engines
+.. -------------------------------
+.. _mapr-configuration-enabling-hive-execution-engines:
+
+.. include:: /_includes/installation/hive-execution-engines.txt

@@ -539,6 +539,11 @@ port ``11011`` of the host where the UI role instance is running.
 Advanced Topics
 ===============
 
+- :ref:`Enabling Security <cloudera-configuration-security>`
+- :ref:`Enabling Kerberos <cloudera-configuration-enabling-kerberos>`
+- :ref:`Enabling CDAP High Availability <cloudera-configuration-highly-available>`
+- :ref:`Enabling Hive Execution Engines <cloudera-configuration-enabling-hive-execution-engines>`
+
 .. _cloudera-configuration-security:
 
 .. Enabling Perimeter Security
@@ -666,3 +671,9 @@ CDAP Authentication Server
 - Start each ``CDAP Security Auth Service`` role.  
 - Note that when an unauthenticated request is made in a secure HA setup, a list of all
   running authentication endpoints will be returned in the body of the request.
+
+.. Enabling Hive Execution Engines
+.. -------------------------------
+.. _cloudera-configuration-enabling-hive-execution-engines:
+
+.. include:: /_includes/installation/hive-execution-engines.txt
