@@ -189,7 +189,6 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                Collections.<QueryResult>emptyList());
   }
 
-
   @Test
   public void testPartitionedFileSet() throws Exception {
     final DatasetId datasetInstanceId = NAMESPACE_ID.dataset("parted");
@@ -688,7 +687,6 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                  new QueryResult(Lists.<Object>newArrayList("x3", "#3"))));
 
     // verify the partition was removed from Hive
-    // verify that the partitions were added to Hive
     runCommand(NAMESPACE_ID, "show partitions " + tableName, true,
                Lists.newArrayList(new ColumnDesc("partition", "STRING", 1, "from deserializer")),
                Lists.newArrayList(
