@@ -560,6 +560,9 @@ class TabbedParsedLiteral(ParsedLiteral):
                 node['mapping'] = DEFAULT_TABS + [DEFAULT_TABS[0]] * (tab_count -2)
             else:
                 node['mapping'] = [DEFAULT_TABS[0]] * tab_count
+        if tab_count > len(node['line_counts']):
+            print "Warning: number of tabs (%s) is greater than the number of elements in the line_counts (%s)" % (node['tabs'], node['line_counts'])
+                
         return [node] + messages
         
 def visit_tpl_html(self, node):
@@ -722,29 +725,33 @@ def visit_tpl_html(self, node):
     text_list = node.astext().split('\n')
     offset = 0
     for index in range(len(tabs)):
-        lang, lines = languages[index], line_counts[index]
-        tab_name, tab_link = tab_labels[index], clean_tab_links[index]
-        start_tag = self.starttag(node, 'div', suffix='', CLASS='highlight-%s' % lang)
-        tab_text = text_list[offset:offset + lines]
-        offset += lines
-        # Strip any leading empty lines
-        text = ''
-        for line in tab_text:
-            if not line and not text:
-                continue
-            elif not text:
-                text = line
-            else:
-                text += '\n' + line
-        highlighted = _highlighter(node, text, lang)
-        tab_options = {'active': 'active' if not index else '',
-                       'tab_link': tab_link,
-                       'tab_name': tab_name,}
+        if index < len(languages) and index < len(line_counts):
+            lang, lines = languages[index], line_counts[index]
+            tab_name, tab_link = tab_labels[index], clean_tab_links[index]
+            start_tag = self.starttag(node, 'div', suffix='', CLASS='highlight-%s' % lang)
+            tab_text = text_list[offset:offset + lines]
+            offset += lines
+            # Strip any leading empty lines
+            text = ''
+            for line in tab_text:
+                if not line and not text:
+                    continue
+                elif not text:
+                    text = line
+                else:
+                    text += '\n' + line
+            highlighted = _highlighter(node, text, lang)
+            tab_options = {'active': 'active' if not index else '',
+                           'tab_link': tab_link,
+                           'tab_name': tab_name,}
 
-        nav_tabs_html += NAV_TABS_ENTRY.format(**tab_options)
-        tab_entry_start = TAB_CONTENT_ENTRY_START.format(**tab_options)
-        tab_content_html += tab_entry_start + start_tag + highlighted + DIV_END + DIV_DIV_END
-                                                    
+            nav_tabs_html += NAV_TABS_ENTRY.format(**tab_options)
+            tab_entry_start = TAB_CONTENT_ENTRY_START.format(**tab_options)
+            tab_content_html += tab_entry_start + start_tag + highlighted + DIV_END + DIV_DIV_END
+        else:
+            raise Exception('visit_tpl_html', 
+                    "Warning: Index %d exceeds length of languages (%d) and/or line_counts (%d)" % (index, len(languages), len(line_counts)))
+
     nav_tabs_html = NAV_TABS % nav_tabs_html
     tab_content_html = TAB_CONTENT_START + tab_content_html + DIV_END
     self.body.append(start_html + nav_tabs_html + tab_content_html + DIV_END)

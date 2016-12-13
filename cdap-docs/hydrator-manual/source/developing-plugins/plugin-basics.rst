@@ -58,7 +58,7 @@ where ``<archetype>`` is one of the archetypes listed above.
 Complete examples for each archetype:
 
 .. tabbed-parsed-literal::
-  :tabs: cdap-data-pipeline-plugins,cdap-etl-realtime-source,cdap-etl-realtime-sink,cdap-etl-transform
+  :tabs: cdap-data-pipeline-plugins,cdap-etl-transform
   :dependent: hydrator-archetype
 
   .. cdap-data-pipeline-plugins
