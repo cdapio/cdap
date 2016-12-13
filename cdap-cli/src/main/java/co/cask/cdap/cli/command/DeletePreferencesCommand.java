@@ -65,7 +65,7 @@ public class DeletePreferencesCommand extends AbstractCommand {
         break;
 
       case APP:
-        client.deleteApplicationPreferences(parseAppId(programIdParts));
+        client.deleteApplicationPreferences(parseApplicationId(arguments));
         printStream.printf(SUCCESS + "\n", type.getName());
         break;
 
@@ -74,8 +74,7 @@ public class DeletePreferencesCommand extends AbstractCommand {
       case WORKFLOW:
       case SERVICE:
       case SPARK:
-        checkInputLength(programIdParts, 2);
-        client.deleteProgramPreferences(parseProgramId(programIdParts, type.getProgramType()));
+        client.deleteProgramPreferences(parseProgramId(arguments, type));
         printStream.printf(SUCCESS + "\n", type.getName());
         break;
 
@@ -86,7 +85,20 @@ public class DeletePreferencesCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("delete preferences %s [<%s>]", type.getShortName(), type.getArgumentName());
+    switch (type) {
+      case INSTANCE:
+      case NAMESPACE:
+        return String.format("delete preferences %s", type.getShortName());
+      case APP:
+      case FLOW:
+      case MAPREDUCE:
+      case WORKFLOW:
+      case SERVICE:
+      case WORKER:
+      case SPARK:
+        return String.format("delete preferences %s <%s>", type.getShortName(), type.getArgumentName());
+    }
+    throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }
 
   @Override
