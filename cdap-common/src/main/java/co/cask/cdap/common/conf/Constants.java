@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public final class Constants {
 
   public static final String[] FEATURE_TOGGLE_PROPS = {
-    Security.SSL_ENABLED,
+    Security.SSL.EXTERNAL_ENABLED,
     Security.SSL.INTERNAL_ENABLED,
     Security.ENABLED,
     Explore.EXPLORE_ENABLED,
@@ -748,9 +748,10 @@ public final class Constants {
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
     /** Enables external SSL */
     @Deprecated
-    public static final String SSL_ENABLED = "ssl.enabled";
+    public static final String SSL_ENABLED_DEPRECATED = "ssl.enabled";
     /** Key to mark a discoverable which supports ssl */
-    public static final String SSL_DISCOVERABLE_KEY = "ssl";
+    public static final String SSL_URI_SCHEME = "https://";
+    public static final String URI_SCHEME = "http://";
 
     /**
      * App Fabric
@@ -763,8 +764,6 @@ public final class Constants {
       public static final String INTERNAL_ENABLED = "ssl.internal.enabled";
       /** Password for the java keystore. */
       public static final String KEYSTORE_PASSWORD = "ssl.internal.keystore.password";
-      /** Type for the java keystore. e.g. JCEKS. */
-      public static final String KEYSTORE_TYPE = "ssl.internal.keystore.type";
       /** Validity of the self generated certificate in days */
       public static final String CERT_VALIDITY = "ssl.internal.cert.validity";
     }

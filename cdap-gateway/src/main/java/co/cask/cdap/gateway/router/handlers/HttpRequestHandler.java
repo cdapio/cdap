@@ -17,9 +17,11 @@
 package co.cask.cdap.gateway.router.handlers;
 
 import co.cask.cdap.common.HandlerException;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.gateway.router.ProxyRule;
 import co.cask.cdap.gateway.router.RouterServiceLookup;
+import co.cask.cdap.security.tools.PermissiveTrustManagerFactory;
 import com.google.common.collect.Queues;
 import com.google.common.io.Closeables;
 import org.apache.twill.discovery.Discoverable;
@@ -40,18 +42,24 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 
 /**
  * Handler that handles HTTP requests and forwards to appropriate services. The service discovery is
@@ -117,6 +125,21 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
         final Channel outboundChannel = future.getChannel();
         outboundChannel.getPipeline().addAfter("request-encoder",
                                                "outbound-handler", new OutboundHandler(inboundChannel));
+        if (Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload())) {
+          SSLContext clientContext = null;
+          try {
+            clientContext = SSLContext.getInstance("TLS");
+            clientContext.init(null, PermissiveTrustManagerFactory.getTrustManagers(), null);
+          } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            throw new RuntimeException("SSL is enabled for app-fabric but failed to create SSLContext in the router " +
+                                         "client.", e);
+          }
+          SSLEngine engine = clientContext.createSSLEngine();
+          engine.setUseClientMode(true);
+          engine.setEnabledProtocols(new String[] {"TLSv1.2", "TLSv1.1", "TLSv1"});
+          outboundChannel.getPipeline().addFirst("ssl", new SslHandler(engine));
+          LOG.trace("Adding ssl handler to the pipeline.");
+        }
         sender = new MessageSender(inboundChannel, future);
         discoveryLookup.put(discoverable, sender);
 

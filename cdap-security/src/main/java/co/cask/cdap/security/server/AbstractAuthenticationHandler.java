@@ -50,7 +50,7 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     constraint.setRoles(new String[]{"*"});
     constraint.setAuthenticate(true);
 
-    if (configuration.getBoolean(Constants.Security.SSL_ENABLED)) {
+    if (configuration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED)) {
       constraint.setDataConstraint(Constraint.DC_CONFIDENTIAL);
     }
 

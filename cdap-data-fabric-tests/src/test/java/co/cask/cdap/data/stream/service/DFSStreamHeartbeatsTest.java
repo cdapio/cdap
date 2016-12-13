@@ -266,7 +266,7 @@ public class DFSStreamHeartbeatsTest {
     }
 
     @Nullable
-    public StreamWriterHeartbeat getHeartbeat() {
+    StreamWriterHeartbeat getHeartbeat() {
       return heartbeat.get();
     }
   }
