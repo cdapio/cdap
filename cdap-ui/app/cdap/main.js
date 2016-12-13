@@ -41,7 +41,6 @@ import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import RouteToNamespace from 'components/RouteToNamespace';
 import Helmet from 'react-helmet';
-import Wrangler from 'components/Wrangler';
 import SchemaEditor from 'components/SchemaEditor';
 
 class CDAP extends Component {
@@ -83,10 +82,10 @@ class CDAP extends Component {
     }
 
     return (
-      <Router basename="/cask-cdap" history={history}>
+      <Router basename="/cdap" history={history}>
         <div className="cdap-container">
           <Helmet
-            title={T.translate('features.Home.Title')}
+            title={T.translate('features.EntityListView.Title')}
           />
           <CdapHeader />
           <SplashScreen openVideo={this.openCaskVideo}/>
@@ -95,11 +94,10 @@ class CDAP extends Component {
             <Match exactly pattern="/notfound" component={Missed} />
             <Match exactly pattern="/management" component={Management} />
             <Match exactly pattern="/ns" component={RouteToNamespace} />
-            <Match exactly pattern="/ns/:namespace" history={history} component={Home} />
+            <Match pattern="/ns/:namespace" history={history} component={Home} />
             <Match exactly pattern="/ns/:namespace/dashboard" component={Dashboard} />
             <Match pattern="/Experimental" component={Experimental} />
             <Match pattern="/socket-example" component={ConnectionExample} />
-            <Match pattern="/wrangler" component={Wrangler} />
             <Match pattern="/schemaeditor" component={SchemaEditor} />
             <Miss component={Missed} />
           </div>

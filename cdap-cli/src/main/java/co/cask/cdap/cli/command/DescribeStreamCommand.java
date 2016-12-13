@@ -52,7 +52,7 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
-    StreamProperties config = streamClient.getConfig(streamId.toId());
+    StreamProperties config = streamClient.getConfig(streamId);
 
     Table table = Table.builder()
       .setHeader("ttl", "format", "schema", "notification.threshold.mb", "description")

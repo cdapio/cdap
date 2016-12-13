@@ -42,7 +42,6 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
@@ -129,7 +128,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  private final Id.Namespace testSpace = Id.Namespace.from("testspace");
+  private final NamespaceId testSpace = new NamespaceId("testspace");
 
   @Before
   public void setUp() throws Exception {
@@ -144,18 +143,18 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testInvalidAppWithDuplicateDatasets() throws Exception {
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "invalid-app", "1.0.0-SNAPSHOT");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("invalid-app", "1.0.0-SNAPSHOT");
     addAppArtifact(artifactId, AppWithDuplicateData.class);
 
-    Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugin", "1.0.0-SNAPSHOT");
+    ArtifactId pluginArtifactId = NamespaceId.DEFAULT.artifact("test-plugin", "1.0.0-SNAPSHOT");
     addPluginArtifact(pluginArtifactId, artifactId, ToStringPlugin.class);
 
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "InvalidApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("InvalidApp");
 
     for (int choice = 4; choice > 0; choice /= 2) {
       try {
         AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
-          new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+          new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
           new AppWithDuplicateData.ConfigClass((choice == 4), (choice == 2), (choice == 1)));
         deployApplication(appId, createRequest);
         // fail if we succeed with application deployment
@@ -166,7 +165,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
 
     AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+      new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
       new AppWithDuplicateData.ConfigClass(false, false, false));
     deployApplication(appId, createRequest);
   }
@@ -312,7 +311,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.waitForStatus(true, 1, 10);
 
     URL serviceURL = serviceManager.getServiceURL(10, TimeUnit.SECONDS);
-    Assert.assertEquals(testSpace.getId(), callServiceGet(serviceURL, "ns"));
+    Assert.assertEquals(testSpace.getNamespace(), callServiceGet(serviceURL, "ns"));
 
     serviceManager.stop();
     serviceManager.waitForStatus(false, 1, 10);
@@ -331,15 +330,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testAppWithPlugin() throws Exception {
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "app-with-plugin", "1.0.0-SNAPSHOT");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("app-with-plugin", "1.0.0-SNAPSHOT");
     addAppArtifact(artifactId, AppWithPlugin.class);
 
-    Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugin", "1.0.0-SNAPSHOT");
+    ArtifactId pluginArtifactId = NamespaceId.DEFAULT.artifact("test-plugin", "1.0.0-SNAPSHOT");
     addPluginArtifact(pluginArtifactId, artifactId, ToStringPlugin.class);
 
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "AppWithPlugin");
-    AppRequest createRequest = new AppRequest(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
+    ApplicationId appId = NamespaceId.DEFAULT.app("AppWithPlugin");
+    AppRequest createRequest = new AppRequest(new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()));
 
     ApplicationManager appManager = deployApplication(appId, createRequest);
 
@@ -403,16 +401,16 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testAppFromArtifact() throws Exception {
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "cfg-app", "1.0.0-SNAPSHOT");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("cfg-app", "1.0.0-SNAPSHOT");
     addAppArtifact(artifactId, ConfigTestApp.class);
 
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "AppFromArtifact");
+    ApplicationId appId = NamespaceId.DEFAULT.app("AppFromArtifact");
     AppRequest<ConfigTestApp.ConfigClass> createRequest = new AppRequest<>(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+      new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
       new ConfigTestApp.ConfigClass("testStream", "testDataset")
     );
     ApplicationManager appManager = deployApplication(appId, createRequest);
-    testAppConfig(appId.getId(), appManager, createRequest.getConfig());
+    testAppConfig(appId.getApplication(), appManager, createRequest.getConfig());
   }
 
   @Test
@@ -493,9 +491,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     getNamespaceAdmin().create(inputNS);
     getNamespaceAdmin().create(outputNS);
 
-    addDatasetInstance(inputNS.getNamespaceId().toId(), "keyValueTable", "table1");
-    addDatasetInstance(outputNS.getNamespaceId().toId(), "keyValueTable", "table2");
-    DataSetManager<KeyValueTable> tableManager = getDataset(inputNS.getNamespaceId().toId(), "table1");
+    addDatasetInstance(inputNS.getNamespaceId().dataset("table1"), "keyValueTable");
+    addDatasetInstance(outputNS.getNamespaceId().dataset("table2"), "keyValueTable");
+    DataSetManager<KeyValueTable> tableManager = getDataset(inputNS.getNamespaceId().dataset("table1"));
     KeyValueTable inputTable = tableManager.get();
     inputTable.write("hello", "world");
     tableManager.flush();
@@ -511,7 +509,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     appManager.stopAll();
 
-    DataSetManager<KeyValueTable> outTableManager = getDataset(outputNS.getNamespaceId().toId(), "table2");
+    DataSetManager<KeyValueTable> outTableManager = getDataset(outputNS.getNamespaceId().dataset("table2"));
     verifyMapperJobOutput(DatasetCrossNSAccessWithMAPApp.class, outTableManager);
   }
 
@@ -674,9 +672,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     throws Exception {
 
     // Once the Workflow run is complete local datasets should not be available
-    DataSetManager<KeyValueTable> localKeyValueDataset = getDataset(testSpace,
-                                                                    WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET
-                                                                      + "." + runId);
+    DataSetManager<KeyValueTable> localKeyValueDataset =
+      getDataset(testSpace.dataset(WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET + "." + runId));
 
     if (shouldKeepWordCountDataset) {
       Assert.assertNotNull(localKeyValueDataset.get());
@@ -684,8 +681,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       Assert.assertNull(localKeyValueDataset.get());
     }
 
-    DataSetManager<FileSet> localFileSetDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET
-      + "." + runId);
+    DataSetManager<FileSet> localFileSetDataset =
+      getDataset(testSpace.dataset(WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET + "." + runId));
 
     if (shouldKeepCSVFilesetDataset) {
       Assert.assertNotNull(localFileSetDataset.get());
@@ -694,16 +691,16 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
 
     // Dataset which is not local should still be available
-    DataSetManager<KeyValueTable> nonLocalKeyValueDataset = getDataset(testSpace,
-                                                                       WorkflowAppWithLocalDatasets.RESULT_DATASET);
+    DataSetManager<KeyValueTable> nonLocalKeyValueDataset =
+      getDataset(testSpace.dataset(WorkflowAppWithLocalDatasets.RESULT_DATASET));
     Assert.assertEquals("6", Bytes.toString(nonLocalKeyValueDataset.get().read("UniqueWordCount")));
 
     // There should not be any local copy of the non local dataset
-    nonLocalKeyValueDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.RESULT_DATASET + "." + runId);
+    nonLocalKeyValueDataset = getDataset(testSpace.dataset(WorkflowAppWithLocalDatasets.RESULT_DATASET + "." + runId));
     Assert.assertNull(nonLocalKeyValueDataset.get());
 
     DataSetManager<KeyValueTable> workflowRuns
-      = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORKFLOW_RUNS_DATASET);
+      = getDataset(testSpace.dataset(WorkflowAppWithLocalDatasets.WORKFLOW_RUNS_DATASET));
 
     Assert.assertEquals(expectedRunStatus, Bytes.toString(workflowRuns.get().read(runId)));
   }
@@ -733,19 +730,19 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     String runId = history.get(0).getPid();
 
     // Get the local datasets for this Workflow run
-    DataSetManager<KeyValueTable> localDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET
-      + "." + runId);
+    DataSetManager<KeyValueTable> localDataset =
+      getDataset(testSpace.dataset(WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET + "." + runId));
     Assert.assertEquals("2", Bytes.toString(localDataset.get().read("text")));
 
-    DataSetManager<FileSet> fileSetDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET
-      + "." + runId);
+    DataSetManager<FileSet> fileSetDataset =
+      getDataset(testSpace.dataset(WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET + "." + runId));
     Assert.assertNotNull(fileSetDataset.get());
 
     // Local datasets should not exist at the namespace level
-    localDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET);
+    localDataset = getDataset(testSpace.dataset(WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET));
     Assert.assertNull(localDataset.get());
 
-    fileSetDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET);
+    fileSetDataset = getDataset(testSpace.dataset(WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET));
     Assert.assertNull(fileSetDataset.get());
 
     // Verify that the workflow hasn't completed on its own before we signal it to
@@ -759,7 +756,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     wfManager.waitForFinish(1, TimeUnit.MINUTES);
     Map<String, WorkflowNodeStateDetail> nodeStateDetailMap = wfManager.getWorkflowNodeStates(runId);
     Map<String, String> workflowMetricsContext = new HashMap<>();
-    workflowMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getId());
+    workflowMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getNamespace());
     workflowMetricsContext.put(Constants.Metrics.Tag.APP, applicationManager.getInfo().getName());
     workflowMetricsContext.put(Constants.Metrics.Tag.WORKFLOW, WorkflowAppWithLocalDatasets.WORKFLOW_NAME);
     workflowMetricsContext.put(Constants.Metrics.Tag.RUN_ID, runId);
@@ -776,7 +773,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // check in spark context
     Map<String, String> sparkMetricsContext = new HashMap<>();
-    sparkMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getId());
+    sparkMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getNamespace());
     sparkMetricsContext.put(Constants.Metrics.Tag.APP, applicationManager.getInfo().getName());
     sparkMetricsContext.put(Constants.Metrics.Tag.SPARK, "JavaSparkCSVToSpaceConverter");
     sparkMetricsContext.put(Constants.Metrics.Tag.RUN_ID,
@@ -784,7 +781,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(2, getMetricsManager().getTotalMetric(sparkMetricsContext, "user.num.lines"));
 
     Map<String, String> appMetricsContext = new HashMap<>();
-    appMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getId());
+    appMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getNamespace());
     appMetricsContext.put(Constants.Metrics.Tag.APP, applicationManager.getInfo().getName());
     // app metrics context should have sum from custom action and spark metrics.
     Assert.assertEquals(4, getMetricsManager().getTotalMetric(appMetricsContext, "user.num.lines"));
@@ -795,7 +792,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // mr metrics context
     Map<String, String> mrMetricsContext = new HashMap<>();
-    mrMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getId());
+    mrMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getNamespace());
     mrMetricsContext.put(Constants.Metrics.Tag.APP, applicationManager.getInfo().getName());
     mrMetricsContext.put(Constants.Metrics.Tag.MAPREDUCE, "WordCount");
     mrMetricsContext.put(Constants.Metrics.Tag.RUN_ID,
@@ -942,15 +939,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }, 5, TimeUnit.SECONDS, 30, TimeUnit.MILLISECONDS);
   }
 
-  private void waitForWorkflowRuns(final WorkflowManager wfmanager, int expected) throws Exception {
-    Tasks.waitFor(expected, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return wfmanager.getHistory().size();
-      }
-    }, 5, TimeUnit.SECONDS, 30, TimeUnit.MILLISECONDS);
-  }
-
   private void waitForScheduleState(final String scheduleId, final WorkflowManager wfmanager,
                                     Scheduler.ScheduleState expected) throws Exception {
     Tasks.waitFor(expected, new Callable<Scheduler.ScheduleState>() {
@@ -1050,18 +1038,18 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   /**
    * Checks to ensure that a particular key is present in a {@link KeyValueTable}
-   * @param namespace {@link Id.Namespace}
+   * @param namespace {@link NamespaceId}
    * @param datasetName name of the dataset
    * @param expectedKey expected key byte array
    *
    * @throws Exception if the key is not found even after 15 seconds of timeout
    */
-  private void kvTableKeyCheck(final Id.Namespace namespace, final String datasetName, final byte[] expectedKey)
+  private void kvTableKeyCheck(final NamespaceId namespace, final String datasetName, final byte[] expectedKey)
     throws Exception {
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        DataSetManager<KeyValueTable> datasetManager = getDataset(namespace, datasetName);
+        DataSetManager<KeyValueTable> datasetManager = getDataset(namespace.dataset(datasetName));
         KeyValueTable kvTable = datasetManager.get();
         return kvTable.read(expectedKey) != null;
       }
@@ -1137,7 +1125,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   private void assertWorkerDatasetWrites(byte[] startRow, byte[] endRow,
                                          int expectedCount, int expectedTotalCount) throws Exception {
     DataSetManager<KeyValueTable> datasetManager =
-      getDataset(testSpace, AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
+      getDataset(testSpace.dataset(AppUsingGetServiceURL.WORKER_INSTANCES_DATASET));
     KeyValueTable instancesTable = datasetManager.get();
     try (CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(startRow, endRow)) {
       List<KeyValue<byte[], byte[]>> workerInstances = Lists.newArrayList(instancesIterator);
@@ -1168,7 +1156,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        DataSetManager<KeyValueTable> dataSetManager = getDataset(testSpace, AppWithWorker.DATASET);
+        DataSetManager<KeyValueTable> dataSetManager = getDataset(testSpace.dataset(AppWithWorker.DATASET));
         KeyValueTable table = dataSetManager.get();
         return AppWithWorker.INITIALIZE.equals(Bytes.toString(table.read(AppWithWorker.INITIALIZE))) &&
           AppWithWorker.RUN.equals(Bytes.toString(table.read(AppWithWorker.RUN)));
@@ -1182,7 +1170,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        DataSetManager<KeyValueTable> dataSetManager = getDataset(testSpace, AppWithWorker.DATASET);
+        DataSetManager<KeyValueTable> dataSetManager = getDataset(testSpace.dataset(AppWithWorker.DATASET));
         KeyValueTable table = dataSetManager.get();
         return AppWithWorker.STOP.equals(Bytes.toString(table.read(AppWithWorker.STOP)));
       }
@@ -1212,7 +1200,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       }
 
       // now start all the programs with valid tx timeouts
-      getStreamManager(testSpace, AppWithCustomTx.INPUT).send("hello");
+      getStreamManager(testSpace.stream(AppWithCustomTx.INPUT)).send("hello");
       ServiceManager serviceManager = appManager.getServiceManager(AppWithCustomTx.SERVICE)
         .start(txTimeoutArguments(txDefaulTimeoutService));
       WorkerManager notxWorkerManager = appManager.getWorkerManager(AppWithCustomTx.WORKER_NOTX)
@@ -1259,7 +1247,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       txWFManager.waitForFinish(10L, TimeUnit.SECONDS);
       notxWFManager.waitForFinish(10L, TimeUnit.SECONDS);
 
-      DataSetManager<TransactionCapturingTable> dataset = getDataset(testSpace, AppWithCustomTx.CAPTURE);
+      DataSetManager<TransactionCapturingTable> dataset = getDataset(testSpace.dataset(AppWithCustomTx.CAPTURE));
       Table t = dataset.get().getTable();
 
       // all programs attempt to write to the table in different transactional contexts
@@ -1520,7 +1508,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(1, serviceMetrics.getException());
 
     // in the AppWithServices the handlerName is same as the serviceName - "ServerService" handler
-    RuntimeMetrics handlerMetrics = getMetricsManager().getServiceHandlerMetrics(Id.Namespace.DEFAULT.getId(),
+    RuntimeMetrics handlerMetrics = getMetricsManager().getServiceHandlerMetrics(NamespaceId.DEFAULT.getNamespace(),
                                                                                  AppWithServices.APP_NAME,
                                                                                  AppWithServices.SERVICE_NAME,
                                                                                  AppWithServices.SERVICE_NAME);
@@ -1549,7 +1537,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     String decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE, decodedResult);
 
-    handlerMetrics = getMetricsManager().getServiceHandlerMetrics(Id.Namespace.DEFAULT.getId(),
+    handlerMetrics = getMetricsManager().getServiceHandlerMetrics(NamespaceId.DEFAULT.getNamespace(),
                                                                   AppWithServices.APP_NAME,
                                                                   "NoOpService",
                                                                   "NoOpHandler");
@@ -1639,7 +1627,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.stop();
     serviceManager.waitForStatus(false);
 
-    DataSetManager<KeyValueTable> dsManager = getDataset(testSpace, AppWithServices.TRANSACTIONS_DATASET_NAME);
+    DataSetManager<KeyValueTable> dsManager = getDataset(testSpace.dataset(AppWithServices.TRANSACTIONS_DATASET_NAME));
     String value = Bytes.toString(dsManager.get().read(AppWithServices.DESTROY_KEY));
     Assert.assertEquals(AppWithServices.VALUE, value);
   }
@@ -1733,7 +1721,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testDynamicBatchSize() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, GenSinkApp2.class);
 
-    DataSetManager<KeyValueTable> table = getDataset(testSpace, "table");
+    DataSetManager<KeyValueTable> table = getDataset(testSpace.dataset("table"));
 
     // Start the flow with runtime argument. It should set the batch size to 1.
     FlowManager flowManager = applicationManager.getFlowManager("GenSinkFlow").start(Collections.singletonMap(
@@ -1758,17 +1746,17 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test
   public void testAppRedeployKeepsData() throws Exception {
     deployApplication(testSpace, AppWithTable.class);
-    DataSetManager<Table> myTableManager = getDataset(testSpace, "my_table");
+    DataSetManager<Table> myTableManager = getDataset(testSpace.dataset("my_table"));
     myTableManager.get().put(new Put("key1", "column1", "value1"));
     myTableManager.flush();
 
     // Changes should be visible to other instances of datasets
-    DataSetManager<Table> myTableManager2 = getDataset(testSpace, "my_table");
+    DataSetManager<Table> myTableManager2 = getDataset(testSpace.dataset("my_table"));
     Assert.assertEquals("value1", myTableManager2.get().get(new Get("key1", "column1")).getString("column1"));
 
     // Even after redeploy of an app: changes should be visible to other instances of datasets
     deployApplication(AppWithTable.class);
-    DataSetManager<Table> myTableManager3 = getDataset(testSpace, "my_table");
+    DataSetManager<Table> myTableManager3 = getDataset(testSpace.dataset("my_table"));
     Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
 
     // Calling commit again (to test we can call it multiple times)
@@ -1824,7 +1812,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     flowManager.stop();
 
-    DataSetManager<Table> dataSetManager = getDataset(testSpace, "conf");
+    DataSetManager<Table> dataSetManager = getDataset(testSpace.dataset("conf"));
     Table confTable = dataSetManager.get();
 
     Assert.assertEquals("generator", confTable.get(new Get("key", "column")).getString("column"));
@@ -1868,10 +1856,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testDatasetWithoutApp() throws Exception {
     // TODO: Although this has nothing to do with this testcase, deploying a dummy app to create the default namespace
     deployApplication(testSpace, DummyApp.class);
-    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance(testSpace, "myKeyValueTable", "myTable", DatasetProperties.EMPTY);
+    deployDatasetModule(testSpace.datasetModule("my-kv"), AppsWithDataset.KeyValueTableDefinition.Module.class);
+    addDatasetInstance("myKeyValueTable", testSpace.dataset("myTable"), DatasetProperties.EMPTY);
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager =
-      getDataset(testSpace, "myTable");
+      getDataset(testSpace.dataset("myTable"));
     AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = dataSetManager.get();
     kvTable.put("test", "hello");
     dataSetManager.flush();
@@ -1925,7 +1913,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.stop();
 
     // Verify the record count with dataset
-    DataSetManager<KeyValueTable> recordsManager = getDataset(testSpace, "records");
+    DataSetManager<KeyValueTable> recordsManager = getDataset(testSpace.dataset("records"));
     KeyValueTable records = recordsManager.get();
     Assert.assertTrue(count == Bytes.toLong(records.read("PUBLIC")));
   }

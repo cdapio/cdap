@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.metadata.indexer;
 
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 
 import java.util.Set;
 
@@ -32,4 +33,9 @@ public interface Indexer {
    * @return a {@link Set Set&lt;String&gt;} containing indexes for the given {@link MetadataEntry}
    */
   Set<String> getIndexes(MetadataEntry entry);
+
+  /**
+   * Returns the {@link SortInfo.SortOrder} supported by this indexer.
+   */
+  SortInfo.SortOrder getSortOrder();
 }

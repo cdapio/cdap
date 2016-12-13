@@ -49,7 +49,7 @@ public class MultipleInputsTest {
     Assert.assertEquals(inputFormatConfigs1, Iterables.getOnlyElement(map.values()).getInputFormatConfiguration());
     Assert.assertEquals(job.getMapperClass().getName(), Iterables.getOnlyElement(map.values()).getMapperClassName());
 
-    Assert.assertEquals(DelegatingInputFormat.class, job.getInputFormatClass());
+    Assert.assertEquals(MultiInputFormat.class, job.getInputFormatClass());
 
     // now, test with two inputs in the configuration
     String inputName2 = "inputName2";

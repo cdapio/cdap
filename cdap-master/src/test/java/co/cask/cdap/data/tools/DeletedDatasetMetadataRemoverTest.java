@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data.tools;
 
-import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -43,7 +42,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Collections;
 
 /**
@@ -80,7 +78,7 @@ public class DeletedDatasetMetadataRemoverTest {
   }
 
   @Test
-  public void test() throws IOException, DatasetManagementException {
+  public void test() throws Exception {
     DatasetId ds1 = NamespaceId.DEFAULT.dataset("ds1");
     DatasetId ds2 = NamespaceId.DEFAULT.dataset("ds2");
     DatasetId ds3 = NamespaceId.DEFAULT.dataset("ds3");
@@ -97,7 +95,7 @@ public class DeletedDatasetMetadataRemoverTest {
     verifyMetadataRemoval(ds3);
   }
 
-  private void verifyMetadataRemoval(DatasetId dsId) throws IOException, DatasetManagementException {
+  private void verifyMetadataRemoval(DatasetId dsId) throws Exception {
     DS_FRAMEWORK_TEST_UTIL.deleteInstance(dsId);
     assertNonEmptyMetadata(dsId);
     metadataRemover.remove();

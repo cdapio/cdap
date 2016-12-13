@@ -311,12 +311,12 @@ public class SparkTestRun extends TestFrameworkTestBase {
     // create a namespace for stream and create the stream in it
     NamespaceMeta crossNSStreamMeta = new NamespaceMeta.Builder().setName("streamSpaceForSpark").build();
     getNamespaceAdmin().create(crossNSStreamMeta);
-    StreamManager streamManager = getStreamManager(crossNSStreamMeta.getNamespaceId().toId(), "testStream");
+    StreamManager streamManager = getStreamManager(crossNSStreamMeta.getNamespaceId().stream("testStream"));
 
     // create a namespace for dataset and add the dataset instance in it
     NamespaceMeta crossNSDatasetMeta = new NamespaceMeta.Builder().setName("crossNSDataset").build();
     getNamespaceAdmin().create(crossNSDatasetMeta);
-    addDatasetInstance(crossNSDatasetMeta.getNamespaceId().toId(), "keyValueTable", "count");
+    addDatasetInstance(crossNSDatasetMeta.getNamespaceId().dataset("count"), "keyValueTable");
 
     // write something to the stream
     streamManager.createStream();
@@ -337,7 +337,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
     sparkManager.waitForFinish(1, TimeUnit.MINUTES);
 
     // get the dataset from the other namespace where we expect it to exist and compare the data
-    DataSetManager<KeyValueTable> countManager = getDataset(crossNSDatasetMeta.getNamespaceId().toId(), "count");
+    DataSetManager<KeyValueTable> countManager = getDataset(crossNSDatasetMeta.getNamespaceId().dataset("count"));
     KeyValueTable results = countManager.get();
     for (int i = 0; i < 50; i++) {
       byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
@@ -351,7 +351,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
     NamespaceMeta inputDSNSMeta = new NamespaceMeta.Builder().setName("datasetSpaceForSpark").build();
     getNamespaceAdmin().create(inputDSNSMeta);
     deploy(inputDSNSMeta.getNamespaceId(), SparkAppUsingObjectStore.class);
-    DataSetManager<ObjectStore<String>> keysManager = getDataset(inputDSNSMeta.getNamespaceId().toId(), "keys");
+    DataSetManager<ObjectStore<String>> keysManager = getDataset(inputDSNSMeta.getNamespaceId().dataset("keys"));
     prepareInputData(keysManager);
 
     Map<String, String> args = ImmutableMap.of(ScalaCharCountProgram.INPUT_DATASET_NAMESPACE(),
@@ -400,8 +400,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
       public Set<String> call() throws Exception {
         resultManager.flush();    // This is to start a new TX
         LOG.info("Reading from threshold result");
-        CloseableIterator<KeyValue<byte[], byte[]>> itor = resultTable.scan(null, null);
-        try {
+        try (CloseableIterator<KeyValue<byte[], byte[]>> itor = resultTable.scan(null, null)) {
           return ImmutableSet.copyOf(Iterators.transform(itor, new Function<KeyValue<byte[], byte[]>, String>() {
             @Override
             public String apply(KeyValue<byte[], byte[]> input) {
@@ -410,8 +409,6 @@ public class SparkTestRun extends TestFrameworkTestBase {
               return word;
             }
           }));
-        } finally {
-          itor.close();
         }
       }
     }, 3, TimeUnit.MINUTES, 1, TimeUnit.SECONDS);
@@ -478,13 +475,10 @@ public class SparkTestRun extends TestFrameworkTestBase {
     // Cleanup after run
     location.delete(true);
     logStatsManager.flush();
-    CloseableIterator<KeyValue<byte[], byte[]>> scan = logStatsTable.scan(null, null);
-    try {
+    try (CloseableIterator<KeyValue<byte[], byte[]>> scan = logStatsTable.scan(null, null)) {
       while (scan.hasNext()) {
         logStatsTable.delete(scan.next().getKey());
       }
-    } finally {
-      scan.close();
     }
     logStatsManager.flush();
   }
@@ -501,17 +495,14 @@ public class SparkTestRun extends TestFrameworkTestBase {
     DataSetManager<KeyValueTable> kvTableManager = getDataset(SparkAppUsingLocalFiles.OUTPUT_DATASET_NAME);
     KeyValueTable kvTable = kvTableManager.get();
     Map<String, String> expected = ImmutableMap.of("a", "1", "b", "2", "c", "3");
-    CloseableIterator<KeyValue<byte[], byte[]>> scan = kvTable.scan(null, null);
     List<byte[]> deleteKeys = new ArrayList<>();
-    try {
+    try (CloseableIterator<KeyValue<byte[], byte[]>> scan = kvTable.scan(null, null)) {
       for (int i = 0; i < 3; i++) {
         KeyValue<byte[], byte[]> next = scan.next();
         Assert.assertEquals(expected.get(Bytes.toString(next.getKey())), Bytes.toString(next.getValue()));
         deleteKeys.add(next.getKey());
       }
       Assert.assertFalse(scan.hasNext());
-    } finally {
-      scan.close();
     }
 
     // Cleanup after run
@@ -576,8 +567,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
       fredKey1, fredStats1, fredKey2, fredStats2, bradKey1, bradStats1, bradKey2, bradStats2
     );
 
-    CloseableIterator<KeyValue<byte[], byte[]>> scan = logStatsTable.scan(null, null);
-    try {
+    try (CloseableIterator<KeyValue<byte[], byte[]>> scan = logStatsTable.scan(null, null)) {
       // must have 4 records
       for (int i = 0; i < 4; i++) {
         Assert.assertTrue("Expected next for i = " + i, scan.hasNext());
@@ -590,8 +580,6 @@ public class SparkTestRun extends TestFrameworkTestBase {
       }
       // no more records
       Assert.assertFalse(scan.hasNext());
-    } finally {
-      scan.close();
     }
   }
 

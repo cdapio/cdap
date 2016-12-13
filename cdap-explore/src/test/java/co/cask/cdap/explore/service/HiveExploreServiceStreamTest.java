@@ -155,7 +155,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   }
 
   private void testSelectStarOnStream() throws Exception {
-    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID.toId(),
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID,
                                                           "select * from " + streamTableName).get();
     // check schema
     List<ColumnDesc> expectedSchema = Lists.newArrayList(
@@ -264,7 +264,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
   @Test(expected = ExecutionException.class)
   public void testWriteToStreamFails() throws Exception {
-    exploreClient.submit(NAMESPACE_ID.toId(),
+    exploreClient.submit(NAMESPACE_ID,
                          "insert into table " + streamTableName + " select * from " + streamTableName).get();
   }
 
@@ -298,7 +298,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
 
       ExploreExecutionResult result = exploreClient.submit(
-        NAMESPACE_ID.toId(),
+        NAMESPACE_ID,
         "SELECT `user`, sum(num) as total_num, sum(price * num) as total_price " +
           "FROM " + getTableName(streamId) + " GROUP BY `user` ORDER BY total_price DESC").get();
 

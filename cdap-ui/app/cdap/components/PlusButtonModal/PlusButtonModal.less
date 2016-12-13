@@ -70,11 +70,22 @@
             line-height: 30px;
           }
         }
-        .btn-resource-center {
-          background-color: #464a57;
-          color: #efefef;
+        .navigation-button {
           font-weight: 500;
           padding: 0 10px 0 5px;
+          background: white;
+          color: #ff6600;
+          box-shadow: 0px 1px 10px 0 rgba(0, 0, 0, 0.3);
+          border: 0;
+
+          &.active {
+            margin: 0;
+            box-shadow: 1px 5px 11px rgba(0, 0, 0, 0.25) inset;
+            border: 0;
+          }
+          &.resource-center {
+            color: #5a84e4;
+          }
           &:focus {
             outline: 0;
           }

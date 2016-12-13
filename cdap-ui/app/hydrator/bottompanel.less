@@ -104,7 +104,7 @@ body.theme-cdap.state-hydrator {
     min-height: ~"-moz-calc(40vh - 113px)";
     min-height: ~"-webkit-calc(40vh - 113px)";
     min-height: ~"calc(40vh - 113px)";
-    z-index: 1024;
+    z-index: 999;
     transition: height 0.2s ease;
 
     // Styling for minimized bottom panel
@@ -113,7 +113,7 @@ body.theme-cdap.state-hydrator {
       right: 0;
       bottom: 53px;
       min-height: 0;
-      z-index: 1025;
+      z-index: 999;
 
       .console-type {
         display: none;
@@ -134,7 +134,7 @@ body.theme-cdap.state-hydrator {
       bottom: 53px;
       overflow-y: scroll;
       overflow-x: hidden;
-      z-index: 1029;
+      z-index: 999;
       div.console-tabs {
         border-top: 0;
       }
@@ -549,6 +549,6 @@ body.theme-cdap.state-hydrator {
     // Creates a bottom border for the bottom panel, needed to accommodate the single scroll
     border-top: 1px solid @table-border-color;
     position: fixed;
-    z-index: 1025;
+    z-index: 999;
   }
 }

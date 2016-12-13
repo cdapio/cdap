@@ -55,19 +55,15 @@ public class UsageHandlerTestRun extends ClientTestBase {
   private static final Gson GSON = new Gson();
 
   private void deployApp(Class<? extends Application> appCls) throws Exception {
-    new ApplicationClient(getClientConfig()).deploy(NamespaceId.DEFAULT.toId(), createAppJarFile(appCls));
+    new ApplicationClient(getClientConfig()).deploy(NamespaceId.DEFAULT, createAppJarFile(appCls));
   }
 
   private void deleteApp(ApplicationId appId) throws Exception {
-    new ApplicationClient(getClientConfig()).delete(appId.toId());
+    new ApplicationClient(getClientConfig()).delete(appId);
   }
 
   private void startProgram(ProgramId programId) throws Exception {
-    new ProgramClient(getClientConfig()).start(programId.toId());
-  }
-
-  private void stopProgram(ProgramId programId) throws Exception {
-    new ProgramClient(getClientConfig()).stop(programId.toId());
+    new ProgramClient(getClientConfig()).start(programId);
   }
 
   private void waitState(final ProgramId programId, ProgramStatus status) throws Exception {
@@ -75,7 +71,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
     Tasks.waitFor(status, new Callable<ProgramStatus>() {
       @Override
       public ProgramStatus call() throws Exception {
-        return ProgramStatus.valueOf(programclient.getStatus(programId.toId()));
+        return ProgramStatus.valueOf(programclient.getStatus(programId));
       }
     }, 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }

@@ -17,6 +17,7 @@
 package co.cask.cdap.datastreams;
 
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.streaming.StreamingContext;
@@ -33,6 +34,7 @@ import co.cask.cdap.etl.spark.streaming.PairDStreamCollection;
 import co.cask.cdap.etl.spark.streaming.function.CountingTranformFunction;
 import co.cask.cdap.etl.spark.streaming.function.DynamicJoinMerge;
 import co.cask.cdap.etl.spark.streaming.function.DynamicJoinOn;
+import co.cask.cdap.etl.spark.streaming.function.preview.LimitingFunction;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
@@ -47,12 +49,14 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
   private final JavaSparkExecutionContext sec;
   private final JavaStreamingContext streamingContext;
   private final boolean checkpointsDisabled;
+  private final int numOfRecordsPreview;
 
   public SparkStreamingPipelineRunner(JavaSparkExecutionContext sec, JavaStreamingContext streamingContext,
-                                      boolean checkpointsDisabled) {
+                                      boolean checkpointsDisabled, int numOfRecordsPreview) {
     this.sec = sec;
     this.streamingContext = streamingContext;
     this.checkpointsDisabled = checkpointsDisabled;
+    this.numOfRecordsPreview = numOfRecordsPreview;
   }
 
   @Override
@@ -76,10 +80,15 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       source = sec.getPluginContext().newPluginInstance(stageInfo.getName(), macroEvaluator);
     }
 
+    DataTracer dataTracer = sec.getDataTracer(stageInfo.getName());
     StreamingContext sourceContext = new DefaultStreamingContext(stageInfo.getName(), sec, streamingContext);
-    JavaDStream<Object> javaDStream = source.getStream(sourceContext)
-      .transform(new CountingTranformFunction<>(stageInfo.getName(), sec.getMetrics(), "records.out",
-                                                sec.getDataTracer(stageInfo.getName())));
+    JavaDStream<Object> javaDStream = source.getStream(sourceContext);
+    if (dataTracer.isEnabled()) {
+      // it will create a new function for each RDD, which would limit each RDD but not the entire DStream.
+      javaDStream = javaDStream.transform(new LimitingFunction<>(numOfRecordsPreview));
+    }
+    javaDStream = javaDStream.transform(new CountingTranformFunction<>(stageInfo.getName(), sec.getMetrics(),
+                                                                       "records.out", dataTracer));
     return new DStreamCollection<>(sec, javaDStream);
   }
 

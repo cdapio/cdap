@@ -26,7 +26,10 @@ import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.reflect.TypeToken;
+
+import java.util.Map;
 
 /**
  * Stage to write system metadata for an application.
@@ -45,7 +48,10 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
     // add system metadata for apps
     ApplicationId appId = input.getApplicationId();
     ApplicationSpecification appSpec = input.getSpecification();
-    SystemMetadataWriter appSystemMetadataWriter = new AppSystemMetadataWriter(metadataStore, appId, appSpec);
+    // only update creation time if this is a new app
+    Map<String, String> properties = metadataStore.getProperties(MetadataScope.SYSTEM, appId);
+    SystemMetadataWriter appSystemMetadataWriter =
+      new AppSystemMetadataWriter(metadataStore, appId, appSpec, !properties.isEmpty());
     appSystemMetadataWriter.write();
 
     // add system metadata for programs
@@ -64,7 +70,9 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
                                           Iterable<? extends ProgramSpecification> specs) {
     for (ProgramSpecification spec : specs) {
       ProgramId programId = appId.program(programType, spec.getName());
-      ProgramSystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, spec);
+      Map<String, String> properties = metadataStore.getProperties(MetadataScope.SYSTEM, programId);
+      ProgramSystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, spec,
+                                                                           !properties.isEmpty());
       writer.write();
     }
   }

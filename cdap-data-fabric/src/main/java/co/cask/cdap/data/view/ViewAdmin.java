@@ -56,24 +56,24 @@ public class ViewAdmin {
       } else if (!spec.getTableName().equals(previousSpec.getTableName())) {
         throw new IllegalArgumentException(String.format("Cannot change table name for view %s", viewId));
       }
-      explore.disableExploreStream(viewId.getParent().toId(), previousSpec.getTableName());
+      explore.disableExploreStream(viewId.getParent(), previousSpec.getTableName());
     } catch (NotFoundException e) {
       // pass through
     }
 
     if (spec.getTableName() == null) {
-      spec = new ViewSpecification(spec.getFormat(), naming.getTableName(viewId.toId()));
+      spec = new ViewSpecification(spec.getFormat(), naming.getTableName(viewId));
     }
-    explore.enableExploreStream(viewId.getParent().toId(), spec.getTableName(), spec.getFormat());
+    explore.enableExploreStream(viewId.getParent(), spec.getTableName(), spec.getFormat());
     boolean result = store.createOrUpdate(viewId, spec);
-    ViewSystemMetadataWriter systemMetadataWriter = new ViewSystemMetadataWriter(metadataStore, viewId, spec);
+    ViewSystemMetadataWriter systemMetadataWriter = new ViewSystemMetadataWriter(metadataStore, viewId, spec, !result);
     systemMetadataWriter.write();
     return result;
   }
 
   public void delete(StreamViewId viewId) throws Exception {
     ViewSpecification spec = store.get(viewId);
-    explore.disableExploreStream(viewId.getParent().toId(), spec.getTableName());
+    explore.disableExploreStream(viewId.getParent(), spec.getTableName());
     store.delete(viewId);
     metadataStore.removeMetadata(viewId);
   }

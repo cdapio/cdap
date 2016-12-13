@@ -31,13 +31,16 @@ import java.util.Set;
  */
 public class SchemaIndexerTest {
 
+  private static final String KEY = "schema";
+  private static final String KEY_PREFIX = KEY + ":";
+
   @Test
   public void testSimpleSchema() throws Exception {
     Schema simpleSchema = Schema.of(Schema.Type.INT);
     Set<String> expected = Collections.emptySet();
     SchemaIndexer indexer = new SchemaIndexer();
     DatasetId datasetInstance = new DatasetId("ns1", "ds1");
-    Set<String> actual = indexer.getIndexes(new MetadataEntry(datasetInstance, "schema", simpleSchema.toString()));
+    Set<String> actual = indexer.getIndexes(new MetadataEntry(datasetInstance, KEY, simpleSchema.toString()));
     Assert.assertEquals(expected, actual);
   }
 
@@ -54,8 +57,8 @@ public class SchemaIndexerTest {
     Set<String> expected = ImmutableSet.of("record1", "record1:RECORD", "x", "x:STRING", "y", "y:ARRAY", "z", "z:MAP");
     SchemaIndexer indexer = new SchemaIndexer();
     DatasetId datasetInstance = new DatasetId("ns1", "ds1");
-    Set<String> actual = indexer.getIndexes(new MetadataEntry(datasetInstance, "schema", simpleSchema.toString()));
-    Assert.assertEquals(expected, actual);
+    Set<String> actual = indexer.getIndexes(new MetadataEntry(datasetInstance, KEY, simpleSchema.toString()));
+    Assert.assertEquals(addKeyPrefix(expected), actual);
   }
 
   @Test
@@ -94,8 +97,16 @@ public class SchemaIndexerTest {
                                            "i", "i:INT", "j", "j:UNION", "record1", "record1:RECORD");
     SchemaIndexer indexer = new SchemaIndexer();
     DatasetId datasetInstance = new DatasetId("ns1", "ds1");
-    Set<String> actual = indexer.getIndexes(new MetadataEntry(datasetInstance, "schema",
-                                                              superComplexSchema.toString()));
-    Assert.assertEquals(expected, actual);
+    Set<String> actual = indexer.getIndexes(new MetadataEntry(datasetInstance, KEY, superComplexSchema.toString()));
+    Assert.assertEquals(addKeyPrefix(expected), actual);
+  }
+
+  private Set<String> addKeyPrefix(Set<String> expectedValues) {
+    ImmutableSet.Builder<String> expected = ImmutableSet.<String>builder()
+      .addAll(expectedValues);
+    for (String expectedValue : expectedValues) {
+      expected.add(KEY_PREFIX + expectedValue);
+    }
+    return expected.build();
   }
 }

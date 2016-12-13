@@ -17,6 +17,7 @@
 package co.cask.cdap.flow.stream;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
@@ -42,18 +43,18 @@ public class FlowStreamIntegrationTestRun extends TestFrameworkTestBase {
       s1.send(String.valueOf(i));
     }
     FlowManager flowManager = applicationManager.getFlowManager("StreamTestFlow");
-    submitAndVerifyFlowProgram(applicationManager, flowManager);
+    submitAndVerifyFlowProgram(flowManager);
   }
 
   @Test
   public void testStreamFromOtherNamespaceBatch() throws Exception {
     NamespaceId streamSpace = new NamespaceId("streamSpace");
-    createNamespace(streamSpace.toId());
+    getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(streamSpace).build());
     // Deploy an app to add a stream in streamSpace
-    deployApplication(streamSpace.toId(), TestFlowStreamIntegrationAcrossNSApp.class);
+    deployApplication(streamSpace, TestFlowStreamIntegrationAcrossNSApp.class);
     
     ApplicationManager applicationManager = deployApplication(TestFlowStreamIntegrationAcrossNSApp.class);
-    StreamManager s1 = getStreamManager(streamSpace.toId(), "s1");
+    StreamManager s1 = getStreamManager(streamSpace.stream("s1"));
     StreamManager s1Default = getStreamManager("s1");
     // Send to both stream
     for (int i = 0; i < 50; i++) {
@@ -61,10 +62,10 @@ public class FlowStreamIntegrationTestRun extends TestFrameworkTestBase {
       s1Default.send(String.valueOf(i));
     }
     FlowManager flowManager = applicationManager.getFlowManager("StreamAcrossNSTestFlow");
-    submitAndVerifyFlowProgram(applicationManager, flowManager);
+    submitAndVerifyFlowProgram(flowManager);
   }
 
-  private void submitAndVerifyFlowProgram(ApplicationManager applicationManager, FlowManager flowManager)
+  private void submitAndVerifyFlowProgram(FlowManager flowManager)
     throws Exception {
     flowManager.start();
     RuntimeMetrics flowletMetrics = flowManager.getFlowletMetrics("StreamReader");

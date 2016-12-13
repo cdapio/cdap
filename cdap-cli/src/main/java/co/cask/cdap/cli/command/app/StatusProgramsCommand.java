@@ -54,7 +54,7 @@ public class StatusProgramsCommand extends BaseBatchCommand<BatchProgram> {
 
   @Override
   protected void runBatchCommand(PrintStream printStream, Args<BatchProgram> args) throws Exception {
-    List<BatchProgramStatus> results = programClient.getStatus(args.appId.getParent().toId(), args.programs);
+    List<BatchProgramStatus> results = programClient.getStatus(args.appId.getParent(), args.programs);
 
     Table table = Table.builder()
       .setHeader("name", "type", "status", "error")

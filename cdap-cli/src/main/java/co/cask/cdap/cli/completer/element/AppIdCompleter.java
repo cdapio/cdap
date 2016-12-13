@@ -41,7 +41,7 @@ public class AppIdCompleter extends StringsCompleter {
       @Override
       public Collection<String> get() {
         try {
-          List<ApplicationRecord> appsList = applicationClient.list(cliConfig.getCurrentNamespace().toId());
+          List<ApplicationRecord> appsList = applicationClient.list(cliConfig.getCurrentNamespace());
           List<String> appIds = new ArrayList<>();
           for (ApplicationRecord item : appsList) {
             appIds.add(item.getName());

@@ -29,6 +29,7 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
@@ -76,12 +77,12 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected void addAppArtifact(ArtifactId artifactId, Class<?> cls) throws Exception {
-    artifactClient.add(artifactId.toId(), null, Files.newInputStreamSupplier(createAppJarFile(cls)));
+    artifactClient.add(artifactId, null, Files.newInputStreamSupplier(createAppJarFile(cls)));
   }
 
   protected void addPluginArtifact(ArtifactId artifactId, Class<?> cls, Manifest manifest,
                                    @Nullable Set<ArtifactRange> parents) throws Exception {
-    artifactClient.add(artifactId.toId(), parents, Files.newInputStreamSupplier(createArtifactJarFile(cls, manifest)));
+    artifactClient.add(artifactId, parents, Files.newInputStreamSupplier(createArtifactJarFile(cls, manifest)));
   }
 
   protected void addProperties(ApplicationId app, @Nullable Map<String, String> properties) throws Exception {
@@ -458,7 +459,23 @@ public abstract class MetadataTestBase extends ClientTestBase {
 
   protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
                                                            Set<MetadataSearchTargetType> targets) throws Exception {
+    // Note: Can't delegate this to the next method. This is because MetadataHttpHandlerTestRun overrides these two
+    // methods, to strip out metadata from search results for easier assertions.
     return metadataClient.searchMetadata(namespaceId.toId(), query, targets).getResults();
+  }
+
+  protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
+                                                           Set<MetadataSearchTargetType> targets,
+                                                           @Nullable String sort) throws Exception {
+    return metadataClient.searchMetadata(namespaceId.toId(), query, targets,
+                                         sort, 0, Integer.MAX_VALUE, 0, null).getResults();
+  }
+
+  protected MetadataSearchResponse searchMetadata(NamespaceId namespaceId, String query,
+                                                  Set<MetadataSearchTargetType> targets,
+                                                  @Nullable String sort, int offset, int limit, int numCursors,
+                                                  @Nullable String cursor) throws Exception {
+    return metadataClient.searchMetadata(namespaceId.toId(), query, targets, sort, offset, limit, numCursors, cursor);
   }
 
   protected Set<String> getTags(ApplicationId app, MetadataScope scope) throws Exception {
@@ -553,30 +570,30 @@ public abstract class MetadataTestBase extends ClientTestBase {
 
   protected LineageRecord fetchLineage(DatasetId datasetInstance, long start, long end,
                                        int levels) throws Exception {
-    return lineageClient.getLineage(datasetInstance.toId(), start, end, levels);
+    return lineageClient.getLineage(datasetInstance, start, end, levels);
   }
 
   protected LineageRecord fetchLineage(DatasetId datasetInstance, long start, long end,
                                        Set<CollapseType> collapseTypes, int levels) throws Exception {
-    return lineageClient.getLineage(datasetInstance.toId(), start, end, collapseTypes, levels);
+    return lineageClient.getLineage(datasetInstance, start, end, collapseTypes, levels);
   }
 
   protected LineageRecord fetchLineage(DatasetId datasetInstance, String start, String end,
                                        int levels) throws Exception {
-    return lineageClient.getLineage(datasetInstance.toId(), start, end, levels);
+    return lineageClient.getLineage(datasetInstance, start, end, levels);
   }
 
   protected LineageRecord fetchLineage(StreamId stream, long start, long end, int levels) throws Exception {
-    return lineageClient.getLineage(stream.toId(), start, end, levels);
+    return lineageClient.getLineage(stream, start, end, levels);
   }
 
   protected LineageRecord fetchLineage(StreamId stream, String start, String end, int levels) throws Exception {
-    return lineageClient.getLineage(stream.toId(), start, end, levels);
+    return lineageClient.getLineage(stream, start, end, levels);
   }
 
   protected LineageRecord fetchLineage(StreamId stream, long start, long end, Set<CollapseType> collapseTypes,
                                        int levels) throws Exception {
-    return lineageClient.getLineage(stream.toId(), start, end, collapseTypes, levels);
+    return lineageClient.getLineage(stream, start, end, collapseTypes, levels);
   }
 
   protected Set<MetadataRecord> fetchRunMetadata(ProgramRunId run) throws Exception {

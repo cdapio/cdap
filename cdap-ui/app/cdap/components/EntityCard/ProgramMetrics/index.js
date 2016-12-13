@@ -29,6 +29,7 @@ export default class ProgramMetrics extends Component {
       appName: this.props.entity.applicationId,
       loading: true
     };
+    this.runsApi = '';
   }
 
   componentWillMount() {
@@ -39,7 +40,12 @@ export default class ProgramMetrics extends Component {
       programId: this.props.entity.id
     };
 
-    this.programMetrics$ = MyProgramApi.listRuns(params)
+    if (this.props.poll) {
+      this.runsApi = MyProgramApi.pollRuns;
+    } else {
+      this.runsApi = MyProgramApi.runs;
+    }
+    this.programMetrics$ = this.runsApi(params)
       .combineLatest(MyProgramApi.pollStatus(params))
       .subscribe((res) => {
         this.setState({
@@ -76,10 +82,15 @@ export default class ProgramMetrics extends Component {
   }
 }
 
+ProgramMetrics.defaultProps = {
+  poll: false
+};
+
 ProgramMetrics.propTypes = {
   entity: PropTypes.shape({
     applicationId: PropTypes.string.isRequired,
     programType: PropTypes.string.isRequired,
     id: PropTypes.string.isRequired
-  })
+  }),
+  poll: PropTypes.bool
 };

@@ -1,0 +1,299 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@error-color: #e74c3c;
+@wrangler-left-panel-width: 200px;
+.error-text { color: @error-color; }
+
+.wrangler-container {
+  margin-bottom: 60px;
+
+  .wrangler-copy-paste,
+  .file-input {
+    width: 750px;
+    margin: 0 auto;
+  }
+
+  .file-input {
+    .file-drop-container {
+      height: 150px;
+    }
+  }
+
+  .wrangler-copy-paste {
+    border: 2px solid #dedede;
+    border-radius: 4px;
+    height: 350px;
+    margin: 100px auto 0;
+    position: relative;
+
+    .wrangler-plus-button {
+      position: absolute;
+      top: 75px;
+      left: 0;
+      right: 0;
+      cursor: pointer;
+
+      .fa.fa-plus-circle {
+        font-size: 60px;
+        color: #cccccc;
+      }
+
+      h4 { font-weight: 500; }
+    }
+
+    textarea {
+      max-width: 100%;
+      min-height: 240px;
+      max-height: 240px;
+      border: 0;
+
+      &:focus { box-shadow: none; }
+    }
+
+    .parse-options {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      padding: 10px;
+      border: 2px solid #dedede;
+      border-radius: 4px;
+
+      hr {
+        margin-top: 0;
+        margin-bottom: 10px;
+        border-top: 2px solid #cccccc;
+      }
+
+      .delimiter {
+        .form-control {
+          border: none;
+          box-shadow: none;
+          padding-left: 0;
+        }
+      }
+
+      .checkbox { margin-right: 25px; }
+    }
+  }
+
+  .loading {
+    margin-top: 100px;
+    span.fa.fa-spinner {
+      font-size: 60px;
+      color: #666666;
+    }
+
+    h3 {
+      font-weight: 400;
+      color: #666666;
+    }
+  }
+
+  .wrangler-data {
+    position: relative;
+    margin: 0;
+
+    .wrangle-transforms,
+    .wrangle-results {
+      position: absolute;
+      top: 0;
+      height: calc(~"100vh - 103px");
+    }
+
+    .wrangle-transforms {
+      left: 0;
+      width: @wrangler-left-panel-width;
+      border-right: 2px solid #dddddd;
+
+      .wrangle-filters {
+        height: 60px;
+        border-bottom: 2px solid #dddddd;
+        background-color: #eeeeee;
+        font-size: 25px;
+        display: flex;
+        justify-content: space-around;
+
+        span {
+          line-height: 60px;
+          vertical-align: middle;
+          cursor: pointer;
+        }
+      }
+
+      .transform-item {
+        font-size: 14px;
+        padding: 10px 15px;
+        border-bottom: 2px solid #dddddd;
+        cursor: pointer;
+
+        &.expanded {
+          border-left: 4px solid #ff6600;
+          .filter-input {
+            margin-top: 10px;
+            font-size: 13px;
+          }
+        }
+        &.disabled { cursor: not-allowed; }
+        .transform-item-text {
+          margin-left: 10px;
+          span { margin-right: 5px; }
+        }
+        .sort-indicator { color: #999999; }
+      }
+    }
+
+    .wrangle-results {
+      left: @wrangler-left-panel-width;
+      right: 250px; // offset right panel
+      overflow-y: auto;
+
+      .data-table {
+        width: 100%;
+        height: calc(~"100% - 60px");
+        overflow-x: auto;
+      }
+    }
+  }
+
+  .table {
+    margin-bottom: 0;
+
+    .resize-container {
+      table-layout: fixed;
+      display: table;
+      width: 100%;
+    }
+
+    .resize-value {
+      display: inline-block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      word-break: break-all;
+      word-wrap: break-word;
+      width: calc(100% - 1px);
+    }
+
+    .resize-handle {
+      cursor: col-resize;
+      float: right;
+      width: 0;
+      margin-right: -6px;
+    }
+
+    &.table-bordered { border: 0; }
+
+    th:first-child,
+    td:first-child {
+      border-left: 0;
+    }
+
+    th:last-child,
+    td:last-child {
+      border-right: 0;
+    }
+
+    .column-name {
+      cursor: pointer;
+      background-color: #cccccc;
+    }
+    .active {
+      @active-border: 2px solid #f39c12;
+
+      border-right: @active-border;
+      border-left: @active-border;
+
+      &.top-header { border-top: @active-border; }
+    }
+
+    .top-header.active {
+      border-top: 2px solid #f39c12;
+    }
+
+    td.column-type-cell {
+      font-size: 11px;
+      font-weight: 400;
+      padding: 3px 8px;
+      background-color: #efefef;
+    }
+
+    th {
+      background-color: #efefef;
+    }
+
+    .header-text {
+      cursor: pointer;
+    }
+
+    td {
+      padding-right: 3px;
+      background-color: white;
+      font-size: 12px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .index-column {
+      background-color: #cccccc;
+      font-size: 10px;
+      padding: 7px;
+
+      .content { margin-right: 0; }
+    }
+
+    .content {
+      margin-right: 15px;
+    }
+  }
+
+  .error {
+    color: @error-color;
+    margin-left: 10px;
+  }
+
+  .wrangler-data-metrics {
+    height: 60px;
+    border-bottom: 2px solid #dddddd;
+    .metric-block {
+      display: inline-block;
+      padding-right: 25px;
+      padding-left: 25px;
+
+      .text-danger { color: @error-color; }
+      .text-success { color: #27ae60; }
+
+      h3,
+      h5 {
+        font-weight: 400;
+      }
+
+      h3 {
+        margin-top: 10px;
+        margin-bottom: 3px;
+      }
+
+      h5 {
+        margin-top: 3px;
+        font-size: 12px;
+        color: #999999;
+        font-weight: 500;
+      }
+    }
+  }
+}

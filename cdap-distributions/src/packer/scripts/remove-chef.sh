@@ -19,7 +19,11 @@
 #
 
 # Remove packages
-apt-get purge -y chef
+if [[ $(which apt-get 2>/dev/null) ]]; then
+  apt-get purge -y chef || exit 1
+else
+  yum erase -y chef || exit 1
+fi
 
 # Remove directory
 rm -rf /var/chef

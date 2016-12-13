@@ -59,10 +59,10 @@ public class DescribeArtifactCommand extends AbstractAuthCommand {
 
     ArtifactInfo info;
     if (scopeStr == null) {
-      info = artifactClient.getArtifactInfo(artifactId.toId());
+      info = artifactClient.getArtifactInfo(artifactId);
     } else {
       ArtifactScope scope = ArtifactScope.valueOf(scopeStr.toUpperCase());
-      info = artifactClient.getArtifactInfo(artifactId.toId(), scope);
+      info = artifactClient.getArtifactInfo(artifactId, scope);
     }
 
     Table table = Table.builder()

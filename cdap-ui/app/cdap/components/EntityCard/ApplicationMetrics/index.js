@@ -29,18 +29,39 @@ export default class ApplicationMetrics extends Component {
       failed: 0,
       loading: true
     };
+     this.updateState = this.updateState.bind(this);
   }
-
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.entity.id) {
+      this.fetchApplicationMetrics();
+    }
+  }
+  updateState() {
+    if (!this._mounted) {
+      return;
+    }
+    this.setState.apply(this, arguments);
+  }
   // Need a major refactor
   componentWillMount() {
+    this._mounted = true;
+    if (!this.props.entity.id) {
+      return;
+    } else {
+      this.fetchApplicationMetrics();
+    }
+  }
+  componentWillUnmount() {
+    this._mounted = false;
+  }
+  fetchApplicationMetrics() {
     const params = {
       namespace: NamespaceStore.getState().selectedNamespace,
       appId: this.props.entity.id
     };
-
     MyAppApi.get(params)
       .subscribe( (res) => {
-        this.setState({numPrograms: res.programs.length});
+        this.updateState({numPrograms: res.programs.length});
 
         const statusRequestArray = res.programs.map((program) => {
           return {
@@ -54,7 +75,7 @@ export default class ApplicationMetrics extends Component {
           namespace: NamespaceStore.getState().selectedNamespace
         }, statusRequestArray)
           .subscribe((stats) => {
-            this.setState({
+            this.updateState({
               running: stats.filter((stat) => stat.status === 'RUNNING').length,
               failed: stats.filter((stat) => stat.status === 'FAILED').length,
               loading: false
@@ -64,7 +85,6 @@ export default class ApplicationMetrics extends Component {
         console.log('ERROR', err);
       });
   }
-
   render () {
     const loading = <span className="fa fa-spin fa-spinner"></span>;
 

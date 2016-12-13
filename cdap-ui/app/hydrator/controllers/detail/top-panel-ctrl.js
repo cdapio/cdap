@@ -138,7 +138,7 @@ class HydratorDetailTopPanelController {
     let res = true;
 
     for(let key in this.macrosMap){
-      if(!this.macrosMap[key]){
+      if (this.macrosMap.hasOwnProperty(key) && !this.macrosMap[key]) {
         res = false;
       }
     }

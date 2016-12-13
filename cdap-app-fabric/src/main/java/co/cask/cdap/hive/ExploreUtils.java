@@ -82,7 +82,8 @@ public final class ExploreUtils {
 
     LOG.debug("Explore ClassLoader urls {}", urls);
 
-    exploreClassLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), ClassLoader.getSystemClassLoader());
+    // The parent class loader is MainClassLoader since ExploreUtil will always be loaded from MainClassLoader
+    exploreClassLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), ExploreUtils.class.getClassLoader());
     return exploreClassLoader;
   }
 

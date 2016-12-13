@@ -55,9 +55,9 @@ public class ListArtifactPluginTypesCommand extends AbstractAuthCommand {
     List<String> types;
     String scopeStr = arguments.getOptional(ArgumentName.SCOPE.toString());
     if (scopeStr == null) {
-      types = artifactClient.getPluginTypes(artifactId.toId());
+      types = artifactClient.getPluginTypes(artifactId);
     } else {
-      types = artifactClient.getPluginTypes(artifactId.toId(), ArtifactScope.valueOf(scopeStr.toUpperCase()));
+      types = artifactClient.getPluginTypes(artifactId, ArtifactScope.valueOf(scopeStr.toUpperCase()));
     }
 
     Table table = Table.builder()

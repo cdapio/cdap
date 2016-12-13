@@ -31,9 +31,11 @@ import co.cask.cdap.dq.functions.DiscreteValuesHistogram;
 import co.cask.cdap.dq.testclasses.StreamBatchSource;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
@@ -83,16 +85,16 @@ public class DataQualityAppTest extends TestBase {
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
-  private static Id.Artifact appArtifact;
+  private static ArtifactId appArtifact;
   private static boolean sentData = false;
 
   @BeforeClass
   public static void setup() throws Exception {
-    appArtifact = Id.Artifact.from(Id.Namespace.DEFAULT, "dqArtifact", "1.0");
+    appArtifact = NamespaceId.DEFAULT.artifact("dqArtifact", "1.0");
     addAppArtifact(appArtifact, DataQualityApp.class, BatchSource.class.getPackage().getName(),
                    PipelineConfigurer.class.getPackage().getName());
 
-    Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "source-plugin", "1.0.0-SNAPSHOT");
+    ArtifactId pluginArtifactId = NamespaceId.DEFAULT.artifact("source-plugin", "1.0.0-SNAPSHOT");
     addPluginArtifact(pluginArtifactId, appArtifact, StreamBatchSource.class, AvroKey.class, GenericRecord.class);
   }
 
@@ -125,7 +127,7 @@ public class DataQualityAppTest extends TestBase {
 
   @Test(expected = IllegalStateException.class)
   public void testInvalidConfig() throws Exception {
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "badApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("badApp");
     Map<String, Set<String>> testMap = new HashMap<>();
     // Empty aggregation set - should throw an exception while creating an application
     testMap.put("content_length", new HashSet<String>());
@@ -134,7 +136,7 @@ public class DataQualityAppTest extends TestBase {
       50, getStreamSource(), "avg", testMap);
 
     AppRequest<DataQualityApp.DataQualityConfig> appRequest = new AppRequest<>(
-      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion()), config);
+      new ArtifactSummary(appArtifact.getArtifact(), appArtifact.getVersion()), config);
     deployApplication(appId, appRequest);
   }
 
@@ -148,9 +150,9 @@ public class DataQualityAppTest extends TestBase {
 
     DataQualityApp.DataQualityConfig config = new DataQualityApp.DataQualityConfig(
       WORKFLOW_SCHEDULE_MINUTES, getStreamSource(), "dataQuality", testMap);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "newApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("newApp");
     AppRequest<DataQualityApp.DataQualityConfig> appRequest = new AppRequest<>(
-      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion()), config);
+      new ArtifactSummary(appArtifact.getArtifact(), appArtifact.getVersion()), config);
     ApplicationManager applicationManager = deployApplication(appId, appRequest);
 
     MapReduceManager mrManager = applicationManager.getMapReduceManager("FieldAggregator").start();
@@ -189,9 +191,9 @@ public class DataQualityAppTest extends TestBase {
     DataQualityApp.DataQualityConfig config = new DataQualityApp.DataQualityConfig(
       WORKFLOW_SCHEDULE_MINUTES, getStreamSource(), "avg", testMap);
 
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "newApp2");
+    ApplicationId appId = NamespaceId.DEFAULT.app("newApp2");
     AppRequest<DataQualityApp.DataQualityConfig> appRequest = new AppRequest<>(
-      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion()), config);
+      new ArtifactSummary(appArtifact.getArtifact(), appArtifact.getVersion()), config);
     ApplicationManager applicationManager = deployApplication(appId, appRequest);
 
     MapReduceManager mrManager = applicationManager.getMapReduceManager("FieldAggregator").start();
@@ -229,9 +231,9 @@ public class DataQualityAppTest extends TestBase {
     DataQualityApp.DataQualityConfig config = new DataQualityApp.DataQualityConfig(WORKFLOW_SCHEDULE_MINUTES,
       getStreamSource(), "histogram", testMap);
 
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "newApp3");
+    ApplicationId appId = NamespaceId.DEFAULT.app("newApp3");
     AppRequest<DataQualityApp.DataQualityConfig> appRequest = new AppRequest<>(
-      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion()), config);
+      new ArtifactSummary(appArtifact.getArtifact(), appArtifact.getVersion()), config);
     ApplicationManager applicationManager = deployApplication(appId, appRequest);
 
     MapReduceManager mrManager = applicationManager.getMapReduceManager("FieldAggregator").start();

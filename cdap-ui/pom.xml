@@ -79,6 +79,10 @@
               <followSymlinks>false</followSymlinks>
             </fileset>
             <fileset>
+              <directory>wrangler_dist</directory>
+              <followSymlinks>false</followSymlinks>
+            </fileset>
+            <fileset>
               <directory>common_dist</directory>
               <followSymlinks>false</followSymlinks>
             </fileset>
@@ -151,6 +155,7 @@
                   <exclude>**/common_dist/**</exclude>
                   <exclude>**/cdap_dist/**</exclude>
                   <exclude>**/login_dist/**</exclude>
+                  <exclude>**/wrangler_dist/**</exclude>
                   <exclude>**/logs/**</exclude>
                   <exclude>**/npm-debug.log</exclude>
                   <exclude>**/node/**</exclude>
@@ -316,6 +321,9 @@
                     </copy>
                     <copy todir = "${stage.opt.dir}/login_dist">
                       <fileset dir = "login_dist" />
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/wrangler_dist">
+                      <fileset dir = "wrangler_dist" />
                     </copy>
                     <copy todir = "${stage.opt.dir}/bin">
                       <fileset dir = "node">

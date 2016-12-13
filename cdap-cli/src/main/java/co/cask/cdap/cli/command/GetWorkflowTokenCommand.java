@@ -102,7 +102,7 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
 
   private Table getWorkflowToken(ProgramRunId runId, WorkflowToken.Scope workflowTokenScope, String key)
     throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
-    WorkflowTokenDetail workflowToken = workflowClient.getWorkflowToken(runId.toId(), workflowTokenScope, key);
+    WorkflowTokenDetail workflowToken = workflowClient.getWorkflowToken(runId, workflowTokenScope, key);
     List<Map.Entry<String, List<WorkflowTokenDetail.NodeValueDetail>>> tokenKeys = new ArrayList<>();
     tokenKeys.addAll(workflowToken.getTokenData().entrySet());
     return Table.builder()
@@ -120,7 +120,7 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
   private Table getWorkflowToken(ProgramRunId runId, WorkflowToken.Scope workflowTokenScope,
                                  String key, String nodeName)
     throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
-    WorkflowTokenNodeDetail workflowToken = workflowClient.getWorkflowTokenAtNode(runId.toId(), nodeName,
+    WorkflowTokenNodeDetail workflowToken = workflowClient.getWorkflowTokenAtNode(runId, nodeName,
                                                                                   workflowTokenScope, key);
     List<Map.Entry<String, String>> tokenKeys = new ArrayList<>();
     tokenKeys.addAll(workflowToken.getTokenDataAtNode().entrySet());

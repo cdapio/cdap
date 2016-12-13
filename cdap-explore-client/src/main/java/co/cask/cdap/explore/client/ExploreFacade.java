@@ -23,8 +23,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
@@ -61,14 +63,14 @@ public class ExploreFacade {
    * @param tableName name of the Hive table to create.
    * @param format format of the stream events.
    */
-  public void enableExploreStream(Id.Stream stream, String tableName,
+  public void enableExploreStream(StreamId stream, String tableName,
                                   FormatSpecification format) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
     ListenableFuture<Void> futureSuccess = exploreClient.enableExploreStream(stream, tableName, format);
-    handleExploreFuture(futureSuccess, "enable", "stream", stream.getId());
+    handleExploreFuture(futureSuccess, "enable", "stream", stream.getStream());
   }
 
   /**
@@ -77,40 +79,40 @@ public class ExploreFacade {
    * @param stream id of the stream.
    * @param tableName name of the Hive table to delete.
    */
-  public void disableExploreStream(Id.Stream stream, String tableName) throws ExploreException, SQLException {
+  public void disableExploreStream(StreamId stream, String tableName) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
     ListenableFuture<Void> futureSuccess = exploreClient.disableExploreStream(stream, tableName);
-    handleExploreFuture(futureSuccess, "disable", "stream", stream.getId());
+    handleExploreFuture(futureSuccess, "disable", "stream", stream.getStream());
   }
 
   /**
    * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
    * @param datasetInstance dataset instance id.
    */
-  public void enableExploreDataset(Id.DatasetInstance datasetInstance) throws ExploreException, SQLException {
+  public void enableExploreDataset(DatasetId datasetInstance) throws ExploreException, SQLException {
     if (!(exploreEnabled && isDatasetExplorable(datasetInstance))) {
       return;
     }
 
     ListenableFuture<Void> futureSuccess = exploreClient.enableExploreDataset(datasetInstance);
-    handleExploreFuture(futureSuccess, "enable", "dataset", datasetInstance.getId());
+    handleExploreFuture(futureSuccess, "enable", "dataset", datasetInstance.getDataset());
   }
 
   /**
    * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
    * @param datasetInstance dataset instance id.
    */
-  public void enableExploreDataset(Id.DatasetInstance datasetInstance,
+  public void enableExploreDataset(DatasetId datasetInstance,
                                    DatasetSpecification spec) throws ExploreException, SQLException {
     if (!(exploreEnabled && isDatasetExplorable(datasetInstance))) {
       return;
     }
 
     ListenableFuture<Void> futureSuccess = exploreClient.enableExploreDataset(datasetInstance, spec);
-    handleExploreFuture(futureSuccess, "enable", "dataset", datasetInstance.getId());
+    handleExploreFuture(futureSuccess, "enable", "dataset", datasetInstance.getDataset());
   }
 
   /**
@@ -118,7 +120,7 @@ public class ExploreFacade {
    * @param datasetInstance dataset instance id.
    * @param oldSpec the previous dataset spec
    */
-  public void updateExploreDataset(Id.DatasetInstance datasetInstance,
+  public void updateExploreDataset(DatasetId datasetInstance,
                                    DatasetSpecification oldSpec,
                                    DatasetSpecification newSpec) throws ExploreException, SQLException {
     if (!(exploreEnabled && isDatasetExplorable(datasetInstance))) {
@@ -126,40 +128,40 @@ public class ExploreFacade {
     }
 
     ListenableFuture<Void> futureSuccess = exploreClient.updateExploreDataset(datasetInstance, oldSpec, newSpec);
-    handleExploreFuture(futureSuccess, "update", "dataset", datasetInstance.getId());
+    handleExploreFuture(futureSuccess, "update", "dataset", datasetInstance.getDataset());
   }
 
   /**
    * Disable ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
    * @param datasetInstance dataset instance id.
    */
-  public void disableExploreDataset(Id.DatasetInstance datasetInstance) throws ExploreException, SQLException {
+  public void disableExploreDataset(DatasetId datasetInstance) throws ExploreException, SQLException {
     if (!(exploreEnabled && isDatasetExplorable(datasetInstance))) {
       return;
     }
 
     ListenableFuture<Void> futureSuccess = exploreClient.disableExploreDataset(datasetInstance);
-    handleExploreFuture(futureSuccess, "disable", "dataset", datasetInstance.getId());
+    handleExploreFuture(futureSuccess, "disable", "dataset", datasetInstance.getDataset());
   }
 
-  public void addPartition(Id.DatasetInstance datasetInstance,
+  public void addPartition(DatasetId datasetInstance,
                            PartitionKey key, String location) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
     ListenableFuture<Void> futureSuccess = exploreClient.addPartition(datasetInstance, key, location);
-    handleExploreFuture(futureSuccess, "add", "partition", datasetInstance.getId());
+    handleExploreFuture(futureSuccess, "add", "partition", datasetInstance.getDataset());
   }
 
-  public void dropPartition(Id.DatasetInstance datasetInstance,
+  public void dropPartition(DatasetId datasetInstance,
                             PartitionKey key) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
     ListenableFuture<Void> futureSuccess = exploreClient.dropPartition(datasetInstance, key);
-    handleExploreFuture(futureSuccess, "drop", "partition", datasetInstance.getId());
+    handleExploreFuture(futureSuccess, "drop", "partition", datasetInstance.getDataset());
   }
 
   public void createNamespace(NamespaceMeta namespace) throws ExploreException, SQLException {
@@ -171,23 +173,23 @@ public class ExploreFacade {
     handleExploreFuture(futureSuccess, "add", "namespace", namespace.getName());
   }
 
-  public void removeNamespace(Id.Namespace namespace) throws ExploreException, SQLException {
+  public void removeNamespace(NamespaceId namespace) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
     ListenableFuture<ExploreExecutionResult> futureSuccess = exploreClient.removeNamespace(namespace);
-    handleExploreFuture(futureSuccess, "remove", "namespace", namespace.getId());
+    handleExploreFuture(futureSuccess, "remove", "namespace", namespace.getNamespace());
   }
 
   //TODO: CDAP-4627 - Figure out a better way to identify system datasets in user namespaces
   // Same check is done in DatasetsUtil.isUserDataset method.
-  private boolean isDatasetExplorable(Id.DatasetInstance datasetInstance) {
-    return !Id.Namespace.SYSTEM.equals(datasetInstance.getNamespace()) &&
-      !"system.queue.config".equals(datasetInstance.getId()) &&
-      !datasetInstance.getId().startsWith("system.sharded.queue") &&
-      !datasetInstance.getId().startsWith("system.queue") &&
-      !datasetInstance.getId().startsWith("system.stream");
+  private boolean isDatasetExplorable(DatasetId datasetInstance) {
+    return !NamespaceId.SYSTEM.getNamespace().equals(datasetInstance.getNamespace()) &&
+      !"system.queue.config".equals(datasetInstance.getDataset()) &&
+      !datasetInstance.getDataset().startsWith("system.sharded.queue") &&
+      !datasetInstance.getDataset().startsWith("system.queue") &&
+      !datasetInstance.getDataset().startsWith("system.stream");
   }
 
   // wait for the enable/disable operation to finish and log and throw exceptions as appropriate if there was an error.

@@ -7,6 +7,7 @@ bower_components/
 dist/
 cdap_dist/
 login_dist/
+wrangler_dist/
 plusbutton_dist
 common_dist/
 target/

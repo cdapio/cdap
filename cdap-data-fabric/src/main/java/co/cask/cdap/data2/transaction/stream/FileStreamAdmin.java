@@ -789,9 +789,9 @@ public class FileStreamAdmin implements StreamAdmin {
       Preconditions.checkNotNull(exploreFacade, "Explore enabled but no ExploreFacade instance is available");
       try {
         if (enable) {
-          exploreFacade.enableExploreStream(stream.toId(), tableNaming.getTableName(stream), format);
+          exploreFacade.enableExploreStream(stream, tableNaming.getTableName(stream), format);
         } else {
-          exploreFacade.disableExploreStream(stream.toId(), tableNaming.getTableName(stream));
+          exploreFacade.disableExploreStream(stream, tableNaming.getTableName(stream));
         }
       } catch (Exception e) {
         // at this time we want to still allow using stream even if it cannot be used for exploration

@@ -39,8 +39,10 @@ export default class TruncateAction extends Component {
 
   toggleModal(event) {
     this.setState({modal: !this.state.modal});
-    event.stopPropagation();
-    event.nativeEvent.stopImmediatePropagation();
+    if (event) {
+      event.stopPropagation();
+      event.nativeEvent.stopImmediatePropagation();
+    }
   }
 
   action() {

@@ -96,8 +96,7 @@ public class ArtifactRepositoryTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static final String TEST_EMPTY_CLASS = EmptyClass.class.getName();
-  private static final Id.Artifact APP_ARTIFACT_ID =
-    Id.Artifact.from(Id.Namespace.DEFAULT, "PluginTest", "1.0.0");
+  private static final Id.Artifact APP_ARTIFACT_ID = Id.Artifact.from(Id.Namespace.DEFAULT, "PluginTest", "1.0.0");
 
   private static CConfiguration cConf;
   private static File tmpDir;
@@ -147,25 +146,25 @@ public class ArtifactRepositoryTest {
   @Test
   public void testDeletingArtifact() throws Exception {
     MetadataRecord record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID.toEntityId());
-    Assert.assertEquals(1, record.getTags().size());
+    Assert.assertFalse(record.getProperties().isEmpty());
     artifactRepository.deleteArtifact(APP_ARTIFACT_ID);
     record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID.toEntityId());
-    Assert.assertEquals(0, record.getTags().size());
+    Assert.assertTrue(record.getProperties().isEmpty());
   }
 
   @Test(expected = InvalidArtifactException.class)
   public void testMultipleParentVersions() throws InvalidArtifactException {
     Id.Artifact child = Id.Artifact.from(Id.Namespace.SYSTEM, "abc", "1.0.0");
     ArtifactRepository.validateParentSet(child, ImmutableSet.of(
-      new ArtifactRange(Id.Namespace.SYSTEM, "r1", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")),
-      new ArtifactRange(Id.Namespace.SYSTEM, "r1", new ArtifactVersion("3.0.0"), new ArtifactVersion("4.0.0"))));
+      new ArtifactRange(NamespaceId.SYSTEM, "r1", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")),
+      new ArtifactRange(NamespaceId.SYSTEM, "r1", new ArtifactVersion("3.0.0"), new ArtifactVersion("4.0.0"))));
   }
 
   @Test(expected = InvalidArtifactException.class)
   public void testSelfExtendingArtifact() throws InvalidArtifactException {
     Id.Artifact child = Id.Artifact.from(Id.Namespace.SYSTEM, "abc", "1.0.0");
     ArtifactRepository.validateParentSet(child, ImmutableSet.of(
-      new ArtifactRange(Id.Namespace.SYSTEM, "abc", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))));
+      new ArtifactRange(NamespaceId.SYSTEM, "abc", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))));
   }
 
   @Test(expected = InvalidArtifactException.class)
@@ -197,7 +196,7 @@ public class ArtifactRepositoryTest {
     File pluginConfigFile = new File(systemArtifactsDir1, "APlugin-1.0.0.json");
     ArtifactConfig pluginConfig1 = new ArtifactConfig(
       ImmutableSet.of(new ArtifactRange(
-        Id.Namespace.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0"))),
+        NamespaceId.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0"))),
       // add a dummy plugin to test explicit addition of plugins through the config file
       manuallyAddedPlugins1,
       ImmutableMap.of("k1", "v1", "k2", "v2")
@@ -220,7 +219,7 @@ public class ArtifactRepositoryTest {
     pluginConfigFile = new File(systemArtifactsDir2, "BPlugin-1.0.0.json");
     ArtifactConfig pluginConfig2 = new ArtifactConfig(
       ImmutableSet.of(new ArtifactRange(
-        Id.Namespace.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0"))),
+        NamespaceId.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0"))),
       manuallyAddedPlugins2,
       ImmutableMap.of("k3", "v3")
     );
@@ -416,7 +415,7 @@ public class ArtifactRepositoryTest {
 
     // Build up the plugin repository.
     Set<ArtifactRange> parents = ImmutableSet.of(
-      new ArtifactRange(APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
+      new ArtifactRange(APP_ARTIFACT_ID.getNamespace().toEntityId(), APP_ARTIFACT_ID.getName(),
                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     artifactRepository.addArtifact(artifact1Id, jarFile, parents);
 
@@ -488,7 +487,7 @@ public class ArtifactRepositoryTest {
 
     // add the artifact
     Set<ArtifactRange> parents = ImmutableSet.of(new ArtifactRange(
-      APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
+      APP_ARTIFACT_ID.getNamespace().toEntityId(), APP_ARTIFACT_ID.getName(),
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     artifactRepository.addArtifact(childId, jarFile, parents);
 
@@ -497,7 +496,7 @@ public class ArtifactRepositoryTest {
     manifest = createManifest(ManifestFields.EXPORT_PACKAGE, Plugin2.class.getPackage().getName());
     jarFile = createPluginJar(Plugin2.class, new File(tmpDir, "grandchild-1.0.0.jar"), manifest);
     parents = ImmutableSet.of(new ArtifactRange(
-      childId.getNamespace(), childId.getName(),
+      childId.getNamespace().toEntityId(), childId.getName(),
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     artifactRepository.addArtifact(grandchildId, jarFile, parents);
   }
@@ -553,7 +552,7 @@ public class ArtifactRepositoryTest {
     Assert.assertTrue(jar.delete());
 
     Set<ArtifactRange> parents = ImmutableSet.of(
-      new ArtifactRange(systemAppArtifactId.getNamespace(), systemAppArtifactId.getName(),
+      new ArtifactRange(systemAppArtifactId.getNamespace().toEntityId(), systemAppArtifactId.getName(),
                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     NamespaceId namespace1 = Ids.namespace("ns1");
     NamespaceId namespace2 = Ids.namespace("ns2");
@@ -595,7 +594,7 @@ public class ArtifactRepositoryTest {
 
     // add the artifact
     Set<ArtifactRange> parents = ImmutableSet.of(
-      new ArtifactRange(APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
+      new ArtifactRange(APP_ARTIFACT_ID.getNamespace().toEntityId(), APP_ARTIFACT_ID.getName(),
                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
     artifactRepository.addArtifact(artifactId, jarFile, parents);

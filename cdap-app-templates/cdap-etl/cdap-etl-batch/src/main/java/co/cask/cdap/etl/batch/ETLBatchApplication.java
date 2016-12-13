@@ -98,7 +98,8 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
                                                            config.getResources(),
                                                            config.getDriverResources(),
                                                            config.isStageLoggingEnabled(),
-                                                           new HashMap<String, String>());
+                                                           new HashMap<String, String>(),
+                                                           config.getNumOfRecordsPreview());
         addMapReduce(new ETLMapReduce(batchPhaseSpec));
         break;
       case SPARK:
@@ -106,7 +107,7 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
                                             config.getResources(),
                                             config.getDriverResources(),
                                             config.isStageLoggingEnabled(),
-                                            new HashMap<String, String>());
+                                            new HashMap<String, String>(), config.getNumOfRecordsPreview());
         addSpark(new ETLSpark(batchPhaseSpec));
         break;
       default:

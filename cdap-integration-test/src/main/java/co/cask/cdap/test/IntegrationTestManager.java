@@ -51,8 +51,11 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
 import co.cask.cdap.test.remote.RemoteArtifactManager;
@@ -91,7 +94,7 @@ import javax.annotation.Nullable;
 /**
  * {@link TestManager} for integration tests.
  */
-public class IntegrationTestManager implements TestManager {
+public class IntegrationTestManager extends AbstractTestManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestManager.class);
   private static final Gson GSON = new Gson();
@@ -141,25 +144,17 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public ApplicationManager deployApplication(Id.Namespace namespace,
-                                              Class<? extends Application> applicationClz,
-                                              File... bundleEmbeddedJars) {
-    return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
-  }
-
-  @Override
   @SuppressWarnings("unchecked")
-  public ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,
+  public ApplicationManager deployApplication(NamespaceId namespace, Class<? extends Application> applicationClz,
                                               @Nullable Config configObject, File... bundleEmbeddedJars) {
     // See if the application class comes from file or jar.
     // If it's from JAR, no need to trace dependency since it should already be in an application jar.
     URL appClassURL = applicationClz.getClassLoader()
-                                    .getResource(applicationClz.getName().replace('.', '/') + ".class");
+      .getResource(applicationClz.getName().replace('.', '/') + ".class");
     // Should never happen, otherwise the ClassLoader is broken
     Preconditions.checkNotNull(appClassURL, "Cannot find class %s from the classloader", applicationClz);
 
     String appConfig = "";
-    TypeToken typeToken = TypeToken.of(applicationClz);
     Type configType = Artifacts.getConfigType(applicationClz);
 
     try {
@@ -191,17 +186,10 @@ public class IntegrationTestManager implements TestManager {
       MockAppConfigurer configurer = new MockAppConfigurer(application);
       application.configure(configurer, new DefaultApplicationContext<>(configObject));
       String applicationId = configurer.getName();
-      return new RemoteApplicationManager(Id.Application.from(namespace, applicationId), clientConfig, restClient);
+      return new RemoteApplicationManager(namespace.app(applicationId), clientConfig, restClient);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  @Override
-  public ApplicationManager deployApplication(Id.Application appId,
-                                              AppRequest appRequest) throws Exception {
-    applicationClient.deploy(appId, appRequest);
-    return new RemoteApplicationManager(appId, clientConfig, restClient);
   }
 
   @Override
@@ -212,17 +200,12 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public ApplicationManager getApplicationManager(ApplicationId applicationId) {
-    return new RemoteApplicationManager(applicationId.toId(), clientConfig, restClient);
-  }
-
-  @Override
-  public void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
-    artifactClient.add(artifactId, null, Files.newInputStreamSupplier(artifactFile));
+    return new RemoteApplicationManager(applicationId, clientConfig, restClient);
   }
 
   @Override
   public ArtifactManager addArtifact(ArtifactId artifactId, final File artifactFile) throws Exception {
-    artifactClient.add(artifactId.toId(), null, new InputSupplier<InputStream>() {
+    artifactClient.add(artifactId, null, new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
         return new FileInputStream(artifactFile);
@@ -232,19 +215,9 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
-    addAppArtifact(artifactId.toEntityId(), appClass);
-  }
-
-  @Override
   public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception {
     addAppArtifact(artifactId, appClass, new Manifest());
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
-  }
-
-  @Override
-  public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, String... exportPackages) throws Exception {
-    addAppArtifact(artifactId.toEntityId(), appClass, exportPackages);
   }
 
   @Override
@@ -257,16 +230,11 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception {
-    addAppArtifact(artifactId.toEntityId(), appClass, manifest);
-  }
-
-  @Override
   public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                         Manifest manifest) throws Exception {
     final Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest, CLASS_ACCEPTOR);
 
-    artifactClient.add(artifactId.toId(), null, new InputSupplier<InputStream>() {
+    artifactClient.add(artifactId, null, new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
         return appJar.getInputStream();
@@ -274,12 +242,6 @@ public class IntegrationTestManager implements TestManager {
     });
     appJar.delete();
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
-  }
-
-  @Override
-  public void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
-                                Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    addPluginArtifact(artifactId.toEntityId(), parent.toEntityId(), pluginClass, pluginClasses);
   }
 
   @Override
@@ -287,16 +249,10 @@ public class IntegrationTestManager implements TestManager {
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
-      Ids.namespace(parent.getNamespace()).toId(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
+      parent.getParent(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
       true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, pluginClass, pluginClasses);
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
-  }
-
-  @Override
-  public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
-                                Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    addPluginArtifact(artifactId.toEntityId(), parents, pluginClass, pluginClasses);
   }
 
   @Override
@@ -304,7 +260,7 @@ public class IntegrationTestManager implements TestManager {
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
     final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
-    artifactClient.add(artifactId.toId(), parents, new InputSupplier<InputStream>() {
+    artifactClient.add(artifactId, parents, new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
         return appJar.getInputStream();
@@ -312,14 +268,6 @@ public class IntegrationTestManager implements TestManager {
     });
     appJar.delete();
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
-  }
-
-  @Override
-  public void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
-                                Set<PluginClass> additionalPlugins,
-                                Class<?> pluginClass,
-                                Class<?>... pluginClasses) throws Exception {
-    addPluginArtifact(artifactId.toEntityId(), parent.toEntityId(), additionalPlugins, pluginClass, pluginClasses);
   }
 
   @Override
@@ -328,17 +276,10 @@ public class IntegrationTestManager implements TestManager {
                                            Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
-      Ids.namespace(parent.getNamespace()).toId(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
+      parent.getParent(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
       true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, additionalPlugins, pluginClass, pluginClasses);
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
-  }
-
-  @Override
-  public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
-                                @Nullable Set<PluginClass> additionalPlugins,
-                                Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    addPluginArtifact(artifactId.toEntityId(), parents, additionalPlugins, pluginClass, pluginClasses);
   }
 
   @Override
@@ -348,7 +289,7 @@ public class IntegrationTestManager implements TestManager {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
     final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
     artifactClient.add(
-      Ids.namespace(artifactId.getNamespace()).toId(),
+      Ids.namespace(artifactId.getNamespace()),
       artifactId.getArtifact(),
       new InputSupplier<InputStream>() {
         @Override
@@ -366,21 +307,21 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public void deleteArtifact(Id.Artifact artifactId) throws Exception {
-    artifactClient.delete(artifactId);
+    artifactClient.delete(artifactId.toEntityId());
   }
 
   @Override
   public void clear() throws Exception {
     for (NamespaceMeta namespace : namespaceClient.list()) {
-      programClient.stopAll(Id.Namespace.from(namespace.getName()));
+      programClient.stopAll(namespace.getNamespaceId());
     }
     namespaceClient.deleteAll();
   }
 
   @Override
-  public void deployDatasetModule(Id.Namespace namespace, String moduleName,
+  public void deployDatasetModule(DatasetModuleId datasetModuleId,
                                   Class<? extends DatasetModule> datasetModule) throws Exception {
-    datasetModuleClient.add(Id.DatasetModule.from(namespace, moduleName),
+    datasetModuleClient.add(datasetModuleId,
                             datasetModule.getName(),
                             createModuleJarFile(datasetModule));
   }
@@ -394,41 +335,29 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
-                                                       String datasetTypeName, String datasetInstanceName,
+  public <T extends DatasetAdmin> T addDatasetInstance(String datasetType, DatasetId datasetId,
                                                        DatasetProperties props) throws Exception {
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, datasetInstanceName);
-    DatasetInstanceConfiguration dsConf = new DatasetInstanceConfiguration(datasetTypeName, props.getProperties(),
+    DatasetInstanceConfiguration dsConf = new DatasetInstanceConfiguration(datasetType, props.getProperties(),
                                                                            props.getDescription());
 
-    datasetClient.create(datasetInstance, dsConf);
-    return (T) new RemoteDatasetAdmin(datasetClient, datasetInstance, dsConf);
+    datasetClient.create(datasetId, dsConf);
+    return (T) new RemoteDatasetAdmin(datasetClient, datasetId, dsConf);
   }
 
   @Override
-  public <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
-                                                       String datasetTypeName,
-                                                       String datasetInstanceName) throws Exception {
-    return addDatasetInstance(namespace, datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
+  public void deleteDatasetInstance(DatasetId datasetId) throws Exception {
+    datasetClient.delete(datasetId);
   }
 
   @Override
-  public void deleteDatasetInstance(NamespaceId namespaceId, String datasetInstanceName) throws Exception {
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId.toId(), datasetInstanceName);
-    datasetClient.delete(datasetInstance);
-  }
-
-  @Override
-  public <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName) throws Exception {
+  public <T> DataSetManager<T> getDataset(DatasetId datasetId) throws Exception {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Connection getQueryClient(Id.Namespace namespace) throws Exception {
-
+  public Connection getQueryClient(NamespaceId namespace) throws Exception {
     Map<String, String> connParams = new HashMap<>();
-    connParams.put(ExploreConnectionParams.Info.NAMESPACE.getName(), namespace.getId());
+    connParams.put(ExploreConnectionParams.Info.NAMESPACE.getName(), namespace.getNamespace());
     AccessToken accessToken = clientConfig.getAccessToken();
     if (accessToken != null) {
       connParams.put(ExploreConnectionParams.Info.EXPLORE_AUTH_TOKEN.getName(), accessToken.getValue());
@@ -455,13 +384,13 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public StreamManager getStreamManager(Id.Stream streamId) {
+  public StreamManager getStreamManager(StreamId streamId) {
     return new RemoteStreamManager(clientConfig, restClient, streamId);
   }
 
   @Override
   public void deleteAllApplications(NamespaceId namespaceId) throws Exception {
-    applicationClient.deleteAll(namespaceId.toId());
+    applicationClient.deleteAll(namespaceId);
   }
 
   /**

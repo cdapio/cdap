@@ -24,6 +24,7 @@
 */
 import React, {Component, PropTypes} from 'react';
 require('./CardActionFeedback.less');
+import isObject from 'lodash/isObject';
 
 var classNames = require('classnames');
 
@@ -51,7 +52,12 @@ export default class CardActionFeedback extends Component {
     if (this.props.extendedMessage) {
       return (
         <div className='stack-trace'>
-          <pre>{this.props.extendedMessage}</pre>
+          {
+            isObject(this.props.extendedMessage) ?
+              <pre>{this.props.extendedMessage.response}</pre>
+            :
+              <pre>{this.props.extendedMessage}</pre>
+          }
         </div>
       );
     }
@@ -107,5 +113,10 @@ export default class CardActionFeedback extends Component {
 CardActionFeedback.propTypes = {
   type: PropTypes.oneOf(['SUCCESS', 'WARNING', 'DANGER', 'LOADING']).isRequired,
   message: PropTypes.string,
-  extendedMessage: PropTypes.string
+  extendedMessage: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.shape({
+      response: PropTypes.string
+    })
+  ])
 };

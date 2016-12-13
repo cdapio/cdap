@@ -50,7 +50,7 @@ public class StartProgramsCommand extends BaseBatchCommand<BatchProgramStart> {
 
   @Override
   protected void runBatchCommand(PrintStream printStream, Args<BatchProgramStart> args) throws Exception {
-    List<BatchProgramResult> results = programClient.start(args.appId.getParent().toId(), args.programs);
+    List<BatchProgramResult> results = programClient.start(args.appId.getParent(), args.programs);
 
     Table table = Table.builder()
       .setHeader("name", "type", "error")

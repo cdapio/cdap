@@ -24,6 +24,7 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -39,23 +40,34 @@ import java.util.Set;
 public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private final ProgramId programId;
   private final ProgramSpecification programSpec;
+  private final boolean existing;
 
   public ProgramSystemMetadataWriter(MetadataStore metadataStore, ProgramId programId,
-                                     ProgramSpecification programSpec) {
+                                     ProgramSpecification programSpec, boolean existing) {
     super(metadataStore, programId);
     this.programId = programId;
     this.programSpec = programSpec;
+    this.existing = existing;
   }
 
   @Override
   protected Map<String, String> getSystemPropertiesToAdd() {
-    return ImmutableMap.of(VERSION, programId.getVersion());
+    ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
+    properties.put(ENTITY_NAME_KEY, programId.getEntityName());
+    properties.put(VERSION_KEY, programId.getVersion());
+    String description = programSpec.getDescription();
+    if (!Strings.isNullOrEmpty(description)) {
+      properties.put(DESCRIPTION_KEY, description);
+    }
+    if (!existing) {
+      properties.put(CREATION_TIME_KEY, String.valueOf(System.currentTimeMillis()));
+    }
+    return properties.build();
   }
 
   @Override
   protected String[] getSystemTagsToAdd() {
     List<String> tags = ImmutableList.<String>builder()
-      .add(programId.getProgram())
       .add(programId.getType().getPrettyName())
       .add(getMode())
       .addAll(getWorkflowNodes())

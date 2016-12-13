@@ -113,10 +113,7 @@ public class StandardUnionObjectInspector implements UnionObjectInspector {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(getClass().getName());
-    sb.append(getTypeName());
-    return sb.toString();
+    return getClass().getName() + getTypeName();
   }
 
 }

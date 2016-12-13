@@ -212,8 +212,8 @@ public class ArtifactRepository {
         @Override
         public boolean apply(ArtifactDetail artifactDetail) {
           ArtifactId artifactId = artifactDetail.getDescriptor().getArtifactId();
-          return filter.apply(range.getNamespace().toEntityId().artifact(artifactId.getName(),
-                                                                         artifactId.getVersion().getVersion()));
+          return filter.apply(range.getNamespace().artifact(artifactId.getName(),
+                                                            artifactId.getVersion().getVersion()));
         }
       })
     );
@@ -869,7 +869,8 @@ public class ArtifactRepository {
         dupes.add(parentName);
         isInvalid = true;
       }
-      if (artifactId.getName().equals(parentName) && artifactId.getNamespace().equals(parent.getNamespace())) {
+      if (artifactId.getName().equals(parentName) &&
+        artifactId.getNamespace().toEntityId().equals(parent.getNamespace())) {
         throw new InvalidArtifactException(String.format(
           "Invalid parent '%s' for artifact '%s'. An artifact cannot extend itself.", parent, artifactId));
       }

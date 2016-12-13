@@ -43,8 +43,9 @@ public final class DataStreamsConfig extends ETLConfig {
                             String batchInterval,
                             boolean isUnitTest,
                             boolean disableCheckpoints,
-                            @Nullable String checkpointDir) {
-    super(stages, connections, resources, stageLoggingEnabled);
+                            @Nullable String checkpointDir,
+                            int numOfRecordsPreview) {
+    super(stages, connections, resources, stageLoggingEnabled, numOfRecordsPreview);
     this.batchInterval = batchInterval;
     this.driverResources = driverResources;
     this.isUnitTest = isUnitTest;
@@ -153,7 +154,8 @@ public final class DataStreamsConfig extends ETLConfig {
 
     public DataStreamsConfig build() {
       return new DataStreamsConfig(stages, connections, resources, driverResources,
-                                   stageLoggingEnabled, batchInterval, isUnitTest, false, checkpointDir);
+                                   stageLoggingEnabled, batchInterval, isUnitTest, false, checkpointDir,
+                                   numOfRecordsPreview);
     }
   }
 }

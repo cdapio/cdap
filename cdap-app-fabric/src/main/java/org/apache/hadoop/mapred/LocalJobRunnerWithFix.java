@@ -556,10 +556,11 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
         status.setCleanupProgress(1.0f);
         if (killed) {
           this.status.setRunState(JobStatus.KILLED);
+          LOG.warn("Job {} was killed", id, t);
         } else {
           this.status.setRunState(JobStatus.FAILED);
+          LOG.error("Job {} failed", id, t);
         }
-        LOG.warn("Error cleaning up job: {}", id, t);
 
         JobEndNotifier.localRunnerNotification(job, status);
 

@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _datasets-cube:
 
@@ -51,7 +51,9 @@ specific time:
   - ``cpu.used(gauge)=60``
   - ``disk.reads(counter)=23244``
 
-Currently, two types of measurements are supported: gauge and counter.
+Currently, two types of measurements are supported: gauge and counter. A *gauge*
+measurement is for an absolute metric (it overwrites) while a *counter* measurement is for
+an incremental metric.
 
 Writing Data
 ============

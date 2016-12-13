@@ -23,7 +23,16 @@ import AbstractWizard from 'components/AbstractWizard';
 import T from 'i18n-react';
 
 require('./ResourceCenter.less');
-
+/*
+  TODO: Stream views:
+  {
+    title: T.translate('features.Resource-Center.Stream-View.label'),
+    description: T.translate('features.Resource-Center.Stream-View.description'),
+    actionLabel: T.translate('features.Resource-Center.Stream-View.actionbtn0'),
+    iconClassName: 'fa icon-streamview',
+    disabled: true
+  }
+*/
 export default class ResourceCenter extends Component {
   constructor(props) {
     super(props);
@@ -48,12 +57,6 @@ export default class ResourceCenter extends Component {
         actionLabel: T.translate('features.Resource-Center.Application.actionbtn0'),
         iconClassName: 'fa icon-app',
         wizardId: 'createApplicationWizard'
-      }, {
-        title: T.translate('features.Resource-Center.Stream-View.label'),
-        description: T.translate('features.Resource-Center.Stream-View.description'),
-        actionLabel: T.translate('features.Resource-Center.Stream-View.actionbtn0'),
-        iconClassName: 'fa icon-streamview',
-        disabled: true
       }, {
         title: T.translate('features.Resource-Center.HydratorPipeline.label'),
         description: T.translate('features.Resource-Center.HydratorPipeline.description'),
@@ -102,6 +105,7 @@ export default class ResourceCenter extends Component {
         <AbstractWizard
           wizardType="create_app_rc"
           isOpen={true}
+          input={{headerLabel: T.translate('features.Resource-Center.Application.modalheadertitle')}}
           onClose={this.toggleWizard.bind(this, 'createApplicationWizard')}
         />
       );
@@ -111,7 +115,7 @@ export default class ResourceCenter extends Component {
         <AbstractWizard
           isOpen={true}
           wizardType="create_artifact_rc"
-          backdrop={false}
+          input={{headerLabel: T.translate('features.Resource-Center.Artifact.modalheadertitle')}}
           onClose={this.toggleWizard.bind(this, 'createArtifactWizard')}
         />
       );
@@ -121,7 +125,7 @@ export default class ResourceCenter extends Component {
         <AbstractWizard
           isOpen={true}
           wizardType="create_plugin_artifact_rc"
-          backdrop={false}
+          input={{headerLabel: T.translate('features.Resource-Center.Plugins.modalheadertitle')}}
           onClose={this.toggleWizard.bind(this, 'createPluginArtifactWizard')}
         />
       );

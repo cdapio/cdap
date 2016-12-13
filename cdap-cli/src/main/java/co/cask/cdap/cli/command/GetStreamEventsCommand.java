@@ -57,7 +57,7 @@ public class GetStreamEventsCommand extends AbstractCommand {
     int limit = arguments.getIntOptional(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
 
     // Get a list of stream events and prints it.
-    List<StreamEvent> events = streamClient.getEvents(streamId.toId(), startTime, endTime,
+    List<StreamEvent> events = streamClient.getEvents(streamId, startTime, endTime,
                                                       limit, Lists.<StreamEvent>newArrayList());
     Table table = Table.builder()
       .setHeader("timestamp", "headers", "body size", "body")

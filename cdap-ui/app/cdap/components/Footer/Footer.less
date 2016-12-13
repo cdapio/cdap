@@ -39,7 +39,7 @@ footer {
     padding-left: 15px;
   }
   div.text-muted {
-    margin: 10px 0;
+    margin: 0;
 
     > div {
       @media (min-width: @screen-md-max) {
@@ -57,12 +57,8 @@ footer {
   }
   p,
   ul {
-    height: 32px;
+    height: @height-of-footer;
+    line-height: @height-of-footer;
     margin: 0;
-  }
-  span,
-  li {
-    line-height: 32px;
-    vertical-align: middle;
   }
 }
