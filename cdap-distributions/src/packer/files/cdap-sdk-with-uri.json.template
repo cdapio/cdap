@@ -4,5 +4,9 @@
     "sdk": {
       "url": "{{URI}}"
     }
+  },
+  "java": {
+    "install_flavor": "openjdk",
+    "jdk_version": 7
   }
 }
