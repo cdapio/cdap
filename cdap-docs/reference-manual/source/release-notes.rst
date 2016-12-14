@@ -4283,7 +4283,7 @@ Known Issues
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
   ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
-  updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+  updated in a future version of CDAP, a work-around is to kill the errant process. The YARN
   command to list all running applications and their ``app-id``\s is::
   
     yarn application -list -appStates RUNNING
@@ -4355,7 +4355,7 @@ Known Issues
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
   ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
-  updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+  updated in a future version of CDAP, a work-around is to kill the errant process. The YARN
   command to list all running applications and their ``app-id``\s is::
   
     yarn application -list -appStates RUNNING
@@ -4412,7 +4412,7 @@ Known Issues
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
   ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
-  updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+  updated in a future version of CDAP, a work-around is to kill the errant process. The YARN
   command to list all running applications and their ``app-id``\s is::
   
     yarn application -list -appStates RUNNING
@@ -4552,7 +4552,7 @@ Known Issues
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
   ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
-  updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+  updated in a future version of CDAP, a work-around is to kill the errant process. The YARN
   command to list all running applications and their ``app-id``\s is::
   
     yarn application -list -appStates RUNNING
@@ -4617,7 +4617,7 @@ Known Issues
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
   ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
-  updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+  updated in a future version of CDAP, a work-around is to kill the errant process. The YARN
   command to list all running applications and their ``app-id``\s is::
   
     yarn application -list -appStates RUNNING
@@ -4667,7 +4667,7 @@ Known Issues
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
   ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
-  updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+  updated in a future version of CDAP, a work-around is to kill the errant process. The YARN
   command to list all running applications and their ``app-id``\s is::
   
     yarn application -list -appStates RUNNING
@@ -4755,7 +4755,7 @@ Known Issues
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
   ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
-  updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+  updated in a future version of CDAP, a work-around is to kill the errant process. The YARN
   command to list all running applications and their ``app-id``\s is::
   
     yarn application -list -appStates RUNNING

@@ -39,7 +39,7 @@ See the instructions for either a :ref:`distribution-specific <installation-inde
 
 - A production, staging, and QA mode; runs in a distributed environment
 - Currently uses Apache HBase and HDFS as the underlying storage technology
-- Uses Apache Yarn Containers as the processing abstraction (via Apache Twill)
+- Uses Apache YARN Containers as the processing abstraction (via Apache Twill)
 
 
 .. _standalone-data-application-platform:

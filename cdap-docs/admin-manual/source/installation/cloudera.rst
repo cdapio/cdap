@@ -563,9 +563,9 @@ For Kerberos-enabled Hadoop clusters:
   the ``cdap`` user to the whitelist.)
   
 - If you are converting an existing CDAP cluster to being Kerberos-enabled, then you may
-  run into Yarn usercache directory permission problems. A non-Kerberos cluster with
+  run into YARN usercache directory permission problems. A non-Kerberos cluster with
   default settings will run CDAP containers as the user ``yarn``. A Kerberos cluster will
-  run them as the user ``cdap``. When converting, the usercache directory that Yarn
+  run them as the user ``cdap``. When converting, the usercache directory that YARN
   creates will already exist and be owned by a different user. On all datanodes, run this
   command, substituting in the correct value of the YARN parameter ``yarn.nodemanager.local-dirs``::
     
