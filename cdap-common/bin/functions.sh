@@ -1025,28 +1025,7 @@ cdap_config_tool() {
 # cdap_upgrade_tool [arguments]
 #
 cdap_upgrade_tool() {
-  local readonly __args=${@}
-  local readonly __path __libexec __lib __script="$(basename ${0}):cdap_upgrade_tool"
   local readonly __ret __class=co.cask.cdap.data.tools.UpgradeTool
-  cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
-  __path=${CDAP_HOME}
-  if [[ -d ${__path}/master/lib ]]; then
-    __libexec=${__path}/master/libexec
-    __lib=${__path}/master/lib
-  else
-    __libexec=${__path}/libexec
-    __lib=${__path}/lib
-  fi
-  if [[ ${CLASSPATH} == "" ]]; then
-    CLASSPATH=${__lib}/*
-  else
-    CLASSPATH=${CLASSPATH}:${__lib}/*
-  fi
-  if [[ -d ${CDAP_CONF} ]]; then
-    CLASSPATH=${CLASSPATH}:"${CDAP_CONF}"
-  elif [[ -d ${__path}/conf ]]; then
-    CLASSPATH=${CLASSPATH}:"${__path}"/conf/
-  fi
 
   # check arguments
   if [[ ${1} == 'hbase' ]]; then
@@ -1056,7 +1035,7 @@ cdap_upgrade_tool() {
     set -- "upgrade" ${@}
   fi
 
-  "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
+  cdap_run_class ${__class} ${@}
   __ret=${?}
   return ${__ret}
 }
