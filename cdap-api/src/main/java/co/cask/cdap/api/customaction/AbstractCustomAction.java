@@ -25,12 +25,12 @@ import java.util.Map;
  */
 public abstract class AbstractCustomAction implements CustomAction {
 
-  private final String name;
+  private String name;
   private CustomActionConfigurer configurer;
   private CustomActionContext context;
 
   protected AbstractCustomAction() {
-    name = getClass().getSimpleName();
+    // no-op, for instantiation only
   }
 
   protected AbstractCustomAction(String name) {
@@ -40,7 +40,7 @@ public abstract class AbstractCustomAction implements CustomAction {
   @Override
   public final void configure(CustomActionConfigurer configurer) {
     this.configurer = configurer;
-    setName(name);
+    setName(name == null ? getClass().getSimpleName() : name);
     configure();
   }
 
