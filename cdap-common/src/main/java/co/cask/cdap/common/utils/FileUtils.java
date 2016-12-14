@@ -33,13 +33,6 @@ public class FileUtils {
   public static final FileAttribute<Set<PosixFilePermission>> OWNER_ONLY_RW =
     PosixFilePermissions.asFileAttribute(EnumSet.of(PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_READ));
 
-  /**
-   * FileAttribute representing owner-only read/write/execute (700).
-   */
-  public static final FileAttribute<Set<PosixFilePermission>> OWNER_ONLY_RWX =
-    PosixFilePermissions.asFileAttribute(EnumSet.of(PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_READ,
-                                                    PosixFilePermission.OWNER_EXECUTE));
-
   private FileUtils(){ }
 
 }
