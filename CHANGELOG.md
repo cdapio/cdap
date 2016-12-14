@@ -1,6 +1,15 @@
 cdap CHANGELOG
 ==============
 
+v2.27.0 (Dec 14, 2016)
+----------------------
+- Do not set kafka.server.log.dirs so kafka.log.dir can be used ( Issue: #187 )
+- Sync script with CDAP init scripts ( Issue: #188 )
+- Include Java in CLI recipe, unless skip is requested ( Issue: #189 )
+- Support HDP 2.5.3.0 ( Issue: #190 )
+- Use precise repo for up through xenial ( Issue: #191 )
+- Restrict ark cookbook version ( Issue: #192 )
+
 v2.26.2 (Nov 10, 2016)
 ----------------------
 - Always run security recipe in fullstack ( Issue: #185 )
