@@ -14,7 +14,7 @@
  * the License.
  */
 
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import ChartPanel from 'wrangler/components/Wrangler/WranglerRightPanel/ChartPanel';
@@ -38,12 +38,16 @@ export default class WranglerRightPanel extends Component {
   }
 
   componentWillMount() {
-    WranglerStore.subscribe(() => {
+    this.sub = WranglerStore.subscribe(() => {
       let state = WranglerStore.getState();
       this.setState(Object.assign({}, state.visualization, {
         columns: state.wrangler.headersList
       }));
     });
+  }
+
+  componentWillUnmount() {
+    this.sub();
   }
 
   addGraph() {
@@ -54,7 +58,7 @@ export default class WranglerRightPanel extends Component {
           id: shortid.generate(),
           type: this.state.graphTypeSelected,
           x: '##',
-          y: []
+          y: [this.state.columns[0]]
         }
       }
     });
@@ -77,12 +81,20 @@ export default class WranglerRightPanel extends Component {
             </select>
           </div>
 
-          <div className="graph-add-button text-center pull-right">
+          <div className="graph-add-button text-center">
             <span
               className="fa fa-plus-circle"
               onClick={this.addGraph}
             />
           </div>
+
+          <div
+            className="hide-button text-center pull-right"
+            onClick={this.props.toggle}
+          >
+            <span className="fa fa-times" />
+          </div>
+
         </div>
 
         <div className="graphs-list">
@@ -101,3 +113,7 @@ export default class WranglerRightPanel extends Component {
     );
   }
 }
+
+WranglerRightPanel.propTypes = {
+  toggle: PropTypes.func
+};

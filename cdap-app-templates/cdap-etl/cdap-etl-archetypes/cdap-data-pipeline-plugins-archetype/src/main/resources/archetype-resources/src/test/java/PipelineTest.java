@@ -14,7 +14,7 @@
  * the License.
  */
 
-package org.example.plugin;
+package $package;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -25,9 +25,11 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.datapipeline.DataPipelineApp;
 import co.cask.cdap.datapipeline.SmartWorkflow;
 import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.mock.batch.MockSink;
@@ -38,6 +40,7 @@ import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
@@ -53,7 +56,6 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -89,15 +91,23 @@ public class PipelineTest extends HydratorTestBase {
   }
 
   @Test
-  public void testTextFileSource() throws Exception {
+  public void testTextFileSourceAndMoveAction() throws Exception {
     // create the pipeline config
+    String moveFromName = "sourceTestMoveFrom";
     String inputName = "sourceTestInput";
     String outputName = "sourceTestOutput";
+
+    Map<String, String> actionProperties = new HashMap<>();
+    actionProperties.put(FilesetMoveAction.Conf.SOURCE_FILESET, "sourceTestMoveFrom");
+    actionProperties.put(FilesetMoveAction.Conf.DEST_FILESET, inputName);
+    ETLStage moveAction =
+      new ETLStage("moveInput", new ETLPlugin(FilesetMoveAction.NAME, Action.PLUGIN_TYPE, actionProperties, null));
 
     Map<String, String> sourceProperties = new HashMap<>();
     sourceProperties.put(TextFileSetSource.Conf.FILESET_NAME, inputName);
     sourceProperties.put(TextFileSetSource.Conf.CREATE_IF_NOT_EXISTS, "true");
     sourceProperties.put(TextFileSetSource.Conf.DELETE_INPUT_ON_SUCCESS, "true");
+    sourceProperties.put(TextFileSetSource.Conf.FILES, "${file}");
     ETLStage source =
       new ETLStage("source", new ETLPlugin(TextFileSetSource.NAME, BatchSource.PLUGIN_TYPE, sourceProperties, null));
     ETLStage sink = new ETLStage("sink", MockSink.getPlugin(outputName));
@@ -105,28 +115,41 @@ public class PipelineTest extends HydratorTestBase {
     ETLBatchConfig pipelineConfig = ETLBatchConfig.builder("* * * * *")
       .addStage(source)
       .addStage(sink)
+      .addStage(moveAction)
+      .addConnection(moveAction.getName(), source.getName())
       .addConnection(source.getName(), sink.getName())
       .build();
+
+    // create the move from fileset
+    addDatasetInstance(FileSet.class.getName(), moveFromName);
 
     // create the pipeline
     ApplicationId pipelineId = NamespaceId.DEFAULT.app("textSourceTestPipeline");
     ApplicationManager appManager = deployApplication(pipelineId, new AppRequest<>(APP_ARTIFACT, pipelineConfig));
 
-    // write some data to the input fileset
-    DataSetManager<FileSet> inputManager = getDataset(inputName);
-    Location inputFile = inputManager.get().getBaseLocation().append("somedir");
+    // write some files that will be moved to the input fileset
+    DataSetManager<FileSet> moveFromManager = getDataset(moveFromName);
 
+    // this file starts with '.' and should be ignored.
+    Location invisibleFile = moveFromManager.get().getBaseLocation().append(".hidden");
+    try (OutputStream outputStream = invisibleFile.getOutputStream()) {
+      outputStream.write(Bytes.toBytes("this should not be read"));
+    }
+
+    // this file should be moved
     String line1 = "Hello World!";
     String line2 = "Good to meet you";
     String line3 = "My name is Hal";
     String inputText = line1 + "\n" + line2 + "\n" + line3;
+    Location inputFile = moveFromManager.get().getBaseLocation().append("inputFile");
     try (OutputStream outputStream = inputFile.getOutputStream()) {
-      outputStream.write(inputText.getBytes(Charset.forName("UTF-8")));
+      outputStream.write(Bytes.toBytes(inputText));
     }
 
     // run the pipeline
     Map<String, String> runtimeArgs = new HashMap<>();
-    runtimeArgs.put(String.format("dataset.%s.input.paths", inputName), inputFile.getName());
+    // the ${file} macro will be substituted with "inputFile" for our pipeline run
+    runtimeArgs.put("file", "inputFile");
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start(runtimeArgs);
@@ -151,27 +174,42 @@ public class PipelineTest extends HydratorTestBase {
                    .build());
     Assert.assertEquals(expected, outputRecords);
 
-    // check that the input was deleted by the source
-    Assert.assertFalse(inputFile.exists());
+    // check that the input file does not exist in the moveFrom fileSet,
+    // and was deleted by the source in the input fileSet
+    Assert.assertFalse(moveFromManager.get().getBaseLocation().append("inputFile").exists());
+    DataSetManager<FileSet> inputManager = getDataset(inputName);
+    Assert.assertFalse(inputManager.get().getBaseLocation().append("inputFile").exists());
   }
 
   @Test
-  public void testTextFileSink() throws Exception {
+  public void testTextFileSinkAndDeletePostAction() throws Exception {
     // create the pipeline config
     String inputName = "sinkTestInput";
     String outputName = "sinkTestOutput";
+    String outputDirName = "users";
 
     ETLStage source = new ETLStage("source", MockSource.getPlugin(inputName));
 
     Map<String, String> sinkProperties = new HashMap<>();
     sinkProperties.put(TextFileSetSink.Conf.FILESET_NAME, outputName);
     sinkProperties.put(TextFileSetSink.Conf.FIELD_SEPARATOR, "|");
+    sinkProperties.put(TextFileSetSink.Conf.OUTPUT_DIR, "${dir}");
     ETLStage sink = new ETLStage("sink", new ETLPlugin(TextFileSetSink.NAME, BatchSink.PLUGIN_TYPE,
                                                        sinkProperties, null));
+
+    Map<String, String> actionProperties = new HashMap<>();
+    actionProperties.put(FilesetDeletePostAction.Conf.FILESET_NAME, outputName);
+    // mapreduce writes multiple files to the output directory. Along with the actual output,
+    // there are various .crc files that do not contain any of the output content.
+    actionProperties.put(FilesetDeletePostAction.Conf.DELETE_REGEX, ".*\\.crc|_SUCCESS");
+    actionProperties.put(FilesetDeletePostAction.Conf.DIRECTORY, outputDirName);
+    ETLStage postAction = new ETLStage("cleanup", new ETLPlugin(FilesetDeletePostAction.NAME, PostAction.PLUGIN_TYPE,
+                                                                actionProperties, null));
 
     ETLBatchConfig pipelineConfig = ETLBatchConfig.builder("* * * * *")
       .addStage(source)
       .addStage(sink)
+      .addPostAction(postAction)
       .addConnection(source.getName(), sink.getName())
       .build();
 
@@ -200,8 +238,8 @@ public class PipelineTest extends HydratorTestBase {
 
     // run the pipeline
     Map<String, String> runtimeArgs = new HashMap<>();
-    String outputPath = "users";
-    runtimeArgs.put(String.format("dataset.%s.output.path", outputName), outputPath);
+    // the ${dir} macro will be substituted with "users" for our pipeline run
+    runtimeArgs.put("dir", outputDirName);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start(runtimeArgs);
@@ -210,14 +248,12 @@ public class PipelineTest extends HydratorTestBase {
     // check the pipeline output
     DataSetManager<FileSet> outputManager = getDataset(outputName);
     FileSet output = outputManager.get();
-    Location outputDir = output.getBaseLocation().append(outputPath);
+    Location outputDir = output.getBaseLocation().append(outputDirName);
 
     Map<String, String> actual = new HashMap<>();
     for (Location outputFile : outputDir.list()) {
-      // mapreduce writes multiple files to the output directory. There is a _SUCCESS file, and various files
-      // that end with .crc that do not have any content. The actual output should not be read from those files.
       if (outputFile.getName().endsWith(".crc") || "_SUCCESS".equals(outputFile.getName())) {
-        continue;
+        Assert.fail("Post action did not delete file " + outputFile.getName());
       }
 
       try (BufferedReader reader = new BufferedReader(new InputStreamReader(outputFile.getInputStream()))) {

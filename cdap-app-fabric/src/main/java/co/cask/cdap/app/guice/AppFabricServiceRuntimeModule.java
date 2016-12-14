@@ -167,14 +167,18 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                                           Names.named("appfabric.services.names"));
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.STREAMS);
-                               servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
+
+                               // TODO: Uncomment after CDAP-7688 is resolved
+                               // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
 
                                Multibinder<String> handlerHookNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
                                                           Names.named("appfabric.handler.hooks"));
                                handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
                                handlerHookNamesBinder.addBinding().toInstance(Constants.Stream.STREAM_HANDLER);
-                               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
+
+                               // TODO: Uncomment after CDAP-7688 is resolved
+                               // handlerHookNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
                              }
                            });
   }
@@ -206,7 +210,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.STREAMS);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.PREVIEW_HTTP);
-                               servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
+
+                               // TODO: Uncomment after CDAP-7688 is resolved
+                               // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
 
                                Multibinder<String> handlerHookNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -214,7 +220,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
                                handlerHookNamesBinder.addBinding().toInstance(Constants.Stream.STREAM_HANDLER);
                                handlerHookNamesBinder.addBinding().toInstance(Constants.Service.PREVIEW_HTTP);
-                               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
+
+                               // TODO: Uncomment after CDAP-7688 is resolved
+                               // handlerHookNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
                              }
                            });
   }

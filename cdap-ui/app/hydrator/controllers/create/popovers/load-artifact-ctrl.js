@@ -57,6 +57,7 @@ angular.module(`${PKG.name}.feature.hydrator`)
       artifactName = name;
       artifactVersion = version;
       this.jarStatus = 1;
+      this.jarName = jar[0].name;
     };
     // FIXME: Could this be extracted out into a factory??
     let getJsonContents = (file) => {
@@ -82,6 +83,7 @@ angular.module(`${PKG.name}.feature.hydrator`)
         this.jsonLoadFailMessage = this.GLOBALS.en.hydrator.studio.info['ARTIFACT-UPLOAD-MESSAGE-JSON'];
         return;
       }
+      this.jsonName = json[0].name;
       let artifactJson;
       getJsonContents(json[0]).then(
         (result) => {

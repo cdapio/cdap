@@ -1,0 +1,43 @@
+
+
+<div class="container">
+  <div class="row" ng-if="ProgramsController.programs.length > 0">
+    <h2><span>Programs</span></h2>
+  </div>
+
+  <div class="row">
+    <div class="table-responsive" ng-if="ProgramsController.programs.length > 0">
+      <table class="table table-curved" cask-sortable>
+        <thead>
+          <tr ng-class="{'sort-enabled': ProgramsController.programs.length > 0}">
+            <th data-predicate="id">Name</th>
+            <th data-predicate="type">Type</th>
+            <th data-predicate="application.applicationId">Application</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="program in ProgramsController.programs | orderBy:sortable.predicate:sortable.reverse">
+            <td>
+
+              <my-program-link type="program.type" namespace="$state.params.namespace" app="program.application.applicationId" program="program.id">
+              </my-program-link>
+
+            </td>
+            <td>{{ ::program.type }}</td>
+            <td>
+              <a ui-sref="apps.detail.overview.programs({ appId: program.application.applicationId })">
+                {{ ::program.application.applicationId }}
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <br>
+    <div class="well text-center" ng-if="ProgramsController.programs.length === 0">
+      <h3>No program currently using this stream.</h3>
+    </div>
+  </div>
+</div>

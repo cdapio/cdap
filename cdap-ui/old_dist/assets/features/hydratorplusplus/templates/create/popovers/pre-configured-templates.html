@@ -1,0 +1,54 @@
+
+<div class="modal-header clearfix">
+  <h3 class="modal-title pull-left">Template Gallery: {{ HydratorPlusPlusPreConfiguredCtrl.templateContext }}</h3>
+  <div class="btn-group pull-right">
+    <a class="btn" ng-click="$close()">
+      <span class="fa fa-times"></span>
+    </a>
+  </div>
+</div>
+
+<div class="modal-body">
+  <div class="row">
+    <div class="col-xs-offset-8 col-xs-4 templates-filters">
+      <div class="row">
+        <div class="col-xs-12">
+          <div class="form-group has-feedback">
+            <input type="text" class="form-control" ng-model="HydratorPlusPlusPreConfiguredCtrl.searchText" placeholder="Search">
+            <span class="fa fa-search form-control-feedback"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xs-12 template-main">
+      <div class="row">
+        <div class="col-xs-4" ng-repeat="template in HydratorPlusPlusPreConfiguredCtrl.filtered = (HydratorPlusPlusPreConfiguredCtrl.templates | filter: { $: HydratorPlusPlusPreConfiguredCtrl.searchText })" ng-click="HydratorPlusPlusPreConfiguredCtrl.selectTemplate(template)">
+          <div class="well well-md start-well template-link">
+            <h4 class="template-name">{{ template.name }}</h4>
+            <p>{{ template.description }}</p>
+            <hr>
+            <div class="template-properties">
+              <p>Source: {{ template._source[0].plugin.name }}</p>
+              <p>Sinks: {{ template._sinks[0].plugin.name }}<span ng-if="template._sinks.length > 1">, ...</span> </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xs-12" ng-if="HydratorPlusPlusPreConfiguredCtrl.filtered.length > 9">
+          <uib-pagination total-items="HydratorPlusPlusPreConfiguredCtrl.filtered.length" ng-model="HydratorPlusPlusPreConfiguredCtrl.currentPage" items-per-page="9"></uib-pagination>
+        </div>
+        <div class="col-xs-12" ng-if="HydratorPlusPlusPreConfiguredCtrl.templates.length && HydratorPlusPlusPreConfiguredCtrl.filtered.length === 0">
+          <div class="well well-sm text-center">
+            No result(s) for <strong>{{HydratorPlusPlusPreConfiguredCtrl.searchText}}</strong>
+          </div>
+        </div>
+        <div class="col-xs-12" ng-if="HydratorPlusPlusPreConfiguredCtrl.templates.length === 0">
+          <div class="well well-sm text-center">
+            No templates to display for <strong>{{HydratorPlusPlusPreConfiguredCtrl.templateContext}}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

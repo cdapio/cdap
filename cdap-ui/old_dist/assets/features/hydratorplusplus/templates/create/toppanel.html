@@ -1,0 +1,72 @@
+
+
+<div class="side-panel top text-center">
+  <div class="hydrator-metadata" ng-class="{'expanded': HydratorPlusPlusTopPanelCtrl.metadataExpanded}" ng-click="!HydratorPlusPlusTopPanelCtrl.metadataExpanded && HydratorPlusPlusTopPanelCtrl.openMetadata()">
+
+    <div class="pipeline-type">
+      <span ng-if="HydratorPlusPlusTopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(HydratorPlusPlusTopPanelCtrl.state.artifact.name) !== -1" class="icon-ETLBatch"></span>
+      <span ng-if="HydratorPlusPlusTopPanelCtrl.state.artifact.name === HydratorPlusPlusTopPanelCtrl.GLOBALS.etlRealtime" class="icon-ETLRealtime"></span>
+      <span ng-if="HydratorPlusPlusTopPanelCtrl.state.artifact.name === HydratorPlusPlusTopPanelCtrl.GLOBALS.etlDataStreams" class="icon-sparkstreaming"></span>
+    </div>
+    <div class="metadata text-left">
+      <div class="pipeline-name" ng-class="{'placeholder': !HydratorPlusPlusTopPanelCtrl.state.metadata.name.length, 'error': HydratorPlusPlusTopPanelCtrl.invalidName}" ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded" ng-bind="HydratorPlusPlusTopPanelCtrl.state.metadata['name']" uib-tooltip="{{ HydratorPlusPlusTopPanelCtrl.state.metadata['name'] }}" tooltip-placement="bottom-left" tooltip-append-to-body="true" tooltip-enable="!HydratorPlusPlusTopPanelCtrl.invalidName" tooltip-class="toppanel-tooltip">
+      </div>
+      <div ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded && HydratorPlusPlusTopPanelCtrl.invalidName" uib-tooltip="Invalid Name" tooltip-is-open="HydratorPlusPlusTopPanelCtrl.invalidName" tooltip-placement="bottom-left" tooltip-append-to-body="true" tooltip-class="error-tooltip"></div>
+      <input type="text" id="pipeline-name-input" ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded" ng-model="HydratorPlusPlusTopPanelCtrl.state.metadata['name']" placeholder="Name your pipeline" ng-keyup="HydratorPlusPlusTopPanelCtrl.onEnterOnMetadata($event)">
+      <div class="pipeline-description" ng-class="{'placeholder': !HydratorPlusPlusTopPanelCtrl.state.metadata['description'].length}" ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded" ng-bind="HydratorPlusPlusTopPanelCtrl.parsedDescription" uib-tooltip="{{ HydratorPlusPlusTopPanelCtrl.parsedDescription }}" tooltip-placement="bottom-left" tooltip-append-to-body="true" tooltip-class="toppanel-tooltip"></div>
+      <textarea ng-model="HydratorPlusPlusTopPanelCtrl.state.metadata['description']" placeholder="Enter a description for your pipeline." ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded"></textarea>
+      <div class="btn-group pull-right" ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded">
+        <button type="button" class="btn btn-grey-cancel" ng-click="HydratorPlusPlusTopPanelCtrl.resetMetadata($event)">Cancel</button>
+        <button type="button" class="btn btn-blue" ng-click="HydratorPlusPlusTopPanelCtrl.saveMetadata($event)">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-group action-buttons" ng-if="!HydratorPlusPlusTopPanelCtrl.previewMode">
+    <div class="btn" ng-click="HydratorPlusPlusTopPanelCtrl.togglePreviewMode()" ng-if="HydratorPlusPlusTopPanelCtrl.isPreviewEnabled" uib-tooltip="Preview" tooltip-placement="bottom" tooltip-class="toppanel-tooltip">
+      <span class="fa icon-eye"></span>
+    </div>
+    <div class="btn" ng-click="HydratorPlusPlusTopPanelCtrl.showSettings()" uib-tooltip="Settings" tooltip-placement="bottom" tooltip-class="toppanel-tooltip">
+      <span class="fa fa-sliders"></span>
+      <span class="fa fa-caret-down" ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings"></span>
+    </div>
+    <div class="btn" ng-click="HydratorPlusPlusTopPanelCtrl.onExport()" uib-tooltip="Export" tooltip-placement="bottom" tooltip-class="toppanel-tooltip">
+      <span class="fa icon-export"></span>
+    </div>
+    <div class="btn" ng-click="HydratorPlusPlusTopPanelCtrl.onSaveDraft()" uib-tooltip="Save" tooltip-placement="bottom" tooltip-class="toppanel-tooltip">
+      <span class="fa icon-savedraft"></span>
+    </div>
+    <div class="btn" ng-click="HydratorPlusPlusTopPanelCtrl.onValidate()" uib-tooltip="Validate" tooltip-placement="bottom" tooltip-class="toppanel-tooltip">
+      <span class="fa icon-validate"></span>
+    </div>
+    <div class="btn" ng-click="HydratorPlusPlusTopPanelCtrl.onPublish()" uib-tooltip="Publish" tooltip-placement="bottom" tooltip-class="toppanel-tooltip">
+      <span class="fa icon-publish"></span>
+    </div>
+  </div>
+
+  
+  <div class="btn-group action-buttons" ng-if="HydratorPlusPlusTopPanelCtrl.previewMode">
+    <div class="btn active" ng-click="HydratorPlusPlusTopPanelCtrl.togglePreviewMode()">
+      <span class="fa icon-eye"></span>
+    </div>
+    <div class="btn" ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.runPreview()" ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading">
+      <span class="fa fa-play" ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading">
+      </span>
+
+      <span ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">
+        <span class="fa fa-refresh fa-spin"></span>
+      </span>
+    </div>
+    <div class="btn run-time">
+      <span>
+        {{ HydratorPlusPlusTopPanelCtrl.displayDuration.minutes }}:{{ HydratorPlusPlusTopPanelCtrl.displayDuration.seconds }}
+      </span>
+    </div>
+  </div>
+
+</div>
+<div class="pipeline-settings-backdrop" ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings" ng-click="HydratorPlusPlusTopPanelCtrl.state.viewSettings = false"></div>
+<div class="pipeline-settings">
+  <div store="HydratorPlusPlusTopPanelCtrl.HydratorPlusPlusConfigStore" action-creator="HydratorPlusPlusTopPanelCtrl.HydratorPlusPlusConfigActions" ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings" is-disabled="false" template-type="{{HydratorPlusPlusTopPanelCtrl.state.artifact.name}}" my-pipeline-settings>
+  </div>
+</div>

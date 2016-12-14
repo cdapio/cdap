@@ -1,0 +1,70 @@
+
+
+<my-breadcrumbs></my-breadcrumbs>
+  <div class="row" cdap-object-heading>
+    <div class="col-sm-6">
+      <div class="type-block">
+        <span ng-if="DetailController.myHydratorFactory.isCustomApp(DetailController.artifact.name)">
+          <span class="icon-app pull-left" uib-tooltip="Type: App" tooltip-placement="top" tooltip-append-to-body="true"></span>
+        </span>
+        <span ng-if="DetailController.myHydratorFactory.isETLApp(DetailController.artifact.name)">
+          <span ng-if="DetailController.GLOBALS.etlBatchPipelines.indexOf(DetailController.artifact.name) !== -1">
+            <span class="icon-ETLBatch pull-left" uib-tooltip="Type: ETL Batch" tooltip-placement="top" tooltip-append-to-body="true"></span>
+          </span>
+          <span ng-if="DetailController.GLOBALS.etlRealtime.indexOf(DetailController.artifact.name) !== -1">
+            <span class="icon-ETLRealtime pull-left" uib-tooltip="Type: ETL Realtime" tooltip-placement="top" tooltip-append-to-body="true"></span>
+          </span>
+          <span ng-if="DetailController.GLOBALS.etlDataStreams.indexOf(DetailController.artifact.name) !== -1">
+            <span class="icon-sparkstreaming pull-left" uib-tooltip="Type: Data Pipeline" tooltip-placement="top" tooltip-append-to-body="true"></span>
+          </span>
+        </span>
+        <h2 ng-bind="$state.params.appId"></h2>
+      </div>
+      <my-metadata-tags tag-limit="5" params="DetailController.metadataParams" type="apps"></my-metadata-tags>
+    </div>
+    <div class="col-sm-6 text-right">
+      <a href="{{DetailController.getHydratorUrl( { stateName: 'hydrator.detail', stateParams: { namespace: $stateParams.namespace, pipelineId: $state.params.appId} } )}}" class="btn btn-hydrator" ng-if="DetailController.isHydrator" title="View in Hydrator">
+        <span class="icon-hydrator"></span>
+        <span>Hydrator</span>
+      </a>
+      <div class="btn-group dropdown-right" uib-dropdown>
+        <button type="button" class="btn btn-default dropdown-toggle" uib-dropdown-toggle>
+          Actions <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+          <li role="presentation">
+            <a ui-sref="admin.namespace.detail.apps.metadata.preference({ nsadmin: $state.params.namespace, appId: $state.params.appId })" role="menuitem">
+              <span class="fa fa-fw fa-cog pull-right"></span>
+              <span> Preferences </span>
+            </a>
+          </li>
+          <li role="presentation">
+            <a ui-sref="admin.namespace.detail.apps.metadata({ nsadmin: $state.params.namespace, appId: $state.params.appId })" role="menuitem">
+              <span> Manage </span>
+              <span class="fa fa-wrench pull-right"></span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+  <div class="cdap-subnav-end"></div>
+
+  <ul class="nav nav-tabs slanted-tabs" role="tablist">
+    <li role="presentation" ui-sref-active="active" ng-if="DetailController.isHydrator">
+      <a ui-sref="apps.detail.overview.status" ui-sref-opts="{reload: true}" role="tab">Status</a>
+    </li>
+
+    <li role="presentation" ui-sref-active="active">
+      <a ui-sref="apps.detail.overview.programs" ui-sref-opts="{reload: true}" role="tab">Programs</a>
+    </li>
+
+    <li role="presentation" ui-sref-active="active">
+      <a ui-sref="apps.detail.overview.datasets" ui-sref-opts="{reload: true}" role="tab">Datasets</a>
+    </li>
+
+  </ul>
+
+  <br>
+  <ui-view role="tabpanel">

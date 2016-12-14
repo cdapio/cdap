@@ -30,18 +30,41 @@ public final class MessagingUtils {
   }
 
   /**
-   * Convert {@link TopicId} to byte array to be used a message tables row key prefix.
+   * Constants
+   */
+  public static final class Constants {
+    public static final String DEFAULT_GENERATION = Integer.toString(1);
+  }
+
+  /**
+   * Convert {@link TopicId} to byte array to be used for metadata table row key.
    *
    * @param topicId {@link TopicId}
    * @return byte array representation for the topic id
    */
-  public static byte[] toRowKeyPrefix(TopicId topicId) {
+  public static byte[] toMetadataRowKey(TopicId topicId) {
     String topic = topicId.getNamespace() + ":" + topicId.getTopic() + ":";
     return Bytes.toBytes(topic);
   }
 
   /**
-   * Convert byte array encoded with the {@link #toRowKeyPrefix(TopicId)} method back to the {@link TopicId}
+   * Convert {@link TopicId} and generation id to byte array to be used for data tables (message and payload) as
+   * row key prefix.
+   *
+   * @param topicId {@link TopicId}
+   * @param generation generation id of the topic
+   * @return byte array representation to be used as row key prefix for data tables
+   */
+  public static byte[] toDataKeyPrefix(TopicId topicId, int generation) {
+    byte[] metadataRowKey = toMetadataRowKey(topicId);
+    byte[] keyPrefix = new byte[metadataRowKey.length + Bytes.SIZEOF_INT];
+    Bytes.putBytes(keyPrefix, 0, metadataRowKey, 0, metadataRowKey.length);
+    Bytes.putInt(keyPrefix, metadataRowKey.length, generation);
+    return keyPrefix;
+  }
+
+  /**
+   * Convert byte array encoded with the {@link #toMetadataRowKey(TopicId)} method back to the {@link TopicId}
    *
    * @param topicBytes byte array which contains the representation of the topic id
    * @param offset offset to start decoding
@@ -57,7 +80,7 @@ public final class MessagingUtils {
   }
 
   /**
-   * Convert byte array encoded with the {@link #toRowKeyPrefix(TopicId)} method back to the {@link TopicId}.
+   * Convert byte array encoded with the {@link #toMetadataRowKey(TopicId)} method back to the {@link TopicId}.
    * Same as calling {@link #toTopicId(byte[], int, int)} with {@code offset = 0}
    * and {@code length = topicBytes.length}.
    *

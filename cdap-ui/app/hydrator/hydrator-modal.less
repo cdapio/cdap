@@ -172,6 +172,19 @@
                 plugin-functions > * { top: 25px; }
               }
 
+              .wrangler-button {
+                margin-top: -20px;
+
+                .btn-wrangler {
+                  color: white;
+                  background-color: @wrangler-red;
+
+                  &:hover {
+                    background-color: darken(@wrangler-red, 5%);
+                  }
+                }
+              }
+
               ul.nav.nav-tabs {
                 li {
                   color: #666666;
@@ -370,6 +383,32 @@ body.theme-cdap {
             }
           }
         }
+      }
+    }
+  }
+}
+
+.modal.wrangler-modal {
+  overflow-y: hidden;
+  .modal-dialog {
+    width: 100vw;
+    margin-top: 50px;
+
+    .modal-content {
+      height: calc(~"100vh - 50px");
+      border-radius: 0;
+
+      .modal-body {
+        height: 100%;
+        max-height: initial;
+        padding: 0;
+        overflow: hidden;
+
+        .data-table {
+          overflow-y: hidden;
+        }
+
+        .table { margin-top: 0; }
       }
     }
   }

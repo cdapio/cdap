@@ -109,7 +109,7 @@ class ConfigurationCheck extends AbstractMasterCheck {
   private void checkPotentialPortConflicts() {
     // check for potential port conflicts
     Multimap<Integer, String> services = HashMultimap.create();
-    if (cConf.getBoolean(Constants.Security.SSL_ENABLED)) {
+    if (cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED)) {
       services.put(cConf.getInt(Constants.Router.ROUTER_SSL_PORT), "Router");
       services.put(cConf.getInt(Constants.Router.WEBAPP_SSL_PORT), "UI");
       services.put(cConf.getInt(Constants.Security.AuthenticationServer.SSL_PORT), "Authentication Server");

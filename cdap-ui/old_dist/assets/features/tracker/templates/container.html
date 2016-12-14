@@ -1,0 +1,18 @@
+
+
+
+<div class="tracker-top-search">
+  <div class="tracker-search-bar">
+    <div class="form-group has-feedback" ng-keypress="ContainerController.search($event)">
+      <input type="text" class="form-control" ng-model="ContainerController.searchQuery" pattern="^(?![*]).*$">
+      <span class="fa fa-search form-control-feedback"></span>
+    </div>
+  </div>
+
+   <span class="try-star-search" ng-if="$state.params.searchQuery && $state.params.searchQuery[$state.params.searchQuery.length - 1] !== '*'">
+    Didn't find what you are looking for? Try
+    <a ui-sref="tracker.detail.result({ searchQuery: $state.params.searchQuery + '*' })" ui-sref-opts="{reload: true}">{{ $state.params.searchQuery }}*</a>
+  </span>
+</div>
+
+<ui-view></ui-view>

@@ -45,8 +45,11 @@ export default class WranglerTable extends Component {
       errors: storeState.errors,
       sort: storeState.sort,
       sortAscending: storeState.sortAscending,
-      filter: storeState.filter
+      filter: storeState.filter,
+      showColumnMetadata: false
     };
+
+    this.toggleColumnMetadata = this.toggleColumnMetadata.bind(this);
 
     this.tableHeader = null;
     this.tableBody = null;
@@ -59,7 +62,7 @@ export default class WranglerTable extends Component {
       getId: ({ property}) => property
     });
 
-    WranglerStore.subscribe(() => {
+   this.sub = WranglerStore.subscribe(() => {
       let state = WranglerStore.getState().wrangler;
 
       this.setState({
@@ -87,6 +90,11 @@ export default class WranglerTable extends Component {
 
   componentWillUnmount() {
     this.resizableHelper.cleanup();
+    this.sub();
+  }
+
+  toggleColumnMetadata() {
+    this.setState({showColumnMetadata: !this.state.showColumnMetadata});
   }
 
   onColumnClick(column) {
@@ -97,9 +105,9 @@ export default class WranglerTable extends Component {
      **/
 
     let prevActiveColumn = this.props.activeSelection;
-    let prevColumns = document.getElementsByClassName(`column-${prevActiveColumn}`);
+    let prevColumns = document.getElementsByClassName(`wrangler-column-${prevActiveColumn}`);
 
-    let columns = document.getElementsByClassName(`column-${column}`);
+    let columns = document.getElementsByClassName(`wrangler-column-${column}`);
 
     for (let i = 0; i < columns.length; i++) {
       if (prevActiveColumn) {
@@ -138,7 +146,7 @@ export default class WranglerTable extends Component {
             className: this.props.activeSelection === header ? 'top-header active' : '',
           })],
           formatters: [(head, extraParameters) => resizableFormatter(
-            (<div style={{ display: 'inline' }}>
+            (<div className="header-content-container">
               <span
                 className="header-text"
                 onClick={this.onColumnClick.bind(this, head)}
@@ -146,17 +154,17 @@ export default class WranglerTable extends Component {
                 {head}
               </span>
 
-              <span className="pull-right">
+              <span className="pull-right action-icon text-right">
                 {errors[head] && errors[head].count ? errorCircle : null}
                 <ColumnActionsDropdown column={head} />
               </span>
-              </div>),
+            </div>),
             extraParameters
           )]
         },
         cell: {
           transforms: [(cell, extra) => ({
-            className: classnames(`column-${header}`, {
+            className: classnames(`wrangler-column-${header}`, {
               'active': this.props.activeSelection === header,
               'column-type-cell': extra.rowIndex === -1
             }),
@@ -170,7 +178,7 @@ export default class WranglerTable extends Component {
                   labels={state.histogram[extra.property].labels}
                 />
               ) : (
-                <span style={{width: '100%', display: 'inline-block'}}>
+                <span>
                   <span className="content">{value}</span>
                   {
                     errors[header] && errors[header][extra.rowData._index] ?
@@ -189,7 +197,18 @@ export default class WranglerTable extends Component {
       property: '_index',
       header: {
         label: '#',
-        formatters: [resizableFormatter]
+        formatters: [(head, extraParameters) => resizableFormatter((
+          <span
+            className="index-column-header-content"
+            onClick={this.toggleColumnMetadata}
+          >
+            <span>#</span>
+            <span className={classnames('fa', {
+              'fa-caret-down': !this.state.showColumnMetadata,
+              'fa-caret-up': this.state.showColumnMetadata
+            })} />
+          </span>
+        ), extraParameters)]
       },
       cell: {
         formatters: [
@@ -241,13 +260,12 @@ export default class WranglerTable extends Component {
       method: resolve.index
     })(data);
 
-    if (this.props.showHistogram) {
+    if (this.state.showColumnMetadata) {
       let histogramRow = Object.assign({}, this.state.histogram, {_index: -2});
       rows.unshift(histogramRow);
+      let typeRow = Object.assign({}, this.state.columnTypes, {_index: -1});
+      rows.unshift(typeRow);
     }
-
-    let typeRow = Object.assign({}, this.state.columnTypes, {_index: -1});
-    rows.unshift(typeRow);
 
     return (
       <Table.Provider
@@ -286,7 +304,6 @@ export default class WranglerTable extends Component {
 WranglerTable.propTypes = {
   onColumnClick: PropTypes.func,
   activeSelection: PropTypes.string,
-  showHistogram: PropTypes.bool,
   height: PropTypes.number,
   width: PropTypes.number
 };

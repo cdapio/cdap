@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.gateway.router.handlers.HttpRequestHandler;
 import co.cask.cdap.gateway.router.handlers.HttpStatusRequestHandler;
-import co.cask.cdap.gateway.router.handlers.IdleEventProcessor;
 import co.cask.cdap.gateway.router.handlers.SecurityAuthenticationHttpHandler;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.auth.TokenValidator;
@@ -54,10 +53,7 @@ import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioWorkerPool;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
-import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
-import org.jboss.netty.handler.codec.http.HttpResponseDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
-import org.jboss.netty.handler.timeout.IdleStateHandler;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timer;
 import org.slf4j.Logger;
@@ -124,7 +120,7 @@ public class NettyRouter extends AbstractIdleService {
     this.accessTokenTransformer = accessTokenTransformer;
     this.discoveryServiceClient = discoveryServiceClient;
     this.configuration = cConf;
-    this.sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
+    this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED);
     boolean webAppEnabled = cConf.getBoolean(Constants.Router.WEBAPP_ENABLED);
     if (isSSLEnabled()) {
       this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
@@ -198,10 +194,10 @@ public class NettyRouter extends AbstractIdleService {
     LOG.info("Stopped Netty Router.");
   }
 
+  /** @noinspection NullableProblems */
   @Override
   protected Executor executor(final State state) {
     final AtomicInteger id = new AtomicInteger();
-    //noinspection NullableProblems
     final Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
       @Override
       public void uncaughtException(Thread t, Throwable e) {
@@ -312,23 +308,9 @@ public class NettyRouter extends AbstractIdleService {
         new NioClientBossPool(clientBossExecutor, clientBossThreadPoolSize),
         new NioWorkerPool(clientWorkerExecutor, clientWorkerThreadPoolSize)));
 
-
-    clientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-      @Override
-      public ChannelPipeline getPipeline() throws Exception {
-        ChannelPipeline pipeline = Channels.pipeline();
-        pipeline.addLast("tracker", connectionTracker);
-        pipeline.addLast("request-encoder", new HttpRequestEncoder());
-        // outbound handler gets dynamically added here (after 'request-encoder')
-        pipeline.addLast("response-decoder", new HttpResponseDecoder());
-        // disable the read-specific and write-specific timeouts; we only utilize IdleState#ALL_IDLE
-        pipeline.addLast("idle-event-generator",
-                         new IdleStateHandler(timer, 0, 0, connectionTimeout));
-        pipeline.addLast("idle-event-processor", new IdleEventProcessor());
-        return pipeline;
-      }
-    });
-
+    ChannelPipelineFactory pipelineFactory = new ClientChannelPipelineFactory(connectionTracker, connectionTimeout,
+                                                                              timer);
+    clientBootstrap.setPipelineFactory(pipelineFactory);
     clientBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
   }
 

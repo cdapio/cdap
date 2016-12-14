@@ -1,0 +1,14 @@
+
+
+<div ng-repeat="(name, value) in PostActionController.pluginConfig._backendProperties track by $index">
+  <div class="form-group">
+    <label ng-init="title='info';description=PostActionController.pluginConfig._backendProperties[name].description" class="control-label">
+      <span>{{name}}</span>
+      <span class="fa fa-info-circle" uib-tooltip="{{description}}" tooltip-placement="right" tooltip-append-to-body="true">
+      </span>
+      <span class="fa fa-asterisk" ng-if="PostActionController.pluginConfig._backendProperties[name].required"></span>
+      <small class="text-danger" ng-if="PostActionController.errorInConfig && PostActionController.pluginConfig._backendProperties[name].required && !PostActionController.pluginConfig.plugin.properties[name]">{{::PostActionController.requiredPropertyError}}</small>
+    </label>
+    <input type="text" class="form-control" ng-model="PostActionController.pluginConfig.plugin.properties[name]">
+  </div>
+</div>

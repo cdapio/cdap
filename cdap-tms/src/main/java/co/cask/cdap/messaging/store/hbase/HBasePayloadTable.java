@@ -25,7 +25,6 @@ import co.cask.cdap.hbase.wd.DistributedScanner;
 import co.cask.cdap.messaging.store.AbstractPayloadTable;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.RawPayloadTableEntry;
-import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -111,31 +110,6 @@ final class HBasePayloadTable extends AbstractPayloadTable {
 
     if (!batchPuts.isEmpty()) {
       hTable.put(batchPuts);
-      if (!hTable.isAutoFlush()) {
-        hTable.flushCommits();
-      }
-    }
-  }
-
-  @Override
-  protected void delete(byte[] startRow, byte[] stopRow) throws IOException {
-    Scan scan = tableUtil.buildScan()
-      .setStartRow(startRow)
-      .setStopRow(stopRow)
-      .build();
-
-    List<Delete> batchDeletes = new ArrayList<>();
-    try (ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor)) {
-      for (Result result : scanner) {
-        // No need to turn the key back to the original row key because we want to delete with the actual row key
-        Delete delete = tableUtil.buildDelete(result.getRow()).build();
-        batchDeletes.add(delete);
-        hTable.delete(delete);
-      }
-    }
-
-    if (!batchDeletes.isEmpty()) {
-      hTable.delete(batchDeletes);
       if (!hTable.isAutoFlush()) {
         hTable.flushCommits();
       }

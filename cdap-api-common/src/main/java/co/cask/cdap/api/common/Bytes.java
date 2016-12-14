@@ -257,6 +257,20 @@ public class Bytes {
   }
 
   /**
+   * Returns a byte[] by decoding from the given hexadecimal string. The string must be have an even length.
+   */
+  public static byte[] fromHexString(String str) {
+    if (str.length() % 2 != 0) {
+      throw new IllegalArgumentException("The hex string must have an even number of characters: " + str);
+    }
+    byte[] result = new byte[str.length() / 2];
+    for (int i = 0; i < str.length(); i += 2) {
+      result[i / 2] = (byte) ((Character.digit(str.charAt(i), 16) << 4) + Character.digit(str.charAt(i + 1), 16));
+    }
+    return result;
+  }
+
+  /**
    * Converts the given byte buffer, from its array offset to its limit, to
    * a string. The position and the mark are ignored.
    *

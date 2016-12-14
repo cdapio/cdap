@@ -1,0 +1,120 @@
+
+
+<div class="row">
+  <div class="integration-item">
+    <div class="integration-information">
+      <h3>Cloudera Navigator</h3>
+      <p>Secure, govern, and explore the large amounts of diverse data that land in Hadoop</p>
+    </div>
+
+    <div class="integration-setup text-right" ng-if="!IntegrationsController.navigatorSetup.isSetup">
+      <button class="btn btn-default btn-setup" uib-popover-template="'old_assetsfeatures/tracker/templates/partial/integrations-setup-popover.html'" popover-placement="bottom" popover-class="integration-setup-popup" popover-trigger="outsideClick" popover-is-open="IntegrationsController.navigatorSetup.isOpen">
+        <span ng-if="!IntegrationsController.saving">
+          Setup
+        </span>
+        <span ng-if="IntegrationsController.saving">
+          <span class="fa fa-spin fa-refresh"></span>
+          <span>Saving</span>
+        </span>
+      </button>
+    </div>
+
+    <div class="integration-status" ng-if="IntegrationsController.navigatorSetup.isSetup">
+      <div class="status status-item">
+        <p>
+          <strong>Status: </strong>
+          <span class="fa fa-circle" ng-class="{ 'text-success': IntegrationsController.navigatorState.status === 'RUNNING' || IntegrationsController.navigatorState.status === 'STARTING', 'text-danger': IntegrationsController.navigatorState.status !== 'RUNNING' && IntegrationsController.navigatorState.status !== 'STARTING' }"></span>
+          <span ng-if="IntegrationsController.navigatorState.status !== 'KILLED'">
+            {{ IntegrationsController.navigatorState.status }}
+          </span>
+          <span ng-if="IntegrationsController.navigatorState.status === 'KILLED'">
+            STOPPED
+          </span>
+        </p>
+      </div>
+
+      <div class="date status-item">
+        <p class="status-information">
+          <span ng-if="IntegrationsController.navigatorState.status !== 'RUNNING' && IntegrationsController.navigatorState.end">
+            <strong>Disabled: </strong>
+            <span>{{ IntegrationsController.navigatorState.end * 1000 | amDateFormat: 'MMM DD, YYYY h:mm A'}}</span>
+          </span>
+          <span ng-if="IntegrationsController.navigatorState.status === 'RUNNING'">
+            <strong>Enabled: </strong>
+            <span>{{ IntegrationsController.navigatorState.start * 1000 | amDateFormat: 'MMM DD, YYYY h:mm A'}}</span>
+          </span>
+
+        </p>
+      </div>
+      <div class="config status-item">
+        <button class="btn btn-default btn-setup" uib-popover-template="'old_assetsfeatures/tracker/templates/partial/integrations-setup-popover.html'" popover-placement="bottom" popover-class="integration-setup-popup" popover-trigger="outsideClick" popover-is-open="IntegrationsController.navigatorSetup.isOpen">
+          <span ng-if="!IntegrationsController.saving">View Config</span>
+          <span ng-if="IntegrationsController.saving">
+            <span class="fa fa-spin fa-refresh"></span>
+            <span>Saving</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="enable-control status-item">
+        <div class="integrations-switch" ng-class="{'enabled': IntegrationsController.navigatorSetup.isEnabled, 'disabled': !IntegrationsController.navigatorSetup.isEnabled }" ng-click="IntegrationsController.toggleNavigator()">
+            <span class="switch-button"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row" ng-if="IntegrationsController.navigatorState.status === 'RUNNING'">
+  <div class="col-xs-12">
+    <div class="navigator-metrics">
+      <h4 class="events-sent-title">Events Sent</h4>
+      <c3-area-spline chart-metric="IntegrationsController.chartData" chart-settings="IntegrationsController.chartSettings" chart-size="{height: 150}" chart-padding="{ bottom: -6 }"></c3-area-spline>
+
+      <h5 class="time-label">Time(last hour)</h5>
+      <h5 class="total-events">Total Events Sent: {{ IntegrationsController.eventsSentAggregate }}</h5>
+    </div>
+  </div>
+</div>
+
+<div ng-if="IntegrationsController.navigatorState.status === 'RUNNING'">
+  <div class="integrations-log-viewer">
+    <div class="row">
+      <div class="col-xs-10">
+        <div class="navigator-flow-title">
+          <h3>
+            <span class="icon-tigon"></span>
+            <span>MetadataFlow</span>
+          </h3>
+          <p>
+            Flow that subscribes to Metadata changes and propagates the same to Navigator
+          </p>
+        </div>
+      </div>
+      <div class="col-xs-2 text-right">
+        <div uib-dropdown>
+          <button class="btn" uib-dropdown-toggle>
+            <span>Jump</span>
+            <span class="fa fa-angle-down"></span>
+          </button>
+
+          <ul class="pull-right" uib-dropdown-menu>
+            <li>
+              <a ui-sref="flows.detail({ appId: IntegrationsController.UI_CONFIG.navigator.appId, programId: IntegrationsController.UI_CONFIG.navigator.programId})">
+                View in CDAP
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      
+      <div class="col-xs-12 log-viewer-parent">
+        <my-log-viewer namespace-id="{{IntegrationsController.logsParams.namespace}}" app-id="{{IntegrationsController.logsParams.appId}}" program-type="{{IntegrationsController.logsParams.programType}}" program-id="{{IntegrationsController.logsParams.programId}}" run-id="{{IntegrationsController.logsParams.runId}}" entity-name="Cloudera Navigator">
+        </my-log-viewer>
+      </div>
+    </div>
+  </div>
+</div>

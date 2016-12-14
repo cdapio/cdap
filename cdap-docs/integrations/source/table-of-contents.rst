@@ -10,7 +10,7 @@ CDAP Integrations Table of Contents
    :maxdepth: 4
 
     Introduction <index>
-    Cask Market <cask-market/index>
+    Cask Market <cask-market>
     Cloudera <partners/cloudera/index>
     Apache Sentry <apache-sentry>
     Apache Hadoop KMS <hadoop-kms>

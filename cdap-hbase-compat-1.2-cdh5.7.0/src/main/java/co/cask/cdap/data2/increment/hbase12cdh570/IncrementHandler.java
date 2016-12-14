@@ -27,10 +27,13 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
@@ -44,6 +47,7 @@ import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.tephra.TxConstants;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -72,7 +76,6 @@ public class IncrementHandler extends BaseRegionObserver {
   private Region region;
   private IncrementHandlerState state;
 
-
   @Override
   public void start(CoprocessorEnvironment e) throws IOException {
     if (e instanceof RegionCoprocessorEnvironment) {
@@ -90,7 +93,7 @@ public class IncrementHandler extends BaseRegionObserver {
   }
 
   @VisibleForTesting
-  public void setTimestampOracle(TimestampOracle timeOracle) {
+  void setTimestampOracle(TimestampOracle timeOracle) {
     state.setTimestampOracle(timeOracle);
   }
 
@@ -118,6 +121,58 @@ public class IncrementHandler extends BaseRegionObserver {
         scanner.close();
       }
     }
+  }
+
+  @Override
+  public Result preIncrementAfterRowLock(ObserverContext<RegionCoprocessorEnvironment> e, Increment increment)
+    throws IOException {
+
+    // this should only trigger for a transactional readless increment
+    boolean isIncrement = increment.getAttribute(HBaseTable.DELTA_WRITE) != null;
+    boolean transactional = state.containsTransactionalFamily(increment.getFamilyCellMap().keySet());
+    if (!isIncrement || !transactional) {
+      return null;
+    }
+    byte[] txBytes = increment.getAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY);
+    if (txBytes == null) {
+      throw new IllegalArgumentException("Attribute " + TxConstants.TX_OPERATION_ATTRIBUTE_KEY
+                                           + " must be set for transactional readless increments");
+    }
+    byte[] wpBytes = increment.getAttribute(HBaseTable.WRITE_POINTER);
+    if (wpBytes == null) {
+      throw new IllegalArgumentException("Attribute " + HBaseTable.WRITE_POINTER
+                                           + " must be set for transactional readless increments");
+    }
+    long writeVersion = Bytes.toLong(wpBytes);
+    Get get = new Get(increment.getRow());
+    get.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txBytes);
+    for (Map.Entry<byte[], NavigableMap<byte[], Long>> entry : increment.getFamilyMapOfLongs().entrySet()) {
+      byte[] family = entry.getKey();
+      for (byte[] column : entry.getValue().keySet()) {
+        get.addColumn(family, column);
+      }
+    }
+    Result result = region.get(get);
+
+    Put put = new Put(increment.getRow());
+    for (Map.Entry<byte[], NavigableMap<byte[], Long>> entry : increment.getFamilyMapOfLongs().entrySet()) {
+      byte[] family = entry.getKey();
+      for (Map.Entry<byte[], Long> colEntry: entry.getValue().entrySet()) {
+        byte[] column = colEntry.getKey();
+        long value = colEntry.getValue();
+        byte[] existingValue = result.getValue(family, column);
+        if (existingValue != null) {
+          long delta = Bytes.toLong(existingValue);
+          value += delta;
+        }
+        put.add(new KeyValue(increment.getRow(), family, column, writeVersion, Bytes.toBytes(value)));
+      }
+    }
+    if (!put.isEmpty()) {
+      region.put(put);
+    }
+    e.bypass();
+    return new Result();
   }
 
   @Override
@@ -204,7 +259,7 @@ public class IncrementHandler extends BaseRegionObserver {
         ScanType.COMPACT_RETAIN_DELETES, state.getCompactionBound(family), state.getOldestVisibleTimestamp(family));
   }
 
-  public static boolean isIncrement(Cell cell) {
+  static boolean isIncrement(Cell cell) {
     return !CellUtil.isDelete(cell) && cell.getValueLength() == IncrementHandlerState.DELTA_FULL_LENGTH &&
       Bytes.equals(cell.getValueArray(), cell.getValueOffset(), IncrementHandlerState.DELTA_MAGIC_PREFIX.length,
                    IncrementHandlerState.DELTA_MAGIC_PREFIX, 0, IncrementHandlerState.DELTA_MAGIC_PREFIX.length);

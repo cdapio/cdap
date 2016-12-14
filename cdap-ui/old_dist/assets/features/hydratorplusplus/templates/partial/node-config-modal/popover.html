@@ -1,0 +1,56 @@
+
+<div class="modal-header clearfix">
+
+  <h4 class="modal-title pull-left" ng-class="{'with-jump': HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.jumpConfig.datasets.length}">
+    <span>
+      {{HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name}} Properties
+      <small>{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.artifact.version }}</small>
+    </span>
+    <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">({{HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage}})</small>
+    <p>
+      <small>{{HydratorPlusPlusNodeConfigCtrl.state.node.description}}</small>
+    </p>
+  </h4>
+  <div class="btn-group pull-right">
+    <my-link-button class="btn" ng-if="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.jumpConfig.datasets.length" entities="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.jumpConfig.datasets">
+    </my-link-button>
+    <a class="btn" ng-if="HydratorPlusPlusNodeConfigCtrl.state.windowMode === 'regular'" ng-click="HydratorPlusPlusNodeConfigCtrl.toggleMaximizedView(true)">
+      <span class="fa fa-expand"></span>
+      <span class="sr-only"> Expand </span>
+    </a>
+    <a class="btn" ng-if="HydratorPlusPlusNodeConfigCtrl.state.windowMode === 'expand'" ng-click="HydratorPlusPlusNodeConfigCtrl.toggleMaximizedView(false)">
+      <span class="fa fa-compress"></span>
+      <span class="sr-only"> Compress </span>
+    </a>
+    <a class="btn" ng-click="$close()">
+      <span class="fa fa-remove"></span>
+      <span class="sr-only"> Close </span>
+    </a>
+  </div>
+</div>
+<div class="modal-body config-modal">
+  <div class="console-type">
+    <div class="node-config">
+      <div>
+        <ul class="nav nav-tabs" role="tablist">
+          <li role="presentation" ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 1" ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 1}">
+            {{::HydratorPlusPlusNodeConfigCtrl.tabs[0].label}}
+          </li>
+          <li role="presentation" ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 2" ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 2}" ng-if="HydratorPlusPlusNodeConfigCtrl.isPreviewMode">
+            {{::HydratorPlusPlusNodeConfigCtrl.tabs[1].label}}
+          </li>
+          <li role="presentation" ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 3" ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 3}">
+            {{::HydratorPlusPlusNodeConfigCtrl.tabs[2].label}}
+          </li>
+        </ul>
+        <div class="bottompanel-body" ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 1 && HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin" ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[0].templateUrl">
+        </div>
+        <div class="bottompanel-body" ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 2" ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[1].templateUrl">
+        </div>
+        <div class="bottompanel-body" ng-init="node=HydratorPlusPlusNodeConfigCtrl.state.node" ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 3" ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[2].templateUrl">
+        </div>
+      </div>
+    </div>
+  </div>
+  <br>
+</div>

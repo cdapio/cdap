@@ -19,6 +19,8 @@ import {Dropdown, DropdownMenu} from 'reactstrap';
 import classnames from 'classnames';
 import AbstractWizard from 'components/AbstractWizard';
 import NamespaceStore from 'services/NamespaceStore';
+import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
+
 import {Link} from 'react-router';
 const shortid = require('shortid');
 require('./NamespaceDropdown.less');
@@ -62,7 +64,7 @@ export default class NamespaceDropdown extends Component {
   }
   selectNamespace(name){
     NamespaceStore.dispatch({
-      type: 'SELECT_NAMESPACE',
+      type: NamespaceActions.selectNamespace,
       payload: {
         selectedNamespace : name
       }

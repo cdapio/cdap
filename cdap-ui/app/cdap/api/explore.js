@@ -26,7 +26,9 @@ const myExploreApi = {
   fetchQueries: apiCreator(dataSrc, 'GET', 'POLL', queriesPath),
   submitQuery: apiCreator(dataSrc, 'POST', 'REQUEST', queriesPath),
   getQuerySchema: apiCreator(dataSrc, 'GET', 'REQUEST', queryHandleApi + '/schema'),
-  getQueryPreview: apiCreator(dataSrc, 'POST', 'REQUEST', queryHandleApi + '/preview')
+  getQueryPreview: apiCreator(dataSrc, 'POST', 'REQUEST', queryHandleApi + '/preview'),
+  pollQueryStatus: apiCreator(dataSrc, 'GET', 'POLL', queryHandleApi + '/status'),
+  download: apiCreator(dataSrc, 'POST', 'REQUEST', queryHandleApi + '/download')
 };
 
 export default myExploreApi;

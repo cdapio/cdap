@@ -1,0 +1,60 @@
+
+
+<my-breadcrumbs></my-breadcrumbs>
+<div class="row">
+  <div class="col-xs-8">
+    <h2> All Datasets </h2>
+  </div>
+
+  <div class="col-xs-4">
+    <div class="input-group pull-right h2">
+      <input type="text" class="form-control" ng-model="dataCtrl.searchText" placeholder="search...">
+      <div class="input-group-addon">
+        <i class="fa fa-search"></i>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="table-responsive">
+  <table class="table table-curved" cask-sortable>
+    <thead>
+      <tr ng-class="{'sort-enabled': dataCtrl.dataList.length>0}">
+        <th data-predicate="name"> Name </th>
+        <th data-predicate="dataType"> Type </th>
+        <th data-predicate="programs"> Programs </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="data in dataCtrl.filtered = (dataCtrl.dataList | filter: dataCtrl.searchText ) | orderBy:sortable.predicate:sortable.reverse | myPaginate:dataCtrl.currentPage ">
+          <td>
+            <a ng-click="dataCtrl.goToDetail(data)" href="">
+                <strong ng-bind="data.name"> </strong>
+            </a>
+          </td>
+          <td>
+            <span class="icon-streams" ng-if="data.dataType === 'Stream'"></span>
+            <span class="icon-datasets" ng-if="data.dataType === 'Dataset'"></span>
+            <span> {{data.dataType}} </span>
+          </td>
+          <td>
+            <span ng-repeat="program in data.programs | limitTo:5" ng-if="data.programs.length > 0">
+
+              <my-program-link namespace="$state.params.namespace" app="program.application.applicationId" program="program.id" type="program.type">
+              </my-program-link>
+
+              <span ng-if="!$last">|</span>
+            </span>
+            <span ng-if="data.programs.length > 5">|
+              <a ui-sref="datasets.detail.overview.programs({ datasetId: data.name })" ng-if="data.dataType === 'Dataset'">...</a>
+              <a ui-sref="streams.detail.overview.programs({ streamId: data.name })" ng-if="data.dataType === 'Stream'">...</a>
+            </span>
+            <span ng-if="data.programs.length === 0">---</span>
+          </td>
+      </tr>
+    <tbody>
+  </tbody></tbody></table>
+</div>
+
+<div class="text-center" ng-if="dataCtrl.filtered.length > 10">
+  <uib-pagination total-items="dataCtrl.filtered.length" ng-model="dataCtrl.currentPage"></uib-pagination>
+</div>

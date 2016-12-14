@@ -39,7 +39,9 @@ export default class Datasource {
           this.bindings[hash].rx.onNext(data.response);
         }
 
-        if (this.bindings[hash].type === 'REQUEST') {
+        // Adding check if bindings[hash] exist because if a Poll that gets cancelled
+        // within 1 tick, the bindings[hash] will already be deleted
+        if (this.bindings[hash] && this.bindings[hash].type === 'REQUEST') {
           this.bindings[hash].rx.onCompleted();
           this.bindings[hash].rx.dispose();
           delete this.bindings[hash];

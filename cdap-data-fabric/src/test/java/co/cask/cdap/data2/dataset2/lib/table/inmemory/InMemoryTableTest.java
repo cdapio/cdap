@@ -24,6 +24,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTableTest;
 import co.cask.cdap.data2.dataset2.lib.table.TableProperties;
 
+import java.util.Map;
+
 /**
  *
  */
@@ -33,7 +35,7 @@ public class InMemoryTableTest extends BufferingTableTest<InMemoryTable> {
 
   @Override
   protected InMemoryTable getTable(DatasetContext datasetContext, String name,
-                                   DatasetProperties props) throws Exception {
+                                   DatasetProperties props, Map<String, String> runtimeArguments) throws Exception {
     ConflictDetection conflictLevel =
       TableProperties.getConflictDetectionLevel(props.getProperties(), ConflictDetection.ROW);
     return new InMemoryTable(datasetContext, name, conflictLevel, cConf);

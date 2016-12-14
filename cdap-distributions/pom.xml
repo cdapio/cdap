@@ -95,6 +95,9 @@
                     --before-install "${project.basedir}/src/rpm/scripts/common-preinst"
                     --before-remove "${project.basedir}/src/rpm/scripts/common-prerm"
                     --iteration "${release.iteration}"
+                    --depends chkconfig
+                    --depends glibc-common
+                    --depends shadow-utils
                     ${package.config.dirs}
                     etc
                   </commandlineArgs>
@@ -172,6 +175,9 @@
                     --before-install "${project.basedir}/src/debian/scripts/common-preinst"
                     --before-remove "${project.basedir}/src/debian/scripts/common-prerm"
                     --iteration "${release.iteration}"
+                    --depends dpkg
+                    --depends libc-bin
+                    --depends passwd
                     ${package.config.dirs}
                     etc
                   </commandlineArgs>

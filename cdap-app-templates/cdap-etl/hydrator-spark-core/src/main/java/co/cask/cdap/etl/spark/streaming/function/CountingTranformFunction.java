@@ -22,6 +22,8 @@ import co.cask.cdap.etl.spark.function.CountingFunction;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 
+import javax.annotation.Nullable;
+
 /**
  * Function used to emit a metric for every item in an RDD.
  *
@@ -33,7 +35,9 @@ public class CountingTranformFunction<T> implements Function<JavaRDD<T>, JavaRDD
   private final String metricName;
   private final DataTracer dataTracer;
 
-  public CountingTranformFunction(String stageName, Metrics metrics, String metricName, DataTracer dataTracer) {
+  // DataTracer is null for records.in
+  public CountingTranformFunction(String stageName, Metrics metrics, String metricName,
+                                  @Nullable DataTracer dataTracer) {
     this.metrics = metrics;
     this.stageName = stageName;
     this.metricName = metricName;

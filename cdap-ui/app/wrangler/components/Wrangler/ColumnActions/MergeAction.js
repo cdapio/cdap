@@ -87,6 +87,7 @@ export default class MergeAction extends Component {
         toggle={this.toggle}
         className="wrangler-actions"
         onClick={e => e.stopPropagation() }
+        zIndex="1070"
       >
         <ModalHeader>Merge Column: {this.props.column}</ModalHeader>
         <ModalBody>

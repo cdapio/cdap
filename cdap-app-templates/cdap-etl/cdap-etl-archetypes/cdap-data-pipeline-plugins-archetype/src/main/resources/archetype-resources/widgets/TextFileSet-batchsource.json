@@ -12,6 +12,11 @@
           "name": "fileSetName"
         },
         {
+          "widget-type": "textbox",
+          "label": "Input files within the FileSet",
+          "name": "files"
+        },
+        {
           "widget-type": "select",
           "label": "Create FileSet if it does not exist",
           "name": "createIfNotExists",

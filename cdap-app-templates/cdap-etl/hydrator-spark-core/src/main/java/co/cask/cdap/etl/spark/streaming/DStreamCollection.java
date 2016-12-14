@@ -128,8 +128,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   @Override
   public SparkCollection<T> window(StageInfo stageInfo, Windower windower) {
     String stageName = stageInfo.getName();
-    return wrap(stream.transform(new CountingTranformFunction<T>(stageName, sec.getMetrics(), "records.in",
-                                                                 sec.getDataTracer(stageName)))
+    return wrap(stream.transform(new CountingTranformFunction<T>(stageName, sec.getMetrics(), "records.in", null))
                   .window(Durations.seconds(windower.getWidth()), Durations.seconds(windower.getSlideInterval()))
                   .transform(new CountingTranformFunction<T>(stageName, sec.getMetrics(), "records.out",
                                                              sec.getDataTracer(stageName))));

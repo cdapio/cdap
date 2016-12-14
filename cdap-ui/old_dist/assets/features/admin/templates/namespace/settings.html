@@ -1,0 +1,44 @@
+
+
+<div class="row">
+  <div class="col-xs-6">
+    <h2> Settings: {{ ::$state.params.nsadmin }} </h2>
+  </div>
+
+  <div class="col-xs-6 text-right">
+    <div class="btn-group dropdown-right" uib-dropdown>
+      <button type="button" class="btn btn-default dropdown-toggle" uib-dropdown-toggle>
+        Actions
+        <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-right" role="menu">
+        <li role="presentations">
+          <a role="menuitem" href="#" ng-click="caskConfirm()" cask-confirmable="deleteNamespace()" data-confirmable-content="Are you sure you want to delete the namespace '<strong>{{$state.params.nsadmin}}</strong>'?" ng-if="$state.params.nsadmin !== 'default'">
+            <span class="fa fa-fw fa-trash pull-right"></span>
+            <span> Delete </span>
+          </a>
+          <a role="menuitem" href="#" ng-click="caskConfirm()" cask-confirmable="deleteNamespace()" data-confirmable-content="Deleting default namespace will only result in the removal of data and applications within the default namespace. Are you sure you want to continue?" ng-if="$state.params.nsadmin === 'default'">
+            <span class="fa fa-fw fa-trash pull-right"></span>
+            <span> Delete </span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+<br>
+
+<form class="form-horizontal">
+  <div class="form-group">
+    <label for="description" class="col-xs-2 control-label"> Description </label>
+    <div class="col-xs-10">
+      <textarea name="description" id="description" class="form-control" ng-model="description"></textarea>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div class="col-xs-12 text-right">
+      <button class="btn btn-success" ng-click="save()" ng-disabled="loading"><span class="fa fa-refresh fa-spin" ng-if="loading"></span> Save </button>
+    </div>
+  </div>
+</form>

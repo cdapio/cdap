@@ -1,0 +1,21 @@
+
+
+<div class="modal-body">
+  <div>
+    <span>Do you wish to save your work before navigating away?</span>
+  </div>
+</div>
+<div class="modal-footer">
+  <div class="pull-left">
+    <button class="btn btn-grey-cancel" ng-click="discard()" ng-disabled="isSaving">Don't Save</button>
+  </div>
+  <div class="pull-right">
+    <button class="btn btn-grey-cancel" ng-click="cancel()" ng-disabled="isSaving">Cancel</button>
+    <button class="btn btn-blue" ng-click="save()" ng-disabled="isSaving">
+      <span ng-if="isSaving">
+        <span class="fa fa-spin fa-refresh"></span>
+      </span>
+      <span>Save</span>
+    </button>
+  </div>
+</div>

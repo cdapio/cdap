@@ -111,7 +111,9 @@ public class ETLMapReduce extends AbstractMapReduce {
     setName(phaseSpec.getPhaseName());
     setDescription("MapReduce phase executor. " + phaseSpec.getDescription());
 
+    // Set resources for mapper, reducer and driver
     setMapperResources(phaseSpec.getResources());
+    setReducerResources(phaseSpec.getResources());
     setDriverResources(phaseSpec.getDriverResources());
 
     Set<String> sources = phaseSpec.getPhase().getSources();

@@ -1,0 +1,15 @@
+
+<div ng-controller="HydratorPlusPlusConsoleTabCtrl as HydratorPlusPlusConsoleTabCtrl">
+
+  <div class="bottompanel-body">
+    <div class="console-wrapper">
+      <div ng-repeat="message in HydratorPlusPlusConsoleTabCtrl.messages track by $index">
+        <pre ng-class="{'text-danger': message.type === 'error', 'text-info': message.type === 'info', 'text-success': message.type === 'success'}">{{message.date | amDateFormat: 'MM/DD/YY h:mm:ss a'}}: {{message.content}}</pre>
+      </div>
+      <div ng-if="HydratorPlusPlusConsoleTabCtrl.messages.length === 0">
+        <pre>No messages as of now.</pre>
+      </div>
+    </div>
+  </div>
+
+</div>
