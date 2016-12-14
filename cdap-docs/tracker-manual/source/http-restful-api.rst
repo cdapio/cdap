@@ -13,7 +13,7 @@ Cask Tracker HTTP RESTful API
 
 All Cask Tracker features are available via HTTP RESTful endpoints. It supports searching
 of the *_auditLog* dataset, managing preferred tags, querying metrics, managing the data dictionary,
-and updating configurations, using a set of HTTP RESTful APIs. (See the :ref:`Reference Manual: HTTP RESTful API
+and updating configurations, all using a set of HTTP RESTful APIs. (See the :ref:`Reference Manual: HTTP RESTful API
 <http-restful-api-introduction>` for details on the conventions used for these HTTP RESTful APIs.)
 
 Searching the *_auditLog* Dataset
@@ -813,12 +813,11 @@ Results (reformatted for display)::
 Data Dictionary
 ===============
 
-Retrieve the Data Dictionary for the Namespace
-----------------------------------------------
-Returns the entire data dictionary for the namespace::
+Retrieve the Data Dictionary for a Namespace
+--------------------------------------------
+Returns the entire data dictionary for a namespace::
 
   GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary
-
 
 A successful query will return a 200 response with a body containing the data dictionary for the namespace. If no
 data dictionary exists, a response with an empty array of results is returned.
@@ -872,12 +871,11 @@ Results (reformatted for display)::
    * - ``500 SERVER ERROR``
      - Unknown server error
 
-Retrieve the Data Dictionary for the Schema
--------------------------------------------
-Returns the data dictionary related to the specified schema::
+Retrieve the Data Dictionary for a Schema
+-----------------------------------------
+Returns the data dictionary related to a specified schema::
 
   POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary
-
 
 A successful query will return a 200 response with a body containing the data dictionary for the specified schema. If no
 data dictionary exists, a response with an empty array of results is returned.
@@ -925,41 +923,11 @@ Results (reformatted for display)::
    * - ``500 SERVER ERROR``
      - Unknown server error
 
-Add a Column to the Data Dictionary
------------------------------------
+Adding a Column to the Data Dictionary
+--------------------------------------
 This endpoint will add a column to the data dictionary::
 
-  POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary/{column-name}
-
-
-A successful query will return a 200 response.
-
-Example:
-
-.. tabbed-parsed-literal::
-
-  $ curl -w"\n" -X POST "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/dictionary/testColumn" \
-  -d '{ "columnType" : "String", "isNullable" : true, "isPII : false, "description" : "this is a description of the column" }'
-
-.. rubric:: HTTP Responses
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - Empty
-   * - ``500 SERVER ERROR``
-     - Unknown server error
-
-Update a Column to the Data Dictionary
---------------------------------------
-This endpoint will update a column to the data dictionary::
-
-  PUT /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary/{column-name}
-
+  POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary/<column-name>
 
 A successful query will return a 200 response.
 
@@ -983,12 +951,39 @@ Example:
    * - ``500 SERVER ERROR``
      - Unknown server error
 
-Delete a Column in the Data Dictionary
------------------------------------
-This endpoint will update a column to the data dictionary::
+Updating a Column in the Data Dictionary
+----------------------------------------
+This endpoint will update a column in the data dictionary::
 
-  DELETE /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary/{column-name}
+  PUT /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary/<column-name>
 
+A successful query will return a 200 response.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X POST "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/dictionary/testColumn" \
+  -d '{ "columnType" : "String", "isNullable" : true, "isPII : false, "description" : "this is a description of the column" }'
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Empty
+   * - ``500 SERVER ERROR``
+     - Unknown server error
+
+Deleting a Column in the Data Dictionary
+----------------------------------------
+This endpoint will delete a column in the data dictionary::
+
+  DELETE /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary/<column-name>
 
 A successful query will return a 200 response.
 
@@ -1016,12 +1011,11 @@ Example:
 Configuration API
 =================
 
-Retrieve All Configuration Settings for the Namespace
------------------------------------------------------
-Returns the entire Tracker config as a key value map::
+Retrieve All Configuration Settings for a Namespace
+---------------------------------------------------
+Returns the entire Tracker configuration as a key-value map::
 
   GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config
-
 
 A successful query will return a 200 response with a body containing the entire configuration for the namespace. If no
 configuration exists, a response with an empty map is returned.
@@ -1056,14 +1050,13 @@ Results (reformatted for display)::
 
 Retrieve Configuration Settings by Key
 --------------------------------------
-Returns the set of configurations that match the given key::
+Returns the set of configurations that match a given key::
 
-  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/{config-key}?strict=(true|false)
+  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/<config-key>?strict={true|false}
 
-
-A successful query will return a 200 response with a body containing the configurations for the given key. If strict is set
-to true, only a single value will be returned exactly matching the key provided. If no configuration key exists, a 404 will
-be returned.
+A successful query will return a 200 response with a body containing the configurations for the given key. 
+If ``strict`` is set to ``true``, only a single value will be returned, exactly matching the key provided. 
+If no configuration key exists, a 404 will be returned.
 
 Example:
 
@@ -1094,12 +1087,11 @@ Results (reformatted for display)::
 
 Set a Configuration Setting
 ---------------------------
-Sets the configuration value::
+Sets the configuration value for a specified key::
 
-  POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/{config-key}
+  POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/<config-key>
 
-
-A successful query will return a 200 response. If the value or key was invalid, it will return a 400 with an error message
+A successful query will return a 200 response. If the value or key was invalid, it will return a 400 with an error message.
 
 Example:
 
@@ -1125,13 +1117,12 @@ Example:
 
 Update a Configuration Setting
 ------------------------------
-Sets the configuration value::
+Sets the configuration value for a specified key::
 
-  PUT /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/{config-key}
+  PUT /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/<config-key>
 
-
-A successful query will return a 200 response. If the config-key was not found, it will return a 404. If the value or
-key was invalid, it will return a 400 with an error message
+A successful query will return a 200 response. If the ``config-key`` was not found, it will return a 404. 
+If the value or key was invalid, it will return a 400 with an error message.
 
 Example:
 
@@ -1159,10 +1150,9 @@ Example:
 
 Delete a Configuration Setting
 ------------------------------
-Sets the configuration value::
+Deletes the configuration value for a specified key::
 
-  DELETE /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/{config-key}
-
+  DELETE /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/<config-key>
 
 A successful query will return a 200 response. If the config-key was not found, it will return a 404.
 
