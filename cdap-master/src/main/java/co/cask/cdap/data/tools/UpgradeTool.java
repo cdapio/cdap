@@ -17,6 +17,7 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
@@ -49,6 +50,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
+import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
@@ -70,6 +72,8 @@ import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
@@ -77,9 +81,12 @@ import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
@@ -122,6 +129,7 @@ public class UpgradeTool {
   private final DatasetBasedStreamSizeScheduleStore datasetBasedStreamSizeScheduleStore;
   private final DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
   private final DefaultStore store;
+  private final DatasetInstanceManager datasetInstanceManager;
 
   /**
    * Set of Action available in this tool.
@@ -131,9 +139,10 @@ public class UpgradeTool {
               "  The upgrade tool upgrades the following: \n" +
               "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
               "  2. Stream State Store\n" +
-              "  3. System metadata for all existing entities\n" +
-              "  4. Metadata indexes for all existing metadata\n" +
-              "  5. Any metadata that may have left behind for deleted datasets (This metadata will be removed).\n" +
+              "  3. Metadata dataset specifications.\n" +
+              "  4. System metadata for all existing entities\n" +
+              "  5. Metadata indexes for all existing metadata\n" +
+              "  6. Any metadata that may have left behind for deleted datasets (This metadata will be removed).\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
                     "system HBase tables to a version that is compatible with the new HBase \n" +
@@ -151,7 +160,7 @@ public class UpgradeTool {
     }
   }
 
-  public UpgradeTool() throws Exception {
+  UpgradeTool() throws Exception {
     this.cConf = CConfiguration.create();
     if (this.cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       LOG.info("Disabling authorization for {}.", getClass().getSimpleName());
@@ -175,6 +184,8 @@ public class UpgradeTool {
     this.datasetBasedStreamSizeScheduleStore = injector.getInstance(DatasetBasedStreamSizeScheduleStore.class);
     this.datasetBasedTimeScheduleStore = injector.getInstance(DatasetBasedTimeScheduleStore.class);
     this.store = injector.getInstance(DefaultStore.class);
+    this.datasetInstanceManager =
+      injector.getInstance(Key.get(DatasetInstanceManager.class, Names.named("datasetInstanceManager")));
 
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -413,6 +424,11 @@ public class UpgradeTool {
     LOG.info("Upgrading stream state store table...");
     streamStateStoreUpgrader.upgrade();
 
+    LOG.info("Upgrading metadata dataset specifications to add new index columns...");
+    upgradeMetadataDatasetSpecs();
+
+    // TODO: CDAP-7835: This should be removed. Anything that requires DatasetService to be started, should run after
+    // CDAP starts up.
     upgradeDatasetServiceManager.startUp();
 
     LOG.info("Upgrading stream size schedule store...");
@@ -421,6 +437,7 @@ public class UpgradeTool {
     LOG.info("Upgrading time schedule store...");
     datasetBasedTimeScheduleStore.upgrade();
 
+    // TODO: CDAP-7835: This should be moved out (probably to MetadataService) so it can be run after CDAP starts up.
     LOG.info("Writing system metadata to existing entities...");
     try {
       existingEntitySystemMetadataWriter.write(upgradeDatasetServiceManager.getDSFramework());
@@ -435,6 +452,44 @@ public class UpgradeTool {
     } finally {
       upgradeDatasetServiceManager.shutDown();
     }
+  }
+
+  private void upgradeMetadataDatasetSpecs() {
+    upgradeMetadataDatasetSpec(DefaultMetadataStore.BUSINESS_METADATA_INSTANCE_ID);
+    upgradeMetadataDatasetSpec(DefaultMetadataStore.SYSTEM_METADATA_INSTANCE_ID);
+  }
+
+  private void upgradeMetadataDatasetSpec(DatasetId metadataDatasetId) {
+    DatasetSpecification oldMetadataDatasetSpec = datasetInstanceManager.get(metadataDatasetId);
+    if (oldMetadataDatasetSpec == null) {
+      LOG.info("Metadata Dataset {} not found. No upgrade necessary.", metadataDatasetId);
+      return;
+    }
+    // Updating the type in the spec using Gson. Doing choosing this option over:
+    // 1. Build a new DatasetSpecification using the DatasetSpecification Builder: This seems clean, but because
+    // of the namespacing logic in the builder, you would need to change names of the embedded datasets first,
+    // leading to unnecessary complex logic for this temporary code.
+    // TODO: CDAP-7834: Adding new indexed columns should be supported by IndexedTable.
+    // TODO: CDAP-7835: This should be moved out (probably to MetadataService) so it can be run after CDAP starts up.
+    Gson gson = new Gson();
+    JsonObject jsonObject = gson.toJsonTree(oldMetadataDatasetSpec, DatasetSpecification.class).getAsJsonObject();
+    // change the columnsToIndex since in 4.0 we added 4 more index columns
+    JsonObject metadataIndexObject = jsonObject.get("datasetSpecs").getAsJsonObject()
+      .get("metadata_index").getAsJsonObject();
+    JsonObject properties = metadataIndexObject.get("properties").getAsJsonObject();
+    properties.addProperty("columnsToIndex", MetadataDataset.COLUMNS_TO_INDEX);
+    JsonObject dProperties = metadataIndexObject.get("datasetSpecs").getAsJsonObject().get("d").getAsJsonObject()
+      .get("properties").getAsJsonObject();
+    JsonObject iProperties = metadataIndexObject.get("datasetSpecs").getAsJsonObject().get("i").getAsJsonObject()
+      .get("properties").getAsJsonObject();
+    dProperties.addProperty("columnsToIndex", MetadataDataset.COLUMNS_TO_INDEX);
+    iProperties.addProperty("columnsToIndex", MetadataDataset.COLUMNS_TO_INDEX);
+
+    DatasetSpecification newMetadataDatasetSpec = gson.fromJson(jsonObject, DatasetSpecification.class);
+    datasetInstanceManager.delete(metadataDatasetId);
+    datasetInstanceManager.add(NamespaceId.SYSTEM, newMetadataDatasetSpec);
+    LOG.info("Found old Metadata Dataset Spec {}. Upgraded it to new spec {}.",
+             oldMetadataDatasetSpec, newMetadataDatasetSpec);
   }
 
   private void performHBaseUpgrade() throws Exception {
