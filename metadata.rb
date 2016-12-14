@@ -6,9 +6,11 @@ description      'Installs/Configures Cask Data Application Platform (CDAP)'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
 version          '2.26.2'
 
-%w(apt ark hadoop java nodejs ntp yum yum-epel).each do |cb|
+%w(apt hadoop java nodejs ntp yum yum-epel).each do |cb|
   depends cb
 end
+
+depends 'ark', '< 2.2.0' # Fails saying "owner" isn't a valid attribute
 
 depends 'krb5_utils'
 recommends 'ambari' # ~FC053
