@@ -47,10 +47,7 @@ export default class WrangleData extends Component {
     this.undo = this.undo.bind(this);
     this.generateLinks = this.generateLinks.bind(this);
 
-    this.tableHeader = null;
-    this.tableBody = null;
-
-   this.sub = WranglerStore.subscribe(() => {
+    this.sub = WranglerStore.subscribe(() => {
       let state = WranglerStore.getState().wrangler;
       this.setState(state);
     });
@@ -60,18 +57,25 @@ export default class WrangleData extends Component {
   componentDidMount() {
     this.forceUpdate();
 
-    setTimeout(() => {
+    const getContainerSize = () => {
       let container = document.getElementsByClassName('data-table');
 
       let height = container[0].clientHeight;
       let width = container[0].clientWidth;
 
       this.setState({height, width});
-    });
+    };
+
+    setTimeout(getContainerSize.bind(this));
+
+    this.windowResize$ = Rx.Observable.fromEvent(window, 'resize')
+      .debounce(500)
+      .subscribe(getContainerSize.bind(this));
   }
 
   componentWillUnmount() {
     this.sub();
+    this.windowResize$.dispose();
   }
 
   onColumnClick(column) {

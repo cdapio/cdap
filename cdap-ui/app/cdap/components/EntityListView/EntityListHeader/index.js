@@ -119,7 +119,7 @@ export default class EntityListHeader extends Component {
           <span>{T.translate('features.EntityListView.Header.filters')}</span>
           <span className="fa fa-filter pull-right"></span>
         </DropdownToggle>
-        <DropdownMenu onClick={e => e.stopPropagation()} left>
+        <DropdownMenu onClick={e => e.stopPropagation()}>
           {
             this.state.filterOptions.map((option) => {
               return (

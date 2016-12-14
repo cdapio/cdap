@@ -21,13 +21,24 @@
 .error-text { color: @error-color; }
 
 .wrangler-container {
-  margin-bottom: 60px;
+  height: 100%;
+
+  .wrangler-input-container {
+    overflow-y: auto;
+    height: 100%;
+    padding-bottom: 50px;
+  }
 
   .wrangler-copy-paste,
   .wrangler-error-container,
   .file-input {
     width: 750px;
     margin: 0 auto;
+  }
+
+  .wrangle-button {
+    font-size: 18px;
+    padding: 5px 35px;
   }
 
   .wrangler-error-container {
@@ -39,7 +50,7 @@
 
   .dropzone-container {
     position: absolute;
-    top: 45px;
+    top: 15px;
     left: 50%;
     transform: translateX(-50%);
     width: 60px;
@@ -49,7 +60,9 @@
     position: absolute;
     right: 0;
     left: 0;
-    top: 110px;
+    top: 80px;
+
+    h4 { margin: 0; }
   }
 
   .wrangler-file-drop-container {
@@ -66,8 +79,8 @@
   .wrangler-copy-paste {
     border: 2px solid #dedede;
     border-radius: 4px;
-    height: 350px;
-    margin: 100px auto 0;
+    height: 270px;
+    margin: 0 auto;
     position: relative;
 
     .wrangler-plus-button {
@@ -137,12 +150,13 @@
   .wrangler-data {
     position: relative;
     margin: 0;
+    height: 100%;
 
     .wrangle-transforms,
     .wrangle-results {
       position: absolute;
       top: 0;
-      height: calc(~"100vh - 103px");
+      bottom: 0;
     }
 
     .wrangle-transforms {

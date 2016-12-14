@@ -22,6 +22,7 @@ import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 import shortid from 'shortid';
 import Dropzone from 'react-dropzone';
 import {convertHistoryToDml} from 'wrangler/components/Wrangler/dml-converter';
+import Explore from 'wrangler/components/Explore';
 
 require('./Wrangler.less');
 
@@ -55,104 +56,40 @@ export default class Wrangler extends Component {
     this.handleTextInput = this.handleTextInput.bind(this);
     this.onPlusButtonClick = this.onPlusButtonClick.bind(this);
     this.onWrangleClick = this.onWrangleClick.bind(this);
-    this.onWrangleFile = this.onWrangleFile.bind(this);
     this.getWranglerOutput = this.getWranglerOutput.bind(this);
+    this.onTextInputBlur = this.onTextInputBlur.bind(this);
   }
 
   getChildContext() {
     return {source: this.props.source};
   }
 
-  // componentDidMount() {
-  //   this.wrangle();
-  // }
-
   componentWillUnmount() {
     WranglerStore.dispatch({
       type: WranglerActions.reset
     });
   }
-
   onWrangleClick() {
-    this.setState({loading: true});
-    this.wrangle();
-  }
-
-  onWrangleFile() {
-    this.setState({loading: true});
-    this.wrangle(true);
-  }
-
-  wrangle() {
     let input = this.state.wranglerInput;
 
     if (this.state.file) {
       input = this.state.file;
     }
 
-    // Keeping these for dev purposes
+    this.wrangle(input, this.state.delimiter, this.state.header, this.state.skipEmptyLines);
+  }
 
-//     input = `name,num1,num2,num3
-// Hakeem Gillespie,91,753,599,a
-// Arsenio Gardner,,754,641
-// Darius Mcdonald,567,473,520
-// Zachary Small,981,271,385
-// Travis Rutledge,468,91,578
-// Thaddeus Clemons,346,1106,367
-// Yardley Merrill,278,1028,473
-// Lars Fowler,494,1268,354
-// Omar Rocha,856,694,318
-// Ryan Chapman,553,1009,565
-// Drew Murray,912,402,272
-// Henry Reynolds,734,848,643
-// Hu Noel,655,668,599
-// Abraham Ellis,914,304,307
-// Kenyon Newman,83,1040,606
-// James Winters,473,327,569
-// Asher Mcclure,548,86,458
-// Quamar Watts,393,454,547
-// Alfonso Webster,986,848,525
-// Darius Sharpe,710,931,581
-// Gavin Baldwin,139,302,572
-// Lyle Hardin,989,857,612
-// Nathan Glenn,807,464,334
-// Ethan Figueroa,70,834,276
-// Silas Wheeler,827,1353,259
-// Isaiah Franklin,290,508,259
-// Sean Schneider,655,828,622
-// Quinlan Hewitt,417,944,671
-// Brody Sharp,245,162,511
-// Bruno Whitaker,805,1453,390
-// Nolan Combs,70,302,696
-// Ray Larsen,538,444,232
-// Garth Mckee,919,420,379
-// Wesley Rivera,122,476,363
-// Louis Thornton,731,1288,356
-// Jackson Waller,906,801,239
-// Beck Singleton,196,391,559
-// Abel Anthony,13,572,459
-// Victor Gray,856,826,280
-// Vance Colon,349,906,264
-// Solomon Herrera,128,1181,370
-// Drake Church,258,1048,291
-// Rafael Ramsey,475,231,428
-// Timon Bowen,481,1090,439
-// Eric Dunlap,205,1357,582
-// Joel Mcbride,794,1237,423
-// Kane Richardson,956,241,597
-// Luke Zamora,666,1293,200
-// Zeus Herrera,84,577,379
-// Jeremy Acosta,668,1039,426
-// Boris Jimenez,69,406,232`;
+  wrangle(input, delimiter, header, skipEmptyLines) {
+    this.setState({loading: true});
 
     let papaConfig = {
-      header: this.state.header,
-      skipEmptyLines: this.state.skipEmptyLines,
+      header: header,
+      skipEmptyLines: skipEmptyLines,
       complete: this.handleData
     };
 
-    if (this.state.delimiter) {
-      papaConfig.delimiter = this.state.delimiter;
+    if (delimiter) {
+      papaConfig.delimiter = delimiter;
     }
 
     Papa.parse(input, papaConfig);
@@ -308,8 +245,15 @@ export default class Wrangler extends Component {
         className="form-control"
         onChange={this.handleTextInput}
         autoFocus={true}
+        onBlur={this.onTextInputBlur}
       />
     );
+  }
+
+  onTextInputBlur() {
+    if (this.state.wranglerInput) { return; }
+
+    this.setState({textarea: false});
   }
 
   getWranglerOutput() {
@@ -372,9 +316,12 @@ export default class Wrangler extends Component {
     }
 
     return (
-      <div>
-        <div className="wrangler-copy-paste">
+      <div className="wrangler-input-container">
+        <h3 className="text-center">Cask Wrangler</h3>
 
+        <Explore wrangle={this.wrangle} />
+
+        <div className="wrangler-copy-paste">
           {this.renderWranglerCopyPaste()}
 
           <div className="parse-options">
@@ -418,7 +365,7 @@ export default class Wrangler extends Component {
 
         <div className="text-center">
           <button
-            className="btn btn-primary"
+            className="btn btn-primary wrangle-button"
             onClick={this.onWrangleClick}
           >
             Wrangle
@@ -434,6 +381,7 @@ export default class Wrangler extends Component {
   render() {
     return (
       <div className="wrangler-container">
+
         {this.renderWranglerInputBox()}
 
         {
