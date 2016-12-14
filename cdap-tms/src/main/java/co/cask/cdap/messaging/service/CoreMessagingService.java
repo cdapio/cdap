@@ -16,6 +16,8 @@
 
 package co.cask.cdap.messaging.service;
 
+import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -23,11 +25,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeProvider;
 import co.cask.cdap.messaging.MessageFetcher;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.RollbackDetail;
 import co.cask.cdap.messaging.StoreRequest;
-import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.PayloadTable;
@@ -119,6 +120,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     try (MetadataTable metadataTable = createMetadataTable()) {
       metadataTable.deleteTopic(topicId);
       topicCache.invalidate(topicId);
+      messageTableWriterCache.invalidate(topicId);
+      payloadTableWriterCache.invalidate(topicId);
     }
   }
 
@@ -160,7 +163,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   public RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException {
     try {
-      return messageTableWriterCache.get(request.getTopicId()).persist(request);
+      TopicMetadata metadata = topicCache.get(request.getTopicId());
+      return messageTableWriterCache.get(request.getTopicId()).persist(request, metadata);
     } catch (ExecutionException e) {
       Throwable cause = Objects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
@@ -171,7 +175,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   public void storePayload(StoreRequest request) throws TopicNotFoundException, IOException {
     try {
-      payloadTableWriterCache.get(request.getTopicId()).persist(request);
+      TopicMetadata metadata = topicCache.get(request.getTopicId());
+      payloadTableWriterCache.get(request.getTopicId()).persist(request, metadata);
     } catch (ExecutionException e) {
       Throwable cause = Objects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
@@ -185,20 +190,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
 
     Exception failure = null;
     try (MessageTable messageTable = createMessageTable(metadata)) {
-      // Safe to cast to short because message table only use the sequence id as unsigned bytes.
-      messageTable.delete(topicId, rollbackDetail.getStartTimestamp(), (short) rollbackDetail.getStartSequenceId(),
-                          rollbackDetail.getEndTimestamp(), (short) rollbackDetail.getEndSequenceId());
+      messageTable.rollback(metadata, rollbackDetail);
     } catch (Exception e) {
       failure = e;
-    }
-    try (PayloadTable payloadTable = createPayloadTable(metadata)) {
-      payloadTable.delete(topicId, rollbackDetail.getTransactionWritePointer());
-    } catch (Exception e) {
-      if (failure != null) {
-        failure.addSuppressed(e);
-      } else {
-        failure = e;
-      }
     }
 
     // Throw if there is any failure in rollback.
@@ -307,8 +301,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   private Map<String, String> createDefaultProperties() {
     Map<String, String> properties = new HashMap<>();
 
-    // Default the TTL
+    // Default properties
     properties.put(TopicMetadata.TTL_KEY, cConf.get(Constants.MessagingSystem.TOPIC_DEFAULT_TTL_SECONDS));
+    properties.put(TopicMetadata.GENERATION_KEY, MessagingUtils.Constants.DEFAULT_GENERATION);
     return properties;
   }
 }

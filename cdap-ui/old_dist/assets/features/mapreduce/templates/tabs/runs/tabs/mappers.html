@@ -1,0 +1,38 @@
+
+
+<div class="mapreduce-components" ng-controller="MapreduceStatusController as StatusController">
+  <div class="table-responsive">
+    <table class="table table-curved" cask-sortable>
+      <thead>
+        <tr ng-class="{'sort-enabled': StatusController.info.mapTasks.length>0}">
+          <th data-predicate="taskId">ID</th>
+          <th data-predicate="state">Status</th>
+          <th data-predicate="progress">% Complete</th>
+          <th data-predicate="finishTime">Duration</th>
+          <th data-predicate="counters.MAP_INPUT_RECORDS">Records In</th>
+          <th data-predicate="counters.MAP_OUTPUT_RECORDS">Records Out</th>
+          <th data-predicate="counters.MAP_OUTPUT_BYTES">Bytes Out</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr ng-repeat="map in StatusController.info.mapTasks | orderBy:sortable.predicate:sortable.reverse">
+          <td>{{ ::map.taskId }}</td>
+          <td ng-if="map.state">{{ map.state }}</td>
+          <td ng-if="!map.state">NA</td>
+          <td>{{ (map.progress * 100) | number: 0 }}%</td>
+          <td>
+            <span ng-show="map.finishTime !== 0">{{ (map.finishTime - map.startTime) | amDurationFormat}}</span>
+            <span ng-show="map.finishTime === 0"> &mdash; </span>
+          </td>
+          <td>{{ map.counters.MAP_INPUT_RECORDS | myNumber: 0}}</td>
+          <td>{{ map.counters.MAP_OUTPUT_RECORDS | myNumber: 0 }}</td>
+          <td>{{ map.counters.MAP_OUTPUT_BYTES | bytes: 2 }}</td>
+        </tr>
+        <tr class="text-center" ng-if="!StatusController.info.mapTasks.length">
+          <td colspan="8">Not Available</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

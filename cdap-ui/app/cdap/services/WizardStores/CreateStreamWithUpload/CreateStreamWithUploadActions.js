@@ -25,8 +25,7 @@ const CreateStreamWithUploadAction = {
   setSchema: 'SET-STREAM-SCHEMA',
   createStream: 'CREATE-STREAM',
 
-  setFilename: 'SET-FILENAME',
-  setDefaultData: 'SET-DEFAULT-DATA',
+  setData: 'SET-DEFAULT-DATA',
 
   onError: 'FORM-SUBMIT-FAILURE',
   onSuccess: 'FORM-SUBMIT-SUCCESS',

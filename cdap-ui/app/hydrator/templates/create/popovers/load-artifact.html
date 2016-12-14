@@ -31,6 +31,9 @@
         <span class="fa fa-cloud-upload"
               ng-class="{'text-success': LoadArtifactCtrl.jarStatus === 1, 'text-danger': LoadArtifactCtrl.jarStatus === 2}">
         </span>
+        <div ng-if="LoadArtifactCtrl.jarStatus === 1" class="upload-file-name">
+          {{LoadArtifactCtrl.jarName}}
+        </div>
         <div class="upload-message">
           Click to add JAR file
           <div>
@@ -50,6 +53,9 @@
         <span class="fa fa-cloud-upload"
               ng-class="{'text-success': LoadArtifactCtrl.jsonStatus === 1, 'text-danger': LoadArtifactCtrl.jsonStatus === 2}">
         </span>
+        <div ng-if="LoadArtifactCtrl.jsonStatus === 1" class="upload-file-name">
+          {{LoadArtifactCtrl.jsonName}}
+        </div>
         <div class="upload-message">
           <div>
             Click to add JSON file

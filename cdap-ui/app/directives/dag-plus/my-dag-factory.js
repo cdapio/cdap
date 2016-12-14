@@ -187,7 +187,8 @@ angular.module(PKG.name + '.commons')
         'solrsearch': 'icon-solr',
         'sparkstreaming': 'icon-sparkstreaming',
         'rename': 'icon-rename',
-        'archive': 'icon-archive'
+        'archive': 'icon-archive',
+        'wrangler': 'icon-DataWrangler'
       };
 
       var pluginName = plugin.toLowerCase();

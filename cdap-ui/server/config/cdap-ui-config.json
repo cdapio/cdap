@@ -19,7 +19,7 @@
     "programId": "MetadataFlow"
   },
   "market": {
-    "path": "http://market.cask.co/preview",
+    "path": "http://market.cask.co",
     "version": "v1"
   }
 }

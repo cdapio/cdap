@@ -1,0 +1,18 @@
+ 
+
+<div class="{{wdgt.color}}" ng-controller="C3WidgetTimeseriesCtrl" ng-style="{'height': chartSize.height + 'px', 'overflow': 'auto'}">
+  <table class="table table-curved" ng-controller="WidgetTableCtrl">
+    <thead>
+    <th>Timestamp</th>
+    <th ng-repeat="metricName in chartData.metricNames">{{::metricName}}</th>
+    </thead>
+    <tbody>
+      <tr ng-repeat="row in tableData">
+        <td ng-repeat="value in row track by $index">
+          <div ng-if="$first">{{value * 1000 | amDateFormat:'M/D/YY h:mm:ss a'}}</div>
+          <div ng-if="!$first">{{value}}</div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

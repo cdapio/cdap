@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory) {
     'ngInject';
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -34,7 +34,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.myPipelineApi = myPipelineApi;
     this.previewStore = HydratorPlusPlusPreviewStore;
-
+    this.HydratorPlusPlusOrderingFactory = HydratorPlusPlusOrderingFactory;
     this.setDefaults(rPlugin);
     this.tabs = [
       {
@@ -344,10 +344,21 @@ class HydratorPlusPlusNodeConfigCtrl {
     let params = {
       namespace: this.$state.params.namespace,
       previewId: previewId,
-      stage: this.state.node.plugin.label,
       scope: this.$scope
     };
-    this.myPipelineApi.getStagePreview(params)
+
+    let connections = this.ConfigStore.getConfigForExport().config.connections;
+    let adjacencyMap = this.HydratorPlusPlusOrderingFactory.getAdjacencyMap(connections);
+    let postBody = [];
+    angular.forEach(adjacencyMap, (value, key) => {
+      let inputPlugin = value.filter(node =>this.state.node.plugin.label === node);
+      if (inputPlugin.length) {
+        postBody.push(key);
+      }
+    });
+    this.myPipelineApi.getStagePreview(params, {
+      tracers: postBody.concat([this.state.node.plugin.label])
+    })
       .$promise
       .then((res) => {
         this.previewData = {
@@ -355,14 +366,18 @@ class HydratorPlusPlusNodeConfigCtrl {
           output: {},
           numInputStages: 0
         };
-
-        if (!this.state.isSource) {
-          this.previewData.input = this.formatMultipleRecords(res['input.records']);
-          this.previewData.numInputStages = Object.keys(this.previewData.input).length;
-        }
-        if (!this.state.isSink) {
-          this.previewData.output = this.formatRecords(res['output.records']);
-        }
+        angular.forEach(res, (value, key) => {
+          if (key !== this.state.node.plugin.label) {
+            if (!this.state.isSource) {
+              this.previewData.input[key] = this.formatMultipleRecords(value['records.out']);
+              this.previewData.numInputStages = Object.keys(res).length;
+            }
+          } else {
+            if (!this.state.isSink) {
+              this.previewData.output = this.formatMultipleRecords(value['records.out']);
+            }
+          }
+        });
         this.previewLoading = false;
       }, () => {
         this.previewLoading = false;
@@ -370,33 +385,27 @@ class HydratorPlusPlusNodeConfigCtrl {
   }
 
   formatMultipleRecords(records) {
-    let mapInputs = {};
+    let mapInputs = {
+      schema: {},
+      records: []
+    };
 
     angular.forEach(records, (record) => {
-      let json = {};
-      try {
-        json = JSON.parse(record);
-      } catch (e) {
-        console.log('ERROR', e);
-        return;
+      let json = record;
+      if (json.value) {
+        json = json.value;
       }
 
-      if (!json.value.schema) { return; }
+      if (!json.schema) { return; }
 
-      let schema = json.value.schema.fields.map( (field) => {
+      let schema = json.schema.fields.map( (field) => {
         return field.name;
       });
 
-      let data = json.value.fields;
+      let data = json.fields;
 
-      if (!mapInputs[json.key]) {
-        mapInputs[json.key] = {
-          schema: schema,
-          records: []
-        };
-      }
-
-      mapInputs[json.key].records.push(data);
+      mapInputs.schema = schema;
+      mapInputs.records.push(data);
     });
 
     return mapInputs;
@@ -410,16 +419,7 @@ class HydratorPlusPlusNodeConfigCtrl {
       };
     }
 
-    let jsonRecords = records.map( (record) => {
-      let json = {};
-      try {
-        json = JSON.parse(record);
-      } catch (e) {
-        console.log('ERROR', e);
-        return json;
-      }
-      return json;
-    });
+    let jsonRecords = records;
 
     let schema = jsonRecords[0].value.schema.fields.map( (field) => {
       return field.name;
@@ -435,6 +435,21 @@ class HydratorPlusPlusNodeConfigCtrl {
     };
   }
 
+
+  // Wrangler
+  openWranglerModal() {
+    this.$uibModal.open({
+      controller: 'WranglerModalController',
+      controllerAs: 'Wrangler',
+      windowClass: 'wrangler-modal',
+      templateUrl: '/assets/features/hydrator/templates/create/Wrangler/wrangler-modal.html',
+      resolve: {
+        rPlugin: () => {
+          return this.state.node;
+        }
+      }
+    });
+  }
 
 }
 

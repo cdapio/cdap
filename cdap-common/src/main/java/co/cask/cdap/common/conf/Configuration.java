@@ -250,6 +250,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           new DeprecatedKeyInfo(Constants.LogSaver.MEMORY_MB));
       put(Constants.LogSaver.NUM_CORES_DEPRECATED,
           new DeprecatedKeyInfo(Constants.LogSaver.NUM_CORES));
+      put(Constants.Security.SSL_ENABLED_DEPRECATED,
+          new DeprecatedKeyInfo(Constants.Security.SSL.EXTERNAL_ENABLED));
     }
   };
 
@@ -271,6 +273,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           new String[] {KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG_DEPRECATED});
       put(Constants.Service.MASTER_SERVICES_BIND_ADDRESS,
           new String[]{Constants.AppFabric.SERVER_ADDRESS_DEPRECATED, Constants.Dataset.Manager.ADDRESS_DEPRECATED});
+      put(Constants.Security.SSL.EXTERNAL_ENABLED, new String[] { Constants.Security.SSL_ENABLED_DEPRECATED });
     }
   };
 

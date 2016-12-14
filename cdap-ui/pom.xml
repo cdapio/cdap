@@ -152,6 +152,7 @@
                   <exclude>**/node_modules/**</exclude>
                   <exclude>**/coverage/**</exclude>
                   <exclude>**/dist/**</exclude>
+                  <exclude>**/old_dist/**</exclude>
                   <exclude>**/common_dist/**</exclude>
                   <exclude>**/cdap_dist/**</exclude>
                   <exclude>**/login_dist/**</exclude>
@@ -312,6 +313,9 @@
                     </copy>
                     <copy todir = "${stage.opt.dir}/dist">
                       <fileset dir = "dist" />
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/old_dist">
+                      <fileset dir = "old_dist" />
                     </copy>
                     <copy todir = "${stage.opt.dir}/common_dist">
                       <fileset dir = "common_dist" />

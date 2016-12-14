@@ -33,9 +33,9 @@ export default class EntityCardHeader extends Component {
       return this.props.entity.type;
     }
 
-    if (this.props.systemTags.includes('cdap-data-pipeline')) {
+    if (this.props.systemTags.indexOf('cdap-data-pipeline') !== -1) {
       return 'cdap-data-pipeline';
-    } else if (this.props.systemTags.includes('cdap-data-streams')) {
+    } else if (this.props.systemTags.indexOf('cdap-data-streams') !== -1) {
       return 'cdap-data-streams';
     } else {
       return this.props.entity.type;

@@ -19,6 +19,8 @@ Properties
 
 **fieldSeparator:** The separator to join input record fields on. Defaults to ','.
 
+**outputDir:** The output directory to write to. Macro enabled.
+
 Example
 -------
 
@@ -29,10 +31,9 @@ This example writes to a FileSet named 'users', using the '|' character to separ
         "type": "batchsink",
         "properties": {
             "fileSetName": "users",
-            "fieldSeparator": "|"
+            "fieldSeparator": "|",
+            "outputDir": "${outputDir}"
         }
     }
 
-In order to properly write to the FileSet, the runtime argument 'dataset.<name>.output.path' should be set.
-In the example above, setting 'dataset.users.output.path' to 'run10' will configure the pipeline run to write
-to the 'run10' directory in the FileSet.
+Before running the pipeline, the 'outputDir' runtime argument must be specified.

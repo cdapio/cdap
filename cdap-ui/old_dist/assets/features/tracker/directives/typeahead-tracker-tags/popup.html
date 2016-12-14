@@ -1,0 +1,7 @@
+
+
+<ul class="dropdown-menu" role="listbox" ng-show="(isOpen() && !moveInProgress)" ng-click="$event.stopPropagation()">
+  <li ng-repeat="match in matches track by $index" ng-class="{active: isActive($index), 'preferred-tag': match.model.preferredTag > 0 }" ng-mouseenter="selectActive($index)" ng-click="selectMatch($index)" role="option" id="{{::match.id}}">
+    <div uib-typeahead-match index="$index" match="match" query="query" template-url="templateUrl"></div>
+  </li>
+</ul>

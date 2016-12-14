@@ -26,6 +26,8 @@ import SubstringAction from 'wrangler/components/Wrangler/ColumnActions/Substrin
 import MergeAction from 'wrangler/components/Wrangler/ColumnActions/MergeAction';
 import RenameAction from 'wrangler/components/Wrangler/ColumnActions/RenameAction';
 
+import {Popover, PopoverContent} from 'reactstrap';
+
 require('./ColumnActionsDropdown.less');
 
 export default class ColumnActionsDropdown extends Component {
@@ -45,8 +47,9 @@ export default class ColumnActionsDropdown extends Component {
     this.setState({isOpen: setState});
 
     if (setState) {
-      let appContainer = document.getElementById('app-container');
-      this.documentClick$ = Rx.Observable.fromEvent(appContainer, 'click')
+      let element = document.getElementById('app-container');
+
+      this.documentClick$ = Rx.Observable.fromEvent(element, 'click')
         .subscribe((e) => {
           if (isDescendant(this.popover, e.target) || !this.state.isOpen) {
             return;
@@ -66,24 +69,26 @@ export default class ColumnActionsDropdown extends Component {
   }
 
   renderPopover() {
-    if (!this.state.isOpen) { return null; }
-
     return (
-      <div
-        className="actions-popover"
-        ref={(ref) => this.popover = ref}
+      <Popover
+        placement="left top"
+        isOpen={this.state.isOpen}
+        target={`column-${this.props.column}`}
+        className="wrangler-actions-popover"
       >
-        <div className="actions-list">
-          <DropAction column={this.props.column} />
-          <SplitAction column={this.props.column} />
-          <MergeAction column={this.props.column} />
-          <SubstringAction column={this.props.column} />
-          <UpperCaseAction column={this.props.column} />
-          <LowerCaseAction column={this.props.column} />
-          <TitleCaseAction column={this.props.column} />
-          <RenameAction column={this.props.column} />
-        </div>
-      </div>
+        <PopoverContent>
+          <span ref={(ref) => this.popover = ref}>
+            <DropAction column={this.props.column} />
+            <SplitAction column={this.props.column} />
+            <MergeAction column={this.props.column} />
+            <SubstringAction column={this.props.column} />
+            <UpperCaseAction column={this.props.column} />
+            <LowerCaseAction column={this.props.column} />
+            <TitleCaseAction column={this.props.column} />
+            <RenameAction column={this.props.column} />
+          </span>
+        </PopoverContent>
+      </Popover>
     );
   }
 

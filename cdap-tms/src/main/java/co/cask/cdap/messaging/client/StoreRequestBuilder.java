@@ -19,13 +19,10 @@ package co.cask.cdap.messaging.client;
 import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -41,7 +38,7 @@ public final class StoreRequestBuilder {
   };
 
   private final TopicId topicId;
-  private final List<byte[]> payloads;
+  private Iterator<byte[]> payloads;
   private Long txWritePointer;
 
   /**
@@ -58,20 +55,13 @@ public final class StoreRequestBuilder {
    */
   private StoreRequestBuilder(TopicId topicId) {
     this.topicId = topicId;
-    this.payloads = new ArrayList<>();
   }
 
   /**
    * Adds a list of byte arrays as the payloads of the request.
    */
   public StoreRequestBuilder addPayloads(byte[]...payloads) {
-    if (payloads.length > 1) {
-      return addPayloads(Arrays.asList(payloads));
-    }
-    if (payloads.length == 1) {
-      this.payloads.add(payloads[0]);
-    }
-    return this;
+    return addPayloads(Iterators.forArray(payloads));
   }
 
   /**
@@ -79,20 +69,14 @@ public final class StoreRequestBuilder {
    * UTF-8 encoding.
    */
   public StoreRequestBuilder addPayloads(String...payloads) {
-    if (payloads.length > 1) {
-      return addPayloads(Iterables.transform(Arrays.asList(payloads), STRING_TO_BYTES));
-    }
-    if (payloads.length == 1) {
-      this.payloads.add(STRING_TO_BYTES.apply(payloads[0]));
-    }
-    return this;
+    return addPayloads(Iterators.transform(Iterators.forArray(payloads), STRING_TO_BYTES));
   }
 
   /**
    * Adds a list of byte arrays as the payloads of the request.
    */
-  public StoreRequestBuilder addPayloads(Iterable<byte[]> payloads) {
-    Iterables.addAll(this.payloads, payloads);
+  public StoreRequestBuilder addPayloads(Iterator<byte[]> payloads) {
+    this.payloads = (this.payloads == null) ? payloads : Iterators.concat(this.payloads, payloads);
     return this;
   }
 
@@ -108,14 +92,21 @@ public final class StoreRequestBuilder {
   }
 
   /**
+   * Returns {@code true} if there is some payload in this builder.
+   */
+  public boolean hasPayload() {
+    return payloads != null && payloads.hasNext();
+  }
+
+  /**
    * Creates a {@link StoreRequest} based on the settings in this builder.
    */
   public StoreRequest build() {
-    if (txWritePointer == null && payloads.isEmpty()) {
+    if (txWritePointer == null && payloads == null) {
       throw new IllegalArgumentException("Payload cannot be empty for non-transactional publish");
     }
     return new SimpleStoreRequest(topicId, txWritePointer != null, txWritePointer == null ? -1L : txWritePointer,
-                                  payloads.iterator());
+                                  payloads);
   }
 
   /**
@@ -134,6 +125,9 @@ public final class StoreRequestBuilder {
     @Nullable
     @Override
     protected byte[] doComputeNext() {
+      if (payloads == null) {
+        return null;
+      }
       return payloads.hasNext() ? payloads.next() : null;
     }
   }

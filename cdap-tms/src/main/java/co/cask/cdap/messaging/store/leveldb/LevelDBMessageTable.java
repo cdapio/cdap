@@ -112,11 +112,14 @@ final class LevelDBMessageTable extends AbstractMessageTable {
   }
 
   @Override
-  protected void delete(byte[] startKey, byte[] stopKey) throws IOException {
+  protected void rollback(byte[] startKey, byte[] stopKey, byte[] txWritePtr) throws IOException {
     WriteBatch writeBatch = levelDB.createWriteBatch();
     try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startKey, stopKey)) {
       while (rowIterator.hasNext()) {
-        writeBatch.delete(rowIterator.next().getKey());
+        Map.Entry<byte[], byte[]> rowValue = rowIterator.next();
+        byte[] value = rowValue.getValue();
+        Map<String, byte[]> columns = decodeValue(value);
+        writeBatch.put(rowValue.getKey(), encodeValue(txWritePtr, columns.get(PAYLOAD_COL)));
       }
     }
     levelDB.write(writeBatch, WRITE_OPTIONS);

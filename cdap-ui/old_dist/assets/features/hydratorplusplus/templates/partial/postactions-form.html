@@ -1,0 +1,23 @@
+
+
+<div ng-repeat="group in PostActionController.groupsConfig.groups">
+  <div class="widget-group-container">
+    <h4>{{::group.display}}</h4>
+    <div ng-repeat="field in group.fields">
+      <div class="form-group">
+        <label class="control-label">
+          <span>{{::field.label}}</span>
+          <span class="fa fa-info-circle" uib-tooltip="{{::field.description}}" tooltip-placement="right" tooltip-append-to-body="true">
+          </span>
+          <span class="fa fa-asterisk" ng-if="PostActionController.pluginConfig._backendProperties[field.name].required"></span>
+          <small class="text-danger" ng-if="PostActionController.errorInConfig && PostActionController.pluginConfig._backendProperties[field.name].required && !PostActionController.pluginConfig.plugin.properties[field.name]">{{::PostActionController.requiredPropertyError}}</small>
+        </label>
+
+        <div>
+          <div data-name="field" class="my-widget-container" ng-class="{'select-wrapper': field.widget === 'select'}" data-model="PostActionController.pluginConfig.plugin.properties[field.name]" data-myconfig="field" data-properties="PostActionController.pluginConfig.plugin.properties" widget-container>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

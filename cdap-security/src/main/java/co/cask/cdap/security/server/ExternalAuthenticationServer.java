@@ -95,7 +95,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
                                       DiscoveryService discoveryService,
                                       @Named("security.handlers") Map<String, Object> handlers,
                                       @Named(NAMED_EXTERNAL_AUTH) AuditLogHandler auditLogHandler) {
-    this.port = configuration.getBoolean(Constants.Security.SSL_ENABLED) ?
+    this.port = configuration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED) ?
       configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT) :
       configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
@@ -153,7 +153,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
       statusContext.setServer(server);
       statusContext.setHandler(new StatusRequestHandler());
 
-      if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
+      if (configuration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
         String keyStorePath = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
         String keyStorePassword = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);

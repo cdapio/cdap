@@ -104,6 +104,12 @@ features:
     sendEventsButtonLabel: Send
     sendEventsClickLabel: Click to input events
     sendEventsFailed: Error - Send Events Failed
+    startConfirmLabel: Start
+    stopConfirmLabel: Stop
+    startConfirmation: "Are you sure you want to start the program: *_{entityId}_*?"
+    stopConfirmation: "Are you sure you want to stop the program:  *_{entityId}_*?"
+    stopProgramHeader: Stop Program
+    startProgramHeader: Start Program
 
   JumpButton:
     buttonLabel: Jump

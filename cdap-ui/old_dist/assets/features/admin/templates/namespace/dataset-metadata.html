@@ -1,0 +1,67 @@
+
+
+<div class="row">
+  <div class="col-xs-6">
+    <h2><a ui-sref="datasets.detail.overview.status({namespace: $state.params.nsadmin, datasetId: $state.params.datasetId })">{{ ::$state.params.datasetId }}</a>: Metadata</h2>
+  </div>
+  <div class="col-xs-6">
+
+    <div class="text-right">
+
+      <div class="btn-group dropdown-right" uib-dropdown>
+        <button type="button" class="btn btn-default dropdown-toggle" uib-dropdown-toggle>
+          Actions
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+          <li role="presentations">
+            <a role="menuitem" href="#" ng-click="caskConfirm()" cask-confirmable="deleteDataset()" data-confirmable-content="Are you sure you want to delete the dataset '<strong>{{$state.params.datasetId}}</strong>'?">
+              <span class="fa fa-fw fa-trash pull-right"></span>
+              <span> Delete </span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+<br>
+
+<table class="table table-curved" ng-if="metadata">
+  <tr>
+    <td>Table</td>
+    <td>{{ metadata.table_name }}</td>
+  </tr>
+
+  <tr>
+    <td>Database</td>
+    <td>{{ metadata.db_name }}</td>
+  </tr>
+
+  <tr>
+    <td>Owner</td>
+    <td>{{ metadata.owner }}</td>
+  </tr>
+
+  <tr>
+    <td>Creation Time</td>
+    <td>
+      {{ metadata.creation_time  | amDateFormat:'dddd, MMMM Do YYYY, h:mm:ss a' }}
+    </td>
+  </tr>
+
+  <tr>
+    <td>Compressed</td>
+    <td>{{ metadata.compressed }}</td>
+  </tr>
+
+  <tr>
+    <td>Is Dataset</td>
+    <td>{{ metadata.from_dataset }}</td>
+  </tr>
+</table>
+
+<div class="well text-center" ng-if="!metadata">
+  <h4>No metadata for this dataset</h4>
+</div>

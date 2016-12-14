@@ -21,30 +21,26 @@
   cursor: pointer;
 }
 
-.actions-popover {
-  display: inline-block;
-  position: absolute;
-
-  .actions-list {
-    width: @popover-width;
-    border: 1px solid #999999;
-    border-radius: 4px;
-    padding: 10px 15px;
-    background-color: white;
-    position: absolute;
-    left: 10px - @popover-width;
-    top: 20px;
-
-    .column-actions {
-      margin: 0 8px;
-      cursor: pointer;
-
-      &:first-child { margin-left: 0; }
-      &:last-child { margin-right: 0; }
-    }
-  }
-}
-
 .wrangler-actions.modal-dialog {
   margin-top: 100px;
+}
+
+.popover.bs-tether-element {
+  display: block;
+  z-index: 1060;
+  min-width: initial;
+}
+
+.wrangler-actions-popover {
+  .popover-content {
+    padding: 9px 14px;
+  }
+
+  .column-actions {
+    margin: 0 8px;
+    cursor: pointer;
+
+    &:first-child { margin-left: 0; }
+    &:last-child { margin-right: 0; }
+  }
 }

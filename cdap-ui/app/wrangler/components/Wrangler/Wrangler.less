@@ -15,40 +15,83 @@
  */
 
 @error-color: #e74c3c;
-@wrangler-left-panel-width: 200px;
+@wrangler-left-panel-width: 175px;
+@border: 1px solid #dddddd;
+
 .error-text { color: @error-color; }
 
 .wrangler-container {
-  margin-bottom: 60px;
+  height: 100%;
+
+  .wrangler-input-container {
+    overflow-y: auto;
+    height: 100%;
+    padding-bottom: 50px;
+  }
 
   .wrangler-copy-paste,
+  .wrangler-error-container,
   .file-input {
     width: 750px;
     margin: 0 auto;
   }
 
-  .file-input {
-    .file-drop-container {
-      height: 150px;
+  .wrangle-button {
+    font-size: 18px;
+    padding: 5px 35px;
+  }
+
+  .wrangler-error-container {
+    .error-table.table.table-bordered {
+      width: inherit;
+      border: none;
+    }
+  }
+
+  .dropzone-container {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+  }
+
+  .plus-button-helper-text {
+    position: absolute;
+    right: 0;
+    left: 0;
+    top: 80px;
+
+    h4 { margin: 0; }
+  }
+
+  .wrangler-file-drop-container {
+    height: 60px;
+    width: 60px;
+    margin: 0 auto;
+
+    .fa.fa-plus-circle {
+      font-size: 60px;
+      color: #cccccc;
     }
   }
 
   .wrangler-copy-paste {
     border: 2px solid #dedede;
     border-radius: 4px;
-    height: 350px;
-    margin: 100px auto 0;
+    height: 270px;
+    margin: 0 auto;
     position: relative;
 
     .wrangler-plus-button {
       position: absolute;
-      top: 75px;
+      top: 0;
       left: 0;
       right: 0;
+      bottom: 100px;
       cursor: pointer;
 
       .fa.fa-plus-circle {
-        font-size: 60px;
         color: #cccccc;
       }
 
@@ -107,22 +150,23 @@
   .wrangler-data {
     position: relative;
     margin: 0;
+    height: 100%;
 
     .wrangle-transforms,
     .wrangle-results {
       position: absolute;
       top: 0;
-      height: calc(~"100vh - 103px");
+      bottom: 0;
     }
 
     .wrangle-transforms {
       left: 0;
       width: @wrangler-left-panel-width;
-      border-right: 2px solid #dddddd;
+      border-right: @border;
 
       .wrangle-filters {
         height: 60px;
-        border-bottom: 2px solid #dddddd;
+        border-bottom: @border;
         background-color: #eeeeee;
         font-size: 25px;
         display: flex;
@@ -136,9 +180,8 @@
       }
 
       .transform-item {
-        font-size: 14px;
         padding: 10px 15px;
-        border-bottom: 2px solid #dddddd;
+        border-bottom: @border;
         cursor: pointer;
 
         &.expanded {
@@ -159,8 +202,10 @@
 
     .wrangle-results {
       left: @wrangler-left-panel-width;
-      right: 250px; // offset right panel
+      right: 400px; // offset right panel
       overflow-y: auto;
+
+      &.expanded { right: 0; }
 
       .data-table {
         width: 100%;
@@ -225,6 +270,24 @@
       border-top: 2px solid #f39c12;
     }
 
+    .header-content-container {
+      display: inline-block;
+      width: 100%;
+
+      .header-text {
+        cursor: pointer;
+        display: inline-block;
+        width: calc(~"100% - 40px");
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        line-height: 18px;
+        vertical-align: middle;
+      }
+
+      .action-icon { width: 40px; }
+    }
+
     td.column-type-cell {
       font-size: 11px;
       font-weight: 400;
@@ -234,14 +297,20 @@
 
     th {
       background-color: #efefef;
-    }
+      border-bottom-width: 0;
 
-    .header-text {
-      cursor: pointer;
+      &.index-column {
+        font-size: 13px;
+        .fa {
+          margin-left: 5px;
+        }
+
+        .index-column-header-content { cursor: pointer; }
+      }
     }
 
     td {
-      padding-right: 3px;
+      padding-right: 5px;
       background-color: white;
       font-size: 12px;
       white-space: nowrap;
@@ -269,7 +338,36 @@
 
   .wrangler-data-metrics {
     height: 60px;
-    border-bottom: 2px solid #dddddd;
+    border-bottom: @border;
+
+    .action-button-container {
+      .hydrator-button {
+        display: inline-block;
+        margin-right: 15px;
+        line-height: 60px;
+        float: left;
+
+        .fa {
+          margin-right: 5px;
+          vertical-align: top;
+          margin-top: 2px;
+        }
+      }
+
+      .action-button {
+        display: inline-block;
+        line-height: 60px;
+        width: 60px;
+        cursor: pointer;
+        border-left: @border;
+        font-size: 16px;
+
+        &:hover {
+          background-color: #efefef;
+        }
+      }
+    }
+
     .metric-block {
       display: inline-block;
       padding-right: 25px;

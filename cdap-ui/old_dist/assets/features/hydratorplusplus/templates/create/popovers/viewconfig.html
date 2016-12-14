@@ -1,0 +1,20 @@
+
+
+<div class="modal-header clearfix">
+  <h3 class="modal-title pull-left">Export Pipeline Configuration</h3>
+  <span class="fa fa-times pull-right" ng-click="$close()"></span>
+</div>
+<div class="modal-body config-modal">
+  <fieldset disabled="true" class="view-plugin-json">
+    <my-json-textbox ng-model="config"></my-json-textbox>
+  </fieldset>
+  <br>
+</div>
+
+<div class="modal-footer">
+  <button class="btn btn-grey-cancel" ng-click="$close()">Cancel</button>
+  <button class="btn btn-blue" ng-click="export()">Export</button>
+</div>
+
+
+<a class="sr-only" id="pipeline-export-config-link" href="{{url}}" download="{{exportFileName}}.json">Export</a>

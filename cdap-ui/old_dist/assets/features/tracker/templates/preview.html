@@ -1,0 +1,46 @@
+
+
+<div class="content-loading text-center" ng-show="PreviewController.loading">
+  <h3>
+    <span class="fa fa-spinner fa-spin"></span>
+    <span>Obtaining preview data</span>
+  </h3>
+</div>
+
+<div class="preview-table-container" ng-hide="PreviewController.loading">
+  <table class="table table-bordered" ng-if="PreviewController.previewData.length > 0">
+    <thead>
+      <th></th>
+      <th ng-repeat="header in ::PreviewController.previewSchema">
+        {{ ::header.name }}
+      </th>
+    </thead>
+
+    <tbody infinite-scroll="PreviewController.loadNextData()" infinite-scroll-distance="2" infinite-scroll-disabled="PreviewController.viewLimit >= PreviewController.previewData.length">
+      <tr ng-repeat="row in PreviewController.previewData | limitTo: PreviewController.viewLimit track by $index">
+        <td>
+          {{ $index + 1 }}
+        </td>
+        <td ng-repeat="column in row.columns track by $index">
+          <span ng-if="column !== null">{{ ::column }}</span>
+          <span ng-if="column === null">null</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="text-center" ng-if="PreviewController.viewLimit >= 500">
+    <h4>
+      <a ui-sref="datasets.detail.overview.explore({ datasetId: $state.params.entityId })" ng-if="$state.params.entityType === 'datasets'">
+        Click here to explore in CDAP
+      </a>
+      <a ui-sref="streams.detail.overview.explore({ streamId: $state.params.entityId })" ng-if="$state.params.entityType === 'streams'">
+        Click here to explore in CDAP
+      </a>
+    </h4>
+  </div>
+</div>
+
+<div class="tracker-no-result text-center" ng-if="PreviewController.previewData.length === 0 && !PreviewController.loading">
+  <p>No data</p>
+</div>

@@ -1,0 +1,56 @@
+
+
+<div class="row">
+  <div class="col-xs-6">
+    <h2> Plugin Templates: {{ ::$state.params.nsadmin }} </h2>
+  </div>
+
+  <div class="col-xs-6 text-right">
+    <a ui-sref="admin.namespace.detail.templates" class="btn btn-default">
+      <i class="fa fa-plus"></i>
+      Add Template
+    </a>
+  </div>
+</div>
+
+<div class="table-responsive" ng-if="!TemplatesListController.isEmpty()">
+  <table class="table table-curved">
+    <thead>
+      <th>Name</th>
+      <th>Pipeline Type</th>
+      <th>Type</th>
+      <th>Plugin</th>
+      <th>Artifact Name</th>
+      <th>Artifact Version</th>
+      <th></th>
+    </thead>
+
+    <tbody>
+      <tr ng-repeat="template in TemplatesListController.list">
+        <td>
+          <a ui-sref="admin.namespace.detail.templateedit({ templateType: template.templateType, pluginType: template.pluginType, pluginTemplate: template.pluginTemplate })">
+            {{ template.pluginTemplate }}
+          </a>
+        </td>
+        <td>
+          <i class="icon-{{template.templateType}}"></i>
+          <span>{{ template.templateType }}</span>
+        </td>
+        <td>{{ template.pluginType }}</td>
+        <td>{{ template.pluginName }}</td>
+        <td>{{ template.artifact.name }}</td>
+        <td>{{ template.artifact.version }}</td>
+        <td class="text-center">
+          <a href="" ng-click="caskConfirm()" cask-confirmable="TemplatesListController.delete(template)" data-confirmable-content="Are you sure you want to delete the template '<strong>{{template.pluginTemplate}}</strong>'?">
+            <span class="fa fa-trash text-danger"></span>
+          </a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<br>
+<div class="well text-center" ng-if="TemplatesListController.isEmpty()">
+  <h3>No Plugin Templates</h3>
+</div>

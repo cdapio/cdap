@@ -1,0 +1,73 @@
+
+
+
+
+<form name="addWdgtForm" class="form-horizontal" ng-submit="doAddWidget()" novalidate>
+  <div class="modal-header clearfix">
+    <h3 class="pull-left">Add Widget(s)</h3>
+    <a class="btn pull-right" ng-click="closeModal()">
+      <span class="fa fa-remove"></span>
+      <span class="sr-only"> Close </span>
+    </a>
+  </div>
+  <div class="modal-body">
+
+    <div class="form-group">
+      <label for="addWdgtType" class="col-xs-3 control-label">
+        <span>Type</span>
+        <span class="fa fa-asterisk"></span>
+      </label>
+      <div class="col-xs-8">
+        <div class="select-wrapper">
+          <select id="addWdgtType" name="type" class="form-control" cask-focus="addWdgtType" ng-model="model.type" ng-options="t.type as t.name for t in widgetTypes" required></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="col-xs-3 control-label">
+        <span>Context</span>
+        <span class="fa fa-asterisk"></span>
+      </label>
+      <div class="col-xs-8">
+
+        <my-metric-picker ng-model="model.metric" data-metrics-limit="metricsLimit" data-metrics-slots-filled="metricsSlotsFilled" required></my-metric-picker>
+
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="col-xs-offset-3 col-xs-8">
+        <div class="radio">
+          <label>
+            <input type="radio" ng-model="addType" value="INDIVIDUAL" checked="checked">
+            Multiple widgets with one metric each
+          </label>
+        </div>
+
+        <div class="radio">
+          <label>
+            <input type="radio" ng-model="addType" value="MULTIPLE">
+            One widget with one or more metrics
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" ng-if="addType === 'MULTIPLE'">
+      <label for="addWdgtName" class="col-xs-3 control-label">
+        <span>Widget Name</span>
+        <span class="fa fa-asterisk"></span>
+      </label>
+      <div class="col-xs-8">
+        <input id="addWdgtName" type="text" name="name" class="form-control" placeholder="Name" cask-focus="addWdgtName" ng-model="model.title" required>
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-default" ng-click="addWidget()" ng-disabled="addWdgtForm.$invalid || (addType === 'INDIVIDUAL' && ((metricsLimit - metricsSlotsFilled) < model.metric.names.length))">
+      Add
+    </button>
+  </div>
+</form>

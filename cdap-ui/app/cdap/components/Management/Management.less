@@ -27,11 +27,23 @@
   background-color: #FFFFFF;
   padding: 20px;
 
+  .top-panel {
+    margin-bottom: 20px;
+  }
+
+  .admin-horizontal-line {
+    border: none;
+    height: 2px;
+    color: #E3E3E3;
+    background-color: #E3E3E3;
+    margin-top: 0;
+    margin-bottom: 0;
+    width: ~"calc(100% + 40px)";
+    margin-left: -20px;
+  }
+
   .fa.fa-spinner {
     color: gray;
-  }
-  .top-panel {
-    border: solid @grey-theme-color 2px;
   }
   .admin-bottom-panel {
     display: flex;
@@ -54,6 +66,9 @@
   .centering-container {
     display: flex;
     justify-content: center;
+    > li {
+      cursor: pointer;
+    }
   }
 
   .container {

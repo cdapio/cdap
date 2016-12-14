@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service.mds;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.Table;
@@ -26,9 +27,18 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -52,6 +62,9 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
    * see {@link #MODULES_PREFIX} for more info.
    */
   private static final String TYPE_TO_MODULE_PREFIX = "t_";
+
+  private static final Gson BACKWARD_COMPAT_GSON = new GsonBuilder()
+    .registerTypeAdapter(DatasetModuleId.class, new BackwardCompatDatasetModuleIdDeserializer()).create();
 
   public DatasetTypeMDS(DatasetSpecification spec, @EmbeddedDataset("") Table table) {
     super(table);
@@ -214,5 +227,43 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
       builder.add(name);
     }
     return builder.build();
+  }
+
+  @Override
+  protected <T> T deserialize(byte[] serialized, Type typeOfT) {
+    return BACKWARD_COMPAT_GSON.fromJson(Bytes.toString(serialized), typeOfT);
+  }
+
+  @VisibleForTesting
+  <T> T deserializeProxy(byte[] serialized, Type typeOfT) {
+    return deserialize(serialized, typeOfT);
+  }
+
+  /**
+   * A JsonDeserializer that can decode the pre-4.0 Id.DatasetModule as a 4.0+ DatasetModuleId.
+   */
+  private static class BackwardCompatDatasetModuleIdDeserializer implements JsonDeserializer<DatasetModuleId> {
+
+    private static final Gson GSON = new Gson();
+
+    @Override
+    public DatasetModuleId deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+      throws JsonParseException {
+      if (!(json instanceof JsonObject)) {
+        throw new JsonParseException("Expected JsonObject but found " + json.getClass().getSimpleName());
+      }
+      JsonObject object = (JsonObject) json;
+      // 4.0: {“module":"metricsTable-hbase","namespace":"system","entity":"DATASET_MODULE”}
+      if (object.has("entity")) {
+        return GSON.fromJson(json, DatasetModuleId.class);
+      }
+      // 3.5: {"namespace":{"id":"system"},"moduleId":"metricsTable-hbase"}
+      try {
+        return new DatasetModuleId(object.getAsJsonObject("namespace").get("id").getAsString(),
+                                   object.get("moduleId").getAsString());
+      } catch (Exception e) {
+        throw new JsonParseException("Failed to deserialize as 3.5 Id.DatasetModule: " + json, e);
+      }
+    }
   }
 }

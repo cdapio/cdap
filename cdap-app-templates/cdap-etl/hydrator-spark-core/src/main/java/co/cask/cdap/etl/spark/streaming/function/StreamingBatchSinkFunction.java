@@ -76,7 +76,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
       });
       isPrepared = true;
 
-      data = data.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", sec.getDataTracer(stageName)));
+      data = data.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
       sinkFactory.writeFromRDD(data.flatMapToPair(sinkFunction), sec, stageName, Object.class, Object.class);
       isDone = true;
       sec.execute(new TxRunnable() {

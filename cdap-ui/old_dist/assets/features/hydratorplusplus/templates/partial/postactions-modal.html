@@ -1,0 +1,29 @@
+
+
+<div class="modal-header clearfix">
+  <h3 class="modal-title pull-left">{{ PostActionController.pluginConfig.plugin.name }}</h3>
+  <div class="btn-group pull-right">
+    <a class="btn" ng-click="$close()">
+      <span class="fa fa-remove"></span>
+      <span class="sr-only"> Close </span>
+    </a>
+  </div>
+</div>
+<div class="modal-body config-modal">
+  <fieldset disabled="disabled">
+
+    
+    <div ng-if="!PostActionController.noConfig">
+      <div ng-include="'old_assetsfeatures/hydratorplusplus/templates/partial/postactions-form.html'">
+      </div>
+    </div>
+
+    
+    <div ng-if="PostActionController.noConfig">
+      <div ng-include="'old_assetsfeatures/hydratorplusplus/templates/partial/postactions-noconfig-form.html'">
+      </div>
+    </div>
+
+    </fieldset></div>
+  
+

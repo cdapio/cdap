@@ -21,7 +21,6 @@ import {MyServiceProviderApi} from 'api/serviceproviders';
 var shortid = require('shortid');
 
 const propTypes = {
-  services: PropTypes.array,
   isLoading: PropTypes.bool
 };
 

@@ -1,0 +1,18 @@
+
+<br>
+<div uib-dropdown>
+  <button class="btn btn-default" uib-dropdown-toggle>Action</button>
+
+  <ul uib-dropdown-menu>
+    <li><a href="" ng-click="vm.import()">Import</a></li>
+    <li><a href="" ng-click="vm.export()">Export</a></li>
+  </ul>
+</div>
+
+
+
+<my-complex-schema-editor ng-model="vm.outputSchema">
+</my-complex-schema-editor>
+
+<my-file-select class="sr-only" id="schema-import-link" data-button-icon="fa-upload" on-file-select="vm.importFiles($files)" data-button-label="Import">
+</my-file-select>
