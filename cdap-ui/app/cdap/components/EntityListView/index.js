@@ -96,7 +96,7 @@ class EntityListView extends Component {
 
     this.state = {
       filter: defaultFilter,
-      sortObj: this.sortOptions[0],
+      sortObj: this.sortOptions[3],
       query: '',
       entities: [],
       selectedEntity: null,
@@ -277,8 +277,7 @@ class EntityListView extends Component {
           .map((entity) => {
             entity.uniqueId = shortid.generate();
             return entity;
-          })
-          .filter((entity) => entity.id.charAt(0) !== '_');
+          });
       })
       .subscribe((res) => {
         this.setState({
@@ -308,7 +307,7 @@ class EntityListView extends Component {
 
   handleFilterClick(option) {
     let filters = [...this.state.filter];
-    if (this.state.filter.includes(option.id)) {
+    if (this.state.filter.indexOf(option.id) !== -1) {
       let index = filters.indexOf(option.id);
       filters.splice(index, 1);
     } else {

@@ -81,9 +81,9 @@ export default class AllTabContents extends Component {
     const empty = <h3>Empty</h3>;
     const entities = (
       this.state.entities
-        .map((e, index) => (
+        .map((e) => (
           <MarketPlaceEntity
-            key={index}
+            key={e.id}
             entityId={e.id}
             entity={e}
           />

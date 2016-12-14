@@ -22,21 +22,16 @@ require('./UploadData.less');
 
 const mapStateWithDNDFileProps = (state) => {
   return {
-    file: state.upload.filename
+    file: state.upload.data
   };
 };
 const mapDispatchWithDNDFileProps = (dispatch) => {
   return {
     onDropHandler: (e) => {
       dispatch({
-        type: CreateStreamWithUploadActions.setFilename,
+        type: CreateStreamWithUploadActions.setData,
         payload: {
-          filename: e[0].name
-        }
-      });
-      dispatch({
-        type: CreateStreamWithUploadActions.setDefaultData,
-        payload: {
+          filename: e[0].name,
           data: e[0]
         }
       });
