@@ -16,6 +16,7 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
@@ -41,10 +42,12 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.inject.Inject;
@@ -53,7 +56,9 @@ import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.api.logging.LogEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -151,6 +156,19 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   protected EventHandler createEventHandler(CConfiguration cConf) {
     return new AbortOnTimeoutEventHandler(
       cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE), true);
+  }
+
+  @Override
+  protected TwillPreparer setLogLevels(TwillPreparer twillPreparer, Program program, ProgramOptions options) {
+    FlowSpecification spec = program.getApplicationSpecification().getFlows().get(program.getName());
+    for (String flowlet : spec.getFlowlets().keySet()) {
+      Map<String, String> logLevels = SystemArguments.getLogLevels(
+        RuntimeArguments.extractScope(FlowUtils.FLOWLET_SCOPE, flowlet, options.getUserArguments().asMap()));
+      if (!logLevels.isEmpty()) {
+        twillPreparer.setLogLevels(flowlet, transformLogLevels(logLevels));
+      }
+    }
+    return twillPreparer;
   }
 
   /**

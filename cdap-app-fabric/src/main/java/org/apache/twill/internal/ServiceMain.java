@@ -229,12 +229,12 @@ public abstract class ServiceMain {
   }
 
   /**
-   * Override to return the right log level for the service.
+   * Return the right log level for the service.
    *
    * @param logger the {@link Logger} instance of the service context.
    * @return String of log level based on {@code slf4j} log levels.
    */
-  protected String getLoggerLevel(Logger logger) {
+  private String getLoggerLevel(Logger logger) {
     if (logger instanceof ch.qos.logback.classic.Logger) {
       return ((ch.qos.logback.classic.Logger) logger).getLevel().toString();
     }
