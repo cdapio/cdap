@@ -27,51 +27,17 @@ import Helmet from 'react-helmet';
 import NamespaceStore from 'services/NamespaceStore';
 import {MyServiceProviderApi} from 'api/serviceproviders';
 import Mousetrap from 'mousetrap';
+import MyCDAPVersionApi from 'api/version.js';
 
 import T from 'i18n-react';
 var shortid = require('shortid');
 var classNames = require('classnames');
 
 var dummyData = {
-  version: '4.0.0',
   uptime: {
-    duration: '0.2',
-    unit: 'hr'
-  },
-  services: [
-    {
-      name: 'App Fabric',
-      status: 'Green'
-    },
-    {
-      name: 'Explore',
-      status: 'Green'
-    },
-    {
-      name: 'Metadata',
-      status: 'Green'
-    },
-    {
-      name: 'Metrics Processor',
-      status: 'Green'
-    },
-    {
-      name: 'Tephra Transaction',
-      status: 'Green'
-    },
-    {
-      name: 'Dataset Executor',
-      status: 'Green'
-    },
-    {
-      name: 'Log Saver',
-      status: 'Green'
-    },
-    {
-      name: 'Streams',
-      status: 'Green'
-    }
-  ]
+    duration: '--',
+    unit: '-'
+  }
 };
 
 class Management extends Component {
@@ -82,8 +48,9 @@ class Management extends Component {
       application: '',
       applications: [],
       services: [],
-      lastUpdated: '15',
+      version: '',
       loading: false,
+      lastUpdated : 0,
       wizard : {
         actionIndex : null,
         actionType : null
@@ -113,12 +80,12 @@ class Management extends Component {
           this.setState({
             application : current,
             applications : apps,
-            services : services,
-            lastUpdated : 'a few'
+            services : services
           });
         }
       );
 
+    this.updatingInterval;
     this.lastAccessedNamespace;
     this.interval = undefined;
     this.getServices = this.getServices.bind(this);
@@ -140,10 +107,24 @@ class Management extends Component {
         this.setState({
           serviceData : serviceData
         });
+
+        clearInterval(this.updatingInterval);
+
+        this.setState({
+          lastUpdated : 0
+        });
+
+        this.updatingInterval= setInterval(()=> {
+          this.setState({
+            lastUpdated : this.state.lastUpdated + 30
+          });
+        }, 30000);
       });
     });
   }
-
+  componentWillMount(){
+    MyCDAPVersionApi.get().subscribe((res) => this.setState({ version : res.version }));
+  }
   componentDidMount(){
     document.querySelector('#header-namespace-dropdown').style.display = 'none';
     this.lastAccessedNamespace = NamespaceStore.getState().selectedNamespace;
@@ -221,7 +202,7 @@ class Management extends Component {
           <div className="admin-row top-row">
             <InfoCard
               isLoading={this.state.loading}
-              primaryText={dummyData.version}
+              primaryText={this.state.version}
               secondaryText={T.translate('features.Management.Top.version-label')}
             />
             <InfoCard
@@ -233,9 +214,14 @@ class Management extends Component {
             <ServiceLabel/>
             <ServiceStatusPanel
               isLoading={this.state.loading}
-              services={dummyData.services}
             />
           </div>
+          <div className="container">
+            <ul className="nav nav-pills nav-justified centering-container">
+                {navItems}
+            </ul>
+          </div>
+          <hr className="admin-horizontal-line" />
           <div className="admin-row">
             <AdminDetailPanel
               isLoading={this.state.loading}
@@ -246,12 +232,8 @@ class Management extends Component {
               serviceData={this.state.serviceData[this.state.application]}
             />
           </div>
-          <div className="container">
-            <ul className="nav nav-pills nav-justified centering-container">
-                {navItems}
-            </ul>
-          </div>
         </div>
+        <hr className="admin-horizontal-line" />
         <div className="admin-bottom-panel">
           <AdminConfigurePane openNamespaceWizard={this.openNamespaceWizard}/>
           <AdminOverviewPane

@@ -15,7 +15,7 @@
  */
 
 
-import React, {PropTypes} from 'react';
+import React, {Component, PropTypes} from 'react';
 require('./AdminDetailPanel.less');
 import AdminMetadataPane from '../AdminMetadataPane/index.js';
 import shortid from 'shortid';
@@ -24,92 +24,115 @@ import T from 'i18n-react';
 
 const propTypes = {
   applicationName: PropTypes.string,
-  timeFromUpdate: PropTypes.string,
+  timeFromUpdate: PropTypes.number,
   isLoading: PropTypes.bool,
   clickLeftButton: PropTypes.func,
   clickRightButton: PropTypes.func,
   serviceData: PropTypes.object
 };
 
-function AdminDetailPanel({applicationName, timeFromUpdate, clickLeftButton, clickRightButton, serviceData}){
+class AdminDetailPanel extends Component {
 
-  let panelData = [];
+  constructor(props){
+    super(props);
+  }
 
-  //Process the data so it can be easily consumed by child components
-  for(let key in serviceData){
-    if(serviceData.hasOwnProperty(key)){
-      let category = key;
+  render() {
 
-      //Construct Array from Object Category
-      //Convert number into human readable text
-      let pairs = [];
-      Object.keys(serviceData[key]).map((item) => {
+    let panelData = [];
 
-        let humanReadableNum;
+    //Process the data so it can be easily consumed by child components
+    for(let key in this.props.serviceData){
+      if(this.props.serviceData.hasOwnProperty(key)){
+        let category = key;
 
-        if(key === 'storage' || key === 'memory'){
-          humanReadableNum = humanReadableNumber(serviceData[key][item], 'STORAGE');
-        } else {
-          humanReadableNum = humanReadableNumber(serviceData[key][item]);
-        }
+        //Construct Array from Object Category
+        //Convert number into human readable text
+        let pairs = [];
+        Object.keys(this.props.serviceData[key]).map((item) => {
 
-        pairs.push({
-          'statName' : item,
-          'statNum' : humanReadableNum
+          let humanReadableNum;
+
+          if(key === 'storage' || key === 'memory'){
+            humanReadableNum = humanReadableNumber(this.props.serviceData[key][item], 'STORAGE');
+          } else {
+            humanReadableNum = humanReadableNumber(this.props.serviceData[key][item]);
+          }
+
+          pairs.push({
+            'statName' : item,
+            'statNum' : humanReadableNum
+          });
         });
-      });
 
-      panelData.push({
-        'statsHeader' : category,
-        'stats' : pairs
-      });
+        panelData.push({
+          'statsHeader' : category,
+          'stats' : pairs
+        });
+      }
     }
+
+    let panes = panelData.map((panel) => {
+      if(panel.stats.length){
+        return (
+          <AdminMetadataPane
+            statObject={panel}
+            key={shortid.generate()}
+          />
+        );
+      }
+    });
+
+    //Place vertical lines between panes
+    for(let i = panes.length ; i >= 0 ; i--){
+      if(i !== 0 && i != panes.length){
+        panes.splice(i, 0, <div className="vertical-line" key={shortid.generate()}/>);
+      }
+    }
+
+    let translatedApplicationName = this.props.applicationName ?
+        T.translate(`features.Management.Component-Overview.headers.${this.props.applicationName}`)
+        :
+        <span className="fa fa-spinner" />;
+
+    let updateLabel;
+
+    switch(this.props.timeFromUpdate) {
+      case 0:
+        updateLabel = 'moments ago';
+        break;
+
+      case 30:
+        updateLabel = '30 seconds ago';
+        break;
+
+      default:
+        updateLabel = (Math.floor(this.props.timeFromUpdate / 60)) + ' minutes ' + (this.props.timeFromUpdate % 60) + ' seconds ago';
+    }
+
+    return (
+      <div className="admin-detail-panel">
+        <div onClick={this.props.clickLeftButton} className="admin-detail-panel-button-left">
+          <i className="fa fa-chevron-left" aria-hidden="true" />
+        </div>
+        <div onClick={this.props.clickRightButton} className="admin-detail-panel-button-right">
+          <i className="fa fa-chevron-right" aria-hidden="true" />
+        </div>
+        <div className="admin-detail-panel-header">
+          <div className="admin-detail-panel-header-name">
+            {translatedApplicationName}
+          </div>
+          <div className="admin-detail-panel-header-status">
+            Last updated {updateLabel}
+          </div>
+        </div>
+        <div className="admin-detail-panel-body">
+          {panes}
+        </div>
+      </div>
+    );
   }
 
-  let panes = panelData.map((panel) => {
-    if(panel.stats.length){
-      return (
-        <AdminMetadataPane
-          statObject={panel}
-          key={shortid.generate()}
-        />
-      );
-    }
-  });
-
-  //Place vertical lines between panes
-  for(let i = panes.length ; i >= 0 ; i--){
-    if(i !== 0 && i != panes.length){
-      panes.splice(i, 0, <div className="vertical-line" key={shortid.generate()}/>);
-    }
-  }
-
-  let translatedApplicationName = applicationName ?
-      T.translate(`features.Management.Component-Overview.headers.${applicationName}`)
-      :
-      <span className="fa fa-spinner" />;
-
-  return (
-    <div className="admin-detail-panel">
-      <div onClick={clickLeftButton} className="admin-detail-panel-button-left">
-        <i className="fa fa-chevron-left" aria-hidden="true" />
-      </div>
-      <div onClick={clickRightButton} className="admin-detail-panel-button-right">
-        <i className="fa fa-chevron-right" aria-hidden="true" />
-      </div>
-      <div className="admin-detail-panel-header">
-        <div className="admin-detail-panel-header-name">
-          {translatedApplicationName}
-        </div>
-        <div className="admin-detail-panel-header-status">
-          Last updated {timeFromUpdate} seconds ago
-        </div>
-      </div>
-      <div className="admin-detail-panel-body">
-        {panes}
-      </div>
-    </div>
-  );
 }
 
 AdminDetailPanel.propTypes = propTypes;
