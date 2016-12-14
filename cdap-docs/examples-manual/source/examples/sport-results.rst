@@ -75,9 +75,9 @@ Let's take a closer look at the upload method:
 - Then it obtains a ``PartitionOutput`` for that partition key from the *results* dataset.
 - It then uses the ``getLocation`` method of the PartitionOutput to obtain the location
   for writing the file, and opens an output stream for that location to write the file contents.
-  ``Location`` is a file system abstraction from `Apache™ Twill® <http://twill.incubator.apache.org>`__;
+  ``Location`` is a file system abstraction from `Apache™ Twill® <http://twill.apache.org>`__;
   you can read more about its interface in the `Apache Twill
-  Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
+  Javadocs <http://twill.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
 - It then returns an ``HttpContentConsumer`` to consume the incoming request body.
 
   - In the ``onReceive`` method, it keeps appending newly received bytes to the output stream.

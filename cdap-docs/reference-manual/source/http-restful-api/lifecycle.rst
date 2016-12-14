@@ -1076,7 +1076,7 @@ To fetch the run record for a particular run of a program, use::
 
 For services, you can retrieve:
 
-- the history of successfully completed Twill service runs using::
+- the history of successfully completed Apache Twill service runs using::
 
     GET /v3/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/runs?status=completed
 

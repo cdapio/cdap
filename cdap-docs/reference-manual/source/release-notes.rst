@@ -1083,7 +1083,7 @@ Bug Fixes
 - `CDAP-3498 <https://issues.cask.co/browse/CDAP-3498>`__ - Upgraded CDAP to use
   Apache Twill ``0.7.0-incubating`` with numerous new features, improvements, and bug
   fixes. See the `Apache Twill release notes
-  <http://twill.incubator.apache.org/releases/0.7.0-incubating.html>`__ for details.
+  <http://twill.apache.org/releases/0.7.0-incubating.html>`__ for details.
 
 - `CDAP-3584 <https://issues.cask.co/browse/CDAP-3584>`__ - Upon transaction rollback, a
   ``PartitionedFileSet`` now rolls back the files for the partitions that were added and/or
@@ -3011,7 +3011,7 @@ Bug Fixes
   Fixed a problem with that examples needing to be updated for new CDAP UI.
 
 - `CDAP-2454 <https://issues.cask.co/browse/CDAP-2454>`__ -
-  Fixed a problem with Proto class RunRecord containing the Twill RunId when serialized in REST API response.
+  Fixed a problem with Proto class RunRecord containing the Apache Twill RunId when serialized in REST API response.
 
 - `CDAP-2459 <https://issues.cask.co/browse/CDAP-2459>`__ -
   Fixed a problem with the CDAP UI going into a loop when the Router returns 200 and App Fabric is not up.
@@ -4282,7 +4282,7 @@ Known Issues
 - A race condition resulting in a deadlock can occur when a TwillRunnable container
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
-  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Apache Twill is
   updated in a future version of CDAP, a work-around is to kill the errant process. The YARN
   command to list all running applications and their ``app-id``\s is::
   
@@ -4292,7 +4292,7 @@ Known Issues
   
     yarn application -kill <app-id>
     
-  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  All versions of CDAP running Apache Twill version 0.4.0 with this configuration can exhibit this
   problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
   
 
@@ -4354,7 +4354,7 @@ Known Issues
 - A race condition resulting in a deadlock can occur when a TwillRunnable container
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
-  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Apache Twill is
   updated in a future version of CDAP, a work-around is to kill the errant process. The YARN
   command to list all running applications and their ``app-id``\s is::
   
@@ -4364,7 +4364,7 @@ Known Issues
   
     yarn application -kill <app-id>
     
-  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  All versions of CDAP running Apache Twill version 0.4.0 with this configuration can exhibit this
   problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
 
 - Typically, datasets are bundled as part of applications. When an application is upgraded and redeployed,
@@ -4411,7 +4411,7 @@ Known Issues
 - A race condition resulting in a deadlock can occur when a TwillRunnable container
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
-  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Apache Twill is
   updated in a future version of CDAP, a work-around is to kill the errant process. The YARN
   command to list all running applications and their ``app-id``\s is::
   
@@ -4421,7 +4421,7 @@ Known Issues
   
     yarn application -kill <app-id>
     
-  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  All versions of CDAP running Apache Twill version 0.4.0 with this configuration can exhibit this
   problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
 
 - Typically, datasets are bundled as part of applications. When an application is upgraded and redeployed,
@@ -4551,7 +4551,7 @@ Known Issues
 - A race condition resulting in a deadlock can occur when a TwillRunnable container
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
-  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Apache Twill is
   updated in a future version of CDAP, a work-around is to kill the errant process. The YARN
   command to list all running applications and their ``app-id``\s is::
   
@@ -4561,7 +4561,7 @@ Known Issues
   
     yarn application -kill <app-id>
     
-  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  All versions of CDAP running Apache Twill version 0.4.0 with this configuration can exhibit this
   problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
 
 
@@ -4616,7 +4616,7 @@ Known Issues
 - A race condition resulting in a deadlock can occur when a TwillRunnable container
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
-  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Apache Twill is
   updated in a future version of CDAP, a work-around is to kill the errant process. The YARN
   command to list all running applications and their ``app-id``\s is::
   
@@ -4626,7 +4626,7 @@ Known Issues
   
     yarn application -kill <app-id>
     
-  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  All versions of CDAP running Apache Twill version 0.4.0 with this configuration can exhibit this
   problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
 
 
@@ -4666,7 +4666,7 @@ Known Issues
 - A race condition resulting in a deadlock can occur when a TwillRunnable container
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
-  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Apache Twill is
   updated in a future version of CDAP, a work-around is to kill the errant process. The YARN
   command to list all running applications and their ``app-id``\s is::
   
@@ -4676,7 +4676,7 @@ Known Issues
   
     yarn application -kill <app-id>
     
-  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  All versions of CDAP running Apache Twill version 0.4.0 with this configuration can exhibit this
   problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
 
 
@@ -4754,7 +4754,7 @@ Known Issues
 - A race condition resulting in a deadlock can occur when a TwillRunnable container
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
-  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Apache Twill is
   updated in a future version of CDAP, a work-around is to kill the errant process. The YARN
   command to list all running applications and their ``app-id``\s is::
   
@@ -4764,5 +4764,5 @@ Known Issues
   
     yarn application -kill <app-id>
     
-  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  All versions of CDAP running Apache Twill version 0.4.0 with this configuration can exhibit this
   problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
