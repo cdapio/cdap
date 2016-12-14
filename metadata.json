@@ -15,13 +15,13 @@
   },
   "dependencies": {
     "apt": ">= 0.0.0",
-    "ark": ">= 0.0.0",
     "hadoop": ">= 0.0.0",
     "java": ">= 0.0.0",
     "nodejs": ">= 0.0.0",
     "ntp": ">= 0.0.0",
     "yum": ">= 0.0.0",
     "yum-epel": ">= 0.0.0",
+    "ark": "< 2.2.0",
     "krb5_utils": ">= 0.0.0"
   },
   "recommendations": {
@@ -48,7 +48,7 @@
   "recipes": {
 
   },
-  "version": "2.26.2",
+  "version": "2.27.0",
   "source_url": "https://github.com/caskdata/cdap_cookbook",
   "issues_url": "https://issues.cask.co/browse/COOK/component/10603"
 }
