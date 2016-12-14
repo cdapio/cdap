@@ -14,12 +14,11 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import { Dropdown, DropdownMenu } from 'reactstrap';
 import T from 'i18n-react';
 import classnames from 'classnames';
 require('./ProductsDropdown.less');
-import head from 'lodash/head';
 import shortid from 'shortid';
 import NamespaceStore from 'services/NamespaceStore';
 
@@ -53,10 +52,8 @@ export default class ProductsDrawer extends Component {
         icon: 'icon-DataWrangler'
       }
     ];
-    let currentChoice = head(products.filter(product => product.name === props.currentChoice));
     this.state = {
       productsDropdown: false,
-      currentChoice,
       products
     };
   }
@@ -107,17 +104,17 @@ export default class ProductsDrawer extends Component {
         toggle={this.toggle.bind(this)}
       >
         <div
-          className={classnames("current-product", this.state.currentChoice.name, {'open': this.state.productsDropdown})}
+          className={classnames("current-product", this.state.products[0].name, {'open': this.state.productsDropdown})}
           onClick={this.toggle.bind(this)}
         >
-          <span className={classnames("fa", this.state.currentChoice.icon)}></span>
-          <span className="product-name">{this.state.currentChoice.label}</span>
+          <span className={classnames("fa", this.state.products[0].icon)}></span>
+          <span className="product-name">{this.state.products[0].label}</span>
         </div>
         <DropdownMenu>
           {
             this.state
               .products
-              .filter(product => product.name !== this.state.currentChoice.name)
+              .filter(product => product.name !== this.state.products[0].name)
               .map(product => {
                 return (
                   <div
@@ -152,7 +149,3 @@ export default class ProductsDrawer extends Component {
     );
   }
 }
-
-ProductsDrawer.propTypes = {
-  currentChoice: PropTypes.string
-};
