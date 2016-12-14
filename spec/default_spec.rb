@@ -42,18 +42,4 @@ describe 'cdap::default' do
       expect(link).to link_to('/test/logs/cdap')
     end
   end
-
-  context 'when security.enabled' do
-    let(:chef_run) do
-      ChefSpec::SoloRunner.new(platform: 'centos', version: 6.6) do |node|
-        node.override['cdap']['cdap_site']['security.enabled'] = 'true'
-        stub_command(/update-alternatives --display /).and_return(false)
-        stub_command(/test -L /).and_return(false)
-      end.converge(described_recipe)
-    end
-
-    it 'includes security recipe' do
-      expect(chef_run).to include_recipe('cdap::security')
-    end
-  end
 end

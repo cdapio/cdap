@@ -46,7 +46,7 @@ end
     execute "initaction-create-hdfs-mr-jhs-staging-#{dir.tr('_', '-')}-#{u}" do
       only_if "getent passwd #{u}"
       not_if "hadoop fs -test -d /tmp/hadoop-yarn/staging/history/#{dir}/#{u}", :user => u
-      command "hadoop fs -mkdir -p /tmp/hadoop-yarn/staging/history/#{dir}/#{u} && hadoop fs -chown #{u} /tmp/hadoop-yarn/staging/history/#{dir}/#{u} && hadoop fs -chmod 1777 /tmp/hadoop-yarn/staging/history/#{dir}/#{u}"
+      command "hadoop fs -mkdir -p /tmp/hadoop-yarn/staging/history/#{dir}/#{u} && hadoop fs -chown #{u} /tmp/hadoop-yarn/staging/history/#{dir}/#{u} && hadoop fs -chmod 770 /tmp/hadoop-yarn/staging/history/#{dir}/#{u}"
       timeout 300
       user node['cdap']['fs_superuser']
       retries 3

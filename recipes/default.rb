@@ -69,10 +69,3 @@ if node['cdap'].key?('cdap_env') && node['cdap']['cdap_env'].key?('log_dir')
 end
 
 include_recipe 'cdap::config'
-
-if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('security.enabled') &&
-   node['cdap']['cdap_site'].key?('security.auth.server.address') &&
-   node['cdap']['cdap_site']['security.auth.server.address'] == node['fqdn']
-
-  include_recipe 'cdap::security'
-end

@@ -34,7 +34,7 @@ kafka_log_dirs =
   elsif node['cdap']['cdap_site'].key?('kafka.log.dir')
     node['cdap']['cdap_site']['kafka.log.dir']
   else
-    '/tmp/kafka-logs'
+    '/data/cdap/kafka-logs'
   end
 
 node.default['cdap']['cdap_site']['kafka.server.log.dirs'] = kafka_log_dirs

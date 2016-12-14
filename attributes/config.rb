@@ -27,14 +27,6 @@ default['cdap']['cdap_site']['root.namespace'] = 'cdap'
 default['cdap']['cdap_site']['hdfs.namespace'] = "/#{node['cdap']['cdap_site']['root.namespace']}"
 default['cdap']['cdap_site']['hdfs.user'] = 'yarn'
 default['cdap']['cdap_site']['kafka.seed.brokers'] = "#{node['fqdn']}:9092"
-# CDAP 3.5.0 deprecated Kafka Server settings
-if node['cdap']['version'].to_f < 3.5
-  default['cdap']['cdap_site']['kafka.log.dir'] = '/data/cdap/kafka-logs'
-  default['cdap']['cdap_site']['kafka.default.replication.factor'] = '1'
-else
-  default['cdap']['cdap_site']['kafka.server.log.dirs'] = '/data/cdap/kafka-logs'
-  default['cdap']['cdap_site']['kafka.server.default.replication.factor'] = '1'
-end
 default['cdap']['cdap_site']['log.retention.duration.days'] = '7'
 default['cdap']['cdap_site']['zookeeper.quorum'] = "#{node['fqdn']}:2181/#{node['cdap']['cdap_site']['root.namespace']}"
 default['cdap']['cdap_site']['router.bind.address'] = node['fqdn']
@@ -60,6 +52,8 @@ hdp_version =
       '2.2.4.4-16'
     when '2.2.6.0'
       '2.2.6.0-2800'
+    when '2.2.6.3'
+      '2.2.6.3-1'
     when '2.2.8.0'
       '2.2.8.0-3150'
     when '2.2.9.0'
@@ -78,6 +72,8 @@ hdp_version =
       '2.4.0.0-169'
     when '2.4.2.0'
       '2.4.2.0-258'
+    when '2.4.3.0'
+      '2.4.3.0-227'
     when '2.5.0.0'
       '2.5.0.0-1245'
     else

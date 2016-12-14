@@ -17,6 +17,11 @@
 # limitations under the License.
 #
 
+# Install Java, unless skip_prerequisites
+unless node['cdap'].key?('skip_prerequisites') && node['cdap']['skip_prerequisites'].to_s == 'true'
+  include_recipe 'java'
+end
+
 include_recipe 'cdap::repo'
 
 package 'cdap-cli' do

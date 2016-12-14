@@ -1,5 +1,15 @@
 cdap CHANGELOG
-===============
+==============
+
+v2.26.2 (Nov 10, 2016)
+----------------------
+- Always run security recipe in fullstack ( Issue: #185 )
+
+v2.26.1 (Oct 25, 2016)
+----------------------
+- Add HDP 2.2.6.3 and 2.4.3.0 support ( Issue: #180 )
+- Remove sticky bit from user JHS directories ( Issue: #182 )
+- Honor the CDAP_USER environment ( Issue: #183 )
 
 v2.26.0 (Oct 18, 2016)
 ----------------------
