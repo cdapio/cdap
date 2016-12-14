@@ -126,11 +126,23 @@
     </div>
     <div class="btn"
          ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.runPreview()"
-         ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading">
+         ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading"
+         ng-if="!HydratorPlusPlusTopPanelCtrl.previewRunning">
       <span class="fa fa-play"
             ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading">
       </span>
+      <span ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">
+        <span class="fa fa-refresh fa-spin"></span>
+      </span>
+    </div>
 
+    <div class="btn"
+         ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.stopPreview()"
+         ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading"
+         ng-if="HydratorPlusPlusTopPanelCtrl.previewRunning">
+      <span class="fa fa-refresh fa-stop text-danger"
+            ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading"
+      ></span>
       <span ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">
         <span class="fa fa-refresh fa-spin"></span>
       </span>

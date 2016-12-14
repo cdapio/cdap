@@ -72,13 +72,13 @@ class EntityListView extends Component {
         displayName: T.translate('features.EntityListView.Header.sortOptions.entityNameAsc.displayName'),
         sort: 'name',
         order: 'asc',
-        fullSort: 'name asc'
+        fullSort: 'entity-name asc'
       },
       {
         displayName: T.translate('features.EntityListView.Header.sortOptions.entityNameDesc.displayName'),
         sort: 'name',
         order: 'desc',
-        fullSort: 'name desc'
+        fullSort: 'entity-name desc'
       },
       {
         displayName: T.translate('features.EntityListView.Header.sortOptions.creationTimeAsc.displayName'),
