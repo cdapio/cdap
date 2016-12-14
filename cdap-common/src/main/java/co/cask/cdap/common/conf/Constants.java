@@ -199,6 +199,7 @@ public final class Constants {
    */
   public class Scheduler {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
+    public static final String CFG_SCHEDULER_MISFIRE_THRESHOLD_MS = "scheduler.misfire.threshold.ms";
   }
 
   /**

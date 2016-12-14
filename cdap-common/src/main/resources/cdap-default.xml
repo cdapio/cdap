@@ -341,6 +341,15 @@
   </property>
 
   <property>
+    <name>scheduler.misfire.threshold.ms</name>
+    <value>60000</value>
+    <description>
+      The number of milliseconds by which a schedule execution can miss its
+      next-fire-time and still run
+    </description>
+  </property>
+
+  <property>
     <name>workflow.token.max.size.mb</name>
     <value>30</value>
     <description>
