@@ -134,7 +134,7 @@ export default class HeaderActions extends Component {
             <NamespaceDropdown tag={this.props.tag}/>
           </div>
           <div className="products-dropdown">
-            <ProductsDrawer currentChoice={this.props.product}/>
+            <ProductsDrawer />
           </div>
         </ul>
       </div>
