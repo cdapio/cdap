@@ -67,11 +67,11 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
   @Override
   protected void doStop() throws Exception {
     if (service.state() != Service.State.TERMINATED && service.state() != Service.State.FAILED) {
-      LOG.debug("stopping service for program {}.", getProgramId());
+      LOG.debug("stopping service for program {}.", getProgramRunId());
       service.stopAndWait();
-      LOG.debug("stopped service for program {}, waiting for it to finish running listener hooks.", getProgramId());
-      serviceStoppedLatch.await(3, TimeUnit.MINUTES);
-      LOG.debug("service for program {} finished running listener hooks.", getProgramId());
+      LOG.debug("stopped service for program {}, waiting for it to finish running listener hooks.", getProgramRunId());
+      serviceStoppedLatch.await(30, TimeUnit.SECONDS);
+      LOG.debug("service for program {} finished running listener hooks.", getProgramRunId());
     }
   }
 

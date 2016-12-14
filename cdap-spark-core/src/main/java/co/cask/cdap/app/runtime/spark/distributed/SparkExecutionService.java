@@ -69,7 +69,7 @@ public final class SparkExecutionService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(SparkExecutionService.class);
   private static final Gson GSON = new Gson();
   private static final Type TOKEN_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final long SHUTDOWN_WAIT_SECONDS = 30L;
+  private static final long SHUTDOWN_WAIT_SECONDS = 20L;
 
   private final LocationFactory locationFactory;
   private final NettyHttpService httpServer;
