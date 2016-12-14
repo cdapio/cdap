@@ -529,6 +529,21 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Saving runtime arguments failed");
   }
 
+  public Map<String, String> getRuntimeArgs(ProgramId programId) throws Exception {
+    DefaultHttpRequest request = new DefaultHttpRequest(
+      HttpVersion.HTTP_1_1, HttpMethod.GET,
+      String.format("%s/apps/%s/%s/%s/runtimeargs", getNamespacePath(programId.getNamespace()),
+                    programId.getApplication(), programId.getType().getCategoryName(), programId.getProgram())
+    );
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    MockResponder mockResponder = new MockResponder();
+    programLifecycleHttpHandler.getProgramRuntimeArgs(request, mockResponder, programId.getNamespace(),
+                                                       programId.getApplication(),
+                                                       programId.getType().getCategoryName(), programId.getProgram());
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Getting runtime arguments failed");
+    return mockResponder.decodeResponseContent(MAP_TYPE);
+  }
+
   public List<PluginInstanceDetail> getPlugins(ApplicationId application) throws Exception {
     DefaultHttpRequest request = new DefaultHttpRequest(
       HttpVersion.HTTP_1_1, HttpMethod.GET,

@@ -199,4 +199,9 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   public void setRuntimeArgs(ProgramId programId, Map<String, String> args) throws Exception {
     appFabricClient.setRuntimeArgs(programId, args);
   }
+
+  @Override
+  public Map<String, String> getRuntimeArgs(ProgramId programId) throws Exception {
+    return appFabricClient.getRuntimeArgs(programId);
+  }
 }

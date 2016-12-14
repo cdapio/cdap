@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
@@ -35,6 +36,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import co.cask.cdap.common.security.AuthEnforce;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -491,6 +493,26 @@ public class ProgramLifecycleService extends AbstractIdleService {
     preferencesStore.setProperties(programId.getNamespace(), programId.getApplication(),
                                    programId.getType().getCategoryName(),
                                    programId.getProgram(), runtimeArgs);
+  }
+
+  /**
+   * Gets runtime arguments for the program from the {@link PreferencesStore}
+   *
+   * @param programId the {@link ProgramId program} for which runtime arguments needs to be retrieved
+   * @return {@link Map} containing runtime arguments of the program
+   * @throws NotFoundException if the specified program was not found
+   * @throws UnauthorizedException if the current user does not have sufficient privileges to get runtime arguments for
+   * the specified program. To get runtime arguments for a program, a user requires
+   * {@link Action#READ} privileges on the program.
+   */
+  @AuthEnforce(entities = "programId", enforceOn = ProgramId.class, actions = Action.READ)
+  public Map<String, String> getRuntimeArgs(@Name("programId") ProgramId programId)
+    throws NotFoundException, UnauthorizedException {
+    if (!store.programExists(programId)) {
+      throw new NotFoundException(programId);
+    }
+    return preferencesStore.getProperties(programId.getNamespace(), programId.getApplication(),
+                                          programId.getType().getCategoryName(), programId.getProgram());
   }
 
   private boolean isRunning(ProgramId programId) throws Exception {
