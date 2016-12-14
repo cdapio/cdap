@@ -54,7 +54,7 @@ if node['cdap']['cdap_site'].key?('kerberos.auth.enabled') && node['cdap']['cdap
   if node['cdap'].key?('security') && node['cdap']['security'].key?('cdap_keytab')
     default['cdap']['kerberos']['cdap_keytab'] = node['cdap']['security']['cdap_keytab']
   else
-    default['cdap']['kerberos']['cdap_keytab'] = "#{node['krb5_utils']['keytabs_dir']}/cdap.service.keytab"
+    default['cdap']['kerberos']['cdap_keytab'] = "#{node['krb5']['keytabs_dir']}/cdap.service.keytab"
     # Backwards compat
     default['cdap']['security']['cdap_keytab'] = node['cdap']['kerberos']['cdap_keytab']
   end
