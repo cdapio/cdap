@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.spec;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
@@ -236,6 +237,8 @@ public class PipelineSpecGeneratorTest {
           .build())
       .addConnections(etlConfig.getConnections())
       .setResources(etlConfig.getResources())
+      .setDriverResources(new Resources(1024, 1))
+      .setClientResources(new Resources(1024, 1))
       .setStageLoggingEnabled(etlConfig.isStageLoggingEnabled())
       .build();
     Assert.assertEquals(expected, actual);

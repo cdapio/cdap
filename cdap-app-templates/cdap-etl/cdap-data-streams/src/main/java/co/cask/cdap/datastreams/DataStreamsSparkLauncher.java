@@ -67,6 +67,7 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
 
     setExecutorResources(pipelineSpec.getResources());
     setDriverResources(pipelineSpec.getDriverResources());
+    setClientResources(pipelineSpec.getClientResources());
 
     int numSources = 0;
     for (StageSpec stageSpec : pipelineSpec.getStages()) {
