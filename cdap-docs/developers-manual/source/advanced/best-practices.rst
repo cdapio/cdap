@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 ==========================================
 Best Practices for Developing Applications
@@ -18,8 +18,7 @@ To initialize using a property annotation, simply annotate the field definition 
 ``@Property``. 
 
 The following example demonstrates the convenience of using ``@Property`` in a
-``WordFilter`` flowlet
-that filters out specific words::
+``WordFilter`` flowlet that filters out specific words::
 
   public static class WordFilter extends AbstractFlowlet {
 
@@ -62,15 +61,15 @@ The flowlet constructor is called with the parameter when the flow is configured
 At run-time, when the flowlet is started, a value is injected into the ``toFilterOut``
 field.
 
-Field types that are supported using the ``@Property`` annotation are primitives,
-boxed types (e.g. ``Integer``), ``String`` and ``enum``.
+**Note:** Field types that are supported using the ``@Property`` annotation are primitives,
+boxed types (such as an ``Integer``), ``String``, and ``enum``.
 
 
-Scanning Over Tables with ``byte[]`` Keys
+Scanning Over Tables with Byte Array Keys
 =========================================
 In the CDAP Java API, 
 `Bytes.stopKeyForPrefix() <../../reference-manual/javadocs/co/cask/cdap/api/common/Bytes.html#stopKeyForPrefix(byte[])>`__
-is a very handy tool when performing scans over tables with ``byte[]`` keys.
+is a very handy tool when performing scans over tables with byte array (``byte[]``) keys.
 
 The method returns a given prefix, incremented by one, in a form that is suitable for
 prefix matching. Here is an example, showing ``stopKeyForPrefix`` being used to generate,
