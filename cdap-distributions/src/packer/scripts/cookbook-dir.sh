@@ -26,6 +26,7 @@ cd /var/chef/cookbooks
 touch .gitignore
 
 if [[ $(which apt-get 2>/dev/null) ]]; then
+  apt-get update
   apt-get install -y --no-install-recommends git || exit 1
 else
   yum install -y git || exit 1

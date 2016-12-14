@@ -189,6 +189,12 @@
     },
     {
       "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
+      "scripts": "scripts/sdk-ami-security.sh",
+      "only": ["cdap-sdk-ami"]
+    },
+    {
+      "type": "shell",
       "scripts": [
         "scripts/random-root-password.sh",
         "scripts/zero-disk.sh"
