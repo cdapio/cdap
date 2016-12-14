@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -65,18 +67,23 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
   private final TransactionExecutorFactory factory;
   private final ScheduleStoreTableUtil tableUtil;
+  private final CConfiguration cConf;
   private Table table;
 
   @Inject
-  public DatasetBasedTimeScheduleStore(TransactionExecutorFactory factory, ScheduleStoreTableUtil tableUtil) {
+  DatasetBasedTimeScheduleStore(TransactionExecutorFactory factory, ScheduleStoreTableUtil tableUtil,
+                                CConfiguration cConf) {
     this.tableUtil = tableUtil;
     this.factory = factory;
+    this.cConf = cConf;
   }
 
   @Override
   public void initialize(ClassLoadHelper loadHelper, SchedulerSignaler schedSignaler) {
     super.initialize(loadHelper, schedSignaler);
     try {
+      // See CDAP-7116
+      setMisfireThreshold(cConf.getLong(Constants.Scheduler.CFG_SCHEDULER_MISFIRE_THRESHOLD_MS));
       initializeScheduleTable();
       readSchedulesFromPersistentStore();
     } catch (Throwable th) {
