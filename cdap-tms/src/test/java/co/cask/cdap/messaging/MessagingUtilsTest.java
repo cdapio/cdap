@@ -28,7 +28,7 @@ public class MessagingUtilsTest {
   @Test
   public void testTopicConversion() throws Exception {
     TopicId id = new TopicId("n1", "t1");
-    byte[] topicBytes = MessagingUtils.toRowKeyPrefix(id);
+    byte[] topicBytes = MessagingUtils.toMetadataRowKey(id);
     TopicId topicId = MessagingUtils.toTopicId(topicBytes);
     Assert.assertEquals(id, topicId);
   }

@@ -20,6 +20,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.messaging.MessagingUtils;
+import co.cask.cdap.messaging.RollbackDetail;
+import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
 import org.apache.tephra.Transaction;
@@ -52,13 +54,14 @@ public abstract class AbstractMessageTable implements MessageTable {
   protected abstract void persist(Iterator<RawMessageTableEntry> entries) throws IOException;
 
   /**
-   * Delete the transactionally published messages in the Table in the given key range.
+   * Rollback the transactionally published messages in the Table in the given key range.
    *
    * @param startKey start row to delete (inclusive)
    * @param stopKey stop row to delete (exclusive)
+   * @param txWritePointer transaction write pointer for messages that are being roll backed
    * @throws IOException thrown if there was an error while trying to delete the entries
    */
-  protected abstract void delete(byte[] startKey, byte[] stopKey) throws IOException;
+  protected abstract void rollback(byte[] startKey, byte[] stopKey, byte[] txWritePointer) throws IOException;
 
   /**
    * Read the {@link RawMessageTableEntry}s given a key range.
@@ -71,9 +74,9 @@ public abstract class AbstractMessageTable implements MessageTable {
   protected abstract CloseableIterator<RawMessageTableEntry> read(byte[] startRow, byte[] stopRow) throws IOException;
 
   @Override
-  public CloseableIterator<Entry> fetch(TopicId topicId, long startTime, int limit,
+  public CloseableIterator<Entry> fetch(TopicMetadata metadata, long startTime, int limit,
                                         @Nullable Transaction transaction) throws IOException {
-    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
+    byte[] topic = MessagingUtils.toDataKeyPrefix(metadata.getTopicId(), metadata.getGeneration());
     byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, startTime);
@@ -83,9 +86,9 @@ public abstract class AbstractMessageTable implements MessageTable {
   }
 
   @Override
-  public CloseableIterator<Entry> fetch(TopicId topicId, MessageId messageId, boolean inclusive, final int limit,
-                                        @Nullable final Transaction transaction) throws IOException {
-    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
+  public CloseableIterator<Entry> fetch(TopicMetadata metadata, MessageId messageId, boolean inclusive,
+                                        final int limit, @Nullable final Transaction transaction) throws IOException {
+    byte[] topic = MessagingUtils.toDataKeyPrefix(metadata.getTopicId(), metadata.getGeneration());
     byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, messageId.getPublishTimestamp());
@@ -101,20 +104,22 @@ public abstract class AbstractMessageTable implements MessageTable {
   }
 
   @Override
-  public void delete(TopicId topicId, long startTimestamp, short startSequenceId,
-                     long endTimestamp, short endSequenceId) throws IOException {
-    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
+  public void rollback(TopicMetadata metadata, RollbackDetail rollbackDetail) throws IOException {
+    //long startTimestamp, short startSequenceId,
+    //long endTimestamp, short endSequenceId
+    byte[] topic = MessagingUtils.toDataKeyPrefix(metadata.getTopicId(), metadata.getGeneration());
     byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
-    Bytes.putLong(startRow, topic.length, startTimestamp);
-    Bytes.putShort(startRow, topic.length + Bytes.SIZEOF_LONG, startSequenceId);
+    Bytes.putLong(startRow, topic.length, rollbackDetail.getStartTimestamp());
+    Bytes.putShort(startRow, topic.length + Bytes.SIZEOF_LONG, (short) rollbackDetail.getStartSequenceId());
 
     byte[] stopRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
     Bytes.putBytes(stopRow, 0, topic, 0, topic.length);
-    Bytes.putLong(stopRow, topic.length, endTimestamp);
-    Bytes.putShort(stopRow, topic.length + Bytes.SIZEOF_LONG, endSequenceId);
+    Bytes.putLong(stopRow, topic.length, rollbackDetail.getEndTimestamp());
+    Bytes.putShort(stopRow, topic.length + Bytes.SIZEOF_LONG, (short) rollbackDetail.getEndSequenceId());
 
-    delete(startRow, Bytes.stopKeyForPrefix(stopRow));
+    rollback(startRow, Bytes.stopKeyForPrefix(stopRow),
+             Bytes.toBytes(-1 * rollbackDetail.getTransactionWritePointer()));
   }
 
   private static Result isVisible(@Nullable byte[] txPtr, @Nullable Transaction transaction) {
@@ -124,6 +129,11 @@ public abstract class AbstractMessageTable implements MessageTable {
     }
 
     long txWritePtr = Bytes.toLong(txPtr);
+    // This transaction has been rolled back and thus skip the entry
+    if (txWritePtr < 0) {
+      return Result.SKIP;
+    }
+
     // This transaction is visible, hence accept the message
     if (transaction.isVisible(txWritePtr)) {
       return Result.ACCEPT;
@@ -208,6 +218,7 @@ public abstract class AbstractMessageTable implements MessageTable {
 
     private Iterator<? extends Entry> entries;
     private TopicId topicId;
+    private int generation;
     private byte[] topic;
     private byte[] rowKey;
     private Entry nextEntry;
@@ -233,9 +244,10 @@ public abstract class AbstractMessageTable implements MessageTable {
       Entry entry = nextEntry;
       nextEntry = null;
       // Create new byte arrays only when the topicId is different. Else, reuse the byte arrays.
-      if (topicId == null || (!topicId.equals(entry.getTopicId()))) {
+      if (topicId == null || (!topicId.equals(entry.getTopicId())) || (generation != entry.getGeneration())) {
         topicId = entry.getTopicId();
-        topic = MessagingUtils.toRowKeyPrefix(topicId);
+        generation = entry.getGeneration();
+        topic = MessagingUtils.toDataKeyPrefix(topicId, entry.getGeneration());
         rowKey = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
       }
 

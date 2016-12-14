@@ -27,10 +27,8 @@ import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -87,25 +85,6 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
         writeBatch.put(Arrays.copyOf(key, key.length), Arrays.copyOf(value, value.length));
       }
       levelDB.write(writeBatch, WRITE_OPTIONS);
-    } catch (DBException ex) {
-      throw new IOException(ex);
-    }
-  }
-
-  @Override
-  protected void delete(byte[] startRow, byte[] stopRow) throws IOException {
-    List<byte[]> rowKeysToDelete = new ArrayList<>();
-    try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startRow, stopRow)) {
-      while (rowIterator.hasNext()) {
-        Map.Entry<byte[], byte[]> candidateRow = rowIterator.next();
-        rowKeysToDelete.add(candidateRow.getKey());
-      }
-    }
-
-    try {
-      for (byte[] deleteRowKey : rowKeysToDelete) {
-        levelDB.delete(deleteRowKey);
-      }
     } catch (DBException ex) {
       throw new IOException(ex);
     }
