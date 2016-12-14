@@ -546,6 +546,7 @@ cdap_service() {
       echo ${CLASSPATH}
       __ret=0
       ;;
+    run) cdap_run_class ${__args} ; __ret=${?} ;;
     usage|-h|--help) echo "Usage: $0 ${__service} {start|stop|restart|status|condrestart|classpath}"; __ret=0 ;;
     *) die "Usage: $0 ${__service} {start|stop|restart|status|condrestart|classpath}" ;;
   esac
