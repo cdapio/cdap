@@ -561,7 +561,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Update the log level for a program back to when it starts. Currently supported program types are
+   * Update the log level for a program according to the request body. Currently supported program types are
    * {@link ProgramType#FLOW}, {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
    * The request body is expected to contain a map of log levels, where key is loggername, value is one of the
    * valid {@link org.apache.twill.api.logging.LogEntry.Level} or null.
@@ -573,6 +573,20 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-name") String appName,
                                      @PathParam("program-type") String type,
                                      @PathParam("program-name") String programName) throws Exception {
+    updateProgramLogLevels(request, responder, namespace, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+  }
+
+  /**
+   * Update the log level for a program according to the request body.
+   */
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/logLevels")
+  @PUT
+  public void updateProgramLogLevels(HttpRequest request, HttpResponder responder,
+                                     @PathParam("namespace-id") String namespace,
+                                     @PathParam("app-name") String appName,
+                                     @PathParam("app-version") String appVersion,
+                                     @PathParam("program-type") String type,
+                                     @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
     if (programType == null) {
       throw new MethodNotAllowedException(request.getMethod(), request.getUri());
@@ -580,8 +594,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       // we are decoding the body to Map<String, String> instead of Map<String, LogEntry.Level> here since Gson will
       // serialize invalid enum values to null, which is allowed for log level, instead of throw an Exception.
-      lifecycleService.updateProgramLogLevels(new ProgramId(namespace, appName, programType, programName),
-                                              decodeArguments(request));
+      lifecycleService.updateProgramLogLevels(
+        new ApplicationId(namespace, appName, appVersion).program(programType, programName), decodeArguments(request));
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (JsonSyntaxException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");
@@ -591,7 +605,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Reset the log level for a program back to when it starts. Currently supported program types are
+   * Reset the log level for a program back to where it starts. Currently supported program types are
    * {@link ProgramType#FLOW}, {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
    * The request body can either be empty, which will reset all loggers for the program, or contain a list of
    * logger names, which will reset for these particular logger names for the program.
@@ -603,6 +617,20 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("app-name") String appName,
                                     @PathParam("program-type") String type,
                                     @PathParam("program-name") String programName) throws Exception {
+    resetProgramLogLevels(request, responder, namespace, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+  }
+
+  /**
+   * Reset the log level for a program back to where it starts.
+   */
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/resetLogLevels")
+  @PUT
+  public void resetProgramLogLevels(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespace,
+                                    @PathParam("app-name") String appName,
+                                    @PathParam("app-version") String appVersion,
+                                    @PathParam("program-type") String type,
+                                    @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
     if (programType == null) {
       throw new MethodNotAllowedException(request.getMethod(), request.getUri());
@@ -610,7 +638,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Map<String, String[]> resetRequest = parseBody(request, STRING_STRINGARRAY_MAP_TYPE);
       String[] loggerNames = resetRequest == null ? null : resetRequest.entrySet().iterator().next().getValue();
-      lifecycleService.resetProgramLogLevels(new ProgramId(namespace, appName, programType, programName), loggerNames);
+      lifecycleService.resetProgramLogLevels(
+        new ApplicationId(namespace, appName, appVersion).program(programType, programName), loggerNames);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (JsonSyntaxException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");
@@ -1032,9 +1061,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Update the log level for a flowlet. Currently supported program types are Flow, Worker and Service. The request
-   * body is expected to contain a map of log levels, where key is loggername, value is one of the valid
-   * {@link org.apache.twill.api.logging.LogEntry.Level} or null.
+   * Update the log level for a flowlet according to the request body. Currently supported program types are Flow,
+   * Worker and Service. The request body is expected to contain a map of log levels, where key is loggername, value is
+   * one of the valid {@link org.apache.twill.api.logging.LogEntry.Level} or null.
    */
   @PUT
   @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/logLevels")
@@ -1057,7 +1086,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Update the log level for a program back to when it starts. Currently supported program types are Flow, Worker and
+   * Update the log level for a program back to where it starts. Currently supported program types are Flow, Worker and
    * Service. The request body is expected to contain a map of log levels, where key is loggername, value is one of the
    * valid {@link org.apache.twill.api.logging.LogEntry.Level} or null.
    */
