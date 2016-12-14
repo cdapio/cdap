@@ -27,6 +27,8 @@ import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
+import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -46,6 +48,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -115,10 +118,11 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             SecureStore secureStore,
                             SecureStoreManager secureStoreManager,
                             AuthorizationEnforcer authorizationEnforcer,
-                            AuthenticationContext authenticationContext) {
+                            AuthenticationContext authenticationContext,
+                            MessagingService messagingService) {
     super(program, programOptions, cConf,  ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient,
           true, metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), secureStore,
-          secureStoreManager, pluginInstantiator);
+          secureStoreManager, messagingService, pluginInstantiator);
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
     this.spec = spec;
@@ -233,6 +237,24 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Override
   public InputContext getInputContext() {
     return inputContext;
+  }
+
+  @Override
+  public MessagePublisher getMessagePublisher() {
+    // TODO: CDAP-7807
+    throw new UnsupportedOperationException("Messaging is not supported in MapReduce task-level context");
+  }
+
+  @Override
+  public MessagePublisher getDirectMessagePublisher() {
+    // TODO: CDAP-7807
+    throw new UnsupportedOperationException("Messaging is not supported in MapReduce task-level context");
+  }
+
+  @Override
+  public MessageFetcher getMessageFetcher() {
+    // TODO: CDAP-7807
+    throw new UnsupportedOperationException("Messaging is not supported in MapReduce task-level context");
   }
 
   private static Map<String, String> createMetricsTags(@Nullable String taskId,

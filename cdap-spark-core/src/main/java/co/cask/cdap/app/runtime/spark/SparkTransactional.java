@@ -146,7 +146,7 @@ final class SparkTransactional implements Transactional {
   /**
    * Executes the given runnable with transactionally. If there is an opened transaction that can be used, then
    * the runnable will be executed with that existing transaction.
-   * Otherwise, a new long transaction will be created to exeucte the given runnable.
+   * Otherwise, a new long transaction will be created to execute the given runnable.
    *
    * @param runnable The {@link TxRunnable} to be executed inside a transaction
    * @param transactionType The {@link TransactionType} of the Spark transaction.
@@ -192,7 +192,7 @@ final class SparkTransactional implements Transactional {
 
     // If there is no active transaction, start a new long transaction
     if (txDatasetContext == null) {
-      txDatasetContext = new TransactionalDatasetContext(txClient.startLong(), datasetCache, transactionType);
+      txDatasetContext = new TransactionalDatasetContext(datasetCache, transactionType);
       activeDatasetContext.set(txDatasetContext);
       needCommit = transactionType != TransactionType.IMPLICIT_COMMIT_ON_JOB_END;
     }
@@ -217,6 +217,7 @@ final class SparkTransactional implements Transactional {
     } catch (Throwable t) {
       // Any exception will cause invalidation of the transaction
       activeDatasetContext.remove();
+      txDatasetContext.rollbackWithoutFailure();
       Transactions.invalidateQuietly(txClient, transaction);
       throw Transactions.asTransactionFailure(t);
     }
@@ -246,18 +247,39 @@ final class SparkTransactional implements Transactional {
     private final DynamicDatasetCache datasetCache;
     private final Set<Dataset> datasets;
     private final Set<Dataset> discardDatasets;
+    private final Iterable<TransactionAware> extraTxAwares;
     private TransactionType transactionType;
     private CountDownLatch completion;
     private volatile boolean jobStarted;
 
-    private TransactionalDatasetContext(Transaction transaction,
-                                        DynamicDatasetCache datasetCache, TransactionType transactionType) {
-      this.transaction = transaction;
+    private TransactionalDatasetContext(DynamicDatasetCache datasetCache,
+                                        TransactionType transactionType) throws TransactionFailureException {
       this.datasetCache = datasetCache;
       this.datasets = Collections.synchronizedSet(new HashSet<Dataset>());
       this.discardDatasets = Collections.synchronizedSet(new HashSet<Dataset>());
       this.transactionType = transactionType;
       this.completion = new CountDownLatch(1);
+
+      // Needs to capture the extra transaction aware from this thread, as the commit can happen from different thread
+      // The blocking mechanism in the execute method in the outer class makes sure there is no concurrent access
+      // to this list.
+      this.extraTxAwares = datasetCache.getExtraTransactionAwares();
+      this.transaction = startTx(extraTxAwares);
+    }
+
+    private Transaction startTx(Iterable<TransactionAware> txAwares) throws TransactionFailureException {
+      Transaction transaction = txClient.startLong();
+      for (TransactionAware txAware : txAwares) {
+        try {
+          txAware.startTx(transaction);
+        } catch (Throwable t) {
+          txClient.abort(transaction);
+          throw new TransactionFailureException(
+            String.format("Unable to start transaction-aware '%s' for transaction %d. ",
+                          txAware.getTransactionAwareName(), transaction.getTransactionId()), t);
+        }
+      }
+      return transaction;
     }
 
     boolean isJobStarted() {
@@ -285,8 +307,10 @@ final class SparkTransactional implements Transactional {
       // Shouldn't happen
       Preconditions.checkState(commitOnJobEnded(), "Not expecting transaction to be completed");
       transactionInfos.remove(Long.toString(transaction.getWritePointer()));
-      if (failureCause == null) {
+      if (jobSucceeded && failureCause == null) {
         postCommit();
+      } else {
+        rollbackWithoutFailure();
       }
       completion.countDown();
     }
@@ -368,7 +392,7 @@ final class SparkTransactional implements Transactional {
      * @throws TransactionFailureException if any {@link TransactionAware#commitTx()} call throws exception
      */
     private void flush() throws TransactionFailureException {
-      for (TransactionAware txAware : Iterables.filter(datasets, TransactionAware.class)) {
+      for (TransactionAware txAware : getTransactionAwares()) {
         try {
           if (!txAware.commitTx()) {
             throw new TransactionFailureException("Failed to persist changes for " + txAware);
@@ -384,13 +408,33 @@ final class SparkTransactional implements Transactional {
      * {@link DatasetContext}.
      */
     private void postCommit() {
-      for (TransactionAware txAware : Iterables.filter(datasets, TransactionAware.class)) {
+      for (TransactionAware txAware : getTransactionAwares()) {
         try {
           txAware.postTxCommit();
         } catch (Exception e) {
-          LOG.warn("Exception raised in postTxCommit call on dataset {}", txAware, e);
+          LOG.warn("Exception raised in postTxCommit call on TransactionAware {}", txAware, e);
         }
       }
+    }
+
+    /**
+     * Calls {@link TransactionAware#rollbackTx()} methods on all {@link TransactionAware} acquired through this
+     * {@link DatasetContext}. We don't need to ignore rollback failure because the transaction is always
+     * getting invalidated. However, TransactionAware implementation may rely on the call to reset internal states,
+     * hence it's good always call it.
+     */
+    private void rollbackWithoutFailure() {
+      for (TransactionAware txAware : getTransactionAwares()) {
+        try {
+          txAware.rollbackTx();
+        } catch (Exception e) {
+          LOG.warn("Exception raised in rollback call on TransactionAware {}", txAware, e);
+        }
+      }
+    }
+
+    private Iterable<TransactionAware> getTransactionAwares() {
+      return Iterables.concat(Iterables.filter(datasets, TransactionAware.class), extraTxAwares);
     }
 
     /**

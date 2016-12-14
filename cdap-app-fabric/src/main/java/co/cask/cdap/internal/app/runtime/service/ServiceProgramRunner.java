@@ -34,6 +34,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
@@ -59,12 +60,14 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final ServiceAnnouncer serviceAnnouncer;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
+  private final MessagingService messagingService;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                              SecureStore secureStore, SecureStoreManager secureStoreManager,
+                              MessagingService messagingService) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -73,6 +76,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.serviceAnnouncer = serviceAnnouncer;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
+    this.messagingService = messagingService;
   }
 
   @Override
@@ -109,7 +113,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           instanceId, instanceCount, serviceAnnouncer,
                                                           metricsCollectionService, datasetFramework,
                                                           txClient, discoveryServiceClient,
-                                                          pluginInstantiator, secureStore, secureStoreManager);
+                                                          pluginInstantiator, secureStore, secureStoreManager,
+                                                          messagingService);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(new ServiceListenerAdapter() {

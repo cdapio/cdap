@@ -71,13 +71,13 @@ class TransactionSpark extends AbstractSpark with SparkMain  {
       .saveAsDataset(runtimeArgs("result.all.dataset"))
 
     // Use an explicit transaction to read from the all dataset and perform filtering and write it to dataset
-    Transaction {
+    Transaction(() => {
       sc.fromDataset[Array[Byte], Array[Byte]](runtimeArgs("result.all.dataset"))
         .map(t => (t._1, Bytes.toInt(t._2)))
         .filter(t => t._2 >= runtimeArgs("result.threshold").toInt)
         .map(t => (t._1, Bytes.toBytes(t._2)))
         .saveAsDataset(runtimeArgs("result.threshold.dataset"))
-    }
+    })
 
     // Sleep for 5 mins. This allows the unit-test to verify the dataset results
     // committed by the transaction above.

@@ -263,6 +263,12 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
   public abstract Iterable<TransactionAware> getTransactionAwares();
 
   /**
+   * @return the current list of extra {@link TransactionAware}s that were added through the
+   * {@link #addExtraTransactionAware(TransactionAware)} method.
+   */
+  public abstract Iterable<TransactionAware> getExtraTransactionAwares();
+
+  /**
    * Add an extra transaction aware to the static datasets. This is a transaction aware that
    * is not instantiated through this factory, but needs to participate in every transaction.
    * Note that if a transaction is in progress, then this transaction aware will join that transaction.

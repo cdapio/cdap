@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.transaction.MultiThreadTransactionAware;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -55,13 +56,18 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
    * @param staticDatasets  if non-null, a map from dataset name to runtime arguments. These datasets will be
    *                        instantiated immediately, and they will participate in every transaction started
    *                        through {@link #newTransactionContext}.
+   * @param multiThreadTxAwares a list of {@link MultiThreadTransactionAware} that will get added to each
+   *                            {@link SingleThreadDatasetCache} instance created for each thread through the
+   *                            {@link SingleThreadDatasetCache#addExtraTransactionAware(TransactionAware)} method
+   *                            to participate in transaction lifecycle.
    */
   public MultiThreadDatasetCache(final SystemDatasetInstantiator instantiator,
                                  final TransactionSystemClient txClient,
                                  final NamespaceId namespace,
                                  final Map<String, String> runtimeArguments,
                                  @Nullable final MetricsContext metricsContext,
-                                 @Nullable final Map<String, Map<String, String>> staticDatasets) {
+                                 @Nullable final Map<String, Map<String, String>> staticDatasets,
+                                 final MultiThreadTransactionAware<?>...multiThreadTxAwares) {
     super(instantiator, txClient, namespace, runtimeArguments);
     this.perThreadMap = CacheBuilder.newBuilder()
       .weakKeys()
@@ -80,8 +86,12 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
           @Override
           @ParametersAreNonnullByDefault
           public SingleThreadDatasetCache load(Thread thread) throws Exception {
-            return new SingleThreadDatasetCache(
+            SingleThreadDatasetCache cache = new SingleThreadDatasetCache(
               instantiator, txClient, namespace, runtimeArguments, metricsContext, staticDatasets);
+            for (MultiThreadTransactionAware<?> txAware : multiThreadTxAwares) {
+              cache.addExtraTransactionAware(txAware);
+            }
+            return cache;
           }
         });
   }
@@ -127,6 +137,11 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
   @Override
   public Iterable<TransactionAware> getTransactionAwares() {
     return entryForCurrentThread().getTransactionAwares();
+  }
+
+  @Override
+  public Iterable<TransactionAware> getExtraTransactionAwares() {
+    return entryForCurrentThread().getExtraTransactionAwares();
   }
 
   @Override

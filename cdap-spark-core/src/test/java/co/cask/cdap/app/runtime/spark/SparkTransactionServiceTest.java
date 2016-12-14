@@ -70,7 +70,8 @@ public class SparkTransactionServiceTest {
 
     txClient = new InMemoryTxSystemClient(txManager);
 
-    sparkTxService = new SparkTransactionService(txClient, InetAddress.getLoopbackAddress().getCanonicalHostName());
+    sparkTxService = new SparkTransactionService(txClient, InetAddress.getLoopbackAddress().getCanonicalHostName(),
+                                                 "test");
     sparkTxService.startAndWait();
 
     sparkTxClient = new SparkTransactionClient(sparkTxService.getBaseURI());
@@ -176,7 +177,7 @@ public class SparkTransactionServiceTest {
     txManager.startAndWait();
     try {
       SparkTransactionService sparkTxService = new SparkTransactionService(
-        new InMemoryTxSystemClient(txManager), InetAddress.getLoopbackAddress().getCanonicalHostName());
+        new InMemoryTxSystemClient(txManager), InetAddress.getLoopbackAddress().getCanonicalHostName(), "test");
       sparkTxService.startAndWait();
       try {
         // Start a job
