@@ -16,38 +16,11 @@
 
 <header class="navbar navbar-fixed-top">
   <nav class="navbar {{ Navbar.activeProduct }}">
-    <div class="brand-header">
-      <a href="" class="navbar-brand" ng-click="Navbar.toggleSidebar()"
-         ng-mouseenter="Navbar.mouseHoverBrand = true"
-         ng-mouseleave="Navbar.mouseHoverBrand = false">
-        <span class="icon-fist"
-              ng-if="Navbar.activeProduct === 'cdap' || Navbar.mouseHoverBrand"></span>
-        <span class="icon-hydrator"
-              ng-if="Navbar.activeProduct === 'hydrator' && !Navbar.mouseHoverBrand"></span>
-        <span class="icon-tracker"
-              ng-if="Navbar.activeProduct === 'tracker' && !Navbar.mouseHoverBrand"></span>
-      </a>
 
-      <a ui-sref="overview({namespace: $stateParams.namespace})"
-         class="menu-item product-title"
-         ng-if="Navbar.activeProduct === 'cdap'">
-        CDAP
-      </a>
-
-      <a ui-sref="hydratorplusplus.list({ namespace: $stateParams.namespace })"
-         class="menu-item product-title"
-         ng-if="Navbar.activeProduct === 'hydrator'">
-        Cask Hydrator
-      </a>
-
-      <a ui-sref="tracker.home({ namespace: $stateParams.namespace })"
-         class="menu-item product-title"
-         ng-if="Navbar.activeProduct === 'tracker'">
-        Cask Tracker
-      </a>
-
-    </div>
-
+    <a ui-sref="overview({namespace: $stateParams.namespace})"
+       class="navbar-brand brand-logo">
+      <div class="company-logo"></div>
+    </a>
     <!-- CDAP -->
     <ul class="navbar-list" ng-if="Navbar.activeProduct === 'cdap'">
       <li>
@@ -110,15 +83,13 @@
       </li>
     </ul>
 
-    <div class="environment">
-      <span>{{ ::Navbar.environment }}</span>
-      <span class="icon-lock_close" ng-if="Navbar.securityEnabled"></span>
-      <span class="icon-lock_open" ng-if="!Navbar.securityEnabled"></span>
-    </div>
-
-
     <!-- RIGHT MENUS -->
     <div class="pull-right right-menu">
+      <div class="environment pull-left">
+        <span>{{ ::Navbar.environment }}</span>
+        <span class="icon-lock_close" ng-if="Navbar.securityEnabled"></span>
+        <span class="icon-lock_open" ng-if="!Navbar.securityEnabled"></span>
+      </div>
 
       <my-search></my-search>
 
@@ -188,6 +159,31 @@
           </li>
         </ul>
       </div>
+
+      <div class="brand-header">
+        <a href="" class="navbar-brand" ng-click="Navbar.toggleSidebar()"
+           ng-mouseenter="Navbar.mouseHoverBrand = true"
+           ng-mouseleave="Navbar.mouseHoverBrand = false">
+          <span class="icon-fist"
+                ng-if="Navbar.activeProduct === 'cdap' || Navbar.mouseHoverBrand"></span>
+          <span class="cdap-brand-text"
+                ng-if="Navbar.activeProduct === 'cdap'">
+            CDAP
+          </span>
+          <span class="icon-hydrator"
+                ng-if="Navbar.activeProduct === 'hydrator' && !Navbar.mouseHoverBrand"></span>
+          <span class="hydrator-brand-text"
+                ng-if="Navbar.activeProduct === 'hydrator'">
+            Cask Hydrator
+          </span>
+          <span class="icon-tracker"
+                ng-if="Navbar.activeProduct === 'tracker' && !Navbar.mouseHoverBrand"></span>
+          <span class="tracker-brand-text"
+                ng-if="Navbar.activeProduct === 'tracker'">
+            Cask Tracker
+          </span>
+        </a>
+      </div>
     </div>
 
   </nav>
@@ -195,7 +191,7 @@
 
 <!-- SIDEBAR MENU -->
 <div class="display-container" ng-if="Navbar.showSidebar" ng-click="Navbar.toggleSidebar()">
-  <div class="sidebar" ng-click="$event.stopPropagation()">
+  <div class="sidebar pull-right" ng-click="$event.stopPropagation()">
     <a ui-sref="overview({namespace: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default' })"
        class="brand sidebar-item top">
       <div class="brand-icon text-center cdap">

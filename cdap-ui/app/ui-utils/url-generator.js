@@ -63,7 +63,7 @@ window.getAbsUIUrl = function(navigationObj) {
     baseUrl += '/' + entityType + '/' + entityId;
   }
   if (runId) {
-    baseUrl += '/' + runs + '/' + runId;
+    baseUrl += '/runs/' + runId;
   }
   return baseUrl;
 };

@@ -34,9 +34,11 @@ var pkg = require('../package.json'),
     finalhandler = require('finalhandler'),
     serveFavicon = require('serve-favicon'),
     request = require('request'),
-    uuid = require('node-uuid'),
     log4js = require('log4js'),
     bodyParser = require('body-parser'),
+    OLD_DIST_PATH = require('path').normalize(
+      __dirname + '/../old_dist'
+    ),
     DIST_PATH = require('path').normalize(
       __dirname + '/../dist'
     ),
@@ -252,6 +254,15 @@ function makeApp (authAddress, cdapConfig) {
         });
   });
 
+  app.use('/old_assets', [
+    express.static(OLD_DIST_PATH + '/assets', {
+      index: false
+    }),
+    function(req, res) {
+      finalhandler(req, res)(false); // 404
+    }
+  ]);
+
   // serve static assets
   app.use('/assets', [
     express.static(DIST_PATH + '/assets', {
@@ -430,23 +441,51 @@ function makeApp (authAddress, cdapConfig) {
     }
   ]);
 
-  // any other path, serve index.html
-  app.all('*', [
+  app.get('/ui-config-old.js', function (req, res) {
+    var path = __dirname + '/config/cdap-ui-config.json';
+
+    var fileConfig = {};
+
+    fileConfig = fs.readFileSync(path, 'utf8');
+    res.header({
+      'Content-Type': 'text/javascript',
+      'Cache-Control': 'no-store, must-revalidate'
+    });
+    res.send('angular.module("'+pkg.name+'.config")' +
+              '.constant("UI_CONFIG",'+fileConfig+');');
+  });
+  app.get('/config-old.js', function (req, res) {
+
+    var data = JSON.stringify({
+      // the following will be available in angular via the "MY_CONFIG" injectable
+
+      authorization: req.headers.authorization,
+      cdap: {
+        routerServerUrl: cdapConfig['router.server.address'],
+        routerServerPort: cdapConfig['router.server.port'],
+        routerSSLServerPort: cdapConfig['router.ssl.bind.port']
+      },
+      hydrator: {
+        previewEnabled: cdapConfig['enable.alpha.preview'] === 'true'
+      },
+      sslEnabled: cdapConfig['ssl.enabled'] === 'true',
+      securityEnabled: authAddress.enabled,
+      isEnterprise: process.env.NODE_ENV === 'production'
+    });
+
+    res.header({
+      'Content-Type': 'text/javascript',
+      'Cache-Control': 'no-store, must-revalidate'
+    });
+    res.send('angular.module("'+pkg.name+'.config", [])' +
+              '.constant("MY_CONFIG",'+data+');');
+  });
+
+  app.all(['/oldcdap', '/oldcdap*'], [
     function (req, res) {
-      // BCookie is the browser cookie, that is generated and will live for a year.
-      // This cookie is always generated to provide unique id for the browser that
-      // is being used to interact with the CDAP backend.
-      var date = new Date();
-      date.setDate(date.getDate() + 365); // Expires after a year.
-      if(! req.cookies.bcookie) {
-        res.cookie('bcookie', uuid.v4(), { expires: date});
-      } else {
-        res.cookie('bcookie', req.cookies.bcookie, { expires: date});
-      }
-     res.sendFile(DIST_PATH + '/index.html');
+      res.sendFile(OLD_DIST_PATH + '/index.html');
     }
   ]);
-
 
   return app;
 

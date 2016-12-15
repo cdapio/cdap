@@ -28,6 +28,22 @@ my-global-navbar {
     border: 0;
     font-weight: 500;
 
+    .navbar-brand {
+      &.brand-logo {
+        padding: 10px;
+        .company-logo {
+          background: url('@{img-path}/company_logo.png') 0 0 no-repeat;
+          display: inline-block;
+          height: 40px;
+          width: 40px;
+          vertical-align: top;
+          margin-top: -4px;
+          background-size: 40px;
+          margin-right: 3px;
+        }
+      }
+    }
+
     &.cdap { .product-navbar-mixins(@cdap-orange, @cdap-orange); }
     &.hydrator { .product-navbar-mixins(@hydrator-blue, #43AAFF); }
     &.tracker { .product-navbar-mixins(@tracker-green, @tracker-green); }
@@ -38,8 +54,21 @@ my-global-navbar {
       a { color: white; }
 
       .navbar-brand {
-        border-right: 4px solid;
+        border-left: 4px solid;
         background-color: @navbar-brand-bg;
+        width: 100%;
+        line-height: 14px;
+        span {
+          vertical-align: middle;
+        }
+      }
+      .tracker-brand-text,
+      .hydrator-brand-text,
+      .cdap-brand-text {
+        padding-left: 10px;
+        margin-left: 10px;
+        font-weight: 500;
+        font-size: 14px;
       }
     }
 
@@ -89,8 +118,6 @@ my-global-navbar {
     .environment {
       display: inline-block;
       line-height: @navbar-height;
-      position: absolute;
-      right: 335px;
       color: rgba(117, 117, 117, 0.7);
     }
 
@@ -208,7 +235,7 @@ my-global-navbar {
         }
 
         .brand-icon {
-          border-right: 4px solid;
+          border-left: 4px solid;
           padding: 16px 15px;
           line-height: 18px;
           height: 50px;
