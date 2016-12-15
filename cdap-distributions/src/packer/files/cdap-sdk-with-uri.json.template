@@ -5,6 +5,15 @@
       "url": "{{URI}}"
     }
   },
+  "nodejs": {
+    "install_method": "binary",
+    "version": "4.5.0",
+    "binary": {
+      "checksum": {
+        "linux_x64": "5678ad94ee35e40fc3a2c545e136a0dc946ac4c039fca5898e1ea51ecf9e7c39"
+      }
+    }
+  },
   "java": {
     "install_flavor": "openjdk",
     "jdk_version": 7
