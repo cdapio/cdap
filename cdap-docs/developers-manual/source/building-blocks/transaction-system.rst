@@ -336,7 +336,7 @@ provide this setting as a runtime argument when starting the program. Note that 
 application, or program.
 
 Finally, for explicit transactions, you can control the transaction timeout by passing in
-the timeout in seconds to the execute method:;
+the timeout in seconds to the ``execute()`` method::
 
   getContext().execute(90, new TxRunnable() {
     @Override
