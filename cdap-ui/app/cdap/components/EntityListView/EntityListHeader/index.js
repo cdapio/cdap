@@ -175,8 +175,6 @@ export default class EntityListHeader extends Component {
               onPageChange={this.props.onPageChange}
             />
           </div>
-          <span className="fa fa-th active"></span>
-          <span className="fa fa-list"></span>
         </div>
       </div>
     );
