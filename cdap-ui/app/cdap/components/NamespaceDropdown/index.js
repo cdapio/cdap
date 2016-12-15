@@ -20,6 +20,7 @@ import classnames from 'classnames';
 import AbstractWizard from 'components/AbstractWizard';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
+import T from 'i18n-react';
 
 import {Link} from 'react-router';
 const shortid = require('shortid');
@@ -148,7 +149,7 @@ export default class NamespaceDropdown extends Component {
                     className="namespace-action text-center"
                     onClick={this.showNamespaceWizard.bind(this)}
                   >
-                    Manage Namespaces
+                    {T.translate('features.Navbar.NamespaceDropdown.addNS')}
                   </div>
                 )
               :
@@ -157,7 +158,7 @@ export default class NamespaceDropdown extends Component {
                     className="namespace-action text-center"
                     onClick={this.showNamespaceWizard.bind(this)}
                   >
-                    Add Namespace
+                    {T.translate('features.Navbar.NamespaceDropdown.addNS')}
                   </div>
                 )
             }
