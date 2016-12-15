@@ -61,6 +61,21 @@ solution is instead to set these as properties in a configuration object, which 
 available at runtime, as in the examples on :ref:`initializing instance fields
 <best-practices-initializing>`.
 
+Transactions
+============
+The relationship between transactions and lifecycle depends on which method in the lifecycle is involved:
+
+- ``configure()`` No transactions
+
+- ``initialize()`` Inside a transaction
+
+- ``destroy()`` Inside a transaction
+
+The exception to this are :ref:`Workers <workers-datasets>`, which are run inside their own transaction.
+See :ref:`workers and datasets <workers-datasets>` for details.
+
+Details on transactions in these methods is covered in the :ref:`transaction section <transaction-system>`.
+
 Program Types
 =============
 This table summarizes, for each program or sub-program type, the methods available, parent
@@ -170,20 +185,3 @@ interface, and their signatures:
        | ``initialize()``
        | ``run()``
        | ``destroy()``
-
-
-Transactions
-============
-The relationship between transactions and lifecycle depends on which method in the lifecycle is involved:
-
-- ``configure()`` No transactions
-
-- ``initialize()`` Inside a transaction
-
-- ``destroy()`` Inside a transaction
-
-The exception to this are :ref:`Workers <workers-datasets>`, which are run inside their own transaction.
-See :ref:`workers and datasets <workers-datasets>` for details.
-
-Details on transactions in these methods is covered in the :ref:`transaction section <transaction-system>`.
-
