@@ -203,7 +203,6 @@ features:
         ReadPointer: Read Pointer
         RegionServers: Region Servers
         RegionsInTransition: Regions in Transition
-        RemainingBytes: Available
         Running: Running
         ServerErrors: Server Errors
         Snapshots: Snapshots
@@ -243,7 +242,6 @@ features:
         kafka: Kafka
         spark: Spark
         yarn: YARN
-        zookeeper: Zookeeper
 
   Market:
     search-placeholder: Search
