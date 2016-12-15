@@ -130,6 +130,9 @@ features:
       updated-label:
         plural: seconds ago
         singular: second ago
+      primaryLabelOne: DAY
+      primaryLabelTwo: HR
+      primaryLabelThree: MIN
     Panels:
       nodes: Nodes
       virtual-cores: Virtual Cores
@@ -137,6 +140,7 @@ features:
       application: Application
     Services:
       appfabric: App Fabric
+      messaging_service: Messaging Service
       log_saver: Log Saver
       metrics_processor: Metrics Processor
       dataset_executor: Dataset Executor

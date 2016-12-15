@@ -19,6 +19,7 @@ require('./AdminMetadataPane.less');
 import StatContainer from '../StatContainer/index.js';
 import shortid from 'shortid';
 import T from 'i18n-react';
+import {humanReadableDate} from 'services/helpers';
 
 function AdminMetadataPane({ statObject }){
 
@@ -30,13 +31,32 @@ function AdminMetadataPane({ statObject }){
   let statsList = [];
 
   statObject.stats.forEach((stat) => {
-    statsList.push (
-      <StatContainer
-        label={T.translate(`features.Management.DetailPanel.labels.${stat.statName}`)}
-        number={stat.statNum}
-        key={shortid.generate()}
-      />
-    );
+
+    //Ignore Stats Associated with WritePointer, ReadPointer, and VisibilityUpperBound
+    if(!(stat.statName === 'WritePointer' || stat.statName === 'ReadPointer' || stat.statName === 'VisibilityUpperBound')) {
+
+      //Convert snapshot time to human readable number
+      if(stat.statName === 'SnapshotTime'){
+        stat.statNum = humanReadableDate(Math.floor(stat.statNum.split(',').join('')), true);
+
+        statsList.push (
+          <StatContainer
+            label={T.translate(`features.Management.DetailPanel.labels.${stat.statName}`)}
+            number={stat.statNum}
+            date={true}
+            key={shortid.generate()}
+          />
+        );
+      } else {
+        statsList.push (
+          <StatContainer
+            label={T.translate(`features.Management.DetailPanel.labels.${stat.statName}`)}
+            number={stat.statNum}
+            key={shortid.generate()}
+          />
+        );
+      }
+    }
   });
 
   //Construct Columns of Statistics
