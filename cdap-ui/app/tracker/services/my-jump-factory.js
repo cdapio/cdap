@@ -18,13 +18,7 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
   'ngInject';
 
   let batchArtifact = {
-    name: 'cdap-etl-batch',
-    scope: 'SYSTEM',
-    version: $rootScope.cdapVersion
-  };
-
-  let realtimeArtifact = {
-    name: 'cdap-etl-realtime',
+    name: 'cdap-data-pipeline',
     scope: 'SYSTEM',
     version: $rootScope.cdapVersion
   };
@@ -32,7 +26,7 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
   let corePluginsArtifacts = {
     name: 'core-plugins',
     scope: 'SYSTEM',
-    version: '1.4.1'
+    version: '1.5.0-SNAPSHOT'
   };
 
   let batchSourceTemplate = {
@@ -53,19 +47,22 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
     }
   };
 
-  let realtimeSinkTemplate = {
-    artifact: realtimeArtifact,
-    config: {
-      source: {},
-      transforms: [],
-      connections: []
-    }
-  };
-
   let cdapDatasetTypes = {
     Table: 'co.cask.cdap.api.dataset.table.Table',
     KVTable: 'co.cask.cdap.api.dataset.lib.KeyValueTable'
   };
+
+  function _redirect(data) {
+    let url = window.getHydratorUrl({
+      stateName: 'hydrator.create',
+      stateParams: {
+        namespace: $state.params.namespace,
+        configParams: data
+      }
+    });
+
+    window.location.replace(url);
+  }
 
 
   function streamBatchSource(streamName) {
@@ -92,33 +89,10 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
           }
         };
 
-        $state.go('hydratorplusplus.create', {
-          data: data,
-          type: 'cdap-etl-batch'
-        });
+
+        _redirect(data);
+
       });
-  }
-
-  function streamRealtimeSink(streamName) {
-    let data = angular.copy(realtimeSinkTemplate);
-    data.config.sinks = [
-      {
-        name: streamName,
-        plugin: {
-          name: 'Stream',
-          label: streamName,
-          artifact: corePluginsArtifacts,
-          properties: {
-            name: streamName
-          }
-        }
-      }
-    ];
-
-    $state.go('hydratorplusplus.create', {
-      data: data,
-      type: 'cdap-etl-realtime'
-    });
   }
 
   function datasetBatchSource(datasetName) {
@@ -187,10 +161,7 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
           }
         };
 
-        $state.go('hydratorplusplus.create', {
-          data: data,
-          type: 'cdap-etl-batch'
-        });
+        _redirect(data);
       });
   }
 
@@ -217,10 +188,7 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
           }
         }];
 
-        $state.go('hydratorplusplus.create', {
-          data: data,
-          type: 'cdap-etl-batch'
-        });
+        _redirect(data);
       });
   }
 
@@ -238,10 +206,7 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
       }
     };
 
-    $state.go('hydratorplusplus.create', {
-      data: data,
-      type: 'cdap-etl-batch'
-    });
+    _redirect(data);
   }
   function _addKVTableBatchSink(datasetName) {
     let data = angular.copy(batchSinkTemplate);
@@ -257,15 +222,11 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
       }
     }];
 
-    $state.go('hydratorplusplus.create', {
-      data: data,
-      type: 'cdap-etl-batch'
-    });
+    _redirect(data);
   }
 
   return {
     streamBatchSource: streamBatchSource,
-    streamRealtimeSink: streamRealtimeSink,
     datasetBatchSource: datasetBatchSource,
     datasetBatchSink: datasetBatchSink,
     isAvailableDataset: isAvailableDataset
