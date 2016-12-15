@@ -65,8 +65,8 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
   private final YarnConfiguration hConf;
   private final LocationFactory locationFactory;
   private final co.cask.cdap.api.security.store.SecureStore secureStore;
-  private final long updateInterval;
   private final boolean secureExplore;
+  private Long updateInterval;
 
   @Inject
   TokenSecureStoreUpdater(YarnConfiguration hConf, CConfiguration cConf,
@@ -76,7 +76,6 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
     this.locationFactory = locationFactory;
     this.secureStore = secureStore;
     secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && UserGroupInformation.isSecurityEnabled();
-    updateInterval = calculateUpdateInterval();
   }
 
   private Credentials refreshCredentials() {
@@ -211,8 +210,8 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
 
     // Set the update interval to the shortest update interval of all required renewals.
     Long minimumInterval = Collections.min(renewalTimes);
-    // Schedule it 5 min before it expires
-    long delay = minimumInterval - TimeUnit.MINUTES.toMillis(5);
+    // Schedule it 1 hour before it expires
+    long delay = minimumInterval - TimeUnit.HOURS.toMillis(1);
     // Safeguard: In practice, the value can't be that small, otherwise nothing would work.
     if (delay <= 0) {
       delay = (minimumInterval <= 2) ? 1 : minimumInterval / 2;
@@ -226,6 +225,12 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
    * @return The update interval in milliseconds.
    */
   public long getUpdateInterval() {
+    if (updateInterval == null) {
+      // we want to lazily call this (as opposed to in the constructor), because sometimes we use an instance of
+      // TokenSecureStoreUpdater without scheduling updates. For instance, when launching a program or from
+      // ImpersonationHandler.
+      updateInterval = calculateUpdateInterval();
+    }
     return updateInterval;
   }
 
