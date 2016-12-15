@@ -23,6 +23,7 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.runtime.LogLevelUpdater;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
@@ -43,7 +44,6 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.internal.app.runtime.distributed.AbstractTwillProgramController;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.BasicThrowable;
@@ -79,7 +79,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
-import org.apache.twill.api.TwillController;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -279,7 +278,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public synchronized ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug)
     throws Exception {
-    if (isCocurrentRunsInSameAppForbidden(programId.getType()) && isRunningInSameProgram(programId)) {
+    if (isConcurrentRunsInSameAppForbidden(programId.getType()) && isRunningInSameProgram(programId)) {
       throw new ConflictException(String.format("Program %s is already running in an version of the same application",
                                                 programId));
     }
@@ -499,39 +498,27 @@ public class ProgramLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * @see #updateProgramLogLevels(ProgramId, Map, String)
-   */
-  public void updateProgramLogLevels(ProgramId programId, Map<String, String> logLevels) throws Exception {
-    updateProgramLogLevels(programId, logLevels, null);
-  }
-
-  /**
    * Update log levels for the given program. Only supported program types for this action are {@link ProgramType#FLOW},
    * {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
    *
    * @param programId the {@link ProgramId} of the program for which log levels are to be updated
    * @param logLevels the {@link Map} of the log levels to be updated.
    * @param component the flowlet name. Only used when the program is a {@link ProgramType#FLOW flow}.
+   * @param runId the run id of the program. {@code null} if update log levels for flowlet
    * @throws InterruptedException if there is an error while asynchronously updating log levels.
+   * @throws ExecutionException if there is an error while asynchronously updating log levels.
    * @throws BadRequestException if the log level is not valid or the program type is not supported.
    * @throws UnauthorizedException if the user does not have privileges to update log levels for the specified program.
    *                               To update log levels for a program, a user needs {@link Action#ADMIN} on the program.
    */
-  public void updateProgramLogLevels(ProgramId programId, Map<String, String> logLevels, @Nullable String component)
-    throws Exception {
+  public void updateProgramLogLevels(ProgramId programId, Map<String, LogEntry.Level> logLevels,
+                                     @Nullable String component, @Nullable String runId) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
     if (!EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programId.getType())) {
       throw new BadRequestException(String.format("Updating log levels for program type %s is not supported",
                                                   programId.getType().getPrettyName()));
     }
-    updateLogLevels(programId, logLevels, component);
-  }
-
-  /**
-   * @see #resetProgramLogLevels(ProgramId, String[], String)
-   */
-  public void resetProgramLogLevels(ProgramId programId, @Nullable String[] loggerNames) throws Exception {
-    resetProgramLogLevels(programId, loggerNames, null);
+    updateLogLevels(programId, logLevels, component, runId);
   }
 
   /**
@@ -539,21 +526,23 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
    *
    * @param programId the {@link ProgramId} of the program for which log levels are to be reset.
-   * @param loggerNames the {@link String} array of the logger names to be updated, null or empty means reset for all
+   * @param loggerNames the {@link String} set of the logger names to be updated, empty means reset for all
    *                    loggers.
    * @param component the flowlet name. Only used when the program is a {@link ProgramType#FLOW flow}.
+   * @param runId the run id of the program. {@code null} if set log levels for flowlet
    * @throws InterruptedException if there is an error while asynchronously resetting log levels.
+   * @throws ExecutionException if there is an error while asynchronously resetting log levels.
    * @throws UnauthorizedException if the user does not have privileges to reset log levels for the specified program.
    *                               To reset log levels for a program, a user needs {@link Action#ADMIN} on the program.
    */
-  public void resetProgramLogLevels(ProgramId programId, @Nullable String[] loggerNames, @Nullable String component)
-    throws Exception {
+  public void resetProgramLogLevels(ProgramId programId, Set<String> loggerNames,
+                                    @Nullable String component, @Nullable String runId) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
     if (!EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programId.getType())) {
       throw new BadRequestException(String.format("Resetting log levels for program type %s is not supported",
                                                   programId.getType().getPrettyName()));
     }
-    resetLogLevels(programId, loggerNames, component);
+    resetLogLevels(programId, loggerNames, component, runId);
   }
 
   /**
@@ -602,13 +591,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
     return false;
   }
 
-  private boolean isCocurrentRunsInSameAppForbidden(ProgramType type) {
+  private boolean isConcurrentRunsInSameAppForbidden(ProgramType type) {
     // Concurrent runs in different (or same) versions of an application are forbidden for worker and flow
     return EnumSet.of(ProgramType.WORKER, ProgramType.FLOW).contains(type);
   }
 
   private boolean isConcurrentRunsAllowed(ProgramType type) {
-    // Concurrent runs are only allowed for the Workflow and MapReduce
+    // Concurrent runs are only allowed for the Workflow, MapReduce and Spark
     return EnumSet.of(ProgramType.WORKFLOW, ProgramType.MAPREDUCE, ProgramType.SPARK).contains(type);
   }
 
@@ -1135,69 +1124,38 @@ public class ProgramLifecycleService extends AbstractIdleService {
   /**
    * Helper method to update log levels for Worker, Flow, or Service.
    */
-  private void updateLogLevels(ProgramId programId, Map<String, String> logLevels, @Nullable String component)
-    throws Exception {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
+  private void updateLogLevels(ProgramId programId, Map<String, LogEntry.Level> logLevels,
+                               @Nullable String component, @Nullable String runId) throws Exception {
+    List<ProgramRuntimeService.RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, runId);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeInfos.isEmpty() ? null : runtimeInfos.get(0);
     if (runtimeInfo != null) {
-      TwillController twillController = getTwillController(runtimeInfo);
-      if (component == null) {
-        twillController.updateLogLevels(transformLogLevelsMap(logLevels)).get();
-      } else {
-        twillController.updateLogLevels(component, transformLogLevelsMap(logLevels)).get();
-      }
+      LogLevelUpdater logLevelUpdater = getLogLevelUpdater(runtimeInfo);
+      logLevelUpdater.updateLogLevels(logLevels, component);
     }
   }
 
   /**
    * Helper method to reset log levels for Worker, Flow or Service.
    */
-  private void resetLogLevels(ProgramId programId, @Nullable String[] loggerNames, @Nullable String component)
-    throws Exception {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
+  private void resetLogLevels(ProgramId programId, Set<String> loggerNames,
+                              @Nullable String component, @Nullable String runId) throws Exception {
+    List<ProgramRuntimeService.RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, runId);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeInfos.isEmpty() ? null : runtimeInfos.get(0);
     if (runtimeInfo != null) {
-      TwillController twillController = getTwillController(runtimeInfo);
-      if (component == null) {
-        if (loggerNames == null || loggerNames.length == 0) {
-          twillController.resetLogLevels().get();
-        } else {
-          twillController.resetLogLevels(loggerNames).get();
-        }
-      } else {
-        if (loggerNames == null || loggerNames.length == 0) {
-          twillController.resetRunnableLogLevels(component).get();
-        } else {
-          twillController.resetRunnableLogLevels(component, loggerNames).get();
-        }
-      }
+      LogLevelUpdater logLevelUpdater = getLogLevelUpdater(runtimeInfo);
+      logLevelUpdater.resetLogLevels(loggerNames, component);
     }
   }
 
   /**
-   * Helper method to get the {@link TwillController} for the program.
+   * Helper method to get the {@link LogLevelUpdater} for the program.
    */
-  private TwillController getTwillController(ProgramRuntimeService.RuntimeInfo runtimeInfo) throws Exception {
+  private LogLevelUpdater getLogLevelUpdater(RuntimeInfo runtimeInfo) throws Exception {
     ProgramController programController = runtimeInfo.getController();
-    if (!(programController instanceof AbstractTwillProgramController)) {
-      throw new BadRequestException("Update log levels at runtime is only supported in distribute mode");
+    if (!(programController instanceof LogLevelUpdater)) {
+      throw new BadRequestException("Update log levels at runtime is only supported in distributed mode");
     }
-    return ((AbstractTwillProgramController) programController).getTwillController();
-  }
-
-  /**
-   * Helper method to transform the type of the log level map.
-   */
-  public Map<String, LogEntry.Level> transformLogLevelsMap(Map<String, String> logLevels)
-    throws BadRequestException {
-    Map<String, LogEntry.Level> result = new HashMap<>();
-    for (Map.Entry<String, String> entry : logLevels.entrySet()) {
-      String logLevel = entry.getValue();
-      try {
-        result.put(entry.getKey(), logLevel == null ? null : LogEntry.Level.valueOf(logLevel.toUpperCase()));
-      } catch (IllegalArgumentException e) {
-        throw new BadRequestException(String.format("%s is not a valid log level", logLevel));
-      }
-    }
-    return result;
+    return ((LogLevelUpdater) programController);
   }
 
   /**
