@@ -36,6 +36,13 @@ Cask Data Application Platform Release Notes
 Known Issues
 ------------
 
+- :cask-issue:`CDAP-6099` - Due to a limitation in the CDAP MapReduce implementation,
+  writing to a dataset does not work in a MapReduce Mapper's ``destroy()`` method.
+
+- :cask-issue:`CDAP-7444` - If a MapReduce program fails during startup, the program's
+  ``destroy()`` method is never called, preventing any cleanup or action there being taken.
+
+
 API Changes
 -----------
 
