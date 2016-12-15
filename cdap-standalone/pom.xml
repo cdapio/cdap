@@ -373,6 +373,7 @@
                      <targetPath>ui</targetPath>
                      <excludes>
                       <exclude>**LICENSE**</exclude>
+                      <exclude>bin/node</exclude>
                      </excludes>
                    </resource>
                     <!-- Copy examples code -->
