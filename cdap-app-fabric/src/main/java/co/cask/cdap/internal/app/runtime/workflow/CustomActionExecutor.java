@@ -28,11 +28,10 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
@@ -40,10 +39,7 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
-import org.apache.tephra.TransactionContext;
-import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,134 +125,82 @@ class CustomActionExecutor {
       executeCustomAction();
       return;
     }
-    ClassLoader oldClassLoader = setContextCombinedClassLoader(action.getClass().getClassLoader());
-    try {
-      workflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
-      initializeInTransaction();
-      runInTransaction();
-      workflowContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
-    } catch (Throwable t) {
-      Throwable rootCause = Throwables.getRootCause(t);
-      if (rootCause instanceof InterruptedException) {
-        workflowContext.setState(new ProgramState(ProgramStatus.KILLED, rootCause.getMessage()));
-      } else {
-        workflowContext.setState(new ProgramState(ProgramStatus.FAILED, rootCause.getMessage()));
+    workflowContext.executeChecked(new AbstractContext.ThrowingRunnable() {
+      @Override
+      public void run() throws Exception {
+        try {
+          workflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
+          workflowContext.execute(new TxRunnable() {
+            @Override
+            public void run(DatasetContext context) throws Exception {
+              action.initialize(workflowContext);
+            }
+          });
+          workflowContext.execute(new TxRunnable() {
+            @Override
+            public void run(DatasetContext context) throws Exception {
+              action.run();
+            }
+          });
+          workflowContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
+
+        } catch (Throwable t) {
+          Throwable rootCause = Throwables.getRootCause(t);
+          if (rootCause instanceof InterruptedException) {
+            workflowContext.setState(new ProgramState(ProgramStatus.KILLED, rootCause.getMessage()));
+          } else {
+            workflowContext.setState(new ProgramState(ProgramStatus.FAILED, rootCause.getMessage()));
+          }
+          throw Throwables.propagate(rootCause);
+
+        } finally {
+          try {
+            workflowContext.execute(new TxRunnable() {
+              @Override
+              public void run(DatasetContext context) throws Exception {
+                action.destroy();
+              }
+            });
+          } catch (Throwable t) {
+            LOG.error("Failed to execute the destroy method on action {} for Workflow run {}",
+                      workflowContext.getSpecification().getName(), workflowRunId, t);
+          }
+        }
       }
-      throw Throwables.propagate(rootCause);
-    } finally {
-      destroyInTransaction();
-      ClassLoaders.setContextClassLoader(oldClassLoader);
-    }
+    });
   }
 
   private void executeCustomAction() throws Exception {
-    ClassLoader oldClassLoader = setContextCombinedClassLoader(customAction.getClass().getClassLoader());
     try {
       customActionContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
-      initialize();
+      // AbstractCustomAction implements final initialize(context) and requires subclass to
+      // implement initialize(), whereas programs that directly implement CustomAction can
+      // override initialize(context)
+      TransactionControl txControl = customAction instanceof AbstractCustomAction
+        ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, AbstractCustomAction.class,
+                                             customAction, "initialize")
+        : Transactions.getTransactionControl(TransactionControl.IMPLICIT, CustomAction.class,
+                                             customAction, "initialize", CustomActionContext.class);
+      customActionContext.initializeProgram(customAction, customActionContext, txControl, false);
+
       customActionContext.setState(new ProgramState(ProgramStatus.RUNNING, null));
-      customAction.run();
+      customActionContext.executeChecked(new AbstractContext.ThrowingRunnable() {
+        @Override
+        public void run() throws Exception {
+          customAction.run();
+        }
+      });
       customActionContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
+
     } catch (Throwable t) {
       customActionContext.setState(new ProgramState(ProgramStatus.FAILED, Throwables.getRootCause(t).getMessage()));
       Throwables.propagateIfPossible(t, Exception.class);
       throw Throwables.propagate(t);
+
     } finally {
-      destroy();
-      ClassLoaders.setContextClassLoader(oldClassLoader);
+      TransactionControl txControl =
+        Transactions.getTransactionControl(TransactionControl.IMPLICIT, CustomAction.class, customAction, "destroy");
+      customActionContext.destroyProgram(customAction, customActionContext, txControl, false);
     }
-  }
-
-  private void initialize() throws Exception {
-    // AbstractCustomAction implements final initialize(context) and requires subclass to
-    // implement initialize(), whereas programs that directly implement CustomAction can
-    // override initialize(context)
-    TransactionControl txControl = customAction instanceof AbstractCustomAction
-      ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, AbstractCustomAction.class,
-                                           customAction, "initialize")
-      : Transactions.getTransactionControl(TransactionControl.IMPLICIT, CustomAction.class,
-                                           customAction, "initialize", CustomActionContext.class);
-    if (TransactionControl.IMPLICIT == txControl) {
-      customActionContext.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          customAction.initialize(customActionContext);
-        }
-      });
-    } else {
-      customAction.initialize(customActionContext);
-    }
-  }
-
-  private void destroy() throws Exception {
-    TransactionControl txControl =
-      Transactions.getTransactionControl(TransactionControl.IMPLICIT, CustomAction.class, customAction, "destroy");
-    try {
-      if (TransactionControl.IMPLICIT == txControl) {
-        customActionContext.execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            customAction.destroy();
-          }
-        });
-      } else {
-        customAction.destroy();
-      }
-    } catch (Throwable t) {
-      LOG.error("Failed to execute the destroy method on action {} for Workflow run {}",
-                customActionContext.getSpecification().getName(), workflowRunId, t);
-    }
-  }
-
-  @Deprecated
-  private void initializeInTransaction() throws Exception {
-    TransactionContext txContext = workflowContext.getDatasetCache().newTransactionContext();
-    txContext.start();
-    try {
-      action.initialize(workflowContext);
-      txContext.finish();
-    } catch (TransactionFailureException e) {
-      txContext.abort(e);
-    } catch (Throwable t) {
-      txContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", t));
-    }
-  }
-
-  @Deprecated
-  private void runInTransaction() throws Exception {
-    TransactionContext txContext = workflowContext.getDatasetCache().newTransactionContext();
-    txContext.start();
-    try {
-      action.run();
-      txContext.finish();
-    } catch (TransactionFailureException e) {
-      txContext.abort(e);
-    } catch (Throwable t) {
-      txContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", t));
-    }
-  }
-
-  @Deprecated
-  private void destroyInTransaction() {
-    try {
-      TransactionContext txContext = workflowContext.getDatasetCache().newTransactionContext();
-      txContext.start();
-      try {
-        action.destroy();
-        txContext.finish();
-      } catch (TransactionFailureException e) {
-        txContext.abort(e);
-      } catch (Throwable t) {
-        txContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", t));
-      }
-    } catch (Throwable t) {
-      LOG.error("Failed to execute the destroy method on action {} for Workflow run {}",
-                workflowContext.getSpecification().getName(), workflowRunId, t);
-    }
-  }
-
-  private ClassLoader setContextCombinedClassLoader(ClassLoader classLoader) {
-    return ClassLoaders.setContextClassLoader(
-      new CombineClassLoader(null, ImmutableList.of(classLoader, getClass().getClassLoader())));
   }
 }
