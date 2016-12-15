@@ -44,9 +44,9 @@ installed.
 
 For a Distributed CDAP cluster, version |release|, you **must** install these Hadoop components:
 
-.. |cdh-version|       replace:: 5.1 through 5.8
-.. |hdp-version|       replace:: 2.0 through 2.4
-.. |mapr-version|      replace:: 4.1 through 5.1
+.. |cdh-version|       replace:: 5.1 through 5.9
+.. |hdp-version|       replace:: 2.0 through 2.5
+.. |mapr-version|      replace:: 4.1 through 5.2
 
 +----------------+---------------------------------+---------------------------------------+
 | Component      | Source                          | Supported Versions                    |
