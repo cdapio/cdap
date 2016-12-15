@@ -286,6 +286,7 @@ features:
       dashboard: Dashboard
       home: Home
       management: Management
+      olduilink: Switch to Original UI
     HeaderActions:
       caskHome: Cask Home
       documentation: Documentation
