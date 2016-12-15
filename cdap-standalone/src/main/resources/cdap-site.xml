@@ -48,6 +48,14 @@
     </description>
   </property>
 
+  <property>
+    <name>enable.preview</name>
+    <value>true</value>
+    <description>
+      Determines if preview should be enabled.
+    </description>
+  </property>
+
 
   <!-- Datasets Configuration -->
   

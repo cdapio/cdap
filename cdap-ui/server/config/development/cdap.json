@@ -8,6 +8,6 @@
   "ssl.enabled": "false",
   "router.server.address": "127.0.0.1",
   "dashboard.bind.port": "11011",
-  "enable.alpha.preview": "false",
+  "enable.preview": "true",
   "dashboard.router.check.timeout.secs": "0"
 }

@@ -398,7 +398,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     let name = item.name || item.pluginTemplate;
 
     let filteredNodes = this.HydratorPlusPlusConfigStore.getNodes()
-        .filter( node => (node.plugin.label ? node.plugin.label.includes(name) : false) );
+        .filter( node => (node.plugin.label ? node.plugin.label.indexOf(name) !== -1 : false) );
     let config;
     if (item.pluginTemplate) {
       config = {

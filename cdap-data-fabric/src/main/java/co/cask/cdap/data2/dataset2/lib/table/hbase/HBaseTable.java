@@ -37,6 +37,7 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.DeleteBuilder;
 import co.cask.cdap.data2.util.hbase.GetBuilder;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.IncrementBuilder;
 import co.cask.cdap.data2.util.hbase.PutBuilder;
 import co.cask.cdap.data2.util.hbase.ScanBuilder;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -51,10 +52,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TxConstants;
@@ -62,7 +62,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -81,6 +80,9 @@ public class HBaseTable extends BufferingTable {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTable.class);
 
   public static final String DELTA_WRITE = "d";
+  public static final String WRITE_POINTER = "wp";
+
+  public static final String SAFE_INCREMENTS = "dataset.table.safe.readless.increments";
 
   private final HBaseTableUtil tableUtil;
   private final HTable hTable;
@@ -89,8 +91,10 @@ public class HBaseTable extends BufferingTable {
   private final TransactionCodec txCodec;
   // name length + name of the table: handy to have one cached
   private final byte[] nameAsTxChangePrefix;
+  private final boolean safeReadlessIncrements;
 
-  public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec,
+
+  public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> args,
                     CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName()),
           TableProperties.supportsReadlessIncrements(spec.getProperties()), spec.getProperties());
@@ -107,6 +111,7 @@ public class HBaseTable extends BufferingTable {
     // Overriding the hbase tx change prefix so it resembles the hbase table name more closely, since the HBase
     // table name is not the same as the dataset name anymore
     this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) this.hTableName.length()}, Bytes.toBytes(this.hTableName));
+    this.safeReadlessIncrements = args.containsKey(SAFE_INCREMENTS) && Boolean.valueOf(args.get(SAFE_INCREMENTS));
   }
 
   @Override
@@ -185,62 +190,98 @@ public class HBaseTable extends BufferingTable {
     if (updates.isEmpty()) {
       return;
     }
-
-    List<Put> puts = Lists.newArrayList();
+    List<Mutation> mutations = new ArrayList<>();
     for (Map.Entry<byte[], NavigableMap<byte[], Update>> row : updates.entrySet()) {
-      PutBuilder put = tableUtil.buildPut(row.getKey());
-      Put incrementPut = null;
+      // create these only when they are needed
+      PutBuilder put = null;
+      PutBuilder incrementPut = null;
+      IncrementBuilder increment = null;
+
       for (Map.Entry<byte[], Update> column : row.getValue().entrySet()) {
         // we want support tx and non-tx modes
         if (tx != null) {
           // TODO: hijacking timestamp... bad
           Update val = column.getValue();
           if (val instanceof IncrementValue) {
-            incrementPut = getIncrementalPut(incrementPut, row.getKey());
-            incrementPut.add(columnFamily, column.getKey(), tx.getWritePointer(),
-                             Bytes.toBytes(((IncrementValue) val).getValue()));
+            if (safeReadlessIncrements) {
+              increment = getIncrement(increment, row.getKey(), true);
+              increment.add(columnFamily, column.getKey(), tx.getWritePointer(),
+                            ((IncrementValue) val).getValue());
+            } else {
+              incrementPut = getPutForIncrement(incrementPut, row.getKey());
+              incrementPut.add(columnFamily, column.getKey(), tx.getWritePointer(),
+                               Bytes.toBytes(((IncrementValue) val).getValue()));
+            }
           } else if (val instanceof PutValue) {
+            put = getPut(put, row.getKey());
             put.add(columnFamily, column.getKey(), tx.getWritePointer(),
                     wrapDeleteIfNeeded(((PutValue) val).getValue()));
           }
         } else {
           Update val = column.getValue();
           if (val instanceof IncrementValue) {
-            incrementPut = getIncrementalPut(incrementPut, row.getKey());
+            incrementPut = getPutForIncrement(incrementPut, row.getKey());
             incrementPut.add(columnFamily, column.getKey(),
                              Bytes.toBytes(((IncrementValue) val).getValue()));
           } else if (val instanceof PutValue) {
+            put = getPut(put, row.getKey());
             put.add(columnFamily, column.getKey(), ((PutValue) val).getValue());
           }
         }
       }
       if (incrementPut != null) {
-        puts.add(incrementPut);
+        mutations.add(incrementPut.build());
       }
-      if (!put.isEmpty()) {
-        puts.add(put.build());
+      if (increment != null) {
+        mutations.add(increment.build());
+      }
+      if (put != null) {
+        mutations.add(put.build());
       }
     }
-    if (!puts.isEmpty()) {
-      hbasePut(puts);
-    } else {
+    if (!hbaseFlush(mutations)) {
       LOG.info("No writes to persist!");
     }
   }
 
   @WriteOnly
-  private void hbasePut(List<Put> puts) throws InterruptedIOException, RetriesExhaustedWithDetailsException {
-    hTable.put(puts);
-    hTable.flushCommits();
+  private boolean hbaseFlush(List<Mutation> mutations)
+    throws IOException, InterruptedException {
+
+    if (!mutations.isEmpty()) {
+      hTable.batch(mutations, new Object[mutations.size()]);
+      hTable.flushCommits();
+      return true;
+    }
+    return false;
   }
 
-  private Put getIncrementalPut(Put existing, byte[] row) {
+  private PutBuilder getPut(PutBuilder existing, byte[] row) {
+    if (existing != null) {
+      return existing;
+    }
+    return tableUtil.buildPut(row);
+  }
+
+  private PutBuilder getPutForIncrement(PutBuilder existing, byte[] row) {
     if (existing != null) {
       return existing;
     }
     return tableUtil.buildPut(row)
-      .setAttribute(DELTA_WRITE, Bytes.toBytes(true))
-      .build();
+      .setAttribute(DELTA_WRITE, Bytes.toBytes(true));
+  }
+
+  private IncrementBuilder getIncrement(IncrementBuilder existing, byte[] row, boolean transactional)
+    throws IOException {
+    if (existing != null) {
+      return existing;
+    }
+    IncrementBuilder builder = tableUtil.buildIncrement(row).setAttribute(DELTA_WRITE, Bytes.toBytes(true));
+    if (transactional) {
+      builder.setAttribute(WRITE_POINTER, Bytes.toBytes(tx.getWritePointer()));
+      builder.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
+    }
+    return builder;
   }
 
   @Override

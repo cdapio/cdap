@@ -277,6 +277,11 @@ public class HBase12CDH570TableUtil extends HBaseTableUtil {
   }
 
   @Override
+  public IncrementBuilder buildIncrement(byte[] row) {
+    return new HBase12CDH570IncrementBuilder(row);
+  }
+
+  @Override
   public PutBuilder buildPut(byte[] row) {
     return new HBase12CDH570PutBuilder(row);
   }

@@ -30,11 +30,14 @@ export default class ChartPanel extends Component {
     this.state = {
       columns: headersList,
       isExpanded: true,
-      yValue: headersList[0]
+      showAllX: false,
+      showAllY: false
     };
 
     this.onExpandClick = this.onExpandClick.bind(this);
     this.addYValue = this.addYValue.bind(this);
+    this.toggleShowAllX = this.toggleShowAllX.bind(this);
+    this.toggleShowAllY = this.toggleShowAllY.bind(this);
   }
 
   componentWillMount() {
@@ -62,10 +65,10 @@ export default class ChartPanel extends Component {
     });
   }
 
-  removeYValue(value) {
+  removeYValue(column) {
     let newGraphSpec = Object.assign({}, this.props.chart);
 
-    newGraphSpec.y.splice(newGraphSpec.y.indexOf(value), 1);
+    newGraphSpec.y.splice(newGraphSpec.y.indexOf(column), 1);
 
     WranglerStore.dispatch({
       type: WranglerActions.editChart,
@@ -75,10 +78,7 @@ export default class ChartPanel extends Component {
     });
   }
 
-  addYValue() {
-    const columnToAdd = this.state.yValue;
-    if (!columnToAdd) { return; }
-
+  addYValue(columnToAdd) {
     let newGraphSpec = Object.assign({}, this.props.chart);
     newGraphSpec.y.push(columnToAdd);
 
@@ -96,6 +96,124 @@ export default class ChartPanel extends Component {
     });
   }
 
+  onYChange(e) {
+    const column = e.target.value;
+    const checked = e.target.checked;
+
+    if (checked) {
+      this.addYValue(column);
+    } else {
+      this.removeYValue(column);
+    }
+  }
+
+  toggleShowAllX() {
+    this.setState({showAllX: !this.state.showAllX});
+  }
+
+  toggleShowAllY() {
+    this.setState({showAllY: !this.state.showAllY});
+  }
+
+  renderXOptions() {
+    const graph = this.props.chart;
+
+    const showMoreToggle = (
+      <a href="#" onClick={this.toggleShowAllX}>
+        {this.state.showAllX ? 'Show Less' : 'Show More'}
+      </a>
+    );
+
+    let xList = this.state.columns;
+
+    if (!this.state.showAllX) {
+      xList = xList.slice(0,4);
+    }
+
+    return (
+      <div>
+        <div className="x-axis-options">
+          <div className="radio">
+            <label>
+              <input
+                type="radio"
+                value="##"
+                checked={'##' === graph.x}
+                onChange={e => this.onXChange(e, graph)}
+              />
+              #
+            </label>
+          </div>
+          {
+            xList.map((column) => {
+              return (
+                <div
+                  className="radio"
+                  key={column}
+                >
+                  <label>
+                    <input
+                      type="radio"
+                      value={column}
+                      checked={column === graph.x}
+                      onChange={e => this.onXChange(e, graph)}
+                    />
+                    {column}
+                  </label>
+                </div>
+              );
+            })
+          }
+        </div>
+
+        {this.state.columns.length > 4 ? showMoreToggle : null}
+      </div>
+    );
+  }
+
+  renderYOptions() {
+    const graph = this.props.chart;
+    const showMoreToggle = (
+      <a href="#" onClick={this.toggleShowAllY}>
+        {this.state.showAllY ? 'Show Less' : 'Show More'}
+      </a>
+    );
+
+    let yList = this.state.columns;
+    if (!this.state.showAllY) {
+      yList = yList.slice(0,5);
+    }
+
+    return (
+      <div>
+        <div className="y-axis-options">
+          {
+            yList.map((column) => {
+              return (
+                <div
+                  className="checkbox"
+                  key={column}
+                >
+                  <label>
+                    <input
+                      type="checkbox"
+                      value={column}
+                      checked={graph.y.indexOf(column) !== -1}
+                      onChange={e => this.onYChange(e, graph)}
+                    />
+                    {column}
+                  </label>
+                </div>
+              );
+            })
+          }
+        </div>
+
+        {this.state.columns.length > 5 ? showMoreToggle : null}
+      </div>
+    );
+  }
+
   renderPanelContent() {
     if (!this.state.isExpanded) { return null; }
 
@@ -106,43 +224,6 @@ export default class ChartPanel extends Component {
       chart = <Charts spec={graph} />;
     }
 
-    let yOptions = xor(this.state.columns, graph.y);
-
-    let ySelect;
-    if (yOptions.length) {
-      ySelect = (
-        <div className="y-axis-selector">
-          <div className="y-value-selector">
-            <select
-              className="form-control"
-              value={this.state.yValue}
-              onChange={e => this.setState({yValue: e.target.value})}
-            >
-              {yOptions.map((column) => {
-                return (
-                  <option
-                    key={column}
-                    value={column}
-                  >
-                    {column}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-
-          <div className="add-y-value-button">
-            <div className="y-axis-add-button text-center">
-              <span
-                className="fa fa-plus-circle"
-                onClick={this.addYValue}
-              />
-            </div>
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div className="graph-content">
         <div className="graph-diagram">
@@ -151,46 +232,14 @@ export default class ChartPanel extends Component {
 
         <div className="x-axis-selector">
           <h5>X Axis</h5>
-          <select
-            className="form-control"
-            value={graph.x}
-            onChange={e => this.onXChange(e, graph)}
-          >
-            <option value="##">##</option>
-            {this.state.columns.map((column) => {
-              return (
-                <option
-                  key={column}
-                  value={column}
-                >
-                  {column}
-                </option>
-              );
-            })}
-          </select>
+
+          {this.renderXOptions()}
         </div>
 
         <div className="y-axis-selector">
           <h5>Y Axis</h5>
 
-          <div className="y-values-list">
-            <ul>
-              {
-                graph.y.map((value) => {
-                  return (
-                    <li key={value}>
-                      <span>{value}</span>
-                      <span
-                        className="fa fa-times-circle pull-right"
-                        onClick={this.removeYValue.bind(this, value)}
-                      />
-                    </li>
-                  );
-                })
-              }
-            </ul>
-          </div>
-          {ySelect}
+          {this.renderYOptions()}
         </div>
       </div>
     );

@@ -2336,6 +2336,7 @@
                       --before-remove "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/prerm"
                       --after-remove "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/postrm"
                       --iteration "${release.iteration}"
+                      --depends coreutils
                       --depends libxml2
                       ${package.rpm.depends}
                       ${package.dirs}
@@ -2388,6 +2389,7 @@
                       --before-remove "${project.parent.basedir}/cdap-distributions/src/debian/scripts/prerm"
                       --after-remove "${project.parent.basedir}/cdap-distributions/src/debian/scripts/postrm"
                       --iteration "${release.iteration}"
+                      --depends coreutils
                       --depends libxml2-utils
                       ${package.deb.depends}
                       ${package.dirs}
@@ -2605,6 +2607,10 @@
               <title>Application Template Packages</title>
               <packages>co.cask.cdap.etl.*</packages>
             </group>
+            <group>
+              <title>Java Client Packages</title>
+              <packages>co.cask.cdap.client:co.cask.cdap.client.*</packages>
+            </group>
           </groups>
         </configuration>
         <reportSets>
@@ -2618,6 +2624,7 @@
               <excludePackageNames>*.internal.*</excludePackageNames>
               <sourceFileIncludes>
                 <include>**/api/**/*.java</include>
+                <include>co/cask/cdap/client/**/*.java</include>
                 <include>co/cask/cdap/test/*.java</include>
               </sourceFileIncludes>
             </configuration>

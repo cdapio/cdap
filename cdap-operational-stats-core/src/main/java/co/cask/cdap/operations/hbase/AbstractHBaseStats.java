@@ -16,14 +16,14 @@
 
 package co.cask.cdap.operations.hbase;
 
-import co.cask.cdap.operations.OperationalStats;
+import co.cask.cdap.operations.AbstractOperationalStats;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 
 /**
  * Base class for HBase operational stats.
  */
-public abstract class AbstractHBaseStats implements OperationalStats {
+public abstract class AbstractHBaseStats extends AbstractOperationalStats {
   @VisibleForTesting
   static final String SERVICE_NAME = "HBase";
 

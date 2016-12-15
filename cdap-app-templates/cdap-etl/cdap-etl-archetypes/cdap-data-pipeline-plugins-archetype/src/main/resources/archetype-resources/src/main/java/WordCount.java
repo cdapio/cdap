@@ -14,7 +14,7 @@
  * the License.
  */
 
-package org.example.plugin;
+package $package;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;

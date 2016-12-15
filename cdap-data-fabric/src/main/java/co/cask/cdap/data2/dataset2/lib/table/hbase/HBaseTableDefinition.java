@@ -47,7 +47,7 @@ public class HBaseTableDefinition extends AbstractTableDefinition<Table, HBaseTa
   @Override
   public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                           Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    return new HBaseTable(datasetContext, spec, cConf, hConf, hBaseTableUtil);
+    return new HBaseTable(datasetContext, spec, arguments, cConf, hConf, hBaseTableUtil);
   }
 
   @Override

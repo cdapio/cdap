@@ -20,6 +20,7 @@ import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.messaging.RollbackDetail;
 import co.cask.cdap.messaging.StoreRequest;
+import co.cask.cdap.messaging.TopicMetadata;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 
@@ -94,17 +95,18 @@ final class ConcurrentMessageWriter implements Closeable {
    * is safe to be called concurrently from multiple threads.
    *
    * @param storeRequest contains information about payload to be store
+   * @param metadata {@link TopicMetadata} for the topic in the {@link StoreRequest}
    * @return if the store request is transactional, then returns a {@link RollbackDetail} containing
    *         information for rollback; otherwise {@code null} will be returned.
    * @throws IOException if failed to persist the data
    */
   @Nullable
-  RollbackDetail persist(StoreRequest storeRequest) throws IOException {
+  RollbackDetail persist(StoreRequest storeRequest, TopicMetadata metadata) throws IOException {
     if (closed.get()) {
       throw new IOException("Message writer is already closed");
     }
 
-    PendingStoreRequest pendingStoreRequest = new PendingStoreRequest(storeRequest);
+    PendingStoreRequest pendingStoreRequest = new PendingStoreRequest(storeRequest, metadata);
     pendingStoreQueue.enqueue(pendingStoreRequest);
 
     metricsCollector.increment("persist.requested", 1L);

@@ -178,15 +178,11 @@ const schema = (state = defaultSchemaState, action = defaultAction) => {
 const upload = (state = defaultViewData, action = defaultAction) => {
   let stateCopy;
   switch(action.type) {
-    case CreateStreamWithUploadAction.setDefaultData:
+    case CreateStreamWithUploadAction.setData:
       stateCopy = Object.assign({}, state, {
         data: action.payload.data,
+        filename: action.payload.filename,
         loading: false
-      });
-      break;
-    case CreateStreamWithUploadAction.setFilename:
-      stateCopy = Object.assign({}, state, {
-        filename: action.payload.filename
       });
       break;
     case CreateStreamWithUploadAction.onReset:

@@ -28,8 +28,8 @@ commons:
       plural: Flows
       singular: Flow
     mapreduce:
-      plural: Mapreduce
-      singular: Mapreduce
+      plural: MapReduce
+      singular: MapReduce
     program:
       plural: Programs
       singular: Program
@@ -76,7 +76,7 @@ features:
       type: "Type: "
     Header:
       filters: Filters
-      search-placeholder: Search entities ...
+      search-placeholder: Search entities...
       sort: Sort
       sortOptions:
         entityNameAsc:
@@ -91,19 +91,25 @@ features:
     Title: Dashboard
 
   FileDnD:
-    uploadLabel: Drag and Drop the file to be uploaded
+    uploadLabel: Drag-and-drop the file to be uploaded
     clickLabel: Click to select file from your computer
   FastAction:
     deleteConfirmation: Are you sure you want to delete *_{entityId}_*?
     deleteLabel: Delete
-    deleteFailed: Failed to delete {entityId}
+    deleteFailed: Failed to delete {entityId}.
     truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
     truncateLabel: Truncate
-    truncateFailed: Failed to truncate {entityId}
+    truncateFailed: Failed to truncate {entityId}.
     sendEventsLabel: Send Events
     sendEventsButtonLabel: Send
-    sendEventsClickLabel: Click to input events
-    sendEventsFailed: Error - Send Events Failed
+    sendEventsClickLabel: Click to input events.
+    sendEventsFailed: Error - Send Events Failed.
+    startConfirmLabel: Start
+    stopConfirmLabel: Stop
+    startConfirmation: "Are you sure you want to start the program: *_{entityId}_*?"
+    stopConfirmation: "Are you sure you want to stop the program:  *_{entityId}_*?"
+    stopProgramHeader: Stop Program
+    startProgramHeader: Start Program
 
   JumpButton:
     buttonLabel: Jump
@@ -153,20 +159,27 @@ features:
         view-invalid: View Invalid Transactions
     DetailPanel:
       headers:
-        nodes: Nodes
-        entities: Entities
         apps: Apps
         blocks: Blocks
-        storage: Storage
+        connections: Connections
+        entities: Entities
+        load: Load
+        nodes: Nodes
         queues: Queues
         resources: Resources
-        load: Load
+        storage: Storage
+        transactions: Transactions
       labels:
         Accepted: Accepted
-        AverageRegionsPerServer: Average Regions Per Server
         RemainingBytes: Available
+        Applications: Applications
+        Artifacts: Artifacts
+        AverageRegionsPerServer: Average Regions per Server
+        ClientErrors: Client Errors
         CorruptBlocks: Corrupt Blocks
+        Datasets: Datasets
         DeadRegionServers: Dead Region Servers
+        ErrorLogs: Errors in Logs
         Failed: Failed
         Finished: Finished
         FreeMemory: Free Memory
@@ -181,13 +194,25 @@ features:
         MissingBlocks: Missing Blocks
         Namenodes: Namenodes
         Namespaces: Namespaces
+        NumCommittingChangeSets: Committing Changes
+        NumCommittedChangeSets: Committed Changes
+        NumInProgressTransactions: In-Progress Transactions
+        NumInvalidTransactions: Invalid Transactions
+        NumRequests: No. of Requests
+        Programs: Programs
+        ReadPointer: Read Pointer
         RegionServers: Region Servers
         RegionsInTransition: Regions in Transition
-        NumRequests: No. of Requests
+        RemainingBytes: Available
         Running: Running
+        ServerErrors: Server Errors
         Snapshots: Snapshots
+        SnapshotTime: Last Snapshot Time
         Stopped: Stopped
+        Streams: Streams
+        StreamViews: Stream Views
         Submitted: Submitted
+        Successful: Successful
         Tables: Tables
         Total: Total
         TotalBytes: Total
@@ -195,25 +220,30 @@ features:
         TotalContainers: Total Containers
         TotalMemory: Total Memory
         TotalRegions: Total Regions
+        TotalRequests: Total Requests
         TotalVCores: Total Virtual Cores
-        totalRegionServers: Total Region Servers
         UnderReplicatedBlocks: Under Replicated Blocks
         UsedBytes: Used
         UsedMemory: Used Memory
         UsedVCores: Used Virtual Cores
         UnusableNodes: Unusable Nodes
         UnusableContainers: Unusable Containers
+        VisibilityUpperBound: Visibility Upper Bound
+        WarnLogs: Warnings in Logs
+        WritePointer: Write Pointer
 
     Component-Overview:
       label: Component Overview
       headers:
+        cdap: CDAP
         cdh: CDH
-        yarn: YARN
         hbase: HBASE
         hdfs: HDFS
-        zookeeper: Zookeeper
+        zookeeper: ZooKeeper
         kafka: Kafka
         spark: Spark
+        yarn: YARN
+        zookeeper: Zookeeper
 
   Market:
     search-placeholder: Search
@@ -272,30 +302,30 @@ features:
   Resource-Center:
     Stream:
       label: Stream
-      description: Stream is used to ingest data into HDFS in real-time or batch.
+      description: A stream is used to ingest data into HDFS in real-time or batch.
       actionbtn0: Create
     Application:
       label: Application
-      description: Upload a custom Application artifact or create an instance of Application from existing Artifact.
+      description: Upload a custom application artifact or create an instance of an application from an existing artifact.
       actionbtn0: Upload
       actionbtn-1: Create
       modalheadertitle: Upload Application
     Stream-View:
       label: Stream View
-      description: Stream View is non-materialized view over a Stream with schema on read capability. Create a view over existing Stream.
+      description: A stream view is non-materialized view over a stream with schema-on-read capability. Creates a view over an existing stream.
       actionbtn0: Create
     HydratorPipeline:
       label: Hydrator Pipeline
-      description: Hydrator pipeline allows you to ingest, egress and process data to, from and within Hadoop.
+      description: A Hydrator pipeline allows you to ingest, egress, and process data either to, from, or within Hadoop.
       actionbtn0: Create
     Artifact:
       label: Artifact
-      description: Artifact is a JAR file that contains either a native Application or collection of Plugins.
+      description: An artifact is a JAR file that contains either a native application or collection of plugins.
       actionbtn0: Upload
       modalheadertitle: Upload Artifact
     Plugins:
       label: Plugins
-      description: Plugin is a easy way to extend the functionality of a Application.
+      description: A plugin is a easy way to extend the functionality of an application.
       actionbtn0: Upload
       modalheadertitle: Upload Plugin Artifact
 
@@ -368,99 +398,99 @@ features:
       Step1:
         shorttitle: General Information
         title: General
-        description: Provide information about Stream you want to create.
+        description: Provide information about the stream you want to create.
         ttllabel: Event Life Time
-        ttl-placeholder: Specify time to live events in seconds
+        ttl-placeholder: Specify time-to-live events in seconds
       Step2:
         shorttitle: Setup Format and Schema
         title: Set Format and Schema
         description: Setting format and schema allows you to perform schema-on-read.
       Step3:
         shorttitle: Trigger Setup
-        title: Setup Trigger
-        description: Setting up Trigger configures system to notify systems observing to start processing.
-        thresholdlabel: The stream will notify any observers upon reaching this threshold to start processing of the data in this Stream
+        title: Setup a Trigger
+        description: Setting up a trigger configures CDAP to notify systems observing to start processing.
+        thresholdlabel: The stream will notify any observers upon reaching this threshold to start processing the data in this stream.
         mblabel: Megabytes (MB)
       Step4:
         shorttitle: Upload Data
         title: Upload Data
-        description: Upload Data to the Stream you created
+        description: Upload data to the stream you created.
       headerlabel: Create Stream
     UploadData:
       Step1:
         shorttitle: View Data
         title: View Data
-        description: Shows the data for your reference that would be uploaded to a destination
+        description: Shows the data for your reference that would be uploaded to a destination.
       Step2:
         shorttitle: Select Destination
-        title: Select Destination
-        description: Select the destination where the data needs to be uploaded
+        title: Select a Destination
+        description: Select the destination where the data needs to be uploaded.
         dataentitynameplaceholder: Dataset/Stream Name
         destinationtype: Destination Type
         destinationname: Destination Name
       headerlabel: Upload Data
     PublishPipeline:
       Step1:
-        shorttitle: Configure pipeline
-        title: Configure pipeline
-        description: Specify the name of the pipeline
-      pipelinenameplaceholder: Pipeline name
+        shorttitle: Configure Pipeline
+        title: Configure a Pipeline
+        description: Specify the name of the pipeline.
+      pipelinenameplaceholder: Pipeline Name
       headerlabel: Publish Pipeline
     HydratorPipeline:
-      title: Create Data Pipeline
-      message: Choose the pipeline type you would like to create
+      title: Create a Data Pipeline
+      message: Choose the pipeline type you would like to create.
       batchLinkLabel: Batch Pipeline
       realtimeLinkLabel: Realtime Pipeline
     PluginArtifact:
       Step1:
-        description: Upload your plugin artifact JAR
         shorttitle: Upload Plugin Artifact
         title: Upload Plugin Artifact
-        filePathLabel: Choose file
-        errorMessage: Invalid plugin artifact. Artifact must be a jar file
+        description: Upload your plugin artifact JAR.
+        filePathLabel: Choose File
+        errorMessage: Invalid plugin artifact. Artifact must be a JAR file.
       Step2:
-        description: Upload the plugin configuration json
         shorttitle: Upload Plugin Configuration JSON
         title: Upload Plugin Configuration JSON
-        errorMessage: Invalid plugin JSON. Plugin Configuration should be in json format
-        errorMessageParentArtifacts: Invalid plugin JSON. Please specify parent artifacts
+        description: Upload the plugin configuration JSON.
+        errorMessage: Invalid plugin JSON. Plugin configuration should be in JSON format.
+        errorMessageParentArtifacts: Invalid plugin JSON. Please specify parent artifacts.
     Add-Namespace:
        Step1:
          ssd-label: "General Information"
-         sld-desc:  "Specifies the name and the description of Namespace"
+         sld-desc:  "Specify the name and the description of the namespace."
          name-label: "Name"
-         name-placeholder: "Namespace Name"
+         name-placeholder: "Namespace name"
          description-label: "Description"
-         description-placeholder: "Description"
+         description-placeholder: "Namespace description"
          scheduler-queue-label: "Scheduler Queue"
          scheduler-queue-placeholder: "Specify the YARN queue name to be associated with this namespace"
        Step2:
          ssd-label: "Namespace Mapping"
-         sld-label: "Specifies mapping of namespace resources to the underlying existing storage resources"
+         sld-label: "Specify mapping of namespace resources to the underlying existing storage resources."
          hdfs-root-directory-label: "HDFS Root Directory"
          hdfs-root-directory-placeholder: "Root directory of HDFS for new namespace root"
          hive-db-name-label: "Hive Database Name"
-         hive-db-name-placeholder: "Hive db name for new namespace"
+         hive-db-name-placeholder: "Hive db name for the new namespace."
          hbase-nm-name-label: "HBase Namespace Name"
          hbase-nm-name-placeholder: "Existing namespace in HBase for new namespace"
        Step3:
          ssd-label: "Security"
-         sld-label: "Specifies credentials for securely impersonating programs running as specified user"
+         sld-label: "Specify credentials for securely impersonating programs running as a specified user."
          principal-label: "Principal"
-         principal-placeholder: "User to be impersonated for jobs in new namespace"
+         principal-placeholder: "User to be impersonated-as for jobs in the new namespace"
          keytab-uri-label: "Keytab URI"
          keytab-uri-placeholder: "Location of keytab file associated with the principal"
        Step4:
          ssd-label: "Preferences"
-         sld-label: "Specify preferences to applied at the namespace level"
+         sld-label: "Specify preferences to be applied at the namespace level."
          name-label: "Name"
          name-placeholder: "Preference name"
          value-label: "Value"
          value-placeholder: "Preference value"
        headerlabel: Add Namespace
        Status:
-         creation-error-desc: "Failed to create namespace '%s'"
-         creation-success-desc: "Successfully created namespace '%s'"
+         creation-error-desc: "Failed to create namespace '%s'."
+         creation-success-desc: "Successfully created namespace '%s'."
 
   Wrangler:
     Actions:

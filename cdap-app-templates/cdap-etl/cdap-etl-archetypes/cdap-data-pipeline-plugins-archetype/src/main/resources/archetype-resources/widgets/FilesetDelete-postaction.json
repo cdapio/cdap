@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "Fileset Delete Configuration",
+      "properties": [
+        {
+          "widget-type": "dataset-selector",
+          "label": "FileSet Name",
+          "name": "filesetName"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "FileSet directory",
+          "name": "directory"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Delete Regex",
+          "name": "deleteRegex"
+        }
+      ]
+    }
+  ],
+  "outputs": []
+}

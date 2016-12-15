@@ -141,15 +141,16 @@ final class CoreMessageFetcher extends MessageFetcher {
       // do the scanning based on time. The smallest start time should be the currentTime - TTL.
       if (startOffset == null || startOffset.getPublishTimestamp() < smallestPublishTime) {
         long fetchStartTime = Math.max(smallestPublishTime, startTime == null ? smallestPublishTime : startTime);
-        messageIterator = messageTable.fetch(topicId, fetchStartTime, messageLimit, getTransaction());
+        messageIterator = messageTable.fetch(topicMetadata, fetchStartTime, messageLimit, getTransaction());
       } else {
         // Start scanning based on the start message id
         if (startOffset.getPayloadWriteTimestamp() != 0L) {
           // This message ID refer to payload table. Scan the message table with the reference message ID inclusively.
-          messageIterator = messageTable.fetch(topicId, createMessageTableMessageId(startOffset),
+          messageIterator = messageTable.fetch(topicMetadata, createMessageTableMessageId(startOffset),
                                                true, messageLimit, getTransaction());
         } else {
-          messageIterator = messageTable.fetch(topicId, startOffset, isIncludeStart(), messageLimit, getTransaction());
+          messageIterator = messageTable.fetch(topicMetadata, startOffset, isIncludeStart(),
+                                               messageLimit, getTransaction());
         }
       }
       this.messageIterator = messageIterator;
@@ -180,7 +181,7 @@ final class CoreMessageFetcher extends MessageFetcher {
               if (payloadTable == null) {
                 payloadTable = payloadTableProvider.get();
               }
-              payloadIterator = payloadTable.fetch(topicId, messageEntry.getTransactionWritePointer(),
+              payloadIterator = payloadTable.fetch(topicMetadata, messageEntry.getTransactionWritePointer(),
                                                    new MessageId(createMessageId(messageEntry, null)),
                                                    inclusive, messageLimit);
             } catch (IOException e) {

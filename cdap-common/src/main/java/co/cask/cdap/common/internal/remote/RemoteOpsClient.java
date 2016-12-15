@@ -17,6 +17,7 @@
 package co.cask.cdap.common.internal.remote;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
@@ -45,6 +46,7 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -54,7 +56,6 @@ import javax.annotation.Nullable;
  * Common HTTP client functionality for remote operations from programs.
  */
 public class RemoteOpsClient {
-
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
@@ -74,7 +75,7 @@ public class RemoteOpsClient {
       }
     });
 
-    this.httpRequestConfig = new DefaultHttpRequestConfig();
+    this.httpRequestConfig = new DefaultHttpRequestConfig(false);
     this.discoverableServiceName = discoverableServiceName;
   }
 
@@ -91,10 +92,10 @@ public class RemoteOpsClient {
     if (discoverable == null) {
       throw new RuntimeException(String.format("Cannot discover service %s", discoverableServiceName));
     }
-    InetSocketAddress addr = discoverable.getSocketAddress();
-
-    return String.format("http://%s:%s%s/%s",
-                         addr.getHostName(), addr.getPort(), "/v1", resource);
+    InetSocketAddress address = discoverable.getSocketAddress();
+    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
+      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
+    return String.format("%s%s:%s%s/%s", scheme, address.getHostName(), address.getPort(), "/v1", resource);
   }
 
   private static List<MethodArgument> createArguments(Object... arguments) {

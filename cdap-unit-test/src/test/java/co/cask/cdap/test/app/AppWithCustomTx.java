@@ -40,6 +40,9 @@ import co.cask.cdap.api.service.http.HttpContentProducer;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.api.spark.AbstractSpark;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
@@ -169,8 +172,8 @@ public class AppWithCustomTx extends AbstractApplication {
     addWorker(new TxWorker());
     addMapReduce(new TxMR());
     addMapReduce(new NoTxMR());
-    addSpark(new SparkWithCustomTx.TxSpark());
-    addSpark(new SparkWithCustomTx.NoTxSpark());
+    addSpark(new TxSpark());
+    addSpark(new NoTxSpark());
     addWorkflow(new TxWorkflow());
     addWorkflow(new NoTxWorkflow());
     addService(new AbstractService() {
@@ -887,6 +890,61 @@ public class AppWithCustomTx extends AbstractApplication {
         public void abortTask(TaskAttemptContext taskContext) throws IOException {
         }
       };
+    }
+  }
+
+  public static class TxSpark extends AbstractSpark implements JavaSparkMain {
+    @Override
+    protected void configure() {
+      setName(SPARK_TX);
+      setMainClass(TxSpark.class);
+    }
+
+    @Override
+    protected void initialize() throws Exception {
+      // this job will fail because we don't configure the mapper etc. That is fine because destroy() still gets called
+      recordTransaction(getContext(), SPARK_TX, INITIALIZE);
+      attemptNestedTransaction(getContext(), SPARK_TX, INITIALIZE_NEST);
+    }
+
+    @Override
+    public void destroy() {
+      recordTransaction(getContext(), SPARK_TX, DESTROY);
+      attemptNestedTransaction(getContext(), SPARK_TX, DESTROY_NEST);
+    }
+
+    @Override
+    public void run(JavaSparkExecutionContext sec) throws Exception {
+      // no-op
+    }
+  }
+
+  public static class NoTxSpark extends TxSpark {
+    @Override
+    protected void configure() {
+      super.configure();
+      setName(SPARK_NOTX);
+    }
+
+    @Override
+    @TransactionPolicy(TransactionControl.EXPLICIT)
+    protected void initialize() throws Exception {
+      // this job will fail because we don't configure the mapper etc. That is fine because destroy() still gets called
+      recordTransaction(getContext(), SPARK_NOTX, INITIALIZE);
+      executeRecordTransaction(getContext(), SPARK_NOTX,
+                               INITIALIZE_TX, TIMEOUT_SPARK_INITIALIZE);
+      executeAttemptNestedTransaction(getContext(),
+                                      SPARK_NOTX, INITIALIZE_NEST);
+    }
+
+    @Override
+    @TransactionPolicy(TransactionControl.EXPLICIT)
+    public void destroy() {
+      recordTransaction(getContext(), SPARK_NOTX, DESTROY);
+      executeRecordTransaction(getContext(), SPARK_NOTX,
+                               DESTROY_TX, TIMEOUT_SPARK_DESTROY);
+      executeAttemptNestedTransaction(getContext(),
+                                      SPARK_NOTX, DESTROY_NEST);
     }
   }
 }

@@ -36,6 +36,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -60,21 +61,24 @@ public class RemoteNamespaceQueryClient extends AbstractNamespaceQueryClient {
 
   @Override
   protected HttpResponse execute(HttpRequest request) throws IOException {
-    return HttpRequests.execute(addUserIdHeader(request), new DefaultHttpRequestConfig());
+    return HttpRequests.execute(addUserIdHeader(request), new DefaultHttpRequestConfig(false));
   }
 
   @Override
   protected URL resolve(String resource) throws IOException {
-    InetSocketAddress addr = getNamespaceServiceAddress();
-    String url = String.format("http://%s:%d/%s/%s", addr.getHostName(), addr.getPort(),
+    Discoverable discoverable = getNamespaceService();
+    InetSocketAddress addr = discoverable.getSocketAddress();
+    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
+      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
+    String url = String.format("%s%s:%d/%s/%s", scheme, addr.getHostName(), addr.getPort(),
                                Constants.Gateway.API_VERSION_3_TOKEN, resource);
     return new URL(url);
   }
 
-  private InetSocketAddress getNamespaceServiceAddress() {
+  private Discoverable getNamespaceService() {
     Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
     if (discoverable != null) {
-      return discoverable.getSocketAddress();
+      return discoverable;
     }
     throw new ServiceUnavailableException(Constants.Service.APP_FABRIC_HTTP);
   }

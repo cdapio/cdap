@@ -132,18 +132,20 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
 
 
 .. _cdap-building-running-starting-application:
+.. _cdap-building-running-starting-programs:
 
-Starting an Application
------------------------
+Starting an Application's Programs
+----------------------------------
 
-Once an application is deployed, there are multiple methods for starting an application:
+Once an application is deployed, there are multiple methods for starting an application's programs:
 
 - You can go to the application's detail page in the CDAP UI by clicking on the
   application's name in either the |development|_ page or on the |all_apps|_ page. Now you can 
   see the status of any of the programs associated with the application and, by clicking
   on them, go to their detail page where you can start or stop them.
-- From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface<cli>`.
-  In each CDAP example, the CLI commands for that particular example are provided:
+  
+- From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface<cli>` to start a specific program of an application.
+  (In each CDAP example, the CLI commands for that particular example are provided):
   
   .. tabbed-parsed-literal::
 
@@ -161,30 +163,98 @@ Once an application is deployed, there are multiple methods for starting an appl
       - Name of the application being called
     * - ``<program-id>``
       - Name of the *flow*, *MapReduce*, *service*, *spark*, *worker* or *workflow* being called
+
+..
+
+- Use the :ref:`Command Line Interface<cli>` to start all or selected types of programs of an application at once:
+  
+  .. tabbed-parsed-literal::
+
+    $ start app <app-id> programs [of type <program-types>]
+    
+  .. list-table::
+    :widths: 20 80
+    :header-rows: 1
+
+    * - Parameter
+      - Description
+    * - ``<app-id>``
+      - Name of the application being called
+    * - ``<program-types>``
+      - An optional comma-separated list of program types (``flow``, ``mapreduce``, ``service``,
+        ``spark``, ``worker``, or ``workflow``) which will start all programs of those
+        types; for example, specifying ``'flow,workflow'`` will start all flows and
+        workflows in the application
+  
+..
       
+- Use the :ref:`Program Lifecycle <http-restful-api-lifecycle-start>` of the Lifecycle
+  HTTP RESTful API to start the programs of an application using a program such as ``curl``
 
 .. _cdap-building-running-stopping:
+.. _cdap-building-running-stopping-application:
+.. _cdap-building-running-stopping-program:
 
-Stopping an Application
------------------------
+Stopping an Application's Programs
+----------------------------------
 
-Once an application is deployed:
+Once an application is deployed, use one of these methods for stoping an application's programs:
 
 - On an application's detail page in the CDAP UI, you can click on a program to go 
-  to its detail page and then click the *Stop* button there; or
-- From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface <cli>`:
+  to its detail page and then click the *Stop* button there
+
+- From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface <cli>` to stop a specific program of an application:
 
   .. tabbed-parsed-literal::
 
     $ cdap cli stop <program-type> <app-id.program-id>
+
+  .. list-table::
+    :widths: 20 80
+    :header-rows: 1
+
+    * - Parameter
+      - Description
+    * - ``<program-type>``
+      - One of ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
+    * - ``<app-id>``
+      - Name of the application being called
+    * - ``<program-id>``
+      - Name of the *flow*, *MapReduce*, *service*, *spark*, *worker* or *workflow* being called
+
+..
+
+- Use the :ref:`Command Line Interface<cli>` to stop all or selected types of programs of an application at once:
+  
+  .. tabbed-parsed-literal::
+
+    $ stop app <app-id> programs [of type <program-types>]
     
+  .. list-table::
+    :widths: 20 80
+    :header-rows: 1
+
+    * - Parameter
+      - Description
+    * - ``<app-id>``
+      - Name of the application being called
+    * - ``<program-types>``
+      - An optional comma-separated list of program types (``flow``, ``mapreduce``, ``service``,
+        ``spark``, ``worker``, or ``workflow``) which will stop all programs of those
+        types; for example, specifying ``'flow,workflow'`` will stop all flows and
+        workflows in the application
+
+..
+      
+- Use the :ref:`Program Lifecycle <http-restful-api-lifecycle-stop>` of the Lifecycle
+  HTTP RESTful API to stop the programs of an application using a program such as ``curl``
     
 .. _cdap-building-running-removing:
 
 Removing an Application
 -----------------------
 
-Once an application is stopped |---| all of its programs (flows, MapReduce programs,
+Once an application is "stopped" |---| when all of its programs (flows, MapReduce programs,
 workflows, services, etc.) are stopped |---| you can go to the |all_apps|_
 page of the CDAP UI, click on the particular application to go to its detail page, click
 the *Actions* menu on the right side and select *Manage* to go to the Management pane for
