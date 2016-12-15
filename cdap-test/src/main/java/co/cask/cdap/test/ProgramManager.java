@@ -98,4 +98,11 @@ public interface ProgramManager<T extends ProgramManager> {
    * @param args the runtime arguments to save
    */
   void setRuntimeArgs(Map<String, String> args) throws Exception;
+
+  /**
+   * Get runtime arguments of this program
+   *
+   * @return args the runtime arguments of the programs
+   */
+  Map<String, String> getRuntimeArgs() throws Exception;
 }
