@@ -157,7 +157,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       File credentialsDir = new File(localDirStr, dirName);
 
       try {
-        java.nio.file.Files.createDirectories(credentialsDir.toPath(), FileUtils.OWNER_ONLY_RWX);
+        java.nio.file.Files.createDirectories(credentialsDir.toPath());
       } catch (IOException ioe) {
         // we have to wrap the IOException, because Provider#get doesn't declare it
         Throwables.propagate(ioe);
