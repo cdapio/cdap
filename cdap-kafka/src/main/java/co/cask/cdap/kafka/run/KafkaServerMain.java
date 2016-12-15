@@ -155,6 +155,7 @@ public class KafkaServerMain extends DaemonMain {
     Map<String, String> propConfigs = cConf.getValByRegex("^(kafka\\.server\\.)");
     for (Map.Entry<String, String> pair : propConfigs.entrySet()) {
       String key = pair.getKey();
+      // we get the value via the cConf, because cConf#getValByRegex does not do variable substitution
       String value = cConf.get(key);
       String trimmedKey = key.substring(13);
       prop.setProperty(trimmedKey, value);

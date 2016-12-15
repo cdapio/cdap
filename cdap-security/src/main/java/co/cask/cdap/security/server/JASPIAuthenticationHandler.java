@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,7 @@
 
 package co.cask.cdap.security.server;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import com.google.inject.Inject;
 import org.apache.geronimo.components.jaspi.impl.ServerAuthConfigImpl;
 import org.apache.geronimo.components.jaspi.impl.ServerAuthContextImpl;
 import org.apache.geronimo.components.jaspi.model.AuthModuleType;
@@ -35,7 +33,6 @@ import org.eclipse.jetty.security.jaspi.modules.BasicAuthModule;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 import javax.security.auth.Subject;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
@@ -49,16 +46,6 @@ import javax.security.auth.message.module.ServerAuthModule;
 public class JASPIAuthenticationHandler extends AbstractAuthenticationHandler {
   private JAASLoginService loginService;
   private IdentityService identityService;
-
-  /**
-   * Create a new Authentication handler to interface with JASPI plugins.
-   * @param configuration
-   * @throws Exception
-   */
-  @Inject
-  public JASPIAuthenticationHandler(CConfiguration configuration) throws Exception {
-    super(configuration);
-  }
 
   @Override
   protected LoginService getHandlerLoginService() {
@@ -86,9 +73,8 @@ public class JASPIAuthenticationHandler extends AbstractAuthenticationHandler {
                                                                             new AuthModuleType<ServerAuthModule>());
     ServerAuthConfigType serverAuthConfigType = new ServerAuthConfigType(serverAuthContextType, true);
     ServerAuthConfig serverAuthConfig = new ServerAuthConfigImpl(serverAuthConfigType, serverAuthContextMap);
-    JaspiAuthenticator jaspiAuthenticator = new JaspiAuthenticator(serverAuthConfig, null, callbackHandler,
-                                                                   new Subject(), true, getHandlerIdentityService());
-    return jaspiAuthenticator;
+    return new JaspiAuthenticator(serverAuthConfig, null, callbackHandler,
+                                  new Subject(), true, getHandlerIdentityService());
   }
 
   @Override
@@ -107,21 +93,9 @@ public class JASPIAuthenticationHandler extends AbstractAuthenticationHandler {
     return new Configuration() {
       @Override
       public AppConfigurationEntry[] getAppConfigurationEntry(String s) {
-        HashMap<String, String> map = new HashMap<>();
-
-
-        String configRegex = Constants.Security.AUTH_HANDLER_CONFIG_BASE.replace(".", "\\.").concat(".");
-        Map<String, String> configurables = configuration.getValByRegex(configRegex);
-
-        for (Map.Entry<String, String> pairs : configurables.entrySet()) {
-          String key = pairs.getKey();
-          String value = pairs.getValue();
-          map.put(key.substring(key.lastIndexOf('.') + 1).trim(), value);
-        }
-
         return new AppConfigurationEntry[] {
-          new AppConfigurationEntry(configuration.get(Constants.Security.LOGIN_MODULE_CLASS_NAME),
-                                    AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, map)
+          new AppConfigurationEntry(handlerProps.get(Constants.Security.LOGIN_MODULE_CLASS_NAME),
+                                    AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, new HashMap<>(handlerProps))
         };
       }
     };

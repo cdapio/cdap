@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.security.guice;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Codec;
+import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.security.auth.AccessToken;
 import co.cask.cdap.security.auth.AccessTokenCodec;
 import co.cask.cdap.security.auth.AccessTokenIdentifier;
@@ -32,26 +33,21 @@ import co.cask.cdap.security.auth.TokenValidator;
 import co.cask.cdap.security.server.AuditLogHandler;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.cdap.security.server.GrantAccessToken;
+import com.google.common.reflect.TypeToken;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
-import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
-import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
-import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.eclipse.jetty.server.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
- * Guice bindings for security related classes.  This extends {@code PrivateModule} in order to limit which classes
+ * Guice bindings for security related classes. This extends {@code PrivateModule} in order to limit which classes
  * are exposed.
  */
 public abstract class SecurityModule extends PrivateModule {
@@ -70,21 +66,16 @@ public abstract class SecurityModule extends PrivateModule {
     bind(ExternalAuthenticationServer.class).in(Scopes.SINGLETON);
 
     MapBinder<String, Object> handlerBinder = MapBinder.newMapBinder(binder(), String.class, Object.class,
-                                                                      Names.named("security.handlers.map"));
+                                                                     Names.named("security.handlers.map"));
 
     handlerBinder.addBinding(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER)
-                 .toProvider(AuthenticationHandlerProvider.class);
+                 .toProvider(AuthenticationHandlerProvider.class).in(Scopes.SINGLETON);
     handlerBinder.addBinding(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER)
-                 .to(GrantAccessToken.class);
+                 .to(GrantAccessToken.class).in(Scopes.SINGLETON);
 
     bind(AuditLogHandler.class)
       .annotatedWith(Names.named(ExternalAuthenticationServer.NAMED_EXTERNAL_AUTH))
       .toInstance(new AuditLogHandler(EXTERNAL_AUTH_AUDIT_LOG));
-
-    bind(new TypeLiteral<Map<String, Object>>() { })
-      .annotatedWith(Names.named("security.handlers"))
-      .toProvider(AuthenticationHandlerMapProvider.class)
-      .in(Scopes.SINGLETON);
 
     bind(TokenValidator.class).to(AccessTokenValidator.class);
     bind(AccessTokenTransformer.class).in(Scopes.SINGLETON);
@@ -95,39 +86,20 @@ public abstract class SecurityModule extends PrivateModule {
     expose(new TypeLiteral<Codec<KeyIdentifier>>() { });
   }
 
-  @Provides
-  private Class<? extends Handler> provideHandlerClass(CConfiguration configuration) throws ClassNotFoundException {
-    return configuration.getClass(Constants.Security.AUTH_HANDLER_CLASS, null, Handler.class);
-  }
-
   private static final class AuthenticationHandlerProvider implements Provider<Handler> {
 
-    private final Injector injector;
     private final Class<? extends Handler> handlerClass;
 
     @Inject
-    private AuthenticationHandlerProvider(Injector injector, Class<? extends Handler> handlerClass) {
-      this.injector = injector;
-      this.handlerClass = handlerClass;
+    private AuthenticationHandlerProvider(CConfiguration configuration) {
+      this.handlerClass = configuration.getClass(Constants.Security.AUTH_HANDLER_CLASS, null, Handler.class);
     }
 
     @Override
     public Handler get() {
-      return injector.getInstance(handlerClass);
-    }
-  }
-
-  private static final class AuthenticationHandlerMapProvider implements Provider<Map<String, Object>> {
-    private final Map<String, Object> handlerMap;
-
-    @Inject
-    AuthenticationHandlerMapProvider(@Named("security.handlers.map") Map<String, Object> handlers) {
-      handlerMap = new HashMap<>(handlers);
-    }
-
-    @Override
-    public Map<String, Object> get() {
-      return handlerMap;
+      // we don't instantiate the handler class via injection, to avoid giving it access to objects bound in guice,
+      // such as SConfiguration
+      return new InstantiatorFactory(false).get(TypeToken.of(handlerClass)).create();
     }
   }
 
