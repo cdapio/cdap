@@ -149,7 +149,7 @@ export default class NamespaceDropdown extends Component {
                     className="namespace-action text-center"
                     onClick={this.showNamespaceWizard.bind(this)}
                   >
-                    {T.translate('features.Navbar.NamespaceDropdown.add-ns')}
+                    {T.translate('features.Navbar.NamespaceDropdown.addNS')}
                   </div>
                 )
               :
@@ -158,7 +158,7 @@ export default class NamespaceDropdown extends Component {
                     className="namespace-action text-center"
                     onClick={this.showNamespaceWizard.bind(this)}
                   >
-                    {T.translate('features.Navbar.NamespaceDropdown.add-ns')}
+                    {T.translate('features.Navbar.NamespaceDropdown.addNS')}
                   </div>
                 )
             }
