@@ -48,7 +48,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.ServiceListenerAdapter;
 
 /**
- * A {@link ProgramRunner} that runs a component inside a Service (either a HTTP Server or a Worker).
+ * A {@link ProgramRunner} that runs an HTTP Server inside a Service.
  */
 public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
@@ -111,7 +111,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           txClient, discoveryServiceClient,
                                                           pluginInstantiator, secureStore, secureStoreManager);
 
-      // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.
+      // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(new ServiceListenerAdapter() {
         @Override
         public void terminated(Service.State from) {

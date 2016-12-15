@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
@@ -138,7 +139,8 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
                                                                            streamAdmin, queueAdmin, txExecutorFactory);
 
       // Launch flowlet program runners
-      LOG.info("Launching distributed flow: " + program.getName() + ":" + flowSpec.getName());
+      RunId runId = ProgramRunners.getRunId(options);
+      LOG.info("Launching distributed flow: {}", program.getId().run(runId));
 
       TwillController controller = launcher.launch(new FlowTwillApplication(program, options.getUserArguments(),
                                                                             flowSpec, localizeResources, eventHandler));
@@ -146,7 +148,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
         new DistributedFlowletInstanceUpdater(program.getId(), controller, queueAdmin,
                                               streamAdmin, flowletQueues, txExecutorFactory, impersonator);
 
-      return createProgramController(controller, program.getId(), ProgramRunners.getRunId(options), instanceUpdater);
+      return createProgramController(controller, program.getId(), runId, instanceUpdater);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
