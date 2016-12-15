@@ -26,6 +26,7 @@ import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
+import co.cask.cdap.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.etl.planner.Dag;
 import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.proto.v2.ETLConfig;
@@ -39,6 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -114,9 +116,28 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
       // for each output, set their input schema to our output schema
       for (String outputStageName : stageConnections.getOutputs()) {
-        pluginConfigurers.get(outputStageName).getStageConfigurer().addInputSchema(pluginTypes.get(outputStageName),
-                                                                                   stageName,
-                                                                                   outputSchema);
+
+        String outputStageType = pluginTypes.get(outputStageName);
+        // no need to set any input schemas for an Action plug
+        if (Action.PLUGIN_TYPE.equals(outputStageType)) {
+          continue;
+        }
+
+        DefaultStageConfigurer outputStageConfigurer = pluginConfigurers.get(outputStageName).getStageConfigurer();
+
+        // Do not allow null input schema for Joiner
+        if (BatchJoiner.PLUGIN_TYPE.equals(outputStageType) && outputSchema == null) {
+          throw new IllegalArgumentException(String.format("Joiner cannot have any null input schemas, but stage %s " +
+                                                             "outputs a null schema.", stageName));
+        }
+
+        // Do not allow more than one input schema for stages other than Joiner
+        if (!outputStageType.equals(BatchJoiner.PLUGIN_TYPE) &&
+          !hasSameSchema(outputStageConfigurer.getInputSchemas(), outputSchema)) {
+          throw new IllegalArgumentException("Two different input schema were set for the stage " + outputStageName);
+        }
+
+        outputStageConfigurer.addInputSchema(stageName, outputSchema);
       }
       specBuilder.addStage(stageSpec);
     }
@@ -125,6 +146,15 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       .setResources(config.getResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview());
+  }
+
+  private boolean hasSameSchema(Map<String, Schema> inputSchemas, Schema inputSchema) {
+    if (!inputSchemas.isEmpty()) {
+      if (!Objects.equals(inputSchemas.values().iterator().next(), inputSchema)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
