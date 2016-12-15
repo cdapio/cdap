@@ -21,6 +21,7 @@ import myExploreApi from 'api/explore';
 import {Modal, ModalHeader, ModalBody} from 'reactstrap';
 import shortid from 'shortid';
 import Papa from 'papaparse';
+import T from 'i18n-react';
 
 require('./TableItem.less');
 
@@ -168,7 +169,9 @@ export default class TableItem extends Component {
 
     const noData = (
       <div>
-        <h4 className="text-center">No data</h4>
+        <h4 className="text-center">
+          {T.translate('features.Wrangler.Explore.noData')}
+        </h4>
       </div>
     );
 
@@ -180,7 +183,7 @@ export default class TableItem extends Component {
 
         <div className="form-inline field-selection">
           <label className="control-label">
-            Choose field to wrangle:
+            {T.translate('features.Wrangler.Explore.chooseField')}
           </label>
 
           <select
@@ -210,7 +213,7 @@ export default class TableItem extends Component {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Set delimiter"
+                placeholder={T.translate('features.Wrangler.InputScreen.Options.delimiter')}
                 onChange={this.setDelimiter}
               />
             </div>
@@ -223,7 +226,7 @@ export default class TableItem extends Component {
                 <input type="checkbox"
                   onChange={this.handleSetHeaders}
                   checked={this.state.headers}
-                /> First line as column name
+                /> {T.translate('features.Wrangler.InputScreen.Options.firstLineAsColumns')}
               </label>
             </div>
 
@@ -232,7 +235,7 @@ export default class TableItem extends Component {
               <label>
                 <input type="checkbox"
                   onChange={this.handleSetSkipEmptyLines}
-                /> Skip empty lines
+                /> {T.translate('features.Wrangler.InputScreen.Options.skipEmptyLines')}
               </label>
             </div>
           </form>
@@ -243,7 +246,7 @@ export default class TableItem extends Component {
             className="btn btn-wrangler"
             onClick={this.onWrangleClick}
           >
-            Wrangle
+            {T.translate('features.Wrangler.wrangleButton')}
           </button>
         </div>
       </div>

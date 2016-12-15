@@ -500,8 +500,98 @@ features:
       WRANGLER_LOWER_CASE_COLUMN: lowercase
       WRANGLER_TITLE_CASE_COLUMN: titlecase
       WRANGLER_SUBSTRING_COLUMN: substring
+    ColumnActions:
+      Drop:
+        label: Drop
+      LowerCase:
+        label: Lowercase
+      Merge:
+        header: "Merge Column: {columnName}"
+        joinBy: Join By
+        label: Merge
+        mergedColumn: Merged Column Name
+        mergeWith: Merge With
+      Rename:
+        header: "Rename Column: {columnName}"
+        label: Rename
+        newName: "New Column Name"
+      Split:
+        firstColumn: First Split Column Name
+        header: "Split Column: {columnName}"
+        label: Split
+        secondColumn: Second Split Column Name
+        splitBy: Split by first occurence of
+      Substring:
+        beginIndex: Begin Index
+        endIndex: End Index
+        header: "Substring Column: {columnName}"
+        label: Substring
+        substringColumn: Substring Column Name
+      TitleCase:
+        label: Titlecase
+      UpperCase:
+        label: Uppercase
+
     Errors:
       MISSING_REQUIRED_FIELDS: Please fill out all required fields
       INVALID_NAME: "Invalid column name. Column name can only be alphanumeric, '_', or '-'"
       DUPLICATE_NAME: "Column name already exist. Please choose a different name"
+    Explore:
+      browse: "Browse Dataset ({count})"
+      noData: No data
+      chooseField: "Choose field to wrangle:"
+    Filter:
+      apply: Apply
+      filter: Filter
+      ignoreCase: Ignore Case
+      Options:
+        equal: Equal
+        doesNotEqual: Does not equal
+        lessThan: Less than
+        greaterThan: Greater than
+        lessEqual: Less or equal to
+        greaterEqual: Greater or equal to
+        startsWith: Starts with
+        endsWith: Ends with
+        contains: Contains
+    Header:
+      importData: Import Data
+    history: History
+    InputScreen:
+      ErrorTable:
+        error: Error
+        row: Row
+      HelperText:
+        click: "Click "
+        upload: " to upload a file"
+        or: or
+        paste: Click anywhere else to paste data
+      Options:
+        delimiter: Set delimiter
+        firstLineAsColumns: First line as column name
+        skipEmptyLines: Skip empty lines
+    LeftPanel:
+      sort: Sort
+      selectColumn: Select a column to enable {type}
+    MetricsBar:
+      rows: Rows
+      columns: Columns
+      nulls: Nulls
+
+    Visualization:
+      line: Line
+      area: Area
+      bar: Bar
+      scatter: Scatter
+    wrangleButton: Wrangle
+    WrangleData:
+      applyToHydrator: Apply to Hydrator
+      addToHydrator: Add to Hydrator
+      wrangling: "Wrangling..."
+    Tooltips:
+      actions: Actions
+      redo: Redo
+      undo: Undo
+
+    parsing: "Parsing..."
 ...

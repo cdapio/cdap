@@ -16,7 +16,6 @@
 
 import React, { Component, PropTypes } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Tooltip } from 'reactstrap';
-
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 import validateColumnName from 'wrangler/components/Wrangler/column-validation';
@@ -98,7 +97,11 @@ export default class SubstringAction extends Component {
         zIndex="1070"
       >
         <ModalHeader>
-          <span>Substring Column: {this.props.column}</span>
+          <span>
+            {T.translate('features.Wrangler.ColumnActions.Substring.header', {
+              columnName: this.props.column
+            })}
+          </span>
 
           <div
             className="close-section pull-right"
@@ -110,7 +113,7 @@ export default class SubstringAction extends Component {
         <ModalBody>
           <div>
             <label className="control-label col">
-              Begin Index
+              {T.translate('features.Wrangler.ColumnActions.Substring.beginIndex')}
               <span className="fa fa-asterisk error-text"></span>
             </label>
             <input
@@ -123,7 +126,7 @@ export default class SubstringAction extends Component {
 
           <div>
             <label className="control-label">
-              End Index
+              {T.translate('features.Wrangler.ColumnActions.Substring.endIndex')}
             </label>
             <input
               type="number"
@@ -134,7 +137,7 @@ export default class SubstringAction extends Component {
 
           <div>
             <label className="control-label">
-              Substring Column Name
+              {T.translate('features.Wrangler.ColumnActions.Substring.substringColumn')}
               <span className="fa fa-asterisk error-text"></span>
             </label>
             <input
@@ -152,7 +155,7 @@ export default class SubstringAction extends Component {
             className="btn btn-wrangler"
             onClick={this.onSave}
           >
-            Substring
+            {T.translate('features.Wrangler.ColumnActions.Substring.label')}
           </button>
         </ModalFooter>
       </Modal>
@@ -178,7 +181,7 @@ export default class SubstringAction extends Component {
           className="wrangler-tooltip"
           delay={0}
         >
-          Substring
+          {T.translate('features.Wrangler.ColumnActions.Substring.label')}
         </Tooltip>
 
         {this.renderModal()}
