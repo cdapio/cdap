@@ -374,7 +374,7 @@
                       <exclude>**LICENSE**</exclude>
                      </excludes>
                    </resource>
-                    <!-- Copy examples. This assumes the examples are already built -->
+                    <!-- Copy examples code -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-examples</directory>
                       <targetPath>examples</targetPath>
@@ -392,7 +392,6 @@
                         <include>**/bin/**</include>
                         <include>**/resources/**</include>
                         <include>**/pom.xml</include>
-                        <include>**/target/*.jar</include>
                       </includes>
                       <excludes>
                         <exclude>pom.xml</exclude>
