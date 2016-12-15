@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _transaction-system:
 
@@ -9,8 +9,7 @@ Transaction System
 ==================
 
 The Need for Transactions
--------------------------
-
+=========================
 A flowlet processes the data objects received on its inputs one at a time. While processing
 a single input object, all operations, including the removal of the data from the input,
 and emission of data to the outputs, are executed in a *transaction*. This provides us
@@ -31,9 +30,9 @@ with ACID—atomicity, consistency, isolation, and durability properties:
 In case of failure, the state of the data is unchanged and processing of the input
 object can be reattempted. This ensures "exactly-once" processing of each object.
 
-OCC: Optimistic Concurrency Control
------------------------------------
 
+OCC: Optimistic Concurrency Control
+===================================
 The Cask Data Application Platform uses `Apache Tephra™ <http://tephra.incubator.apache.org>`__, 
 which uses *Optimistic Concurrency Control* (OCC) to implement transactions. Unlike most relational
 databases that use locks to prevent conflicting operations between transactions, under OCC
@@ -81,11 +80,11 @@ Here are some rules to follow for flows, flowlets, and services:
 Keeping these guidelines in mind will help you write more efficient and faster-performing
 code.
 
+
 .. _transaction-system-conflict-detection:
 
 Levels of Conflict Detection
-----------------------------
-
+============================
 Transactions providing ACID (atomicity, consistency, isolation, and durability) guarantees
 are useful in several applications where data accuracy is critical—examples include billing
 applications and computing click-through rates.
@@ -131,8 +130,11 @@ You have these options:
   See the :ref:`UserProfile example <examples-user-profiles>`
   for a sample use case.
 
+
+.. _transaction-system-transactions-mapreduce:
+
 Transactions in MapReduce
--------------------------
+=========================
 When you run a MapReduce that interacts with datasets, the system creates a
 long-running transaction. Similar to the transaction of a flowlet, here are
 some rules to follow:
@@ -158,3 +160,189 @@ It's important to note that the MapReduce framework will reattempt a task (Mappe
 Reducer) if it fails. If the task is writing to a dataset, the reattempt of the task will
 most likely repeat the writes that were already performed in the failed attempt. Therefore
 it is highly advisable that all writes performed by MapReduce programs be idempotent.
+
+
+.. _transaction-system-using-in-programs:
+
+Using Transactions in Programs
+==============================
+CDAP provides transactional capabilities to help ensure consistency of data under highly
+concurrent workloads. To make transactions easy to use, CDAP will often implicitly execute
+application code inside a transaction |---| and retry the execution if the transaction fails
+due to write conflicts. 
+
+For example, to guarantee exactly-once processing semantics for flows, the process method
+of a flowlet is always run inside a transaction. This transaction encapsulates the removal
+of data from an input queue, all data operations performed in the course of processing
+this data, and the emitting of data to its output queues for downstream flowlets. All of
+these must be together in the same transaction and committed atomically: otherwise,
+exactly-once processing cannot be ensured.
+
+For other types of programs, transactions can also be useful. For example, the handler
+methods of services are executed transactionally to make sure they operate on consistent
+data. The lifecycle methods (``initialize()`` and ``destroy()``) of all programs are also executed
+within an implicit transaction.
+
+However, there are use cases where that transaction is not desired:
+
+- The default transaction timeout (as :ref:`configured by
+  <appendix-cdap-default-datasets>` ``data.tx.timeout`` in ``cdap-site.xml``) may be too
+  short for the operations performed by a method. For example, the ``destroy()`` method of a
+  MapReduce program may have to clean up temporary data, or make a web service call to
+  notify some other party of the job completion.
+
+- A method does not perform any transactional operations. For example, FileSet datasets do
+  not require a transaction |---| a method using only FileSets therefore does not require an 
+  implicit transaction.
+
+- A method performs many operations and wishes to execute them in several short
+  transactions rather than a single long transaction. A good example of such a method is the
+  ``run()`` method of a worker, which runs perpetually and cannot be executed inside a single
+  transaction. Instead, it needs to start an explicit transaction whenever it performs
+  operations on transactional datasets. 
+
+To facilitate these use cases, CDAP offers programs control over the execution of
+transactions:
+
+- Annotate a method with an ``@TransactionPolicy`` to turn off the implicit transaction
+  started by CDAP.
+
+- Use the program context’s ``execute()`` method to run a block of code inside an explicit
+  transaction.
+
+- Control the timeout of transactions by setting a system-wide configuration
+  (``data.tx.timeout``); by setting a preference for an individual namespace, application, or
+  program; or by passing a timeout for the transaction to the ``execute()`` method.
+
+Implicit versus Explicit Transactions
+-------------------------------------
+By default, CDAP will start an implicit transaction for these methods:
+
+- All flowlet process methods
+- All service handler methods
+- The ``ProgramLifecycle`` methods (``initialize()`` and ``destroy()``) for all types of
+  programs and sub-programs (flowlets, service handlers, and workflow actions), with the
+  exception of worker programs.
+
+For flowlet process methods, this cannot be disabled, because that would impact the
+semantics of flow execution. For MapReduce programs, the lifecycle methods of MapReduce
+tasks (mappers and reducers) and MapReduce helpers (such as partitioners and comparators)
+are always run inside a transaction: the long-running transaction that encapsulates an
+entire MapReduce job (see :ref:`above <transaction-system-transactions-mapreduce>`). 
+
+For all other lifecycle methods and for service handlers, the implicit transaction can be
+turned off by annotating the method with ``@TransactionPolicy(TransactionControl.EXPLICIT)``.
+
+For example, in the ``FileSetService`` of the :ref:`FileSetExample <examples-fileset>`::
+
+  @GET
+  @Path("{fileset}")
+  @TransactionPolicy(TransactionControl.EXPLICIT)
+  public void read(HttpServiceRequest request, HttpServiceResponder responder,
+                   @PathParam("fileset") String set, @QueryParam("path") String filePath) {
+    ...
+
+This service handler method only accesses FileSets, which do not require transactions.
+Therefore, we can safely turn off the implicit transaction for this method. 
+
+Note that you can access any dataset through the program context’s ``getDataset()`` method.
+However, if you attempt to perform an operation on a transactional dataset (such as a
+Table) without a transaction, that operation will fail with an exception.
+
+For the lifecycle methods of a worker, CDAP does not (by default) start an implicit
+transaction. In a similar fashion as above, that can be changed by annotating the
+lifecycle method ``initialize()``::
+
+  @Override
+  @TransactionPolicy(TransactionControl.IMPLICIT)
+  public void initialize(WorkerContext context) throws Exception {
+    ...
+
+This method will now run inside an implicit transaction. 
+
+Note that you cannot annotate the ``run()`` method of a worker of a custom workflow action
+with implicit transaction control; they are always executed without an implicit
+transaction and must start transactions explicitly when needed. This is described in the
+next section.
+
+Explicit Transactions 
+----------------------
+Every program context (except for the ``FlowletContext`` and the ``MapReduceTaskContext``)
+allows the executing of a block of code in an explicit transaction. 
+
+For example, this service handler method (from the ``UploadService`` of the
+:ref:`SportResultsExample <examples-sport-results>`) uses an explicit transaction to
+access the partition metadata, whereas the streaming of the file contents to the client is
+performed outside the transaction::
+
+  @GET
+  @Path("leagues/{league}/seasons/{season}")
+  @TransactionPolicy(TransactionControl.EXPLICIT)
+  public void read(HttpServiceRequest request, HttpServiceResponder responder,
+                   @PathParam("league") final String league,
+                   @PathParam("season") final int season) throws TransactionFailureException {
+
+
+    final PartitionKey key = PartitionKey.builder().addField("league", league).addField("season", season).build();
+    final AtomicReference<PartitionDetail> partitionDetail = new AtomicReference<>();
+ 
+ 
+    getContext().execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        partitionDetail.set(results.getPartition(key));
+      }
+    });     
+    if (partitionDetail.get() == null) {
+      responder.sendString(404, "Partition not found.", Charsets.UTF_8);
+      return;
+    }
+ 
+ 
+    try {
+      responder.send(200, partitionDetail.get().getLocation().append("file"), "text/plain");
+    } catch (IOException e) {
+      responder.sendError(400, String.format("Unable to read path '%s'", partitionDetail.get().getRelativePath()));
+    }
+  }
+
+
+Be aware that you cannot nest transactions. For example, either:
+
+- calling ``execute()`` from a method that already runs inside an implicit transaction; or
+- calling ``execute()`` from the ``run()`` method of a ``TxRunnable``
+
+would fail with an exception. 
+
+Controlling the Transaction Timeout
+-----------------------------------
+By default, all transactions are executed with the same transaction timeout. This timeout
+is :ref:`configured site-wide <appendix-cdap-default-datasets>` as ``data.tx.timeout``
+(default value 30 seconds) in ``cdap-site.xml``. You can change it to a higher number of
+seconds if your transactions typically require a longer timeout. 
+
+To control the transaction timeout for individual namespaces, applications, or programs,
+you can :ref:`set a preference <preferences>` for the namespace, application, or program.
+The name of the preference is ``system.data.tx.timeout``. 
+
+To configure the timeout for a sub-program (a flowlet or a custom workflow action), prefix
+the property name with ``flowlet.<name>`` or ``action.<name>``. For example, setting
+``flowlet.aggregator.system.data.tx.timeout`` to 60 seconds will only affect the flowlet
+named *aggregator* but not the other flowlets of the flow. 
+
+To control the transaction timeout for an individual run of a program, you can also
+provide this setting as a runtime argument when starting the program. Note that this will
+:ref:`prevail over a preference <preferences-order-of>` configured for the namespace, 
+application, or program.
+
+Finally, for explicit transactions, you can control the transaction timeout by passing in
+the timeout in seconds to the execute method:;
+
+  getContext().execute(90, new TxRunnable() {
+    @Override
+    public void run(DatasetContext context) throws Exception {
+      ...
+    }
+  });
+
+This will execute the ``TxRunnable`` in a transaction with a timeout of 90 seconds.

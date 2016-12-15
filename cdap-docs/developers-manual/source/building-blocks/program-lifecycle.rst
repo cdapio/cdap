@@ -63,7 +63,7 @@ available at runtime, as in the examples on :ref:`initializing instance fields
 
 Transactions
 ============
-The relationship between transactions and lifecycle depends on which method in the lifecycle is involved:
+The relationship between transactions and lifecycle depends on the method involved:
 
 - ``configure()`` No transactions
 
@@ -74,7 +74,8 @@ The relationship between transactions and lifecycle depends on which method in t
 The exception to this are :ref:`Workers <workers-datasets>`, which are run inside their own transaction.
 See :ref:`workers and datasets <workers-datasets>` for details.
 
-Details on transactions in these methods is covered in the :ref:`transaction section <transaction-system>`.
+Details on transactions in these methods is covered in the section on :ref:`using the
+transaction system in programs <transaction-system-using-in-programs>`.
 
 Program Types
 =============
