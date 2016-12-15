@@ -6,6 +6,8 @@
 Best Practices for Developing Applications
 ==========================================
 
+.. _best-practices-initializing:
+
 Initializing Instance Fields
 ============================
 There are three ways to initialize instance fields used in flowlets:
