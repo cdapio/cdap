@@ -61,7 +61,7 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
       }
     });
 
-    window.location.replace(url);
+    window.location.href = url;
   }
 
 
@@ -88,7 +88,6 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
             },
           }
         };
-
 
         _redirect(data);
 
