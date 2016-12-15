@@ -21,7 +21,7 @@
 die() { echo $*; exit 1; }
 
 # Grab cookbooks using knife
-for cb in cdap hadoop idea maven nodejs openssh; do
+for cb in cdap idea maven openssh; do
   knife cookbook site install $cb || die "Cannot fetch cookbook $cb"
 done
 
