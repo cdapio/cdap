@@ -212,7 +212,9 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     protected Builder() {
       this.stages = new HashSet<>();
       this.connections = new HashSet<>();
-      this.resources = new Resources();
+      this.resources = new Resources(1024, 1);
+      this.driverResources = new Resources(1024, 1);
+      this.clientResources = new Resources(1024, 1);
       this.stageLoggingEnabled = true;
     }
 
