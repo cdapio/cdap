@@ -211,6 +211,20 @@ angular.module(PKG.name + '.feature.tracker')
         }
       })
 
+      .state('tracker.dictionary', {
+        url: '/dictionary',
+        templateUrl: '/assets/features/tracker/templates/dictionary.html',
+        controller: 'TrackerDictionaryController',
+        controllerAs: 'DictionaryController',
+        onEnter: function() {
+          document.title = 'Dictionary';
+        },
+        data: {
+          authorizedRoles: MYAUTH_ROLE.all,
+          highlightTab: 'dictionary'
+        }
+      })
+
       .state('tracker.detail', {
         url: '',
         data: {

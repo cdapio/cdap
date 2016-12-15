@@ -12,18 +12,18 @@ Integrations
 .. rubric:: Cask Market
 
 .. |cask-market-overview| replace:: **Overview:**
-.. _cask-market-overview: cask-market/index.html
+.. _cask-market-overview: cask-market.html#overview
 
 - |cask-market-overview|_ Summary of the **Cask Market,** a source for re-usable
   applications, data, and code for CDAP users
 
 .. |cask-market-api| replace:: **API:**
-.. _cask-market-api: cask-market/api.html
+.. _cask-market-api: cask-market.html#api
 
-- |cask-market-api|_ Cask Market APIs
+- |cask-market-api|_ Cask Market APIs used to create entities in a Cask Market
 
 .. |cask-market-custom| replace:: **Custom Hosting:**
-.. _cask-market-custom: cask-market/custom.html
+.. _cask-market-custom: cask-market.html#custom
 
 - |cask-market-custom|_ Hosting your own custom Cask Market
 

@@ -101,6 +101,11 @@ Verification
 Advanced Topics
 ===============
 
+- :ref:`Enabling Security <packages-configuration-security>`
+- :ref:`Enabling Kerberos <packages-configuration-enabling-kerberos>`
+- :ref:`Enabling CDAP High Availability <packages-configuration-highly-available>`
+- :ref:`Enabling Hive Execution Engines <packages-configuration-enabling-hive-execution-engines>`
+
 .. _packages-configuration-security:
 
 .. Enabling Perimeter Security
@@ -116,5 +121,12 @@ Advanced Topics
     :start-after: .. configuration-enabling-kerberos:
     :end-before: .. _packages-configuration-eps:
 
+.. Enabling CDAP HA
+.. ----------------
 .. include:: /../target/_includes/packages-ha-installation.rst
 
+.. Enabling Hive Execution Engines
+.. -------------------------------
+.. _packages-configuration-enabling-hive-execution-engines:
+
+.. include:: /_includes/installation/hive-execution-engines.txt

@@ -386,8 +386,9 @@ Custom Authentication
 
 To use a Custom Authentication mechanism, set the
 ``security.authentication.handlerClassName`` in ``cdap-site.xml`` with the custom
-handler's classname. Any properties set in ``cdap-site.xml`` are available through a
-``CConfiguration`` object and can be used to configure the handler. 
+handler's classname. Any properties set in either ``cdap-site.xml`` or ``cdap-security.xml``
+and that are prefixed with ``security.authentication.handler.`` are available through a
+``Map<String, String>`` object and can be used to configure the handler.
 
 To make your custom handler class available to the authentication service, copy your
 packaged jar file (and any additional dependency jars) to the ``security/lib/`` directory

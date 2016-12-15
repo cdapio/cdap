@@ -119,7 +119,7 @@ export default class EntityListHeader extends Component {
           <span>{T.translate('features.EntityListView.Header.filters')}</span>
           <span className="fa fa-filter pull-right"></span>
         </DropdownToggle>
-        <DropdownMenu onClick={e => e.stopPropagation()} left>
+        <DropdownMenu onClick={e => e.stopPropagation()}>
           {
             this.state.filterOptions.map((option) => {
               return (
@@ -130,7 +130,7 @@ export default class EntityListHeader extends Component {
                     <label onClick={e => e.stopPropagation()}>
                       <input
                         type="checkbox"
-                        checked={this.state.activeFilter.includes(option.id)}
+                        checked={this.state.activeFilter.indexOf(option.id) !== -1}
                         onChange={this.props.onFilterClick.bind(this, option)}
                       />
                       {option.displayName}

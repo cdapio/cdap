@@ -67,7 +67,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -110,10 +112,10 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
 
   @Override
   protected BufferingTable getTable(DatasetContext datasetContext, String name,
-                                    DatasetProperties props) throws Exception {
+                                    DatasetProperties props, Map<String, String> args) throws Exception {
     // ttl=-1 means "keep data forever"
     DatasetSpecification spec = TABLE_DEFINITION.configure(name, props);
-    return new HBaseTable(datasetContext, spec, cConf, TEST_HBASE.getConfiguration(), hBaseTableUtil);
+    return new HBaseTable(datasetContext, spec, args, cConf, TEST_HBASE.getConfiguration(), hBaseTableUtil);
   }
 
   @Override
@@ -146,7 +148,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     DatasetSpecification ttlTableSpec = DatasetSpecification.builder(ttlTable, HBaseTable.class.getName())
       .properties(props.getProperties())
       .build();
-    HBaseTable table = new HBaseTable(CONTEXT1, ttlTableSpec, cConf, TEST_HBASE.getConfiguration(), hBaseTableUtil);
+    HBaseTable table = new HBaseTable(CONTEXT1, ttlTableSpec, Collections.<String, String>emptyMap(),
+                                      cConf, TEST_HBASE.getConfiguration(), hBaseTableUtil);
 
     DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
     Transaction tx = txSystemClient.startShort();
@@ -178,7 +181,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     DatasetSpecification noTtlTableSpec = DatasetSpecification.builder(noTtlTable, HBaseTable.class.getName())
       .properties(props2.getProperties())
       .build();
-    HBaseTable table2 = new HBaseTable(CONTEXT1, noTtlTableSpec, cConf, TEST_HBASE.getConfiguration(), hBaseTableUtil);
+    HBaseTable table2 = new HBaseTable(CONTEXT1, noTtlTableSpec, Collections.<String, String>emptyMap(),
+                                       cConf, TEST_HBASE.getConfiguration(), hBaseTableUtil);
 
     tx = txSystemClient.startShort();
     table2.startTx(tx);
@@ -333,5 +337,4 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   private static byte[] b(String s) {
     return Bytes.toBytes(s);
   }
-
 }

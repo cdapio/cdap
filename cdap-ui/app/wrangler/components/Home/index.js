@@ -18,6 +18,8 @@ import React, { Component, PropTypes } from 'react';
 import Wrangler from 'wrangler/components/Wrangler';
 import NamespaceStore from 'services/NamespaceStore';
 
+require('./Home.less');
+
 export default class Home extends Component {
   componentWillMount() {
     NamespaceStore.dispatch({
@@ -29,7 +31,11 @@ export default class Home extends Component {
   }
 
   render() {
-    return <Wrangler source='wrangler' />;
+    return (
+      <div className="wrangler-home">
+        <Wrangler source='wrangler' />
+      </div>
+    );
   }
 }
 

@@ -19,19 +19,13 @@ package co.cask.cdap.security.server;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Networks;
-
 import com.unboundid.ldap.listener.InMemoryDirectoryServer;
 import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import com.unboundid.ldap.sdk.Entry;
-
 import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URL;
-
-import static org.mockito.Mockito.mock;
 
 
 /**
@@ -39,12 +33,8 @@ import static org.mockito.Mockito.mock;
  */
 public abstract class ExternalLDAPAuthenticationServerTestBase extends ExternalAuthenticationServerTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ExternalLDAPAuthenticationServerTestBase.class);
   private static InMemoryDirectoryServer ldapServer;
   protected static int ldapPort = Networks.getRandomPort();
-
-  private static final Logger TEST_AUDIT_LOGGER = mock(Logger.class);
-
   protected static InMemoryListenerConfig ldapListenerConfig;
 
   /**
@@ -98,6 +88,5 @@ public abstract class ExternalLDAPAuthenticationServerTestBase extends ExternalA
   protected void stopExternalAuthenticationServer() throws Exception {
     ldapServer.shutDown(true);
   }
-
 
 }

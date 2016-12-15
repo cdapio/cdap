@@ -43,8 +43,8 @@ be granted::
       "entity": "DATASET"
     },
     "principal": {
-      "name": "alice",
-      "type": "USER",
+      "name": "admin",
+      "type": "GROUP"
     },
     "actions": ["READ", "WRITE", "ADMIN"]
   }
@@ -86,8 +86,8 @@ be granted, such as::
       "entity": "DATASET"
     },
     "principal": {
-      "name": "alice",
-      "type": "USER",
+      "name": "admin",
+      "type": "GROUP"
     },
     "actions": ["READ", "WRITE", "ADMIN"]
   }
@@ -121,8 +121,8 @@ with JSON-formatted body that contains the principal, the CDAP entity and the ac
       "entity": "DATASET"
     },
     "principal": {
-      "name": "alice",
-      "type": "USER",
+      "name": "admin",
+      "type": "GROUP"
     },
     "actions": ["READ", "WRITE", "ADMIN"]
   }
@@ -134,6 +134,7 @@ The ``entity`` object is mandatory in a revoke request.
 - If ``entity`` and ``principal`` are provided, but ``actions`` is not, the API revokes
   all actions (``READ``, ``WRITE``, ``ADMIN``, and ``EXECUTE``) on the specified entity for
   the specified principal.
+- Revoking privileges is only supported for ``GROUP`` or ``ROLE`` types.
 
 .. rubric:: HTTP Responses
 

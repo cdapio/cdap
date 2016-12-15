@@ -16,7 +16,8 @@
 
 package co.cask.cdap.operations.yarn;
 
-import co.cask.cdap.operations.OperationalStats;
+import co.cask.cdap.operations.AbstractOperationalStats;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -24,7 +25,10 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 /**
  * Base class for capturing stats from YARN.
  */
-public abstract class AbstractYarnStats implements OperationalStats {
+public abstract class AbstractYarnStats extends AbstractOperationalStats {
+  @VisibleForTesting
+  static final String SERVICE_NAME = "Yarn";
+
   protected final YarnConfiguration conf;
 
   protected AbstractYarnStats(Configuration conf) {
@@ -40,6 +44,6 @@ public abstract class AbstractYarnStats implements OperationalStats {
 
   @Override
   public String getServiceName() {
-    return "YARN";
+    return SERVICE_NAME;
   }
 }

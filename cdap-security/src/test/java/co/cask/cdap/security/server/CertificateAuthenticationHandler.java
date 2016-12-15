@@ -16,8 +16,6 @@
 
 package co.cask.cdap.security.server;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import com.google.inject.Inject;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.DefaultIdentityService;
@@ -36,26 +34,18 @@ import javax.security.auth.login.Configuration;
  */
 public class CertificateAuthenticationHandler extends AbstractAuthenticationHandler {
 
-  public static final String AUTH_HANDLER_CONFIG_BASE = "security.authentication.handler.";
   public static final String AUTH_SSL_CONFIG_BASE = "security.auth.server.ssl.";
-
-  @Inject
-  public CertificateAuthenticationHandler(CConfiguration configuration) {
-    super(configuration);
-    new DefaultIdentityService();
-  }
 
   /**
    * Configure the Jetty {@link ClientCertAuthenticator} by setting the
    * Truststore.
    *
    * @param clientCertAuthenticator
-   * @param cConf
    */
-  private void setupClientCertAuthenticator(ClientCertAuthenticator clientCertAuthenticator, CConfiguration cConf) {
-    String trustStorePath = cConf.get(AUTH_SSL_CONFIG_BASE.concat("truststore.path"));
-    String trustStorePassword = cConf.get(AUTH_SSL_CONFIG_BASE.concat("truststore.password"));
-    String trustStoreType = cConf.get(AUTH_SSL_CONFIG_BASE.concat("truststore.type"));
+  private void setupClientCertAuthenticator(ClientCertAuthenticator clientCertAuthenticator) {
+    String trustStorePath = handlerProps.get(AUTH_SSL_CONFIG_BASE.concat("truststore.path"));
+    String trustStorePassword = handlerProps.get(AUTH_SSL_CONFIG_BASE.concat("truststore.password"));
+    String trustStoreType = handlerProps.get(AUTH_SSL_CONFIG_BASE.concat("truststore.type"));
 
     if (StringUtils.isNotEmpty(trustStorePath)) {
       clientCertAuthenticator.setTrustStore(trustStorePath);
@@ -73,15 +63,13 @@ public class CertificateAuthenticationHandler extends AbstractAuthenticationHand
 
   @Override
   protected LoginService getHandlerLoginService() {
-    String realmFile = configuration.get(AUTH_HANDLER_CONFIG_BASE.concat("realmfile"));
-    MTLSLoginService loginService = new MTLSLoginService(realmFile);
-    return loginService;
+    return new MTLSLoginService(handlerProps.get("realmfile"));
   }
 
   @Override
   protected Authenticator getHandlerAuthenticator() {
     ClientCertAuthenticator clientCertAuthenticator = new ClientCertAuthenticator();
-    setupClientCertAuthenticator(clientCertAuthenticator, configuration);
+    setupClientCertAuthenticator(clientCertAuthenticator);
     return clientCertAuthenticator;
   }
 

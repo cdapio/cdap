@@ -1,0 +1,98 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<div class="row">
+  <div class="col-xs-12">
+    <label class="heading">Data Dictionary</label>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-12">
+    <div class="table-responsive">
+      <table class="table dictionary-table">
+        <thead>
+          <tr>
+            <th class="column-cell"><span>&nbsp;</span>Column</th>
+            <th clas="type-cell">Type</th>
+            <th class="null-cell">Null</th>
+            <th class="pii-cell"><span uib-tooltip="{{::DictionaryController.piiTitle}}" class="marginb-0">PII</span></th>
+            <th class="entities-cell">Entities</th>
+            <th class="description-cell">Description</th>
+            <th class="actions-cell">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="data in DictionaryController.dictionaryData 
+            | myPaginate:DictionaryController.currentPreferredPage" 
+            ng-include="DictionaryController.getTemplate(data)">
+          </tr>
+          <tr ng-show="DictionaryController.addNewColumn">
+            <td>
+              <input type="text" ng-model="DictionaryController.selectedDictColumn.columnName" >
+            </td>
+            <td>
+              <select ng-model="DictionaryController.selectedDictColumn.columnType">
+                <option value=''>Select</option>
+                <option value='boolean'>boolean</option>
+                <option value='bytes'>bytes</option>
+                <option value='double'>double</option>
+                <option value='float'>float</option>
+                <option value='int'>int</option>
+                <option value='long'>long</option>
+                <option value='string'>string</option>
+                <option value='array'>array</option>
+                <option value='enum'>enum</option>
+                <option value='map'>map</option>
+                <option value='union'>union</option>
+                <option value='record'>record</option>
+              </select>
+            </td>
+            <td>
+              <input type="checkbox" ng-model="DictionaryController.selectedDictColumn.isNullable">
+            </td>
+            <td>
+              <input type="checkbox" ng-model="DictionaryController.selectedDictColumn.isPII">
+            </td>
+            <td></td>
+            <td><input type="text" ng-model="DictionaryController.selectedDictColumn.description" /></td>
+            <td>
+              <div class="action-buttons">
+                <span class="fa icon-savedraft"
+                  ng-click="DictionaryController.addColumn()"
+                  ng-class = "{'disabled': !DictionaryController.selectedDictColumn.columnName
+                  || !DictionaryController.selectedDictColumn.columnType
+                  || !DictionaryController.selectedDictColumn.description}">
+                </span>
+                <span class="fa fa-times" ng-click="DictionaryController.reset()">
+                </span>
+              </div>
+            </td>
+          </tr>
+          <tr ng-click="DictionaryController.displayNewRow()" ng-show="!DictionaryController.addNewColumn || !DictionaryController.dictionaryData">
+            <td colspan="8">&nbsp;</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="text-center"
+          ng-if="DictionaryController.dictionaryData.length > 10">
+        <uib-pagination total-items="DictionaryController.dictionaryData.length"
+          max-size="10"
+          force-ellipses="true"
+          ng-model="DictionaryController.currentPreferredPage">
+        </uib-pagination>
+      </div>
+    </div>
+  </div>
+</div>

@@ -18,6 +18,7 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
@@ -47,6 +48,7 @@ import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -62,7 +64,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
   private final int maxThreads;
   private final Map<String, Object> handlers;
   private final DiscoveryService discoveryService;
-  private final CConfiguration configuration;
+  private final CConfiguration cConfiguration;
   private final SConfiguration sConfiguration;
   private final AuditLogHandler auditLogHandler;
   private final GrantAccessToken grantAccessToken;
@@ -91,17 +93,17 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
   }
 
   @Inject
-  public ExternalAuthenticationServer(CConfiguration configuration, SConfiguration sConfiguration,
+  public ExternalAuthenticationServer(CConfiguration cConfiguration, SConfiguration sConfiguration,
                                       DiscoveryService discoveryService,
-                                      @Named("security.handlers") Map<String, Object> handlers,
+                                      @Named("security.handlers.map") Map<String, Object> handlers,
                                       @Named(NAMED_EXTERNAL_AUTH) AuditLogHandler auditLogHandler) {
-    this.port = configuration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED) ?
-      configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT) :
-      configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
-    this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
+    this.port = cConfiguration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED) ?
+      cConfiguration.getInt(Constants.Security.AuthenticationServer.SSL_PORT) :
+      cConfiguration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
+    this.maxThreads = cConfiguration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
     this.discoveryService = discoveryService;
-    this.configuration = configuration;
+    this.cConfiguration = cConfiguration;
     this.sConfiguration = sConfiguration;
     this.grantAccessToken = (GrantAccessToken) handlers.get(HandlerType.GRANT_TOKEN_HANDLER);
     this.authenticationHandler = (AbstractAuthenticationHandler) handlers.get(HandlerType.AUTHENTICATION_HANDLER);
@@ -119,7 +121,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
     }
 
     // assumes we only have one connector
-    final Connector connector = server.getConnectors()[0];
+    Connector connector = server.getConnectors()[0];
     return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
   }
 
@@ -129,10 +131,10 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
       server = new Server();
 
       try {
-        bindAddress = InetAddress.getByName(configuration.get(Constants.Security.AUTH_SERVER_BIND_ADDRESS));
+        bindAddress = InetAddress.getByName(cConfiguration.get(Constants.Security.AUTH_SERVER_BIND_ADDRESS));
       } catch (UnknownHostException e) {
         LOG.error("Error finding host to connect to.", e);
-        throw Throwables.propagate(e);
+        throw e;
       }
 
       QueuedThreadPool threadPool = new QueuedThreadPool();
@@ -153,7 +155,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
       statusContext.setServer(server);
       statusContext.setHandler(new StatusRequestHandler());
 
-      if (configuration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED, false)) {
+      if (cConfiguration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
         String keyStorePath = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
         String keyStorePassword = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
@@ -171,12 +173,12 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
           sslContextFactory.setKeyManagerPassword(keyPassword);
         }
 
-        String trustStorePath = configuration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PATH);
+        String trustStorePath = cConfiguration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PATH);
         if (StringUtils.isNotEmpty(trustStorePath)) {
           String trustStorePassword =
-            configuration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PASSWORD);
-          String trustStoreType = configuration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_TYPE,
-                                                    Constants.Security.AuthenticationServer.DEFAULT_SSL_KEYSTORE_TYPE);
+            cConfiguration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PASSWORD);
+          String trustStoreType = cConfiguration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_TYPE,
+                                                     Constants.Security.AuthenticationServer.DEFAULT_SSL_KEYSTORE_TYPE);
 
           // SSL handshaking will involve requesting for a client certificate, if cert is not provided
           // server continues with the connection but the client is considered to be unauthenticated
@@ -214,15 +216,14 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
     try {
       server.start();
     } catch (Exception e) {
-      Throwable cause = Throwables.getRootCause(e);
-      if (!(cause instanceof BindException)) {
-        throw e;
+      if ((Throwables.getRootCause(e) instanceof BindException)) {
+        throw new ServiceBindException("Authentication Server", bindAddress.getCanonicalHostName(), port, e);
       }
-      throw new ServiceBindException("Authentication Server", bindAddress.getCanonicalHostName(), port);
+      throw e;
     }
 
     // assumes we only have one connector
-    final Connector connector = server.getConnectors()[0];
+    Connector connector = server.getConnectors()[0];
     InetSocketAddress inetSocketAddress = new InetSocketAddress(connector.getHost(), connector.getLocalPort());
     serviceCancellable = discoveryService.register(
       ResolvingDiscoverable.of(new Discoverable(Constants.Service.EXTERNAL_AUTHENTICATION, inetSocketAddress)));
@@ -231,9 +232,60 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
   /**
    * Initializes the handlers.
    */
-  protected void initHandlers() throws Exception {
-    authenticationHandler.init();
+  private void initHandlers() throws Exception {
+    Map<String, String> handlerProps = new HashMap<>();
+
+    // used by CertificateAuthenticationHandler (see CDAP-7287)
+    copyPropIfExists(handlerProps, cConfiguration, "security.auth.server.ssl.truststore.path");
+    copyPropIfExists(handlerProps, cConfiguration, "security.auth.server.ssl.truststore.type");
+    copyPropIfExists(handlerProps, cConfiguration, "security.auth.server.ssl.truststore.password");
+    // used by AbstractAuthenticationHandler
+    copyPropIfExists(handlerProps, cConfiguration, Constants.Security.SSL.EXTERNAL_ENABLED);
+    // used by BasicAuthenticationHandler
+    copyPropIfExists(handlerProps, cConfiguration, Constants.Security.BASIC_REALM_FILE);
+    // used by BJASPIAuthenticationHandler
+    copyPropIfExists(handlerProps, cConfiguration, Constants.Security.LOGIN_MODULE_CLASS_NAME);
+
+    copyProps(handlerProps, getAuthHandlerConfigs(cConfiguration));
+    copyProps(handlerProps, getAuthHandlerConfigs(sConfiguration));
+
+    authenticationHandler.init(handlerProps);
     grantAccessToken.init();
+  }
+
+  // we don't leverage Map#putAll, because we want to warn if overwriting some keys
+  private void copyProps(Map<String, String> toProps, Map<String, String> fromProps) {
+    for (Map.Entry<String, String> entry : fromProps.entrySet()) {
+      String previousVal = toProps.put(entry.getKey(), entry.getValue());
+      if (previousVal != null && !previousVal.equals(entry.getValue())) {
+        // this can unlikely, but can happen if one of the non-prefixed parameters that we expose to authentication
+        // handlers is also prefixed with the Constants.Security.AUTH_HANDLER_CONFIG_BASE
+        LOG.warn("Overriding property '{}'", entry.getKey());
+      }
+    }
+  }
+
+  private void copyPropIfExists(Map<String, String> toProps, Configuration fromConf, String property) {
+    String value = fromConf.get(property);
+    if (value != null) {
+      toProps.put(property, value);
+    }
+  }
+
+  private Map<String, String> getAuthHandlerConfigs(Configuration configuration) {
+    String prefix = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
+    int prefixLen = prefix.length();
+    // since its a regex match, we want to look for the character '.', and not match any character
+    String configRegex = "^" + prefix.replace(".", "\\.");
+
+    Map<String, String> props = new HashMap<>();
+    for (Map.Entry<String, String> pair : configuration.getValByRegex(configRegex).entrySet()) {
+      String key = pair.getKey();
+      // we get the value via the conf, because conf#getValByRegex does not do variable substitution
+      String value = configuration.get(key);
+      props.put(key.substring(prefixLen), value);
+    }
+    return props;
   }
 
   @Override

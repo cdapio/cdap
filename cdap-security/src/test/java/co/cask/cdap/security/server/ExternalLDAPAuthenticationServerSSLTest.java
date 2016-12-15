@@ -19,7 +19,6 @@ package co.cask.cdap.security.server;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
-import com.google.common.collect.Maps;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import com.unboundid.util.ssl.KeyStoreKeyManager;
 import com.unboundid.util.ssl.SSLUtil;
@@ -39,6 +38,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
+import java.util.HashMap;
 import java.util.Map;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -49,7 +49,7 @@ import javax.net.ssl.X509TrustManager;
  */
 public class ExternalLDAPAuthenticationServerSSLTest extends ExternalLDAPAuthenticationServerTestBase {
 
-  static ExternalLDAPAuthenticationServerSSLTest testServer;
+  private static ExternalLDAPAuthenticationServerSSLTest testServer;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -126,7 +126,7 @@ public class ExternalLDAPAuthenticationServerSSLTest extends ExternalLDAPAuthent
 
   @Override
   protected Map<String, String> getAuthRequestHeader() throws Exception {
-    Map headers = Maps.newHashMap();
+    Map<String, String> headers = new HashMap<>();
     headers.put("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
     return headers;
   }

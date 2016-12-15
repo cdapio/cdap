@@ -17,6 +17,7 @@
 package co.cask.cdap.messaging.service;
 
 import co.cask.cdap.messaging.StoreRequest;
+import co.cask.cdap.messaging.TopicMetadata;
 
 import javax.annotation.Nullable;
 
@@ -26,6 +27,8 @@ import javax.annotation.Nullable;
 final class PendingStoreRequest extends StoreRequest {
 
   private final StoreRequest originalRequest;
+  private final TopicMetadata metadata;
+
   private boolean completed;
   private long startTimestamp;
   private long endTimestamp;
@@ -33,10 +36,15 @@ final class PendingStoreRequest extends StoreRequest {
   private int endSequenceId;
   private Throwable failureCause;
 
-  PendingStoreRequest(StoreRequest originalRequest) {
+  PendingStoreRequest(StoreRequest originalRequest, TopicMetadata topicMetadata) {
     super(originalRequest.getTopicId(), originalRequest.isTransactional(),
           originalRequest.getTransactionWritePointer());
     this.originalRequest = originalRequest;
+    this.metadata = topicMetadata;
+  }
+
+  TopicMetadata getTopicMetadata() {
+    return metadata;
   }
 
   boolean isCompleted() {

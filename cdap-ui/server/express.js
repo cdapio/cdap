@@ -101,7 +101,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false
       },
       hydrator: {
-        previewEnabled: cdapConfig['enable.alpha.preview'] === 'true'
+        previewEnabled: cdapConfig['enable.preview'] === 'true'
       },
       sslEnabled: cdapConfig['ssl.enabled'] === 'true',
       securityEnabled: authAddress.enabled,

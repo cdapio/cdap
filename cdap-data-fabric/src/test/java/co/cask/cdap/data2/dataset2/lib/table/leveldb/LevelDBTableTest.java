@@ -40,6 +40,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * test for LevelDB tables.
@@ -75,7 +76,7 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
 
   @Override
   protected LevelDBTable getTable(DatasetContext datasetContext, String name,
-                                  DatasetProperties props) throws Exception {
+                                  DatasetProperties props, Map<String, String> runtimeArguments) throws Exception {
     DatasetSpecification spec = DatasetSpecification.builder(name, "table").properties(props.getProperties()).build();
     return new LevelDBTable(datasetContext, name, service, cConf, spec);
   }

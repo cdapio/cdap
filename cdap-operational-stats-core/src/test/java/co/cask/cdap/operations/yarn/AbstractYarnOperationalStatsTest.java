@@ -63,7 +63,7 @@ public abstract class AbstractYarnOperationalStatsTest {
   @Test
   public void test() throws Exception {
     YarnInfo info = new YarnInfo(conf);
-    Assert.assertEquals("YARN", info.getServiceName());
+    Assert.assertEquals(AbstractYarnStats.SERVICE_NAME, info.getServiceName());
     Assert.assertEquals("info", info.getStatType());
     Assert.assertNotNull(info.getVersion());
     Assert.assertNull(info.getWebURL());
@@ -73,7 +73,7 @@ public abstract class AbstractYarnOperationalStatsTest {
     Assert.assertNotNull(info.getLogsURL());
     Assert.assertEquals(info.getWebURL() + "/logs", info.getLogsURL());
     YarnApps apps = new YarnApps(conf);
-    Assert.assertEquals("YARN", apps.getServiceName());
+    Assert.assertEquals(AbstractYarnStats.SERVICE_NAME, apps.getServiceName());
     Assert.assertEquals("apps", apps.getStatType());
     apps.collect();
     Assert.assertEquals(0, apps.getAccepted());
@@ -85,7 +85,7 @@ public abstract class AbstractYarnOperationalStatsTest {
     Assert.assertEquals(0, apps.getSubmitted());
     Assert.assertEquals(0, apps.getTotal());
     final YarnResources resources = new YarnResources(conf);
-    Assert.assertEquals("YARN", resources.getServiceName());
+    Assert.assertEquals(AbstractYarnStats.SERVICE_NAME, resources.getServiceName());
     Assert.assertEquals("resources", resources.getStatType());
     // wait until node manager reports are available
     Tasks.waitFor(true, new Callable<Boolean>() {
@@ -101,7 +101,7 @@ public abstract class AbstractYarnOperationalStatsTest {
     Assert.assertEquals(0, resources.getUsedVCores());
     Assert.assertEquals(resources.getTotalVCores(), resources.getFreeVCores());
     YarnQueues queues = new YarnQueues(conf);
-    Assert.assertEquals("YARN", queues.getServiceName());
+    Assert.assertEquals(AbstractYarnStats.SERVICE_NAME, queues.getServiceName());
     Assert.assertEquals("queues", queues.getStatType());
     Assert.assertEquals(0, queues.getStopped());
     Assert.assertEquals(0, queues.getStopped());
@@ -111,7 +111,7 @@ public abstract class AbstractYarnOperationalStatsTest {
     Assert.assertEquals(0, queues.getStopped());
     Assert.assertEquals(queues.getRunning(), queues.getTotal());
     YarnNodes nodes = new YarnNodes(conf);
-    Assert.assertEquals("YARN", nodes.getServiceName());
+    Assert.assertEquals(AbstractYarnStats.SERVICE_NAME, nodes.getServiceName());
     Assert.assertEquals("nodes", nodes.getStatType());
     Assert.assertEquals(0, nodes.getTotalNodes());
     Assert.assertEquals(0, nodes.getHealthyNodes());

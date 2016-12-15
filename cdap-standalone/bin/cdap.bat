@@ -126,7 +126,7 @@ GOTO :EOF
 
 :CHECK_NODE
 REM Check if Node.js is installed
-set nodejs_minimum=v0.10.36
+set nodejs_minimum=v4.5.0
 for %%x in (node.exe) do if [%%~$PATH:x]==[] (
   echo Standalone CDAP requires Node.js but it is either not installed or not in the path.
   echo We recommend any version of Node.js starting with %nodejs_minimum%.

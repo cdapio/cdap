@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,7 @@
 
 package co.cask.cdap.security.server;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import com.google.inject.Inject;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -26,6 +24,7 @@ import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.util.security.Constraint;
 
+import java.util.Map;
 import javax.security.auth.login.Configuration;
 import javax.ws.rs.Path;
 
@@ -35,22 +34,19 @@ import javax.ws.rs.Path;
  */
 @Path("/*")
 public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHandler {
-  protected final CConfiguration configuration;
-
-  @Inject
-  public AbstractAuthenticationHandler(CConfiguration configuration) {
-    this.configuration = configuration;
-  }
+  protected Map<String, String> handlerProps;
 
   /**
    * Initialize the handler context and other related services.
    */
-  public void init() throws Exception {
+  public void init(Map<String, String> handlerProps) throws Exception {
+    this.handlerProps = handlerProps;
+
     Constraint constraint = new Constraint();
     constraint.setRoles(new String[]{"*"});
     constraint.setAuthenticate(true);
 
-    if (configuration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED)) {
+    if (Boolean.parseBoolean(handlerProps.get(Constants.Security.SSL.EXTERNAL_ENABLED))) {
       constraint.setDataConstraint(Constraint.DC_CONFIDENTIAL);
     }
 

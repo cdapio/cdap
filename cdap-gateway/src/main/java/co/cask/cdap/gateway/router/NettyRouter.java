@@ -60,6 +60,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -156,7 +157,7 @@ public class NettyRouter extends AbstractIdleService {
   }
 
   @Override
-  protected void startUp() throws Exception {
+  protected void startUp() throws ServiceBindException {
     ChannelUpstreamHandler connectionTracker = new SimpleChannelUpstreamHandler() {
       @Override
       public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e)
@@ -288,11 +289,11 @@ public class NettyRouter extends AbstractIdleService {
 
         LOG.info("Started Netty Router for service {} on address {}.", service, boundAddress);
       } catch (ChannelException e) {
-        if (!(Throwables.getRootCause(e) instanceof BindException)) {
-          throw e;
+        if ((Throwables.getRootCause(e) instanceof BindException)) {
+          throw new ServiceBindException("Router", hostname.getCanonicalHostName(), port, e);
         }
 
-        throw new ServiceBindException("Router", hostname.getCanonicalHostName(), port);
+        throw e;
       }
     }
   }

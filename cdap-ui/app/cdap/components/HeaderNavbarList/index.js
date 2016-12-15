@@ -26,7 +26,14 @@ const mapStateToProps = (state) => {
   };
 };
 
-function HeaderNavbarList({list, store}){
+function HeaderNavbarList({list, store, showOldUI}){
+  const oldUILink = (
+    <a href={`/oldcdap/ns/${store.getState().selectedNamespace}`}
+       className="old-ui-link">
+      Switch to old UI
+    </a>
+  );
+
   return (
     <ul className="navbar-list">
         {
@@ -38,10 +45,7 @@ function HeaderNavbarList({list, store}){
                     key={shortid.generate()}
                     className={item.className}
                   >
-                    <a href={`/oldcdap/ns/${store.getState().selectedNamespace}`}
-                       className="old-ui-link">
-                      Switch to old UI
-                    </a>
+                    {showOldUI ? oldUILink : null}
                     {
                       item.disabled ?
                         item.title
@@ -87,7 +91,8 @@ HeaderNavbarList.propTypes = {
     title: PropTypes.string,
     linkTo: PropTypes.string
   })),
-  store: PropTypes.object
+  store: PropTypes.object,
+  showOldUI: PropTypes.bool
 };
 
 export default connect(mapStateToProps)(HeaderNavbarList);

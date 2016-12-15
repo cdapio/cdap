@@ -33,7 +33,8 @@
 
 <div class="row preview-tab" ng-if="HydratorPlusPlusNodeConfigCtrl.previewData">
   <!-- INPUT RECORDS -->
-  <div class="col-xs-6 preview-records input">
+  <div ng-class="{'col-xs-12': HydratorPlusPlusNodeConfigCtrl.state.isSink, 'preview-records input': true, 'col-xs-6': HydratorPlusPlusNodeConfigCtrl.state.isTransform }"
+       ng-if="!HydratorPlusPlusNodeConfigCtrl.state.isSource">
     <h4>Input Records</h4>
 
     <div ng-repeat="(key, value) in HydratorPlusPlusNodeConfigCtrl.previewData.input">
@@ -75,7 +76,9 @@
   </div>
 
   <!-- OUTPUT RECORDS -->
-  <div class="col-xs-6 preview-records output">
+  <div ng-class="{'col-xs-12': HydratorPlusPlusNodeConfigCtrl.state.isSource, 'preview-records output': true, 'col-xs-6': HydratorPlusPlusNodeConfigCtrl.state.isTransform}"
+      ng-if="!HydratorPlusPlusNodeConfigCtrl.state.isSink">
+
     <h4>Output Records</h4>
 
     <div ng-if="HydratorPlusPlusNodeConfigCtrl.previewData.output.records.length > 0">

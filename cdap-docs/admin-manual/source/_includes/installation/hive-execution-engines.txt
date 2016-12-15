@@ -1,0 +1,8 @@
+
+Hive Execution Engines
+----------------------
+CDAP Explore has support for additional execution engines such as 
+`Apache Spark <http://spark.apache.org/>`__ and 
+`Apache Tez <http://tez.apache.org/>`__. Details on specifying these engines and 
+configuring CDAP are in the Developers' Manual section on Date Exploration,
+:ref:`Hive Execution Engines <hive-ee>`.
