@@ -97,6 +97,7 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
         BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(ETLMapReduce.NAME, pipeline,
                                                            config.getResources(),
                                                            config.getDriverResources(),
+                                                           config.getClientResources(),
                                                            config.isStageLoggingEnabled(),
                                                            new HashMap<String, String>(),
                                                            config.getNumOfRecordsPreview());
@@ -106,6 +107,7 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
         batchPhaseSpec = new BatchPhaseSpec(ETLSpark.class.getSimpleName(), pipeline,
                                             config.getResources(),
                                             config.getDriverResources(),
+                                            config.getClientResources(),
                                             config.isStageLoggingEnabled(),
                                             new HashMap<String, String>(), config.getNumOfRecordsPreview());
         addSpark(new ETLSpark(batchPhaseSpec));

@@ -88,6 +88,7 @@ public class ETLSpark extends AbstractSpark {
 
     setExecutorResources(phaseSpec.getResources());
     setDriverResources(phaseSpec.getDriverResources());
+    setClientResources(phaseSpec.getClientResources());
 
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
     Map<String, String> properties = new HashMap<>();

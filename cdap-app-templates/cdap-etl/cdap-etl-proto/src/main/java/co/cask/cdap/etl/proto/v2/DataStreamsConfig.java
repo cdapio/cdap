@@ -28,7 +28,6 @@ import javax.annotation.Nullable;
  */
 public final class DataStreamsConfig extends ETLConfig {
   private final String batchInterval;
-  private final Resources driverResources;
   private final String extraJavaOpts;
   private final Boolean disableCheckpoints;
   private final String checkpointDir;
@@ -39,23 +38,19 @@ public final class DataStreamsConfig extends ETLConfig {
                             Set<Connection> connections,
                             Resources resources,
                             Resources driverResources,
+                            Resources clientResources,
                             boolean stageLoggingEnabled,
                             String batchInterval,
                             boolean isUnitTest,
                             boolean disableCheckpoints,
                             @Nullable String checkpointDir,
                             int numOfRecordsPreview) {
-    super(stages, connections, resources, stageLoggingEnabled, numOfRecordsPreview);
+    super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, numOfRecordsPreview);
     this.batchInterval = batchInterval;
-    this.driverResources = driverResources;
     this.isUnitTest = isUnitTest;
     this.extraJavaOpts = "";
     this.disableCheckpoints = disableCheckpoints;
     this.checkpointDir = checkpointDir;
-  }
-
-  public Resources getDriverResources() {
-    return driverResources;
   }
 
   public String getBatchInterval() {
@@ -83,7 +78,6 @@ public final class DataStreamsConfig extends ETLConfig {
   public String toString() {
     return "DataStreamsConfig{" +
       "batchInterval='" + batchInterval + '\'' +
-      ", driverResources=" + driverResources +
       ", extraJavaOpts='" + extraJavaOpts + '\'' +
       ", disableCheckpoints=" + disableCheckpoints +
       ", checkpointDir='" + checkpointDir + '\'' +
@@ -106,7 +100,6 @@ public final class DataStreamsConfig extends ETLConfig {
     DataStreamsConfig that = (DataStreamsConfig) o;
 
     return Objects.equals(batchInterval, that.batchInterval) &&
-      Objects.equals(driverResources, that.driverResources) &&
       Objects.equals(extraJavaOpts, that.extraJavaOpts) &&
       Objects.equals(disableCheckpoints, that.disableCheckpoints) &&
       Objects.equals(checkpointDir, that.checkpointDir);
@@ -114,8 +107,7 @@ public final class DataStreamsConfig extends ETLConfig {
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), batchInterval, driverResources,
-                        extraJavaOpts, disableCheckpoints, checkpointDir);
+    return Objects.hash(super.hashCode(), batchInterval, extraJavaOpts, disableCheckpoints, checkpointDir);
   }
 
   public static Builder builder() {
@@ -153,7 +145,7 @@ public final class DataStreamsConfig extends ETLConfig {
     }
 
     public DataStreamsConfig build() {
-      return new DataStreamsConfig(stages, connections, resources, driverResources,
+      return new DataStreamsConfig(stages, connections, resources, driverResources, clientResources,
                                    stageLoggingEnabled, batchInterval, isUnitTest, false, checkpointDir,
                                    numOfRecordsPreview);
     }
