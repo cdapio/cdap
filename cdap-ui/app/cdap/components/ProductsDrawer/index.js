@@ -22,6 +22,7 @@ require('./ProductsDropdown.less');
 import head from 'lodash/head';
 import shortid from 'shortid';
 import NamespaceStore from 'services/NamespaceStore';
+import cookie from 'react-cookie';
 
 export default class ProductsDrawer extends Component {
   constructor(props) {
@@ -29,25 +30,21 @@ export default class ProductsDrawer extends Component {
     this.namespace;
     let products = [
       {
-        link: '/cdap/',
         label: T.translate('commons.cdap'),
         name: 'cdap',
         icon: 'icon-fist'
       },
       {
-        link: '/hydrator/',
         label: T.translate('commons.hydrator'),
         name: 'hydrator',
         icon: 'icon-hydrator'
       },
       {
-        link: '/tracker/',
         label: T.translate('commons.tracker'),
         name: 'tracker',
         icon: 'icon-tracker'
       },
       {
-        link: '/wrangler/',
         label: T.translate('commons.wrangler'),
         name: 'wrangler',
         icon: 'icon-DataWrangler'
@@ -76,17 +73,21 @@ export default class ProductsDrawer extends Component {
     if (!this.namespace && Array.isArray(NamespaceState.namespaces) && NamespaceState.namespaces.length) {
       this.namespace = NamespaceState.namespaces[0].name;
     }
+    let defaultUI = cookie.load('DEFAULT_UI');
     let products = this.state.products.map((product) => {
 
       switch(product.name) {
         case 'cdap' :
-          product.link = `/cdap/ns/${this.namespace}`;
+          product.link = `${defaultUI === 'OLD' ? '/old' : '/'}cdap/ns/${this.namespace}`;
           break;
         case 'hydrator' :
           product.link = `/hydrator/ns/${this.namespace}`;
           break;
         case 'tracker' :
           product.link = `/tracker/ns/${this.namespace}`;
+          break;
+        case 'wrangler' :
+          product.link = `/wrangler/ns/${this.namespace}`;
           break;
         default:
           break;

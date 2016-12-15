@@ -53,6 +53,7 @@ class CDAP extends Component {
   }
 
   componentWillMount(){
+    cookie.save('DEFAULT_UI', 'NEW', {path: '/'});
     // Polls for namespace data
     MyNamespaceApi.pollList()
       .subscribe(
