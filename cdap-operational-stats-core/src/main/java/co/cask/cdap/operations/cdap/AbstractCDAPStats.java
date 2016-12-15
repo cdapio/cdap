@@ -14,33 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.operations.yarn;
+package co.cask.cdap.operations.cdap;
 
 import co.cask.cdap.operations.AbstractOperationalStats;
+import co.cask.cdap.operations.OperationalStats;
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.yarn.client.api.YarnClient;
-import org.apache.hadoop.yarn.conf.YarnConfiguration;
 
 /**
- * Base class for capturing stats from YARN.
+ * Base class for CDAP {@link OperationalStats}.
  */
-public abstract class AbstractYarnStats extends AbstractOperationalStats {
+public abstract class AbstractCDAPStats extends AbstractOperationalStats {
   @VisibleForTesting
-  static final String SERVICE_NAME = "Yarn";
-
-  protected final YarnConfiguration conf;
-
-  protected AbstractYarnStats(Configuration conf) {
-    this.conf = new YarnConfiguration(conf);
-  }
-
-  protected YarnClient createYARNClient() {
-    YarnClient yarnClient = YarnClient.createYarnClient();
-    yarnClient.init(conf);
-    yarnClient.start();
-    return yarnClient;
-  }
+  static final String SERVICE_NAME = "CDAP";
 
   @Override
   public String getServiceName() {
