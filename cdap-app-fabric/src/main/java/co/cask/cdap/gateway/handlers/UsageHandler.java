@@ -18,14 +18,18 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -55,7 +59,8 @@ public class UsageHandler extends AbstractHttpHandler {
                                  @PathParam("app-id") String appId) {
     final ApplicationId id = new ApplicationId(namespaceId, appId);
     Set<? extends EntityId> ids = registry.getDatasets(id);
-    responder.sendJson(HttpResponseStatus.OK, ids);
+    responder.sendJson(HttpResponseStatus.OK,
+                       Collections2.transform(ids, BackwardCompatibility.MAKE_COMPATIBLE_WITH_35));
   }
 
   @GET
@@ -65,7 +70,8 @@ public class UsageHandler extends AbstractHttpHandler {
                                 @PathParam("app-id") String appId) {
     final ApplicationId id = new ApplicationId(namespaceId, appId);
     Set<? extends EntityId> ids = registry.getStreams(id);
-    responder.sendJson(HttpResponseStatus.OK, ids);
+    responder.sendJson(HttpResponseStatus.OK,
+                       Collections2.transform(ids, BackwardCompatibility.MAKE_COMPATIBLE_WITH_35));
   }
 
   @GET
@@ -78,7 +84,8 @@ public class UsageHandler extends AbstractHttpHandler {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     final ProgramId id = new ProgramId(namespaceId, appId, type, programId);
     Set<? extends EntityId> ids = registry.getDatasets(id);
-    responder.sendJson(HttpResponseStatus.OK, ids);
+    responder.sendJson(HttpResponseStatus.OK,
+                       Collections2.transform(ids, BackwardCompatibility.MAKE_COMPATIBLE_WITH_35));
   }
 
   @GET
@@ -91,7 +98,8 @@ public class UsageHandler extends AbstractHttpHandler {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     final ProgramId id = new ProgramId(namespaceId, appId, type, programId);
     Set<? extends EntityId> ids = registry.getStreams(id);
-    responder.sendJson(HttpResponseStatus.OK, ids);
+    responder.sendJson(HttpResponseStatus.OK,
+                       Collections2.transform(ids, BackwardCompatibility.MAKE_COMPATIBLE_WITH_35));
   }
 
   @GET
@@ -101,7 +109,8 @@ public class UsageHandler extends AbstractHttpHandler {
                                 @PathParam("stream-id") String streamId) {
     final StreamId id = new StreamId(namespaceId, streamId);
     Set<? extends EntityId> ids = registry.getPrograms(id);
-    responder.sendJson(HttpResponseStatus.OK, ids);
+    responder.sendJson(HttpResponseStatus.OK,
+                       Collections2.transform(ids, BackwardCompatibility.MAKE_COMPATIBLE_WITH_35));
   }
 
   @GET
@@ -111,6 +120,111 @@ public class UsageHandler extends AbstractHttpHandler {
                                  @PathParam("dataset-id") String datasetId) {
     final DatasetId id = new DatasetId(namespaceId, datasetId);
     Set<? extends EntityId> ids = registry.getPrograms(id);
-    responder.sendJson(HttpResponseStatus.OK, ids);
+    responder.sendJson(HttpResponseStatus.OK,
+                       Collections2.transform(ids, BackwardCompatibility.MAKE_COMPATIBLE_WITH_35));
+  }
+
+  /**
+   * Class to wrap stuff needed to make {@link UsageHandler} backward compatible. See CDAP-7316
+   * Also, see {@link IdCompatibleEntityIds} documentation for more details.
+   *
+   * Note: This backward compatibility transformation does not have its separate unit tests since since the unit test
+   * for {@link UsageHandler} will deserialize the JSON for the below classes to {@link Id} class and any
+   * incompatibility will fail the JSON deserialization there.
+   */
+  private static final class BackwardCompatibility {
+
+    /**
+     * Function which transforms and {@link EntityId} {@link IdCompatibleEntityIds} for backward compatibility with
+     * {@link Id}. This only supports {@link EntityId} which can be returned by {@link UsageHandler}.
+     */
+    private static final Function<EntityId, IdCompatibleEntityIds> MAKE_COMPATIBLE_WITH_35 =
+      new Function<EntityId, IdCompatibleEntityIds>() {
+        @Override
+        public IdCompatibleEntityIds apply(final EntityId entity) {
+          if (entity instanceof DatasetId) {
+            return new IdCompatibleEntityIds.IdDatasetInstance((DatasetId) entity);
+          } else if (entity instanceof StreamId) {
+            return new IdCompatibleEntityIds.IdStream((StreamId) entity);
+          } else if (entity instanceof ProgramId) {
+            return new IdCompatibleEntityIds.IdProgram((ProgramId) entity);
+          } else {
+            throw new IllegalArgumentException(String.format("Entity %s cannot be converted into backward " +
+                                                               "compatible Id.", entity));
+          }
+        }
+      };
+
+    /**
+     * Just a simple POJO to support backward compatibility for {@link UsageHandler} See: CDAP-7316
+     * This class allows {@link UsageHandler} to return results in deprecated {@link Id} serialized form.
+     */
+    private abstract static class IdCompatibleEntityIds {
+
+      /**
+       * Support Compatibility with {@link Id.Namespace} for {@link NamespaceId}
+       */
+      private static final class IdNamespace extends IdCompatibleEntityIds {
+        private final String id;
+
+        IdNamespace(NamespaceId id) {
+          this.id = id.getNamespace();
+        }
+      }
+
+      /**
+       * Support Compatibility with {@link Id.DatasetInstance} for {@link DatasetId}
+       */
+      private static final class IdDatasetInstance extends IdCompatibleEntityIds {
+        private final IdNamespace namespace;
+        private final String instanceId;
+
+        IdDatasetInstance(DatasetId datasetId) {
+          this.namespace = new IdNamespace(datasetId.getNamespaceId());
+          this.instanceId = datasetId.getEntityName();
+        }
+      }
+
+      /**
+       * Support Compatibility with {@link Id.Stream} for {@link StreamId}
+       */
+      private static final class IdStream extends IdCompatibleEntityIds {
+        private final IdNamespace namespace;
+        private final String streamName;
+
+        IdStream(StreamId streamId) {
+          this.namespace = new IdNamespace(streamId.getNamespaceId());
+          this.streamName = streamId.getEntityName();
+        }
+      }
+
+      /**
+       * Support Compatibility with {@link Id.Application} for {@link ApplicationId}
+       */
+      private static final class IdApplication extends IdCompatibleEntityIds {
+        private final IdNamespace namespace;
+        private final String applicationId;
+
+        IdApplication(ApplicationId applicationId) {
+          this.namespace = new IdNamespace(applicationId.getNamespaceId());
+          this.applicationId = applicationId.getEntityName();
+        }
+      }
+
+      /**
+       * Support Compatibility with {@link Id.Program} for {@link ProgramId}
+       */
+      private static final class IdProgram extends IdCompatibleEntityIds {
+        private final IdApplication application;
+        private final ProgramType type;
+        private final String id;
+
+        IdProgram(ProgramId programId) {
+          this.application = new IdApplication(programId.getParent());
+          this.type = programId.getType();
+          this.id = programId.getEntityName();
+        }
+      }
+    }
   }
 }

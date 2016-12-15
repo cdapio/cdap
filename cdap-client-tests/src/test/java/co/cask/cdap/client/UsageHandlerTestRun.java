@@ -21,14 +21,18 @@ import co.cask.cdap.client.app.AllProgramsApp;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -42,6 +46,7 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -53,6 +58,15 @@ import java.util.concurrent.TimeUnit;
 public class UsageHandlerTestRun extends ClientTestBase {
 
   private static final Gson GSON = new Gson();
+
+  // Function to transform an Id to EntityId
+  private static final Function<Id, EntityId> ENTITY_ID_TRANSFORMER =
+    new Function<Id, EntityId>() {
+      @Override
+      public EntityId apply(final Id id) {
+        return id.toEntityId();
+      }
+    };
 
   private void deployApp(Class<? extends Application> appCls) throws Exception {
     new ApplicationClient(getClientConfig()).deploy(NamespaceId.DEFAULT, createAppJarFile(appCls));
@@ -296,42 +310,51 @@ public class UsageHandlerTestRun extends ClientTestBase {
     }
   }
 
-  private Set<DatasetId> getAppDatasetUsage(ApplicationId app) throws Exception {
-    return doGet(String.format("/v3/namespaces/%s/apps/%s/datasets", app.getNamespace(), app.getEntityName()),
-                 new TypeToken<Set<DatasetId>>() { }.getType());
+  private Set<EntityId> getAppDatasetUsage(ApplicationId app) throws Exception {
+    Set<Id.DatasetInstance> datasetIds = doGet(String.format("/v3/namespaces/%s/apps/%s/datasets", app.getNamespace(),
+                                                             app.getEntityName()),
+                                               new TypeToken<Set<Id.DatasetInstance>>() { }.getType());
+    return new HashSet<>(Collections2.transform(datasetIds, ENTITY_ID_TRANSFORMER));
   }
 
-  private Set<StreamId> getAppStreamUsage(ApplicationId app) throws Exception {
-    return doGet(String.format("/v3/namespaces/%s/apps/%s/streams", app.getNamespace(), app.getEntityName()),
-                 new TypeToken<Set<StreamId>>() { }.getType());
+  private Set<EntityId> getAppStreamUsage(ApplicationId app) throws Exception {
+    Set<Id.Stream> streamIds = doGet(String.format("/v3/namespaces/%s/apps/%s/streams", app.getNamespace(),
+                                                   app.getEntityName()), new TypeToken<Set<Id.Stream>>() { }.getType());
+    return new HashSet<>(Collections2.transform(streamIds, ENTITY_ID_TRANSFORMER));
+
   }
 
-  private Set<DatasetId> getProgramDatasetUsage(ProgramId program) throws Exception {
-    return doGet(String.format("/v3/namespaces/%s/apps/%s/%s/%s/datasets",
-                               program.getNamespace(), program.getApplication(),
-                               program.getType().getCategoryName(), program.getEntityName()),
-                 new TypeToken<Set<DatasetId>>() { }.getType());
+  private Set<EntityId> getProgramDatasetUsage(ProgramId program) throws Exception {
+    Set<Id.DatasetInstance> datasetIds = doGet(String.format("/v3/namespaces/%s/apps/%s/%s/%s/datasets",
+                                                             program.getNamespace(), program.getApplication(),
+                                                             program.getType().getCategoryName(),
+                                                             program.getEntityName()),
+                                               new TypeToken<Set<Id.DatasetInstance>>() { }.getType());
+    return new HashSet<>(Collections2.transform(datasetIds, ENTITY_ID_TRANSFORMER));
   }
 
-  private Set<StreamId> getProgramStreamUsage(ProgramId program) throws Exception {
-    return doGet(String.format("/v3/namespaces/%s/apps/%s/%s/%s/streams",
-                               program.getNamespace(), program.getApplication(),
-                               program.getType().getCategoryName(),
-                               program.getEntityName()),
-                 new TypeToken<Set<StreamId>>() { }.getType());
+  private Set<EntityId> getProgramStreamUsage(ProgramId program) throws Exception {
+    Set<Id.Stream> streamIds = doGet(String.format("/v3/namespaces/%s/apps/%s/%s/%s/streams",
+                                                   program.getNamespace(), program.getApplication(),
+                                                   program.getType().getCategoryName(),
+                                                   program.getEntityName()),
+                                     new TypeToken<Set<Id.Stream>>() { }.getType());
+    return new HashSet<>(Collections2.transform(streamIds, ENTITY_ID_TRANSFORMER));
   }
 
   // dataset/stream -> program
 
-  private Set<ProgramId> getStreamProgramUsage(StreamId stream) throws Exception {
-    return doGet(String.format("/v3/namespaces/%s/streams/%s/programs",
-                               stream.getNamespace(), stream.getEntityName()),
-                 new TypeToken<Set<ProgramId>>() { }.getType());
+  private Set<EntityId> getStreamProgramUsage(StreamId stream) throws Exception {
+    Set<Id.Program> programIds = doGet(String.format("/v3/namespaces/%s/streams/%s/programs",
+                                                     stream.getNamespace(), stream.getEntityName()),
+                                       new TypeToken<Set<Id.Program>>() { }.getType());
+    return new HashSet<>(Collections2.transform(programIds, ENTITY_ID_TRANSFORMER));
   }
 
-  private Set<ProgramId> getDatasetProgramUsage(DatasetId dataset) throws Exception {
-    return doGet(String.format("/v3/namespaces/%s/data/datasets/%s/programs",
-                               dataset.getNamespace(), dataset.getEntityName()),
-                 new TypeToken<Set<ProgramId>>() { }.getType());
+  private Set<EntityId> getDatasetProgramUsage(DatasetId dataset) throws Exception {
+    Set<Id.Program> programIds = doGet(String.format("/v3/namespaces/%s/data/datasets/%s/programs",
+                                                     dataset.getNamespace(), dataset.getEntityName()),
+                                       new TypeToken<Set<Id.Program>>() { }.getType());
+    return new HashSet<>(Collections2.transform(programIds, ENTITY_ID_TRANSFORMER));
   }
 }
