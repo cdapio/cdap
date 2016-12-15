@@ -30,6 +30,7 @@ export default class TableItem extends Component {
 
     this.state = {
       isModalOpen: false,
+      loading: false,
       columns: [],
       preview: [],
       fieldSelected: '',
@@ -87,7 +88,8 @@ export default class TableItem extends Component {
         this.setState({
           columns,
           preview,
-          queryHandle
+          queryHandle,
+          loading: false
         });
 
       });
@@ -96,6 +98,7 @@ export default class TableItem extends Component {
   onTableClick() {
     this.setState({
       isModalOpen: true,
+      loading: true
     });
 
     const table = this.props.table;
@@ -140,7 +143,122 @@ export default class TableItem extends Component {
     );
   }
 
+  renderModalContent() {
+    const table = (
+      <table className="table table-bordered">
+        <thead>
+          <tr>
+            {this.state.columns.map((column) => <th key={column.raw}>{column.displayName}</th>)}
+          </tr>
+        </thead>
+
+        <tbody>
+          {
+            this.state.preview.map((row) => {
+              return (
+                <tr key={shortid.generate()}>
+                  {row.map((columnData) => <td key={shortid.generate()}>{columnData}</td>)}
+                </tr>
+              );
+            })
+          }
+        </tbody>
+      </table>
+    );
+
+    const noData = (
+      <div>
+        <h4 className="text-center">No data</h4>
+      </div>
+    );
+
+    return (
+      <div>
+        <div className="table-container">
+          {this.state.preview.length === 0 ? noData : table}
+        </div>
+
+        <div className="form-inline field-selection">
+          <label className="control-label">
+            Choose field to wrangle:
+          </label>
+
+          <select
+            className="form-control"
+            value={this.state.fieldSelected}
+            onChange={e => this.setState({fieldSelected: e.target.value})}
+          >
+            {
+              this.state.columns.map((column) => {
+                return (
+                  <option
+                    value={column.raw}
+                    key={column.raw}
+                  >
+                    {column.displayName}
+                  </option>
+                );
+              })
+            }
+          </select>
+        </div>
+
+        <div className="parse-options">
+          <form className="form-inline">
+            <div className="delimiter">
+              {/* delimiter */}
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Set delimiter"
+                onChange={this.setDelimiter}
+              />
+            </div>
+
+            <hr/>
+
+            <div className="checkbox">
+              {/* header */}
+              <label>
+                <input type="checkbox"
+                  onChange={this.handleSetHeaders}
+                  checked={this.state.headers}
+                /> First line as column name
+              </label>
+            </div>
+
+            <div className="checkbox">
+              {/* skipEmptyLines */}
+              <label>
+                <input type="checkbox"
+                  onChange={this.handleSetSkipEmptyLines}
+                /> Skip empty lines
+              </label>
+            </div>
+          </form>
+        </div>
+
+        <div className="wrangle-button text-center">
+          <button
+            className="btn btn-wrangler"
+            onClick={this.onWrangleClick}
+          >
+            Wrangle
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   render() {
+    const loading = (
+      <div>
+        <h3 className="text-center">
+          <span className="fa fa-spinner fa-spin" />
+        </h3>
+      </div>
+    );
+
     return (
       <div
         className="explore-table-item text-center"
@@ -164,99 +282,19 @@ export default class TableItem extends Component {
           zIndex="1070"
         >
           <ModalHeader>
-            {this.props.table.name}
+            <span>{this.props.table.name}</span>
+
+            <div
+              className="close-section pull-right"
+              onClick={this.toggleModal}
+            >
+              <span className="fa fa-times" />
+            </div>
           </ModalHeader>
           <ModalBody>
-            <div className="table-container">
-              <table className="table table-bordered">
-                <thead>
-                  <tr>
-                    {this.state.columns.map((column) => <th key={column.raw}>{column.displayName}</th>)}
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {
-                    this.state.preview.map((row) => {
-                      return (
-                        <tr key={shortid.generate()}>
-                          {row.map((columnData) => <td key={shortid.generate()}>{columnData}</td>)}
-                        </tr>
-                      );
-                    })
-                  }
-                </tbody>
-              </table>
-            </div>
-
-            <div className="form-inline field-selection">
-              <label className="control-label">
-                Choose field to wrangle:
-              </label>
-
-              <select
-                className="form-control"
-                value={this.state.fieldSelected}
-                onChange={e => this.setState({fieldSelected: e.target.value})}
-              >
-                {
-                  this.state.columns.map((column) => {
-                    return (
-                      <option
-                        value={column.raw}
-                        key={column.raw}
-                      >
-                        {column.displayName}
-                      </option>
-                    );
-                  })
-                }
-              </select>
-            </div>
-
-            <div className="parse-options">
-              <form className="form-inline">
-                <div className="delimiter">
-                  {/* delimiter */}
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Set delimiter"
-                    onChange={this.setDelimiter}
-                  />
-                </div>
-
-                <hr/>
-
-                <div className="checkbox">
-                  {/* header */}
-                  <label>
-                    <input type="checkbox"
-                      onChange={this.handleSetHeaders}
-                      checked={this.state.headers}
-                    /> First line as column name
-                  </label>
-                </div>
-
-                <div className="checkbox">
-                  {/* skipEmptyLines */}
-                  <label>
-                    <input type="checkbox"
-                      onChange={this.handleSetSkipEmptyLines}
-                    /> Skip empty lines
-                  </label>
-                </div>
-              </form>
-            </div>
-
-            <div className="wrangle-button text-center">
-              <button
-                className="btn btn-primary"
-                onClick={this.onWrangleClick}
-              >
-                Wrangle
-              </button>
-            </div>
+            {
+              this.state.loading ? loading : this.renderModalContent()
+            }
           </ModalBody>
         </Modal>
       </div>
