@@ -294,7 +294,8 @@ features:
       support: Support
     Sidebar:
       extension: "Extensions:"
-
+    NamespaceDropdown:
+      add-ns: "Add Namespace"
   Pagination:
     dropdown-label: Page
   Resource-Center:
