@@ -148,7 +148,7 @@
             <artifactId>maven-resources-plugin</artifactId>
             <version>2.6</version>
             <executions>
-              <!-- Copy CLI scripts -->
+              <!-- Copy CDAP and CLI scripts -->
               <execution>
                 <id>copy-cli-scripts</id>
                 <phase>process-resources</phase>
