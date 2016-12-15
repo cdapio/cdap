@@ -90,7 +90,7 @@ To use this mode, set these properties:
       </description>
     </property>
 
-**Note:** If the ``cdap-security.xml` file does not already exist, it needs to be created.  
+**Note:** If the ``cdap-security.xml`` file does not already exist, it needs to be created.  
 
 .. _admin-secure-storage-kms:
 
@@ -116,4 +116,5 @@ For additional information on integration with Hadoop KMS, please refer to
 
 Accessing the Secure Storage
 ----------------------------
-
+The :ref:`Secure Storage HTTP RESTful API <http-restful-api-secure-storage>` has endpoints for
+the management and creation, retrieval, and deletion of secure keys.
