@@ -49,6 +49,9 @@ export default class ConfigurableTab extends Component{
   isActiveTab(tabId) {
     return this.state.tabId === tabId;
   }
+  componentWillReceiveProps(nextProps) {
+    this.setState({ tabs: nextProps.tabConfig.tabs});
+  }
   render() {
     return (
       <div className="cask-configurable-tab">
