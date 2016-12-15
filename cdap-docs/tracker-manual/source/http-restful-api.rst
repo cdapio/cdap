@@ -877,6 +877,17 @@ Returns the data dictionary related to a specified schema::
 
   POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary
 
+where the payload is a JSON-formatted schema:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``payload``
+     - A JSON-formatted schema
+
 A successful query will return a 200 response with a body containing the data dictionary for the specified schema. If no
 data dictionary exists, a response with an empty array of results is returned.
 
@@ -929,6 +940,19 @@ This endpoint will add a column to the data dictionary::
 
   POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary/<column-name>
 
+where the payload is a JSON-formatted schema of the column:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``column-name``
+     - Name of the column
+   * - ``payload``
+     - A JSON-formatted schema of the column
+
 A successful query will return a 200 response.
 
 Example:
@@ -947,7 +971,7 @@ Example:
    * - Status Codes
      - Description
    * - ``200 OK``
-     - Empty
+     - The column was successfully added
    * - ``500 SERVER ERROR``
      - Unknown server error
 
@@ -957,6 +981,19 @@ This endpoint will update a column in the data dictionary::
 
   PUT /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary/<column-name>
 
+where the payload is a JSON-formatted schema of the column:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``column-name``
+     - Name of the column
+   * - ``payload``
+     - A JSON-formatted schema of the column
+
 A successful query will return a 200 response.
 
 Example:
@@ -975,7 +1012,7 @@ Example:
    * - Status Codes
      - Description
    * - ``200 OK``
-     - Empty
+     - The column was successfully updated
    * - ``500 SERVER ERROR``
      - Unknown server error
 
@@ -984,6 +1021,15 @@ Deleting a Column in the Data Dictionary
 This endpoint will delete a column in the data dictionary::
 
   DELETE /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary/<column-name>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``column-name``
+     - Name of the column
 
 A successful query will return a 200 response.
 
@@ -1002,7 +1048,7 @@ Example:
    * - Status Codes
      - Description
    * - ``200 OK``
-     - Empty
+     - The column was successfully deleted
    * - ``404 NOT FOUND``
      - Could not find the column specified
    * - ``500 SERVER ERROR``
@@ -1054,6 +1100,17 @@ Returns the set of configurations that match a given key::
 
   GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/<config-key>?strict={true|false}
 
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``config-key``
+     - Configuration key
+   * - ``strict``
+     - Either ``true`` or ``false`` (default if unspecified); determines if singular values are returned
+
 A successful query will return a 200 response with a body containing the configurations for the given key. 
 If ``strict`` is set to ``true``, only a single value will be returned, exactly matching the key provided. 
 If no configuration key exists, a 404 will be returned.
@@ -1091,6 +1148,19 @@ Sets the configuration value for a specified key::
 
   POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/<config-key>
 
+where the payload is a JSON-formatted key-value map of the configuration setting:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``config-key``
+     - Configuration key
+   * - ``payload``
+     - A JSON-formatted key-value map of the configuration setting
+
 A successful query will return a 200 response. If the value or key was invalid, it will return a 400 with an error message.
 
 Example:
@@ -1120,6 +1190,19 @@ Update a Configuration Setting
 Sets the configuration value for a specified key::
 
   PUT /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/<config-key>
+
+where the payload is a JSON-formatted key-value map of the configuration setting:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``config-key``
+     - Configuration key
+   * - ``payload``
+     - A JSON-formatted key-value map of the configuration setting
 
 A successful query will return a 200 response. If the ``config-key`` was not found, it will return a 404. 
 If the value or key was invalid, it will return a 400 with an error message.
@@ -1153,6 +1236,15 @@ Delete a Configuration Setting
 Deletes the configuration value for a specified key::
 
   DELETE /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/<config-key>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``config-key``
+     - Configuration key
 
 A successful query will return a 200 response. If the config-key was not found, it will return a 404.
 
