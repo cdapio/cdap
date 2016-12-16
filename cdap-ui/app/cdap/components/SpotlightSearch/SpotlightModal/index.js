@@ -100,7 +100,8 @@ export default class SpotlightModal extends Component {
     MySearchApi.search({
       namespace: NamespaceStore.getState().selectedNamespace,
       query: this.props.query + '*',
-      size: PAGE_SIZE,
+      limit: PAGE_SIZE,
+      sort: 'creation-time asc',
       offset
     }).subscribe( (res) => {
       this.setState({
