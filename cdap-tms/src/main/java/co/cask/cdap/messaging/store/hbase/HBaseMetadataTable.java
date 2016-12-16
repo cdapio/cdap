@@ -49,9 +49,9 @@ import java.util.TreeMap;
 /**
  * HBase implementation of {@link MetadataTable}.
  */
-final class HBaseMetadataTable implements MetadataTable {
+public final class HBaseMetadataTable implements MetadataTable {
 
-  private static final byte[] COL = Bytes.toBytes("m");
+  public static final byte[] COL = MessagingUtils.Constants.METADATA_COLUMN;
   private static final Gson GSON = new Gson();
 
   // It has to be a sorted map since we depends on the serialized map for compareAndPut operation for topic update.

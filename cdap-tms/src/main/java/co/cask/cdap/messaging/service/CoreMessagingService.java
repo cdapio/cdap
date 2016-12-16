@@ -279,20 +279,19 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
    * Creates a new instance of {@link MetadataTable}.
    */
   private MetadataTable createMetadataTable() throws IOException {
-    return tableFactory.createMetadataTable(NamespaceId.SYSTEM,
-                                            cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME));
+    return tableFactory.createMetadataTable(cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME));
   }
 
   private MessageTable createMessageTable(@SuppressWarnings("unused") TopicMetadata topicMetadata) throws IOException {
     // Currently we don't support customizable table name yet, hence always get it from cConf.
     // Later on it can be done by topic properties, with impersonation setting as well.
-    return tableFactory.createMessageTable(NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
+    return tableFactory.createMessageTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
   }
 
   private PayloadTable createPayloadTable(@SuppressWarnings("unused") TopicMetadata topicMetadata) throws IOException {
     // Currently we don't support customizable table name yet, hence always get it from cConf.
     // Later on it can be done by topic properties, with impersonation setting as well.
-    return tableFactory.createPayloadTable(NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
+    return tableFactory.createPayloadTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
   }
 
   /**

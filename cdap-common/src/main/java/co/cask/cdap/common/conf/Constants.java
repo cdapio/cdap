@@ -1074,6 +1074,7 @@ public final class Constants {
    */
   public static final class MessagingSystem {
     public static final String LOCAL_DATA_DIR = "messaging.local.data.dir";
+    public static final String LOCAL_DATA_CLEANUP_FREQUENCY = "messaging.local.data.cleanup.frequency.secs";
 
     public static final String HBASE_MAX_SCAN_THREADS = "messaging.hbase.max.scan.threads";
     public static final String HBASE_SCAN_CACHE_ROWS = "messaging.hbase.scan.cache.rows";
@@ -1084,6 +1085,8 @@ public final class Constants {
     public static final String PAYLOAD_TABLE_HBASE_SPLITS = "messaging.payload.table.hbase.splits";
     public static final String TABLE_CACHE_EXPIRATION_SECONDS = "messaging.table.expiration.seconds";
     public static final String TOPIC_DEFAULT_TTL_SECONDS = "messaging.topic.default.ttl.seconds";
+    public static final String COPROCESSOR_METADATA_CACHE_EXPIRATION_SECONDS =
+      "messaging.coprocessor.metadata.cache.expiration.seconds";
 
     public static final String HTTP_SERVER_WORKER_THREADS = "messaging.http.server.worker.threads";
     public static final String HTTP_SERVER_EXECUTOR_THREADS = "messaging.http.server.executor.threads";
@@ -1096,8 +1099,8 @@ public final class Constants {
     public static final String CONTAINER_INSTANCES = "messaging.container.instances";
     public static final String MAX_INSTANCES = "messaging.max.instances";
 
-    // The name of the HBase table attribute to store the bucket size being used by the RowKeyDistributor
-    public static final String KEY_DISTRIBUTOR_BUCKETS_ATTR = "cdap.messaging.key.distributor.buckets";
+    // directory to store the messaging system coprocessor jars
+    public static final String COPROCESSOR_DIR = "messaging.coprocessor.dir";
 
     // The following configuration keys are set by messaging service TwillRunnable only,
     // not available in cdap-default.xml
@@ -1110,6 +1113,15 @@ public final class Constants {
 
     // The guice binding name for http handler used by the messaging system
     public static final String HANDLER_BINDING_NAME = "messaging.http.handler";
+
+    // The name of the HBase table attribute to store the bucket size being used by the RowKeyDistributor
+    public static final String KEY_DISTRIBUTOR_BUCKETS_ATTR = "cdap.messaging.key.distributor.buckets";
+
+    // TMS HBase table attribute that indicates the name of the TMS metadata table's HBase namespace
+    public static final String HBASE_METADATA_TABLE_NAMESPACE = "cdap.messaging.metadata.hbase.namespace";
+
+    // TMS HBase table attribute that indicates the number of prefix bytes used for the row key
+    public static final String HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES = "cdap.messaging.table.prefix.num.bytes";
   }
 
   /**

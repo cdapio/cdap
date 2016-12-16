@@ -17,23 +17,30 @@
 package co.cask.cdap.messaging.store.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.NamespaceClientUnitTestModule;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.messaging.store.MessageTable;
-import co.cask.cdap.messaging.store.MessageTableTest;
+import co.cask.cdap.messaging.store.MetadataTable;
+import co.cask.cdap.messaging.store.MetadataTableTest;
 import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
 /**
- * HBase implementation of {@link MessageTableTest}.
+ * Tests for {@link HBaseMetadataTable}
  */
-public class HBaseMessageTableTestRun extends MessageTableTest {
+public class HBaseMetadataTableTestRun extends MetadataTableTest {
 
   @ClassRule
   public static final ExternalResource TEST_BASE = HBaseMessageTestSuite.TEST_BASE;
@@ -41,29 +48,40 @@ public class HBaseMessageTableTestRun extends MessageTableTest {
   private static final HBaseTestBase HBASE_TEST_BASE = HBaseMessageTestSuite.HBASE_TEST_BASE;
   private static final CConfiguration cConf = CConfiguration.create();
 
+  private static Configuration hConf;
   private static HBaseAdmin hBaseAdmin;
   private static HBaseTableUtil tableUtil;
   private static TableFactory tableFactory;
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
+    hConf = HBASE_TEST_BASE.getConfiguration();
     hBaseAdmin = HBASE_TEST_BASE.getHBaseAdmin();
     hBaseAdmin.getConfiguration().set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION,
                                       HBaseTableUtil.CompressionType.NONE.name());
     tableUtil = new HBaseTableUtilFactory(cConf).get();
-    tableUtil.createNamespaceIfNotExists(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.CDAP));
+    tableUtil.createNamespaceIfNotExists(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
 
-    tableFactory = new HBaseTableFactory(cConf, hBaseAdmin.getConfiguration(), tableUtil);
+    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
+    tableFactory = new HBaseTableFactory(cConf, hBaseAdmin.getConfiguration(), tableUtil, locationFactory);
   }
 
   @AfterClass
   public static void teardownAfterClass() throws Exception {
-    tableUtil.deleteAllInNamespace(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.CDAP));
-    tableUtil.deleteNamespaceIfExists(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.CDAP));
+    tableUtil.deleteAllInNamespace(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    tableUtil.deleteNamespaceIfExists(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    hBaseAdmin.close();
   }
 
   @Override
-  protected MessageTable getMessageTable() throws Exception {
-    return tableFactory.createMessageTable(NamespaceId.CDAP, "message");
+  protected MetadataTable createMetadataTable() throws Exception {
+    return tableFactory.createMetadataTable("metadata");
+  }
+
+  public static Injector getInjector() {
+    return Guice.createInjector(
+      new ConfigModule(cConf, hConf),
+      new NamespaceClientUnitTestModule().getModule(),
+      new LocationRuntimeModule().getDistributedModules());
   }
 }
