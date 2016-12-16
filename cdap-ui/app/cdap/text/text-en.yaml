@@ -84,9 +84,9 @@ features:
         entityNameDesc:
           displayName: Z - A
         creationTimeDesc:
-          displayName: Most Recently Created
+          displayName: Newest
         creationTimeAsc:
-          displayName: Least Recently Created
+          displayName: Oldest
   Dashboard:
     Title: Dashboard
 
