@@ -441,6 +441,9 @@
                         <exclude name="${additional.artifacts.exclude.pattern}"/>
                         <exclude name="**/target/*-sources.jar"/>
                         <exclude name="**/target/*-javadoc.jar"/>
+                        <!--We don't want to package solr plugins with CDAP-->
+                        <exclude name="**/target/solr*.json"/>
+                        <exclude name="**/target/solr*.jar"/>
                       </fileset>
                     </copy>
                   </target>
