@@ -224,13 +224,26 @@ By default, CDAP will start an implicit transaction for these methods:
   programs and sub-programs (flowlets, service handlers, and workflow actions), with the
   exception of worker programs.
 
-For flowlet process methods, this cannot be disabled, because that would impact the
-semantics of flow execution. For MapReduce programs, the lifecycle methods of MapReduce
-tasks (mappers and reducers) and MapReduce helpers (such as partitioners and comparators)
-are always run inside a transaction: the long-running transaction that encapsulates an
-entire MapReduce job (see :ref:`above <transaction-system-transactions-mapreduce>`). 
-Please see :ref:`Transactions and Spark <spark-transactions>` for how to use transactions
-in Spark programs.
+For example, as shown in the :ref:`HelloWorld example <examples-hello-world>`, the
+``GreetingHandler`` uses the *whom* ``KeyValueTable``. CDAP implicitly starts a
+transaction for this handler method, and the handler can rely on the transactional
+consistency of the data it reads from the dataset:
+
+.. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
+   :language: java
+   :lines: 118-135
+   :dedent: 4
+
+For flowlet process methods, this starting of implicit transactions cannot be disabled,
+because that would impact the semantics of flow execution.
+
+For MapReduce programs, the lifecycle methods of MapReduce tasks (mappers and reducers)
+and MapReduce helpers (such as partitioners and comparators) are always run inside a
+transaction: the long-running transaction that encapsulates an entire MapReduce job (see
+:ref:`above <transaction-system-transactions-mapreduce>`).
+
+For Spark programs, see :ref:`Transactions and Spark <spark-transactions>` for how to use
+transactions in Spark programs.
 
 For all other lifecycle methods and for service handlers, the implicit transaction can be
 turned off by annotating the method with ``@TransactionPolicy(TransactionControl.EXPLICIT)``.
