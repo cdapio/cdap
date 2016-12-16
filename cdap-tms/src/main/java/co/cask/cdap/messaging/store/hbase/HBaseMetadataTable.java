@@ -21,6 +21,7 @@ import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.PutBuilder;
+import co.cask.cdap.data2.util.hbase.ScanBuilder;
 import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.store.MetadataTable;
@@ -59,11 +60,13 @@ final class HBaseMetadataTable implements MetadataTable {
   private final HBaseTableUtil tableUtil;
   private final byte[] columnFamily;
   private final HTable hTable;
+  private final int scanCacheRows;
 
-  HBaseMetadataTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily) {
+  HBaseMetadataTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily, int scanCacheRows) {
     this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);
+    this.scanCacheRows = scanCacheRows;
   }
 
   @Override
@@ -164,24 +167,22 @@ final class HBaseMetadataTable implements MetadataTable {
   @Override
   public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException {
     byte[] startRow = MessagingUtils.topicScanKey(namespaceId);
-    Scan scan = tableUtil.buildScan()
+    ScanBuilder scanBuilder = tableUtil.buildScan()
       .setStartRow(startRow)
-      .setStopRow(Bytes.stopKeyForPrefix(startRow))
-      .build();
-    return scanTopics(scan);
+      .setStopRow(Bytes.stopKeyForPrefix(startRow));
+    return scanTopics(scanBuilder);
   }
 
   @Override
   public List<TopicId> listTopics() throws IOException {
-    return scanTopics(tableUtil.buildScan().build());
+    return scanTopics(tableUtil.buildScan());
   }
 
   /**
    * Scans the HBase table to get a list of {@link TopicId}.
    */
-  private List<TopicId> scanTopics(Scan scan) throws IOException {
-    scan.setFilter(new FirstKeyOnlyFilter())
-        .setCaching(1000);
+  private List<TopicId> scanTopics(ScanBuilder scanBuilder) throws IOException {
+    Scan scan = scanBuilder.setFilter(new FirstKeyOnlyFilter()).setCaching(scanCacheRows).build();
 
     List<TopicId> topicIds = new ArrayList<>();
     try (ResultScanner resultScanner = hTable.getScanner(scan)) {

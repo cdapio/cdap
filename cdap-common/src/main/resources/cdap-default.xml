@@ -1186,6 +1186,15 @@
   </property>
 
   <property>
+    <name>messaging.hbase.scan.cache.rows</name>
+    <value>1000</value>
+    <description>
+      Number of rows for caching that will be passed to HBase scanners.
+      Higher caching values will enable faster scanning but will use more memory.
+    </description>
+  </property>
+
+  <property>
     <name>messaging.http.server.executor.threads</name>
     <value>0</value>
     <description>

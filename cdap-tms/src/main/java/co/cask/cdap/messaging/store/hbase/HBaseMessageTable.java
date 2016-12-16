@@ -45,21 +45,22 @@ import java.util.concurrent.ExecutorService;
 final class HBaseMessageTable extends AbstractMessageTable {
   private static final byte[] PAYLOAD_COL = Bytes.toBytes('p');
   private static final byte[] TX_COL = Bytes.toBytes('t');
-  private static final int SCAN_CACHE_ROWS = 1000;
 
   private final HBaseTableUtil tableUtil;
   private final byte[] columnFamily;
   private final HTable hTable;
   private final AbstractRowKeyDistributor rowKeyDistributor;
   private final ExecutorService scanExecutor;
+  private final int scanCacheRows;
 
   HBaseMessageTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
-                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor) {
+                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor, int scanCacheRows) {
     this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);
     this.rowKeyDistributor = rowKeyDistributor;
     this.scanExecutor = scanExecutor;
+    this.scanCacheRows = scanCacheRows;
   }
 
   @Override
@@ -67,7 +68,7 @@ final class HBaseMessageTable extends AbstractMessageTable {
     Scan scan = tableUtil.buildScan()
       .setStartRow(startRow)
       .setStopRow(stopRow)
-      .setCaching(SCAN_CACHE_ROWS)
+      .setCaching(scanCacheRows)
       .build();
 
     final ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor);
@@ -128,7 +129,7 @@ final class HBaseMessageTable extends AbstractMessageTable {
     Scan scan = tableUtil.buildScan()
       .setStartRow(startKey)
       .setStopRow(stopKey)
-      .setCaching(SCAN_CACHE_ROWS)
+      .setCaching(scanCacheRows)
       .build();
 
     List<Put> batchPuts = new ArrayList<>();
