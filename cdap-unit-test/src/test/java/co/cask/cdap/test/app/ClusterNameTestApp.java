@@ -43,6 +43,7 @@ import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowInfo;
+import com.google.common.base.Throwables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -50,6 +51,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.tephra.TransactionFailureException;
 
 import java.io.IOException;
 import javax.ws.rs.GET;
@@ -95,13 +97,17 @@ public class ClusterNameTestApp extends AbstractApplication {
 
     @Override
     public void run() {
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          KeyValueTable clusterNameTable = context.getDataset(CLUSTER_NAME_TABLE);
-          clusterNameTable.write("worker.cluster.name", getContext().getClusterName());
-        }
-      });
+      try {
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            KeyValueTable clusterNameTable = context.getDataset(CLUSTER_NAME_TABLE);
+            clusterNameTable.write("worker.cluster.name", getContext().getClusterName());
+          }
+        });
+      } catch (TransactionFailureException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 
