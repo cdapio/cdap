@@ -70,6 +70,7 @@ class TrackerDictionaryController {
 
   displayNewRow() {
     this.reset();
+    this.selectedDictColumn.columnType = 'string';
     this.addNewColumn = true;
   }
 
