@@ -223,16 +223,18 @@ if git_build_vars.has_key(GIT_BRANCH_CDAP_GUIDES):
 else:
     cdap_guides_github_pattern = ''
 
+_cdap_ui_base = 'http://localhost:11011/oldcdap/ns/default'
+
 extlinks = {
-    'cdap-ui': ('http://localhost:11011/ns/default/%s', None),
-    'cdap-ui-apps': ('http://localhost:11011/ns/default/apps/%s', None),
-    'cdap-ui-apps-programs': ('http://localhost:11011/ns/default/apps/%s/overview/programs', None),
-    'cdap-ui-datasets': ('http://localhost:11011/ns/default/datasets/%s', None),
-    'cdap-ui-datasets-explore': ('http://localhost:11011/ns/default/datasets/%s/overview/explore', None),
-    'cdap-ui-datasets-explore': ('http://localhost:11011/ns/default/datasets/%s/overview/explore', None),
-    'cask-hydrator': ('http://localhost:11011/ns/default/hydrator/%s', None),
-    'cask-hydrator-studio': ('http://localhost:11011/ns/default/hydrator/studio/%s', None),
-    'cask-hydrator-studio-artifact': ('http://localhost:11011/ns/default/hydrator/studio?artifactType=%s', None),
+    'cdap-ui': ("%s/%%s" % _cdap_ui_base, None),
+    'cdap-ui-apps': ("%s/apps/%%s" % _cdap_ui_base, None),
+    'cdap-ui-apps-programs': ("%s/apps/%%s/overview/programs" % _cdap_ui_base, None),
+    'cdap-ui-data': ("%s/data/%%s" % _cdap_ui_base, None),
+    'cdap-ui-datasets': ("%s/datasets/%%s" % _cdap_ui_base, None),
+    'cdap-ui-datasets-explore': ("%s/datasets/%%s/overview/explore" % _cdap_ui_base, None),
+    'cask-hydrator': ("%s/%%s" % _cdap_ui_base, None),
+    'cask-hydrator-studio': ("%s/hydrator/%%s" % _cdap_ui_base, None),
+    'cask-hydrator-studio-artifact': ("%s/hydrator/studio?artifactType=%%s" % _cdap_ui_base, None),
     'cdap-java-source-github': (cdap_java_source_github_pattern , None),
     'cdap-security-extn-source-github': (cdap_security_extn_github_pattern, None),
     'cask-issue': ('https://issues.cask.co/browse/%s', ''),

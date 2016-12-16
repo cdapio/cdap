@@ -1,5 +1,5 @@
 .. :author: Cask Data, Inc.
-   :copyright: Copyright © 2014-2015 Cask Data, Inc.
+   :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 ============================================
 Starting and Stopping Standalone CDAP
@@ -28,9 +28,9 @@ installed):
 Note that starting CDAP is not necessary if you use either the Virtual Machine or the
 Docker image, as they both start the Standalone CDAP automatically on startup.
 
-Once CDAP is started successfully, in a web browser you will be able to see the CDAP
-UI running at ``http://localhost:11011``, where you can deploy example applications and
-interact with CDAP. 
+Once CDAP is started successfully, in a web browser you will be able to see the CDAP UI
+running at :cdap-ui:`http://localhost:11011/ <>`, where you can deploy example
+applications and interact with CDAP. 
 
 Note that in the case of the Docker container running inside a Virtual Machine (as on
 either Mac OS X or Microsoft Windows), you will need to substitute the Docker VM's IP
