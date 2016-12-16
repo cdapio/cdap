@@ -250,6 +250,8 @@ class HydratorDetailTopPanelController {
     this.appStatus = 'STARTING';
     this.runPlayer.view = false;
     this.runPlayer.action = null;
+    let startTime = new Date().getTime() / 1000;
+    this.lastFinished.start = startTime;
     this.HydratorPlusPlusDetailActions.startPipeline(
       this.HydratorPlusPlusDetailRunsStore.getApi(),
       this.HydratorPlusPlusDetailRunsStore.getParams(),
