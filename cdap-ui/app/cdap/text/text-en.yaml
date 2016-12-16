@@ -325,7 +325,7 @@ features:
       modalheadertitle: Upload Artifact
     Plugins:
       label: Plugins
-      description: A plugin is a easy way to extend the functionality of an application.
+      description: A plugin is an easy way to extend the functionality of an application.
       actionbtn0: Upload
       modalheadertitle: Upload Plugin Artifact
 
