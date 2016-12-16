@@ -20,6 +20,7 @@ import myExploreApi from 'api/explore';
 import shortid from 'shortid';
 import sortBy from 'lodash/sortBy';
 import TableItem from 'wrangler/components/Explore/TableItem';
+import T from 'i18n-react';
 
 require('./Explore.less');
 
@@ -91,7 +92,9 @@ export default class Explore extends Component {
 
     return (
       <div className="wrangler-explore-container">
-        <h4 className="text-center">Browse Dataset ({this.state.list.length})</h4>
+        <h4 className="text-center">
+          {T.translate('features.Wrangler.Explore.browse', {count: this.state.list.length})}
+        </h4>
         <div className="text-center">
           {tableList.map(this.renderTable)}
         </div>

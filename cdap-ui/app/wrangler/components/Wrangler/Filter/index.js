@@ -19,6 +19,7 @@ import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import classnames from 'classnames';
 import {Tooltip} from 'reactstrap';
+import T from 'i18n-react';
 
 export default class Filter extends Component {
   constructor(props) {
@@ -65,15 +66,15 @@ export default class Filter extends Component {
           onChange={e => this.setState({filterFunction: e.target.value})}
           value={this.state.filterFunction}
         >
-          <option value="=">Equal</option>
-          <option value="!=">Does not equal</option>
-          <option value="<">Less than</option>
-          <option value=">">Greater than</option>
-          <option value="<=">Less or equal to</option>
-          <option value=">=">Greater or equal to</option>
-          <option value="startsWith">Starts With</option>
-          <option value="endsWith">Ends With</option>
-          <option value="contains">Contains</option>
+          <option value="=">{T.translate('features.Wrangler.Filter.Options.equal')}</option>
+          <option value="!=">{T.translate('features.Wrangler.Filter.Options.doesNotEqual')}</option>
+          <option value="<">{T.translate('features.Wrangler.Filter.Options.lessThan')}</option>
+          <option value=">">{T.translate('features.Wrangler.Filter.Options.greaterThan')}</option>
+          <option value="<=">{T.translate('features.Wrangler.Filter.Options.lessEqual')}</option>
+          <option value=">=">{T.translate('features.Wrangler.Filter.Options.greaterEqual')}</option>
+          <option value="startsWith">{T.translate('features.Wrangler.Filter.Options.startsWith')}</option>
+          <option value="endsWith">{T.translate('features.Wrangler.Filter.Options.endsWith')}</option>
+          <option value="contains">{T.translate('features.Wrangler.Filter.Options.contains')}</option>
         </select>
 
         <div>
@@ -82,7 +83,7 @@ export default class Filter extends Component {
             className="form-control"
             onChange={(e) => this.filterByText = e.target.value}
             onKeyPress={this.handleKeyPress}
-            placeholder="Filter"
+            placeholder={T.translate('features.Wrangler.Filter.filter')}
           />
         </div>
 
@@ -93,7 +94,7 @@ export default class Filter extends Component {
               checked={this.state.filterIgnoreCase}
               onChange={() => this.setState({filterIgnoreCase: !this.state.filterIgnoreCase})}
             />
-            Ignore Case
+            {T.translate('features.Wrangler.Filter.ignoreCase')}
           </label>
         </div>
         <br/>
@@ -102,7 +103,7 @@ export default class Filter extends Component {
             className="btn btn-wrangler"
             onClick={this.onFilter}
           >
-            Apply
+            {T.translate('features.Wrangler.Filter.apply')}
           </button>
         </div>
       </div>
@@ -155,7 +156,7 @@ export default class Filter extends Component {
           id={id}
           className="transform-item-text"
         >
-          Filter
+          {T.translate('features.Wrangler.Filter.filter')}
         </span>
 
         {
@@ -169,7 +170,7 @@ export default class Filter extends Component {
               delay={{show: 300, hide: 0}}
               tether={{offset: '0 -10px'}}
             >
-              Select a column to enable filter
+              {T.translate('features.Wrangler.LeftPanel.selectColumn', {type: 'filter'})}
             </Tooltip>
           ) : null
         }

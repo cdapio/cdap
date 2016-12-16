@@ -20,6 +20,8 @@ import HeaderBrand from 'components/HeaderBrand';
 import HeaderActions from 'components/HeaderActions';
 import NamespaceStore from 'services/NamespaceStore';
 import HeaderNavbarList from 'components/HeaderNavbarList';
+import T from 'i18n-react';
+
 require('components/Header/Header.less');
 require('./WranglerHeader.less');
 
@@ -27,7 +29,7 @@ export default function WranglerHeader() {
   const list = [
     {
       linkTo: '/ns',
-      title: 'Import Data'
+      title: T.translate('features.Wrangler.Header.importData')
     },
   ];
 

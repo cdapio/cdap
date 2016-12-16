@@ -180,7 +180,9 @@ export default class WranglerTable extends Component {
                 <span>
                   <span className="content">{value}</span>
                   {
-                    errors[header] && errors[header][extra.rowData._index] ?
+                    // this works because right now the error is only on null
+                    // Need a more scalable way
+                    !value ?
                       <span className="pull-right">{errorCircle}</span> : null
                   }
                 </span>
