@@ -51,6 +51,8 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
 
   override def getRuntimeArguments = delegate.getRuntimeArguments
 
+  override def getClusterName = delegate.getClusterName
+
   override def getApplicationSpecification = delegate.getApplicationSpecification
 
   override def execute(runnable: TxRunnable) = delegate.execute(runnable)
