@@ -216,13 +216,9 @@
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
         <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
-        <stage.security.ext.dir>${stage.opt.dir}/ext/security</stage.security.ext.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
         <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
-        <security.ext.jar.pattern>**/target/*.jar</security.ext.jar.pattern>
-        <security.ext.config.pattern>**/target/*.json</security.ext.config.pattern>
-        <security.ext.exclude.pattern>**/target/*-tests.jar</security.ext.exclude.pattern>
       </properties>
 
       <!-- Add dependencies on spark api and core. It just for making sure those artifacts are built before this -->
@@ -334,6 +330,7 @@
                     <resource>
                       <directory>${project.basedir}/bin</directory>
                       <targetPath>bin</targetPath>
+                      <filtering>true</filtering>
                     </resource>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-common/bin</directory>
@@ -372,9 +369,10 @@
                      <targetPath>ui</targetPath>
                      <excludes>
                       <exclude>**LICENSE**</exclude>
+                      <exclude>bin/node</exclude>
                      </excludes>
                    </resource>
-                    <!-- Copy examples. This assumes the examples are already built -->
+                    <!-- Copy examples code -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-examples</directory>
                       <targetPath>examples</targetPath>
@@ -392,7 +390,6 @@
                         <include>**/bin/**</include>
                         <include>**/resources/**</include>
                         <include>**/pom.xml</include>
-                        <include>**/target/*.jar</include>
                       </includes>
                       <excludes>
                         <exclude>pom.xml</exclude>
@@ -509,8 +506,6 @@
                       <directory>${project.parent.basedir}/cdap-cli/bin</directory>
                       <targetPath>bin</targetPath>
                       <includes>
-                        <include>cdap</include>
-                        <include>functions.sh</include>
                         <include>cdap-cli.bat</include>
                         <include>cdap-cli.sh</include>
                       </includes>
@@ -564,6 +559,12 @@
                         <exclude name="${additional.artifacts.exclude.pattern}"/>
                         <exclude name="**/target/*-sources.jar"/>
                         <exclude name="**/target/*-javadoc.jar"/>
+                        <!--We don't want to package the following plugins with CDAP-->
+                        <exclude name="**/target/solrsearch-plugins*"/>
+                        <exclude name="**/target/hive-plugins*"/>
+                        <exclude name="**/target/elasticsearch-plugins*"/>
+                        <exclude name="**/target/mongodb-plugins*"/>
+                        <exclude name="**/target/cassandra-plugins*"/>
                       </fileset>
                     </copy>
                   </target>
@@ -572,35 +573,16 @@
                   <goal>run</goal>
                 </goals>
               </execution>
-              <execution>
-                <id>copy-security-extensions-artifacts</id>
-                <phase>process-resources</phase>
-                <configuration>
-                  <target if="security.extensions.dir">
-                    <copy todir="${stage.security.ext.dir}" flatten="true">
-                      <fileset dir="${security.extensions.dir}">
-                        <include name="${security.ext.jar.pattern}"/>
-                        <include name="${security.ext.config.pattern}"/>
-                        <exclude name="${security.ext.exclude.pattern}"/>
-                        <exclude name="**/target/*-sources.jar"/>
-                        <exclude name="**/target/*-javadoc.jar"/>
-                      </fileset>
-                    </copy>
-                  </target>
-                </configuration>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-              </execution>
-              <!-- Rename CLI jar and make CLI scripts executable -->
+              <!-- Make CDAP and CLI scripts executable -->
               <execution>
                 <id>copy-cli-bash</id>
                 <phase>prepare-package</phase>
                 <configuration>
                   <target>
+                    <chmod file="${stage.opt.dir}/bin/cdap-cli.bat" perm="755"/>
+                    <chmod file="${stage.opt.dir}/bin/cdap.bat" perm="755"/>
                     <chmod file="${stage.opt.dir}/bin/cdap" perm="755"/>
                     <chmod file="${stage.opt.dir}/bin/functions.sh" perm="644"/>
-                    <chmod file="${stage.opt.dir}/bin/cdap-cli.bat" perm="755"/>
                   </target>
                 </configuration>
                 <goals>

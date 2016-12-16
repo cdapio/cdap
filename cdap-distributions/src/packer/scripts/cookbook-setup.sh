@@ -21,9 +21,12 @@
 die() { echo $*; exit 1; }
 
 # Grab cookbooks using knife
-for cb in cdap hadoop idea maven nodejs openssh; do
+for cb in cdap idea maven openssh; do
   knife cookbook site install $cb || die "Cannot fetch cookbook $cb"
 done
+
+### TODO: remove this hack when chef-cookbooks/ark#181 is solved
+knife cookbook site install ark 2.1.0 || die "Cannot fetch ark cookbook 2.1.0"
 
 # Do not change HOME for cdap user
 sed -i '/ home /d' /var/chef/cookbooks/cdap/recipes/sdk.rb

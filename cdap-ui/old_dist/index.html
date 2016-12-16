@@ -1,0 +1,67 @@
+
+
+<!DOCTYPE html>
+<html lang="en" ng-app="cdap-ui" ng-strict-di>
+<head>
+    <title ng-bind="$state.current | myTitleFilter">CDAP</title>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Cask Data Application Platform">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <base href="/oldcdap/">
+
+    <link rel="stylesheet" type="text/css" href="/old_assets/bundle/lib-533a868d5d.css">
+    <link rel="stylesheet" type="text/css" href="/old_assets/bundle/app-0e3427623d.css">
+</head>
+<body ng-controller="BodyCtrl" ng-class="bodyClass" ng-keyup="onSearch($event)">
+  <my-global-navbar></my-global-navbar>
+
+  <main class="container">
+    <div ui-view></div>
+  </main>
+
+  <div class="alerts" id="alerts"></div>
+
+  <loading-icon></loading-icon>
+
+  <footer>
+    <div class="container">
+      <div class="row text-muted" ng-cloak>
+        <div class="col-sm-6 text-uppercase">
+          <p>
+            <span class="cask-logo"></span>
+            <span>Copyright &copy; {{ copyrightYear }} Cask Data, Inc.</span>
+          </p>
+        </div>
+        <div class="col-sm-6">
+          <ul class="list-inline">
+            <li>
+              {{ ::version }}
+            </li>
+            <li>
+              <a href="http://cask.co/terms" target="_blank">Terms</a>
+            </li>
+            <li>
+              <a href="http://cask.co/privacy" target="_blank">Privacy</a>
+            </li>
+            <li>
+              <a href="http://cask.co/contact" target="_blank">Contact</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="text/javascript" src="/old_assets/bundle/polyfill-4e784267c6.js"></script>
+  <script type="text/javascript" src="/old_assets/bundle/lib-533b255a96.js"></script>
+  <script type="text/javascript" src="/config-old.js"></script>
+  <script type="text/javascript" src="/ui-config-old.js"></script>
+  <script type="text/javascript" src="/old_assets/bundle/app-e4380589c9.js"></script>
+  <script type="text/javascript" src="/old_assets/bundle/tpl-41b0f8fccc.js"></script>
+
+  
+
+</body>
+</html>

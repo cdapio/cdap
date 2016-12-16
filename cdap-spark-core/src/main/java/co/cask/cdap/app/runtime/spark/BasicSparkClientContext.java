@@ -25,6 +25,8 @@ import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
@@ -137,6 +139,11 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Override
   public ApplicationSpecification getApplicationSpecification() {
     return sparkRuntimeContext.getApplicationSpecification();
+  }
+
+  @Override
+  public String getClusterName() {
+    return sparkRuntimeContext.getClusterName();
   }
 
   @Override
@@ -286,5 +293,20 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Override
   public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
     sparkRuntimeContext.execute(timeoutInSeconds, runnable);
+  }
+
+  @Override
+  public MessagePublisher getMessagePublisher() {
+    return sparkRuntimeContext.getMessagePublisher();
+  }
+
+  @Override
+  public MessagePublisher getDirectMessagePublisher() {
+    return sparkRuntimeContext.getDirectMessagePublisher();
+  }
+
+  @Override
+  public MessageFetcher getMessageFetcher() {
+    return sparkRuntimeContext.getMessageFetcher();
   }
 }

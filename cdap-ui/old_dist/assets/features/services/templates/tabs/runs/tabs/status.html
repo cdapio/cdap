@@ -1,0 +1,36 @@
+
+
+<div ng-controller="ServicesRunsDetailStatusController as StatusController">
+
+  <div class="row">
+    <div class="col-sm-6 col-sm-offset-6 col-md-5 col-md-offset-7">
+      <my-instance-control data-base-path="StatusController.basePath"></my-instance-control>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12">
+      <h3> Endpoints [{{StatusController.endPoints.length}}] </h3>
+      <table class="table table-curved endpoints">
+        <thead>
+          <tr>
+            <th> Method </th>
+            <th> Path </th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="ep in StatusController.endPoints">
+            <td ng-bind="ep.method"></td>
+            <td class="endpoint-path"> {{ep.path}} </td>
+            <td>
+              <a class="btn btn-default" ng-class="{'btn-success': StatusController.status === 'RUNNING'}" ng-disabled="StatusController.status !== 'RUNNING'" ng-click="StatusController.openModal(ep)">
+              Make Request </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

@@ -3,7 +3,6 @@
     :description: Introduction to the Cask Data Application Platform
     :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
-
 :hide-relations: true
 
 .. _introduction-to-cdap:

@@ -39,6 +39,7 @@ import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.artifact.preview.PreviewConfig;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -52,7 +53,7 @@ import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.common.Threads;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +126,10 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       throw e;
     }
 
-    ProgramController controller = programLifecycleService.start(programId, new HashMap<String, String>(), false);
+    PreviewConfig previewConfig = previewRequest.getAppRequest().getPreview();
+    ProgramController controller = programLifecycleService.start(
+      programId, previewConfig == null ? Collections.<String, String>emptyMap() : previewConfig.getRuntimeArgs(),
+      false);
 
     controller.addListener(new AbstractListener() {
       @Override

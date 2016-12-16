@@ -66,6 +66,7 @@ import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -101,7 +102,7 @@ class DatasetServiceClient {
       }
     });
     this.namespaceId = namespaceId;
-    this.httpRequestConfig = new DefaultHttpRequestConfig();
+    this.httpRequestConfig = new DefaultHttpRequestConfig(false);
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
@@ -148,7 +149,7 @@ class DatasetServiceClient {
     return getInstance(instanceName, null);
   }
 
-  public Collection<DatasetSpecificationSummary> getAllInstances() throws DatasetManagementException {
+  Collection<DatasetSpecificationSummary> getAllInstances() throws DatasetManagementException {
     HttpResponse response = doGet("datasets");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
@@ -190,11 +191,11 @@ class DatasetServiceClient {
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
-                                                         datasetInstanceName, response));
+                                                        datasetInstanceName, response));
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                          datasetInstanceName, response));
+                                                         datasetInstanceName, response));
     }
   }
 
@@ -216,7 +217,7 @@ class DatasetServiceClient {
     }
   }
 
-  public void truncateInstance(String datasetInstanceName) throws DatasetManagementException {
+  void truncateInstance(String datasetInstanceName) throws DatasetManagementException {
     HttpResponse response = doPost("datasets/" + datasetInstanceName + "/admin/truncate");
     if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
       throw new InstanceNotFoundException(datasetInstanceName);
@@ -245,7 +246,7 @@ class DatasetServiceClient {
   /**
    * Deletes all dataset instances inside the namespace of this client is operating in.
    */
-  public Set<String> deleteInstances() throws DatasetManagementException {
+  Set<String> deleteInstances() throws DatasetManagementException {
     HttpResponse response = doDelete("datasets");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete instances, details: %s", response));
@@ -283,7 +284,7 @@ class DatasetServiceClient {
     }
   }
 
-  public void deleteModules() throws DatasetManagementException {
+  void deleteModules() throws DatasetManagementException {
     HttpResponse response = doDelete("modules");
 
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
@@ -375,7 +376,7 @@ class DatasetServiceClient {
       // we compare short name, because in some YARN containers launched by CDAP, the current username isn't the full
       // configured principal
       if (!kerberosEnabled || currUserShortName.equals(masterShortUserName)) {
-        LOG.trace("Acessing dataset in system namespace using the system principal because the current user " +
+        LOG.trace("Accessing dataset in system namespace using the system principal because the current user " +
                     "{} is the same as the CDAP master user {}.",
                   UserGroupInformation.getCurrentUser().getUserName(), masterShortUserName);
         userId = currUserShortName;
@@ -393,8 +394,10 @@ class DatasetServiceClient {
     if (discoverable == null) {
       throw new ServiceUnavailableException("DatasetService");
     }
-    InetSocketAddress addr = discoverable.getSocketAddress();
-    return String.format("http://%s:%s%s/namespaces/%s/data/%s", addr.getHostName(), addr.getPort(),
+    InetSocketAddress address = discoverable.getSocketAddress();
+    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
+      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
+    return String.format("%s%s:%s%s/namespaces/%s/data/%s", scheme, address.getHostName(), address.getPort(),
                          Constants.Gateway.API_VERSION_3, namespaceId.getNamespace(), resource);
   }
 }

@@ -1,0 +1,52 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<td><span>{{$index+1}}</span>{{ data.columnName }}</td>
+<td>
+  <select ng-model="DictionaryController.selectedDictColumn.columnType"
+    ng-change="DictionaryController.updateColumn()" >
+    <option value='boolean'>boolean</option>
+    <option value='bytes'>bytes</option>
+    <option value='double'>double</option>
+    <option value='float'>float</option>
+    <option value='int'>int</option>
+    <option value='long'>long</option>
+    <option value='string'>string</option>
+  </select>
+</td>
+<td>
+  <input type="checkbox"
+    ng-checked="DictionaryController.selectedDictColumn.isNullable"
+    ng-model="DictionaryController.selectedDictColumn.isNullable"
+    ng-change="DictionaryController.updateColumn()" >
+</td>
+<td>
+  <input type="checkbox"
+    ng-checked="DictionaryController.selectedDictColumn.isPII"
+    ng-model="DictionaryController.selectedDictColumn.isPII"
+    ng-change="DictionaryController.updateColumn()" >
+</td>
+<td></td>
+<td>
+  <input type="text"
+    ng-model="DictionaryController.selectedDictColumn.description"
+    ng-model-options='{ debounce: 800 }'
+    ng-change="DictionaryController.updateColumn()"
+    ng-blur="DictionaryController.updateColumn()" />
+</td>
+<td class="action-buttons">
+  <i class="fa fa-times cancel-btn" ng-click="DictionaryController.reset();DictionaryController.fetchDictionary()"></i>
+</td>

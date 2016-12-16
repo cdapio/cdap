@@ -19,6 +19,8 @@ package co.cask.cdap.messaging.client;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -29,11 +31,8 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.RollbackDetail;
 import co.cask.cdap.messaging.Schemas;
 import co.cask.cdap.messaging.StoreRequest;
-import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.TopicNotFoundException;
-import co.cask.cdap.messaging.data.Message;
-import co.cask.cdap.messaging.data.MessageId;
+import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.common.http.HttpRequest;
@@ -42,6 +41,7 @@ import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
@@ -101,13 +101,18 @@ public final class ClientMessagingService implements MessagingService {
   private static final Type TOPIC_PROPERTY_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type TOPIC_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
 
-  private final EndpointStrategy endpointStrategy;
+  private final Supplier<EndpointStrategy> endpointStrategy;
 
   @VisibleForTesting
   @Inject
-  public ClientMessagingService(DiscoveryServiceClient discoveryServiceClient) {
-    this.endpointStrategy = new RandomEndpointStrategy(
-      discoveryServiceClient.discover(Constants.Service.MESSAGING_SERVICE));
+  public ClientMessagingService(final DiscoveryServiceClient discoveryServiceClient) {
+    // Use a supplier to delay the discovery until the first time it is being used.
+    this.endpointStrategy = Suppliers.memoize(new Supplier<EndpointStrategy>() {
+      @Override
+      public EndpointStrategy get() {
+        return new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.MESSAGING_SERVICE));
+      }
+    });
   }
 
   @Override
@@ -121,7 +126,7 @@ public final class ClientMessagingService implements MessagingService {
     HttpResponse response = HttpRequests.execute(request, HTTP_REQUEST_CONFIG);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
-      throw new TopicAlreadyExistsException(topicId);
+      throw new TopicAlreadyExistsException(topicId.getNamespace(), topicId.getTopic());
     }
     handleError(response, "Failed to create topic " + topicId);
   }
@@ -137,7 +142,7 @@ public final class ClientMessagingService implements MessagingService {
     HttpResponse response = HttpRequests.execute(request, HTTP_REQUEST_CONFIG);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new TopicNotFoundException(topicId);
+      throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
     }
     handleError(response, "Failed to update topic " + topicId);
   }
@@ -150,7 +155,7 @@ public final class ClientMessagingService implements MessagingService {
     HttpResponse response = HttpRequests.execute(request, HTTP_REQUEST_CONFIG);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new TopicNotFoundException(topicId);
+      throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
     }
     handleError(response, "Failed to update topic " + topicId);
   }
@@ -163,7 +168,7 @@ public final class ClientMessagingService implements MessagingService {
     HttpResponse response = HttpRequests.execute(request, HTTP_REQUEST_CONFIG);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new TopicNotFoundException(topicId);
+      throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
     }
     handleError(response, "Failed to update topic " + topicId);
 
@@ -228,7 +233,7 @@ public final class ClientMessagingService implements MessagingService {
     HttpResponse response = HttpRequests.execute(httpRequest, HTTP_REQUEST_CONFIG);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new TopicNotFoundException(topicId);
+      throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
     }
     handleError(response, "Failed to rollback message in topic " + topicId
                                       + " with rollback detail " + rollbackDetail);
@@ -270,7 +275,7 @@ public final class ClientMessagingService implements MessagingService {
     HttpResponse response = HttpRequests.execute(httpRequest, HTTP_REQUEST_CONFIG);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new TopicNotFoundException(topicId);
+      throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
     }
     handleError(response, "Failed to " + writeType + " message to topic " + topicId);
     return response;
@@ -287,7 +292,7 @@ public final class ClientMessagingService implements MessagingService {
    * Creates a URL for making HTTP requests to the messaging system.
    */
   private URL createURL(String path) throws MalformedURLException {
-    Discoverable discoverable = endpointStrategy.pick(DISCOVERY_PICK_TIMEOUT_SECS, TimeUnit.SECONDS);
+    Discoverable discoverable = endpointStrategy.get().pick(DISCOVERY_PICK_TIMEOUT_SECS, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new ServiceUnavailableException("No endpoint available for messaging service");
     }
@@ -413,11 +418,11 @@ public final class ClientMessagingService implements MessagingService {
     }
 
     @Override
-    public CloseableIterator<Message> fetch() throws IOException, TopicNotFoundException {
+    public CloseableIterator<RawMessage> fetch() throws IOException, TopicNotFoundException {
       GenericRecord record = new GenericData.Record(Schemas.V1.ConsumeRequest.SCHEMA);
 
       if (getStartOffset() != null) {
-        record.put("startFrom", ByteBuffer.wrap(getStartOffset().getRawId()));
+        record.put("startFrom", ByteBuffer.wrap(getStartOffset()));
       }
       if (getStartTime() != null) {
         record.put("startFrom", getStartTime());
@@ -447,7 +452,7 @@ public final class ClientMessagingService implements MessagingService {
 
       int responseCode = urlConn.getResponseCode();
       if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-        throw new TopicNotFoundException(topicId);
+        throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
       }
 
       handleError(responseCode, new Supplier<String>() {
@@ -468,12 +473,12 @@ public final class ClientMessagingService implements MessagingService {
       // Decode the avro array manually instead of using DatumReader in order to support streaming decode.
       final Decoder decoder = DecoderFactory.get().binaryDecoder(urlConn.getInputStream(), null);
       final long initialItemCount = decoder.readArrayStart();
-      return new AbstractCloseableIterator<Message>() {
+      return new AbstractCloseableIterator<RawMessage>() {
 
         private long itemCount = initialItemCount;
 
         @Override
-        protected Message computeNext() {
+        protected RawMessage computeNext() {
           if (initialItemCount == 0) {
             return endOfData();
           }
@@ -494,8 +499,8 @@ public final class ClientMessagingService implements MessagingService {
             // The response will likely always be an array, but the element schema can evolve.
             messageRecord = messageReader.read(messageRecord, decoder);
 
-            return new Message(new MessageId(Bytes.toBytes((ByteBuffer) messageRecord.get("id"))),
-                               Bytes.toBytes((ByteBuffer) messageRecord.get("payload")));
+            return new RawMessage(Bytes.toBytes((ByteBuffer) messageRecord.get("id")),
+                                  Bytes.toBytes((ByteBuffer) messageRecord.get("payload")));
           } catch (IOException e) {
             throw Throwables.propagate(e);
           }

@@ -79,8 +79,7 @@ public class MetricsHandler extends AbstractHttpHandler {
   private static final String PARAM_MAX_INTERPOLATE_GAP = "maxInterpolateGap";
   private static final String PARAM_AGGREGATE = "aggregate";
   private static final String PARAM_AUTO_RESOLUTION = "auto";
-
-  public static final String ANY_TAG_VALUE = "*";
+  private static final String ANY_TAG_VALUE = "*";
 
   private final MetricStore metricStore;
 

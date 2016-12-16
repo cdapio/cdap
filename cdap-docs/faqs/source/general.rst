@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Frequently Asked Questions about the Cask Data Application Platform
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 :titles-only-global-toc: true
 
@@ -38,8 +38,9 @@ in your environment; we recommend the Oracle JDK.
 
 What version of Node.js is required by CDAP?
 --------------------------------------------
-We recommend any version of `Node.js <https://nodejs.org/>`__ |node-js-min-version|.
-We support Node.js up to |node-js-max-version|.
+We recommend a version of `Node.js <https://nodejs.org/>`__ beginning with |node-js-min-version|.
+
+.. We support Node.js up to |node-js-max-version|.
 
 I have a Hadoop cluster in my data center, can I run CDAP that uses my Hadoop cluster?
 --------------------------------------------------------------------------------------

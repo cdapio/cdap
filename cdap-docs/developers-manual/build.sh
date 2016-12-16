@@ -46,12 +46,13 @@ function download_includes() {
   local includes_dir=${1}
   set_version
 
-  local clients_branch="release/${GIT_BRANCH_CDAP_CLIENTS}"
-  local ingest_branch="release/${GIT_BRANCH_CDAP_INGEST}"
-
+  local clients_branch ingest_branch
   if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     clients_branch="develop"
     ingest_branch="develop"
+  else
+    clients_branch="${GIT_BRANCH_CDAP_CLIENTS}"
+    ingest_branch="${GIT_BRANCH_CDAP_INGEST}"
   fi
 
 # cdap-clients
@@ -59,9 +60,7 @@ function download_includes() {
   local clients_url="${github_url}/cdap-clients/${clients_branch}"
 
   download_readme_file_and_test ${includes_dir} ${clients_url} 9bdc7d9ab874bfb6ec044964d3df804e cdap-authentication-clients/java
-#   download_readme_file_and_test ${includes_dir} ${clients_url} f075935545e48a132d014c6a8d32122a cdap-authentication-clients/javascript
   download_readme_file_and_test ${includes_dir} ${clients_url} 6f937cbf71ed2312a4893cba27e6145f cdap-authentication-clients/python
-#   download_readme_file_and_test ${includes_dir} ${clients_url} c16bf5ce7c1f0a2a4a680974a848cdd0 cdap-authentication-clients/ruby
   
 # cdap-ingest
 # https://raw.githubusercontent.com/caskdata/cdap-ingest/develop/cdap-file-drop-zone/README.rst
@@ -69,7 +68,6 @@ function download_includes() {
 
   download_readme_file_and_test ${includes_dir} ${ingest_url} cf2d8cac45b4be267adbb0e8ecdc88a4 cdap-flume
   download_readme_file_and_test ${includes_dir} ${ingest_url} a852e493aff54ffd726368691f248d80 cdap-stream-clients/java
-#   download_readme_file_and_test ${includes_dir} ${ingest_url} 277ded1924cb8d9b52a007f262820002 cdap-stream-clients/javascript
   download_readme_file_and_test ${includes_dir} ${ingest_url} da242d9be7051417bd5ff73b3dc5edc2 cdap-stream-clients/python
   download_readme_file_and_test ${includes_dir} ${ingest_url} b798091f24f6ecfe05d614f1dd1f7a03 cdap-stream-clients/ruby
 

@@ -23,7 +23,8 @@ const basepath = '/namespaces/:namespace/apps/:appId/:programType/:programId';
 export const MyProgramApi = {
   get: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
   status: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/status`),
+  runs: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/runs`),
+  pollRuns: apiCreator(dataSrc, 'GET', 'POLL', `${basepath}/runs`),
   pollStatus: apiCreator(dataSrc, 'GET', 'POLL', `${basepath}/status`),
-  listRuns: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/runs`),
   action: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/:action`)
 };

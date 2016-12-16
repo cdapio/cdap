@@ -1,0 +1,122 @@
+
+
+<div class="row">
+  <div class="col-xs-6">
+    <h2 ng-if="!TemplatesController.isEdit">Create Template</h2>
+    <h2 ng-if="TemplatesController.isEdit">Edit Template</h2>
+  </div>
+  <div class="col-xs-6 text-right">
+    <button class="btn btn-success" ng-disabled="TemplatesController.pluginConfig.pluginTemplate.length === 0" ng-click="TemplatesController.save()">Save</button>
+  </div>
+</div>
+<div ng-if="!TemplatesController.isEdit">
+  <label class="label-control">Choose Template</label>
+  <div class="select-wrapper">
+    <select ng-model="TemplatesController.templateType" data-ng-options="o for o in TemplatesController.pipelineTypeOptions" ng-change="TemplatesController.onPipelineTypeChange()" class="form-control">
+    </select>
+  </div>
+
+  <div ng-if="TemplatesController.templateType">
+    <label class="label-control">Choose Plugin Type</label>
+    <div class="select-wrapper">
+      <select ng-model="TemplatesController.pluginType" data-ng-options="o for o in TemplatesController.pluginTypeOptions" ng-change="TemplatesController.getPluginsList()" class="form-control">
+      </select>
+    </div>
+  </div>
+
+  <div ng-if="TemplatesController.pluginType">
+    <label class="label-control">Choose Plugin</label>
+    <div class="select-wrapper" ng-if="TemplatesController.pluginList.length > 0">
+      <select ng-model="TemplatesController.pluginName" ng-change="TemplatesController.onPluginSelect()" class="form-control">
+        <option ng-repeat="plugin in TemplatesController.pluginList" value="{{plugin}}">{{plugin}}</option>
+      </select>
+    </div>
+
+    <div ng-if="TemplatesController.pluginList.length === 0">
+      <h4>There is no plugin for this template</h4>
+    </div>
+  </div>
+
+  <div ng-if="TemplatesController.pluginVersions.length > 0">
+    <label class="label-control">Choose Version</label>
+    <div class="select-wrapper">
+      <select ng-model="TemplatesController.plugin" ng-change="TemplatesController.onPluginVersionSelect()" ng-options="plugin.artifact.version for plugin in TemplatesController.pluginVersions" class="form-control">
+      </select>
+    </div>
+  </div>
+
+</div>
+
+
+<div ng-if="TemplatesController.configFetched">
+  <h3>Plugin Properties</h3>
+
+  <label class="label-control">
+    Template Name
+    <i class="fa fa-asterisk text-danger"></i>
+  </label>
+  <input type="text" class="form-control" ng-model="TemplatesController.pluginConfig.pluginTemplate">
+
+  <label class="label-control">Template Description</label>
+  <textarea class="form-control" ng-model="TemplatesController.pluginDescription"></textarea>
+
+  
+  <div ng-if="!TemplatesController.noConfig">
+    <div ng-repeat="group in TemplatesController.groupsConfig.groups">
+      <div class="widget-group-container">
+        <h4>{{::group.display}}</h4>
+        <div ng-repeat="field in group.fields">
+          <div ng-if="field.name !== TemplatesController.groupsConfig.outputSchema.schemaProperty">
+
+            <div class="form-group">
+              <label class="control-label">
+                <span>{{::field.label}}</span>
+                <span class="fa fa-info-circle" uib-tooltip="{{::field.description}}" tooltip-placement="right" tooltip-append-to-body="true">
+                </span>
+                <span class="fa fa-asterisk" ng-if="TemplatesController.pluginConfig._backendProperties[field.name].required"></span>
+                <small class="text-danger" ng-if="TemplatesController.pluginConfig._backendProperties[field.name].required && !TemplatesController.pluginConfig.properties[field.name]">{{::NodeConfigController.requiredPropertyError}}</small>
+              </label>
+
+              <div>
+                <div data-name="field" class="my-widget-container" ng-class="{'select-wrapper': field.widget === 'select'}" data-model="TemplatesController.pluginConfig.properties[field.name]" data-myconfig="field" data-properties="TemplatesController.pluginConfig.properties" widget-container>
+                </div>
+
+                <label class="label-control">Lock change?</label>
+                <input type="checkbox" ng-model="TemplatesController.pluginConfig.lock[field.name]">
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div ng-if="TemplatesController.noConfig">
+    <div ng-repeat="(name, value) in TemplatesController.plugin.properties track by $index">
+      <div class="form-group">
+        <label class="control-label">
+          <span>{{name}}</span>
+          <span class="fa fa-info-circle" uib-tooltip="{{value.description}}" tooltip-placement="right" tooltip-append-to-body="true">
+          </span>
+          <span class="fa fa-asterisk" ng-if="value.required"></span>
+        </label>
+        <input type="text" class="form-control" ng-model="TemplatesController.pluginConfig.properties[name]">
+      </div>
+    </div>
+  </div>
+
+  <div ng-if="!TemplatesController.noConfig">
+    <div class="output-schema">
+      <h4>Output Schema</h4>
+
+      <fieldset ng-disabled="TemplatesController.isDisabled">
+        <my-schema-editor ng-model="TemplatesController.pluginConfig['outputSchema']" data-disabled="TemplatesController.groupsConfig.outputSchema.implicitSchema" plugin-properties="TemplatesController.pluginConfig.properties" config="TemplatesController.groupsConfig.outputSchema.schemaProperties">
+        </my-schema-editor>
+      </fieldset>
+
+    </div>
+  </div>
+
+</div>

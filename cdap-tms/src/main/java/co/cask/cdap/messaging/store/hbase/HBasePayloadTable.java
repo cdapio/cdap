@@ -25,7 +25,6 @@ import co.cask.cdap.hbase.wd.DistributedScanner;
 import co.cask.cdap.messaging.store.AbstractPayloadTable;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.RawPayloadTableEntry;
-import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -50,14 +49,17 @@ final class HBasePayloadTable extends AbstractPayloadTable {
   private final HTable hTable;
   private final AbstractRowKeyDistributor rowKeyDistributor;
   private final ExecutorService scanExecutor;
+  private final int scanCacheRows;
 
   HBasePayloadTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
-                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor) {
+                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor,
+                    int scanCacheRows) {
     this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);
     this.rowKeyDistributor = rowKeyDistributor;
     this.scanExecutor = scanExecutor;
+    this.scanCacheRows = scanCacheRows;
   }
 
   @Override
@@ -66,6 +68,7 @@ final class HBasePayloadTable extends AbstractPayloadTable {
     Scan scan = tableUtil.buildScan()
       .setStartRow(startRow)
       .setStopRow(stopRow)
+      .setCaching(scanCacheRows)
       .build();
     final ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor);
     final Iterator<Result> results = scanner.iterator();
@@ -111,31 +114,6 @@ final class HBasePayloadTable extends AbstractPayloadTable {
 
     if (!batchPuts.isEmpty()) {
       hTable.put(batchPuts);
-      if (!hTable.isAutoFlush()) {
-        hTable.flushCommits();
-      }
-    }
-  }
-
-  @Override
-  protected void delete(byte[] startRow, byte[] stopRow) throws IOException {
-    Scan scan = tableUtil.buildScan()
-      .setStartRow(startRow)
-      .setStopRow(stopRow)
-      .build();
-
-    List<Delete> batchDeletes = new ArrayList<>();
-    try (ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor)) {
-      for (Result result : scanner) {
-        // No need to turn the key back to the original row key because we want to delete with the actual row key
-        Delete delete = tableUtil.buildDelete(result.getRow()).build();
-        batchDeletes.add(delete);
-        hTable.delete(delete);
-      }
-    }
-
-    if (!batchDeletes.isEmpty()) {
-      hTable.delete(batchDeletes);
       if (!hTable.isAutoFlush()) {
         hTable.flushCommits();
       }

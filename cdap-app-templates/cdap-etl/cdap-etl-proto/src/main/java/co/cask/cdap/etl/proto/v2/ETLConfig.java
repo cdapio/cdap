@@ -42,6 +42,8 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   private final Set<ETLStage> stages;
   private final Set<Connection> connections;
   private final Resources resources;
+  private final Resources driverResources;
+  private final Resources clientResources;
   private final Boolean stageLoggingEnabled;
   // v1 fields to support backwards compatibility
   private final co.cask.cdap.etl.proto.v1.ETLStage source;
@@ -50,10 +52,13 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   private final Integer numOfRecordsPreview;
 
   protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections,
-                      Resources resources, boolean stageLoggingEnabled, int numOfRecordsPreview) {
+                      Resources resources, Resources driverResources, Resources clientResources,
+                      boolean stageLoggingEnabled, int numOfRecordsPreview) {
     this.stages = Collections.unmodifiableSet(stages);
     this.connections = Collections.unmodifiableSet(connections);
     this.resources = resources;
+    this.driverResources = driverResources;
+    this.clientResources = clientResources;
     this.stageLoggingEnabled = stageLoggingEnabled;
     // these fields are only here for backwards compatibility
     this.source = null;
@@ -71,7 +76,15 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   }
 
   public Resources getResources() {
-    return resources == null ? new Resources() : resources;
+    return resources == null ? new Resources(1024, 1) : resources;
+  }
+
+  public Resources getDriverResources() {
+    return driverResources == null ? new Resources(1024, 1) : driverResources;
+  }
+
+  public Resources getClientResources() {
+    return clientResources == null ? new Resources(1024, 1) : clientResources;
   }
 
   public int getNumOfRecordsPreview() {
@@ -134,9 +147,16 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   @Override
   public String toString() {
     return "ETLConfig{" +
-      "stageLoggingEnabled=" + stageLoggingEnabled +
-      ", stages=" + stages +
+      "stages=" + stages +
+      ", connections=" + connections +
       ", resources=" + resources +
+      ", driverResources=" + driverResources +
+      ", clientResources=" + clientResources +
+      ", stageLoggingEnabled=" + stageLoggingEnabled +
+      ", source=" + source +
+      ", sinks=" + sinks +
+      ", transforms=" + transforms +
+      ", numOfRecordsPreview=" + numOfRecordsPreview +
       "} " + super.toString();
   }
 
@@ -152,7 +172,10 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     ETLConfig that = (ETLConfig) o;
 
     return Objects.equals(stages, that.stages) &&
+      Objects.equals(connections, that.connections) &&
       Objects.equals(resources, that.resources) &&
+      Objects.equals(driverResources, that.driverResources) &&
+      Objects.equals(clientResources, that.clientResources) &&
       isStageLoggingEnabled() == that.isStageLoggingEnabled();
   }
 
@@ -181,6 +204,8 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     protected Set<ETLStage> stages;
     protected Set<Connection> connections;
     protected Resources resources;
+    protected Resources driverResources;
+    protected Resources clientResources;
     protected Boolean stageLoggingEnabled;
     protected int numOfRecordsPreview;
 
@@ -213,6 +238,16 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
     public T setResources(Resources resources) {
       this.resources = resources;
+      return (T) this;
+    }
+
+    public T setDriverResources(Resources resources) {
+      this.driverResources = resources;
+      return (T) this;
+    }
+
+    public T setClientResources(Resources resources) {
+      this.clientResources = resources;
       return (T) this;
     }
 

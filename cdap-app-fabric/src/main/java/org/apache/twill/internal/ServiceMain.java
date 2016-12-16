@@ -131,11 +131,10 @@ public abstract class ServiceMain {
   protected abstract String getRunnableName();
 
   /**
-   * Returns the {@link Location} for the application based on the env {@link EnvKeys#TWILL_APP_DIR}.
+   * Returns the {@link Location} for the application based on the app directory.
    */
-  protected static Location createAppLocation(Configuration conf) {
+  protected static Location createAppLocation(final Configuration conf, String fsUser, final URI appDir) {
     // Note: It's a little bit hacky based on the uri schema to create the LocationFactory, refactor it later.
-    URI appDir = URI.create(System.getenv(EnvKeys.TWILL_APP_DIR));
 
     try {
       if ("file".equals(appDir.getScheme())) {
@@ -146,11 +145,6 @@ public abstract class ServiceMain {
       // a FileSystem created from the Configuration
       if (UserGroupInformation.isSecurityEnabled()) {
         return new HDFSLocationFactory(FileSystem.get(appDir, conf)).create(appDir);
-      }
-
-      String fsUser = System.getenv(EnvKeys.TWILL_FS_USER);
-      if (fsUser == null) {
-        throw new IllegalStateException("Missing environment variable " + EnvKeys.TWILL_FS_USER);
       }
       return new HDFSLocationFactory(FileSystem.get(appDir, conf, fsUser)).create(appDir);
 
@@ -235,12 +229,12 @@ public abstract class ServiceMain {
   }
 
   /**
-   * Override to return the right log level for the service.
+   * Return the right log level for the service.
    *
    * @param logger the {@link Logger} instance of the service context.
    * @return String of log level based on {@code slf4j} log levels.
    */
-  protected String getLoggerLevel(Logger logger) {
+  private String getLoggerLevel(Logger logger) {
     if (logger instanceof ch.qos.logback.classic.Logger) {
       return ((ch.qos.logback.classic.Logger) logger).getLevel().toString();
     }

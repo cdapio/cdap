@@ -42,8 +42,7 @@ public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchCo
 
   @Override
   public BatchPipelineSpec generateSpec(ETLBatchConfig config) {
-    BatchPipelineSpec.Builder specBuilder = BatchPipelineSpec.builder()
-      .setDriverResources(config.getDriverResources());
+    BatchPipelineSpec.Builder specBuilder = BatchPipelineSpec.builder();
 
     for (ETLStage endingAction : config.getPostActions()) {
       String name = endingAction.getName();

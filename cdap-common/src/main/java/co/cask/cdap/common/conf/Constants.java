@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public final class Constants {
 
   public static final String[] FEATURE_TOGGLE_PROPS = {
-    Security.SSL_ENABLED,
+    Security.SSL.EXTERNAL_ENABLED,
     Security.SSL.INTERNAL_ENABLED,
     Security.ENABLED,
     Explore.EXPLORE_ENABLED,
@@ -52,6 +52,8 @@ public final class Constants {
   public static final String SPARK_HOME = "SPARK_HOME";
   // Environment variable for TEZ home
   public static final String TEZ_HOME = "TEZ_HOME";
+
+  public static final String CLUSTER_NAME = "cluster.name";
 
   /**
    * Configuration for Master startup.
@@ -196,7 +198,8 @@ public final class Constants {
     public static final String WORKFLOW_LOCAL_DATASET_PROPERTY = "workflow.local.dataset";
 
     /**
-     * Configuration setting to provide extra jars for programs.
+     * Configuration setting to localize extra jars to every program container and to be
+     * added to classpaths of CDAP programs.
      */
     public static final String PROGRAM_CONTAINER_DIST_JARS = "program.container.dist.jars";
   }
@@ -220,6 +223,7 @@ public final class Constants {
    */
   public class Scheduler {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
+    public static final String CFG_SCHEDULER_MISFIRE_THRESHOLD_MS = "scheduler.misfire.threshold.ms";
   }
 
   /**
@@ -748,9 +752,10 @@ public final class Constants {
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
     /** Enables external SSL */
     @Deprecated
-    public static final String SSL_ENABLED = "ssl.enabled";
+    public static final String SSL_ENABLED_DEPRECATED = "ssl.enabled";
     /** Key to mark a discoverable which supports ssl */
-    public static final String SSL_DISCOVERABLE_KEY = "ssl";
+    public static final String SSL_URI_SCHEME = "https://";
+    public static final String URI_SCHEME = "http://";
 
     /**
      * App Fabric
@@ -763,8 +768,6 @@ public final class Constants {
       public static final String INTERNAL_ENABLED = "ssl.internal.enabled";
       /** Password for the java keystore. */
       public static final String KEYSTORE_PASSWORD = "ssl.internal.keystore.password";
-      /** Type for the java keystore. e.g. JCEKS. */
-      public static final String KEYSTORE_TYPE = "ssl.internal.keystore.type";
       /** Validity of the self generated certificate in days */
       public static final String CERT_VALIDITY = "ssl.internal.cert.validity";
     }
@@ -1073,6 +1076,7 @@ public final class Constants {
     public static final String LOCAL_DATA_DIR = "messaging.local.data.dir";
 
     public static final String HBASE_MAX_SCAN_THREADS = "messaging.hbase.max.scan.threads";
+    public static final String HBASE_SCAN_CACHE_ROWS = "messaging.hbase.scan.cache.rows";
     public static final String METADATA_TABLE_NAME = "messaging.metadata.table.name";
     public static final String MESSAGE_TABLE_NAME = "messaging.message.table.name";
     public static final String MESSAGE_TABLE_HBASE_SPLITS = "messaging.message.table.hbase.splits";

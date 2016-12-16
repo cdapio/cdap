@@ -20,10 +20,12 @@ package org.apache.twill.internal.container;
 import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.lang.ClassLoaders;
 import com.google.common.base.Charsets;
-import com.google.common.base.Strings;
 import com.google.common.io.Files;
+import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractService;
-import com.google.common.util.concurrent.Service;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.hadoop.security.Credentials;
@@ -31,7 +33,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillRunnableSpecification;
-import org.apache.twill.api.TwillSpecification;
+import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.discovery.ZKDiscoveryService;
 import org.apache.twill.internal.Arguments;
 import org.apache.twill.internal.BasicTwillContext;
@@ -41,8 +43,9 @@ import org.apache.twill.internal.EnvContainerInfo;
 import org.apache.twill.internal.EnvKeys;
 import org.apache.twill.internal.RunIds;
 import org.apache.twill.internal.ServiceMain;
+import org.apache.twill.internal.TwillRuntimeSpecification;
 import org.apache.twill.internal.json.ArgumentsCodec;
-import org.apache.twill.internal.json.TwillSpecificationAdapter;
+import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
 import org.apache.twill.internal.logging.Loggings;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -56,6 +59,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The main class for launching a {@link TwillContainerService}.
@@ -96,22 +101,30 @@ public final class TwillContainerMain extends ServiceMain {
     // Try to load the secure store from localized file, which AM requested RM to localize it for this container.
     loadSecureStore();
 
-    String zkConnectStr = System.getenv(EnvKeys.TWILL_ZK_CONNECT);
     File twillSpecFile = new File(Constants.Files.TWILL_SPEC);
-    RunId appRunId = RunIds.fromString(System.getenv(EnvKeys.TWILL_APP_RUN_ID));
+    TwillRuntimeSpecification twillRuntimeSpec = loadTwillSpec(twillSpecFile);
+    String zkConnectStr = twillRuntimeSpec.getZkConnectStr();
+    RunId appRunId = twillRuntimeSpec.getTwillAppRunId();
     RunId runId = RunIds.fromString(System.getenv(EnvKeys.TWILL_RUN_ID));
     String runnableName = System.getenv(EnvKeys.TWILL_RUNNABLE_NAME);
-    int instanceId = Integer.parseInt(System.getenv(EnvKeys.TWILL_INSTANCE_ID));
-    int instanceCount = Integer.parseInt(System.getenv(EnvKeys.TWILL_INSTANCE_COUNT));
+    int instanceId = Integer.valueOf(System.getenv(EnvKeys.TWILL_INSTANCE_ID));
+    int instanceCount = Integer.valueOf(System.getenv(EnvKeys.TWILL_INSTANCE_COUNT));
+    Map<String, String> defaultLogLevels = twillRuntimeSpec.getLogLevels().get(runnableName);
+    Map<String, String> dynamicLogLevels = loadLogLevels().get(runnableName);
 
-    ZKClientService zkClientService = createZKClient(zkConnectStr, System.getenv(EnvKeys.TWILL_APP_NAME));
+    Map<String, String> logLevels = new HashMap<>();
+    logLevels.putAll(defaultLogLevels);
+    if (dynamicLogLevels != null) {
+      logLevels.putAll(dynamicLogLevels);
+    }
+
+    ZKClientService zkClientService = createZKClient(zkConnectStr, twillRuntimeSpec.getTwillAppName());
     ZKDiscoveryService discoveryService = new ZKDiscoveryService(zkClientService);
 
     ZKClient appRunZkClient = getAppRunZKClient(zkClientService, appRunId);
 
-    TwillSpecification twillSpec = loadTwillSpec(twillSpecFile);
-
-    TwillRunnableSpecification runnableSpec = twillSpec.getRunnables().get(runnableName).getRunnableSpecification();
+    TwillRunnableSpecification runnableSpec =
+      twillRuntimeSpec.getTwillSpecification().getRunnables().get(runnableName).getRunnableSpecification();
     ContainerInfo containerInfo = new EnvContainerInfo();
     Arguments arguments = decodeArgs();
     BasicTwillContext context = new BasicTwillContext(
@@ -124,21 +137,18 @@ public final class TwillContainerMain extends ServiceMain {
 
     ZKClient containerZKClient = getContainerZKClient(zkClientService, appRunId, runnableName);
     Configuration conf = new YarnConfiguration(new HdfsConfiguration(new Configuration()));
-    Service service = new TwillContainerService(context, containerInfo, containerZKClient,
-                                                runId, runnableSpec, getClassLoader(),
-                                                createAppLocation(conf));
+    TwillContainerService service = new TwillContainerService(context, containerInfo, containerZKClient,
+                                                              runId, runnableSpec, getClassLoader(),
+                                                              createAppLocation(conf, twillRuntimeSpec.getFsUser(),
+                                                                                twillRuntimeSpec.getTwillAppDir()),
+                                                              defaultLogLevels, logLevels);
     new TwillContainerMain().doMain(
       service,
-      new LogFlushService(),
       zkClientService,
-      new TwillZKPathService(containerZKClient, runId));
-  }
-
-  @Override
-  protected String getLoggerLevel(Logger logger) {
-    String appLogLevel = System.getenv(EnvKeys.TWILL_APP_LOG_LEVEL);
-
-    return Strings.isNullOrEmpty(appLogLevel) ? super.getLoggerLevel(logger) : appLogLevel;
+      new LogFlushService(),
+      new TwillZKPathService(containerZKClient, runId),
+      new CloseableServiceWrapper(discoveryService)
+    );
   }
 
   private static void loadSecureStore() throws IOException {
@@ -180,10 +190,21 @@ public final class TwillContainerMain extends ServiceMain {
     return classLoader;
   }
 
-  private static TwillSpecification loadTwillSpec(File specFile) throws IOException {
+  private static TwillRuntimeSpecification loadTwillSpec(File specFile) throws IOException {
     try (Reader reader = Files.newReader(specFile, Charsets.UTF_8)) {
-      return TwillSpecificationAdapter.create().fromJson(reader);
+      return TwillRuntimeSpecificationAdapter.create().fromJson(reader);
     }
+  }
+
+  private static Map<String, Map<String, String>> loadLogLevels() throws IOException {
+    File file = new File(Constants.Files.LOG_LEVELS);
+    if (file.exists()) {
+      try (Reader reader = Files.newReader(file, Charsets.UTF_8)) {
+        Gson gson = new GsonBuilder().serializeNulls().create();
+        return gson.fromJson(reader, new TypeToken<Map<String, Map<String, String>>>() { }.getType());
+      }
+    }
+    return new HashMap<>();
   }
 
   private static Arguments decodeArgs() throws IOException {
@@ -221,6 +242,29 @@ public final class TwillContainerMain extends ServiceMain {
     protected void doStop() {
       Loggings.forceFlush();
       notifyStopped();
+    }
+  }
+
+  /**
+   * A wrapper to adapt a {@link AutoCloseable} to a {@link ServiceMain}. The service has no-op during start up
+   * and will call the {@link AutoCloseable#close()} on shutdown.
+   */
+  private static final class CloseableServiceWrapper extends AbstractIdleService {
+
+    private final AutoCloseable closeable;
+
+    private CloseableServiceWrapper(AutoCloseable closeable) {
+      this.closeable = closeable;
+    }
+
+    @Override
+    protected void startUp() throws Exception {
+      // no-op
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+      closeable.close();
     }
   }
 }

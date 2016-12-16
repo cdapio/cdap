@@ -46,6 +46,7 @@ import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -99,6 +100,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final SecureStoreManager secureStoreManager;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final MessagingService messagingService;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
@@ -106,7 +108,8 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      MetricsCollectionService metricsCollectionService,
                      DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
                      RuntimeStore runtimeStore, SecureStore secureStore, SecureStoreManager secureStoreManager,
-                     AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
+                     AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
+                     MessagingService messagingService) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -121,6 +124,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.secureStoreManager = secureStoreManager;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.messagingService = messagingService;
   }
 
   @Override
@@ -168,7 +172,8 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                                    discoveryServiceClient,
                                                                    metricsCollectionService, streamAdmin, workflowInfo,
                                                                    pluginInstantiator, secureStore, secureStoreManager,
-                                                                   authorizationEnforcer, authenticationContext);
+                                                                   authorizationEnforcer, authenticationContext,
+                                                                   messagingService);
       closeables.addFirst(runtimeContext);
 
       Spark spark;

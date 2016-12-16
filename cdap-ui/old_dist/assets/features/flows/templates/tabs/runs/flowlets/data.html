@@ -1,0 +1,31 @@
+ 
+
+
+<div ng-if="DetailCtrl.activeTab === 2" ng-controller="FlowletDetailDataController as DataCtrl">
+  <table class="table table-responsive" ng-if="DataCtrl.datasets.length > 0" cask-sortable>
+    <thead>
+      <tr ng-class="{'sort-enabled': DataCtrl.datasets.length>0}">
+        <th data-predicate="name">Dataset</th>
+        <th data-predicate="reads">Reads</th>
+        <th data-predicate="writes">Writes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="dataset in DataCtrl.datasets">
+        <td>
+          {{ dataset.name }}
+        </td>
+        <td>
+          {{ dataset.reads | myNumber }}
+        </td>
+        <td>
+          {{ dataset.writes | myNumber }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="well text-center" ng-if="DataCtrl.datasets.length === 0">
+    <h3>No Dataset</h3>
+  </div>
+</div>

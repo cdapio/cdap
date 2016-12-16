@@ -43,6 +43,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -224,6 +225,7 @@ public class DefaultPreviewManager implements PreviewManager {
       new MetricsClientRuntimeModule().getStandaloneModules(),
       new LoggingModules().getStandaloneModules(),
       new NamespaceStoreModule().getStandaloneModules(),
+      new MessagingClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

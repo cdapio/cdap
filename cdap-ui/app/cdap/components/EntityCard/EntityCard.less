@@ -17,12 +17,29 @@
 @entity-card-border: 1px solid #cccccc;
 @jump-button-container-size: 80px;
 
-.home-cards {
+.entity-cards {
   padding: 0;
   text-align: left;
   border-radius: 0;
   position: relative;
+  box-shadow: 0px 1px 10px 0 rgba(0, 0, 0, 0.3);
+  width: 300px;
+  margin: 5px;
+  display: inline-block;
 
+  &.active {
+    -webkit-box-shadow: 0px 0px 8px 0 rgba(255,102,0,1);
+    -moz-box-shadow: 0px 0px 8px 0 rgba(255,102,0,1);
+    box-shadow: 0px 0px 8px 0 rgba(255,102,0,1);
+  }
+
+  // FIXME: This will be eventually removed when all the entities are clickable.
+  &.datapipeline,
+  &.application {
+    .cask-card {
+      .card-header { cursor: pointer; }
+    }
+  }
   .cask-card {
     padding: 0;
     .card-header {
@@ -62,6 +79,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      line-height: 18px;
 
       &.with-version { line-height: initial; }
     }

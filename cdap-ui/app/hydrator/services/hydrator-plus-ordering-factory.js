@@ -57,10 +57,26 @@ function HydratorPlusPlusOrderingFactory(GLOBALS) {
     return pluginsMap;
   }
 
+  function getAdjacencyMap(connections) {
+    let adjacencyMap = {};
+    if (!Array.isArray(connections)) {
+      return adjacencyMap;
+    }
+    connections.forEach( conn => {
+      if (Array.isArray(adjacencyMap[conn.from])) {
+        adjacencyMap[conn.from].push(conn.to);
+      } else {
+        adjacencyMap[conn.from] = [conn.to];
+      }
+    });
+    return adjacencyMap;
+  }
+
   return {
     getArtifactDisplayName: getArtifactDisplayName,
     getPluginTypeDisplayName: getPluginTypeDisplayName,
-    orderPluginTypes: orderPluginTypes
+    orderPluginTypes: orderPluginTypes,
+    getAdjacencyMap: getAdjacencyMap
   };
 }
 

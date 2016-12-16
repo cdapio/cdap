@@ -1,0 +1,53 @@
+ 
+
+<div ng-controller="FlowsFlowletDetailController as DetailCtrl">
+  <div class="row">
+    <div class="col-xs-6">
+      <h2><span>{{ ::FlowletsController.activeFlowlet.name }}</span></h2>
+      <p> {{description}} </p>
+    </div>
+
+    <div class="col-xs-offset-3 col-xs-3 instances">
+      <table class="table pull-right">
+        <tr>
+          <td></td>
+          <td>Provisioned</td>
+          <td>Requested</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><strong>Instances:</strong></td>
+          <td class="text-center">{{ DetailCtrl.provisionedInstances }}</td>
+          <td><input class="form-control" type="number" min="1" ng-model="DetailCtrl.instance"></td>
+          <td><button class="btn btn-primary btn-sm" ng-click="DetailCtrl.setInstance()" ng-disabled="DetailCtrl.instance === DetailCtrl.provisionedInstances">Set</button></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs slanted-tabs" role="tablist">
+    <li role="presentation" ng-class="{active: DetailCtrl.activeTab === 0}" ng-click="DetailCtrl.activeTab=0">
+      <a role="tab">Input</a>
+    </li>
+
+    <li role="presentation" ng-class="{active: DetailCtrl.activeTab === 2}" ng-click="DetailCtrl.activeTab=2">
+      <a role="tab">Data</a>
+    </li>
+
+    <li role="presentation" ng-class="{active: DetailCtrl.activeTab === 3}" ng-click="DetailCtrl.activeTab=3">
+      <a role="tab">Output</a>
+    </li>
+  </ul>
+
+  <div ng-include="'old_assetsfeatures/flows/templates/tabs/runs/flowlets/input.html'"></div>
+
+  
+  <div class="well text-center" ng-if="DetailCtrl.activeTab === 1">
+    <h3>Not Implemented Yet</h3>
+  </div>
+
+
+  <div ng-include="'old_assetsfeatures/flows/templates/tabs/runs/flowlets/data.html'"></div>
+
+  <div ng-include="'old_assetsfeatures/flows/templates/tabs/runs/flowlets/output.html'"></div>
+</div>

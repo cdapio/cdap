@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.Resources;
@@ -159,13 +160,14 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     // Add classpaths for MR framework
     extraClassPaths.addAll(MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
 
-    LOG.info("Launching distributed workflow: " + program.getName() + ":" + workflowSpec.getName());
+    RunId runId = ProgramRunners.getRunId(options);
+    LOG.info("Launching distributed workflow: {}", program.getId().run(runId));
     TwillController controller = launcher.launch(
       new WorkflowTwillApplication(program, options.getUserArguments(),
                                    workflowSpec, localizeResources, eventHandler, driverMeta.resources),
       extraClassPaths, extraDependencies
     );
-    return createProgramController(controller, program.getId(), ProgramRunners.getRunId(options));
+    return createProgramController(controller, program.getId(), runId);
   }
 
   private static YarnConfiguration createConfiguration(YarnConfiguration hConf) {

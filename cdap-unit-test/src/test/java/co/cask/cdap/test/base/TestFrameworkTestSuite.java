@@ -34,6 +34,7 @@ import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.app.ServiceLifeCycleTestRun;
 import co.cask.cdap.test.app.TestFrameworkTestRun;
+import co.cask.cdap.test.messaging.MessagingAppTestRun;
 import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -52,6 +53,7 @@ import org.junit.runners.Suite;
   FlowStreamIntegrationTestRun.class,
   MapReduceStreamInputTestRun.class,
   MapReduceServiceIntegrationTestRun.class,
+  MessagingAppTestRun.class,
   ServiceLifeCycleTestRun.class,
   SparkFileSetTestRun.class,
   SparkMetricsIntegrationTestRun.class,
@@ -65,6 +67,7 @@ public class TestFrameworkTestSuite extends TestFrameworkTestBase {
   // Note that setting the following configuration in any of the above Test classes is ignored, since
   // they are run as part of this TestSuite.
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
+                                                                       Constants.CLUSTER_NAME, "testCluster");
 
 }

@@ -26,6 +26,7 @@ import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceController;
 import org.apache.twill.api.TwillController;
+import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
@@ -112,6 +113,27 @@ final class ImpersonatedTwillController implements TwillController {
   @Override
   public Future<String> restartInstances(String runnable, int instanceId, int... moreInstanceIds) {
     return delegate.restartInstances(runnable, instanceId, moreInstanceIds);
+  }
+
+  @Override
+  public Future<Map<String, LogEntry.Level>> updateLogLevels(Map<String, LogEntry.Level> logLevels) {
+    return delegate.updateLogLevels(logLevels);
+  }
+
+  @Override
+  public Future<Map<String, LogEntry.Level>> updateLogLevels(String runnableName,
+                                                             Map<String, LogEntry.Level> logLevels) {
+    return delegate.updateLogLevels(runnableName, logLevels);
+  }
+
+  @Override
+  public Future<String[]> resetLogLevels(String... loggerNames) {
+    return delegate.resetLogLevels(loggerNames);
+  }
+
+  @Override
+  public Future<String[]> resetRunnableLogLevels(String runnableName, String... loggerNames) {
+    return delegate.resetRunnableLogLevels(runnableName, loggerNames);
   }
 
   @Override

@@ -1,0 +1,45 @@
+
+
+<div class="container">
+  <div class="row">
+    <div class="col-xs-8 h2">
+      <h3>Schema
+    </h3></div>
+    <div class="col-xs-4">
+        <table class="table table-curved table-status">
+          <thead>
+            <th>Storage</th>
+            <th>Total Events</th>
+          </thead>
+          <tbody>
+            <td ng-if="StatusController.storage"> {{StatusController.storage | bytes}} </td>
+            <td ng-if="StatusController.storage == null"> 0b </td>
+            <td ng-if="StatusController.events"> {{StatusController.events | number}} </td>
+            <td ng-if="StatusController.events == null"> 0 </td>
+          </tbody>
+        </table>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12">
+      <table class="table table-curved" cask-sortable no-initial-sort="true" ng-show="StatusController.schema.length > 0">
+        <thead>
+          <tr ng-class="{'sort-enabled': StatusController.schema.length > 1}">
+            <th data-predicate="name"> Name </th>
+            <th data-predicate="type"> Type </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="field in StatusController.schema | orderBy:sortable.predicate:sortable.reverse">
+            <td ng-bind="field.name"> </td>
+            <td ng-bind="field.type"> </td>
+          </tr>
+        </tbody>
+      </table>
+      <div ng-show="StatusController.schema.length == 0" class="well well-lg text-center">
+        <span> No Schema defined for this Dataset </span>
+      </div>
+    </div>
+  </div>
+</div>

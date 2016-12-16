@@ -51,7 +51,6 @@ public class GrantAccessToken {
   private static final Logger LOG = LoggerFactory.getLogger(GrantAccessToken.class);
   private final TokenManager tokenManager;
   private final Codec<AccessToken> tokenCodec;
-  private final CConfiguration cConf;
   private final long tokenExpiration;
   private final long extendedTokenExpiration;
 
@@ -61,10 +60,9 @@ public class GrantAccessToken {
   @Inject
   public GrantAccessToken(TokenManager tokenManager,
                           Codec<AccessToken> tokenCodec,
-                          CConfiguration cConfiguration) {
+                          CConfiguration cConf) {
     this.tokenManager = tokenManager;
     this.tokenCodec = tokenCodec;
-    this.cConf = cConfiguration;
     this.tokenExpiration = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
     this.extendedTokenExpiration = cConf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION);
   }
@@ -99,7 +97,7 @@ public class GrantAccessToken {
   @Produces("application/json")
   public Response token(@Context HttpServletRequest request, @Context HttpServletResponse response)
       throws IOException, ServletException {
-    this.grantToken(request, response, tokenExpiration);
+    grantToken(request, response, tokenExpiration);
     return Response.status(200).build();
   }
 
@@ -111,7 +109,7 @@ public class GrantAccessToken {
   @Produces("application/json")
   public Response extendedToken(@Context HttpServletRequest request, @Context HttpServletResponse response)
     throws IOException, ServletException {
-    this.grantToken(request, response, extendedTokenExpiration);
+    grantToken(request, response, extendedTokenExpiration);
     return Response.status(200).build();
   }
 

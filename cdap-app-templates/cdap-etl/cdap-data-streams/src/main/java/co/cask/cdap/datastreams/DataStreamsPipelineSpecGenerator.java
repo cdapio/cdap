@@ -44,7 +44,6 @@ public class DataStreamsPipelineSpecGenerator
         String.format("Unable to parse batchInterval '%s'", config.getBatchInterval()));
     }
     DataStreamsPipelineSpec.Builder specBuilder = DataStreamsPipelineSpec.builder(batchIntervalMillis)
-      .setDriverResources(config.getDriverResources())
       .setExtraJavaOpts(config.getExtraJavaOpts());
     configureStages(config, specBuilder);
     return specBuilder.build();

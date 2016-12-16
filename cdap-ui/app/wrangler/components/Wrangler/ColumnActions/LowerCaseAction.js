@@ -14,25 +14,61 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import React, {Component, PropTypes} from 'react';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
+import {Tooltip} from 'reactstrap';
+import T from 'i18n-react';
 
-export default function LowerCaseAction({column}) {
-  function onClick() {
+export default class LowerCaseAction extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      tooltipOpen: false
+    };
+
+    this.onClick = this.onClick.bind(this);
+    this.toggle = this.toggle.bind(this);
+  }
+
+  toggle() {
+    this.setState({tooltipOpen: !this.state.tooltipOpen});
+  }
+
+  onClick() {
     WranglerStore.dispatch({
       type: WranglerActions.lowerCaseColumn,
       payload: {
-        activeColumn: column
+        activeColumn: this.props.column
       }
     });
   }
 
-  return (
-    <span className="column-actions">
-      <span onClick={onClick}>t</span>
-    </span>
-  );
+  render() {
+    const id = 'column-action-lowercase';
+
+    return (
+      <span className="column-actions">
+        <span
+          id={id}
+          onClick={this.onClick}
+          className="fa icon-lowercase"
+        />
+
+        <Tooltip
+          placement="top"
+          isOpen={this.state.tooltipOpen}
+          toggle={this.toggle}
+          target={id}
+          className="wrangler-tooltip"
+          delay={0}
+        >
+          {T.translate('features.Wrangler.ColumnActions.LowerCase.label')}
+        </Tooltip>
+      </span>
+    );
+  }
 }
 
 LowerCaseAction.propTypes = {

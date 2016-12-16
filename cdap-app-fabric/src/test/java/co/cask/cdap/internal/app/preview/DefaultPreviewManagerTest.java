@@ -40,6 +40,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
@@ -95,6 +96,7 @@ public class DefaultPreviewManagerTest {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new SecureStoreModules().getInMemoryModules(),
+      new MessagingServerRuntimeModule().getInMemoryModules(),
       new PreviewHttpModule()
     );
   }

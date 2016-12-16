@@ -31,7 +31,6 @@ import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
 import co.cask.cdap.messaging.store.leveldb.LevelDBTableFactory;
 import co.cask.http.HttpHandler;
-import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.Module;
@@ -67,7 +66,7 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
         expose(MessagingService.class);
 
         bindHandlers(binder(), Constants.MessagingSystem.HANDLER_BINDING_NAME);
-        bind(MessagingHttpService.class);
+        bind(MessagingHttpService.class).in(Scopes.SINGLETON);
         expose(MessagingHttpService.class);
       }
     };
@@ -85,15 +84,24 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
   /**
    * Guice module being used in in memory as well as standalone mode.
    */
-  private final class LocalModule extends AbstractModule {
+  private final class LocalModule extends PrivateModule {
 
     @Override
     protected void configure() {
       bind(TableFactory.class).to(LevelDBTableFactory.class).in(Scopes.SINGLETON);
       bind(MessagingService.class).to(CoreMessagingService.class).in(Scopes.SINGLETON);
+      expose(MessagingService.class);
 
+      // TODO: Because of CDAP-7688, we need to run MessagingHttpService even in local mode so that we
+      // can use a custom http exception handler. When CDAP-7688 is resolved, uncomment the following
       // In local mode, we don't run the MessagingHttpService, but instead piggy back on app-fabric.
-      bindHandlers(binder(), Constants.AppFabric.HANDLERS_BINDING);
+      // bindHandlers(binder(), Constants.AppFabric.HANDLERS_BINDING);
+
+      // Begin workaround for CDAP-7688. Remove when it is resolved
+      bindHandlers(binder(), Constants.MessagingSystem.HANDLER_BINDING_NAME);
+      bind(MessagingHttpService.class).in(Scopes.SINGLETON);
+      expose(MessagingHttpService.class);
+      // End workaround for CDAP-7688
     }
   }
 

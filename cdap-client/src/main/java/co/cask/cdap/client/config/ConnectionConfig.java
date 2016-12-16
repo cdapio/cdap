@@ -37,7 +37,7 @@ public class ConnectionConfig {
   private static final CConfiguration CONF = CConfiguration.create();
   private static final int DEFAULT_PORT = CONF.getInt(Constants.Router.ROUTER_PORT);
   private static final int DEFAULT_SSL_PORT = CONF.getInt(Constants.Router.ROUTER_SSL_PORT);
-  private static final boolean DEFAULT_SSL_ENABLED = CONF.getBoolean(Constants.Security.SSL_ENABLED, false);
+  private static final boolean DEFAULT_SSL_ENABLED = CONF.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED, false);
   private static final String DEFAULT_HOST = tryResolveAddress(CONF.get(Constants.Router.ADDRESS));
 
   private static String tryResolveAddress(String addressString) {

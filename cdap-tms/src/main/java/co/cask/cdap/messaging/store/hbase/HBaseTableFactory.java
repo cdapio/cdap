@@ -95,7 +95,8 @@ public final class HBaseTableFactory implements TableFactory {
         .build();
       tableUtil.createTableIfNotExists(admin, tableId, htd);
     }
-    return new HBaseMetadataTable(tableUtil, tableUtil.createHTable(hConf, tableId), COLUMN_FAMILY);
+    return new HBaseMetadataTable(tableUtil, tableUtil.createHTable(hConf, tableId),
+                                  COLUMN_FAMILY, cConf.getInt(Constants.MessagingSystem.HBASE_SCAN_CACHE_ROWS));
   }
 
   @Override
@@ -105,7 +106,7 @@ public final class HBaseTableFactory implements TableFactory {
     return new HBaseMessageTable(
       tableUtil, hTable, COLUMN_FAMILY,
       new RowKeyDistributorByHashPrefix(new OneByteSimpleHash(getKeyDistributorBuckets(hTable, tableId))),
-      scanExecutor
+      scanExecutor, cConf.getInt(Constants.MessagingSystem.HBASE_SCAN_CACHE_ROWS)
     );
   }
 
@@ -116,7 +117,7 @@ public final class HBaseTableFactory implements TableFactory {
     return new HBasePayloadTable(
       tableUtil, hTable, COLUMN_FAMILY,
       new RowKeyDistributorByHashPrefix(new OneByteSimpleHash(getKeyDistributorBuckets(hTable, tableId))),
-      scanExecutor
+      scanExecutor, cConf.getInt(Constants.MessagingSystem.HBASE_SCAN_CACHE_ROWS)
     );
   }
 

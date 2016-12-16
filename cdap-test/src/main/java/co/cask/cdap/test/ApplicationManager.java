@@ -171,4 +171,12 @@ public interface ApplicationManager {
    * @param args the arguments to save
    */
   void setRuntimeArgs(ProgramId programId, Map<String, String> args) throws Exception;
+
+  /**
+   * Gets runtime arguments of the specified program.
+   *
+   * @param programId the {@link ProgramId program} to get runtime arguments for
+   * @return args the arguments
+   */
+  Map<String, String> getRuntimeArgs(ProgramId programId) throws Exception;
 }

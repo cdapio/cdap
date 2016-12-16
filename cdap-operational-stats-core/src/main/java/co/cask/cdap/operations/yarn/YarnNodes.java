@@ -21,9 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.records.NodeReport;
 import org.apache.hadoop.yarn.client.api.YarnClient;
-import org.apache.hadoop.yarn.exceptions.YarnException;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -94,14 +92,12 @@ public class YarnNodes extends AbstractYarnStats implements YarnNodesMXBean {
   }
 
   @Override
-  public synchronized void collect() throws IOException {
+  public synchronized void collect() throws Exception {
     reset();
     List<NodeReport> nodeReports;
     YarnClient yarnClient = createYARNClient();
     try {
       nodeReports = yarnClient.getNodeReports();
-    } catch (YarnException e) {
-      throw new IOException(e);
     } finally {
       yarnClient.stop();
     }

@@ -227,23 +227,15 @@ cdap_check_pidfile() {
 # returns: 1 if not found or not high enough version, 0 otherwise
 #
 cdap_check_node_version() {
-  local readonly __ver=${1} __ret
-  program_is_installed node
-  __ret=${?}
-  if [[ ${__ret} -ne 0 ]]; then
-    die "Cannot locate node, is Node.js installed?"
-  fi
-  local readonly __node=$(node -v 2>/dev/null)
-  local readonly __ver_maj=$(echo ${__ver/v/} | cut -d. -f1)
-  local readonly __ver_min=$(echo ${__ver/v/} | cut -d. -f2)
-  local readonly __ver_pat=$(echo ${__ver/v/} | cut -d. -f3)
-  local readonly __maj=$(echo ${__node/v/} | cut -d. -f1)
-  local readonly __min=$(echo ${__node/v/} | cut -d. -f2)
-  local readonly __pat=$(echo ${__node/v/} | cut -d. -f3)
-  if [[ ${__maj} -lt $((__ver_maj + 1)) ]] && [[ ${__min} -lt $((__ver_min + 1)) ]] && [[ ${__pat} -lt $((__ver_pat + 1)) ]]; then
-    die "Node.js ${__node} is not supported. The minimum version supported is ${__ver}"
-    return 1
-  fi
+  local readonly __ver=${1/v/} __ret
+  program_is_installed node || die "Cannot locate node, is Node.js installed?"
+  local readonly __node=$(node -v 2>/dev/null | sed -e 's/v//g')
+  compare_versions ${__node} ${__ver}
+  __ret=$?
+  case ${__ret} in
+    0|1) return 0 ;;
+    *) echo "Node.js ${__node} is not supported. The minimum version supported is ${__ver}" ; return 1 ;;
+  esac
   return 0
 }
 
@@ -554,6 +546,7 @@ cdap_service() {
       echo ${CLASSPATH}
       __ret=0
       ;;
+    run) cdap_run_class ${__args} ; __ret=${?} ;;
     usage|-h|--help) echo "Usage: $0 ${__service} {start|stop|restart|status|condrestart|classpath}"; __ret=0 ;;
     *) die "Usage: $0 ${__service} {start|stop|restart|status|condrestart|classpath}" ;;
   esac
@@ -776,7 +769,7 @@ cdap_sdk_stop() { cdap_stop_pidfile ${__pidfile} "CDAP Standalone (SDK)"; };
 #
 cdap_sdk_check_before_start() {
   cdap_check_pidfile ${__pidfile} || return ${?}
-  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v0.10.36} || return ${?}
+  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v4.5.0} || return ${?}
   local __node_pid=$(ps | grep ${CDAP_UI_PATH:-ui/server.js} | grep -v grep | awk '{ print $1 }')
   if [[ -z ${__node_pid} ]]; then
     : # continue
@@ -1032,28 +1025,7 @@ cdap_config_tool() {
 # cdap_upgrade_tool [arguments]
 #
 cdap_upgrade_tool() {
-  local readonly __args=${@}
-  local readonly __path __libexec __lib __script="$(basename ${0}):cdap_upgrade_tool"
   local readonly __ret __class=co.cask.cdap.data.tools.UpgradeTool
-  cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
-  __path=${CDAP_HOME}
-  if [[ -d ${__path}/master/lib ]]; then
-    __libexec=${__path}/master/libexec
-    __lib=${__path}/master/lib
-  else
-    __libexec=${__path}/libexec
-    __lib=${__path}/lib
-  fi
-  if [[ ${CLASSPATH} == "" ]]; then
-    CLASSPATH=${__lib}/*
-  else
-    CLASSPATH=${CLASSPATH}:${__lib}/*
-  fi
-  if [[ -d ${CDAP_CONF} ]]; then
-    CLASSPATH=${CLASSPATH}:"${CDAP_CONF}"
-  elif [[ -d ${__path}/conf ]]; then
-    CLASSPATH=${CLASSPATH}:"${__path}"/conf/
-  fi
 
   # check arguments
   if [[ ${1} == 'hbase' ]]; then
@@ -1063,7 +1035,7 @@ cdap_upgrade_tool() {
     set -- "upgrade" ${@}
   fi
 
-  "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
+  cdap_run_class ${__class} ${@}
   __ret=${?}
   return ${__ret}
 }

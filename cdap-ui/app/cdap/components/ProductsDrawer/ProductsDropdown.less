@@ -27,39 +27,52 @@
   line-height: 50px;
 
   .dropdown {
-    .current-product {
+    .open {
+      color: @cdap-orange;
+      &:hover {
+        background-color: @cdap-orange;
+        color: white;
+
+        a {
+          color: white;
+        }
+      }
+    }
+    .top-product {
       padding-left: 10px;
       display: inline-block;
       cursor: pointer;
       width: 100%;
 
+      &.open:hover {
+        span {
+          color: white;
+        }
+        color: white;
+      }
+
       &.cdap {
         color: @cdap-orange;
         &.open {
-          background-color: @cdap-orange;
-          color: white;
+          a{
+            text-decoration: inherit;
+            cursor: auto;
+            color: @cdap-orange;
+
+            &:hover {
+              color: white;
+            }
+          }
         }
       }
       &.hydrator {
         color: @hydrator-blue;
-        &.open {
-          background-color: @hydrator-blue;
-          color: white;
-        }
       }
       &.tracker {
         color: @tracker-green;
-        &.open {
-          background-color: @tracker-green;
-          color: white;
-        }
       }
       &.wrangler {
-        color: @wrangler-red;
-        &.open {
-          background-color: @wrangler-red;
-          color: white;
-        }
+        color: @wrangler-yellow;
       }
       [class*="icon-"] {
         vertical-align: middle;
@@ -82,7 +95,7 @@
       height: ~"-webkit-calc(100vh - 50px)";
       height: ~"-moz-calc(100vh - 50px)";
       display: block;
-      transition: 0.3s ease-in;
+      transition: 0.1s ease-in;
       left: 100%;
       outline: 0;
       user-select: none;
@@ -95,49 +108,43 @@
         .product-link {
           color: @namespace-dropdown-color;
           text-decoration: inherit;
-          cursor: auto;
+          cursor: pointer;
           padding-right: 0;
           display: block;
           font-size: 13px;
           padding: 0 10px;
           line-height: 39px;
-
-          &.cdap {
-            color: @cdap-orange;
-          }
-          &.hydrator {
-            color: @hydrator-blue;
-          }
-          &.tracker {
-            color: @tracker-green;
-          }
-          &.wrangler {
-            color: @wrangler-red;
-          }
-
-          &:hover {
-            &.cdap {
-              background-color: @cdap-orange;
-            }
-            &.hydrator {
-              background-color: @hydrator-blue;
-            }
-            &.tracker {
-              background-color: @tracker-green;
-            }
-            &.wrangler {
-              background-color: @wrangler-red;
-            }
-            color: white;
-          }
-
-          [class*="icon-"] {
-            vertical-align: middle;
-            margin-right: 5px;
-          }
+        }
+        [class*="icon-"] {
+          vertical-align: middle;
+          margin-right: 5px;
         }
         &:last-child {
           border: 0;
+        }
+        &:hover {
+          color: white;
+        }
+        .hydrator {
+          color: @hydrator-blue;
+          &:hover {
+            background-color: @hydrator-blue;
+            color: white;
+          }
+        }
+        .tracker {
+          color: @tracker-green;
+          &:hover {
+            background-color: @tracker-green;
+            color: white;
+          }
+        }
+        .wrangler {
+          color: @wrangler-yellow;
+          &:hover {
+            background-color: @wrangler-yellow;
+            color: white;
+          }
         }
       }
     }

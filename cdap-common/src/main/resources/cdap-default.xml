@@ -56,6 +56,18 @@
   </property>
 
   <property>
+    <name>cluster.name</name>
+    <value></value>
+    <description>
+      A cluster-based name for CDAP. It is used for scope resolution of preferences and
+      runtime arguments. For example: the preference key "cluster.[cluster.name].my.key"
+      would be resolved to "my.key" at runtime; a program can then retreive the preference
+      value by using just "my.key". The administrator can use this property to set
+      different preferences for each cluster.
+    </description>
+  </property>
+
+  <property>
     <name>local.data.dir</name>
     <value>data</value>
     <description>
@@ -260,14 +272,6 @@
   </property>
 
   <property>
-    <name>ssl.internal.enabled</name>
-    <value>false</value>
-    <description>
-      Enable SSL between Router and App Fabric
-    </description>
-  </property>
-
-  <property>
     <name>app.ssl.bind.port</name>
     <value>30443</value>
     <description>
@@ -287,7 +291,9 @@
     <name>app.program.extra.classpath</name>
     <value></value>
     <description>
-      Extra Java classpath for CDAP programs
+      Extra Java classpath for CDAP programs. These extra classpaths must
+      be present on all nodes in the cluster. Supports wildcard suffix "*"
+      to include all jar files under a directory.
     </description>
   </property>
 
@@ -365,6 +371,15 @@
   </property>
 
   <property>
+    <name>scheduler.misfire.threshold.ms</name>
+    <value>60000</value>
+    <description>
+      The number of milliseconds by which a schedule execution can miss its
+      next-fire-time and still run
+    </description>
+  </property>
+
+  <property>
     <name>workflow.token.max.size.mb</name>
     <value>30</value>
     <description>
@@ -373,6 +388,16 @@
     </description>
   </property>
 
+  <property>
+    <name>program.container.dist.jars</name>
+    <value></value>
+    <description>
+      Extra jars to be localized to every program container and to be
+      added to classpaths of CDAP programs. They can be local file paths
+      on the CDAP master or URI's of remote files. Multiple jar files
+      are comma separated.
+    </description>
+  </property>
 
   <!-- Audit Configuration -->
 
@@ -1157,6 +1182,15 @@
     <value>48</value>
     <description>
       Maximum number of threads used for scanning HBase tables
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.hbase.scan.cache.rows</name>
+    <value>1000</value>
+    <description>
+      Number of rows for caching that will be passed to HBase scanners.
+      Higher caching values will enable faster scanning but will use more memory.
     </description>
   </property>
 
@@ -2031,18 +2065,17 @@
     <name>ssl.external.enabled</name>
     <value>false</value>
     <description>
-      Determines if SSL for external services is enabled
+      Enable SSL for external services
     </description>
   </property>
 
   <property>
-    <name>ssl.enabled</name>
-    <value>${ssl.external.enabled}</value>
+    <name>ssl.internal.enabled</name>
+    <value>false</value>
     <description>
-      Determines if SSL is enabled
+      Enable SSL between Router and App Fabric
     </description>
   </property>
-
 
   <!-- Stream Configuration -->
 

@@ -1,0 +1,52 @@
+
+
+<div uib-dropdown>
+  <button class="btn btn-jump" uib-dropdown-toggle ng-if="entityType === 'datasets' || entityType === 'streams'">
+    Jump <span class="fa fa-angle-down"></span>
+  </button>
+
+  
+  <ul class="pull-right" uib-dropdown-menu ng-if="entityType === 'streams'">
+    <li>
+      <a ui-sref="streams.detail.overview.status({ streamId: entityId })">View in CDAP</a>
+    </li>
+    <li>
+      <a ui-sref="streams.detail.overview.explore({ streamId: entityId })">Explore</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">Add as:</li>
+    <li>
+      <a href="" ng-click="Jump.streamBatchSource()">Source in batch pipeline</a>
+    </li>
+    <li>
+      <a href="" ng-click="Jump.streamRealtimeSink()">Sink in real-time pipeline</a>
+    </li>
+  </ul>
+
+  <ul class="pull-right" uib-dropdown-menu ng-if="entityType === 'datasets' && Jump.isAvailableDataset">
+    <li>
+      <a ui-sref="datasets.detail.overview.status({ datasetId: entityId })">View in CDAP</a>
+    </li>
+    <li ng-if="datasetExplorable === true">
+      <a ui-sref="datasets.detail.overview.explore({ datasetId: entityId })">Explore</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">Add as:</li>
+    <li>
+      <a href="" ng-click="Jump.datasetBatchSource()">Source in batch pipeline</a>
+    </li>
+    <li>
+      <a href="" ng-click="Jump.datasetBatchSink()">Sink in batch pipeline</a>
+    </li>
+  </ul>
+
+  <ul class="pull-right" uib-dropdown-menu ng-if="entityType === 'datasets' && !Jump.isAvailableDataset">
+    <li>
+      <a ui-sref="datasets.detail.overview.status({ datasetId: entityId })">View in CDAP</a>
+    </li>
+    <li ng-if="datasetExplorable === true">
+      <a ui-sref="datasets.detail.overview.explore({ datasetId: entityId })">Explore</a>
+    </li>
+  </ul>
+
+</div>

@@ -1,0 +1,16 @@
+
+
+<div ng-controller="FlowletsController as FlowletsController">
+<div class="panel-group">
+  <div class="panel panel-default" ng-repeat="flowlet in FlowletsController.flowlets">
+    <div class="panel-heading" ng-click="FlowletsController.selectFlowlet(flowlet)">
+      <span ng-class="{'fa-caret-right': !flowlet.isOpen,
+                   'fa-caret-down': flowlet.isOpen}" class="fa fa-fw"></span>
+      {{flowlet.name}}
+    </div>
+    <div class="panel-body" ng-if="flowlet.isOpen">
+      <div ng-include="'old_assetsfeatures/flows/templates/tabs/runs/flowlets/detail.html'"></div>
+    </div>
+  </div>
+</div>
+</div>

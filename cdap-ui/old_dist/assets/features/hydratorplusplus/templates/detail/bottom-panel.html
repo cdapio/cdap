@@ -1,0 +1,31 @@
+
+
+
+<div class="console" ng-class="{'minimized': BottomPanelCtrl.bottomPanelState === 0, 'maximized': BottomPanelCtrl.bottomPanelState === 2}">
+  <div class="console-tabs clearfix">
+    <ul class="nav nav-tabs pull-left" role="tablist">
+      <li ng-repeat="tab in BottomPanelCtrl.tabs" ng-click="BottomPanelCtrl.selectTab($index)" ng-class="{'active': tab.title == BottomPanelCtrl.activeTab.title}" role="presentation" data-toggle="tab">
+          {{ ::tab.title }}
+      </li>
+    </ul>
+    <div class="btn-group pull-right">
+      <a ng-click="BottomPanelCtrl.toggleCollapse(BottomPanelCtrl.bottomPanelState)">
+        <span ng-if="BottomPanelCtrl.bottomPanelState !== 0" class="fa fa-minus" uib-tooltip="Minimize" tooltip-class="tooltip-pane" tooltip-placement="top" tooltip-append-to-body="true">
+        </span>
+        <span ng-if="BottomPanelCtrl.bottomPanelState === 0" class="fa fa-expand" uib-tooltip="Grow" tooltip-class="tooltip-pane" tooltip-placement="top" tooltip-append-to-body="true">
+        </span>
+      </a>
+      <a ng-click="BottomPanelCtrl.toggleMaximized(BottomPanelCtrl.bottomPanelState)">
+        <span ng-if="BottomPanelCtrl.bottomPanelState !== 2" class="fa fa-arrows-alt" uib-tooltip="Maximize" tooltip-class="tooltip-pane" tooltip-placement="top" tooltip-append-to-body="true">
+        </span>
+        <span ng-if="BottomPanelCtrl.bottomPanelState === 2" class="fa fa-compress" uib-tooltip="Shrink" tooltip-class="tooltip-pane" tooltip-placement="top" tooltip-append-to-body="true">
+        </span>
+      </a>
+    </div>
+  </div>
+
+  <div class="console-type">
+    <div ng-repeat="tab in BottomPanelCtrl.tabs" ng-include="tab.template" ng-show="BottomPanelCtrl.activeTab.title === tab.title" ng-class="{'p-10': tab.title !== 'Node Configuration', 'node-config': tab.title === 'Node Configuration'}">
+      </div>
+  </div>
+</div>

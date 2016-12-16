@@ -70,11 +70,13 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class DefaultMetadataStore implements MetadataStore {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadataStore.class);
-  private static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("business.metadata");
-  private static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("system.metadata");
   private static final Map<String, String> EMPTY_PROPERTIES = ImmutableMap.of();
   private static final Set<String> EMPTY_TAGS = ImmutableSet.of();
   private static final int BATCH_SIZE = 1000;
+
+  // TODO: Can be made private after CDAP-7835 is fixed
+  public static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("business.metadata");
+  public static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("system.metadata");
 
   private static final Comparator<Map.Entry<NamespacedEntityId, Integer>> SEARCH_RESULT_DESC_SCORE_COMPARATOR =
     new Comparator<Map.Entry<NamespacedEntityId, Integer>>() {

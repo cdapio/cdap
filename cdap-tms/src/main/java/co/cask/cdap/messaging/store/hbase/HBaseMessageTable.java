@@ -26,13 +26,11 @@ import co.cask.cdap.hbase.wd.DistributedScanner;
 import co.cask.cdap.messaging.store.AbstractMessageTable;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.RawMessageTableEntry;
-import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,21 +45,22 @@ import java.util.concurrent.ExecutorService;
 final class HBaseMessageTable extends AbstractMessageTable {
   private static final byte[] PAYLOAD_COL = Bytes.toBytes('p');
   private static final byte[] TX_COL = Bytes.toBytes('t');
-  private static final int SCAN_CACHE_ROWS = 1000;
 
   private final HBaseTableUtil tableUtil;
   private final byte[] columnFamily;
   private final HTable hTable;
   private final AbstractRowKeyDistributor rowKeyDistributor;
   private final ExecutorService scanExecutor;
+  private final int scanCacheRows;
 
   HBaseMessageTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
-                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor) {
+                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor, int scanCacheRows) {
     this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);
     this.rowKeyDistributor = rowKeyDistributor;
     this.scanExecutor = scanExecutor;
+    this.scanCacheRows = scanCacheRows;
   }
 
   @Override
@@ -69,7 +68,7 @@ final class HBaseMessageTable extends AbstractMessageTable {
     Scan scan = tableUtil.buildScan()
       .setStartRow(startRow)
       .setStopRow(stopRow)
-      .setCaching(SCAN_CACHE_ROWS)
+      .setCaching(scanCacheRows)
       .build();
 
     final ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor);
@@ -126,24 +125,25 @@ final class HBaseMessageTable extends AbstractMessageTable {
   }
 
   @Override
-  public void delete(byte[] startKey, byte[] stopKey) throws IOException {
+  public void rollback(byte[] startKey, byte[] stopKey, byte[] txWritePtr) throws IOException {
     Scan scan = tableUtil.buildScan()
       .setStartRow(startKey)
       .setStopRow(stopKey)
-      .setFilter(new FirstKeyOnlyFilter())
-      .setCaching(SCAN_CACHE_ROWS)
+      .setCaching(scanCacheRows)
       .build();
 
-    List<Delete> batchDeletes = new ArrayList<>();
+    List<Put> batchPuts = new ArrayList<>();
     try (ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor)) {
       for (Result result : scanner) {
-        // No need to turn the key back to the original row key because we want to delete with the actual row key
-        batchDeletes.add(tableUtil.buildDelete(result.getRow()).build());
+        // No need to turn the key back to the original row key because we want to put with the actual row key
+        PutBuilder putBuilder = tableUtil.buildPut(result.getRow());
+        putBuilder.add(columnFamily, TX_COL, txWritePtr);
+        batchPuts.add(putBuilder.build());
       }
     }
 
-    if (!batchDeletes.isEmpty()) {
-      hTable.delete(batchDeletes);
+    if (!batchPuts.isEmpty()) {
+      hTable.put(batchPuts);
       if (!hTable.isAutoFlush()) {
         hTable.flushCommits();
       }

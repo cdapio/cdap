@@ -53,6 +53,7 @@ class CDAP extends Component {
   }
 
   componentWillMount(){
+    cookie.save('DEFAULT_UI', 'NEW', {path: '/'});
     // Polls for namespace data
     MyNamespaceApi.pollList()
       .subscribe(
@@ -85,7 +86,7 @@ class CDAP extends Component {
       <Router basename="/cdap" history={history}>
         <div className="cdap-container">
           <Helmet
-            title={T.translate('features.Home.Title')}
+            title={T.translate('features.EntityListView.Title')}
           />
           <CdapHeader />
           <SplashScreen openVideo={this.openCaskVideo}/>
@@ -94,7 +95,7 @@ class CDAP extends Component {
             <Match exactly pattern="/notfound" component={Missed} />
             <Match exactly pattern="/management" component={Management} />
             <Match exactly pattern="/ns" component={RouteToNamespace} />
-            <Match exactly pattern="/ns/:namespace" history={history} component={Home} />
+            <Match pattern="/ns/:namespace" history={history} component={Home} />
             <Match exactly pattern="/ns/:namespace/dashboard" component={Dashboard} />
             <Match pattern="/Experimental" component={Experimental} />
             <Match pattern="/socket-example" component={ConnectionExample} />

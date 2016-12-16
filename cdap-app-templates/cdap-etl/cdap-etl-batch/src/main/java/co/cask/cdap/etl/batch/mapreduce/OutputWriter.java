@@ -28,12 +28,12 @@ import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
  * @param <KEY_OUT> the output key type
  * @param <VAL_OUT> the output value type
  */
-abstract class OutputWriter<KEY_OUT, VAL_OUT> {
-  protected final MapReduceTaskContext<KEY_OUT, VAL_OUT> context;
+public abstract class OutputWriter<KEY_OUT, VAL_OUT> {
+  public final MapReduceTaskContext<KEY_OUT, VAL_OUT> context;
 
-  OutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context) {
+  public OutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context) {
     this.context = context;
   }
 
-  protected abstract void write(String sinkName, KeyValue<KEY_OUT, VAL_OUT> output) throws Exception;
+  public abstract void write(String sinkName, KeyValue<KEY_OUT, VAL_OUT> output) throws Exception;
 }

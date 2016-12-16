@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _cdap-console:
 .. _cdap-ui:
@@ -10,7 +10,7 @@ CDAP UI
 =======
 
 The **CDAP UI** is available for deploying, querying and managing the Cask Data
-Application Platform in all modes of CDAP except an 
+Application Platform in all modes of CDAP except as an 
 :ref:`in-memory CDAP <in-memory-data-application-platform>`.
 
 Here is a screen-capture of the CDAP UI running on a Distributed CDAP:

@@ -46,6 +46,7 @@ export default class Header extends Component {
               list={this.state.navbarItemList}
               tag={this.props.tag}
               store={NamespaceStore}
+              showOldUI={true}
             />
           <HeaderActions
             tag={this.props.tag}

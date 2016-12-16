@@ -60,7 +60,7 @@ public class BatchPhaseSpecTest {
         .addConnection("source2", "sink.connector");
 
     BatchPhaseSpec phaseSpec =
-      new BatchPhaseSpec("phase-1", builder.build(), new Resources(), new Resources(),
+      new BatchPhaseSpec("phase-1", builder.build(), new Resources(), new Resources(), new Resources(),
                          false, Collections.<String, String>emptyMap(), 0);
     String phaseSpecStr = GSON.toJson(phaseSpec);
     Assert.assertEquals("Sources 'source1', 'source2' to sinks 'sink.connector'.", phaseSpec.getDescription());

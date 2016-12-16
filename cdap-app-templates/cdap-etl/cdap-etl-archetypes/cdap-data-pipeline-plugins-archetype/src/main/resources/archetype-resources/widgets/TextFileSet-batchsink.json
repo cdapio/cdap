@@ -15,6 +15,11 @@
           "widget-type": "textbox",
           "label": "Field separator",
           "name": "fieldSeparator"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Field separator",
+          "name": "outputDir"
         }
       ]
     }

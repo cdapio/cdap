@@ -1,0 +1,78 @@
+
+
+<h2>{{heading}}</h2>
+
+<div class="panel panel-default">
+
+  <div class="panel-body">
+    <div class="alert alert-info" ng-if="parentPreferences.length > 0">
+      <p>{{ messages }}</p>
+    </div>
+
+    <form ng-show="preferences.length > 0">
+      <div class="form-group row">
+        <div class="col-xs-12">
+          <div ng-repeat="preference in preferences" class="h4" ng-keypress="enter($event, $last)">
+            <div class="row">
+              <div class="col-sm-4">
+                <input type="text" class="pref-key form-control" ng-model="preference.key" placeholder="key" my-focus-watch="$last">
+              </div>
+              <div class="col-sm-7">
+                <input type="text" class="form-control" ng-model="preference.value" placeholder="value">
+              </div>
+              <div class="col-sm-1">
+                <a href="" class="btn btn-danger" ng-click="removePreference(preference)">
+                  <span class="fa fa-fw fa-trash"> </span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <div ng-show="preferences.length === 0">
+      <div class="well well-sm text-center h4">
+        <button class="btn btn-default" ng-click="addPreference()">
+          <span class="fa fa-fw fa-plus"></span> Add Preference
+        </button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xs-12">
+        <button class="btn btn-primary" ng-click="addPreference()" ng-hide="preferences.length === 0">
+          <span class="fa fa-fw fa-plus"></span>
+        </button>
+
+        <div class="pull-right">
+          <button class="btn btn-default" ng-click="loadProperties()">Reset</button>
+          <button class="btn btn-success" ng-click="save()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="system-preferences" ng-if="parentPreferences.length > 0">
+      <hr>
+      <div class="table-responsive">
+        <table class="table table-curved" cask-sortable>
+          <thead>
+            <tr ng-class="{'sort-enabled': parentPreferences.length>0}">
+              <th data-predicate="key">Name</th>
+              <th data-predicate="value">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="pref in parentPreferences | orderBy:sortable.predicate:sortable.reverse">
+              <td>{{ pref.key }}</td>
+              <td>{{ pref.value }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+

@@ -94,11 +94,12 @@ public class DefaultSchedulerService {
       try {
         taskRunner.run(programId, builder.build(), userOverrides).get();
       } catch (TaskExecutionException e) {
+        LOG.warn("Error while running program {}. {}", programId, e);
         throw new JobExecutionException(e.getMessage(), e.getCause(), e.isRefireImmediately());
       } catch (Throwable t) {
-        // Do not  remove this log line. The exception at higher level gets caught by the quartz scheduler and is not
+        // Do not remove this log line. The exception at higher level gets caught by the quartz scheduler and is not
         // logged in cdap master logs making it hard to debug issues.
-        LOG.info("Error while running program {}. {}", programId, t);
+        LOG.warn("Error while running program {}. {}", programId, t);
         throw new JobExecutionException(t.getMessage(), t.getCause(), false);
       }
     }

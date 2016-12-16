@@ -1,0 +1,9 @@
+
+
+<div class="truth-meter" ng-style="{'border-left-width': TruthMeter.width + 'px'}">
+  <div class="truth-score" ng-style="{'left': ((TruthMeter.width * -1) + (TruthMeter.score * (TruthMeter.width / 100))) + 'px'}">
+    <span ng-bind="TruthMeter.score"></span>
+  </div>
+  <span ng-if="TruthMeter.showInfoIcon === true" class="fa fa-info-circle" uib-tooltip="This score indicates how active a dataset is in this namespace. It is calculated based on the relative number and frequency of dataset accesses." tooltip-placement="right" tooltip-append-to-body="true" tooltip-class="tracker-tooltip"></span>
+  <span ng-if="TruthMeter.showBetaText === true">BETA</span>
+</div>

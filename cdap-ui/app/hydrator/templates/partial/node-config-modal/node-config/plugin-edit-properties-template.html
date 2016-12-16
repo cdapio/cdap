@@ -29,6 +29,14 @@
   <div ng-repeat="group in HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.groups">
     <div class="widget-group-container">
       <h4>{{::group.display}}</h4>
+      <div class="wrangler-button pull-right"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Wrangler' && !isDisabled">
+        <button class="btn btn-wrangler"
+                ng-click="HydratorPlusPlusNodeConfigCtrl.openWranglerModal()">
+          <span class="fa icon-DataWrangler"></span>
+          <span>Wrangle</span>
+        </button>
+      </div>
       <div ng-repeat="field in group.fields">
         <div ng-if="field.name !== HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperty">
 

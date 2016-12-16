@@ -1,0 +1,90 @@
+
+
+<div class="welcome-banner" ng-hide="OverviewCtrl.welcomeIsHidden">
+  <div class="container">
+    <div class="col-xs-6">
+      <div class="banner-content hydrator-banner">
+        <div class="text-content">
+          <h3 class="banner-title">
+            <span>Cask Hydrator</span>
+            <a href="{{ OverviewCtrl.getHydratorUrl( { stateParams: { namespace: $stateParams.namespace } } ) }}" class="btn btn-hydrator">Go!</a>
+          </h3>
+          <p>Self-Service, Extensible Framework for Data Pipelines</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-6">
+      <div class="banner-content tracker-banner">
+        <div class="text-content">
+          <h3 class="banner-title">
+            <span>Cask Tracker</span>
+            <a href="{{ OverviewCtrl.getTrackerUrl( { stateParams: { namespace: $stateParams.namespace } } ) }}" class="btn btn-tracker">Go!</a>
+          </h3>
+          <p>Data Discovery with Metadata, Audit and Lineage</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3 ng-class="{ 'system-health-title-offset': !OverviewCtrl.welcomeIsHidden }"> System Health </h3>
+<section class="system-health"> 
+  <div class="divider"></div>
+  <div>
+    <div class="row">
+      <div class="col-xs-12 col-lg-4">
+        <div>
+          <a ui-sref="admin.system.services">
+            <div class="row">
+              <div class="col-xs-4">
+                <div>
+                  <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+                    <circle ng-if="OverviewCtrl.systemStatus.color === 'yellow'" cx="50" cy="70" r="30" fill="#f4b400"/>
+                    <circle ng-if="OverviewCtrl.systemStatus.color === 'red'" cx="50" cy="70" r="30" fill="#d15668"/>
+                    <circle ng-if="OverviewCtrl.systemStatus.color === 'green'" cx="50" cy="70" r="30" fill="#4ab63c"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="col-xs-8">
+                <p ng-if="OverviewCtrl.systemStatus.color === 'yellow'">
+                  Some services might have an issue
+                </p>
+                <p ng-if="OverviewCtrl.systemStatus.color === 'red'">
+                  All services are down
+                </p>
+                <p ng-if="OverviewCtrl.systemStatus.color === 'green'">
+                  All services are up and running
+                </p>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <div class="col-xs-12 col-lg-8">
+        <div class="row health-widgets">
+          <div class="col-xs-12">
+            <p class="text-center">
+              <span> Errors last hour </span>
+            </p>
+          </div>
+        </div>
+
+          <div ng-controller="C3WidgetTimeseriesCtrl" ng-repeat="wdgt in OverviewCtrl.wdgts" class="health-widget">
+            <span>{{wdgt.title}}</span>
+            <c3-spline chart-metric="wdgt.formattedData" chart-metric-alias="wdgt.metricAlias" chart-settings="wdgt.settings" chart-size="chartSize"></c3-spline>
+            <div class="warning-alert">
+              <div>
+                <p> Warnings </p><span class="warn"> {{wdgt.chartData.totals[1]}} </span>
+                <p> Alerts </p><span class="error"> {{wdgt.chartData.totals[0]}} </span>
+              </div>
+            </div>
+          </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="data-apps">
+  <div ng-include="'/old_assets/features/overview/templates/data-apps.html'"> </div>
+</section>

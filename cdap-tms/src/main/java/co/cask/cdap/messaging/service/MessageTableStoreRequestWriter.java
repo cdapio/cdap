@@ -18,6 +18,7 @@ package co.cask.cdap.messaging.service;
 
 import co.cask.cdap.common.utils.TimeProvider;
 import co.cask.cdap.messaging.StoreRequest;
+import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.proto.id.TopicId;
 
@@ -42,10 +43,11 @@ final class MessageTableStoreRequestWriter extends StoreRequestWriter<MessageTab
   }
 
   @Override
-  MessageTable.Entry getEntry(TopicId topicId, boolean transactional, long transactionWritePointer,
+  MessageTable.Entry getEntry(TopicMetadata metadata, boolean transactional, long transactionWritePointer,
                               long writeTimestamp, short sequenceId, @Nullable byte[] payload) {
     return entry
-      .setTopicId(topicId)
+      .setTopicId(metadata.getTopicId())
+      .setGeneration(metadata.getGeneration())
       .setTransactional(transactional)
       .setTransactionWritePointer(transactionWritePointer)
       .setPublishTimestamp(writeTimestamp)
@@ -69,6 +71,7 @@ final class MessageTableStoreRequestWriter extends StoreRequestWriter<MessageTab
   private static final class MutableMessageTableEntry implements MessageTable.Entry {
 
     private TopicId topicId;
+    private int generation;
     private boolean transactional;
     private long transactionWritePointer;
     private long publishTimestamp;
@@ -77,6 +80,11 @@ final class MessageTableStoreRequestWriter extends StoreRequestWriter<MessageTab
 
     MutableMessageTableEntry setTopicId(TopicId topicId) {
       this.topicId = topicId;
+      return this;
+    }
+
+    MutableMessageTableEntry setGeneration(int generation) {
+      this.generation = generation;
       return this;
     }
 
@@ -108,6 +116,11 @@ final class MessageTableStoreRequestWriter extends StoreRequestWriter<MessageTab
     @Override
     public TopicId getTopicId() {
       return topicId;
+    }
+
+    @Override
+    public int getGeneration() {
+      return generation;
     }
 
     @Override

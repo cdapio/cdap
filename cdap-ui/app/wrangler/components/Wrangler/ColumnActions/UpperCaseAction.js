@@ -14,25 +14,61 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import React, {Component, PropTypes} from 'react';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
+import {Tooltip} from 'reactstrap';
+import T from 'i18n-react';
 
-export default function UpperCaseAction({column}) {
-  function onClick() {
+export default class UpperCaseAction extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      tooltipOpen: false
+    };
+
+    this.onClick = this.onClick.bind(this);
+    this.toggle = this.toggle.bind(this);
+  }
+
+  toggle() {
+    this.setState({tooltipOpen: !this.state.tooltipOpen});
+  }
+
+  onClick() {
     WranglerStore.dispatch({
       type: WranglerActions.upperCaseColumn,
       payload: {
-        activeColumn: column
+        activeColumn: this.props.column
       }
     });
   }
 
-  return (
-    <span className="column-actions">
-      <span onClick={onClick}>T</span>
-    </span>
-  );
+  render() {
+    const id = 'column-action-uppercase';
+
+    return (
+      <span className="column-actions">
+        <span
+          id={id}
+          onClick={this.onClick}
+          className="fa icon-uppercase"
+        />
+
+        <Tooltip
+          placement="top"
+          isOpen={this.state.tooltipOpen}
+          toggle={this.toggle}
+          target={id}
+          className="wrangler-tooltip"
+          delay={0}
+        >
+          {T.translate('features.Wrangler.ColumnActions.UpperCase.label')}
+        </Tooltip>
+      </span>
+    );
+  }
 }
 
 UpperCaseAction.propTypes = {

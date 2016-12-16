@@ -18,15 +18,31 @@ import React from 'react';
 
 import HeaderBrand from 'components/HeaderBrand';
 import HeaderActions from 'components/HeaderActions';
+import NamespaceStore from 'services/NamespaceStore';
+import HeaderNavbarList from 'components/HeaderNavbarList';
+import T from 'i18n-react';
 
 require('components/Header/Header.less');
+require('./WranglerHeader.less');
 
 export default function WranglerHeader() {
+  const list = [
+    {
+      linkTo: '/ns',
+      title: T.translate('features.Wrangler.Header.importData')
+    },
+  ];
+
   return (
-    <div className="cask-header">
+    <div className="cask-header wrangler-header">
       <div className="navbar navbar-fixed-top">
         <nav className="navbar cdap">
           <HeaderBrand/>
+
+          <HeaderNavbarList
+            list={list}
+            store={NamespaceStore}
+          />
 
           <HeaderActions
             product="wrangler"

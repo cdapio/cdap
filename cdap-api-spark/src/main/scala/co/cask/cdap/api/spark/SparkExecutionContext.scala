@@ -26,6 +26,7 @@ import co.cask.cdap.api.security.store.SecureStore
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.api._
+import co.cask.cdap.api.messaging.MessagingContext
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.tephra.TransactionFailureException
@@ -83,6 +84,14 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
     * @return A [[scala.Serializable]] [[co.cask.cdap.api.plugin.PluginContext]]
     */
   def getSecureStore: SecureStore
+
+  /**
+    * Returns a [[co.cask.cdap.api.messaging.MessagingContext]] which can be used to interact with the transactional
+    * messaging system. Currently the returned instance can only be used in the Spark driver process.
+    *
+    * @return A [[co.cask.cdap.api.messaging.MessagingContext]]
+    */
+  def getMessagingContext: MessagingContext
 
   /**
     * Returns the [[co.cask.cdap.api.workflow.WorkflowToken]] if the Spark program

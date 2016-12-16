@@ -1,0 +1,37 @@
+
+
+<div class="mapreduce-components" ng-controller="MapreduceStatusController as StatusController">
+  <div class="table-responsive">
+    <table class="table table-curved" cask-sortable>
+      <thead>
+        <tr ng-class="{'sort-enabled': StatusController.info.mapTasks.length>0}">
+          <th data-predicate="taskId">ID</th>
+          <th data-predicate="state">Status</th>
+          <th data-predicate="progress">% Complete</th>
+          <th data-predicate="finishTime">Duration</th>
+          <th data-predicate="counters.REDUCE_INPUT_RECORDS">Records In</th>
+          <th data-predicate="counters.REDUCE_OUTPUT_RECORDS">Records Out</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr ng-repeat="reduce in StatusController.info.reduceTasks | orderBy:sortable.predicate:sortable.reverse">
+          <td>{{ ::reduce.taskId }}</td>
+          <td ng-if="reduce.state">{{ reduce.state }}</td>
+          <td ng-if="!reduce.state">NA</td>
+          <td>{{ (reduce.progress * 100) | number: 0 }}%</td>
+          <td>
+            <span ng-show="reduce.finishTime !== 0">{{ (reduce.finishTime - reduce.startTime) | amDurationFormat}}</span>
+            <span ng-show="reduce.finishTime === 0"> &mdash; </span>
+          </td>
+          <td>{{ reduce.counters.REDUCE_INPUT_RECORDS | myNumber: 0}}</td>
+          <td>{{ reduce.counters.REDUCE_OUTPUT_RECORDS | myNumber: 0}}</td>
+        </tr>
+
+        <tr class="text-center" ng-if="!StatusController.info.reduceTasks.length">
+          <td colspan="8"> Not Available </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

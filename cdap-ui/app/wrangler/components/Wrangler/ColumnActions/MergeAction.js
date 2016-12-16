@@ -15,10 +15,11 @@
  */
 
 import React, { Component, PropTypes } from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
-
+import { Modal, ModalHeader, ModalBody, ModalFooter, Tooltip } from 'reactstrap';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
+import validateColumnName from 'wrangler/components/Wrangler/column-validation';
+import T from 'i18n-react';
 
 export default class MergeAction extends Component {
   constructor(props) {
@@ -28,11 +29,13 @@ export default class MergeAction extends Component {
       isOpen: false,
       error: false,
       columnList: [],
-      mergeWith: ''
+      mergeWith: '',
+      tooltipOpen: false
     };
 
     this.toggle = this.toggle.bind(this);
     this.onSave = this.onSave.bind(this);
+    this.tooltipToggle = this.tooltipToggle.bind(this);
   }
 
   componentWillMount() {
@@ -49,13 +52,23 @@ export default class MergeAction extends Component {
     this.setState({isOpen: !this.state.isOpen});
   }
 
+  tooltipToggle() {
+    this.setState({tooltipOpen: !this.state.tooltipOpen});
+  }
+
   onSave() {
     const mergeWith = this.state.mergeWith;
     const joinBy = this.joinBy;
     const mergedColumnName = this.mergedColumnName;
 
     if (!mergeWith || !joinBy || !mergedColumnName) {
-      this.setState({error: true});
+      this.setState({error: 'MISSING_REQUIRED_FIELDS'});
+      return;
+    }
+
+    let error = validateColumnName(mergedColumnName);
+    if (error) {
+      this.setState({error});
       return;
     }
 
@@ -77,7 +90,7 @@ export default class MergeAction extends Component {
 
     const error = (
       <p className="error-text pull-left">
-        Please fill out all required fields
+        {T.translate(`features.Wrangler.Errors.${this.state.error}`)}
       </p>
     );
 
@@ -87,12 +100,26 @@ export default class MergeAction extends Component {
         toggle={this.toggle}
         className="wrangler-actions"
         onClick={e => e.stopPropagation() }
+        zIndex="1070"
       >
-        <ModalHeader>Merge Column: {this.props.column}</ModalHeader>
+        <ModalHeader>
+          <span>
+            {T.translate('features.Wrangler.ColumnActions.Merge.header', {
+              columnName: this.props.column
+            })}
+          </span>
+
+          <div
+            className="close-section pull-right"
+            onClick={this.toggle}
+          >
+            <span className="fa fa-times" />
+          </div>
+        </ModalHeader>
         <ModalBody>
           <div>
             <label className="control-label">
-              Merge With
+              {T.translate('features.Wrangler.ColumnActions.Merge.mergeWith')}
               <span className="fa fa-asterisk error-text"></span>
             </label>
 
@@ -118,7 +145,7 @@ export default class MergeAction extends Component {
 
           <div>
             <label className="control-label">
-              Join By
+              {T.translate('features.Wrangler.ColumnActions.Merge.joinBy')}
               <span className="fa fa-asterisk error-text"></span>
             </label>
             <input
@@ -130,7 +157,7 @@ export default class MergeAction extends Component {
 
           <div>
             <label className="control-label">
-              Merged Column Name
+              {T.translate('features.Wrangler.ColumnActions.Merge.mergedColumn')}
               <span className="fa fa-asterisk error-text"></span>
             </label>
             <input
@@ -145,10 +172,10 @@ export default class MergeAction extends Component {
           {this.state.error ? error : null}
 
           <button
-            className="btn btn-success"
+            className="btn btn-wrangler"
             onClick={this.onSave}
           >
-            Merge
+            {T.translate('features.Wrangler.ColumnActions.Merge.label')}
           </button>
         </ModalFooter>
       </Modal>
@@ -156,12 +183,26 @@ export default class MergeAction extends Component {
   }
 
   render() {
+    const id = 'column-action-merge';
+
     return (
       <span className="column-actions rename-action">
         <span
-          className="fa fa-compress"
+          id={id}
+          className="fa icon-merge"
           onClick={this.toggle}
         />
+
+        <Tooltip
+          placement="top"
+          isOpen={this.state.tooltipOpen}
+          toggle={this.tooltipToggle}
+          target={id}
+          className="wrangler-tooltip"
+          delay={0}
+        >
+          {T.translate('features.Wrangler.ColumnActions.Merge.label')}
+        </Tooltip>
 
         {this.renderModal()}
 

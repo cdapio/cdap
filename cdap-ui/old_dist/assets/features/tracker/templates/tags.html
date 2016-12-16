@@ -1,0 +1,82 @@
+
+
+<div class="row">
+  <div class="col-xs-12">
+    <h2>Tags</h2>
+    <button class="btn btn-default add-tags" ng-click="TagsController.showAddModal(key)">Add Preferred Tags</button>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-6 preferred-tags">
+    <div ng-if="TagsController.tags.preferredTags.length > 0" class="table-responsive">
+      <table class="table table-striped" cask-sortable>
+        <thead>
+          <tr ng-class="{'sort-enabled': TagsController.tags.preferredTags.length > 0}">
+            <th data-predicate="name">Preferred Tags</th>
+            <th data-predicate="count">Tagged Entities</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="tag in TagsController.tags.preferredTags | orderBy:sortable.predicate:sortable.reverse | myPaginate:TagsController.currentPreferredPage">
+            <td>
+              <a class="tag preferred" ui-sref="tracker.detail.result({searchQuery: tag.name})">{{ tag.name }}</a>
+            </td>
+            <td>
+              <span class="tagged-entities">{{ tag.count }}</span>
+            </td>
+            <td ng-if="tag.count > 0">
+              <span class="action-link" ng-click="TagsController.demotePreferredTag(tag.name)">Demote</span>
+            </td>
+            <td ng-if="tag.count === 0">
+              <span class="fa fa-trash" ng-click="TagsController.showDeleteModal(tag.name)"></span>
+            </td>
+          </tr>
+          <tr ng-if="TagsController.currentPreferredPage === TagsController.tags.emptyPreferredTags.numPages" ng-repeat="empty in TagsController.tags.emptyPreferredTags.emptyArr track by $index" class="empty-row">
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="text-left" ng-if="TagsController.tags.preferredTags.length > 10">
+        <uib-pagination total-items="TagsController.tags.preferredTags.length" max-size="10" force-ellipses="true" ng-model="TagsController.currentPreferredPage"></uib-pagination>
+      </div>
+    </div>
+    <div ng-if="TagsController.tags.preferredTags.length === 0" class="well text-center">
+      <p>No preferred tags to display.</p>
+    </div>
+  </div>
+  <div class="col-sm-6 user-tags">
+    <div ng-if="TagsController.tags.userTags.length > 0" class="table-responsive">
+      <table class="table table-striped" cask-sortable>
+        <thead>
+          <tr ng-class="{'sort-enabled': TagsController.tags.userTags.length > 0}">
+            <th data-predicate="name">User Tags</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="tag in TagsController.tags.userTags | orderBy:sortable.predicate:sortable.reverse | myPaginate:TagsController.currentUserPage">
+            <td>
+              <a class="tag user" ui-sref="tracker.detail.result({searchQuery: tag.name})">{{ tag.name }}</a>
+            </td>
+            <td>
+              <span class="action-link" ng-click="TagsController.promoteUserTag(tag.name)">Promote</span>
+            </td>
+          </tr>
+          <tr ng-if="TagsController.currentUserPage === TagsController.tags.emptyUserTags.numPages" ng-repeat="empty in TagsController.tags.emptyUserTags.emptyArr track by $index" class="empty-row">
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="text-left" ng-if="TagsController.tags.userTags.length > 10">
+        <uib-pagination total-items="TagsController.tags.userTags.length" max-size="10" force-ellipses="true" ng-model="TagsController.currentUserPage"></uib-pagination>
+      </div>
+    </div>
+    <div ng-if="TagsController.tags.userTags.length === 0" class="well text-center">
+      <p>No user tags to display.</p>
+    </div>
+  </div>
+</div>

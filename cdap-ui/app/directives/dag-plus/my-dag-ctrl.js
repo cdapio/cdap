@@ -378,8 +378,15 @@ angular.module(PKG.name + '.commons')
             break;
           default:
             // Need to id each end point so that it can be used later to make connections.
-            vm.instance.addEndpoint(node.name, transformOrigin, {uuid: 'Origin' + node.name});
-            vm.instance.addEndpoint(node.name, transformTarget, {uuid: 'Target' + node.name});
+            var originId = {uuid: 'Origin' + node.name};
+            var targetId = {uuid: 'Target' + node.name};
+            if (node.plugin.name === 'Wrangler') {
+              originId.cssClass = 'wrangler-anchor';
+              targetId.cssClass = 'wrangler-anchor';
+            }
+
+            vm.instance.addEndpoint(node.name, transformOrigin, originId);
+            vm.instance.addEndpoint(node.name, transformTarget, targetId);
             break;
         }
       });
@@ -606,14 +613,14 @@ angular.module(PKG.name + '.commons')
        * 4. Bottom most nodes
        **/
       var minLeft = _.min($scope.nodes, function (node) {
-        if (node._uiPosition.left.includes('vw')) {
+        if (node._uiPosition.left.indexOf('vw') !== -1) {
           var left = parseInt(node._uiPosition.left, 10)/100 * document.documentElement.clientWidth;
           node._uiPosition.left = left + 'px';
         }
         return parseInt(node._uiPosition.left, 10);
       });
       var maxLeft = _.max($scope.nodes, function (node) {
-        if (node._uiPosition.left.includes('vw')) {
+        if (node._uiPosition.left.indexOf('vw') !== -1) {
           var left = parseInt(node._uiPosition.left, 10)/100 * document.documentElement.clientWidth;
           node._uiPosition.left = left + 'px';
         }
