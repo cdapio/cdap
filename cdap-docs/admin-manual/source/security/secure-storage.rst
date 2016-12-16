@@ -61,7 +61,8 @@ To use this mode, set these properties:
       </description>
     </property>
 
-- In ``cdap-security.xml``, set ``security.store.file.password`` to a password (to protect the secure storage file)::
+- In ``cdap-security.xml``, set ``security.store.file.password`` to a password (to protect the secure storage file).
+  **Note:** If the ``cdap-security.xml`` file does not already exist, it needs to be created::
 
     <property>
       <name>security.store.file.password</name>
@@ -71,7 +72,7 @@ To use this mode, set these properties:
       </description>
     </property>
     
-- The path and the filename of the backing file can be configured in ``cdap-security.xml``
+- The path and the filename of the backing file can be configured in ``cdap-site.xml``
   using these (optional) settings::
 
     <property>
@@ -89,8 +90,6 @@ To use this mode, set these properties:
         Name of the secure store file
       </description>
     </property>
-
-**Note:** If the ``cdap-security.xml`` file does not already exist, it needs to be created.  
 
 .. _admin-secure-storage-kms:
 
