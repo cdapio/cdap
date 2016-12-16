@@ -70,6 +70,14 @@ class HydratorDetailTopPanelController {
       }
     };
 
+    this.viewInCdapLink = window.getOldCDAPUrl({
+      stateName: 'apps.detail.overview.status',
+      stateParams: {
+        namespace: $state.params.namespace,
+        appId: this.app.name
+      }
+    });
+
     this.fetchMacros();
     this.$scope.$on('$destroy', () => {
       this.$timeout.cancel(this.scheduleTimeout);
