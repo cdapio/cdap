@@ -41,6 +41,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
@@ -78,6 +79,7 @@ import javax.annotation.Nullable;
 public abstract class AbstractProgramRuntimeService extends AbstractIdleService implements ProgramRuntimeService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRuntimeService.class);
+  private static final String CLUSTER_SCOPE = "cluster";
   private static final String APPLICATION_SCOPE = "app";
   private static final EnumSet<ProgramController.State> COMPLETED_STATES = EnumSet.of(ProgramController.State.COMPLETED,
                                                                                       ProgramController.State.KILLED,
@@ -280,9 +282,14 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     builder.put(ProgramOptionConstants.RUN_ID, runId.getId());
 
     // Resolves the user arguments
-    // First resolves at the application scope
-    Map<String, String> userArguments = RuntimeArguments.extractScope(APPLICATION_SCOPE, programId.getApplication(),
-                                                                      options.getUserArguments().asMap());
+    // First resolves at the cluster scope if the cluster.name is not empty
+    String clusterName = options.getArguments().getOption(Constants.CLUSTER_NAME);
+    Map<String, String> userArguments = options.getUserArguments().asMap();
+    if (!Strings.isNullOrEmpty(clusterName)) {
+      userArguments = RuntimeArguments.extractScope(CLUSTER_SCOPE, clusterName, userArguments);
+    }
+    // Then resolves at the application scope
+    userArguments = RuntimeArguments.extractScope(APPLICATION_SCOPE, programId.getApplication(), userArguments);
     // Then resolves at the program level
     userArguments = RuntimeArguments.extractScope(programId.getType().getScope(), programId.getProgram(),
                                                   userArguments);

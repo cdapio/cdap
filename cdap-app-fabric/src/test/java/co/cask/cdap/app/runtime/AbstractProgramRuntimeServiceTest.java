@@ -24,6 +24,7 @@ import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -183,7 +184,11 @@ public class AbstractProgramRuntimeServiceTest {
 
         // Set of scopes to test
         String programScope = program.getType().getScope();
+        String clusterName = "c1";
         List<String> scopes = Arrays.asList(
+          "cluster.*.",
+          "cluster." + clusterName + ".",
+          "cluster." + clusterName + ".app.*.",
           "app.*.",
           "app." + program.getApplicationId() + ".",
           "app." + program.getApplicationId() + "." + programScope + ".*.",
@@ -195,7 +200,7 @@ public class AbstractProgramRuntimeServiceTest {
 
         for (String scope : scopes) {
           ProgramOptions programOptions = new SimpleProgramOptions(
-            program.getName(), new BasicArguments(),
+            program.getName(), new BasicArguments(Collections.singletonMap(Constants.CLUSTER_NAME, clusterName)),
             new BasicArguments(Collections.singletonMap(scope + "size", Integer.toString(scope.length()))));
 
           final ProgramController controller = runtimeService.run(descriptor, programOptions).getController();

@@ -561,6 +561,11 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
+    public String getClusterName() {
+      return null;
+    }
+
+    @Override
     public String getNamespace() {
       return null;
     }

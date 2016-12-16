@@ -269,6 +269,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
+  public String getClusterName() {
+    return programOptions.getArguments().getOption(Constants.CLUSTER_NAME);
+  }
+
+  @Override
   public RunId getRunId() {
     return runId;
   }
