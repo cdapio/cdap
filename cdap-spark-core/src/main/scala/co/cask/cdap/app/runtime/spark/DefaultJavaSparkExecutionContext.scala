@@ -68,6 +68,8 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
 
   override def getLocalizationContext = sec.getLocalizationContext
 
+  override def getClusterName: String = sec.getClusterName
+
   override def getRuntimeArguments: util.Map[String, String] = sec.getRuntimeArguments
 
   override def getRunId: RunId = sec.getRunId

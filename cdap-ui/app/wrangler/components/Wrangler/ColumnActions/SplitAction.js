@@ -96,7 +96,11 @@ export default class SplitAction extends Component {
         zIndex="1070"
       >
         <ModalHeader>
-          <span>Split Column: {this.props.column}</span>
+          <span>
+            {T.translate('features.Wrangler.ColumnActions.Split.header', {
+              columnName: this.props.column
+            })}
+          </span>
 
           <div
             className="close-section pull-right"
@@ -108,7 +112,7 @@ export default class SplitAction extends Component {
         <ModalBody>
           <div>
             <label className="control-label">
-              Split by first occurrence of
+              {T.translate('features.Wrangler.ColumnActions.Split.splitBy')}
               <span className="fa fa-asterisk error-text"></span>
             </label>
             <input
@@ -121,7 +125,7 @@ export default class SplitAction extends Component {
 
           <div>
             <label className="control-label">
-              First Split Column Name
+              {T.translate('features.Wrangler.ColumnActions.Split.firstColumn')}
               <span className="fa fa-asterisk error-text"></span>
             </label>
             <input
@@ -133,7 +137,7 @@ export default class SplitAction extends Component {
 
           <div>
             <label className="control-label">
-              Second Split Column Name
+              {T.translate('features.Wrangler.ColumnActions.Split.secondColumn')}
               <span className="fa fa-asterisk error-text"></span>
             </label>
             <input
@@ -150,7 +154,7 @@ export default class SplitAction extends Component {
             className="btn btn-wrangler"
             onClick={this.onSave}
           >
-            Split
+            {T.translate('features.Wrangler.ColumnActions.Split.label')}
           </button>
         </ModalFooter>
       </Modal>
@@ -176,7 +180,7 @@ export default class SplitAction extends Component {
           className="wrangler-tooltip"
           delay={0}
         >
-          Split
+          {T.translate('features.Wrangler.ColumnActions.Split.label')}
         </Tooltip>
 
         {this.renderModal()}

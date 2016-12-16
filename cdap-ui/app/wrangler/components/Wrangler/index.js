@@ -23,6 +23,7 @@ import shortid from 'shortid';
 import Dropzone from 'react-dropzone';
 import {convertHistoryToDml} from 'wrangler/components/Wrangler/dml-converter';
 import Explore from 'wrangler/components/Explore';
+import T from 'i18n-react';
 
 require('./Wrangler.less');
 
@@ -166,8 +167,8 @@ export default class Wrangler extends Component {
         <table className="table table-bordered error-table">
           <thead>
             <tr>
-              <th>Row</th>
-              <th>Error</th>
+              <th>{T.translate('features.Wrangler.InputScreen.ErrorTable.row')}</th>
+              <th>{T.translate('features.Wrangler.InputScreen.ErrorTable.error')}</th>
             </tr>
           </thead>
           <tbody>
@@ -229,9 +230,13 @@ export default class Wrangler extends Component {
                 :
               (
                 <div>
-                  <h4>Click <span className="fa fa-plus-circle" /> to upload a file</h4>
-                  <h5>or</h5>
-                  <h4>Click anywhere else to copy paste data</h4>
+                  <h4>
+                    {T.translate('features.Wrangler.InputScreen.HelperText.click')}
+                    <span className="fa fa-plus-circle" />
+                    {T.translate('features.Wrangler.InputScreen.HelperText.upload')}
+                  </h4>
+                  <h5>{T.translate('features.Wrangler.InputScreen.HelperText.or')}</h5>
+                  <h4>{T.translate('features.Wrangler.InputScreen.HelperText.paste')}</h4>
                 </div>
               )
             }
@@ -310,14 +315,14 @@ export default class Wrangler extends Component {
           <div>
             <span className="fa fa-spinner fa-spin"></span>
           </div>
-          <h3>Parsing...</h3>
+          <h3>{T.translate('features.Wrangler.parsing')}</h3>
         </div>
       );
     }
 
     return (
       <div className="wrangler-input-container">
-        <h3 className="text-center">Cask Wrangler</h3>
+        <div className="wrangler-title"></div>
 
         <Explore wrangle={this.wrangle} />
 
@@ -331,7 +336,7 @@ export default class Wrangler extends Component {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Set delimiter"
+                  placeholder={T.translate('features.Wrangler.InputScreen.Options.delimiter')}
                   onChange={this.setDelimiter}
                 />
               </div>
@@ -344,7 +349,7 @@ export default class Wrangler extends Component {
                   <input type="checkbox"
                     onChange={this.handleSetHeaders}
                     checked={this.state.headers}
-                  /> First line as column name
+                  /> {T.translate('features.Wrangler.InputScreen.Options.firstLineAsColumns')}
                 </label>
               </div>
 
@@ -353,7 +358,7 @@ export default class Wrangler extends Component {
                 <label>
                   <input type="checkbox"
                     onChange={this.handleSetSkipEmptyLines}
-                  /> Skip empty lines
+                  /> {T.translate('features.Wrangler.InputScreen.Options.skipEmptyLines')}
                 </label>
               </div>
             </form>
@@ -368,7 +373,7 @@ export default class Wrangler extends Component {
             className="btn btn-wrangler wrangle-button"
             onClick={this.onWrangleClick}
           >
-            Wrangle
+            {T.translate('features.Wrangler.wrangleButton')}
           </button>
         </div>
 

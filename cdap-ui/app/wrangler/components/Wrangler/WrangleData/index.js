@@ -28,6 +28,7 @@ import Rx from 'rx';
 import {MyArtifactApi} from 'api/artifact';
 import find from 'lodash/find';
 import {Tooltip} from 'reactstrap';
+import T from 'i18n-react';
 
 export default class WrangleData extends Component {
   constructor(props, context) {
@@ -181,7 +182,7 @@ export default class WrangleData extends Component {
         onClick={this.props.onHydratorApply}
       >
         <span className="fa icon-hydrator" />
-        Apply to Hydrator
+        {T.translate('features.Wrangler.WrangleData.applyToHydrator')}
       </button>
     );
 
@@ -199,7 +200,7 @@ export default class WrangleData extends Component {
           <div>
             <span className="fa fa-spinner fa-spin"></span>
           </div>
-          <h3>Wrangling...</h3>
+          <h3>{T.translate('features.Wrangler.WrangleData.wrangling')}</h3>
         </div>
       );
     }
@@ -237,7 +238,7 @@ export default class WrangleData extends Component {
                 className="wrangler-tooltip"
                 delay={0}
               >
-                Undo
+                {T.translate('features.Wrangler.Tooltips.undo')}
               </Tooltip>
             </span>
 
@@ -257,7 +258,7 @@ export default class WrangleData extends Component {
                 className="wrangler-tooltip"
                 delay={0}
               >
-                Redo
+                {T.translate('features.Wrangler.Tooltips.redo')}
               </Tooltip>
             </span>
           </div>
@@ -272,7 +273,7 @@ export default class WrangleData extends Component {
               id={sortId}
               className="transform-item-text"
             >
-              Sort
+              {T.translate('features.Wrangler.LeftPanel.sort')}
             </span>
 
             {
@@ -286,7 +287,7 @@ export default class WrangleData extends Component {
                   delay={{show: 300, hide: 0}}
                   tether={{offset: '0 -10px'}}
                 >
-                  Select a column to enable sort
+                  {T.translate('features.Wrangler.LeftPanel.selectColumn', {type: 'sort'})}
                 </Tooltip>
               ) : null
             }
@@ -313,17 +314,17 @@ export default class WrangleData extends Component {
           <div className="wrangler-data-metrics">
             <div className="metric-block">
               <h3 className="text-success">{this.state.data.length}</h3>
-              <h5>Rows</h5>
+              <h5>{T.translate('features.Wrangler.MetricsBar.rows')}</h5>
             </div>
 
             <div className="metric-block">
               <h3 className="text-success">{this.state.headersList.length}</h3>
-              <h5>Columns</h5>
+              <h5>{T.translate('features.Wrangler.MetricsBar.columns')}</h5>
             </div>
 
             <div className="metric-block">
               <h3 className="text-danger">{errorCount}</h3>
-              <h5>Nulls</h5>
+              <h5>{T.translate('features.Wrangler.MetricsBar.nulls')}</h5>
             </div>
 
             <div className="pull-right action-button-container">
