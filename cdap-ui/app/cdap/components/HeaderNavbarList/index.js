@@ -17,6 +17,7 @@ import React, {PropTypes} from 'react';
 import { connect } from 'react-redux';
 import {Link} from 'react-router';
 import shortid from 'shortid';
+import T from 'i18n-react';
 
 require('./HeaderNavbarList.less');
 
@@ -28,9 +29,8 @@ const mapStateToProps = (state) => {
 
 function HeaderNavbarList({list, store, showOldUI}){
   const oldUILink = (
-    <a href={`/oldcdap/ns/${store.getState().selectedNamespace}`}
-       className="old-ui-link">
-      Switch to old UI
+    <a href={`/oldcdap/ns/${store.getState().selectedNamespace}`}>
+      {T.translate('features.Navbar.CDAP.olduilink')}
     </a>
   );
 
@@ -39,13 +39,12 @@ function HeaderNavbarList({list, store, showOldUI}){
         {
           Array.isArray(list) ?
             list.map((item, index) => {
-              if (index === 0) {
+              if (index === list.length - 1) {
                 return (
                   <li
                     key={shortid.generate()}
                     className={item.className}
                   >
-                    {showOldUI ? oldUILink : null}
                     {
                       item.disabled ?
                         item.title
@@ -57,6 +56,7 @@ function HeaderNavbarList({list, store, showOldUI}){
                           {item.title}
                         </Link>
                       }
+                      {showOldUI ? oldUILink : null}
                   </li>
                 );
               }

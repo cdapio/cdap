@@ -37,7 +37,6 @@ import java.util.Set;
 public final class ETLBatchConfig extends ETLConfig {
   private final Engine engine;
   private final String schedule;
-  private final Resources driverResources;
   private final List<ETLStage> postActions;
   // for backwards compatibility
   private final List<ETLStage> actions;
@@ -50,12 +49,12 @@ public final class ETLBatchConfig extends ETLConfig {
                          Engine engine,
                          String schedule,
                          Resources driverResources,
+                         Resources clientResources,
                          int numOfRecordsPreview) {
-    super(stages, connections, resources, stageLoggingEnabled, numOfRecordsPreview);
+    super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, numOfRecordsPreview);
     this.postActions = ImmutableList.copyOf(postActions);
     this.engine = engine;
     this.schedule = schedule;
-    this.driverResources = driverResources;
     // field only exists for backwards compatibility -- used by convertOldConfig()
     this.actions = null;
   }
@@ -91,11 +90,6 @@ public final class ETLBatchConfig extends ETLConfig {
     return schedule;
   }
 
-  public Resources getDriverResources() {
-    return driverResources == null ? new Resources() : driverResources;
-  }
-
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -112,7 +106,6 @@ public final class ETLBatchConfig extends ETLConfig {
 
     return Objects.equals(engine, that.engine) &&
       Objects.equals(schedule, that.schedule) &&
-      Objects.equals(driverResources, that.driverResources) &&
       Objects.equals(postActions, that.postActions) &&
       Objects.equals(actions, that.actions);
 
@@ -120,7 +113,7 @@ public final class ETLBatchConfig extends ETLConfig {
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), engine, schedule, driverResources, postActions, actions);
+    return Objects.hash(super.hashCode(), engine, schedule, postActions, actions);
   }
 
   @Override
@@ -128,7 +121,6 @@ public final class ETLBatchConfig extends ETLConfig {
     return "ETLBatchConfig{" +
       "engine=" + engine +
       ", schedule='" + schedule + '\'' +
-      ", driverResources=" + driverResources +
       ", postActions=" + postActions +
       "} " + super.toString();
   }
@@ -143,7 +135,6 @@ public final class ETLBatchConfig extends ETLConfig {
   public static class Builder extends ETLConfig.Builder<Builder> {
     private final String schedule;
     private Engine engine;
-    private Resources driverResources;
     private List<ETLStage> endingActions;
 
     public Builder(String schedule) {
@@ -175,7 +166,7 @@ public final class ETLBatchConfig extends ETLConfig {
 
     public ETLBatchConfig build() {
       return new ETLBatchConfig(stages, connections, endingActions, resources, stageLoggingEnabled,
-                                engine, schedule, driverResources, numOfRecordsPreview);
+                                engine, schedule, driverResources, clientResources, numOfRecordsPreview);
     }
   }
 }

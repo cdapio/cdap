@@ -126,4 +126,9 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
   public void setRuntimeArgs(Map<String, String> args) throws Exception {
     applicationManager.setRuntimeArgs(programId, args);
   }
+
+  @Override
+  public Map<String, String> getRuntimeArgs() throws Exception {
+    return applicationManager.getRuntimeArgs(programId);
+  }
 }

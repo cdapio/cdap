@@ -16,9 +16,7 @@
 
 package co.cask.cdap.security.server;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import com.google.inject.Inject;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.DefaultIdentityService;
 import org.eclipse.jetty.security.HashLoginService;
@@ -34,14 +32,9 @@ import javax.security.auth.login.Configuration;
 public class BasicAuthenticationHandler extends AbstractAuthenticationHandler {
   private IdentityService identityService;
 
-  @Inject
-  public BasicAuthenticationHandler(CConfiguration configuration) throws Exception {
-    super(configuration);
-  }
-
   @Override
   protected LoginService getHandlerLoginService() {
-    String realmFile = configuration.get(Constants.Security.BASIC_REALM_FILE);
+    String realmFile = handlerProps.get(Constants.Security.BASIC_REALM_FILE);
     HashLoginService loginService = new HashLoginService();
     loginService.setConfig(realmFile);
     loginService.setIdentityService(getHandlerIdentityService());

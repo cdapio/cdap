@@ -30,7 +30,8 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, CDAP_UI_CONFIG) {
       exploreQueryPath = '/namespaces/:namespace/data/explore/queries',
       baseQueryPath = '/data/explore/queries/:handle',
       truthMeterPath = '/namespaces/:namespace/apps/' + CDAP_UI_CONFIG.tracker.appId + '/services/' + CDAP_UI_CONFIG.tracker.serviceId + '/methods/v1/tracker-meter',
-      tagsPath = '/namespaces/:namespace/apps/' + CDAP_UI_CONFIG.tracker.appId + '/services/' + CDAP_UI_CONFIG.tracker.serviceId + '/methods/v1/tags';
+      tagsPath = '/namespaces/:namespace/apps/' + CDAP_UI_CONFIG.tracker.appId + '/services/' + CDAP_UI_CONFIG.tracker.serviceId + '/methods/v1/tags',
+      dictionaryPath = '/namespaces/:namespace/apps/' + CDAP_UI_CONFIG.tracker.appId + '/services/' + CDAP_UI_CONFIG.tracker.serviceId + '/methods/v1/dictionary';
 
   return $resource(
     url({ _cdapPath: searchPath }),
@@ -72,6 +73,12 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, CDAP_UI_CONFIG) {
     addEntityTag: myHelpers.getConfig('POST', 'REQUEST', tagsPath + '/promote/:entityType/:entityId', false, { suppressErrors: true }),
     deletePreferredTags: myHelpers.getConfig('DELETE', 'REQUEST', tagsPath + '/preferred', false, { suppressErrors: true }),
     deleteEntityTag: myHelpers.getConfig('DELETE', 'REQUEST', tagsPath + '/delete/:entityType/:entityId', false, { suppressErrors: true }),
+
+    // DICTIONARY TAB
+    getDictionary: myHelpers.getConfig('GET', 'REQUEST', dictionaryPath, true, { suppressErrors: true }),
+    deleteColumn: myHelpers.getConfig('DELETE', 'REQUEST', dictionaryPath + '/:columnName', false, { suppressErrors: true }),
+    updateColumn: myHelpers.getConfig('PUT', 'REQUEST', dictionaryPath + '/:columnName', false, { contentType: 'application/json' }),
+    addColumn: myHelpers.getConfig('POST', 'REQUEST', dictionaryPath + '/:columnName', false, { suppressErrors: true }),
 
     // METADATA PROPERTIES CONTROL
     deleteEntityProperty: myHelpers.getConfig('DELETE', 'REQUEST', propertyPath + '/:key', false, { suppressErrors: true }),

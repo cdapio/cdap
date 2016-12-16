@@ -27,12 +27,12 @@ import java.util.Map;
 @Deprecated
 public abstract class AbstractWorkflowAction implements WorkflowAction {
 
-  private final String name;
+  private String name;
   private WorkflowActionConfigurer configurer;
   private WorkflowContext context;
 
   protected AbstractWorkflowAction() {
-    name = getClass().getSimpleName();
+    // no-op, just for instantiation
   }
 
   protected AbstractWorkflowAction(String name) {
@@ -42,7 +42,7 @@ public abstract class AbstractWorkflowAction implements WorkflowAction {
   @Override
   public void configure(WorkflowActionConfigurer configurer) {
     this.configurer = configurer;
-    setName(name);
+    setName(name == null ? getClass().getSimpleName() : name);
     configure();
   }
 

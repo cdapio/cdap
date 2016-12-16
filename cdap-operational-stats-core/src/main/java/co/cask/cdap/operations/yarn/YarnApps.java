@@ -21,9 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
 import org.apache.hadoop.yarn.client.api.YarnClient;
-import org.apache.hadoop.yarn.exceptions.YarnException;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -96,14 +94,12 @@ public class YarnApps extends AbstractYarnStats implements OperationalStats, Yar
   }
 
   @Override
-  public synchronized void collect() throws IOException {
+  public synchronized void collect() throws Exception {
     reset();
     YarnClient yarnClient = createYARNClient();
     List<ApplicationReport> applications;
     try {
       applications = yarnClient.getApplications();
-    } catch (YarnException e) {
-      throw new IOException(e);
     } finally {
       yarnClient.stop();
     }

@@ -279,7 +279,9 @@
     <name>app.program.extra.classpath</name>
     <value></value>
     <description>
-      Extra Java classpath for CDAP programs
+      Extra Java classpath for CDAP programs. These extra classpaths must
+      be present on all nodes in the cluster. Supports wildcard suffix "*"
+      to include all jar files under a directory.
     </description>
   </property>
 
@@ -357,6 +359,15 @@
   </property>
 
   <property>
+    <name>scheduler.misfire.threshold.ms</name>
+    <value>60000</value>
+    <description>
+      The number of milliseconds by which a schedule execution can miss its
+      next-fire-time and still run
+    </description>
+  </property>
+
+  <property>
     <name>workflow.token.max.size.mb</name>
     <value>30</value>
     <description>
@@ -365,6 +376,16 @@
     </description>
   </property>
 
+  <property>
+    <name>program.container.dist.jars</name>
+    <value></value>
+    <description>
+      Extra jars to be localized to every program container and to be
+      added to classpaths of CDAP programs. They can be local file paths
+      on the CDAP master or URI's of remote files. Multiple jar files
+      are comma separated.
+    </description>
+  </property>
 
   <!-- Audit Configuration -->
 

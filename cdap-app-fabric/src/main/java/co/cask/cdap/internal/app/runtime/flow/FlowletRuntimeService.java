@@ -16,19 +16,14 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.flow.flowlet.Callback;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import org.apache.tephra.TransactionFailureException;
@@ -110,29 +105,14 @@ final class FlowletRuntimeService extends AbstractIdleService {
 
   private void initFlowlet() throws InterruptedException {
     LOG.info("Initializing flowlet: " + flowletContext);
-    TxRunnable runnable = new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        ClassLoader classLoader = setContextCombinedClassLoader();
-        try {
-          flowlet.initialize(flowletContext);
-        } finally {
-          ClassLoaders.setContextClassLoader(classLoader);
-        }
-      }
-    };
     try {
-      if (TransactionControl.IMPLICIT == Transactions.getTransactionControl(
-        TransactionControl.IMPLICIT, Flowlet.class, flowlet, "initialize", FlowletContext.class)) {
-        try {
-          flowletContext.execute(runnable);
-        } catch (TransactionFailureException e) {
-          throw e.getCause() == null ? e : e.getCause();
-        }
-      } else {
-        runnable.run(flowletContext);
+      try {
+        flowletContext.initializeProgram(flowlet, flowletContext, Transactions.getTransactionControl(
+          TransactionControl.IMPLICIT, Flowlet.class, flowlet, "initialize", FlowletContext.class), false);
+        LOG.info("Flowlet initialized: " + flowletContext);
+      } catch (TransactionFailureException e) {
+        throw e.getCause() == null ? e : e.getCause();
       }
-      LOG.info("Flowlet initialized: " + flowletContext);
     } catch (Throwable cause) {
       LOG.error("Flowlet threw exception during flowlet initialization: " + flowletContext, cause);
       throw Throwables.propagate(cause);
@@ -141,31 +121,14 @@ final class FlowletRuntimeService extends AbstractIdleService {
 
   private void destroyFlowlet() {
     LOG.info("Destroying flowlet: " + flowletContext);
-    TxRunnable runnable = new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        ClassLoader classLoader = setContextCombinedClassLoader();
-        try {
-          flowlet.destroy();
-        } finally {
-          ClassLoaders.setContextClassLoader(classLoader);
-        }
-      }
-    };
     try {
-      if (TransactionControl.IMPLICIT == Transactions.getTransactionControl(TransactionControl.IMPLICIT,
-                                                                            Flowlet.class, flowlet, "destroy")) {
-        try {
-          flowletContext.execute(runnable);
-        } catch (TransactionFailureException e) {
-          throw e.getCause() == null ? e : e.getCause();
-        }
-      } else {
-        runnable.run(flowletContext);
+      try {
+        flowletContext.destroyProgram(flowlet, flowletContext, Transactions.getTransactionControl(
+          TransactionControl.IMPLICIT, Flowlet.class, flowlet, "destroy"), false);
+        LOG.info("Flowlet destroyed: " + flowletContext);
+      } catch (TransactionFailureException e) {
+        throw e.getCause() == null ? e : e.getCause();
       }
-      LOG.info("Flowlet destroyed: " + flowletContext);
-    } catch (InterruptedException e) {
-      // No need to propagate, as it is shutting down.
     } catch (Throwable cause) {
       LOG.error("Flowlet threw exception during flowlet destruction: " + flowletContext, cause);
       throw Throwables.propagate(cause);
@@ -181,10 +144,5 @@ final class FlowletRuntimeService extends AbstractIdleService {
     } catch (Throwable t) {
       LOG.warn("Exception when stopping service {}", service);
     }
-  }
-
-  private ClassLoader setContextCombinedClassLoader() {
-    return ClassLoaders.setContextClassLoader(new CombineClassLoader(
-      null, ImmutableList.of(flowletContext.getProgram().getClassLoader(), getClass().getClassLoader())));
   }
 }

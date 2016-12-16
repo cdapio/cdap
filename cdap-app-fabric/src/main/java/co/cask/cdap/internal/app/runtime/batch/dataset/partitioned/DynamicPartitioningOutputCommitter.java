@@ -35,9 +35,12 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.mapred.FileAlreadyExistsException;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.tephra.TransactionAware;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,6 +65,9 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
   private final TaskAttemptContext taskContext;
   private final Path jobSpecificOutputPath;
 
+  private PartitionedFileSet outputDataset;
+  private Set<String> relativePaths;
+
   // Note that the outputPath passed in is treated as a temporary directory.
   // The commitJob method moves the files from within this directory to an parent (final) directory.
   // The cleanupJob method removes this directory.
@@ -78,11 +84,11 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
     BasicMapReduceTaskContext taskContext = classLoader.getTaskContextProvider().get(this.taskContext);
 
     String outputDatasetName = configuration.get(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
-    PartitionedFileSet outputDataset = taskContext.getDataset(outputDatasetName);
+    outputDataset = taskContext.getDataset(outputDatasetName);
     Partitioning partitioning = outputDataset.getPartitioning();
 
     Set<PartitionKey> partitionsToAdd = new HashSet<>();
-    Set<String> relativePaths = new HashSet<>();
+    relativePaths = new HashSet<>();
     // Go over all files in the temporary directory and keep track of partitions to add for them
     FileStatus[] allCommittedTaskPaths = getAllCommittedTaskPaths(context);
     for (FileStatus committedTaskPath : allCommittedTaskPaths) {
@@ -184,7 +190,42 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
     fs.delete(jobSpecificOutputPath, true);
   }
 
-  // Copied from superclass to enable usage of it, because our 'from' and 'to' locations are different.
+  @Override
+  public void abortJob(JobContext context, JobStatus.State state) throws IOException {
+    // if this is set, then commitJob() was called already and may have created partitions:
+    // We want to rollback these partitions.
+    if (outputDataset != null) {
+      try {
+        try {
+          ((TransactionAware) outputDataset).rollbackTx();
+        } catch (Throwable t) {
+          LOG.warn("Attempt to rollback partitions failed", t);
+        }
+
+        // if this is non-null, then at least some paths have been created. We need to remove them
+        if (relativePaths != null) {
+          for (String pathToDelete : relativePaths) {
+            Location locationToDelete = outputDataset.getEmbeddedFileSet().getLocation(pathToDelete);
+            try {
+              if (locationToDelete.exists()) {
+                locationToDelete.delete(true);
+              }
+            } catch (IOException e) {
+              // not sure how this can happen, but we want to keep going. Log and continue
+              LOG.warn("Attempt to clean up partition location {} failed", locationToDelete.toURI().getPath(), e);
+            }
+          }
+        }
+      } finally {
+        // clear this so that we only attempt rollback once in case it gets called multiple times
+        outputDataset = null;
+        relativePaths = null;
+      }
+    }
+    super.abortJob(context, state);
+  }
+
+// Copied from superclass to enable usage of it, because our 'from' and 'to' locations are different.
   /**
    * Merge two paths together.  Anything in from will be moved into to, if there
    * are any name conflicts while merging the files or directories in from win.

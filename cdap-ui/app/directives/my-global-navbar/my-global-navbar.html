@@ -62,6 +62,12 @@
               Tags
             </a>
           </li>
+          <li>
+            <a ui-sref="tracker.dictionary({ namespace: $stateParams.namespace })"
+               ng-class="{ 'active': Navbar.highlightTab === 'dictionary'}">
+              Dictionary
+            </a>
+          </li>
         </ul>
         <cask-header-actions
           tag="'a'"

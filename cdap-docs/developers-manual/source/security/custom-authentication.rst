@@ -15,11 +15,6 @@ extending ``AbstractAuthenticationHandler`` and implementing its abstract method
 
   public class CustomAuthenticationHandler extends AbstractAuthenticationHandler {
 
-    @Inject
-    public CustomAuthenticationHandler(CConfiguration configuration) {
-      super(configuration);
-    }
-
     @Override
     protected LoginService getHandlerLoginService() {
       // ...

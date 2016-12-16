@@ -36,7 +36,6 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
@@ -175,7 +174,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       // Initialize log appender
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
-      SystemArguments.setLogLevel(programOpts.getUserArguments(), logAppenderInitializer);
 
       // Create the ProgramRunner
       programRunner = createProgramRunner(injector);

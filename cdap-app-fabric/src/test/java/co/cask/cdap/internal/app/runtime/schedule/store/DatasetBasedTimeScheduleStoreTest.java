@@ -133,7 +133,7 @@ public class DatasetBasedTimeScheduleStoreTest {
     JobStore js;
     if (enablePersistence) {
       CConfiguration conf = injector.getInstance(CConfiguration.class);
-      js = new DatasetBasedTimeScheduleStore(factory, new ScheduleStoreTableUtil(dsFramework, conf));
+      js = new DatasetBasedTimeScheduleStore(factory, new ScheduleStoreTableUtil(dsFramework, conf), conf);
     } else {
       js = new RAMJobStore();
     }

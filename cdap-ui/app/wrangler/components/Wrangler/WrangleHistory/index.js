@@ -54,7 +54,7 @@ export default class WrangleHistory extends Component {
         onClick={e => e.stopPropagation()}
       >
         {
-          this.props.historyArray.map((history, index) => {
+          this.props.historyArray.map((history) => {
             return (
               <div
                 className="history-row"
@@ -63,10 +63,11 @@ export default class WrangleHistory extends Component {
                 <span>
                   <span>{T.translate(`features.Wrangler.Actions.${history.action}`)}</span>
                   <span>: {history.payload.activeColumn}</span>
-                  <span
+                  {/* Commenting out the delete history button since it may come back */}
+                  {/*<span
                     className="fa fa-times-circle pull-right history-delete"
                     onClick={this.deleteHistory.bind(this, index)}
-                  />
+                  />*/}
                 </span>
               </div>
             );

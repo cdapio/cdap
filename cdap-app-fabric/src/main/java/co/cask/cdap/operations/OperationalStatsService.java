@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,13 +57,15 @@ public class OperationalStatsService extends AbstractScheduledService {
 
   private final OperationalStatsLoader operationalStatsLoader;
   private final int statsRefreshInterval;
+  private final Injector injector;
 
   private ScheduledExecutorService executor;
 
   @Inject
-  OperationalStatsService(OperationalStatsLoader operationalStatsLoader, CConfiguration cConf) {
+  OperationalStatsService(OperationalStatsLoader operationalStatsLoader, CConfiguration cConf, Injector injector) {
     this.operationalStatsLoader = operationalStatsLoader;
     this.statsRefreshInterval = cConf.getInt(Constants.OperationalStats.REFRESH_INTERVAL_SECS);
+    this.injector = injector;
   }
 
   /**
@@ -72,15 +75,18 @@ public class OperationalStatsService extends AbstractScheduledService {
   protected void startUp() throws Exception {
     MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
     for (Map.Entry<OperationalExtensionId, OperationalStats> entry : operationalStatsLoader.getAll().entrySet()) {
-      ObjectName objectName = getObjectName(entry.getValue());
+      OperationalStats operationalStats = entry.getValue();
+      ObjectName objectName = getObjectName(operationalStats);
       if (objectName == null) {
         LOG.warn("Found an operational extension with null service name and stat type - {}. Ignoring this extension.",
                  OperationalStats.class.getName());
         continue;
       }
-      LOG.debug("Registering operational extension: {}; extension id: {}", entry.getValue(), entry.getKey());
+      LOG.debug("Registering operational extension: {}; extension id: {}", operationalStats, entry.getKey());
+      // initialize operational stats
+      operationalStats.initialize(injector);
       // register MBean
-      mbs.registerMBean(entry.getValue(), objectName);
+      mbs.registerMBean(operationalStats, objectName);
     }
     LOG.info("Successfully started Operational Stats Service...");
   }
@@ -120,10 +126,11 @@ public class OperationalStatsService extends AbstractScheduledService {
   protected void shutDown() throws Exception {
     MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
     for (Map.Entry<OperationalExtensionId, OperationalStats> entry : operationalStatsLoader.getAll().entrySet()) {
-      ObjectName objectName = getObjectName(entry.getValue());
+      OperationalStats operationalStats = entry.getValue();
+      ObjectName objectName = getObjectName(operationalStats);
       if (objectName == null) {
         LOG.warn("Found an operational extension with null service name and stat type while unregistering - {}. " +
-                   "Ignoring this extension.", entry.getValue().getClass().getName());
+                   "Ignoring this extension.", operationalStats.getClass().getName());
         continue;
       }
       try {
@@ -133,6 +140,7 @@ public class OperationalStatsService extends AbstractScheduledService {
       } catch (MBeanRegistrationException e) {
         LOG.warn("Error while un-registering MBean {}.", e);
       }
+      operationalStats.destroy();
     }
     if (executor != null) {
       executor.shutdownNow();

@@ -16,10 +16,8 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -32,8 +30,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -58,7 +54,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -299,57 +294,23 @@ public class ServiceHttpServer extends AbstractIdleService {
   private void initHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
     TransactionControl txCtrl = Transactions.getTransactionControl(TransactionControl.IMPLICIT, Object.class,
                                                                    handler, "initialize", HttpServiceContext.class);
-    ClassLoader classLoader = setContextCombinedClassLoader(handler);
     try {
-      if (TransactionControl.IMPLICIT == txCtrl) {
-        Transactions.createTransactionalWithRetry(
-          serviceContext, org.apache.tephra.RetryStrategies.retryOnConflict(20, 100))
-          .execute(new TxRunnable() {
-            @Override
-            public void run(DatasetContext context) throws Exception {
-              handler.initialize(serviceContext);
-            }
-          });
-      } else {
-        handler.initialize(serviceContext);
-      }
+      serviceContext.initializeProgram(handler, serviceContext, txCtrl, true);
     } catch (Throwable t) {
       LOG.error("Exception raised in HttpServiceHandler.initialize of class {}", handler.getClass(), t);
       throw Throwables.propagate(t);
-    } finally {
-      ClassLoaders.setContextClassLoader(classLoader);
     }
   }
 
   private void destroyHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
     TransactionControl txCtrl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
                                                                    Object.class, handler, "destroy");
-    ClassLoader classLoader = setContextCombinedClassLoader(handler);
     try {
-      if (TransactionControl.IMPLICIT == txCtrl) {
-        Transactions.createTransactionalWithRetry(
-          serviceContext, org.apache.tephra.RetryStrategies.retryOnConflict(20, 100))
-          .execute(new TxRunnable() {
-            @Override
-            public void run(DatasetContext context) throws Exception {
-              handler.destroy();
-            }
-          });
-      } else {
-        handler.destroy();
-      }
+      serviceContext.destroyProgram(handler, serviceContext, txCtrl, true);
     } catch (Throwable t) {
       LOG.error("Exception raised in HttpServiceHandler.destroy of class {}", handler.getClass(), t);
       // Don't propagate
-    } finally {
-      ClassLoaders.setContextClassLoader(classLoader);
     }
-  }
-
-
-  private ClassLoader setContextCombinedClassLoader(HttpServiceHandler handler) {
-    return ClassLoaders.setContextClassLoader(
-      new CombineClassLoader(null, ImmutableList.of(handler.getClass().getClassLoader(), getClass().getClassLoader())));
   }
 
   /**
