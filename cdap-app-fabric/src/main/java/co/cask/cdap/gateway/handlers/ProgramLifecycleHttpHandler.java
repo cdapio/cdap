@@ -67,6 +67,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ServiceId;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -461,7 +462,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("app-name") String appName,
                                     @PathParam("program-type") String type,
                                     @PathParam("program-name") String programName) throws BadRequestException,
-    NotImplementedException, NotFoundException {
+    NotImplementedException, NotFoundException, UnauthorizedException {
     getProgramRuntimeArgs(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
   }
 
@@ -476,21 +477,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("app-version") String appVersion,
                                     @PathParam("program-type") String type,
                                     @PathParam("program-name") String programName) throws BadRequestException,
-    NotImplementedException, NotFoundException {
+    NotImplementedException, NotFoundException, UnauthorizedException {
     ProgramType programType = getProgramType(type);
     if (programType == null || programType == ProgramType.WEBAPP) {
       throw new NotFoundException(String.format("Getting program runtime arguments is not supported for program " +
                                                   "type '%s'.", type));
     }
 
-    ProgramId programId = new ProgramId(namespaceId, appName, programType, programName);
-    if (!store.programExists(programId)) {
-      throw new NotFoundException(programId);
-    }
-
-    Map<String, String> runtimeArgs = preferencesStore.getProperties(programId.getNamespace(), appName,
-                                                                     type, programName);
-    responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
+    responder.sendJson(HttpResponseStatus.OK,
+                       lifecycleService.getRuntimeArgs(new ProgramId(namespaceId, appName, programType, programName)));
   }
 
   /**

@@ -36,7 +36,7 @@ public final class ETLRealtimeConfig extends ETLConfig {
                             boolean stageLoggingEnabled,
                             int instances,
                             int numOfRecordsPreview) {
-    super(stages, connections, resources, stageLoggingEnabled, numOfRecordsPreview);
+    super(stages, connections, resources, resources, resources, stageLoggingEnabled, numOfRecordsPreview);
     this.instances = instances;
   }
 

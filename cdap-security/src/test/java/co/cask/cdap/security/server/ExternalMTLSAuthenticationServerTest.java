@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
@@ -52,8 +53,7 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalMTLSAuthentica
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    URL serverTrustoreURL = ExternalMTLSAuthenticationServerTest.class.getClassLoader().getResource("server-trust" +
-                                                                                                      ".jks");
+    URL serverTrustoreURL = ExternalMTLSAuthenticationServerTest.class.getClassLoader().getResource("server-trust.jks");
     URL serverKeystoreURL = ExternalMTLSAuthenticationServerTest.class.getClassLoader().getResource("server-key.jks");
     URL realmURL = ExternalMTLSAuthenticationServerTest.class.getClassLoader().getResource("realm.properties");
 
@@ -123,13 +123,10 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalMTLSAuthentica
     final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
     KeyStore ks = KeyStore.getInstance("JKS");
     char[] ksPass = "secret".toCharArray();
-    FileInputStream fis = new FileInputStream(clientKeystoreURL.getPath());
-    ks.load(fis, ksPass);
-    kmf.init(ks, configuration.get("security.auth.server.ssl.keystore.password", "secret").toCharArray());
-
-    fis.close();
-    fis = null;
-
+    try (FileInputStream fis = new FileInputStream(clientKeystoreURL.getPath())) {
+      ks.load(fis, ksPass);
+      kmf.init(ks, configuration.get("security.auth.server.ssl.keystore.password", "secret").toCharArray());
+    }
     return kmf.getKeyManagers();
   }
 
@@ -147,13 +144,10 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalMTLSAuthentica
     final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
     KeyStore ks = KeyStore.getInstance("JKS");
     char[] ksPass = "secret".toCharArray();
-    FileInputStream fis = new FileInputStream(clientKeystoreURL.getPath());
-    ks.load(fis, ksPass);
-    kmf.init(ks, configuration.get("security.auth.server.ssl.keystore.password", "secret").toCharArray());
-
-    fis.close();
-    fis = null;
-
+    try (FileInputStream fis = new FileInputStream(clientKeystoreURL.getPath())) {
+      ks.load(fis, ksPass);
+      kmf.init(ks, configuration.get("security.auth.server.ssl.keystore.password", "secret").toCharArray());
+    }
     return kmf.getKeyManagers();
   }
 
@@ -166,7 +160,7 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalMTLSAuthentica
   @Override
   protected TrustManager[] getTrustManagers() throws Exception {
     // Setting up the client's trust store, which trusts all certs
-    TrustManager[] tms = new TrustManager[]{new X509TrustManager() {
+    return new TrustManager[]{new X509TrustManager() {
       @Override
       public java.security.cert.X509Certificate[] getAcceptedIssuers() {
         return null;
@@ -181,11 +175,9 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalMTLSAuthentica
       @Override
       public void checkServerTrusted(java.security.cert.X509Certificate[] x509Certificates, String s)
         throws CertificateException {
-        // no- op
+        // no-op
       }
     }};
-
-    return tms;
   }
 
   protected Map<String, String> getAuthRequestHeader() throws Exception {

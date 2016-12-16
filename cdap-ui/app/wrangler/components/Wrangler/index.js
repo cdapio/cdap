@@ -365,7 +365,7 @@ export default class Wrangler extends Component {
 
         <div className="text-center">
           <button
-            className="btn btn-primary wrangle-button"
+            className="btn btn-wrangler wrangle-button"
             onClick={this.onWrangleClick}
           >
             Wrangle

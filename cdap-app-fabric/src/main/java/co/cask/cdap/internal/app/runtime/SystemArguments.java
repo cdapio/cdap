@@ -41,6 +41,21 @@ public final class SystemArguments {
   private static final String LOG_LEVEL = "system.log.level";
   public static final String TRANSACTION_TIMEOUT = "system.data.tx.timeout";
 
+  public static Map<String, String> getLogLevels(Map<String, String> args) {
+    Map<String, String> logLevels = new HashMap<>();
+    for (Map.Entry<String, String> entry : args.entrySet()) {
+      String loggerName = entry.getKey();
+      if (loggerName.length() > LOG_LEVEL.length() && loggerName.startsWith(LOG_LEVEL)) {
+        logLevels.put(loggerName.substring(LOG_LEVEL.length() + 1), entry.getValue());
+      }
+    }
+    String logLevel = args.get(LOG_LEVEL);
+    if (logLevel != null) {
+      logLevels.put(Logger.ROOT_LOGGER_NAME, logLevel);
+    }
+    return logLevels;
+  }
+
   /**
    * Set the log level for the {@link LogAppenderInitializer}.
    *
@@ -57,18 +72,7 @@ public final class SystemArguments {
    * @param initializer the LogAppenderInitializer which will be used to set up the log level
    */
   public static void setLogLevel(Map<String, String> args, LogAppenderInitializer initializer) {
-    Map<String, String> logPairs = new HashMap<>();
-    for (Map.Entry<String, String> entry : args.entrySet()) {
-      String key = entry.getKey();
-      if (!key.equals(LOG_LEVEL) && key.startsWith(LOG_LEVEL)) {
-        logPairs.put(entry.getKey().substring(LOG_LEVEL.length() + 1), entry.getValue());
-      }
-    }
-    String logLevel = args.get(LOG_LEVEL);
-    if (logLevel != null) {
-      logPairs.put(Logger.ROOT_LOGGER_NAME, logLevel);
-    }
-    initializer.setLogLevels(logPairs);
+    initializer.setLogLevels(getLogLevels(args));
   }
 
   /**

@@ -109,9 +109,13 @@ my-dag-plus {
         }
 
         &.wrangler {
-          color: @wrangler-red;
+          color: @wrangler-yellow;
           .node {
-            border-color: @wrangler-red;
+            border-color: @wrangler-yellow;
+          }
+          .plugin-name {
+            // Wrangler yellow makes the text unreadable
+            color: darken(@wrangler-yellow, 10%);
           }
         }
       }
@@ -357,7 +361,7 @@ my-dag-plus {
 
         &.wrangler-anchor {
           circle {
-            stroke: @wrangler-red;
+            stroke: @wrangler-yellow;
           }
         }
       }

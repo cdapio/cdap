@@ -15,39 +15,47 @@
  */
 
 .explore-table-modal.modal-dialog {
-	margin-top: 70px;
+  margin-top: 70px;
 
-	.table-container {
-		overflow-x: auto;
-	}
+  .modal-header {
+    background-color: #464a57;
+    color: white;
+    padding: 5px 10px;
 
-	.field-selection {
-		margin-bottom: 5px;
+    .close-section { cursor: pointer; }
+  }
 
-		.form-control { margin-left: 10px; }
-	}
+  .table-container {
+    overflow-x: auto;
+  }
 
-	.wrangle-button { margin-top: 10px; }
+  .field-selection {
+    margin-bottom: 5px;
 
-	.parse-options {
-	  padding: 10px;
-	  border: 2px solid #dedede;
-	  border-radius: 4px;
+    .form-control { margin-left: 10px; }
+  }
 
-	  hr {
-	    margin-top: 0;
-	    margin-bottom: 10px;
-	    border-top: 2px solid #cccccc;
-	  }
+  .wrangle-button { margin-top: 10px; }
 
-	  .delimiter {
-	    .form-control {
-	      border: none;
-	      box-shadow: none;
-	      padding-left: 0;
-	    }
-	  }
+  .parse-options {
+    padding: 10px;
+    border: 2px solid #dedede;
+    border-radius: 4px;
 
-	  .checkbox { margin-right: 25px; }
-	}
+    hr {
+      margin-top: 0;
+      margin-bottom: 10px;
+      border-top: 2px solid #cccccc;
+    }
+
+    .delimiter {
+      .form-control {
+        border: none;
+        box-shadow: none;
+        padding-left: 0;
+      }
+    }
+
+    .checkbox { margin-right: 25px; }
+  }
 }

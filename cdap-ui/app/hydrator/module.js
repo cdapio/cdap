@@ -29,6 +29,6 @@ angular.module(PKG.name + '.feature.hydrator', [
     schedule: '0 * * * *',
     resources: {
       virtualCores: 1,
-      memoryMB: 512
+      memoryMB: 1024
     }
   });

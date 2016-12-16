@@ -334,6 +334,7 @@
                     <resource>
                       <directory>${project.basedir}/bin</directory>
                       <targetPath>bin</targetPath>
+                      <filtering>true</filtering>
                     </resource>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-common/bin</directory>
@@ -372,9 +373,10 @@
                      <targetPath>ui</targetPath>
                      <excludes>
                       <exclude>**LICENSE**</exclude>
+                      <exclude>bin/node</exclude>
                      </excludes>
                    </resource>
-                    <!-- Copy examples. This assumes the examples are already built -->
+                    <!-- Copy examples code -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-examples</directory>
                       <targetPath>examples</targetPath>
@@ -392,7 +394,6 @@
                         <include>**/bin/**</include>
                         <include>**/resources/**</include>
                         <include>**/pom.xml</include>
-                        <include>**/target/*.jar</include>
                       </includes>
                       <excludes>
                         <exclude>pom.xml</exclude>
@@ -509,8 +510,6 @@
                       <directory>${project.parent.basedir}/cdap-cli/bin</directory>
                       <targetPath>bin</targetPath>
                       <includes>
-                        <include>cdap</include>
-                        <include>functions.sh</include>
                         <include>cdap-cli.bat</include>
                         <include>cdap-cli.sh</include>
                       </includes>
@@ -592,15 +591,16 @@
                   <goal>run</goal>
                 </goals>
               </execution>
-              <!-- Rename CLI jar and make CLI scripts executable -->
+              <!-- Make CDAP and CLI scripts executable -->
               <execution>
                 <id>copy-cli-bash</id>
                 <phase>prepare-package</phase>
                 <configuration>
                   <target>
+                    <chmod file="${stage.opt.dir}/bin/cdap-cli.bat" perm="755"/>
+                    <chmod file="${stage.opt.dir}/bin/cdap.bat" perm="755"/>
                     <chmod file="${stage.opt.dir}/bin/cdap" perm="755"/>
                     <chmod file="${stage.opt.dir}/bin/functions.sh" perm="644"/>
-                    <chmod file="${stage.opt.dir}/bin/cdap-cli.bat" perm="755"/>
                   </target>
                 </configuration>
                 <goals>

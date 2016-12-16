@@ -138,7 +138,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
-    // Optionally get runId. If the map-reduce started by other program (e.g. Workflow), it inherit the runId.
     Arguments arguments = options.getArguments();
     RunId runId = ProgramRunners.getRunId(options);
 

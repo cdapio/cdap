@@ -44,8 +44,8 @@ function convertHistoryItemToDml(history) {
       return `titlecase ${payload.activeColumn}`;
     case WranglerActions.subStringColumn:
       return `indexsplit ${payload.activeColumn} ${payload.beginIndex} ${payload.endIndex} ${payload.columnName}`;
-
     case WranglerActions.splitColumn:
+      return `split ${payload.activeColumn} ${payload.delimiter} ${payload.firstSplit} ${payload.secondSplit}`;
 
   }
 }

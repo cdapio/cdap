@@ -1,0 +1,35 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<td class="column-cell"><span>{{((DictionaryController.currentPreferredPage-1)*10)+$index+1}}</span>{{ data.columnName }}</td>
+<td class="type-cell">{{ data.columnType }}</td>
+<td class="null-cell"><input type="checkbox" ng-checked="data.isNullable" ng-disabled="true"></td>
+<td class="pii-cell"><input type="checkbox" ng-checked="data.isPII" ng-disabled="true"></td>
+<td class="entities-cell">{{ data.entities }}</td>
+<td class="description-cell" ng-click="DictionaryController.editColumnData(data)">
+  <span uib-tooltip="{{::data.description}}"
+    tooltip-enable="data.description.length > 100"
+    tooltip-placement="bottom"
+    tooltip-append-to-body="true">
+    {{ data.description | myEllipsis: 100}}
+  </span>
+</td>
+<td class="actions-cell">
+  <div class="action-buttons">
+    <span class="fa fa-cog"></span>
+    <span class="fa fa-trash" ng-click="DictionaryController.showDeleteModal(data.columnName)"></span>
+  </div>
+</td>

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,6 +54,7 @@ import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.security.auth.login.Configuration;
 
 import static org.junit.Assert.assertEquals;
@@ -82,6 +83,7 @@ public abstract class ExternalAuthenticationServerTestBase {
 
   protected abstract HttpClient getHTTPClient() throws Exception;
 
+  @Nullable
   protected abstract Map<String, String> getAuthRequestHeader() throws Exception;
 
   protected abstract String getAuthenticatedUserName() throws Exception;
@@ -141,10 +143,6 @@ public abstract class ExternalAuthenticationServerTestBase {
 
   public ExternalAuthenticationServer getServer() {
     return server;
-  }
-
-  public Codec<AccessToken> getTokenCodec() {
-    return tokenCodec;
   }
 
   public DiscoveryServiceClient getDiscoveryServiceClient() {
@@ -312,9 +310,7 @@ public abstract class ExternalAuthenticationServerTestBase {
     }
 
     HttpResponse response = client.execute(request);
-
     assertEquals(404, response.getStatusLine().getStatusCode());
-
   }
 
   /**
