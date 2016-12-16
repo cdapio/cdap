@@ -140,6 +140,11 @@ final class BasicSparkClientContext implements SparkClientContext {
   }
 
   @Override
+  public String getClusterName() {
+    return sparkRuntimeContext.getClusterName();
+  }
+
+  @Override
   public Map<String, String> getRuntimeArguments() {
     return sparkRuntimeContext.getRuntimeArguments();
   }

@@ -33,9 +33,14 @@ public interface RuntimeContext {
   ApplicationSpecification getApplicationSpecification();
 
   /**
-   * @return A map of argument key and value.
+   * @return A map of argument key and value
    */
   Map<String, String> getRuntimeArguments();
+
+  /**
+   * @return The cluster name
+   */
+  String getClusterName();
 
   /**
    * @return The application namespace
@@ -48,7 +53,7 @@ public interface RuntimeContext {
   RunId getRunId();
 
   /**
-   * @return an {@link Admin} to perform admin operations.
+   * @return an {@link Admin} to perform admin operations
    */
   Admin getAdmin();
 
