@@ -134,31 +134,6 @@
   </property>
 
   <property>
-    <name>router.ssl.webapp.bind.port</name>
-    <value>20443</value>
-    <description>
-      CDAP Router service bind port for webapp for HTTPS (deprecated)
-    </description>
-  </property>
-
-  <property>
-    <name>router.webapp.bind.port</name>
-    <value>20000</value>
-    <description>
-      CDAP Router service bind port for webapp (deprecated)
-    </description>
-  </property>
-
-  <property>
-    <name>router.webapp.enabled</name>
-    <value>false</value>
-    <description>
-      Determines if the webapp listening service should be started
-      (deprecated)
-    </description>
-  </property>
-
-  <property>
     <name>security.auth.server.address</name>
     <value>0.0.0.0</value>
     <description>

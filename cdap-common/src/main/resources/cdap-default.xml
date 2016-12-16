@@ -1731,14 +1731,7 @@
     <name>router.ssl.server.port</name>
     <value>${router.ssl.bind.port}</value>
     <description>
-    </description>
-  </property>
-
-  <property>
-    <name>router.ssl.webapp.bind.port</name>
-    <value>20443</value>
-    <description>
-      CDAP Router service bind port for webapp for HTTPS (deprecated)
+      CDAP Router service port to which CDAP UI connects for HTTPS
     </description>
   </property>
 
@@ -1751,23 +1744,6 @@
       "largest", or "drop". A string comparison of the versions of the user service is
       used for "smallest" or "largest". The "drop" option will not route the request to
       any service and will return "service not found".
-    </description>
-  </property>
-
-  <property>
-    <name>router.webapp.bind.port</name>
-    <value>20000</value>
-    <description>
-      CDAP Router service bind port for webapp (deprecated)
-    </description>
-  </property>
-
-  <property>
-    <name>router.webapp.enabled</name>
-    <value>false</value>
-    <description>
-      Determines if the webapp listening service should be started
-      (deprecated)
     </description>
   </property>
 
