@@ -102,6 +102,8 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
 
   override def getSecureStore = delegate.getSecureStore
 
+  override def getMessagingContext = delegate.getMessagingContext
+
   override def getPluginContext = delegate.getPluginContext
 
   override def getMetrics = delegate.getMetrics

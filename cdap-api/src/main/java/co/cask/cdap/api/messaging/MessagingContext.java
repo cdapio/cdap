@@ -67,7 +67,7 @@ public interface MessagingContext {
    * When those {@code fetch} methods are called without a transactional context, message will be fetched
    * without transaction.
    * </p>
-   * @return a new instance of {@link MessageFetcher}.
+   * @return a new instance of {@link MessageFetcher}. The returned instance cannot be shared across multiple threads.
    */
   MessageFetcher getMessageFetcher();
 }

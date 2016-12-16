@@ -67,6 +67,7 @@ import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeSchedule
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
@@ -209,6 +210,7 @@ public class UpgradeTool {
       new LocationRuntimeModule().getDistributedModules(),
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
+      new MessagingClientModule(),
       Modules.override(new DataSetsModules().getDistributedModules()).with(
         new AbstractModule() {
           @Override

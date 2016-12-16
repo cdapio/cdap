@@ -36,6 +36,7 @@ import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
@@ -63,12 +64,14 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final StreamWriterFactory streamWriterFactory;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
+  private final MessagingService messagingService;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
-                             SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                             SecureStore secureStore, SecureStoreManager secureStoreManager,
+                             MessagingService messagingService) {
     super(cConf);
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
@@ -78,6 +81,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.streamWriterFactory = streamWriterFactory;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
+    this.messagingService = messagingService;
   }
 
   @Override
@@ -122,7 +126,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           cConf, instanceId, instanceCount,
                                                           metricsCollectionService, datasetFramework, txClient,
                                                           discoveryServiceClient, streamWriterFactory,
-                                                          pluginInstantiator, secureStore, secureStoreManager);
+                                                          pluginInstantiator, secureStore, secureStoreManager,
+                                                          messagingService);
 
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 

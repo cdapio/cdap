@@ -43,6 +43,7 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
@@ -130,6 +131,7 @@ public final class AppFabricTestModule extends AbstractModule {
     // we want to use RemotePrivilegesFetcher in this module, since app fabric service is started
     install(new AuthorizationEnforcementModule().getStandaloneModules());
     install(new SecureStoreModules().getInMemoryModules());
+    install(new MessagingServerRuntimeModule().getInMemoryModules());
   }
 
   private Scheduler createNoopScheduler() {

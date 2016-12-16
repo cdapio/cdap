@@ -45,6 +45,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
@@ -145,6 +146,7 @@ class UpgradeDatasetServiceManager extends AbstractIdleService {
       new LocationRuntimeModule().getDistributedModules(),
       new IOModule(),
       new KafkaClientModule(),
+      new MessagingClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),

@@ -21,7 +21,6 @@ import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.RollbackDetail;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
@@ -41,7 +40,7 @@ import java.util.Map;
 final class BasicMessagePublisher extends AbstractMessagePublisher implements TransactionAware {
 
   private final MessagingService messagingService;
-  private final MessagePublisher directMessagePublisher;
+  private final DirectMessagePublisher directMessagePublisher;
   private final Map<TopicId, StoreRequestBuilder> txPublishRequests;
   private final Map<TopicId, RollbackDetail> rollbackDetails;
   private final String name;
@@ -56,14 +55,12 @@ final class BasicMessagePublisher extends AbstractMessagePublisher implements Tr
   }
 
   @Override
-  public void publish(String namespace, String topic,
-                      Iterator<byte[]> payloads) throws IOException, TopicNotFoundException {
+  public void publish(TopicId topicId, Iterator<byte[]> payloads) throws IOException, TopicNotFoundException {
     if (transaction == null) {
-      directMessagePublisher.publish(namespace, topic, payloads);
+      directMessagePublisher.publish(topicId, payloads);
       return;
     }
 
-    TopicId topicId = new NamespaceId(namespace).topic(topic);
     StoreRequestBuilder builder = txPublishRequests.get(topicId);
     if (builder == null) {
       builder = StoreRequestBuilder.of(topicId);
@@ -75,6 +72,8 @@ final class BasicMessagePublisher extends AbstractMessagePublisher implements Tr
   @Override
   public void startTx(Transaction transaction) {
     this.transaction = transaction;
+    txPublishRequests.clear();
+    rollbackDetails.clear();
   }
 
   @Override

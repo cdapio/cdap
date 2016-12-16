@@ -34,6 +34,7 @@ import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.app.ServiceLifeCycleTestRun;
 import co.cask.cdap.test.app.TestFrameworkTestRun;
+import co.cask.cdap.test.messaging.MessagingAppTestRun;
 import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -52,6 +53,7 @@ import org.junit.runners.Suite;
   FlowStreamIntegrationTestRun.class,
   MapReduceStreamInputTestRun.class,
   MapReduceServiceIntegrationTestRun.class,
+  MessagingAppTestRun.class,
   ServiceLifeCycleTestRun.class,
   SparkFileSetTestRun.class,
   SparkMetricsIntegrationTestRun.class,

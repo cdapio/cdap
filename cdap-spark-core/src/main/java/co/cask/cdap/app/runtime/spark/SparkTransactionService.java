@@ -86,11 +86,11 @@ final class SparkTransactionService extends AbstractIdleService {
 
   private final NettyHttpService httpServer;
 
-  SparkTransactionService(TransactionSystemClient txClient, String hostname) {
+  SparkTransactionService(TransactionSystemClient txClient, String hostname, String programName) {
     this.txClient = txClient;
     this.stageToJob = new ConcurrentHashMap<>();
     this.jobTransactions = new ConcurrentHashMap<>();
-    this.httpServer = NettyHttpService.builder()
+    this.httpServer = NettyHttpService.builder(programName + "-spark-tx")
       .addHttpHandlers(Collections.singleton(new SparkTransactionHandler()))
       .setHost(hostname)
       .build();
@@ -343,6 +343,7 @@ final class SparkTransactionService extends AbstractIdleService {
             throw new TransactionFailureException("Failed to invalid transaction on job failure. JobId: "
                                                     + jobId + ", transaction: " + jobTx);
           }
+          transactionInfo.onTransactionCompleted(succeeded, null);
         }
       } catch (Throwable t) {
         TransactionFailureException failureCause = Transactions.asTransactionFailure(t);

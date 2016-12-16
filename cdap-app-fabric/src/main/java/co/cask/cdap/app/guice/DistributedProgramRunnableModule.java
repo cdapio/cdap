@@ -44,6 +44,7 @@ import co.cask.cdap.internal.app.store.remote.RemoteLineageWriter;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeUsageRegistry;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -87,6 +88,7 @@ public class DistributedProgramRunnableModule {
       new ZKClientModule(),
       new KafkaClientModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
+      new MessagingClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),

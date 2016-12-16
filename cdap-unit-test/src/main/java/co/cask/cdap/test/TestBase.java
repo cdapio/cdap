@@ -22,6 +22,8 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.messaging.MessagingAdmin;
+import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.plugin.PluginClass;
@@ -73,6 +75,8 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.AuthorizationHandler;
+import co.cask.cdap.internal.app.runtime.messaging.BasicMessagingAdmin;
+import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -198,6 +202,7 @@ public class TestBase {
   private static AuthorizationEnforcementService authorizationEnforcementService;
   private static AuthorizationBootstrapper authorizationBootstrapper;
   private static MessagingService messagingService;
+  private static MessagingContext messagingContext;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -288,6 +293,7 @@ public class TestBase {
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
+
     authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
     authorizationBootstrapper.run();
     authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
@@ -340,6 +346,7 @@ public class TestBase {
     }
     secureStore = injector.getInstance(SecureStore.class);
     secureStoreManager = injector.getInstance(SecureStoreManager.class);
+    messagingContext = new MultiThreadMessagingContext(messagingService);
     firstInit = false;
   }
 
@@ -1141,6 +1148,24 @@ public class TestBase {
    */
   protected final StreamManager getStreamManager(StreamId streamId) {
     return getTestManager().getStreamManager(streamId);
+  }
+
+  /**
+   * Returns a {@link MessagingContext} for interacting with the messaging system.
+   */
+  protected final MessagingContext getMessagingContext() {
+    return messagingContext;
+  }
+
+  /**
+   * Returns a {@link MessagingAdmin} for the given namespace.
+   */
+  protected static MessagingAdmin getMessagingAdmin(String namespace) {
+    return getMessagingAdmin(new NamespaceId(namespace));
+  }
+
+  protected static MessagingAdmin getMessagingAdmin(NamespaceId namespace) {
+    return new BasicMessagingAdmin(messagingService, namespace);
   }
 
   protected TransactionManager getTxService() {

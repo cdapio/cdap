@@ -24,6 +24,8 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.proto.security.Principal;
@@ -34,6 +36,7 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.tephra.TransactionFailureException;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -154,6 +157,33 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   @Override
   public void deleteSecureData(String namespace, String name) throws Exception {
     delegateAdmin.deleteSecureData(namespace, name);
+  }
+
+
+  @Override
+  public void createTopic(String topic) throws TopicAlreadyExistsException, IOException {
+    throw new UnsupportedOperationException("Messaging not supported");
+  }
+
+  @Override
+  public void createTopic(String topic,
+                          Map<String, String> properties) throws TopicAlreadyExistsException, IOException {
+    throw new UnsupportedOperationException("Messaging not supported");
+  }
+
+  @Override
+  public Map<String, String> getTopicProperties(String topic) throws TopicNotFoundException, IOException {
+    throw new UnsupportedOperationException("Messaging not supported");
+  }
+
+  @Override
+  public void updateTopic(String topic, Map<String, String> properties) throws TopicNotFoundException, IOException {
+    throw new UnsupportedOperationException("Messaging not supported");
+  }
+
+  @Override
+  public void deleteTopic(String topic) throws TopicNotFoundException, IOException {
+    throw new UnsupportedOperationException("Messaging not supported");
   }
 
   public Principal getPrincipal() {
