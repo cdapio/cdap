@@ -144,6 +144,9 @@ New Features
 Improvements
 ------------
 
+- :cask-issue:`CDAP-7208` - Improved CDAP Master logging of events related to programs that it launches.
+
+
 Bug Fixes
 ---------
 
