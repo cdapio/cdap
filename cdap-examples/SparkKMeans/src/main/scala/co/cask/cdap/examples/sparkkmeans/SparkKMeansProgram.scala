@@ -88,7 +88,7 @@ object SparkKMeansProgram {
   private final val LOG: Logger = LoggerFactory.getLogger(classOf[SparkKMeansProgram])
 
   private def pointVector(point: Point): Vector[Double] = {
-    DenseVector(Array(point.getX, point.getX, point.getZ).map(_.doubleValue()))
+    DenseVector(Array(point.getX, point.getY, point.getZ).map(_.doubleValue()))
   }
 
   private def closestPoint(p: Vector[Double], centers: Array[Vector[Double]]): Int = {
