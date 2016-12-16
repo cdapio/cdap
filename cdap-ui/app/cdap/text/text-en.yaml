@@ -286,6 +286,7 @@ features:
       dashboard: Dashboard
       home: Home
       management: Management
+      olduilink: Switch to Original UI
     HeaderActions:
       caskHome: Cask Home
       documentation: Documentation
@@ -294,7 +295,8 @@ features:
       support: Support
     Sidebar:
       extension: "Extensions:"
-
+    NamespaceDropdown:
+      addNS: "Add Namespace"
   Pagination:
     dropdown-label: Page
   Resource-Center:
@@ -500,4 +502,8 @@ features:
       WRANGLER_LOWER_CASE_COLUMN: lowercase
       WRANGLER_TITLE_CASE_COLUMN: titlecase
       WRANGLER_SUBSTRING_COLUMN: substring
+    Errors:
+      MISSING_REQUIRED_FIELDS: Please fill out all required fields
+      INVALID_NAME: "Invalid column name. Column name can only be alphanumeric, '_', or '-'"
+      DUPLICATE_NAME: "Column name already exist. Please choose a different name"
 ...

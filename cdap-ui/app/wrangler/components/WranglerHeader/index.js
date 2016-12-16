@@ -27,7 +27,7 @@ export default function WranglerHeader() {
   const list = [
     {
       linkTo: '/ns',
-      title: 'Wrangler'
+      title: 'Import Data'
     },
   ];
 

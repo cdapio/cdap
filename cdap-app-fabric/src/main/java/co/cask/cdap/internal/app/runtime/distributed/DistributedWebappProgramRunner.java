@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
@@ -74,9 +75,10 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == ProgramType.WEBAPP, "Only WEBAPP process type is supported.");
 
-    LOG.info("Launching distributed webapp: " + program.getName());
+    RunId runId = ProgramRunners.getRunId(options);
+    LOG.info("Launching distributed webapp: {}", program.getId().run(runId));
     TwillController controller = launcher.launch(new WebappTwillApplication(program, options.getUserArguments(),
                                                                             localizeResources, eventHandler));
-    return createProgramController(controller, program.getId(), ProgramRunners.getRunId(options));
+    return createProgramController(controller, program.getId(), runId);
   }
 }

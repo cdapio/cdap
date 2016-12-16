@@ -15,10 +15,12 @@
  */
 
 import React, { Component, PropTypes } from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter, Tooltip } from 'reactstrap';
 
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
+import validateColumnName from 'wrangler/components/Wrangler/column-validation';
+import T from 'i18n-react';
 
 export default class SubstringAction extends Component {
   constructor(props) {
@@ -26,17 +28,23 @@ export default class SubstringAction extends Component {
 
     this.state = {
       isOpen: false,
-      error: false
+      error: false,
+      tooltipOpen: false
     };
 
     this.toggle = this.toggle.bind(this);
     this.onSave = this.onSave.bind(this);
+    this.tooltipToggle = this.tooltipToggle.bind(this);
   }
 
   componentDidUpdate() {
     if (this.state.isOpen) {
       this.beginIndex.focus();
     }
+  }
+
+  tooltipToggle() {
+    this.setState({tooltipOpen: !this.state.tooltipOpen});
   }
 
   toggle() {
@@ -49,7 +57,13 @@ export default class SubstringAction extends Component {
     const columnName = this.substringColumnName;
 
     if (!beginIndex || !columnName) {
-      this.setState({error: true});
+      this.setState({error: 'MISSING_REQUIRED_FIELDS'});
+      return;
+    }
+
+    let error = validateColumnName(columnName);
+    if (error) {
+      this.setState({error});
       return;
     }
 
@@ -71,7 +85,7 @@ export default class SubstringAction extends Component {
 
     const error = (
       <p className="error-text pull-left">
-        Please fill out all required fields
+        {T.translate(`features.Wrangler.Errors.${this.state.error}`)}
       </p>
     );
 
@@ -83,10 +97,19 @@ export default class SubstringAction extends Component {
         onClick={e => e.stopPropagation() }
         zIndex="1070"
       >
-        <ModalHeader>Substring Column: {this.props.column}</ModalHeader>
+        <ModalHeader>
+          <span>Substring Column: {this.props.column}</span>
+
+          <div
+            className="close-section pull-right"
+            onClick={this.toggle}
+          >
+            <span className="fa fa-times" />
+          </div>
+        </ModalHeader>
         <ModalBody>
           <div>
-            <label className="control-label">
+            <label className="control-label col">
               Begin Index
               <span className="fa fa-asterisk error-text"></span>
             </label>
@@ -126,7 +149,7 @@ export default class SubstringAction extends Component {
           {this.state.error ? error : null}
 
           <button
-            className="btn btn-success"
+            className="btn btn-wrangler"
             onClick={this.onSave}
           >
             Substring
@@ -137,12 +160,26 @@ export default class SubstringAction extends Component {
   }
 
   render() {
+    const id = 'column-action-substring';
+
     return (
       <span className="column-actions rename-action">
         <span
-          className="fa fa-scissors"
+          id={id}
+          className="fa icon-substring"
           onClick={this.toggle}
         />
+
+        <Tooltip
+          placement="top"
+          isOpen={this.state.tooltipOpen}
+          toggle={this.tooltipToggle}
+          target={id}
+          className="wrangler-tooltip"
+          delay={0}
+        >
+          Substring
+        </Tooltip>
 
         {this.renderModal()}
 

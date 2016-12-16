@@ -21,11 +21,9 @@ package co.cask.cdap.etl.common;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.etl.api.MultiInputStageConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
-import co.cask.cdap.etl.api.batch.BatchJoiner;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import javax.annotation.Nullable;
 
 
@@ -53,7 +51,7 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
   @Override
   @Nullable
   public Schema getInputSchema() {
-    return inputSchemas.entrySet().iterator().next().getValue();
+    return inputSchemas.isEmpty() ? null : inputSchemas.entrySet().iterator().next().getValue();
   }
 
   @Nullable
@@ -67,28 +65,8 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
     this.outputSchema = outputSchema;
   }
 
-  public void addInputSchema(String stageType, String inputStageName, @Nullable Schema inputSchema) {
-    // Do not allow null input schema for Joiner
-    if (stageType.equalsIgnoreCase(BatchJoiner.PLUGIN_TYPE) && inputSchema == null) {
-        throw new IllegalArgumentException(String.format("Joiner cannot have any null input schemas, but stage %s " +
-                                                           "outputs a null schema.", inputStageName));
-    }
-
-    // Do not allow more than one input schema for stages other than Joiner
-    if (!stageType.equalsIgnoreCase(BatchJoiner.PLUGIN_TYPE) && !hasSameSchema(inputSchema)) {
-      throw new IllegalArgumentException("Two different input schema were set for the stage " + this.stageName);
-    }
-
+  public void addInputSchema(String inputStageName, @Nullable Schema inputSchema) {
     inputSchemas.put(inputStageName, inputSchema);
-  }
-
-  private boolean hasSameSchema(Schema inputSchema) {
-    if (!inputSchemas.isEmpty()) {
-      if (!Objects.equals(inputSchemas.values().iterator().next(), inputSchema)) {
-        return false;
-      }
-    }
-    return true;
   }
 }
 

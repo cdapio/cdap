@@ -53,7 +53,12 @@ export function splitColumn(table, delimiter, columnToSplit, firstSplit, secondS
 export function mergeColumn(table, joinKey, firstColumn, secondColumn, columnName) {
   let formattedData = table.map((row) => {
     let newObj = Object.assign({}, row);
-    let merged = newObj[firstColumn].concat(joinKey, newObj[secondColumn]);
+    let merged;
+    if (!newObj[firstColumn] && !newObj[secondColumn]) {
+      merged = '';
+    } else {
+      merged = newObj[firstColumn].concat(joinKey, newObj[secondColumn]);
+    }
     newObj[columnName] = merged;
 
     return newObj;
@@ -92,7 +97,8 @@ export function titlecaseColumn(table, column) {
 
     let titleCase = newObj[column].split(' ')
       .map((word) => {
-        return word[0].toUpperCase() + word.slice(1);
+        if (!word) { return word; }
+        return word[0].toUpperCase() + word.slice(1).toLowerCase();
       })
       .join(' ');
 

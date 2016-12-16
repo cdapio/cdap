@@ -23,6 +23,24 @@
 
 .wrangler-actions.modal-dialog {
   margin-top: 100px;
+
+  .modal-header {
+    background-color: #464a57;
+    color: white;
+    padding: 5px 10px;
+
+    .close-section { cursor: pointer; }
+  }
+
+  .modal-body > div {
+    margin-bottom: 10px;
+
+    .fa.fa-asterisk.error-text {
+      margin-left: 5px;
+    }
+  }
+
+  .modal-footer { padding: 10px 15px; }
 }
 
 .popover.bs-tether-element {
@@ -42,5 +60,12 @@
 
     &:first-child { margin-left: 0; }
     &:last-child { margin-right: 0; }
+  }
+}
+
+.tooltip {
+  .wrangler-tooltip.tooltip-inner {
+    background: black;
+    color: white;
   }
 }

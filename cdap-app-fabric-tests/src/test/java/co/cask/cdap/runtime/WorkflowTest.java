@@ -103,8 +103,8 @@ public class WorkflowTest {
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
         LOG.info("Starting");
-        injector.getInstance(Store.class).setStart(controller.getProgramId(),
-                                                   controller.getRunId().getId(), System.currentTimeMillis());
+        injector.getInstance(Store.class).setStart(controller.getProgramRunId().getParent(),
+                                                   controller.getProgramRunId().getRun(), System.currentTimeMillis());
       }
 
       @Override
@@ -213,8 +213,8 @@ public class WorkflowTest {
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
         LOG.info("Initializing");
-        injector.getInstance(Store.class).setStart(controller.getProgramId(),
-                                                   controller.getRunId().getId(), System.currentTimeMillis());
+        injector.getInstance(Store.class).setStart(controller.getProgramRunId().getParent(),
+                                                   controller.getProgramRunId().getRun(), System.currentTimeMillis());
       }
 
       @Override

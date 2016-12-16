@@ -69,14 +69,19 @@ angular.module(PKG.name + '.commons')
                 var config = mvm.node.plugin.properties;
                 // This is lame where we stringify the input schema from the formatOutputSchema function but again parse it here to send it as an object to the backend.
                 if (!fnConfig['multiple-inputs'] || fnConfig['multiple-inputs'] === 'false') {
-                  var firstNode = nodeInfo.inputSchema[0];
-                  var fields;
-                  try {
-                    fields = JSON.parse(firstNode.schema).fields || [];
-                    config.inputSchema = JSON.parse(HydratorPlusPlusHydratorService.formatOutputSchema(fields));
-                  } catch(e) {
-                    config.inputSchema = '';
+
+                  // Have to check that there is an inputSchema, otherwise it should just ignore
+                  if (nodeInfo.inputSchema && nodeInfo.inputSchema.length) {
+                    var firstNode = nodeInfo.inputSchema[0];
+                    var fields;
+                    try {
+                      fields = JSON.parse(firstNode.schema).fields || [];
+                      config.inputSchema = JSON.parse(HydratorPlusPlusHydratorService.formatOutputSchema(fields));
+                    } catch(e) {
+                      config.inputSchema = '';
+                    }
                   }
+
                 } else {
                   var obj = {};
 

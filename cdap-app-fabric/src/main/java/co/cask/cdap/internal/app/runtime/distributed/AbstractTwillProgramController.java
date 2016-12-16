@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.Futures;
 import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
 import org.apache.twill.api.RunId;
@@ -34,13 +35,11 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTwillProgramController.class);
 
-  protected final ProgramId programId;
   private final TwillController twillController;
   private volatile boolean stopRequested;
 
   protected AbstractTwillProgramController(ProgramId programId, TwillController twillController, RunId runId) {
     super(programId, runId);
-    this.programId = programId;
     this.twillController = twillController;
   }
 
@@ -62,7 +61,7 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
     twillController.onRunning(new Runnable() {
       @Override
       public void run() {
-        LOG.info("Twill program running: {} {}", programId, twillController.getRunId());
+        LOG.info("Twill program running: {}, twill runId: {}", getProgramRunId(), twillController.getRunId());
         started();
       }
     }, Threads.SAME_THREAD_EXECUTOR);
@@ -70,7 +69,7 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
     twillController.onTerminated(new Runnable() {
       @Override
       public void run() {
-        LOG.info("Twill program terminated: {} {}", programId, twillController.getRunId());
+        LOG.info("Twill program terminated: {}, twill runId: {}", getProgramRunId(), twillController.getRunId());
         if (stopRequested) {
           // Service was killed
           stop();

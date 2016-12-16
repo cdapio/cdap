@@ -188,7 +188,26 @@ angular.module(PKG.name + '.commons')
         'sparkstreaming': 'icon-sparkstreaming',
         'rename': 'icon-rename',
         'archive': 'icon-archive',
-        'wrangler': 'icon-DataWrangler'
+        'wrangler': 'icon-DataWrangler',
+        'normalize': 'icon-normalize',
+        'xmlmultiparser': 'icon-XMLmultiparser',
+        'xmltojson': 'icon-XMLtoJSON',
+        'decisiontreepredictor': 'icon-desiciontreepredictor',
+        'decisiontreetrainer': 'icon-desiciontreetrainer',
+        'hashingtffeaturegenerator': 'icon-HashingTF',
+        'ngramtransform': 'icon-NGram',
+        'tokenizer': 'icon-Tokenizer',
+        'skipgramfeaturegenerator': 'icon-skipgramfeaturegenerator',
+        'skipgramtrainer': 'icon-skipgramtrainer',
+        'logisticregressionclassifier': 'icon-LogisticRegressiontrainer',
+        'logisticregressiontrainer': 'icon-LogisticRegressionclassifier',
+        'hdfsdelete': 'icon-hdfsdelete',
+        'hdfsmove': 'icon-hdfsmove',
+        'windowssharecopy': 'icon-windowssharecopy',
+        'httppoller': 'icon-httppoller',
+        'window': 'icon-window',
+        'run': 'icon-Run',
+        'oracleexport': 'icon-OracleDump'
       };
 
       var pluginName = plugin.toLowerCase();

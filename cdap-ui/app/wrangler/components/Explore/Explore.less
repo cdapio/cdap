@@ -15,34 +15,37 @@
  */
 
 .wrangler-explore-container {
-	margin: 10px auto;
-	max-width: 750px;
-	border: 2px solid #dedede;
-	border-radius: 4px;
-	padding-bottom: 10px;
+  margin: 10px auto;
+  max-width: 750px;
+  border: 2px solid #dedede;
+  border-radius: 4px;
+  padding: 10px;
 
-	h4 { font-weight: 500; }
+  h4 { font-weight: 500; }
 
-	.explore-table-item {
-		display: inline-block;
-		margin: 5px;
-		padding: 10px;
-		min-width: 75px;
-		border-radius: 4px;
-		border: 2px solid #999999;
-		color: #666666;
-		cursor: pointer;
+  .explore-table-item {
+    display: inline-block;
+    margin: 5px;
+    padding: 5px;
+    border-radius: 4px;
+    border: 2px solid #999999;
+    color: #666666;
+    cursor: pointer;
+    width: 100px;
 
-		&:hover {
-			background-color: #eeeeee;
-		}
+    &:hover {
+      background-color: #eeeeee;
+    }
 
-		.explore-table-item-icon {
-			font-size: 25px;
-		}
+    .explore-table-item-icon {
+      font-size: 20px;
+    }
 
-		.explore-table-item-name {
-			font-size: 14px;
-		}
-	}
+    .explore-table-item-name {
+      font-size: 14px;
+      overflow-x: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
 }
