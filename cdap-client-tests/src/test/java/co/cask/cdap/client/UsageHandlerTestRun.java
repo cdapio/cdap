@@ -21,7 +21,7 @@ import co.cask.cdap.client.app.AllProgramsApp;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -60,13 +60,14 @@ public class UsageHandlerTestRun extends ClientTestBase {
   private static final Gson GSON = new Gson();
 
   // Function to transform an Id to EntityId
-  private static final Function<Id, EntityId> ENTITY_ID_TRANSFORMER =
-    new Function<Id, EntityId>() {
-      @Override
-      public EntityId apply(final Id id) {
-        return id.toEntityId();
-      }
-    };
+  private static final Function<UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds, EntityId>
+    ENTITY_ID_TRANSFORMER = new Function<UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds,
+    EntityId>() {
+    @Override
+    public EntityId apply(final UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds id) {
+      return id.toEntityId();
+    }
+  };
 
   private void deployApp(Class<? extends Application> appCls) throws Exception {
     new ApplicationClient(getClientConfig()).deploy(NamespaceId.DEFAULT, createAppJarFile(appCls));
@@ -311,50 +312,59 @@ public class UsageHandlerTestRun extends ClientTestBase {
   }
 
   private Set<EntityId> getAppDatasetUsage(ApplicationId app) throws Exception {
-    Set<Id.DatasetInstance> datasetIds = doGet(String.format("/v3/namespaces/%s/apps/%s/datasets", app.getNamespace(),
-                                                             app.getEntityName()),
-                                               new TypeToken<Set<Id.DatasetInstance>>() { }.getType());
+    Set<UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdDatasetInstance> datasetIds =
+      doGet(String.format("/v3/namespaces/%s/apps/%s/datasets", app.getNamespace(), app.getEntityName()),
+            new TypeToken<Set<UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdDatasetInstance>>()
+            { }.getType());
     return new HashSet<>(Collections2.transform(datasetIds, ENTITY_ID_TRANSFORMER));
   }
 
   private Set<EntityId> getAppStreamUsage(ApplicationId app) throws Exception {
-    Set<Id.Stream> streamIds = doGet(String.format("/v3/namespaces/%s/apps/%s/streams", app.getNamespace(),
-                                                   app.getEntityName()), new TypeToken<Set<Id.Stream>>() { }.getType());
+    Set<UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdStream> streamIds =
+      doGet(String.format("/v3/namespaces/%s/apps/%s/streams", app.getNamespace(), app.getEntityName()),
+            new TypeToken<Set<UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdStream>>()
+            { }.getType());
     return new HashSet<>(Collections2.transform(streamIds, ENTITY_ID_TRANSFORMER));
-
   }
 
   private Set<EntityId> getProgramDatasetUsage(ProgramId program) throws Exception {
-    Set<Id.DatasetInstance> datasetIds = doGet(String.format("/v3/namespaces/%s/apps/%s/%s/%s/datasets",
-                                                             program.getNamespace(), program.getApplication(),
-                                                             program.getType().getCategoryName(),
-                                                             program.getEntityName()),
-                                               new TypeToken<Set<Id.DatasetInstance>>() { }.getType());
+    Set<UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdDatasetInstance> datasetIds =
+      doGet(String.format("/v3/namespaces/%s/apps/%s/%s/%s/datasets",
+                          program.getNamespace(), program.getApplication(),
+                          program.getType().getCategoryName(),
+                          program.getEntityName()),
+            new TypeToken<Set<UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdDatasetInstance>>()
+            { }.getType());
     return new HashSet<>(Collections2.transform(datasetIds, ENTITY_ID_TRANSFORMER));
   }
 
   private Set<EntityId> getProgramStreamUsage(ProgramId program) throws Exception {
-    Set<Id.Stream> streamIds = doGet(String.format("/v3/namespaces/%s/apps/%s/%s/%s/streams",
-                                                   program.getNamespace(), program.getApplication(),
-                                                   program.getType().getCategoryName(),
-                                                   program.getEntityName()),
-                                     new TypeToken<Set<Id.Stream>>() { }.getType());
+    Set<UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdStream> streamIds =
+      doGet(String.format("/v3/namespaces/%s/apps/%s/%s/%s/streams",
+                          program.getNamespace(), program.getApplication(),
+                          program.getType().getCategoryName(),
+                          program.getEntityName()),
+            new TypeToken<Set<UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdStream>>()
+            { }.getType());
     return new HashSet<>(Collections2.transform(streamIds, ENTITY_ID_TRANSFORMER));
   }
 
   // dataset/stream -> program
 
   private Set<EntityId> getStreamProgramUsage(StreamId stream) throws Exception {
-    Set<Id.Program> programIds = doGet(String.format("/v3/namespaces/%s/streams/%s/programs",
-                                                     stream.getNamespace(), stream.getEntityName()),
-                                       new TypeToken<Set<Id.Program>>() { }.getType());
+    Set<UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdProgram> programIds =
+      doGet(String.format("/v3/namespaces/%s/streams/%s/programs", stream.getNamespace(), stream.getEntityName()),
+            new TypeToken<Set<UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdProgram>>()
+            { }.getType());
     return new HashSet<>(Collections2.transform(programIds, ENTITY_ID_TRANSFORMER));
   }
 
   private Set<EntityId> getDatasetProgramUsage(DatasetId dataset) throws Exception {
-    Set<Id.Program> programIds = doGet(String.format("/v3/namespaces/%s/data/datasets/%s/programs",
-                                                     dataset.getNamespace(), dataset.getEntityName()),
-                                       new TypeToken<Set<Id.Program>>() { }.getType());
+    Set<UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdProgram> programIds =
+      doGet(String.format("/v3/namespaces/%s/data/datasets/%s/programs",
+                          dataset.getNamespace(), dataset.getEntityName()),
+            new TypeToken<Set<UsageHandler.UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdProgram>>()
+            { }.getType());
     return new HashSet<>(Collections2.transform(programIds, ENTITY_ID_TRANSFORMER));
   }
 }
