@@ -30,11 +30,11 @@ deployment. No dataset operations are possible, as there is no access to dataset
 transactions.
 
 **When an application is run,** each program of an application (and any sub-programs) is
-executed by calling first ``initilaize()`` and (eventually) ``destroy()`` for each program
+executed by calling first ``initialize()`` and (eventually) ``destroy()`` for each program
 and sub-program. In these methods, dataset operations and transactions are allowed.
 
-The following of the program lifecycle is a combination of CDAP's conventions and the implmentation
-of specific interfaces. They can be summarised as:
+The following of the program lifecycle is a combination of CDAP's conventions and the
+implementation of specific interfaces. They can be summarized as:
 
 - At deployment time:
 
@@ -48,7 +48,7 @@ of specific interfaces. They can be summarised as:
 
 The ``initialize()`` method is called once, at the start of the program. The ``destroy()``
 method is called once, at the end of program before it is shutdown. If there is any
-cleanup required, it can be specified in this method.
+cleanup required, it can be implemented in this method.
 
 Flows and services do not have an ``initialize()`` because they have a sub-program (flowlets
 for a flow, service handlers for a service) which has an ``initialize()`` method instead.
@@ -57,9 +57,12 @@ Note that the instance of the object called at deployment **is not the same** in
 the object called at runtime. Because the result of the deployment stage is an immutable
 program specification, any local member variables set during deployment will not be
 available during runtime. This behavior can cause unexpected null-pointer exceptions. The
-solution is instead to set these as properties in a configuration object, which is
+solution is instead to set these as properties in the specification, which is
 available at runtime, as in the examples on :ref:`initializing instance fields
-<best-practices-initializing>`.
+<best-practices-initializing>`. For example, in a flowlet::
+
+  getContext().getSpecification().getProperties()
+
 
 Transactions
 ============
@@ -71,16 +74,25 @@ The relationship between transactions and lifecycle depends on the method involv
 
 - ``destroy()`` Inside a transaction
 
-The exception to this are :ref:`Workers <workers-datasets>`, which are run inside their own transaction.
-See :ref:`workers and datasets <workers-datasets>` for details.
+The exception to this are :ref:`Workers <workers-datasets>`, which have to execute their
+own, explicit transactions. See :ref:`workers and datasets <workers-datasets>` for details.
 
-Details on transactions in these methods is covered in the section on :ref:`using the
+Details on transactions in these methods are covered in the section on :ref:`using the
 transaction system in programs <transaction-system-using-in-programs>`.
 
 Program Types
 =============
-This table summarizes, for each program or sub-program type, the methods available, parent
-interface, and their signatures:
+For convenience, most program types have a corresponding abstract program class. It is
+recommended to always extend the abstract class instead of implementing the program interface.
+The abstract classes provide:
+
+- proxy methods for the program configurer's methods;
+- an ``initialize()`` method that stores the program context in a class member and makes
+  it available via ``getContext()``; and
+- a ``destroy()`` method that does nothing.
+
+This table summarizes, for each program or sub-program type, the methods available,
+abstract class, and their signatures:
 
 .. list-table::
    :widths: 20 20 30 30
@@ -88,7 +100,7 @@ interface, and their signatures:
 
    * - Program Type
      - Sub-program Type
-     - Extends
+     - Abstract Class
      - Runtime Methods
    * - Flow
      -

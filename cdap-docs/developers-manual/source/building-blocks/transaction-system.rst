@@ -229,6 +229,8 @@ semantics of flow execution. For MapReduce programs, the lifecycle methods of Ma
 tasks (mappers and reducers) and MapReduce helpers (such as partitioners and comparators)
 are always run inside a transaction: the long-running transaction that encapsulates an
 entire MapReduce job (see :ref:`above <transaction-system-transactions-mapreduce>`). 
+Please see :ref:`Transactions and Spark <spark-transactions>` for how to use transactions
+in Spark programs.
 
 For all other lifecycle methods and for service handlers, the implicit transaction can be
 turned off by annotating the method with ``@TransactionPolicy(TransactionControl.EXPLICIT)``.
@@ -241,6 +243,12 @@ For example, in the ``FileSetService`` of the :ref:`FileSetExample <examples-fil
   public void read(HttpServiceRequest request, HttpServiceResponder responder,
                    @PathParam("fileset") String set, @QueryParam("path") String filePath) {
     ...
+
+.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+   :language: java
+   :lines: 77-80
+   :dedent: 4
+   :append: . . .
 
 This service handler method only accesses FileSets, which do not require transactions.
 Therefore, we can safely turn off the implicit transaction for this method. 
@@ -306,6 +314,10 @@ performed outside the transaction::
     }
   }
 
+.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
+   :language: java
+   :lines: 68-88
+   :dedent: 4
 
 Be aware that you cannot nest transactions. For example, either:
 
@@ -326,7 +338,7 @@ you can :ref:`set a preference <preferences>` for the namespace, application, or
 The name of the preference is ``system.data.tx.timeout``. 
 
 To configure the timeout for a sub-program (a flowlet or a custom workflow action), prefix
-the property name with ``flowlet.<name>`` or ``action.<name>``. For example, setting
+the preference name with ``flowlet.<name>`` or ``action.<name>``. For example, setting
 ``flowlet.aggregator.system.data.tx.timeout`` to 60 seconds will only affect the flowlet
 named *aggregator* but not the other flowlets of the flow. 
 
