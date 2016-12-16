@@ -56,8 +56,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.HashSet;
-
 /**
  * Tests for {@link DefaultPreviewManager}.
  */
@@ -109,15 +107,14 @@ public class DefaultPreviewManagerTest {
     PreviewManager previewManager = getInjector().getInstance(PreviewManager.class);
     DefaultPreviewManager defaultPreviewManager = (DefaultPreviewManager) previewManager;
 
-    Injector previewInjector = defaultPreviewManager.createPreviewInjector(new ApplicationId("ns1", "app1"),
-                                                                           new HashSet<String>());
+    Injector previewInjector = defaultPreviewManager.createPreviewInjector(new ApplicationId("ns1", "app1"));
 
     // Make sure same PreviewManager instance is returned for a same preview
     Assert.assertEquals(previewInjector.getInstance(PreviewRunner.class),
                         previewInjector.getInstance(PreviewRunner.class));
 
     Injector anotherPreviewInjector
-      = defaultPreviewManager.createPreviewInjector(new ApplicationId("ns2", "app2"), new HashSet<String>());
+      = defaultPreviewManager.createPreviewInjector(new ApplicationId("ns2", "app2"));
 
     Assert.assertNotEquals(previewInjector.getInstance(PreviewRunner.class),
                            anotherPreviewInjector.getInstance(PreviewRunner.class));

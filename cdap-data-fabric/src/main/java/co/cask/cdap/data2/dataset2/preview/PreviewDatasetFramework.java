@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -97,25 +98,29 @@ public class PreviewDatasetFramework implements DatasetFramework {
 
   private final DatasetFramework localDatasetFramework;
   private final DatasetFramework actualDatasetFramework;
-  private final Set<String> datasetNames;
   private final AuthenticationContext authenticationContext;
   private final AuthorizationEnforcer authorizationEnforcer;
+  // list of dataset names which need to be accessed for read only purpose from the real space
+  private Set<String> datasetNames;
 
   /**
    * Create instance of the {@link PreviewDatasetFramework}.
    *
    * @param local the dataset framework instance in the preview space
    * @param actual the dataset framework instance in the real space
-   * @param datasetNames list of dataset names which need to be accessed for read only purpose from the real space
    */
-  public PreviewDatasetFramework(DatasetFramework local, DatasetFramework actual, Set<String> datasetNames,
+  public PreviewDatasetFramework(DatasetFramework local, DatasetFramework actual,
                                  AuthenticationContext authenticationContext,
                                  AuthorizationEnforcer authorizationEnforcer) {
     this.localDatasetFramework = local;
     this.actualDatasetFramework = actual;
-    this.datasetNames = datasetNames;
     this.authenticationContext = authenticationContext;
     this.authorizationEnforcer = authorizationEnforcer;
+    this.datasetNames = new HashSet<>();
+  }
+
+  public void setRealDatasets(Set<String> realDatasets) {
+    this.datasetNames = realDatasets;
   }
 
   @Override

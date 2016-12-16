@@ -30,6 +30,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentCleanupStage;
 import co.cask.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
+import co.cask.cdap.internal.app.deploy.pipeline.RealDatasetSetupStage;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
@@ -85,7 +86,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework,
                                                    inMemoryDatasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework));
-  //  pipeline.addLast(new RealDatasetSetupStage(datasetFramework));
+    pipeline.addLast(new RealDatasetSetupStage(datasetFramework));
     pipeline.addLast(new ProgramGenerationStage(privilegesManager, authenticationContext));
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry));
     pipeline.setFinally(new DeploymentCleanupStage());

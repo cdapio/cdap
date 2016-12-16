@@ -79,8 +79,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -164,11 +162,8 @@ public class DefaultPreviewManager implements PreviewManager {
 
   @Override
   public ApplicationId start(NamespaceId namespace, AppRequest<?> appRequest) throws Exception {
-    Set<String> realDatasets = appRequest.getPreview() == null ? new HashSet<String>()
-      : appRequest.getPreview().getRealDatasets();
-
     ApplicationId previewApp = namespace.app(RunIds.generate().getId());
-    Injector injector = createPreviewInjector(previewApp, realDatasets);
+    Injector injector = createPreviewInjector(previewApp);
     appInjectors.put(previewApp, injector);
     PreviewRunner runner = injector.getInstance(PreviewRunner.class);
     if (runner instanceof Service) {
@@ -192,7 +187,7 @@ public class DefaultPreviewManager implements PreviewManager {
    * Create injector for the given application id.
    */
   @VisibleForTesting
-  Injector createPreviewInjector(ApplicationId applicationId, Set<String> datasetNames) throws IOException {
+  Injector createPreviewInjector(ApplicationId applicationId) throws IOException {
     CConfiguration previewcConf = CConfiguration.copy(cConf);
     java.nio.file.Path previewDirPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
 
@@ -219,7 +214,7 @@ public class DefaultPreviewManager implements PreviewManager {
                               privilegesManager, streamAdmin, streamCoordinatorClient, preferencesStore),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new PreviewDataModules().getDataFabricModule(transactionManager),
-      new PreviewDataModules().getDataSetsModule(datasetFramework, datasetNames),
+      new PreviewDataModules().getDataSetsModule(datasetFramework),
       new DataSetServiceModules().getStandaloneModules(),
       new MetricsClientRuntimeModule().getStandaloneModules(),
       new LoggingModules().getStandaloneModules(),
