@@ -21,6 +21,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.preview.PreviewDatasetFramework;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationVerificationStage;
@@ -49,7 +50,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   private final PipelineFactory pipelineFactory;
   private final CConfiguration cConf;
   private final Store store;
-  private final DatasetFramework datasetFramework;
+  private final PreviewDatasetFramework datasetFramework;
   private final DatasetFramework inMemoryDatasetFramework;
   private final UsageRegistry usageRegistry;
   private final ArtifactRepository artifactRepository;
@@ -59,7 +60,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
 
   @Inject
   PreviewApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
-                            Store store, DatasetFramework datasetFramework,
+                            Store store, PreviewDatasetFramework datasetFramework,
                             @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                             UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
                             PrivilegesManager privilegesManager,
@@ -84,6 +85,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework,
                                                    inMemoryDatasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework));
+  //  pipeline.addLast(new RealDatasetSetupStage(datasetFramework));
     pipeline.addLast(new ProgramGenerationStage(privilegesManager, authenticationContext));
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry));
     pipeline.setFinally(new DeploymentCleanupStage());

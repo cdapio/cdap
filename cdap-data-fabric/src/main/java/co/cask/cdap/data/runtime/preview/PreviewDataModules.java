@@ -84,15 +84,16 @@ public class PreviewDataModules {
           .annotatedWith(Names.named("localDatasetFramework"))
           .to(RemoteDatasetFramework.class);
 
-        bind(DatasetFramework.class).annotatedWith(Names.named("actualDatasetFramework")).
-          toInstance(remoteDatasetFramework);
+        bind(DatasetFramework.class).annotatedWith(Names.named("actualDatasetFramework"))
+          .toInstance(remoteDatasetFramework);
 
-        bind(DatasetFramework.class).
-          annotatedWith(Names.named(BASE_DATASET_FRAMEWORK)).
-          toProvider(PreviewDatasetFrameworkProvider.class).in(Scopes.SINGLETON);
+        bind(PreviewDatasetFramework.class).toProvider(PreviewDatasetFrameworkProvider.class).in(Scopes.SINGLETON);
 
-        bind(DatasetFramework.class).
-          toProvider(PreviewDatasetFrameworkProvider.class).in(Scopes.SINGLETON);
+        bind(DatasetFramework.class)
+          .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
+          .to(PreviewDatasetFramework.class);
+
+        expose(PreviewDatasetFramework.class);
         expose(DatasetFramework.class);
 
         bind(LineageStoreReader.class).to(LineageStore.class);
@@ -112,7 +113,7 @@ public class PreviewDataModules {
     };
   }
 
-  private static final class PreviewDatasetFrameworkProvider implements Provider<DatasetFramework> {
+  private static final class PreviewDatasetFrameworkProvider implements Provider<PreviewDatasetFramework> {
     private final DatasetFramework inMemoryDatasetFramework;
     private final DatasetFramework remoteDatasetFramework;
     private final Set<String> datasetNames;
@@ -133,7 +134,7 @@ public class PreviewDataModules {
     }
 
     @Override
-    public DatasetFramework get() {
+    public PreviewDatasetFramework get() {
       return new PreviewDatasetFramework(inMemoryDatasetFramework, remoteDatasetFramework, datasetNames,
                                          authenticationContext, authorizationEnforcer);
     }
