@@ -25,7 +25,7 @@ import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
-import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData, SecureStoreMetadata}
+import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData}
 import co.cask.cdap.api.spark.{JavaSparkExecutionContext, SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.{GenericStreamEventData, StreamEventDecoder}
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
@@ -65,6 +65,8 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
   override def getWorkflowInfo: WorkflowInfo = sec.getWorkflowInfo.orNull
 
   override def getLocalizationContext = sec.getLocalizationContext
+
+  override def getClusterName: String = sec.getClusterName
 
   override def getRuntimeArguments: util.Map[String, String] = sec.getRuntimeArguments
 
