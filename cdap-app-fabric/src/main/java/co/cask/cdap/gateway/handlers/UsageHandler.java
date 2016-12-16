@@ -60,7 +60,7 @@ public class UsageHandler extends AbstractHttpHandler {
     final ApplicationId id = new ApplicationId(namespaceId, appId);
     Set<DatasetId> ids = registry.getDatasets(id);
     responder.sendJson(HttpResponseStatus.OK,
-                       UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdDatasetInstance.transform(ids));
+                       BackwardCompatibility.IdDatasetInstance.transform(ids));
   }
 
   @GET
@@ -71,7 +71,7 @@ public class UsageHandler extends AbstractHttpHandler {
     final ApplicationId id = new ApplicationId(namespaceId, appId);
     Set<StreamId> ids = registry.getStreams(id);
     responder.sendJson(HttpResponseStatus.OK,
-                       UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdStream.transform(ids));
+                       BackwardCompatibility.IdStream.transform(ids));
   }
 
   @GET
@@ -85,7 +85,7 @@ public class UsageHandler extends AbstractHttpHandler {
     final ProgramId id = new ProgramId(namespaceId, appId, type, programId);
     Set<DatasetId> ids = registry.getDatasets(id);
     responder.sendJson(HttpResponseStatus.OK,
-                       UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdDatasetInstance.transform(ids));
+                       BackwardCompatibility.IdDatasetInstance.transform(ids));
   }
 
   @GET
@@ -99,7 +99,7 @@ public class UsageHandler extends AbstractHttpHandler {
     final ProgramId id = new ProgramId(namespaceId, appId, type, programId);
     Set<StreamId> ids = registry.getStreams(id);
     responder.sendJson(HttpResponseStatus.OK,
-                       UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdStream.transform(ids));
+                       BackwardCompatibility.IdStream.transform(ids));
   }
 
   @GET
@@ -110,7 +110,7 @@ public class UsageHandler extends AbstractHttpHandler {
     final StreamId id = new StreamId(namespaceId, streamId);
     Set<ProgramId> ids = registry.getPrograms(id);
     responder.sendJson(HttpResponseStatus.OK,
-                       UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdProgram.transform(ids));
+                       BackwardCompatibility.IdProgram.transform(ids));
   }
 
   @GET
@@ -121,133 +121,127 @@ public class UsageHandler extends AbstractHttpHandler {
     final DatasetId id = new DatasetId(namespaceId, datasetId);
     Set<ProgramId> ids = registry.getPrograms(id);
     responder.sendJson(HttpResponseStatus.OK,
-                       UsageHandlerBackwardCompatibility.IdCompatibleEntityIds.IdProgram.transform(ids));
+                       BackwardCompatibility.IdProgram.transform(ids));
   }
 
   /**
    * Class to wrap stuff needed to make {@link UsageHandler} backward compatible. See CDAP-7316
-   * Also, see {@link IdCompatibleEntityIds} documentation for more details.
+   * Just a simple POJO to support backward compatibility for {@link UsageHandler} See: CDAP-7316
+   * This class allows {@link UsageHandler} to return results in deprecated {@link Id} serialized form.
    */
-  public static final class UsageHandlerBackwardCompatibility {
+  public static final class BackwardCompatibility {
 
     /**
-     * Just a simple POJO to support backward compatibility for {@link UsageHandler} See: CDAP-7316
-     * This class allows {@link UsageHandler} to return results in deprecated {@link Id} serialized form.
+     * Support Compatibility with {@link Id.Namespace} for {@link NamespaceId}
      */
-    public abstract static class IdCompatibleEntityIds implements EntityIdCompatible {
+    static final class IdNamespace implements EntityIdCompatible {
+      private final String id;
 
-      /**
-       * Support Compatibility with {@link Id.Namespace} for {@link NamespaceId}
-       */
-      static final class IdNamespace extends IdCompatibleEntityIds {
-        private final String id;
-
-        IdNamespace(NamespaceId id) {
-          this.id = id.getNamespace();
-        }
-
-        @Override
-        public EntityId toEntityId() {
-          return new NamespaceId(id);
-        }
+      IdNamespace(NamespaceId id) {
+        this.id = id.getNamespace();
       }
 
-      /**
-       * Support Compatibility with {@link Id.DatasetInstance} for {@link DatasetId}
-       */
-      public static final class IdDatasetInstance extends IdCompatibleEntityIds {
-        private final IdNamespace namespace;
-        private final String instanceId;
+      @Override
+      public EntityId toEntityId() {
+        return new NamespaceId(id);
+      }
+    }
 
-        IdDatasetInstance(DatasetId datasetId) {
-          this.namespace = new IdNamespace(datasetId.getNamespaceId());
-          this.instanceId = datasetId.getEntityName();
-        }
+    /**
+     * Support Compatibility with {@link Id.DatasetInstance} for {@link DatasetId}
+     */
+    public static final class IdDatasetInstance implements EntityIdCompatible {
+      private final IdNamespace namespace;
+      private final String instanceId;
 
-        static Set<IdDatasetInstance> transform(Set<DatasetId> datasetIds) {
-          Set<IdDatasetInstance> idCompatibleEntityIds = new HashSet<>();
-          for (DatasetId datasetId : datasetIds) {
-            idCompatibleEntityIds.add(new IdDatasetInstance(datasetId));
-          }
-          return idCompatibleEntityIds;
-        }
-
-        @Override
-        public EntityId toEntityId() {
-          return new DatasetId(namespace.id, instanceId);
-        }
+      IdDatasetInstance(DatasetId datasetId) {
+        this.namespace = new IdNamespace(datasetId.getNamespaceId());
+        this.instanceId = datasetId.getEntityName();
       }
 
-      /**
-       * Support Compatibility with {@link Id.Stream} for {@link StreamId}
-       */
-      public static final class IdStream extends IdCompatibleEntityIds {
-        private final IdNamespace namespace;
-        private final String streamName;
-
-        IdStream(StreamId streamId) {
-          this.namespace = new IdNamespace(streamId.getNamespaceId());
-          this.streamName = streamId.getEntityName();
+      static Set<IdDatasetInstance> transform(Set<DatasetId> datasetIds) {
+        Set<IdDatasetInstance> idCompatibleEntityIds = new HashSet<>();
+        for (DatasetId datasetId : datasetIds) {
+          idCompatibleEntityIds.add(new IdDatasetInstance(datasetId));
         }
-
-        static Set<IdStream> transform(Set<StreamId> streamIds) {
-          Set<IdStream> idCompatibleEntityIds = new HashSet<>();
-          for (StreamId streamId : streamIds) {
-            idCompatibleEntityIds.add(new IdStream(streamId));
-          }
-          return idCompatibleEntityIds;
-        }
-
-        @Override
-        public EntityId toEntityId() {
-          return new StreamId(namespace.id, streamName);
-        }
+        return idCompatibleEntityIds;
       }
 
-      /**
-       * Support Compatibility with {@link Id.Application} for {@link ApplicationId}
-       */
-      static final class IdApplication extends IdCompatibleEntityIds {
-        private final IdNamespace namespace;
-        private final String applicationId;
+      @Override
+      public EntityId toEntityId() {
+        return new DatasetId(namespace.id, instanceId);
+      }
+    }
 
-        IdApplication(ApplicationId applicationId) {
-          this.namespace = new IdNamespace(applicationId.getNamespaceId());
-          this.applicationId = applicationId.getEntityName();
-        }
+    /**
+     * Support Compatibility with {@link Id.Stream} for {@link StreamId}
+     */
+    public static final class IdStream implements EntityIdCompatible {
+      private final IdNamespace namespace;
+      private final String streamName;
 
-        @Override
-        public EntityId toEntityId() {
-          return new ApplicationId(namespace.id, applicationId);
-        }
+      IdStream(StreamId streamId) {
+        this.namespace = new IdNamespace(streamId.getNamespaceId());
+        this.streamName = streamId.getEntityName();
       }
 
-      /**
-       * Support Compatibility with {@link Id.Program} for {@link ProgramId}
-       */
-      public static final class IdProgram extends IdCompatibleEntityIds {
-        private final IdApplication application;
-        private final ProgramType type;
-        private final String id;
-
-        IdProgram(ProgramId programId) {
-          this.application = new IdApplication(programId.getParent());
-          this.type = programId.getType();
-          this.id = programId.getEntityName();
+      static Set<IdStream> transform(Set<StreamId> streamIds) {
+        Set<IdStream> idCompatibleEntityIds = new HashSet<>();
+        for (StreamId streamId : streamIds) {
+          idCompatibleEntityIds.add(new IdStream(streamId));
         }
+        return idCompatibleEntityIds;
+      }
 
-        static Set<IdProgram> transform(Set<ProgramId> programIds) {
-          Set<IdProgram> idCompatibleEntityIds = new HashSet<>();
-          for (ProgramId programId : programIds) {
-            idCompatibleEntityIds.add(new IdProgram(programId));
-          }
-          return idCompatibleEntityIds;
-        }
+      @Override
+      public EntityId toEntityId() {
+        return new StreamId(namespace.id, streamName);
+      }
+    }
 
-        @Override
-        public EntityId toEntityId() {
-          return new ProgramId(application.namespace.id, application.applicationId, type, id);
+    /**
+     * Support Compatibility with {@link Id.Application} for {@link ApplicationId}
+     */
+    static final class IdApplication implements EntityIdCompatible {
+      private final IdNamespace namespace;
+      private final String applicationId;
+
+      IdApplication(ApplicationId applicationId) {
+        this.namespace = new IdNamespace(applicationId.getNamespaceId());
+        this.applicationId = applicationId.getEntityName();
+      }
+
+      @Override
+      public EntityId toEntityId() {
+        return new ApplicationId(namespace.id, applicationId);
+      }
+    }
+
+    /**
+     * Support Compatibility with {@link Id.Program} for {@link ProgramId}
+     */
+    public static final class IdProgram implements EntityIdCompatible {
+      private final IdApplication application;
+      private final ProgramType type;
+      private final String id;
+
+      IdProgram(ProgramId programId) {
+        this.application = new IdApplication(programId.getParent());
+        this.type = programId.getType();
+        this.id = programId.getEntityName();
+      }
+
+      static Set<IdProgram> transform(Set<ProgramId> programIds) {
+        Set<IdProgram> idCompatibleEntityIds = new HashSet<>();
+        for (ProgramId programId : programIds) {
+          idCompatibleEntityIds.add(new IdProgram(programId));
         }
+        return idCompatibleEntityIds;
+      }
+
+      @Override
+      public EntityId toEntityId() {
+        return new ProgramId(application.namespace.id, application.applicationId, type, id);
       }
     }
   }
