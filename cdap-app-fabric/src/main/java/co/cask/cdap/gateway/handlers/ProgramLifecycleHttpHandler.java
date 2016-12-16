@@ -82,6 +82,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -95,11 +96,14 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -119,6 +123,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Type BATCH_PROGRAMS_TYPE = new TypeToken<List<BatchProgram>>() { }.getType();
   private static final Type BATCH_RUNNABLES_TYPE = new TypeToken<List<BatchRunnable>>() { }.getType();
   private static final Type BATCH_STARTS_TYPE = new TypeToken<List<BatchProgramStart>>() { }.getType();
+  private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
 
   private static final String SCHEDULES = "schedules";
   /**
@@ -555,6 +560,72 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Update the log level for a running program according to the request body. Currently supported program types are
+   * {@link ProgramType#FLOW}, {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
+   * The request body is expected to contain a map of log levels, where key is loggername, value is one of the
+   * valid {@link org.apache.twill.api.logging.LogEntry.Level} or null.
+   */
+  @PUT
+  @Path("/apps/{app-name}/{program-type}/{program-name}/runs/{run-id}/loglevels")
+  public void updateProgramLogLevels(HttpRequest request, HttpResponder responder,
+                                     @PathParam("namespace-id") String namespace,
+                                     @PathParam("app-name") String appName,
+                                     @PathParam("program-type") String type,
+                                     @PathParam("program-name") String programName,
+                                     @PathParam("run-id") String runId) throws Exception {
+    updateLogLevels(request, responder, namespace, appName, ApplicationId.DEFAULT_VERSION, type, programName, null,
+                    runId);
+  }
+
+  /**
+   * Update the log level for a running program according to the request body.
+   */
+  @PUT
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runs/{run-id}/loglevels")
+  public void updateProgramLogLevels(HttpRequest request, HttpResponder responder,
+                                     @PathParam("namespace-id") String namespace,
+                                     @PathParam("app-name") String appName,
+                                     @PathParam("app-version") String appVersion,
+                                     @PathParam("program-type") String type,
+                                     @PathParam("program-name") String programName,
+                                     @PathParam("run-id") String runId) throws Exception {
+    updateLogLevels(request, responder, namespace, appName, appVersion, type, programName, null, runId);
+  }
+
+  /**
+   * Reset the log level for a running program back to where it starts. Currently supported program types are
+   * {@link ProgramType#FLOW}, {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
+   * The request body can either be empty, which will reset all loggers for the program, or contain a list of
+   * logger names, which will reset for these particular logger names for the program.
+   */
+  @POST
+  @Path("/apps/{app-name}/{program-type}/{program-name}/runs/{run-id}/resetloglevels")
+  public void resetProgramLogLevels(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespace,
+                                    @PathParam("app-name") String appName,
+                                    @PathParam("program-type") String type,
+                                    @PathParam("program-name") String programName,
+                                    @PathParam("run-id") String runId) throws Exception {
+    resetLogLevels(request, responder, namespace, appName, ApplicationId.DEFAULT_VERSION, type, programName, null,
+                   runId);
+  }
+
+  /**
+   * Reset the log level for a running program back to where it starts.
+   */
+  @POST
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runs/{run-id}/resetloglevels")
+  public void resetProgramLogLevels(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespace,
+                                    @PathParam("app-name") String appName,
+                                    @PathParam("app-version") String appVersion,
+                                    @PathParam("program-type") String type,
+                                    @PathParam("program-name") String programName,
+                                    @PathParam("run-id") String runId) throws Exception {
+    resetLogLevels(request, responder, namespace, appName, appVersion, type, programName, null, runId);
+  }
+
+  /**
    * Returns the status for all programs that are passed into the data. The data is an array of JSON objects
    * where each object must contain the following three elements: appId, programType, and programId
    * (flow name, service name, etc.).
@@ -966,6 +1037,71 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Update the log level for a flowlet according to the request body. The request body is expected to contain a map
+   * of log levels, where key is loggername, value is one of the valid
+   * {@link org.apache.twill.api.logging.LogEntry.Level} or null.
+   */
+  @PUT
+  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/loglevels")
+  public void updateFlowletLogLevels(HttpRequest request, HttpResponder responder,
+                                     @PathParam("namespace-id") String namespaceId,
+                                     @PathParam("app-id") String appId,
+                                     @PathParam("flow-id") String flowId,
+                                     @PathParam("flowlet-id") String flowletId,
+                                     @PathParam("run-id") String runId) throws Exception {
+      updateLogLevels(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION,
+                      ProgramType.FLOW.getCategoryName(), flowId, flowletId, runId);
+  }
+
+  /**
+   * Update log level for a flowlet belongs to a specific app version.
+   */
+  @PUT
+  @Path("/apps/{app-id}/versions/{app-version}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/loglevels")
+  public void updateFlowletLogLevels(HttpRequest request, HttpResponder responder,
+                                     @PathParam("namespace-id") String namespaceId,
+                                     @PathParam("app-id") String appId,
+                                     @PathParam("app-version") String appVersion,
+                                     @PathParam("flow-id") String flowId,
+                                     @PathParam("flowlet-id") String flowletId,
+                                     @PathParam("run-id") String runId) throws Exception {
+    updateLogLevels(request, responder, namespaceId, appId, appVersion,
+                    ProgramType.FLOW.getCategoryName(), flowId, flowletId, runId);
+  }
+
+  /**
+   * Reset the log levels for a flowlet back to where it starts. The request body is expected to contain a list of
+   * logger names, or null if reset for all loggers.
+   */
+  @POST
+  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/resetloglevels")
+  public void resetFlowletLogLevels(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-id") String appId,
+                                    @PathParam("flow-id") String flowId,
+                                    @PathParam("flowlet-id") String flowletId,
+                                    @PathParam("run-id") String runId) throws Exception {
+    resetLogLevels(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION,
+                   ProgramType.FLOW.getCategoryName(), flowId, flowletId, runId);
+  }
+
+  /**
+   * Reset log level for a flowlet belongs to a specific app version.
+   */
+  @POST
+  @Path("/apps/{app-id}/versions/{app-version}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/resetloglevels")
+  public void resetFlowletLogLevels(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-id") String appId,
+                                    @PathParam("app-version") String appVersion,
+                                    @PathParam("flow-id") String flowId,
+                                    @PathParam("flowlet-id") String flowletId,
+                                    @PathParam("run-id") String runId) throws Exception {
+    resetLogLevels(request, responder, namespaceId, appId, appVersion,
+                   ProgramType.FLOW.getCategoryName(), flowId, flowletId, runId);
+  }
+
   @GET
   @Path("/apps/{app-id}/{program-category}/{program-id}/live-info")
   @SuppressWarnings("unused")
@@ -1293,5 +1429,63 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
     }
     return programs;
+  }
+
+  private void updateLogLevels(HttpRequest request, HttpResponder responder, String namespace, String appName,
+                               String appVersion, String type, String programName,
+                               @Nullable String component, String runId) throws Exception {
+    ProgramType programType = getProgramType(type);
+    if (programType == null) {
+      throw new BadRequestException("Invalid program type provided");
+    }
+    try {
+      // we are decoding the body to Map<String, String> instead of Map<String, LogEntry.Level> here since Gson will
+      // serialize invalid enum values to null, which is allowed for log level, instead of throw an Exception.
+      lifecycleService.updateProgramLogLevels(
+        new ApplicationId(namespace, appName, appVersion).program(programType, programName),
+        transformLogLevelsMap(decodeArguments(request)), component, runId);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Invalid JSON in body");
+    } catch (SecurityException e) {
+      throw new UnauthorizedException("Unauthorized to update the log levels");
+    }
+  }
+
+  private void resetLogLevels(HttpRequest request, HttpResponder responder, String namespace, String appName,
+                              String appVersion, String type, String programName,
+                              @Nullable String component, String runId) throws Exception {
+    ProgramType programType = getProgramType(type);
+    if (programType == null) {
+      throw new BadRequestException("Invalid program type provided");
+    }
+    try {
+      Set<String> loggerNames = parseBody(request, SET_STRING_TYPE);
+      lifecycleService.resetProgramLogLevels(
+        new ApplicationId(namespace, appName, appVersion).program(programType, programName),
+        loggerNames == null ? Collections.<String>emptySet() : loggerNames, component, runId);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Invalid JSON in body");
+    } catch (SecurityException e) {
+      throw new UnauthorizedException("Unauthorized to reset the log levels");
+    }
+  }
+
+  /**
+   * Helper method to transform the type of the log level map.
+   */
+  private Map<String, LogEntry.Level> transformLogLevelsMap(Map<String, String> logLevels)
+    throws BadRequestException {
+    Map<String, LogEntry.Level> result = new HashMap<>();
+    for (Map.Entry<String, String> entry : logLevels.entrySet()) {
+      String logLevel = entry.getValue();
+      try {
+        result.put(entry.getKey(), logLevel == null ? null : LogEntry.Level.valueOf(logLevel.toUpperCase()));
+      } catch (IllegalArgumentException e) {
+        throw new BadRequestException(String.format("%s is not a valid log level", logLevel));
+      }
+    }
+    return result;
   }
 }
