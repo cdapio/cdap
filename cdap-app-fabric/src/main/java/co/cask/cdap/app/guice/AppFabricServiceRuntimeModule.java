@@ -94,11 +94,13 @@ import co.cask.cdap.logging.run.InMemoryAppFabricServiceManager;
 import co.cask.cdap.logging.run.InMemoryDatasetExecutorServiceManager;
 import co.cask.cdap.logging.run.InMemoryExploreServiceManager;
 import co.cask.cdap.logging.run.InMemoryLogSaverServiceManager;
+import co.cask.cdap.logging.run.InMemoryMessagingServiceManager;
 import co.cask.cdap.logging.run.InMemoryMetadataServiceManager;
 import co.cask.cdap.logging.run.InMemoryMetricsProcessorServiceManager;
 import co.cask.cdap.logging.run.InMemoryMetricsServiceManager;
 import co.cask.cdap.logging.run.InMemoryStreamServiceManager;
 import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
+import co.cask.cdap.messaging.distributed.MessagingServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
@@ -249,6 +251,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       .to(InMemoryMetadataServiceManager.class);
     mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
       .to(InMemoryExploreServiceManager.class);
+    mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE)
+      .to(InMemoryMessagingServiceManager.class);
   }
 
   @Override
@@ -290,6 +294,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(RemoteSystemOperationServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(ExploreServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE)
+                                        .to(MessagingServiceManager.class);
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
