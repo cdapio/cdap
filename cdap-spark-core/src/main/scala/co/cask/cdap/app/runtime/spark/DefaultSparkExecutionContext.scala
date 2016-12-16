@@ -126,6 +126,8 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
   override def getApplicationSpecification: ApplicationSpecification = runtimeContext.getApplicationSpecification
 
+  override def getClusterName: String = runtimeContext.getClusterName
+
   override def getRuntimeArguments: util.Map[String, String] = runtimeContext.getRuntimeArguments
 
   override def getRunId: RunId = runtimeContext.getRunId

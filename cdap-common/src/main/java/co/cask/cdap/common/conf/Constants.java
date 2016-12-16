@@ -53,6 +53,8 @@ public final class Constants {
   // Environment variable for TEZ home
   public static final String TEZ_HOME = "TEZ_HOME";
 
+  public static final String CLUSTER_NAME = "cluster.name";
+
   /**
    * Configuration for Master startup.
    */

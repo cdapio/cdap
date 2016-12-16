@@ -176,6 +176,11 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
+  public String getClusterName() {
+    return delegate.getClusterName();
+  }
+
+  @Override
   public String getNamespace() {
     return delegate.getNamespace();
   }
