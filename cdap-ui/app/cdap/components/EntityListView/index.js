@@ -155,11 +155,13 @@ class EntityListView extends Component {
   }
 
   calculatePageSize() {
-    //Performs calculations to determine number of entities to render per page
-    let containerWidth = document.getElementsByClassName('entity-list-view')[0].offsetWidth;
+    // Performs calculations to determine number of entities to render per page
+    // minus 60px of padding in entity-list-view (30px each side)
+    let containerWidth = document.getElementsByClassName('entity-list-view')[0].offsetWidth - 60;
 
-    //Subtract 55px to account for entity-list-header's height (30px) and container's top margin (25px)
-    let containerHeight = document.getElementsByClassName('entity-list-view')[0].offsetHeight - 55;
+    // Subtract 55px to account for entity-list-header's height (30px) and container's top margin (25px)
+    // minus 20px of padding from top and bottom (10px each)
+    let containerHeight = document.getElementsByClassName('entity-list-view')[0].offsetHeight - 55 - 20;
 
     let numColumns = Math.floor(containerWidth / cardWidthWithMarginAndBorder);
     let numRows = Math.floor(containerHeight / cardHeightWithMarginAndBorder);
@@ -263,7 +265,7 @@ class EntityListView extends Component {
       namespace: namespace,
       query: `${query}*`,
       target: filter,
-      size: this.pageSize,
+      limit: this.pageSize,
       offset: offset,
       sort: sortObj.fullSort
     };
