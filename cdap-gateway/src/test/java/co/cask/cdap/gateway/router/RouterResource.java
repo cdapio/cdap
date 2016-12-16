@@ -65,7 +65,6 @@ class RouterResource extends ExternalResource {
     SConfiguration sConf = injector.getInstance(SConfiguration.class);
     cConf.set(Constants.Router.ADDRESS, hostname);
     cConf.setInt(Constants.Router.ROUTER_PORT, 0);
-    cConf.setInt(Constants.Router.WEBAPP_PORT, 0);
     for (Map.Entry<String, String> entry : additionalConfig.entrySet()) {
       cConf.set(entry.getKey(), entry.getValue());
     }
