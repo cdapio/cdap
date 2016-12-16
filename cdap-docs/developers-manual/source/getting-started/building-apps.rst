@@ -12,16 +12,16 @@ Building and Running CDAP Applications
 .. |example-dir| replace:: <example-directory>
 
 .. |development| replace:: *Development Home*
-.. _development: http://localhost:11011/ns/default
+.. _development: http://localhost:11011/oldcdap/ns/default
 
 .. |all_apps| replace:: *All Applications*
-.. _all_apps: http://localhost:11011/ns/default/apps
+.. _all_apps: http://localhost:11011/oldcdap/ns/default/apps
 
 .. |management| replace:: *Management Applications*
-.. _management: http://localhost:11011/admin/namespace/detail/default/apps
+.. _management: http://localhost:11011/oldcdap/admin/namespace/detail/default/apps
 
 .. |datasets| replace:: *Management Datasets*
-.. _datasets: http://localhost:11011/admin/namespace/detail/default/data
+.. _datasets: http://localhost:11011/oldcdap/admin/namespace/detail/default/data
 
 
 .. highlight:: console
@@ -49,7 +49,7 @@ Accessing CLI, curl, and the SDK bin
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
 
 - If you add the SDK bin directory to your path, you can simplify the commands. From within
-  the CDAP-SDK-home directory, enter:
+  the ``<CDAP-SDK-HOME>`` directory, enter:
   
   .. tabbed-parsed-literal::
   
@@ -71,12 +71,25 @@ Accessing CLI, curl, and the SDK bin
 Building an Example Application Artifact
 ----------------------------------------
 
-From the example's project root, build an example with the
+From the example's project root (such as ``examples/<example-dir>``), build an example with the
 `Apache Maven <http://maven.apache.org>`__ command:
 
 .. tabbed-parsed-literal::
 
   $ mvn clean package
+
+To build without running tests, use:
+
+.. tabbed-parsed-literal::
+
+  $ mvn clean package -DskipTests
+
+To build all the examples, switch to the main examples directory and run the Maven command:
+
+.. tabbed-parsed-literal::
+
+  $ cd <CDAP-SDK-HOME>/examples
+  $ mvn clean package -DskipTests
 
 
 .. _cdap-building-running-starting:
