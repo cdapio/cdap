@@ -14,14 +14,48 @@
  * the License.
  */
 
-function JumpController ($scope, myJumpFactory) {
+function JumpController ($scope, myJumpFactory, $state) {
   'ngInject';
 
   let vm = this;
 
   if ($scope.entityType === 'datasets') {
     vm.isAvailableDataset = myJumpFactory.isAvailableDataset($scope.datasetType);
+
+    vm.viewInCDAPLink = window.getOldCDAPUrl({
+      stateName: 'datasets.detail.overview.status',
+      stateParams: {
+        namespace: $state.params.namespace,
+        datasetId: $scope.entityId
+      }
+    });
+
+    vm.exploreLink = window.getOldCDAPUrl({
+      stateName: 'datasets.detail.overview.explore',
+      stateParams: {
+        namespace: $state.params.namespace,
+        datasetId: $scope.entityId
+      }
+    });
+  } else {
+    vm.viewInCDAPLink = window.getOldCDAPUrl({
+      stateName: 'streams.detail.overview.status',
+      stateParams: {
+        namespace: $state.params.namespace,
+        streamId: $scope.entityId
+      }
+    });
+
+    vm.exploreLink = window.getOldCDAPUrl({
+      stateName: 'streams.detail.overview.explore',
+      stateParams: {
+        namespace: $state.params.namespace,
+        streamId: $scope.entityId
+      }
+    });
   }
+
+
 
   vm.streamBatchSource = () => {
     myJumpFactory.streamBatchSource($scope.entityId);

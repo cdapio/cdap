@@ -24,10 +24,10 @@
   <!-- STREAM MENU -->
   <ul class="pull-right" uib-dropdown-menu ng-if="entityType === 'streams'">
     <li>
-      <a ui-sref="streams.detail.overview.status({ streamId: entityId })">View in CDAP</a>
+      <a href="{{Jump.viewInCDAPLink}}">View in CDAP</a>
     </li>
     <li>
-      <a ui-sref="streams.detail.overview.explore({ streamId: entityId })">Explore</a>
+      <a href="{{Jump.exploreLink}}">Explore</a>
     </li>
     <li class="divider"></li>
     <li class="dropdown-header">Add as:</li>
@@ -39,10 +39,10 @@
   <ul class="pull-right" uib-dropdown-menu
       ng-if="entityType === 'datasets' && Jump.isAvailableDataset">
     <li>
-      <a ui-sref="datasets.detail.overview.status({ datasetId: entityId })">View in CDAP</a>
+      <a href="{{Jump.viewInCDAPLink}}">View in CDAP</a>
     </li>
     <li ng-if="datasetExplorable === true">
-      <a ui-sref="datasets.detail.overview.explore({ datasetId: entityId })">Explore</a>
+      <a href="{{Jump.exploreLink}}">Explore</a>
     </li>
     <li class="divider"></li>
     <li class="dropdown-header">Add as:</li>
@@ -57,10 +57,10 @@
   <ul class="pull-right" uib-dropdown-menu
       ng-if="entityType === 'datasets' && !Jump.isAvailableDataset">
     <li>
-      <a ui-sref="datasets.detail.overview.status({ datasetId: entityId })">View in CDAP</a>
+      <a href="{{Jump.viewInCDAPLink}}">View in CDAP</a>
     </li>
     <li ng-if="datasetExplorable === true">
-      <a ui-sref="datasets.detail.overview.explore({ datasetId: entityId })">Explore</a>
+      <a href="{{Jump.exploreLink}}">Explore</a>
     </li>
   </ul>
 
