@@ -36,7 +36,10 @@ class HydratorPlusPlusTopPanelCtrl{
     this.dataSrc = new MyCDAPDataSource($scope);
     this.myAlertOnValium = myAlertOnValium;
     this.currentPreviewId = null;
-
+    this.showRunTimeArguments = false;
+    // This is for now run time arguments. It is will be a map of macroMap
+    // in the future once we get list of macros for a pipeline config.
+    this.macrosMap = {};
     this.$stateParams = $stateParams;
     this.setState();
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
@@ -184,8 +187,17 @@ class HydratorPlusPlusTopPanelCtrl{
     this.$interval.cancel(this.previewTimerInterval);
   }
 
+  toggleRuntimeArguments() {
+    if (!this.currentPreviewId) {
+      this.showRunTimeArguments = !this.showRunTimeArguments;
+    } else {
+      this.stopPreview();
+    }
+  }
   runPreview() {
     this.previewLoading = true;
+    this.showRunTimeArguments = false;
+
     this.displayDuration = {
       minutes: '--',
       seconds: '--'
@@ -207,8 +219,7 @@ class HydratorPlusPlusTopPanelCtrl{
     let previewConfig = {
       startStages: [],
       endStages: [],
-      // useSinks: [], // we are not using sinks for now
-      numOfRecords: 25
+      runTimeArguments: this.macrosMap
     };
 
     if (this.state.artifact.name === this.GLOBALS.etlDataPipeline) {
