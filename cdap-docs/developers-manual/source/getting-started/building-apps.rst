@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _cdap-building-running:
 
@@ -100,7 +100,7 @@ Starting CDAP
 Before running an example application, check that an instance of CDAP is running and available; if not,
 follow the instructions for :ref:`Starting and Stopping Standalone CDAP. <start-stop-cdap>`
 
-If you can reach the CDAP UI through a browser at `http://localhost:11011/ <http://localhost:11011/>`__, 
+If you can reach the CDAP UI through a browser at :cdap-ui:`http://localhost:11011/ <>`,
 CDAP is running.
 
 .. _cdap-building-running-deploying:
