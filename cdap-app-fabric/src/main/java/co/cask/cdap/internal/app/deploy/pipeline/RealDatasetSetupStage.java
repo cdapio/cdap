@@ -41,7 +41,7 @@ public class RealDatasetSetupStage extends AbstractStage<ApplicationDeployable> 
   @Override
   public void process(ApplicationDeployable input) throws Exception {
     ApplicationSpecification applicationSpec = input.getSpecification();
-    Set<String> realDatasets = ImmutableSet.copyOf(applicationSpec.getDatasets().keySet());
-    previewDatasetFramework.setRealDatasets(realDatasets);
+    previewDatasetFramework.addRealDatasets(applicationSpec.getDatasets().keySet());
+    emit(input);
   }
 }

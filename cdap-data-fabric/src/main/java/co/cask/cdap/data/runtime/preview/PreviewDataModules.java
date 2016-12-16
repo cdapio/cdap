@@ -90,6 +90,8 @@ public class PreviewDataModules {
           .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
           .to(PreviewDatasetFramework.class);
 
+        bind(DatasetFramework.class).to(PreviewDatasetFramework.class);
+
         expose(PreviewDatasetFramework.class);
         expose(DatasetFramework.class);
 

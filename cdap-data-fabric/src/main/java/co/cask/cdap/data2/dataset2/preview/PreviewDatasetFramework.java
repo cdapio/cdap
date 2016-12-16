@@ -39,6 +39,7 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
+import com.google.common.collect.Iterables;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +102,7 @@ public class PreviewDatasetFramework implements DatasetFramework {
   private final AuthenticationContext authenticationContext;
   private final AuthorizationEnforcer authorizationEnforcer;
   // list of dataset names which need to be accessed for read only purpose from the real space
-  private Set<String> datasetNames;
+  private final Set<String> datasetNames;
 
   /**
    * Create instance of the {@link PreviewDatasetFramework}.
@@ -119,8 +120,8 @@ public class PreviewDatasetFramework implements DatasetFramework {
     this.datasetNames = new HashSet<>();
   }
 
-  public void setRealDatasets(Set<String> realDatasets) {
-    this.datasetNames = realDatasets;
+  public void addRealDatasets(Iterable<String> realDatasets) {
+    Iterables.addAll(datasetNames, realDatasets);
   }
 
   @Override
