@@ -559,10 +559,10 @@ public class MetadataDataset extends AbstractDataset {
   public SearchResults search(String namespaceId, String searchQuery, Set<MetadataSearchTargetType> types,
                               SortInfo sortInfo, int offset, int limit, int numCursors,
                               @Nullable String cursor) {
-    if (SortInfo.DEFAULT.equals(sortInfo)) {
-      return searchByDefaultIndex(namespaceId, searchQuery, types);
+    if (!SortInfo.DEFAULT.equals(sortInfo) && "*".equals(searchQuery)) {
+      return searchByCustomIndex(namespaceId, types, sortInfo, offset, limit, numCursors, cursor);
     }
-    return searchByCustomIndex(namespaceId, types, sortInfo, offset, limit, numCursors, cursor);
+    return searchByDefaultIndex(namespaceId, searchQuery, types);
   }
 
   private SearchResults searchByDefaultIndex(String namespaceId, String searchQuery,
