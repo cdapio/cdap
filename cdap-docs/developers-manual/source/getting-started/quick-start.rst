@@ -356,9 +356,9 @@ on when and how many events you have sent):
   
   {"startTime":0,"endTime":1431467057,"series":[{"metricName":"system.process.events.processed","grouping":{},"data":[{"time":0,"value":3007}]}]}
 
-A much easier way to observe the flow is in the `CDAP UI: <http://localhost:11011>`__
-it shows a `visualization of the flow, <http://localhost:11011/ns/default/apps/Wise/programs/flows/WiseFlow/runs>`__
-annotated with its real-time metrics:
+A much easier way to observe the flow is in the :cdap-ui:`CDAP UI <>`: it shows a
+:cdap-ui-apps:`visualization of the flow <Wise/programs/flows/WiseFlow/runs>`, annotated
+with its real-time metrics:
 
 .. image:: ../_images/quickstart/wise-flow1.png
    :width: 600px
