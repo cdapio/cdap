@@ -17,6 +17,8 @@
 package co.cask.cdap.examples.fileset;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.DatasetManagementException;
@@ -76,6 +78,7 @@ public class FileSetService extends AbstractService {
      */
     @GET
     @Path("{fileset}")
+    @TransactionPolicy(TransactionControl.EXPLICIT)
     public void read(HttpServiceRequest request, HttpServiceResponder responder,
                      @PathParam("fileset") String set, @QueryParam("path") String filePath) {
 
@@ -106,6 +109,7 @@ public class FileSetService extends AbstractService {
      */
     @PUT
     @Path("{fileset}")
+    @TransactionPolicy(TransactionControl.EXPLICIT)
     public HttpContentConsumer write(HttpServiceRequest request, HttpServiceResponder responder,
                                      @PathParam("fileset") final String set,
                                      @QueryParam("path") final String filePath) {
@@ -166,6 +170,7 @@ public class FileSetService extends AbstractService {
      */
     @POST
     @Path("{fileset}/create")
+    @TransactionPolicy(TransactionControl.EXPLICIT)
     public void create(HttpServiceRequest request, HttpServiceResponder responder,
                        @PathParam("fileset") final String set,
                        @Nullable @QueryParam("clone") final String clone) throws DatasetManagementException {
@@ -203,6 +208,7 @@ public class FileSetService extends AbstractService {
      */
     @POST
     @Path("{fileset}/update")
+    @TransactionPolicy(TransactionControl.EXPLICIT)
     public void update(HttpServiceRequest request, HttpServiceResponder responder,
                        @PathParam("fileset") final String set) throws DatasetManagementException {
       DatasetProperties properties = DatasetProperties.EMPTY;
@@ -231,6 +237,7 @@ public class FileSetService extends AbstractService {
      */
     @POST
     @Path("{fileset}/drop")
+    @TransactionPolicy(TransactionControl.EXPLICIT)
     public void drop(HttpServiceRequest request, HttpServiceResponder responder,
                      @PathParam("fileset") final String set) throws DatasetManagementException {
       try {
@@ -249,6 +256,7 @@ public class FileSetService extends AbstractService {
      */
     @POST
     @Path("{fileset}/truncate")
+    @TransactionPolicy(TransactionControl.EXPLICIT)
     public void truncate(HttpServiceRequest request, HttpServiceResponder responder,
                          @PathParam("fileset") final String set) throws DatasetManagementException {
       try {
@@ -267,6 +275,7 @@ public class FileSetService extends AbstractService {
      */
     @POST
     @Path("{fileset}/properties")
+    @TransactionPolicy(TransactionControl.EXPLICIT)
     public void properties(HttpServiceRequest request, HttpServiceResponder responder,
                            @PathParam("fileset") final String set) throws DatasetManagementException {
       try {
