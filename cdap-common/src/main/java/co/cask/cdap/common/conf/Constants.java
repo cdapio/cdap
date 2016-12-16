@@ -1076,6 +1076,7 @@ public final class Constants {
     public static final String LOCAL_DATA_DIR = "messaging.local.data.dir";
 
     public static final String HBASE_MAX_SCAN_THREADS = "messaging.hbase.max.scan.threads";
+    public static final String HBASE_SCAN_CACHE_ROWS = "messaging.hbase.scan.cache.rows";
     public static final String METADATA_TABLE_NAME = "messaging.metadata.table.name";
     public static final String MESSAGE_TABLE_NAME = "messaging.message.table.name";
     public static final String MESSAGE_TABLE_HBASE_SPLITS = "messaging.message.table.hbase.splits";
