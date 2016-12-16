@@ -410,6 +410,11 @@ function cleanup_messages_file() {
   unset -v TMP_MESSAGES_FILE
 }
 
+function echo_set_message() {
+  echo "${*}"
+  set_message "${*}"
+}
+
 function set_message() {
   if [[ -z ${MESSAGES} ]]; then
     MESSAGES=${*}

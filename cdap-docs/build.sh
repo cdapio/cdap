@@ -43,7 +43,7 @@ function usage() {
   echo
   echo "    docs-set          Clean build of HTML, CLI, and Javadocs, zipped, ready for deploying"
   echo "    docs-all          alias to \"docs-set\""
-  echo "    docs-web-only     Clean build of HTML, CLI, zipped, skipping Javadocs"
+  echo "    docs-web-only     Clean build of HTML, CLI, zipped, skipping Javadocs (aka Quick Build)"
   echo 
   echo "    docs              Dirty build of HTML, skipping CLI, Javadocs, or zipping"
   echo 
@@ -180,21 +180,28 @@ function build_javadocs() {
     local debug_flag=''
   fi
   if [[ ${javadoc_type} == ${ALL} ]]; then
-    javadoc_run="javadoc:aggregate"
+    javadoc_run="javadoc:aggregate -P release"
   else
-    javadoc_run="site"
+    javadoc_run="site -P templates"
   fi
   local start=`date`
   cd ${PROJECT_PATH}
-  MAVEN_OPTS="-Xmx4g -XX:MaxPermSize=256m" # match other CDAP builds
-  mvn clean package ${javadoc_run} -P examples,templates,release -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
+  echo "Maven clean package debug_flag: '${debug_flag}'"
+  MAVEN_OPTS="-Xmx4g -XX:MaxPermSize=256m" mvn clean package -P examples,templates,release -DskipTests -Dgpg.skip=true ${debug_flag}
   warnings=$?
   if [[ ${warnings} -eq 0 ]]; then
-    echo
-    echo "Javadocs Build Start: ${start}"
-    echo "                 End: `date`"
+    echo "Maven javadoc_run: '${javadoc_run}' debug_flag: '${debug_flag}'"
+    MAVEN_OPTS="-Xmx4g -XX:MaxPermSize=256m" mvn ${javadoc_run} -DskipTests -DisOffline=false ${debug_flag}
+    warnings=$?
+    if [[ ${warnings} -eq 0 ]]; then
+      echo
+      echo "Javadocs Build Start: ${start}"
+      echo "                 End: `date`"
+    else
+      echo_set_message "Error building Javadocs: ${warnings}"
+    fi
   else
-    echo "Error building Javadocs: ${warnings}"
+    echo_set_message "Error building Javadocs: Maven clean package: ${warnings}"
   fi
   display_end_title ${title}
   return ${warnings}
@@ -223,10 +230,10 @@ function build_docs_cli() {
         echo "CLI input file written to ${target_txt}"
         USING_CLI_DOCS="true"
       else
-        echo "Error building CLI input file: ${warnings}"
+        echo_set_message "Error building CLI input file: ${warnings}"
       fi
     else
-      echo "Error building CLI itself: ${warnings}"
+      echo_set_message "Error building CLI itself: ${warnings}"
     fi
     export USING_CLI_DOCS
   fi
