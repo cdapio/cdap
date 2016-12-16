@@ -43,6 +43,7 @@ import co.cask.cdap.explore.service.hive.BaseHiveExploreService;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -395,6 +396,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new ConfigModule(cConf, hConf),
       new IOModule(), new ZKClientModule(),
       new KafkaClientModule(),
+      new MessagingClientModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),

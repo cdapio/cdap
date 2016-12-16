@@ -18,6 +18,7 @@ package co.cask.cdap.master.startup;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.id.EntityId;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -57,6 +58,7 @@ class ConfigurationCheck extends AbstractMasterCheck {
     checkBindAddresses();
     checkPotentialPortConflicts();
     checkKafkaTopic(problemKeys);
+    checkMessagingTopics(problemKeys);
 
     if (!problemKeys.isEmpty()) {
       throw new RuntimeException("Invalid configuration settings for keys: " + Joiner.on(',').join(problemKeys));
@@ -132,8 +134,11 @@ class ConfigurationCheck extends AbstractMasterCheck {
     if (!isValidKafkaTopic(Constants.Logging.KAFKA_TOPIC)) {
       problemKeys.add(Constants.Logging.KAFKA_TOPIC);
     }
-    if (!isValidKafkaTopic(Constants.Audit.KAFKA_TOPIC)) {
-      problemKeys.add(Constants.Audit.KAFKA_TOPIC);
+  }
+
+  private void checkMessagingTopics(Set<String> problemKeys) {
+    if (!EntityId.isValidId(cConf.get(Constants.Audit.TOPIC))) {
+      problemKeys.add(Constants.Audit.TOPIC);
     }
   }
 

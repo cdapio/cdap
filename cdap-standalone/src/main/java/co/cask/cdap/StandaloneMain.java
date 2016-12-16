@@ -34,7 +34,6 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.URLConnections;
-import co.cask.cdap.common.service.Services;
 import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.OSDetector;
@@ -82,27 +81,20 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.apache.tephra.inmemory.InMemoryTransactionService;
-import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Standalone Main.
@@ -112,8 +104,6 @@ public class StandaloneMain {
 
   // A special key in the CConfiguration to disable UI. It's mainly used for unit-tests that start Standalone.
   public static final String DISABLE_UI = "standalone.disable.ui";
-  public static final String LOCAL_ZOOKEEPER_SERVER_PORT = "local.zkserver.port";
-  public static final String LOCAL_KAFKA_DIR = "local.kafka.dir";
 
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
@@ -133,10 +123,6 @@ public class StandaloneMain {
   private final CConfiguration cConf;
   private final DatasetService datasetService;
   private final ExploreClient exploreClient;
-  private final ZKClientService zkClient;
-  private final KafkaClientService kafkaClient;
-  private final ExternalJavaProcessExecutor kafkaProcessExecutor;
-  private final ExternalJavaProcessExecutor zookeeperProcessExecutor;
   private final TrackerAppCreationService trackerAppCreationService;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final RemoteSystemOperationsService remoteSystemOperationsService;
@@ -155,24 +141,8 @@ public class StandaloneMain {
 
     // Start ZK client, Kafka client, ZK Server and Kafka Server only when audit is enabled
     if (cConf.getBoolean(Constants.Audit.ENABLED)) {
-      zkClient = injector.getInstance(ZKClientService.class);
-      kafkaClient = injector.getInstance(KafkaClientService.class);
-      File zkLogs = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "zk-logs");
-      String zkPort = cConf.get(LOCAL_ZOOKEEPER_SERVER_PORT);
-      zookeeperProcessExecutor = new ExternalJavaProcessExecutor(ZooKeeperServerMain.class.getCanonicalName(),
-                                                                 ImmutableList.of(zkPort, zkLogs.getAbsolutePath()));
-
-      String kafkaClassPath =  new File(cConf.get(LOCAL_KAFKA_DIR), "*").getAbsolutePath();
-      kafkaProcessExecutor = new ExternalJavaProcessExecutor("co.cask.cdap.kafka.run.KafkaServerMain",
-                                                             Collections.<String>emptyList(),
-                                                             ImmutableMap.of("KAFKA_HEAP_OPTS", "-Xmx1G -Xms1G"),
-                                                             kafkaClassPath);
       trackerAppCreationService = injector.getInstance(TrackerAppCreationService.class);
     } else {
-      zkClient = null;
-      kafkaClient = null;
-      zookeeperProcessExecutor = null;
-      kafkaProcessExecutor = null;
       trackerAppCreationService = null;
     }
 
@@ -245,27 +215,6 @@ public class StandaloneMain {
     cleanupTempDir();
 
     ConfigurationLogger.logImportantConfig(cConf);
-
-    // Start all the services.
-    if (zookeeperProcessExecutor != null) {
-      zookeeperProcessExecutor.startAndWait();
-    }
-
-    if (kafkaProcessExecutor != null) {
-      kafkaProcessExecutor.startAndWait();
-    }
-
-    if (zkClient != null) {
-      Services.startAndWait(zkClient, cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
-                            TimeUnit.MILLISECONDS,
-                            String.format("Connection timed out while trying to start ZooKeeper client. Please " +
-                                            "verify that the ZooKeeper quorum settings are correct in cdap-site.xml. " +
-                                            "Currently configured as: %s", cConf.get(Constants.Zookeeper.QUORUM)));
-    }
-
-    if (kafkaClient != null) {
-      kafkaClient.startAndWait();
-    }
 
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
@@ -370,21 +319,11 @@ public class StandaloneMain {
       }
 
       logAppenderInitializer.close();
-
-      if (kafkaClient != null) {
-        kafkaClient.stopAndWait();
-      }
-
-      if (zkClient != null) {
-        zkClient.stopAndWait();
-      }
-
       authorizerInstantiator.close();
     } catch (Throwable e) {
       halt = true;
       LOG.error("Exception during shutdown", e);
     } finally {
-      stopExternalProcesses();
       cleanupTempDir();
     }
 
@@ -392,24 +331,6 @@ public class StandaloneMain {
     // Therefore System.exit() won't do it, we need to force a halt.
     if (halt) {
       Runtime.getRuntime().halt(1);
-    }
-  }
-
-  private void stopExternalProcesses() {
-    if (kafkaProcessExecutor != null) {
-      try {
-        kafkaProcessExecutor.stopAndWait();
-      } catch (UncheckedExecutionException ex) {
-        LOG.warn("Exception during Kafka process shutdown. Process might still be running.", ex);
-      }
-    }
-
-    if (zookeeperProcessExecutor != null) {
-      try {
-        zookeeperProcessExecutor.stopAndWait();
-      } catch (UncheckedExecutionException ex) {
-        LOG.warn("Exception during Zookeeper process shutdown. Process might still be running", ex);
-      }
     }
   }
 
@@ -469,7 +390,6 @@ public class StandaloneMain {
         System.err.println("Failed to start Standalone CDAP");
         e.printStackTrace(System.err);
       }
-      main.stopExternalProcesses();
       Runtime.getRuntime().halt(-2);
     }
   }

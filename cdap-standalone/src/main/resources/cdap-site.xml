@@ -153,51 +153,11 @@
     </description>
   </property>
 
-
-  <!-- Zookeeper Configuration (only used when Zookeeper server is started in Standalone) -->
-
-  <property>
-    <name>local.zkserver.port</name>
-    <value>2181</value>
-    <description>
-      Port for Zookeeper Server
-    </description>
-  </property>
-
-  <property>
-    <name>zookeeper.quorum</name>
-    <value>127.0.0.1:${local.zkserver.port}/${root.namespace}</value>
-    <description>
-      ZooKeeper quorum string; specifies the ZooKeeper host:port; substitute the quorum
-      (FQDN1:2181,FQDN2:2181,...) for the components shown here
-    </description>
-  </property>
-
-  <!-- Kafka Configuration (only used when Kafka server is started in Standalone) -->
-
-  <property>
-    <name>local.kafka.dir</name>
-    <value>${app.program.runtime.extensions.dir}/kafka</value>
-    <description>
-      Kafka server artifact and its dependencies
-    </description>
-  </property>
-
-  <property>
-    <name>kafka.server.log.dirs</name>
-    <value>${local.data.dir}/kafka-logs</value>
-    <description>
-      Comma-separated list of CDAP Kafka service log storage directories
-    </description>
-  </property>
-
   <property>
     <name>tracker.app.config</name>
     <value>{
-             "auditLogKafkaConfig" : {
-               "topic" : "${audit.kafka.topic}",
-               "zookeeperString" :
-                     "${router.bind.address}:${local.zkserver.port}/${root.namespace}/${kafka.zookeeper.namespace}"
+             "auditLogConfig" : {
+               "topic" : "${audit.topic}"
              }
            }
     </value>

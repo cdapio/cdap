@@ -28,6 +28,14 @@
   </property>
 
   <property>
+    <name>audit.kafka.topic</name>
+    <value>audit</value>
+    <description>
+      Apache Kafka topic name to which audit messages are published
+    </description>
+  </property>
+
+  <property>
     <name>dataset.service.bind.address</name>
     <value>0.0.0.0</value>
     <description>

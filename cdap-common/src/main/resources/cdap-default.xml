@@ -405,18 +405,25 @@
     <name>audit.enabled</name>
     <value>true</value>
     <description>
-      Determines whether to publish audit messages to Apache Kafka
+      Determines whether to publish audit messages
     </description>
   </property>
 
   <property>
-    <name>audit.kafka.topic</name>
+    <name>audit.topic</name>
     <value>audit</value>
     <description>
-      Apache Kafka topic name to which audit messages are published
+      The topic name in the messaging system to which audit messages are published
     </description>
   </property>
 
+  <property>
+    <name>audit.publish.timeout.ms</name>
+    <value>2000</value>
+    <description>
+      Audit message publishing timeout in milliseconds
+    </description>
+  </property>
 
   <!-- Datasets Configuration -->
 
@@ -942,9 +949,8 @@
       the Kafka service used by CDAP. If the same Kafka service ZooKeeper quorum
       and namespace are shared by multiple CDAP instances, each CDAP instance
       needs to distinguish its Kafka topics from those of other CDAP instances
-      with unique values for ${audit.kafka.topic}, ${log.kafka.topic},
-      ${notification.kafka.topic}, ${metadata.updates.kafka.topic}, and
-      ${metrics.kafka.topic.prefix}.
+      with unique values for ${log.kafka.topic}, ${notification.kafka.topic},
+      and ${metrics.kafka.topic.prefix}.
     </description>
   </property>
 
@@ -1280,6 +1286,14 @@
     <value>tms.payload</value>
     <description>
       Name of the payload table of the messaging system
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.system.topics</name>
+    <value>${audit.topic}</value>
+    <description>
+      A comma-separated list of topics that is always available in the system namespace
     </description>
   </property>
 
