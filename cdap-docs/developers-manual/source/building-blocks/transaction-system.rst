@@ -235,18 +235,11 @@ in Spark programs.
 For all other lifecycle methods and for service handlers, the implicit transaction can be
 turned off by annotating the method with ``@TransactionPolicy(TransactionControl.EXPLICIT)``.
 
-For example, in the ``FileSetService`` of the :ref:`FileSetExample <examples-fileset>`::
-
-  @GET
-  @Path("{fileset}")
-  @TransactionPolicy(TransactionControl.EXPLICIT)
-  public void read(HttpServiceRequest request, HttpServiceResponder responder,
-                   @PathParam("fileset") String set, @QueryParam("path") String filePath) {
-    ...
+For example, in the ``FileSetService`` of the :ref:`FileSetExample <examples-fileset>`:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
    :language: java
-   :lines: 77-80
+   :lines: 79-83
    :dedent: 4
    :append: . . .
 
@@ -281,42 +274,11 @@ allows the executing of a block of code in an explicit transaction.
 For example, this service handler method (from the ``UploadService`` of the
 :ref:`SportResultsExample <examples-sport-results>`) uses an explicit transaction to
 access the partition metadata, whereas the streaming of the file contents to the client is
-performed outside the transaction::
-
-  @GET
-  @Path("leagues/{league}/seasons/{season}")
-  @TransactionPolicy(TransactionControl.EXPLICIT)
-  public void read(HttpServiceRequest request, HttpServiceResponder responder,
-                   @PathParam("league") final String league,
-                   @PathParam("season") final int season) throws TransactionFailureException {
-
-
-    final PartitionKey key = PartitionKey.builder().addField("league", league).addField("season", season).build();
-    final AtomicReference<PartitionDetail> partitionDetail = new AtomicReference<>();
- 
- 
-    getContext().execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        partitionDetail.set(results.getPartition(key));
-      }
-    });     
-    if (partitionDetail.get() == null) {
-      responder.sendString(404, "Partition not found.", Charsets.UTF_8);
-      return;
-    }
- 
- 
-    try {
-      responder.send(200, partitionDetail.get().getLocation().append("file"), "text/plain");
-    } catch (IOException e) {
-      responder.sendError(400, String.format("Unable to read path '%s'", partitionDetail.get().getRelativePath()));
-    }
-  }
+performed outside the transaction:
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
    :language: java
-   :lines: 68-88
+   :lines: 74-103
    :dedent: 4
 
 Be aware that you cannot nest transactions. For example, either:
@@ -358,3 +320,16 @@ the timeout in seconds to the ``execute()`` method::
   });
 
 This will execute the ``TxRunnable`` in a transaction with a timeout of 90 seconds.
+
+
+Transaction Examples
+====================
+
+- For an example of using **explicit transactions,** see the :ref:`FileSet example
+  <examples-fileset>` and its ``FileSetService``, whose ``FileSetHandler`` uses explicit
+  transactions for all of its operations.
+
+- For another example of using **explicit transactions,** see the 
+  :ref:`Sport Results example <examples-sport-results>`, where the service
+  ``UploadService`` has an ``UploadHandler`` that reads and writes using explicit
+  transactions.
