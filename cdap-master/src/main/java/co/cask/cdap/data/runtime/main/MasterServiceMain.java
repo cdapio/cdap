@@ -988,25 +988,36 @@ public class MasterServiceMain extends DaemonMain {
       }
     }
 
+
     // Filter out jar files that are already in the master classpath as those will get localized by twill automatically,
     // hence no need to localize again.
-    Iterable<File> exploreJars = Iterables.filter(ExploreUtils.getExploreClasspathJarFiles(), new Predicate<File>() {
-      @Override
-      public boolean apply(File file) {
-        return !masterJars.contains(file);
-      }
-    });
+    Iterable<File> exploreFiles = Iterables.filter(
+      ExploreUtils.getExploreClasspathJarFiles("tgz", "gz"), new Predicate<File>() {
+        @Override
+        public boolean apply(File file) {
+          return !masterJars.contains(file);
+        }
+      });
 
     Map<String, LocalizeResource> resources = new HashMap<>();
-    for (File exploreJar : exploreJars) {
-      File targetJar = tempDir.resolve(System.currentTimeMillis() + "-" + exploreJar.getName()).toFile();
-      File resultFile = ExploreServiceUtils.rewriteHiveAuthFactory(exploreJar, targetJar);
-      if (resultFile == targetJar) {
-        LOG.info("Rewritten HiveAuthFactory from jar file {} to jar file {}", exploreJar, resultFile);
+    for (File file : exploreFiles) {
+      if (file.getName().endsWith(".tgz") || file.getName().endsWith(".gz")) {
+        // It's an archive, hence localize it archive so that it will be expanded to a directory on the container
+        resources.put(file.getName(), new LocalizeResource(file, true));
+        // Includes the expanded directory, jars under that directory and jars under the "lib" to classpath
+        extraClassPaths.add(file.getName());
+        extraClassPaths.add(file.getName() + "/*");
+        extraClassPaths.add(file.getName() + "/lib/*");
+      } else {
+        File targetFile = tempDir.resolve(System.currentTimeMillis() + "-" + file.getName()).toFile();
+        File resultFile = ExploreServiceUtils.rewriteHiveAuthFactory(file, targetFile);
+        if (resultFile == targetFile) {
+          LOG.info("Rewritten HiveAuthFactory from jar file {} to jar file {}", file, resultFile);
+        }
+        resources.put(resultFile.getName(), new LocalizeResource(resultFile));
+        extraClassPaths.add(resultFile.getName());
       }
 
-      resources.put(resultFile.getName(), new LocalizeResource(resultFile));
-      extraClassPaths.add(resultFile.getName());
     }
 
     // Explore also depends on MR, hence adding MR jars to the classpath.
