@@ -81,87 +81,6 @@ Keeping these guidelines in mind will help you write more efficient and faster-p
 code.
 
 
-.. _transaction-system-conflict-detection:
-
-Levels of Conflict Detection
-============================
-Transactions providing ACID (atomicity, consistency, isolation, and durability) guarantees
-are useful in several applications where data accuracy is critical—examples include billing
-applications and computing click-through rates.
-
-However, transaction are not for free: the transaction system must track all the writes
-made by all transactions, and it must check transactions for conflicts before committing them.
-If conflicts are frequent, they will impact performance because the failed transactions
-have to be rolled back and reattempted.
-
-In some scenarios, you may want to fine-tune the manner in which a dataset participates in
-transactions:
-
-- Some applications—such as trending—might not need transactions for all writes, because
-  small inaccuracies have little effect on trends with great momentum. Applications that
-  do not strictly require accuracy can trade it for increased throughput by disabling
-  transactions for some datasets.
-- Some applications perform concurrent updates to the same row of a table, but typically
-  those updates do not strictly conflict with each other because they are on different
-  columns of the row. In this case it can make sense to increase the precision of conflict
-  detection by tracking changes at the column level instead of the row level.
-
-Both of these can be achieved by specifying a conflict detection level when the table is
-created. For example, in your application's ``configure()`` method::
-
-    Tables.createTable(getConfigurer(), "myTable", ConflictDetection.COLUMN);
-
-You have these options:
-
-- ``ConflictDetection.NONE`` to disable transactions for the table. None of the writes
-  performed on this table will participate in conflict detection. However, all writes
-  will still be rolled back in case of a transaction failure (the transaction may fail
-  for other reasons than a conflict on this table).
-- ``ConflictDetection.ROW`` to track writes at the row level. This means that two
-  concurrent transactions will cause a conflict if they write to the same row of the table,
-  even if the writes are for different columns. This is the default.
-- ``ConflictDetection.COLUMN`` to increase the precision of the conflict detection to
-  the column level: Two concurrent transactions can write to the same row without conflict,
-  as long as they write to disjoint sets of columns. This will increase the overhead for
-  each transaction, because the transaction system must track writes with greater detail.
-  But it can also greatly reduce the number of transaction conflicts, leading to improved
-  overall application throughput.
-
-  See the :ref:`UserProfile example <examples-user-profiles>`
-  for a sample use case.
-
-
-.. _transaction-system-transactions-mapreduce:
-
-Transactions in MapReduce
-=========================
-When you run a MapReduce that interacts with datasets, the system creates a
-long-running transaction. Similar to the transaction of a flowlet, here are
-some rules to follow:
-
-- Reads can only see the writes of other transactions that were committed
-  at the time the long-running transaction was started.
-
-- All writes of the long-running transaction are committed atomically,
-  and only become visible to others after they are committed.
-
-- The long-running transaction can read its own writes.
-
-However, there is a key difference: long-running transactions do not participate in
-conflict detection. If another transaction overlaps with the long-running transaction and
-writes to the same row, it will not cause a conflict but simply overwrite it.
-
-It is not efficient to fail the long-running job based on a single conflict. Because of
-this, it is not recommended to write to the same dataset from both real-time and MapReduce
-programs. It is better to use different datasets, or at least ensure that the real-time
-processing writes to a disjoint set of columns.
-
-It's important to note that the MapReduce framework will reattempt a task (Mapper or
-Reducer) if it fails. If the task is writing to a dataset, the reattempt of the task will
-most likely repeat the writes that were already performed in the failed attempt. Therefore
-it is highly advisable that all writes performed by MapReduce programs be idempotent.
-
-
 .. _transaction-system-using-in-programs:
 
 Using Transactions in Programs
@@ -240,7 +159,7 @@ because that would impact the semantics of flow execution.
 For MapReduce programs, the lifecycle methods of MapReduce tasks (mappers and reducers)
 and MapReduce helpers (such as partitioners and comparators) are always run inside a
 transaction: the long-running transaction that encapsulates an entire MapReduce job (see
-:ref:`above <transaction-system-transactions-mapreduce>`).
+:ref:`Transactions and MapReduce <transaction-system-transactions-mapreduce>`).
 
 For Spark programs, see :ref:`Transactions and Spark <spark-transactions>` for how to use
 transactions in Spark programs.
@@ -335,8 +254,93 @@ the timeout in seconds to the ``execute()`` method::
 This will execute the ``TxRunnable`` in a transaction with a timeout of 90 seconds.
 
 
+.. _transaction-system-conflict-detection:
+
+Levels of Conflict Detection
+============================
+Transactions providing ACID (atomicity, consistency, isolation, and durability) guarantees
+are useful in several applications where data accuracy is critical—examples include billing
+applications and computing click-through rates.
+
+However, transaction are not for free: the transaction system must track all the writes
+made by all transactions, and it must check transactions for conflicts before committing them.
+If conflicts are frequent, they will impact performance because the failed transactions
+have to be rolled back and reattempted.
+
+In some scenarios, you may want to fine-tune the manner in which a dataset participates in
+transactions:
+
+- Some applications—such as trending—might not need transactions for all writes, because
+  small inaccuracies have little effect on trends with great momentum. Applications that
+  do not strictly require accuracy can trade it for increased throughput by disabling
+  transactions for some datasets.
+- Some applications perform concurrent updates to the same row of a table, but typically
+  those updates do not strictly conflict with each other because they are on different
+  columns of the row. In this case it can make sense to increase the precision of conflict
+  detection by tracking changes at the column level instead of the row level.
+
+Both of these can be achieved by specifying a conflict detection level when the table is
+created. For example, in your application's ``configure()`` method::
+
+    Tables.createTable(getConfigurer(), "myTable", ConflictDetection.COLUMN);
+
+You have these options:
+
+- ``ConflictDetection.NONE`` to disable transactions for the table. None of the writes
+  performed on this table will participate in conflict detection. However, all writes
+  will still be rolled back in case of a transaction failure (the transaction may fail
+  for other reasons than a conflict on this table).
+- ``ConflictDetection.ROW`` to track writes at the row level. This means that two
+  concurrent transactions will cause a conflict if they write to the same row of the table,
+  even if the writes are for different columns. This is the default.
+- ``ConflictDetection.COLUMN`` to increase the precision of the conflict detection to
+  the column level: Two concurrent transactions can write to the same row without conflict,
+  as long as they write to disjoint sets of columns. This will increase the overhead for
+  each transaction, because the transaction system must track writes with greater detail.
+  But it can also greatly reduce the number of transaction conflicts, leading to improved
+  overall application throughput.
+
+  See the :ref:`UserProfile example <examples-user-profiles>`
+  for a sample use case.
+
+
+.. _transaction-system-transactions-mapreduce:
+
+Transactions and MapReduce
+==========================
+When you run a MapReduce that interacts with datasets, the system creates a
+long-running transaction. Similar to the transaction of a flowlet, here are
+some rules to follow:
+
+- Reads can only see the writes of other transactions that were committed
+  at the time the long-running transaction was started.
+
+- All writes of the long-running transaction are committed atomically,
+  and only become visible to others after they are committed.
+
+- The long-running transaction can read its own writes.
+
+However, there is a key difference: long-running transactions do not participate in
+conflict detection. If another transaction overlaps with the long-running transaction and
+writes to the same row, it will not cause a conflict but simply overwrite it.
+
+It is not efficient to fail the long-running job based on a single conflict. Because of
+this, it is not recommended to write to the same dataset from both real-time and MapReduce
+programs. It is better to use different datasets, or at least ensure that the real-time
+processing writes to a disjoint set of columns.
+
+It's important to note that the MapReduce framework will reattempt a task (Mapper or
+Reducer) if it fails. If the task is writing to a dataset, the reattempt of the task will
+most likely repeat the writes that were already performed in the failed attempt. Therefore
+it is highly advisable that all writes performed by MapReduce programs be idempotent.
+
+
 Transaction Examples
 ====================
+
+- For an example of using **implicit transactions,** see the :ref:`HelloWorld example
+  <examples-hello-world>` and its ``Greeting`` service and ``GreetingHandler``, which uses
+  implicit transactions.
 
 - For an example of using **explicit transactions,** see the :ref:`FileSet example
   <examples-fileset>` and its ``FileSetService``, whose ``FileSetHandler`` uses explicit

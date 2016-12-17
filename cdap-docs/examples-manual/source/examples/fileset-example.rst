@@ -63,8 +63,9 @@ file, and it opens an input stream for that location. ``Location`` is a file sys
 
 Note that after obtaining the location from the FileSet, the handler discards that dataset through its context |---|
 it is not needed any more and therefore can be returned to the system. This is not strictly necessary: all datasets
-are eventually reclaimed by the system. However, explicitly discarding a dataset allows the system to reclaim it
-as soon as the current transaction ends, possibly freeing valuable resources.
+are eventually reclaimed by the system. However, explicitly discarding a dataset allows
+the system to reclaim it either immediately (as in this case) or as soon as the current
+transaction ends; in any case, possibly freeing valuable resources.
 
 The ``write`` method uses an ``HttpContentConsumer`` to stream the body of the request to the location specified
 by the ``path`` query parameter. See the section on :ref:`Handling Large Requests <services-content-consumer>`
