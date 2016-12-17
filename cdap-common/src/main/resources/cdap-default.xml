@@ -1322,8 +1322,10 @@
 
   <property>
     <name>messaging.coprocessor.dir</name>
-    <value>${hdfs.namespace}/tms</value>
-    <description>Directory to store Messaging Service Table coprocessors</description>
+    <value>tms</value>
+    <description>
+      Directory to store Messaging Service Table coprocessors. This path is relative to ${hdfs.namespace}.
+    </description>
   </property>
 
   <!-- Metadata Configuration -->
