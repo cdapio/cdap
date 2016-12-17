@@ -96,7 +96,7 @@ API Changes
         } catch (Exception e) {
           if (e instanceof TransactionFailureException) {
             LOG.error("transaction failure");
-          } else if (e.getCause() != null && e.getCause() instanceof TransactionFailureException) {
+          } else if (e.getCause() instanceof TransactionFailureException) {
             LOG.error("exception with cause transaction failure");
           } else {
             LOG.error("other failure");
@@ -123,12 +123,8 @@ API Changes
               }
             }
           });
-        } catch (Exception e) {
-          if (e instanceof TransactionFailureException) {
-            LOG.error("transaction failure");
-          } else {
-            LOG.error("other failure");
-          }
+        } catch (TransactionFailureException e) {
+          ...
         }
       }
     }
