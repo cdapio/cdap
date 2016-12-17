@@ -949,8 +949,7 @@
       the Kafka service used by CDAP. If the same Kafka service ZooKeeper quorum
       and namespace are shared by multiple CDAP instances, each CDAP instance
       needs to distinguish its Kafka topics from those of other CDAP instances
-      with unique values for ${log.kafka.topic}, ${notification.kafka.topic},
-      and ${metrics.kafka.topic.prefix}.
+      with unique values for ${log.kafka.topic} and ${metrics.kafka.topic.prefix}.
     </description>
   </property>
 
@@ -1291,7 +1290,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic}</value>
+    <value>${audit.topic},${notification.topic}</value>
     <description>
       A comma-separated list of topics that is always available in the system namespace
     </description>
@@ -1578,23 +1577,13 @@
   <!-- Notification System Configuration -->
 
   <property>
-    <name>notification.kafka.topic</name>
+    <name>notification.topic</name>
     <value>notifications</value>
     <description>
-      Kafka topic name used to publish notifications
+      Topic name used to publish notifications
     </description>
   </property>
 
-  <property>
-    <name>notification.transport.system</name>
-    <value>kafka</value>
-    <description>
-      Transport system used by the notification system; can be either
-      'kafka' or 'stream'
-    </description>
-  </property>
-
-  
   <!-- Operational Statistics Configuration -->
   
   <property>
