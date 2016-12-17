@@ -375,7 +375,7 @@ public class DefaultMetadataStore implements MetadataStore {
   public MetadataSearchResponse search(String namespaceId, String searchQuery,
                                        Set<MetadataSearchTargetType> types,
                                        SortInfo sortInfo, int offset, int limit,
-                                       int numCursors, String cursor) throws BadRequestException {
+                                       int numCursors, String cursor, boolean showHidden) throws BadRequestException {
     Set<MetadataScope> searchScopes = EnumSet.allOf(MetadataScope.class);
     if ("*".equals(searchQuery)) {
       if (SortInfo.DEFAULT.equals(sortInfo)) {
@@ -390,18 +390,20 @@ public class DefaultMetadataStore implements MetadataStore {
         searchScopes = EnumSet.of(MetadataScope.SYSTEM);
       }
     }
-    return search(searchScopes, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor);
+    return search(searchScopes, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor,
+                  showHidden);
   }
 
   private MetadataSearchResponse search(Set<MetadataScope> scopes, String namespaceId,
                                         String searchQuery, Set<MetadataSearchTargetType> types,
                                         SortInfo sortInfo, int offset, int limit,
-                                        int numCursors, String cursor) throws BadRequestException {
+                                        int numCursors, String cursor, boolean showHidden) throws BadRequestException {
     List<MetadataEntry> results = new ArrayList<>();
     List<String> cursors = new ArrayList<>();
     for (MetadataScope scope : scopes) {
       SearchResults searchResults =
-        getSearchResults(scope, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor);
+        getSearchResults(scope, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor,
+                         showHidden);
       results.addAll(searchResults.getResults());
       cursors.addAll(searchResults.getCursors());
     }
@@ -442,7 +444,7 @@ public class DefaultMetadataStore implements MetadataStore {
 
     return new MetadataSearchResponse(
       sortInfo.getSortBy() + " " + sortInfo.getSortOrder(), offset, limit, numCursors, total,
-      addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors
+      addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors, showHidden
     );
   }
 
@@ -450,12 +452,12 @@ public class DefaultMetadataStore implements MetadataStore {
                                          final String searchQuery, final Set<MetadataSearchTargetType> types,
                                          final SortInfo sortInfo, final int offset,
                                          final int limit, final int numCursors,
-                                         final String cursor) throws BadRequestException {
+                                         final String cursor, final boolean showHidden) throws BadRequestException {
     return execute(
       new TransactionExecutor.Function<MetadataDataset, SearchResults>() {
         @Override
         public SearchResults apply(MetadataDataset input) throws Exception {
-          return input.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor);
+          return input.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden);
         }
       }, scope);
   }
