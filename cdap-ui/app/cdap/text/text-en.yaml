@@ -541,7 +541,7 @@ features:
     Explore:
       browse: "Browse Dataset ({count})"
       noData: No data
-      chooseField: "Choose field to wrangle:"
+      chooseField: "Choose one field to wrangle:"
     Filter:
       apply: Apply
       filter: Filter
