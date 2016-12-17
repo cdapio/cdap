@@ -45,6 +45,7 @@ import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -582,7 +583,10 @@ public class MetadataDataset extends AbstractDataset {
       try {
         Row next;
         while ((next = scanner.next()) != null) {
-          processRow(results, next, DEFAULT_INDEX_COLUMN, types);
+          Optional<MetadataEntry> metadataEntry = parseRow(next, DEFAULT_INDEX_COLUMN, types);
+          if (metadataEntry.isPresent()) {
+            results.add(metadataEntry.get());
+          }
         }
       } finally {
         scanner.close();
@@ -619,10 +623,18 @@ public class MetadataDataset extends AbstractDataset {
         int count = 0;
         while ((next = scanner.next()) != null && count < fetchSize) {
           // skip until we reach offset
-          if (count++ < offset) {
+          if (count < offset) {
+            if (parseRow(next, indexColumn, types).isPresent()) {
+              count++;
+            }
             continue;
           }
-          processRow(results, next, indexColumn, types);
+          Optional<MetadataEntry> metadataEntry = parseRow(next, indexColumn, types);
+          if (metadataEntry.isPresent()) {
+            count++;
+            results.add(metadataEntry.get());
+          }
+          // note that count will be different than results.size, in the case that offset != 0
           if (results.size() % limit == mod && results.size() > limit) {
             // add the cursor, with the namespace removed.
             String cursorWithNamespace = Bytes.toString(next.get(indexColumn));
@@ -634,11 +646,13 @@ public class MetadataDataset extends AbstractDataset {
     return new SearchResults(results, cursors);
   }
 
-  private void processRow(List<MetadataEntry> results, Row rowToProcess, String indexColumn,
-                             Set<MetadataSearchTargetType> entityFilter) {
+  // there may not be a MetadataEntry in the row or it may for a different targetType (entityFilter),
+  // so return an Optional
+  private Optional<MetadataEntry> parseRow(Row rowToProcess, String indexColumn,
+                                           Set<MetadataSearchTargetType> entityFilter) {
     String rowValue = rowToProcess.getString(indexColumn);
     if (rowValue == null) {
-      return;
+      return Optional.absent();
     }
 
     final byte[] rowKey = rowToProcess.getRow();
@@ -647,13 +661,13 @@ public class MetadataDataset extends AbstractDataset {
     // Filter on target type if not set to include all types
     boolean includeAllTypes = entityFilter.isEmpty() || entityFilter.contains(MetadataSearchTargetType.ALL);
     if (!includeAllTypes && !entityFilter.contains(MetadataSearchTargetType.valueOfSerializedForm(targetType))) {
-      return;
+      return Optional.absent();
     }
 
     NamespacedEntityId targetId = MdsKey.getNamespacedIdFromKey(targetType, rowKey);
     String key = MdsKey.getMetadataKey(targetType, rowKey);
     MetadataEntry entry = getMetadata(targetId, key);
-    results.add(entry);
+    return Optional.fromNullable(entry);
   }
 
   /**
