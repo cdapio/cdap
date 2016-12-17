@@ -468,14 +468,15 @@ public abstract class MetadataTestBase extends ClientTestBase {
                                                            Set<MetadataSearchTargetType> targets,
                                                            @Nullable String sort) throws Exception {
     return metadataClient.searchMetadata(namespaceId.toId(), query, targets,
-                                         sort, 0, Integer.MAX_VALUE, 0, null).getResults();
+                                         sort, 0, Integer.MAX_VALUE, 0, null, false).getResults();
   }
 
   protected MetadataSearchResponse searchMetadata(NamespaceId namespaceId, String query,
                                                   Set<MetadataSearchTargetType> targets,
                                                   @Nullable String sort, int offset, int limit, int numCursors,
-                                                  @Nullable String cursor) throws Exception {
-    return metadataClient.searchMetadata(namespaceId.toId(), query, targets, sort, offset, limit, numCursors, cursor);
+                                                  @Nullable String cursor, boolean showHiddden) throws Exception {
+    return metadataClient.searchMetadata(namespaceId.toId(), query, targets, sort, offset, limit, numCursors,
+                                         cursor, showHiddden);
   }
 
   protected Set<String> getTags(ApplicationId app, MetadataScope scope) throws Exception {

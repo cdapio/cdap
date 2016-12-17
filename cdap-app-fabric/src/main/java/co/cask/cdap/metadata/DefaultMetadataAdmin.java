@@ -166,9 +166,9 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   public MetadataSearchResponse search(String namespaceId, String searchQuery,
                                        Set<MetadataSearchTargetType> types,
                                        SortInfo sortInfo, int offset, int limit,
-                                       int numCursors, String cursor) throws Exception {
+                                       int numCursors, String cursor, boolean showHidden) throws Exception {
     return filterAuthorizedSearchResult(
-      metadataStore.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor)
+      metadataStore.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden)
     );
   }
 
@@ -192,7 +192,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
           }
         })
       ),
-      results.getCursors());
+      results.getCursors(), results.isShowHidden());
   }
 
   // Helper methods to validate the metadata entries.
