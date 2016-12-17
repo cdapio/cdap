@@ -44,16 +44,16 @@ installed.
 
 For a Distributed CDAP cluster, version |release|, you **must** install these Hadoop components:
 
-.. |cdh-version|       replace:: 5.1 through 5.8
-.. |hdp-version|       replace:: 2.0 through 2.4
-.. |mapr-version|      replace:: 4.1 through 5.1
+.. |cdh-version|       replace:: 5.1 through 5.9
+.. |hdp-version|       replace:: 2.0 through 2.5
+.. |mapr-version|      replace:: 4.1 through 5.2
 
 +----------------+---------------------------------+---------------------------------------+
 | Component      | Source                          | Supported Versions                    |
 +================+=================================+=======================================+
 | **Hadoop**     | *various*                       | 2.0 and higher                        |
 +----------------+---------------------------------+---------------------------------------+
-| **HBase**      | Apache                          | 0.98.x and 1.0                        |
+| **HBase**      | Apache                          | 0.98.x and 1.2                        |
 +                +---------------------------------+---------------------------------------+
 |                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
@@ -61,7 +61,7 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-version| (with Apache HBase)    |
 +----------------+---------------------------------+---------------------------------------+
-| **HDFS**       | Apache Hadoop                   | 2.0.2-alpha through 2.6.0             |
+| **HDFS**       | Apache Hadoop                   | 2.0.2-alpha through 2.6               |
 +                +---------------------------------+---------------------------------------+
 |                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
@@ -69,7 +69,7 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-version| (with MapR-FS)         |
 +----------------+---------------------------------+---------------------------------------+
-| **YARN** and   | Apache Hadoop                   | 2.0.2-alpha through 2.6.0             |
+| **YARN** and   | Apache Hadoop                   | 2.0.2-alpha through 2.7               |
 + **MapReduce2** +---------------------------------+---------------------------------------+
 |                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
@@ -77,7 +77,7 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-version|                        |
 +----------------+---------------------------------+---------------------------------------+
-| **ZooKeeper**  | Apache                          | Version 3.4.3 through 3.4.5           |
+| **ZooKeeper**  | Apache                          | Version 3.4.3 through 3.4             |
 +                +---------------------------------+---------------------------------------+
 |                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
@@ -92,7 +92,7 @@ Hadoop components, as required:
 +----------------+---------------------------------+---------------------------------------+
 | Component      | Source                          | Supported Versions                    |
 +================+=================================+=======================================+
-| **Hive**       | Apache                          | Version 0.12.0 through 1.1.0          |
+| **Hive**       | Apache                          | Version 0.12.0 through 1.2.x          |
 +                +---------------------------------+---------------------------------------+
 |                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
