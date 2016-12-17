@@ -495,7 +495,7 @@ Searching for Metadata
 CDAP supports searching metadata of entities. To find which applications, datasets, streams, etc. have a particular
 metadata property or metadata tag, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace-id>/metadata/search?query=<term>[&target=<entity-type>&target=<entity-type2>...]
+  GET /v3/namespaces/<namespace-id>/metadata/search?query=<term>[&target=<entity-type>&target=<entity-type2>...][&showHidden=false]
 
 Entities that match the specified query and entity type are returned in the body of the response in JSON format::
 
@@ -559,8 +559,11 @@ Entities that match the specified query and entity type are returned in the body
    * - ``entity-type``
      - Restricts the search to either all or specified entity types: ``all``, ``artifact``, ``app``, ``dataset``,
        ``program``, ``stream``, or ``view``
+   * - ``showHidden``
+     - Metadata search hides entities whose name starts with "_" (underscore) from search results. 
+       Set this to ``true`` to include these hidden entities in search results. Default is ``false``.
    * - ``term``
-     - :ref:`Query term <http-restful-api-metadata-query-terms>`, as described below. Query terms are case-insensitive
+     - :ref:`Query term <http-restful-api-metadata-query-terms>`, as described below. Query terms are case-insensitive.
 
 .. rubric:: HTTP Responses
 
