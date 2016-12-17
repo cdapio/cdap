@@ -27,7 +27,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 /**
- * Tests notifications using Kafka transport system.
+ * Tests notifications using TMS
  */
 public class MessagingNotificationTest extends NotificationTest {
 

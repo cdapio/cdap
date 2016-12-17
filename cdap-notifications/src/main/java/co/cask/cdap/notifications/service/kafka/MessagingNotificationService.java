@@ -65,7 +65,7 @@ public class MessagingNotificationService extends AbstractNotificationService {
   private final TopicId notificationTopic;
   private final AtomicBoolean needFetch;
 
-  // Executor to publish notifications to Kafka
+  // Executor to publish notifications to TMS
   private ListeningExecutorService publishingExecutor;
   private ScheduledExecutorService subscribeExecutor;
 

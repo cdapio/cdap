@@ -20,7 +20,7 @@ import co.cask.cdap.proto.id.NotificationFeedId;
 import com.google.gson.JsonElement;
 
 /**
- * Message sent to Kafka that contains a serialized notification.
+ * Message sent to TMS that contains a serialized notification.
  */
 final class NotificationMessage {
 
@@ -42,7 +42,7 @@ final class NotificationMessage {
 
   @Override
   public String toString() {
-    return "KafkaMessage{" +
+    return "NotificationMessage{" +
       "feedId=" + feedId +
       ", notificationJson=" + notificationJson +
       '}';
