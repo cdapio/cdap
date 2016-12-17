@@ -22,6 +22,7 @@ const iconMap = {
   create_artifact: 'icon-artifacts',
   informational: 'fa-info',
   load_datapack: 'fa-upload',
+  load_app: 'fa-upload',
   __default__: 'fa-tasks'
 };
 

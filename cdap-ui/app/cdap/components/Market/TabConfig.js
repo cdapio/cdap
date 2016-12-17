@@ -23,6 +23,7 @@ import T from 'i18n-react';
 
 const TabConfig = {
   defaultTab: 1,
+  defaultTabContent: <AllTabContents />,
   layout: 'vertical',
   tabs: [
     {
@@ -32,12 +33,6 @@ const TabConfig = {
       name: T.translate('features.Market.tabs.all'),
       content: <AllTabContents />
     },
-    // {
-    //   id: 2,
-    //   filter: 'example',
-    //   name: T.translate('features.Market.tabs.examples'),
-    //   content: <AllTabContents />
-    // },
     {
       id: 3,
       filter: 'usecase',
@@ -52,18 +47,20 @@ const TabConfig = {
       name: T.translate('features.Market.tabs.pipelines'),
       content: <AllTabContents />
     },
-    // {
-    //   id: 5,
-    //   filter: 'application',
-    //   name: T.translate('features.Market.tabs.applications'),
-    //   content: <AllTabContents />
-    // },
-    // {
-    //   id: 6,
-    //   filter: 'dataset',
-    //   name: T.translate('features.Market.tabs.datasets'),
-    //   content: <AllTabContents />
-    // },
+    {
+      id: 5,
+      filter: 'example',
+      icon: 'icon-app',
+      name: T.translate('features.Market.tabs.examples'),
+      content: <AllTabContents />
+    },
+    {
+      id: 7,
+      filter: 'hydrator-plugin',
+      icon: 'fa fa-plug',
+      name: T.translate('features.Market.tabs.plugins'),
+      content: <AllTabContents />
+    },
     {
       id: 6,
       filter: 'datapack',
@@ -71,19 +68,6 @@ const TabConfig = {
       name: T.translate('features.Market.tabs.datapacks'),
       content: <AllTabContents />
     },
-    // {
-    //   id: 7,
-    //   filter: 'hydrator-plugin',
-    //   icon: 'fa fa-plug',
-    //   name: T.translate('features.Market.tabs.plugins'),
-    //   content: <AllTabContents />
-    // },
-    // {
-    //   id: 8,
-    //   filter: 'dashboard',
-    //   name: T.translate('features.Market.tabs.dashboards'),
-    //   content: <AllTabContents />
-    // },
     {
       id: 9,
       filter: '3rd-party-artifact',

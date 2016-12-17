@@ -13,40 +13,42 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-@import '../../../styles/variables.less';
+@import '../../WizardModal/WizardModal.less';
+.artifact-upload-wizard {
+  .modal-body {
 
-.plus-button-modal {
-  .cask-configurable-tab {
-    .tab-header-icon {
-      margin-right: 5px;
-    }
-    .tab-content {
+    .wizard-body .wizard-steps-content .form-horizontal {
       overflow-y: auto;
+      overflow-x: hidden;
+      width: 100%;
+    }
 
-      .tab-pane { width: 100%; }
-      .all-tab-content {
-
-        .body-section {
-          text-align: center;
-          padding: 10px;
-          display: flex;
-          flex-wrap: wrap;
-
-          &.empty-section {
-            display: block;
-          }
-          .error-message {
+    .cask-wizard {
+      .wizard-body {
+        .wizard-steps-content {
+          .wizard-navigation {
+            position: static;
             width: 100%;
-            margin-top: 30%;
-          }
-
-          h4{
-            position: absolute;
-            top: 45%;
-            left: 55%;
           }
         }
       }
     }
+    select[multiple] {
+      height: 55px;
+    }
   }
 }
+
+
+ // Specific hack for hydrator.
+ body {
+   .modal {
+     .wizard-modal.create-stream-wizard {
+       &.artifact-upload-wizard {
+         &.modal-dialog {
+           margin-top: @wizard-modal-margin-top;
+         }
+       }
+     }
+   }
+ }

@@ -252,14 +252,15 @@ features:
     tabs:
       all: All
       applications: Applications
-      artifacts: Artifacts
+      artifacts: Drivers
       dashboards: Dashboards
       datapacks: Datapacks
       datasets: Datasets
-      examples: Examples
+      examples: Application
       pipelines: Pipelines
       plugins: Plugins
       useCases: Use Cases
+      emptyTab: No Entities found
     action-types:
       create_stream:
         name: Create
@@ -271,8 +272,14 @@ features:
         name: Create
       create_artifact:
         name: Create
+      create_plugin_artifact:
+        name: Deploy
+      create_driver_artifact:
+        name: Deploy
       informational:
         name: Download
+      deploy_app:
+        name: Deploy
       load_datapack:
         name: Load
   MarketPlaceEntity:
@@ -322,7 +329,7 @@ features:
       description: A Hydrator pipeline allows you to ingest, egress, and process data either to, from, or within Hadoop.
       actionbtn0: Create
     Artifact:
-      label: Artifact
+      label: Driver
       description: An artifact is a JAR file that contains either a native application or collection of plugins.
       actionbtn0: Upload
       modalheadertitle: Upload Artifact
@@ -361,6 +368,7 @@ features:
       symbolName: Symbol Name
   Wizard:
     ApplicationUpload:
+      headerlabel: Upload Application
       Step1:
         description: Upload your application JAR
         shorttitle: Upload Application
@@ -395,6 +403,8 @@ features:
         shorttitle: Third Party Artifact Information
         title: Information
       headerlabel: Third Party Artifact
+    MarketHydratorPluginUpload:
+      headerlabel: Hydrator Plugin
     Skip: Skipped
     FailedMessage: Failed to {step}
     StreamCreate:
