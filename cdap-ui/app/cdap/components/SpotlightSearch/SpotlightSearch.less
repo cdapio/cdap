@@ -21,6 +21,14 @@
 @border-color: #cccccc;
 
 .spotlight-search-container {
+
+  @media(max-width: 1260px) {
+    .form-group {
+      input.control {
+        width: 150px;
+      }
+    }
+  }
   &.open {
     margin-top: 8px;
     margin-right: -8px;

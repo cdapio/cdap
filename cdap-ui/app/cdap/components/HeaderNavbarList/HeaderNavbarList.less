@@ -15,6 +15,14 @@
  */
 @import "../../styles/variables.less";
 .navbar-list {
+
+  @media (max-width: 1260px) {
+    li {
+      a {
+        padding-right: 20px;
+      }
+    }
+  }
   margin-left: 15px;
   float: left;
   margin-bottom: 0;
@@ -42,16 +50,7 @@
       text-decoration: none;
     }
     &.old-ui-link {
-      position: absolute;
-      top: 0;
-      line-height: 1;
-      background: gray;
-      color: white;
-      border-bottom-left-radius: 8px;
-      border-bottom-right-radius: 8px;
-      text-align: center;
-      padding: 2px 5px;
-      font-size: 12px;
+      font-size: 11px;
     }
   }
 }
