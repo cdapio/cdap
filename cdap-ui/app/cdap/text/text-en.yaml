@@ -330,7 +330,7 @@ features:
       actionbtn0: Create
     Artifact:
       label: Driver
-      description: An artifact is a JAR file that contains either a native application or collection of plugins.
+      description: A driver is a JAR file that contains either a native application or collection of plugins.
       actionbtn0: Upload
       modalheadertitle: Upload Artifact
     Plugins:
@@ -376,25 +376,25 @@ features:
         filePathLabel: Choose file
     ArtifactUpload:
       Step1:
-        description: Upload your artifact JAR
-        shorttitle: Upload Artifact
+        description: Upload your Driver
+        shorttitle: Upload Driver
         title: Upload JAR
-        uploadHelperText: Upload the third party artifact that was downloaded from the previous step
+        uploadHelperText: Upload the third party driver that was downloaded from the previous step
         filePathLabel: Choose file
       Step2:
-        description: Configure the settings for your artifact
-        shorttitle: Artifact Configuration
-        title: Configure Artifact
+        description: Configure the settings for your driver
+        shorttitle: Driver Configuration
+        title: Configure Driver
         parentArtifactLabel: Parent Artifact
         nameLabel: Name
-        namePlaceholder: Artifact Name
+        namePlaceholder: Driver Name
         descriptionLabel: Description
-        decriptionPlaceholder: Artifact Description
+        decriptionPlaceholder: Driver Description
         typeLabel: Type
-        typePlaceholder: Artifact Type
+        typePlaceholder: Driver Type
         classnameLabel: Class Name
-        classnamePlaceholder: Artifact Class Name
-      headerlabel: Upload Artifact
+        classnamePlaceholder: Driver Class Name
+      headerlabel: Upload Driver
     Done: Done
     Informational:
       Step1:
