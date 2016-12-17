@@ -288,7 +288,7 @@ public class MasterServiceMain extends DaemonMain {
         // file context does ( permission AND  (NOT of umask) ) and uses that as permission, by default umask is 022,
         // if we want 777 permission, we have to set umask to 000
         fileContext.setUMask(new FsPermission(FsAction.NONE, FsAction.NONE, FsAction.NONE));
-        fileContext.mkdir(fPath, permission, false);
+        fileContext.mkdir(fPath, permission, true);
       }
     } catch (FileAlreadyExistsException e) {
       // should not happen as we create only if dir exists
