@@ -16,34 +16,35 @@
 
 package co.cask.cdap.notifications.service.kafka;
 
-import com.google.common.base.Objects;
+import co.cask.cdap.proto.id.NotificationFeedId;
 import com.google.gson.JsonElement;
 
 /**
  * Message sent to Kafka that contains a serialized notification.
  */
-class KafkaMessage {
-  private final String messageKey;
+final class NotificationMessage {
+
+  private final NotificationFeedId feedId;
   private final JsonElement notificationJson;
 
-  KafkaMessage(String messageKey, JsonElement notificationJson) {
-    this.messageKey = messageKey;
+  NotificationMessage(NotificationFeedId feedId, JsonElement notificationJson) {
+    this.feedId = feedId;
     this.notificationJson = notificationJson;
   }
 
-  public String getMessageKey() {
-    return messageKey;
+  NotificationFeedId getFeedId() {
+    return feedId;
   }
 
-  public JsonElement getNotificationJson() {
+  JsonElement getNotificationJson() {
     return notificationJson;
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("messageKey", messageKey)
-      .add("notificationJson", notificationJson)
-      .toString();
+    return "KafkaMessage{" +
+      "feedId=" + feedId +
+      ", notificationJson=" + notificationJson +
+      '}';
   }
 }

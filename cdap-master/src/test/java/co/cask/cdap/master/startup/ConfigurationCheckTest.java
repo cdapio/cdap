@@ -42,8 +42,8 @@ public class ConfigurationCheckTest {
   }
 
   @Test (expected = RuntimeException.class)
-  public void invalidNotificationKafkaTopicTest() {
-    runConfigurationCheck(Constants.Notification.KAFKA_TOPIC, "invalidtopic#1");
+  public void invalidNotificationTopicTest() {
+    runConfigurationCheck(Constants.Notification.TOPIC, "invalidtopic#1");
   }
 
   @Test (expected = RuntimeException.class)

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.notifications.inmemory;
+package co.cask.cdap.notifications.kafka;
 
 import co.cask.cdap.notifications.NotificationTest;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
@@ -27,9 +27,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 /**
- * Tests notifications using in-memory transport system.
+ * Tests notifications using Kafka transport system.
  */
-public class InMemoryNotificationTest extends NotificationTest {
+public class MessagingNotificationTest extends NotificationTest {
 
   @BeforeClass
   public static void start() throws Exception {
@@ -37,8 +37,8 @@ public class InMemoryNotificationTest extends NotificationTest {
       Iterables.concat(
         getCommonModules(),
         ImmutableList.of(
-          new NotificationServiceRuntimeModule().getInMemoryModules(),
-          new NotificationFeedServiceRuntimeModule().getInMemoryModules()
+          new NotificationServiceRuntimeModule().getDistributedModules(),
+          new NotificationFeedServiceRuntimeModule().getDistributedModules()
         )
       )
     );
