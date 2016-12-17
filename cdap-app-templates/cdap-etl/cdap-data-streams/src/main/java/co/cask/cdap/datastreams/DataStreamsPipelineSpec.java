@@ -30,14 +30,17 @@ import java.util.Set;
 public class DataStreamsPipelineSpec extends PipelineSpec {
   private final long batchIntervalMillis;
   private final String extraJavaOpts;
+  private final boolean stopGracefully;
 
   private DataStreamsPipelineSpec(Set<StageSpec> stages, Set<Connection> connections,
                                   Resources resources, Resources driverResources, Resources clientResources,
                                   boolean stageLoggingEnabled, long batchIntervalMillis,
-                                  String extraJavaOpts, int numOfRecordsPreview) {
-    super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, numOfRecordsPreview);
+                                  String extraJavaOpts, int numOfRecordsPreview,
+                                  boolean stopGracefully) {
+      super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, numOfRecordsPreview);
     this.batchIntervalMillis = batchIntervalMillis;
     this.extraJavaOpts = extraJavaOpts;
+    this.stopGracefully = stopGracefully;
   }
 
   public long getBatchIntervalMillis() {
@@ -46,6 +49,10 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
 
   public String getExtraJavaOpts() {
     return extraJavaOpts;
+  }
+
+  public boolean isStopGracefully() {
+    return stopGracefully;
   }
 
   @Override
@@ -63,7 +70,8 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     DataStreamsPipelineSpec that = (DataStreamsPipelineSpec) o;
 
     return batchIntervalMillis == that.batchIntervalMillis &&
-      Objects.equals(extraJavaOpts, that.extraJavaOpts);
+      Objects.equals(extraJavaOpts, that.extraJavaOpts) &&
+      stopGracefully == that.stopGracefully;
   }
 
   @Override
@@ -76,6 +84,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     return "DataStreamsPipelineSpec{" +
       "batchIntervalMillis=" + batchIntervalMillis +
       ", extraJavaOpts='" + extraJavaOpts + '\'' +
+      ", stopGracefully=" + stopGracefully +
       "} " + super.toString();
   }
 
@@ -89,9 +98,11 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
   public static class Builder extends PipelineSpec.Builder<Builder> {
     private final long batchIntervalMillis;
     private String extraJavaOpts;
+    private boolean stopGracefully;
 
     public Builder(long batchIntervalMillis) {
       this.batchIntervalMillis = batchIntervalMillis;
+      this.stopGracefully = false;
     }
 
     public Builder setExtraJavaOpts(String extraJavaOpts) {
@@ -99,9 +110,15 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
       return this;
     }
 
+    public Builder setStopGracefully(boolean stopGracefully) {
+      this.stopGracefully = stopGracefully;
+      return this;
+    }
+
     public DataStreamsPipelineSpec build() {
       return new DataStreamsPipelineSpec(stages, connections, resources, driverResources, clientResources,
-                                         stageLoggingEnabled, batchIntervalMillis, extraJavaOpts, numOfRecordsPreview);
+                                         stageLoggingEnabled, batchIntervalMillis, extraJavaOpts,
+                                         numOfRecordsPreview, stopGracefully);
     }
   }
 }
