@@ -28,6 +28,7 @@ Building Blocks
     Workers <workers>
     Workflows <workflows>
     Artifacts <artifacts>
+    Program Lifecycle <program-lifecycle>
     Metadata and Lineage <metadata-lineage>
     Audit Logging <audit-logging>
     Namespaces <namespaces>
@@ -45,7 +46,7 @@ write data through the data abstraction layer in CDAP.
 - :doc:`Datasets <datasets/index>`
 - :doc:`Views <views>`
 
-**Applications** are composed from these building blocks:
+**Applications** are composed from these program building blocks:
 
 - :doc:`Flows and Flowlets <flows-flowlets/index>`
 - :doc:`MapReduce Programs <mapreduce-programs>`
@@ -60,6 +61,8 @@ write data through the data abstraction layer in CDAP.
 
 - An :doc:`Artifact <artifacts>` is a jar file that packages the Java Application class, as well
   as any other classes and libraries needed to create and run an Application. 
+
+- All of the program building blocks follow a :doc:`Program Lifecycle <program-lifecycle>`.
 
 - :doc:`Metadata <metadata-lineage>` |---| consisting of **properties** (a list of key-value pairs)
   or **tags** (a list of keys) |---| can be set for artifacts, applications, programs, datasets, streams, and views.

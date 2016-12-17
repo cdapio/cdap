@@ -328,6 +328,40 @@ only be used if there are multiple outputs. Similarly, the single output write
 method |---| ``MapReduceTaskContext.write(KEY key, VALUE value)`` |---| can only be used if there
 is a single output to the MapReduce program.
 
+
+.. _mapreduce-transactions:
+
+MapReduce and Transactions
+==========================
+When you run a MapReduce that interacts with datasets, the system creates a
+long-running transaction. Similar to the transaction of a flowlet, here are
+some rules to follow:
+
+- Reads can only see the writes of other transactions that were committed
+  at the time the long-running transaction was started.
+
+- All writes of the long-running transaction are committed atomically,
+  and only become visible to others after they are committed.
+
+- The long-running transaction can read its own writes.
+
+However, there is a key difference: long-running transactions do not participate in
+conflict detection. If another transaction overlaps with the long-running transaction and
+writes to the same row, it will not cause a conflict but simply overwrite it.
+
+It is not efficient to fail the long-running job based on a single conflict. Because of
+this, it is not recommended to write to the same dataset from both real-time and MapReduce
+programs. It is better to use different datasets, or at least ensure that the real-time
+processing writes to a disjoint set of columns.
+
+It's important to note that the MapReduce framework will reattempt a task (Mapper or
+Reducer) if it fails. If the task is writing to a dataset, the reattempt of the task will
+most likely repeat the writes that were already performed in the failed attempt. Therefore
+it is highly advisable that all writes performed by MapReduce programs be idempotent.
+
+See :ref:`transaction-system` for additional information.
+
+
 .. _mapreduce-resources:
 
 MapReduce and Resources
