@@ -198,7 +198,7 @@ New Features
 
 - :cask-issue:`CDAP-7704` - Added reporting operational statistics for HBase. They can be
   retrieved using JMX with the domain name ``co.cask.cdap.operations`` and the property
-  ``name`` set to ``hbase``as well as through the CDAP UI Administration page.
+  ``name`` set to ``hbase`` as well as through the CDAP UI Administration page.
 
 - :cask-issue:`HYDRATOR-504` - Added to the Hydrator plugins a Tokenizer Spark compute
   plugin.
