@@ -33,12 +33,13 @@ export default class DatasetMetrics extends Component {
   }
 
   componentWillMount() {
+    let currentNamespace = NamespaceStore.getState().selectedNamespace;
     const datasetParams = {
-      namespace: NamespaceStore.getState().selectedNamespace,
+      namespace: currentNamespace,
       datasetId: this.props.entity.id
     };
     const metricsParams = {
-      tag: ['namespace:default', `dataset:${this.props.entity.id}`],
+      tag: [`namespace:${currentNamespace}`, `dataset:${this.props.entity.id}`],
       metric: ['system.dataset.store.ops', 'system.dataset.store.writes'],
       aggregate: true
     };
