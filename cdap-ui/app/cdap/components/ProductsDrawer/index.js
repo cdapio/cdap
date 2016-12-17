@@ -111,6 +111,7 @@ export default class ProductsDrawer extends Component {
         className={classnames("top-product", this.state.products[0].name, {'open': this.state.productsDropdown})}
         onClick={this.toggle}
       >
+        <div className={classnames("top-product-highlight", `${this.state.products[0].name}`)} />
         <span className={classnames("fa", this.state.products[0].icon)}></span>
         <span className="product-name">{this.state.products[0].label}</span>
       </div>
@@ -120,7 +121,9 @@ export default class ProductsDrawer extends Component {
     if(this.state.productsDropdown){
       if(this.state.topProduct.name !== this.state.products[0].name){
         topItem = (
-          <a href={this.state.products[0].link}>
+          <a className="top-product-link"
+            href={this.state.products[0].link}
+          >
             {topItem}
           </a>
         );
@@ -132,6 +135,7 @@ export default class ProductsDrawer extends Component {
           className={classnames("top-product", this.state.topProduct.name, {'open': this.state.productsDropdown})}
           onClick={this.toggle}
         >
+          <div className={classnames("top-product-highlight", `${this.state.topProduct.name}`)} />
           <span className={classnames("fa", this.state.topProduct.icon)}></span>
           <span className="product-name">{this.state.topProduct.label}</span>
         </div>
@@ -153,15 +157,18 @@ export default class ProductsDrawer extends Component {
                 if(product.name === this.props.currentChoice){
                   return (
                     <div
-                      className={classnames("dropdown-item product-link", product.name)}
+                      className="dropdown-item"
                       key={shortid.generate()}
                       onClick={this.toggle}
                     >
-                      <a
-                        className={classnames("product-link", product.name)}
-                      >
-                        <span className={classnames("fa", product.icon)}></span>
-                        <span>{product.label}</span>
+                      <a className={classnames("product-link", product.name)}>
+                        <div className="menu-item">
+                          <div className={classnames("product-drawer-highlight", `${product.name}`)} />
+                          <div className="product-drawer-label">
+                            <span className={classnames("fa", product.icon)}></span>
+                            <span>{product.label}</span>
+                          </div>
+                        </div>
                       </a>
                     </div>
                   );
@@ -175,8 +182,13 @@ export default class ProductsDrawer extends Component {
                         className={classnames("product-link", product.name)}
                         href={product.link}
                       >
-                        <span className={classnames("fa", product.icon)}></span>
-                        <span>{product.label}</span>
+                        <div className="menu-item">
+                          <div className={classnames("product-drawer-highlight", `${product.name}`)} />
+                          <div className="product-drawer-label">
+                            <span className={classnames("fa", product.icon)}></span>
+                            <span>{product.label}</span>
+                          </div>
+                        </div>
                       </a>
                     </div>
                   );
