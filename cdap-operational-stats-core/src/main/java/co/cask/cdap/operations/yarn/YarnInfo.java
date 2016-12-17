@@ -19,6 +19,7 @@ package co.cask.cdap.operations.yarn;
 import co.cask.cdap.operations.OperationalStats;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CommonConfigurationKeys;
 import org.apache.hadoop.ha.HAServiceProtocol;
 import org.apache.hadoop.ha.HAServiceStatus;
 import org.apache.hadoop.yarn.client.RMHAServiceTarget;
@@ -111,6 +112,8 @@ public class YarnInfo extends AbstractYarnStats implements YarnInfoMXBean {
     for (String rmId : rmIds) {
       YarnConfiguration yarnConf = new YarnConfiguration(conf);
       yarnConf.set(YarnConfiguration.RM_HA_ID, rmId);
+      yarnConf.set(CommonConfigurationKeys.HADOOP_SECURITY_SERVICE_USER_NAME_KEY,
+                   conf.get(YarnConfiguration.RM_PRINCIPAL, ""));
       RMHAServiceTarget rmhaServiceTarget = new RMHAServiceTarget(yarnConf);
       HAServiceProtocol proxy = rmhaServiceTarget.getProxy(yarnConf, 10000);
       HAServiceStatus serviceStatus = proxy.getServiceStatus();
