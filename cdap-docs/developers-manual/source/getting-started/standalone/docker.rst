@@ -92,7 +92,7 @@ started correctly.
    directory is under ``/opt/cdap/sdk``.
 
 #. Once CDAP starts, it will instruct you to connect to the CDAP UI with a web browser
-   at ``http://localhost:11011``. 
+   at :cdap-ui:`http://localhost:11011/ <>`. 
   
 #. If you are **running Docker on either Mac OS X or Microsoft Windows**, replace ``localhost`` 
    with the Docker VM's IP address (such as ``192.168.99.100``) that you obtained earlier.

@@ -29,9 +29,10 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+  HBaseMetadataTableTestRun.class,
   HBaseMessageTableTestRun.class,
-  HBaseMessageTableTestRun.class,
-  HBasePayloadTableTestRun.class
+  HBasePayloadTableTestRun.class,
+  HBaseTableCoprocessorTestRun.class
 })
 public class HBaseMessageTestSuite {
 

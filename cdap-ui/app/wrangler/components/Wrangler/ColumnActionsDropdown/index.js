@@ -25,7 +25,7 @@ import TitleCaseAction from 'wrangler/components/Wrangler/ColumnActions/TitleCas
 import SubstringAction from 'wrangler/components/Wrangler/ColumnActions/SubstringAction';
 import MergeAction from 'wrangler/components/Wrangler/ColumnActions/MergeAction';
 import RenameAction from 'wrangler/components/Wrangler/ColumnActions/RenameAction';
-
+import T from 'i18n-react';
 import {Popover, PopoverContent, Tooltip} from 'reactstrap';
 
 require('./ColumnActionsDropdown.less');
@@ -117,7 +117,7 @@ export default class ColumnActionsDropdown extends Component {
           className="wrangler-tooltip"
           delay={0}
         >
-          Actions
+          {T.translate('features.Wrangler.Tooltips.actions')}
         </Tooltip>
 
         {this.renderPopover()}

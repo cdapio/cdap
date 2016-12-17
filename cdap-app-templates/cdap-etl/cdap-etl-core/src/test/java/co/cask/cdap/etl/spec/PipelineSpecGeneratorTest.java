@@ -313,6 +313,8 @@ public class PipelineSpecGeneratorTest {
           .build())
       .addConnections(config.getConnections())
       .setResources(config.getResources())
+      .setDriverResources(config.getDriverResources())
+      .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
       .build();
 

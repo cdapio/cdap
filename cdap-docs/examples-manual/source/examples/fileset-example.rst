@@ -49,7 +49,7 @@ For example, the ``read`` method returns the contents of the requested file for 
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 77-99
+    :lines: 79-102
     :dedent: 4
 
 It first instantiates the dataset specified by the first path parameter through its ``HttpServiceContext``.
@@ -58,13 +58,14 @@ Note that, conceptually, this method is not limited to using only the two datase
 
 The handler method then uses the ``getLocation()`` of the FileSet to obtain the location representing the requested
 file, and it opens an input stream for that location. ``Location`` is a file system abstraction from
-`Apache™ Twill® <http://twill.incubator.apache.org>`__; you can read more about its interface in the
-`Apache Twill Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
+`Apache™ Twill® <http://twill.apache.org>`__; you can read more about its interface in the
+`Apache Twill Javadocs <http://twill.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
 
 Note that after obtaining the location from the FileSet, the handler discards that dataset through its context |---|
 it is not needed any more and therefore can be returned to the system. This is not strictly necessary: all datasets
-are eventually reclaimed by the system. However, explicitly discarding a dataset allows the system to reclaim it
-as soon as the current transaction ends, possibly freeing valuable resources.
+are eventually reclaimed by the system. However, explicitly discarding a dataset allows
+the system to reclaim it either immediately (as in this case) or as soon as the current
+transaction ends; in any case, possibly freeing valuable resources.
 
 The ``write`` method uses an ``HttpContentConsumer`` to stream the body of the request to the location specified
 by the ``path`` query parameter. See the section on :ref:`Handling Large Requests <services-content-consumer>`
@@ -72,7 +73,7 @@ and the :ref:`Sport Results Example <examples-sport-results>` for a more detaile
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 107-155
+    :lines: 110-159
     :dedent: 4
 
 In addition to reading and writing individual files, the ``FileSetService`` also allows performing dataset management
@@ -82,7 +83,7 @@ either by cloning an existing file set's dataset properties, or using the proper
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 167-196
+    :lines: 171-201
     :dedent: 4
 
 MapReduce over Files

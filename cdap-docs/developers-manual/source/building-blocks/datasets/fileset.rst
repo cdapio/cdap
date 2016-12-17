@@ -156,7 +156,7 @@ annotation, and then obtaining a ``Location`` for a relative path within the Fil
     }
 
 See the Apache™ Twill®
-`API documentation <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__
+`API documentation <http://twill.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__
 for additional information about the ``Location`` abstraction.
 
 Exploring FileSets

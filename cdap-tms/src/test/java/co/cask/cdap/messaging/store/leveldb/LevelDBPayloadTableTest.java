@@ -18,10 +18,10 @@ package co.cask.cdap.messaging.store.leveldb;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.PayloadTableTest;
 import co.cask.cdap.messaging.store.TableFactory;
-import co.cask.cdap.proto.id.NamespaceId;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -47,6 +47,11 @@ public class LevelDBPayloadTableTest extends PayloadTableTest {
 
   @Override
   protected PayloadTable getPayloadTable() throws Exception {
-    return tableFactory.createPayloadTable(NamespaceId.CDAP, "payload");
+    return tableFactory.createPayloadTable("payload");
+  }
+
+  @Override
+  protected MetadataTable getMetadataTable() throws Exception {
+    return tableFactory.createMetadataTable("metadata");
   }
 }

@@ -25,9 +25,11 @@ import AdminOverviewPane from '../AdminOverviewPane';
 import AbstractWizard from 'components/AbstractWizard';
 import Helmet from 'react-helmet';
 import NamespaceStore from 'services/NamespaceStore';
+import VersionStore from 'services/VersionStore';
+import VersionActions from 'services/VersionStore/VersionActions';
+import MyCDAPVersionApi from 'api/version';
 import {MyServiceProviderApi} from 'api/serviceproviders';
 import Mousetrap from 'mousetrap';
-import MyCDAPVersionApi from 'api/version.js';
 
 import T from 'i18n-react';
 var shortid = require('shortid');
@@ -122,10 +124,22 @@ class Management extends Component {
       });
     });
   }
-  componentWillMount(){
-    MyCDAPVersionApi.get().subscribe((res) => this.setState({ version : res.version }));
-  }
+
   componentDidMount(){
+    if(!VersionStore.getState().version){
+      MyCDAPVersionApi.get().subscribe((res) => {
+        this.setState({ version : res.version });
+        VersionStore.dispatch({
+          type: VersionActions.updateVersion,
+          payload: {
+            version: res.version
+          }
+        });
+      });
+    } else {
+      this.setState({ version : VersionStore.getState().version });
+    }
+
     document.querySelector('#header-namespace-dropdown').style.display = 'none';
     this.lastAccessedNamespace = NamespaceStore.getState().selectedNamespace;
     Mousetrap.bind('left', this.clickLeft);

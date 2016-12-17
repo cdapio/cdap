@@ -47,6 +47,8 @@ Services are implemented by extending ``AbstractService``, which consists of
     }
   }
 
+.. _user-service-handlers:
+
 Service Handlers
 ================
 ``ServiceHandler``\s are used to handle and serve HTTP requests.

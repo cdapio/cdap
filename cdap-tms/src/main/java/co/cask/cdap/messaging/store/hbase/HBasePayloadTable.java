@@ -49,14 +49,17 @@ final class HBasePayloadTable extends AbstractPayloadTable {
   private final HTable hTable;
   private final AbstractRowKeyDistributor rowKeyDistributor;
   private final ExecutorService scanExecutor;
+  private final int scanCacheRows;
 
   HBasePayloadTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
-                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor) {
+                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor,
+                    int scanCacheRows) {
     this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);
     this.rowKeyDistributor = rowKeyDistributor;
     this.scanExecutor = scanExecutor;
+    this.scanCacheRows = scanCacheRows;
   }
 
   @Override
@@ -65,6 +68,7 @@ final class HBasePayloadTable extends AbstractPayloadTable {
     Scan scan = tableUtil.buildScan()
       .setStartRow(startRow)
       .setStopRow(stopRow)
+      .setCaching(scanCacheRows)
       .build();
     final ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor);
     final Iterator<Result> results = scanner.iterator();

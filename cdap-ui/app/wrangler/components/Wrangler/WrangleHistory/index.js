@@ -85,7 +85,9 @@ export default class WrangleHistory extends Component {
           onClick={this.toggleShowHistory}
         >
           <span className="fa fa-list-ol" />
-          <span className="transform-item-text">History</span>
+          <span className="transform-item-text">
+            {T.translate('features.Wrangler.history')}
+          </span>
           <span className={classnames('fa pull-right', {
             'fa-chevron-down': !this.state.showHistory,
             'fa-chevron-up': this.state.showHistory

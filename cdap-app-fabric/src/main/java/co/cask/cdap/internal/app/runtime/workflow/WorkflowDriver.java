@@ -62,6 +62,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.DatasetId;
@@ -135,6 +136,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final PluginInstantiator pluginInstantiator;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
+  private final MessagingService messagingService;
 
   private NettyHttpService httpService;
   private volatile Thread runningThread;
@@ -147,7 +149,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                  DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                  TransactionSystemClient txClient, RuntimeStore runtimeStore, CConfiguration cConf,
                  @Nullable PluginInstantiator pluginInstantiator, SecureStore secureStore,
-                 SecureStoreManager secureStoreManager) {
+                 SecureStoreManager secureStoreManager, MessagingService messagingService) {
     this.program = program;
     this.programOptions = options;
     this.hostname = hostname;
@@ -167,7 +169,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                          basicWorkflowToken, program, programOptions, cConf,
                                                          metricsCollectionService, datasetFramework, txClient,
                                                          discoveryServiceClient, nodeStates, pluginInstantiator,
-                                                         secureStore, secureStoreManager);
+                                                         secureStore, secureStoreManager, messagingService);
 
     this.workflowRunId = program.getId().run(basicWorkflowContext.getRunId());
     this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
@@ -178,6 +180,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.pluginInstantiator = pluginInstantiator;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
+    this.messagingService = messagingService;
+
   }
 
   @Override
@@ -422,7 +426,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                       metricsCollectionService, datasetFramework,
                                                                       txClient, discoveryServiceClient,
                                                                       pluginInstantiator, secureStore,
-                                                                      secureStoreManager);
+                                                                      secureStoreManager, messagingService);
       customActionExecutor = new CustomActionExecutor(workflowRunId, context, instantiator, classLoader);
     }
 
@@ -480,7 +484,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, token, program, programOptions, cConf,
                                                        metricsCollectionService, datasetFramework, txClient,
                                                        discoveryServiceClient, nodeStates, pluginInstantiator,
-                                                       secureStore, secureStoreManager);
+                                                       secureStore, secureStoreManager, messagingService);
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(context)) {
       // execute the if branch
@@ -590,7 +594,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return new BasicWorkflowContext(workflowSpec, actionSpec, token,
                                     program, programOptions, cConf, metricsCollectionService,
                                     datasetFramework, txClient, discoveryServiceClient, nodeStates,
-                                    pluginInstantiator, secureStore, secureStoreManager);
+                                    pluginInstantiator, secureStore, secureStoreManager, messagingService);
   }
 
   private Supplier<List<WorkflowActionNode>> createStatusSupplier() {

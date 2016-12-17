@@ -18,6 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 import {Tooltip} from 'reactstrap';
+import T from 'i18n-react';
 
 export default class LowerCaseAction extends Component {
   constructor(props) {
@@ -63,7 +64,7 @@ export default class LowerCaseAction extends Component {
           className="wrangler-tooltip"
           delay={0}
         >
-          Lowercase
+          {T.translate('features.Wrangler.ColumnActions.LowerCase.label')}
         </Tooltip>
       </span>
     );

@@ -70,7 +70,7 @@ export default class AddToHydrator extends Component {
           onClick={this.onAddToHydratorClick}
         >
           <span className="fa icon-hydrator" />
-          Add to Hydrator
+          {T.translate('features.Wrangler.WrangleData.addToHydrator')}
         </button>
 
         <Modal

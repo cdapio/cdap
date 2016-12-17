@@ -29,8 +29,10 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.TopicId;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +60,7 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ArtifactRepository artifactRepository;
   private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
+  private final MessagingService messagingService;
 
   @Inject
   DefaultNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesStore preferencesStore,
@@ -65,7 +68,8 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
                                   StreamAdmin streamAdmin, MetricStore metricStore, Scheduler scheduler,
                                   ApplicationLifecycleService applicationLifecycleService,
                                   ArtifactRepository artifactRepository,
-                                  StorageProviderNamespaceAdmin storageProviderNamespaceAdmin) {
+                                  StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
+                                  MessagingService messagingService) {
     this.impersonator = impersonator;
     this.store = store;
     this.preferencesStore = preferencesStore;
@@ -78,6 +82,7 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     this.applicationLifecycleService = applicationLifecycleService;
     this.artifactRepository = artifactRepository;
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
+    this.messagingService = messagingService;
   }
 
 
@@ -105,6 +110,11 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     deleteMetrics(namespaceId);
     // delete all artifacts in the namespace
     artifactRepository.clear(namespaceId);
+
+    // delete all messaging topics in the namespace
+    for (TopicId topicId : messagingService.listTopics(namespaceId)) {
+      messagingService.deleteTopic(topicId);
+    }
 
     LOG.info("All data for namespace '{}' deleted.", namespaceId);
 

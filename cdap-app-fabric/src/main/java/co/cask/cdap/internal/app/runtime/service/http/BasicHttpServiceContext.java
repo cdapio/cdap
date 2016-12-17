@@ -27,6 +27,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.messaging.MessagingService;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
@@ -69,11 +70,12 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
                                  MetricsCollectionService metricsCollectionService,
                                  DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
                                  TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator,
-                                 SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                                 SecureStore secureStore, SecureStoreManager secureStoreManager,
+                                 MessagingService messagingService) {
     super(program, programOptions, cConf, spec == null ? Collections.<String>emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
-          secureStore, secureStoreManager, pluginInstantiator);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

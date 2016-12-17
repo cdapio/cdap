@@ -56,6 +56,18 @@
   </property>
 
   <property>
+    <name>cluster.name</name>
+    <value></value>
+    <description>
+      A cluster-based name for CDAP. It is used for scope resolution of preferences and
+      runtime arguments. For example: the preference key "cluster.[cluster.name].my.key"
+      would be resolved to "my.key" at runtime; a program can then retreive the preference
+      value by using just "my.key". The administrator can use this property to set
+      different preferences for each cluster.
+    </description>
+  </property>
+
+  <property>
     <name>local.data.dir</name>
     <value>data</value>
     <description>
@@ -1166,10 +1178,27 @@
   </property>
 
   <property>
+    <name>messaging.local.data.cleanup.frequency.secs</name>
+    <value>3600</value>
+    <description>
+      Scheduling frequency of TTL cleanup thread in seconds (only used in Standalone CDAP)
+    </description>
+  </property>
+
+  <property>
     <name>messaging.hbase.max.scan.threads</name>
     <value>48</value>
     <description>
       Maximum number of threads used for scanning HBase tables
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.hbase.scan.cache.rows</name>
+    <value>1000</value>
+    <description>
+      Number of rows for caching that will be passed to HBase scanners.
+      Higher caching values will enable faster scanning but will use more memory.
     </description>
   </property>
 
@@ -1270,6 +1299,19 @@
     </description>
   </property>
 
+  <property>
+    <name>messaging.coprocessor.metadata.cache.expiration.seconds</name>
+    <value>120</value>
+    <description>
+      The default value of expiration time in seconds for metadata cache in hbase data tables coprocessors
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.coprocessor.dir</name>
+    <value>${hdfs.namespace}/tms</value>
+    <description>Directory to store Messaging Service Table coprocessors</description>
+  </property>
 
   <!-- Metadata Configuration -->
 
@@ -1686,7 +1728,7 @@
     <name>router.server.port</name>
     <value>${router.bind.port}</value>
     <description>
-      CDAP Router service port to which CDAP UI connects
+      CDAP Router service port, for clients and webapps
     </description>
   </property>
 
@@ -1710,6 +1752,7 @@
     <name>router.ssl.server.port</name>
     <value>${router.ssl.bind.port}</value>
     <description>
+      CDAP Router service port for HTTPS, for clients and webapps
     </description>
   </property>
 

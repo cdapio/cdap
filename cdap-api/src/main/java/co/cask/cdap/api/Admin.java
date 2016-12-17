@@ -21,13 +21,14 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
+import co.cask.cdap.api.messaging.MessagingAdmin;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 
 /**
  * This interface provides methods for operational calls from within a CDAP application.
  */
 @Beta
-public interface Admin extends SecureStoreManager {
+public interface Admin extends SecureStoreManager, MessagingAdmin {
   /**
    * Check whether a dataset exists in the current namespace.
    * @param name the name of the dataset

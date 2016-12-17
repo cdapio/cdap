@@ -16,8 +16,7 @@
 import React from 'react';
 import CreateStreamWithUploadActions  from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadActions';
 import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
-import { Label, Form, FormGroup, Col } from 'reactstrap';
-import TimeToLive from 'components/TimeToLive';
+import { Label, Form, FormGroup, Col, Input } from 'reactstrap';
 import InputWithValidations from 'components/InputWithValidations';
 import T from 'i18n-react';
 
@@ -40,7 +39,8 @@ const mapStateToStreamDescritionProps = (state) => {
 };
 const mapStateToStreamTTLProps = (state) => {
   return {
-    value: state.general.ttl
+    value: state.general.ttl,
+    placeholder: T.translate('features.Wizard.StreamCreate.Step1.ttl-placeholder')
   };
 };
 
@@ -84,7 +84,7 @@ const InputStreamDescription = connect(
 const InputStreamTTL = connect(
   mapStateToStreamTTLProps,
   mapDispatchToToStreamTTL
-)(TimeToLive);
+)(Input);
 
 export default function GeneralInfoStep() {
   return(

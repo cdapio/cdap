@@ -44,7 +44,7 @@ export default class Card extends Component {
     if (this.props.closeable) {
       closeButton = (
         <span
-          className='fa fa-times'
+          className='fa fa-times card-close-btn'
           onClick={this.props.onClose}
         >
         </span>

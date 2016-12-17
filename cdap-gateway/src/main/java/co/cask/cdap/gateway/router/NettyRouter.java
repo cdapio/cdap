@@ -122,14 +122,9 @@ public class NettyRouter extends AbstractIdleService {
     this.discoveryServiceClient = discoveryServiceClient;
     this.configuration = cConf;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED);
-    boolean webAppEnabled = cConf.getBoolean(Constants.Router.WEBAPP_ENABLED);
     if (isSSLEnabled()) {
       this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
                                 cConf.getInt(Constants.Router.ROUTER_SSL_PORT));
-      if (webAppEnabled) {
-        this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
-                                  cConf.getInt(Constants.Router.WEBAPP_SSL_PORT));
-      }
 
       File keystore;
       try {
@@ -146,9 +141,6 @@ public class NettyRouter extends AbstractIdleService {
                                                      sConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
     } else {
       this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME, cConf.getInt(Constants.Router.ROUTER_PORT));
-      if (webAppEnabled) {
-        this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME, cConf.getInt(Constants.Router.WEBAPP_PORT));
-      }
       this.sslHandlerFactory = null;
     }
     this.connectionTimeout = cConf.getInt(Constants.Router.CONNECTION_TIMEOUT_SECS);

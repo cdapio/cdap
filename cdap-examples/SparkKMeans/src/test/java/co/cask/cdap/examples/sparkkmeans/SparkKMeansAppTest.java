@@ -52,15 +52,17 @@ public class SparkKMeansAppTest extends TestBase {
     FlowManager flowManager = appManager.getFlowManager("PointsFlow").start();
     // Send a few points to the stream
     StreamManager streamManager = getStreamManager("pointsStream");
-    streamManager.send("10.6 519.2 110.3");
-    streamManager.send("10.6 518.1 110.1");
-    streamManager.send("10.6 519.6 109.9");
-    streamManager.send("10.6 517.9 108.9");
-    streamManager.send("10.7 518 109.2");
+
+    // one cluster around (0, 500, 0) and another around (100, 0, 0)
+    for (int i = 0; i < 100; i++) {
+      double diff = Math.random() / 100;
+      streamManager.send(String.format("%f %f %f", diff, 500 + diff, diff));
+      streamManager.send(String.format("%f %f %f", 100 + diff, diff, diff));
+    }
 
     //  Wait for the events to be processed, or at most 5 seconds
     RuntimeMetrics metrics = flowManager.getFlowletMetrics("reader");
-    metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+    metrics.waitForProcessed(200, 10, TimeUnit.SECONDS);
 
     // Start a Spark Program
     SparkManager sparkManager = appManager.getSparkManager("SparkKMeansProgram").start();
@@ -75,12 +77,32 @@ public class SparkKMeansAppTest extends TestBase {
     serviceManager.waitForStatus(true);
 
     // Request data and verify it
-    String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/1"));
+    String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/0"));
     String[] coordinates = response.split(",");
-    Assert.assertTrue(coordinates.length == 3);
-    for (String coordinate : coordinates) {
-      double value = Double.parseDouble(coordinate);
-      Assert.assertTrue(value > 0);
+    int x0 = Double.valueOf(coordinates[0]).intValue();
+    int y0 = Double.valueOf(coordinates[1]).intValue();
+    int z0 = Double.valueOf(coordinates[2]).intValue();
+
+    response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/1"));
+    coordinates = response.split(",");
+    int x1 = Double.valueOf(coordinates[0]).intValue();
+    int y1 = Double.valueOf(coordinates[1]).intValue();
+    int z1 = Double.valueOf(coordinates[2]).intValue();
+
+    // one cluster should be around (0, 500, 0) and the other around (100, 0, 0)
+    if (x0 == 100) {
+      Assert.assertEquals(0, y0);
+      Assert.assertEquals(0, z0);
+      Assert.assertEquals(0, x1);
+      Assert.assertEquals(500, y1);
+      Assert.assertEquals(0, z1);
+    } else {
+      Assert.assertEquals(0, x0);
+      Assert.assertEquals(500, y0);
+      Assert.assertEquals(0, z0);
+      Assert.assertEquals(100, x1);
+      Assert.assertEquals(0, y1);
+      Assert.assertEquals(0, z1);
     }
 
     // Request data by incorrect index and verify response

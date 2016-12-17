@@ -30,14 +30,20 @@ public final class MessagingUtils {
   }
 
   /**
-   * Constants
+   * Constants used for TMS.
    */
   public static final class Constants {
     public static final String DEFAULT_GENERATION = Integer.toString(1);
+    public static final byte[] COLUMN_FAMILY = {'d'};
+    public static final byte[] METADATA_COLUMN = Bytes.toBytes("m");
+    public static final String GENERATION_KEY = "generation";
+    public static final String TTL_KEY = "ttl";
+    public static final byte[] TX_COL = Bytes.toBytes('t');
+    public static final byte[] PAYLOAD_COL = Bytes.toBytes('p');
   }
 
   /**
-   * Convert {@link TopicId} to byte array to be used for metadata table row key.
+   * Convert {@link TopicId} to byte array to be used a message tables row key prefix.
    *
    * @param topicId {@link TopicId}
    * @return byte array representation for the topic id
@@ -99,5 +105,56 @@ public final class MessagingUtils {
    */
   public static byte[] topicScanKey(NamespaceId namespaceId) {
     return Bytes.toBytes(namespaceId.getNamespace() + ":");
+  }
+
+  /**
+   * Return the length of topic bytes given the size of the payloadtable row key
+   */
+  public static int getTopicLengthPayloadEntry(int sizeOfRowKey) {
+    return (sizeOfRowKey - Bytes.SIZEOF_SHORT - (2 * Bytes.SIZEOF_LONG));
+  }
+
+  /**
+   * Return the length of topic bytes given the size of the messagetable row key
+   */
+  public static int getTopicLengthMessageEntry(int sizeOfRowKey) {
+    return (sizeOfRowKey - Bytes.SIZEOF_SHORT - Bytes.SIZEOF_LONG);
+  }
+
+  /**
+   * Fetch the write timestamp from the payload table row key.
+   *
+   * @param payloadTableRowKey byte array containing payload table row key
+   * @param offset start of the row key in the byte array
+   * @param rowKeyLength length of the row key byte array
+   * @return write timestamp
+   */
+  public static long getWriteTimestamp(byte[] payloadTableRowKey, int offset, int rowKeyLength) {
+    return Bytes.toLong(payloadTableRowKey, offset + getTopicLengthPayloadEntry(rowKeyLength) + Bytes.SIZEOF_LONG);
+  }
+
+  /**
+   * Fetch the publish timestamp from the message table row key.
+   *
+   * @param messageTableRowKey byte array containing message table row key
+   * @param offset start of the row key in the byte array
+   * @param rowKeyLength length of the row key byte array
+   * @return publish timestamp
+   */
+  public static long getPublishTimestamp(byte[] messageTableRowKey, int offset, int rowKeyLength) {
+    return Bytes.toLong(messageTableRowKey, offset + getTopicLengthMessageEntry(rowKeyLength));
+  }
+
+  /**
+   * Determine if the data generation is older compared to the current generation
+   *
+   * @param dataGeneration generation that data belongs to
+   * @param currGeneration generation of the topic
+   * @return true if the data generation is older
+   */
+  public static boolean isOlderGeneration(int dataGeneration, int currGeneration) {
+    boolean prevGeneration = dataGeneration < Math.abs(currGeneration);
+    boolean deletedGeneration = (currGeneration < 0) && (dataGeneration == Math.abs(currGeneration));
+    return prevGeneration || deletedGeneration;
   }
 }

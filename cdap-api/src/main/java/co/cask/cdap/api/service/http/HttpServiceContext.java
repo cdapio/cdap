@@ -20,6 +20,7 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
 
@@ -27,7 +28,7 @@ import co.cask.cdap.api.security.store.SecureStore;
  * The context for a {@link HttpServiceHandler}. Currently contains methods to receive the
  * {@link HttpServiceHandlerSpecification} and the runtime arguments passed by the user.
  */
-public interface HttpServiceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer,
+public interface HttpServiceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer, MessagingContext,
   PluginContext, SecureStore, Transactional {
 
   /**

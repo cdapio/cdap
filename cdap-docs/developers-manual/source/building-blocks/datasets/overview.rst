@@ -124,9 +124,10 @@ the dataset names used by an application.
 
 Contrary to static datasets, dynamic datasets allow the release of the resources held by their Java classes
 after you are finished using them. You can do that by calling the ``discardDataset()`` method of the program context:
-it marks the dataset to be closed and removed from all transactions. However, this will not happen until after the
-current transaction is complete, because the discarded dataset may have performed data operations and therefore
-still needs to participate in the commit (or rollback) of the transaction.
+it marks the dataset to be closed and removed from all transactions. If a transaction is
+currently in progress, however, this will not happen until after the current transaction
+is complete, because the discarded dataset may have performed data operations and
+therefore still needs to participate in the commit (or rollback) of the transaction.
   
 Discarding a dataset is useful:
 
@@ -142,6 +143,10 @@ It is important to know that after discarding a dataset, it remains in the cache
 transaction. Be aware that if you call ``getDataset()`` again for the same dataset and arguments before the
 transaction is complete, then that reverses the effect of discarding. It is therefore a good practice to discard
 a dataset at the end of a transaction.
+
+Discarding a dataset has the effect of releasing the dataset as soon as possible. If there
+is no transaction, that is immediately. If there is a current transaction, that is as soon
+as the transaction finishes.
 
 Similarly to static datasets, if a program is multi-threaded, CDAP will make
 sure that every thread has its own instance of each dynamic dataset |---| and in order to discard a dataset

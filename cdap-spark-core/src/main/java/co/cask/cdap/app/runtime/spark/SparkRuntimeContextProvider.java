@@ -40,6 +40,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -198,7 +199,8 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(SecureStore.class),
         injector.getInstance(SecureStoreManager.class),
         injector.getInstance(AuthorizationEnforcer.class),
-        injector.getInstance(AuthenticationContext.class)
+        injector.getInstance(AuthenticationContext.class),
+        injector.getInstance(MessagingService.class)
       );
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;

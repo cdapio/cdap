@@ -79,6 +79,7 @@ import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowletId;
@@ -143,6 +144,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final RuntimeUsageRegistry runtimeUsageRegistry;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
+  private final MessagingService messageService;
 
   @Inject
   public FlowletProgramRunner(CConfiguration cConfiguration,
@@ -157,7 +159,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               DatasetFramework dsFramework,
                               RuntimeUsageRegistry runtimeUsageRegistry,
                               SecureStore secureStore,
-                              SecureStoreManager secureStoreManager) {
+                              SecureStoreManager secureStoreManager,
+                              MessagingService messagingService) {
     this.cConf = cConfiguration;
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
@@ -171,6 +174,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.runtimeUsageRegistry = runtimeUsageRegistry;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
+    this.messageService = messagingService;
   }
 
   @SuppressWarnings("unchecked")
@@ -221,7 +225,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       flowletContext = new BasicFlowletContext(program, options, flowletName, instanceId, instanceCount,
                                                flowletDef.getDatasets(), flowletDef.getFlowletSpec(),
                                                metricsCollectionService, discoveryServiceClient, txClient,
-                                               dsFramework, secureStore, secureStoreManager, cConf);
+                                               dsFramework, secureStore, secureStoreManager, messageService, cConf);
 
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =

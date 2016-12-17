@@ -16,12 +16,10 @@
 
 import React, { Component, PropTypes } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Tooltip } from 'reactstrap';
-
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 import validateColumnName from 'wrangler/components/Wrangler/column-validation';
 import T from 'i18n-react';
-
 
 export default class RenameAction extends Component {
   constructor(props) {
@@ -97,7 +95,11 @@ export default class RenameAction extends Component {
         zIndex="1070"
       >
         <ModalHeader>
-          <span>Rename Column: {this.props.column}</span>
+          <span>
+            {T.translate('features.Wrangler.ColumnActions.Rename.header', {
+              columnName: this.props.column
+            })}
+          </span>
 
           <div
             className="close-section pull-right"
@@ -109,7 +111,7 @@ export default class RenameAction extends Component {
         <ModalBody>
           <div>
             <label className="control-label">
-              New column name
+              {T.translate('features.Wrangler.ColumnActions.Rename.newName')}
               <span className="fa fa-asterisk error-text"></span>
             </label>
             <input
@@ -129,7 +131,7 @@ export default class RenameAction extends Component {
             className="btn btn-wrangler"
             onClick={this.onSave}
           >
-            Rename
+            {T.translate('features.Wrangler.ColumnActions.Rename.label')}
           </button>
         </ModalFooter>
       </Modal>
@@ -155,7 +157,7 @@ export default class RenameAction extends Component {
           className="wrangler-tooltip"
           delay={0}
         >
-          Rename
+          {T.translate('features.Wrangler.ColumnActions.Rename.label')}
         </Tooltip>
 
         {this.renderModal()}

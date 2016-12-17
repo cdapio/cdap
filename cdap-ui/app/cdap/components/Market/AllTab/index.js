@@ -21,6 +21,7 @@ import T from 'i18n-react';
 import MarketStore from 'components/Market/store/market-store.js';
 import Fuse from 'fuse.js';
 require('./AllTabContents.less');
+import classnames from 'classnames';
 
 export default class AllTabContents extends Component {
   constructor(props) {
@@ -78,7 +79,7 @@ export default class AllTabContents extends Component {
         <span className="fa fa-spinner fa-spin fa-2x"></span>
       </h4>
     );
-    const empty = <h3>Empty</h3>;
+    const empty = <h3>{T.translate('features.Market.tabs.emptyTab')}</h3>;
     const entities = (
       this.state.entities
         .map((e) => (
@@ -119,7 +120,7 @@ export default class AllTabContents extends Component {
             onChange={this.onSearch.bind(this)}
           />
         */}
-        <div className="body-section text-center">
+        <div className={classnames("body-section text-center", {'empty-section': this.state.entities.length === 0 })}>
           {error}
           {this.handleBodyRender()}
         </div>

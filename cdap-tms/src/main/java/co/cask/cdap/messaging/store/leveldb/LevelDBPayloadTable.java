@@ -16,11 +16,16 @@
 
 package co.cask.cdap.messaging.store.leveldb;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.messaging.MessagingUtils;
+import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.store.AbstractPayloadTable;
+import co.cask.cdap.messaging.store.ImmutablePayloadTableEntry;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.RawPayloadTableEntry;
+import co.cask.cdap.proto.id.TopicId;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.WriteBatch;
@@ -30,6 +35,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * LevelDB implementation of {@link PayloadTable}.
@@ -84,6 +90,50 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
         // LevelDB doesn't make copies, and since we reuse RawPayloadTableEntry object, we need to create copies.
         writeBatch.put(Arrays.copyOf(key, key.length), Arrays.copyOf(value, value.length));
       }
+      levelDB.write(writeBatch, WRITE_OPTIONS);
+    } catch (DBException ex) {
+      throw new IOException(ex);
+    }
+  }
+
+  /**
+   * Delete messages of a {@link TopicId} that has exceeded the TTL or if it belongs to an older generation
+   *
+   * @param topicMetadata {@link TopicMetadata}
+   * @param currentTime current timestamp
+   * @throws IOException error occurred while trying to delete a row in LevelDB
+   */
+  public void pruneMessages(TopicMetadata topicMetadata, long currentTime) throws IOException {
+    WriteBatch writeBatch = levelDB.createWriteBatch();
+    long ttlInMs = TimeUnit.SECONDS.toMillis(topicMetadata.getTTL());
+    byte[] startRow = MessagingUtils.toDataKeyPrefix(topicMetadata.getTopicId(),
+                                                     Integer.parseInt(MessagingUtils.Constants.DEFAULT_GENERATION));
+    byte[] stopRow = Bytes.stopKeyForPrefix(startRow);
+
+    try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startRow, stopRow)) {
+      while (rowIterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = rowIterator.next();
+        PayloadTable.Entry payloadTableEntry = new ImmutablePayloadTableEntry(entry.getKey(), entry.getValue());
+
+        int dataGeneration = payloadTableEntry.getGeneration();
+        int currGeneration = topicMetadata.getGeneration();
+        if (MessagingUtils.isOlderGeneration(dataGeneration, currGeneration)) {
+          writeBatch.delete(entry.getKey());
+          continue;
+        }
+
+        if ((dataGeneration == Math.abs(currGeneration)) &&
+          ((currentTime - payloadTableEntry.getPayloadWriteTimestamp()) > ttlInMs)) {
+          writeBatch.delete(entry.getKey());
+        } else {
+          // terminate scanning table once an entry with write time after TTL is found, to avoid scanning whole table,
+          // since the entries are sorted by time.
+          break;
+        }
+      }
+    }
+
+    try {
       levelDB.write(writeBatch, WRITE_OPTIONS);
     } catch (DBException ex) {
       throw new IOException(ex);

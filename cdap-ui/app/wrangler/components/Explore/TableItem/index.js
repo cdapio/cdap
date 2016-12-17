@@ -18,9 +18,10 @@ import React, { Component, PropTypes } from 'react';
 import classnames from 'classnames';
 import NamespaceStore from 'services/NamespaceStore';
 import myExploreApi from 'api/explore';
-import {Modal, ModalHeader, ModalBody} from 'reactstrap';
+import {Modal, ModalHeader, ModalBody, Tooltip} from 'reactstrap';
 import shortid from 'shortid';
 import Papa from 'papaparse';
+import T from 'i18n-react';
 
 require('./TableItem.less');
 
@@ -30,6 +31,7 @@ export default class TableItem extends Component {
 
     this.state = {
       isModalOpen: false,
+      tooltipOpen: false,
       loading: false,
       columns: [],
       preview: [],
@@ -41,19 +43,12 @@ export default class TableItem extends Component {
     this.toggleModal = this.toggleModal.bind(this);
     this.onWrangleClick = this.onWrangleClick.bind(this);
     this.handleData = this.handleData.bind(this);
-    this.handleSetHeaders = this.handleSetHeaders.bind(this);
-    this.handleSetSkipEmptyLines = this.handleSetSkipEmptyLines.bind(this);
     this.setDelimiter = this.setDelimiter.bind(this);
+    this.tooltipToggle = this.tooltipToggle.bind(this);
   }
 
   setDelimiter(e) {
     this.setState({delimiter: e.target.value});
-  }
-  handleSetHeaders() {
-    this.setState({header: !this.state.header});
-  }
-  handleSetSkipEmptyLines() {
-    this.setState({skipEmptyLines: !this.state.skipEmptyLines});
   }
 
   pollQueryStatus(queryHandle) {
@@ -118,6 +113,10 @@ export default class TableItem extends Component {
     this.setState({isModalOpen: !this.state.isModalOpen});
   }
 
+  tooltipToggle() {
+    this.setState({tooltipOpen: !this.state.tooltipOpen});
+  }
+
   onWrangleClick() {
     myExploreApi.download({queryHandle: this.state.queryHandle})
       .subscribe((res) => {
@@ -138,8 +137,8 @@ export default class TableItem extends Component {
     this.props.wrangle(
       formattedData,
       this.state.delimiter,
-      this.state.header,
-      this.state.skipEmptyLines
+      false,
+      false
     );
   }
 
@@ -168,7 +167,9 @@ export default class TableItem extends Component {
 
     const noData = (
       <div>
-        <h4 className="text-center">No data</h4>
+        <h4 className="text-center">
+          {T.translate('features.Wrangler.Explore.noData')}
+        </h4>
       </div>
     );
 
@@ -180,7 +181,7 @@ export default class TableItem extends Component {
 
         <div className="form-inline field-selection">
           <label className="control-label">
-            Choose field to wrangle:
+            {T.translate('features.Wrangler.Explore.chooseField')}
           </label>
 
           <select
@@ -210,30 +211,9 @@ export default class TableItem extends Component {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Set delimiter"
+                placeholder={T.translate('features.Wrangler.InputScreen.Options.delimiter')}
                 onChange={this.setDelimiter}
               />
-            </div>
-
-            <hr/>
-
-            <div className="checkbox">
-              {/* header */}
-              <label>
-                <input type="checkbox"
-                  onChange={this.handleSetHeaders}
-                  checked={this.state.headers}
-                /> First line as column name
-              </label>
-            </div>
-
-            <div className="checkbox">
-              {/* skipEmptyLines */}
-              <label>
-                <input type="checkbox"
-                  onChange={this.handleSetSkipEmptyLines}
-                /> Skip empty lines
-              </label>
             </div>
           </form>
         </div>
@@ -243,7 +223,7 @@ export default class TableItem extends Component {
             className="btn btn-wrangler"
             onClick={this.onWrangleClick}
           >
-            Wrangle
+            {T.translate('features.Wrangler.wrangleButton')}
           </button>
         </div>
       </div>
@@ -259,6 +239,8 @@ export default class TableItem extends Component {
       </div>
     );
 
+    const id = `explore-item-${this.props.table.name}`;
+
     return (
       <div
         className="explore-table-item text-center"
@@ -271,7 +253,18 @@ export default class TableItem extends Component {
           })} />
         </div>
         <div className="explore-table-item-name">
-          <span>{this.props.table.name}</span>
+          <span id={id}>{this.props.table.name}</span>
+
+          <Tooltip
+            placement="top"
+            isOpen={this.state.tooltipOpen}
+            toggle={this.tooltipToggle}
+            target={id}
+            className="wrangler-tooltip"
+            delay={0}
+          >
+            {T.translate(`commons.entity.${this.props.table.type}.singular`)}: {this.props.table.name}
+          </Tooltip>
         </div>
 
         <Modal
