@@ -1251,6 +1251,39 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   }
 
   @Test
+  public void testSearchResultPaginationWithTargetType() throws Exception {
+    // note that the ordering of the entity creations and the sort param used in this test case matter, in order to
+    // reproduce the scenario that caused the issue CDAP-7881
+    NamespaceId namespace = new NamespaceId("pagination_with_target_type");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
+
+    StreamId stream1 = namespace.stream("text1");
+    StreamId stream2 = namespace.stream("text2");
+
+    // we need this dataset to be created before the streams, so that its metadata comes before the stream's metadata
+    // in the scan in MetadataDataset#search
+    datasetClient.create(
+      namespace.dataset("mydataset"),
+      new DatasetInstanceConfiguration(Table.class.getName(), Collections.<String, String>emptyMap())
+    );
+
+    // create entities so system metadata is annotated
+    streamClient.create(stream1);
+    streamClient.create(stream2);
+
+    String sort = AbstractSystemMetadataWriter.ENTITY_NAME_KEY + " asc";
+
+    // offset 1, limit 2, 2 cursors, should return 2nd result, with 0 cursors since we don't have enough data
+    MetadataSearchResponse searchResponse = searchMetadata(namespace, "*",
+                                                           ImmutableSet.of(MetadataSearchTargetType.STREAM),
+                                                           sort, 1, 2, 2, null);
+    List<MetadataSearchResultRecord> expectedResults = ImmutableList.of(new MetadataSearchResultRecord(stream2));
+    List<String> expectedCursors = ImmutableList.of();
+    Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertEquals(expectedCursors, searchResponse.getCursors());
+
+  }
+
   public void testSearchResultPagination() throws Exception {
     NamespaceId namespace = new NamespaceId("pagination");
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
