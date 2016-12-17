@@ -455,11 +455,11 @@ features:
       realtimeLinkLabel: Realtime Pipeline
     PluginArtifact:
       Step1:
-        shorttitle: Upload Plugin Artifact
-        title: Upload Plugin Artifact
-        description: Upload your plugin artifact JAR.
+        shorttitle: Upload Plugin JAR
+        title: Upload Plugin JAR
+        description: Upload your plugin JAR.
         filePathLabel: Choose File
-        errorMessage: Invalid plugin artifact. Artifact must be a JAR file.
+        errorMessage: Invalid plugin. Plugin must be a JAR file.
       Step2:
         shorttitle: Upload Plugin Configuration JSON
         title: Upload Plugin Configuration JSON
