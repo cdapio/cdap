@@ -195,7 +195,7 @@ Programs
      - *ADMIN*
    * - Retrieve runtime arguments
      - *READ*
-   * - Retrieving status
+   * - Retrieve status
      - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
    * - List
      - Only returns those programs on which user has at least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
