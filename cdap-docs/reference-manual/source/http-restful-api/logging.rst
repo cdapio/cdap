@@ -12,7 +12,8 @@ Logging HTTP RESTful API
 .. highlight:: console
 
 Use the CDAP Logging HTTP RESTful API to download the logs of applications and the system,
-with the option of formating and filtering the logs that are downloaded.
+with the option of formating and filtering the logs that are downloaded, and setting the
+log levels of programs at runtime when under Distributed CDAP mode.
 
 Additional details on logging can be found in the :ref:`Administration Manual: Logging and Monitoring <logging-monitoring>`.
 
@@ -160,3 +161,118 @@ Filtering
 ---------
 A filter string can be supplied as an optional parameter. It will filter the returned log entries
 to those that match the supplied string.
+
+
+Changing Program Log Levels
+===========================
+Log levels can be set for a particular run of a program. Once changed, they can be reset back to what
+they started with by using the :ref:`reset endpoint <http-restful-api-logging-resetting>` shown below.
+
+**Note:** The log levels can only be changed for programs that are running under CDAP Distributed mode.
+
+Setting Program Log Levels
+--------------------------
+To set the log levels of a program run at runtime under CDAP Distributed mode, submit an HTTP PUT request::
+
+  PUT /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/loglevels
+
+To set the log levels of a program run in a particular version of an application::
+
+  PUT /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/<program-type>/<program-id>/runs/<run-id>/loglevels
+
+To set the log levels of a flowlet in the run of a flow::
+
+  PUT /v3/namespaces/<namespace-id>/apps/<app-id>/flows/<flow-id>/flowlet/<flowlet-id>/runs/<run-id>/loglevels
+
+To set the log levels of a flowlet in the run of a flow in a particular version of an application::
+
+  PUT /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/flows/<flow-id>/flowlet/<flowlet-id>/runs/<run-id>/loglevels
+
+and, in all cases, with a JSON map in the request body consisting of a map of logger names and log level pairs, such as::
+
+  '{ "co.cask.cdap":"ERROR", "ROOT":"TRACE" }'
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application
+   * - ``version-id``
+     - Version of the application
+   * - ``program-type``
+     - One of ``flows``, ``mapreduce``, ``services``, or ``workers``
+   * - ``program-id``
+     - Name of the program
+   * - ``flow-id``
+     - Name of the flow
+   * - ``flowlet-id``
+     - Name of the flowlet
+   * - ``run-id``
+     - UUID of the program run
+
+For example::
+
+  PUT /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/run-id/cdec1791-c2c0-11e6-ac6b-42010a800022/loglevels \
+      -d '{ "co.cask.cdap":"ERROR", "ROOT":"TRACE" }'
+
+will update the log levels of the flow *WhoFlow* in the *HelloWorld* application with two log level arguments.
+
+.. _http-restful-api-logging-resetting:
+
+Resetting Program Log Levels
+----------------------------
+Resetting the log levels will change the log levels back to what they were when the program was started.
+
+To reset the log levels of a program run at runtime under CDAP Distributed mode, submit an HTTP PUT request::
+
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/resetloglevels
+
+To reset the log levels of a program run in a particular version of an application::
+
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/<program-type>/<program-id>/runs/<run-id>/resetloglevels
+
+To reset the log levels of a flowlet in the run of a flow::
+
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/flows/<flow-id>/flowlet/<flowlet-id>/runs/<run-id>/resetloglevels
+
+To reset the log levels of a flowlet in the run of a flow in a particular version of an application::
+
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/flows/<flow-id>/flowlet/<flowlet-id>/runs/<run-id>/resetloglevels
+
+and, in all cases, with an optional JSON array in the request body consisting of the logger names to be reset.
+If the body is not provided or is empty, it will reset the log levels of all logger names.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application
+   * - ``version-id``
+     - Version of the application
+   * - ``program-type``
+     - One of ``flows``, ``mapreduce``, ``services`` or ``workers``
+   * - ``program-id``
+     - Name of the program
+   * - ``flow-id``
+     - Name of the flow
+   * - ``flowlet-id``
+     - Name of the flowlet
+   * - ``run-id``
+     - UUID of the program run
+
+For example::
+
+  POST /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/run-id/cdec1791-c2c0-11e6-ac6b-42010a800022/resetloglevels \
+      -d '[ "co.cask.cdap", "ROOT" ]'
+
+will reset the log level of the *WhoFlow* flow in the *HelloWorld* application for the two logger names.
