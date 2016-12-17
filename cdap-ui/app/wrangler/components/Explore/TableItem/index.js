@@ -43,20 +43,12 @@ export default class TableItem extends Component {
     this.toggleModal = this.toggleModal.bind(this);
     this.onWrangleClick = this.onWrangleClick.bind(this);
     this.handleData = this.handleData.bind(this);
-    this.handleSetHeaders = this.handleSetHeaders.bind(this);
-    this.handleSetSkipEmptyLines = this.handleSetSkipEmptyLines.bind(this);
     this.setDelimiter = this.setDelimiter.bind(this);
     this.tooltipToggle = this.tooltipToggle.bind(this);
   }
 
   setDelimiter(e) {
     this.setState({delimiter: e.target.value});
-  }
-  handleSetHeaders() {
-    this.setState({header: !this.state.header});
-  }
-  handleSetSkipEmptyLines() {
-    this.setState({skipEmptyLines: !this.state.skipEmptyLines});
   }
 
   pollQueryStatus(queryHandle) {
@@ -145,8 +137,8 @@ export default class TableItem extends Component {
     this.props.wrangle(
       formattedData,
       this.state.delimiter,
-      this.state.header,
-      this.state.skipEmptyLines
+      false,
+      false
     );
   }
 
@@ -222,27 +214,6 @@ export default class TableItem extends Component {
                 placeholder={T.translate('features.Wrangler.InputScreen.Options.delimiter')}
                 onChange={this.setDelimiter}
               />
-            </div>
-
-            <hr/>
-
-            <div className="checkbox">
-              {/* header */}
-              <label>
-                <input type="checkbox"
-                  onChange={this.handleSetHeaders}
-                  checked={this.state.headers}
-                /> {T.translate('features.Wrangler.InputScreen.Options.firstLineAsColumns')}
-              </label>
-            </div>
-
-            <div className="checkbox">
-              {/* skipEmptyLines */}
-              <label>
-                <input type="checkbox"
-                  onChange={this.handleSetSkipEmptyLines}
-                /> {T.translate('features.Wrangler.InputScreen.Options.skipEmptyLines')}
-              </label>
             </div>
           </form>
         </div>
