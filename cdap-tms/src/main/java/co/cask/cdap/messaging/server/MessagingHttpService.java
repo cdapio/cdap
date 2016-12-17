@@ -75,7 +75,7 @@ public class MessagingHttpService extends AbstractIdleService {
         new MetricsReporterHook(metricsCollectionService, Constants.Service.MESSAGING_SERVICE)))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_WORKER_THREADS))
       .setExecThreadPoolSize(cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_EXECUTOR_THREADS))
-      .setHttpChunkLimit(cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_MAX_REQUEST_SIZE_MB))
+      .setHttpChunkLimit(cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_MAX_REQUEST_SIZE_MB) * 1024 * 1024)
       .setExceptionHandler(new HttpExceptionHandler() {
         @Override
         public void handle(Throwable t, HttpRequest request, HttpResponder responder) {

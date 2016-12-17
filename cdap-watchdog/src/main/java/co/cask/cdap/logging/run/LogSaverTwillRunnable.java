@@ -36,6 +36,7 @@ import co.cask.cdap.logging.guice.LogSaverServiceModule;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.save.KafkaLogSaverService;
 import co.cask.cdap.logging.service.LogSaverStatusService;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -204,6 +205,7 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       new AuditModule().getDistributedModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
+      new MessagingClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

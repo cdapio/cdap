@@ -128,9 +128,6 @@ class ConfigurationCheck extends AbstractMasterCheck {
   }
 
   private void checkKafkaTopic(Set<String> problemKeys) {
-    if (!isValidKafkaTopic(Constants.Notification.KAFKA_TOPIC)) {
-      problemKeys.add(Constants.Notification.KAFKA_TOPIC);
-    }
     if (!isValidKafkaTopic(Constants.Logging.KAFKA_TOPIC)) {
       problemKeys.add(Constants.Logging.KAFKA_TOPIC);
     }
@@ -139,6 +136,9 @@ class ConfigurationCheck extends AbstractMasterCheck {
   private void checkMessagingTopics(Set<String> problemKeys) {
     if (!EntityId.isValidId(cConf.get(Constants.Audit.TOPIC))) {
       problemKeys.add(Constants.Audit.TOPIC);
+    }
+    if (!EntityId.isValidId(cConf.get(Constants.Notification.TOPIC))) {
+      problemKeys.add(Constants.Notification.TOPIC);
     }
   }
 

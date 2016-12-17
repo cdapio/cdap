@@ -29,7 +29,8 @@ const mapStateToProps = (state) => {
 
 function HeaderNavbarList({list, store, showOldUI}){
   const oldUILink = (
-    <a href={`/oldcdap/ns/${store.getState().selectedNamespace}`}>
+    <a className="old-ui-link"
+       href={`/oldcdap/ns/${store.getState().selectedNamespace}`}>
       {T.translate('features.Navbar.CDAP.olduilink')}
     </a>
   );
