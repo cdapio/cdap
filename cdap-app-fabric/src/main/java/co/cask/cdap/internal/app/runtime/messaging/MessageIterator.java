@@ -63,6 +63,11 @@ final class MessageIterator extends AbstractCloseableIterator<Message> {
       public byte[] getPayload() {
         return rawMessage.getPayload();
       }
+
+      @Override
+      public String toString() {
+        return "Message{" + "id=" + getId() + ",payload=" + getPayloadAsString() + "}";
+      }
     };
   }
 

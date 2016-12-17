@@ -22,6 +22,9 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
@@ -36,6 +39,8 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
@@ -60,6 +65,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -68,7 +74,9 @@ import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Cancellable;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,6 +98,9 @@ import java.util.concurrent.TimeUnit;
 public abstract class NotificationTest {
   private static final Logger LOG = LoggerFactory.getLogger(NotificationTest.class);
 
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   protected static NotificationFeedManager feedManager;
   private static DatasetFramework dsFramework;
   private static TransactionSystemClient txClient;
@@ -98,6 +109,7 @@ public abstract class NotificationTest {
   private static DatasetService datasetService;
   private static NamespaceAdmin namespaceAdmin;
   private static NotificationService notificationService;
+  private static MessagingService messagingService;
 
   private static final NamespaceId namespace = new NamespaceId("namespace");
   protected static final NotificationFeedId FEED1 = new NotificationFeedId(namespace.getNamespace(), "stream", "foo");
@@ -111,14 +123,19 @@ public abstract class NotificationTest {
     return notificationService;
   }
 
-  protected static List<Module> getCommonModules() {
+  protected static List<Module> getCommonModules() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+
     return ImmutableList.of(
+      new ConfigModule(cConf),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new NonCustomLocationUnitTestModule().getModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
+      new MessagingServerRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
       new AuthorizationTestModule(),
@@ -134,6 +151,11 @@ public abstract class NotificationTest {
   }
 
   public static void startServices(Injector injector) throws Exception {
+    messagingService = injector.getInstance(MessagingService.class);
+    if (messagingService instanceof Service) {
+      ((Service) messagingService).startAndWait();
+    }
+
     notificationService = injector.getInstance(NotificationService.class);
     notificationService.startAndWait();
 
@@ -156,6 +178,9 @@ public abstract class NotificationTest {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
+    if (messagingService instanceof Service) {
+      ((Service) messagingService).stopAndWait();
+    }
   }
 
   @Test (expected = NotificationFeedNotFoundException.class)

@@ -84,9 +84,9 @@ features:
         entityNameDesc:
           displayName: Z - A
         creationTimeDesc:
-          displayName: Most Recently Created
+          displayName: Newest
         creationTimeAsc:
-          displayName: Least Recently Created
+          displayName: Oldest
   Dashboard:
     Title: Dashboard
 
@@ -95,12 +95,15 @@ features:
     clickLabel: Click to select file from your computer
   FastAction:
     deleteConfirmation: Are you sure you want to delete *_{entityId}_*?
+    exploreLabel: Explore
     deleteLabel: Delete
     deleteFailed: Failed to delete {entityId}.
     truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
     truncateLabel: Truncate
     truncateFailed: Failed to truncate {entityId}.
     sendEventsLabel: Send Events
+    start: Start
+    stop: Stop
     sendEventsButtonLabel: Send
     sendEventsClickLabel: Click to input events.
     sendEventsFailed: Error - Send Events Failed.
@@ -249,14 +252,15 @@ features:
     tabs:
       all: All
       applications: Applications
-      artifacts: Artifacts
+      artifacts: Drivers
       dashboards: Dashboards
       datapacks: Datapacks
       datasets: Datasets
-      examples: Examples
+      examples: Application
       pipelines: Pipelines
       plugins: Plugins
       useCases: Use Cases
+      emptyTab: No Entities found
     action-types:
       create_stream:
         name: Create
@@ -268,8 +272,14 @@ features:
         name: Create
       create_artifact:
         name: Create
+      create_plugin_artifact:
+        name: Deploy
+      create_driver_artifact:
+        name: Deploy
       informational:
         name: Download
+      deploy_app:
+        name: Deploy
       load_datapack:
         name: Load
   MarketPlaceEntity:
@@ -286,7 +296,7 @@ features:
       dashboard: Dashboard
       home: Home
       management: Management
-      olduilink: Switch to Original UI
+      olduilink: VIEW ORIGINAL UI
     HeaderActions:
       caskHome: Cask Home
       documentation: Documentation
@@ -319,7 +329,7 @@ features:
       description: A Hydrator pipeline allows you to ingest, egress, and process data either to, from, or within Hadoop.
       actionbtn0: Create
     Artifact:
-      label: Artifact
+      label: Driver
       description: An artifact is a JAR file that contains either a native application or collection of plugins.
       actionbtn0: Upload
       modalheadertitle: Upload Artifact
@@ -336,14 +346,13 @@ features:
       introduction: Intro to CDAP
       register: Register for Updates
     intro-message: Unified Integration Platform for Big Data
-    title: Welcome to Cask Data Application Platform
-    version-label: Version 4.0.0 Preview
+    title: Welcome to
+    titleTwo: Cask Data Application Platform
+    version-label: Version 4.0 Beta
     registration-zero: I
     registration-one: would like to receive product updates and
     registration-two: newsletters from Cask at this email address
-    first-placeholder: First Name
-    last-placeholder: Last Name
-    email-placeholder: email@example.com
+    getUpdates: Get Updates
 
   SpotlightSearch:
     noResult: No results found
@@ -358,6 +367,7 @@ features:
       symbolName: Symbol Name
   Wizard:
     ApplicationUpload:
+      headerlabel: Upload Application
       Step1:
         description: Upload your application JAR
         shorttitle: Upload Application
@@ -392,6 +402,8 @@ features:
         shorttitle: Third Party Artifact Information
         title: Information
       headerlabel: Third Party Artifact
+    MarketHydratorPluginUpload:
+      headerlabel: Hydrator Plugin
     Skip: Skipped
     FailedMessage: Failed to {step}
     StreamCreate:
@@ -541,7 +553,7 @@ features:
     Explore:
       browse: "Browse Dataset ({count})"
       noData: No data
-      chooseField: "Choose field to wrangle:"
+      chooseField: "Choose one field to wrangle:"
     Filter:
       apply: Apply
       filter: Filter

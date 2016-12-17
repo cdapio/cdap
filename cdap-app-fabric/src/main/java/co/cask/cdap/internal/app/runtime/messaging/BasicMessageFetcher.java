@@ -66,8 +66,11 @@ final class BasicMessageFetcher implements MessageFetcher, TransactionAware {
                                           @Nullable String afterMessageId) throws IOException, TopicNotFoundException {
     co.cask.cdap.messaging.MessageFetcher fetcher = messagingService
       .prepareFetch(new NamespaceId(namespace).topic(topic))
-      .setLimit(limit)
-      .setStartMessage(Bytes.fromHexString(afterMessageId), false);
+      .setLimit(limit);
+
+    if (afterMessageId != null) {
+      fetcher.setStartMessage(Bytes.fromHexString(afterMessageId), false);
+    }
 
     if (transaction != null) {
       fetcher.setTransaction(transaction);

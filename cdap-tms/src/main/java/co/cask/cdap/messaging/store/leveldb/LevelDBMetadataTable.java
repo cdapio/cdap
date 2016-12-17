@@ -17,6 +17,7 @@
 package co.cask.cdap.messaging.store.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
@@ -158,32 +159,69 @@ final class LevelDBMetadataTable implements MetadataTable {
   public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException {
     byte[] startKey = MessagingUtils.topicScanKey(namespaceId);
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
-    return scanTopics(startKey, stopKey);
+    return listTopics(startKey, stopKey);
   }
 
   @Override
   public List<TopicId> listTopics() throws IOException {
+    return listTopics(null, null);
+  }
+
+  /**
+   * Returns an iterator of {@link TopicMetadata} of all the topics including the ones that were deleted.
+   *
+   * @return {@link CloseableIterator} of {@link TopicMetadata}
+   * @throws IOException if failed to scan topics
+   */
+  public CloseableIterator<TopicMetadata> scanTopics() throws IOException {
     return scanTopics(null, null);
+  }
+
+  private List<TopicId> listTopics(@Nullable byte[] startKey, @Nullable byte[] stopKey) throws IOException {
+    List<TopicId> topicList = new ArrayList<>();
+    try (CloseableIterator<TopicMetadata> iterator = scanTopics(startKey, stopKey)) {
+      while (iterator.hasNext()) {
+        TopicMetadata metadata = iterator.next();
+        if (metadata.exists()) {
+          topicList.add(metadata.getTopicId());
+        }
+      }
+    }
+    return topicList;
+  }
+
+  private CloseableIterator<TopicMetadata> scanTopics(@Nullable byte[] startKey,
+                                                     @Nullable byte[] stopKey) throws IOException {
+    final CloseableIterator<Map.Entry<byte[], byte[]>> iterator = new DBScanIterator(levelDB, startKey, stopKey);
+    return new AbstractCloseableIterator<TopicMetadata>() {
+      private boolean closed = false;
+
+      @Override
+      protected TopicMetadata computeNext() {
+        if (closed || (!iterator.hasNext())) {
+          return endOfData();
+        }
+
+        Map.Entry<byte[], byte[]> entry = iterator.next();
+        TopicId topicId = MessagingUtils.toTopicId(entry.getKey());
+        Map<String, String> properties = GSON.fromJson(Bytes.toString(entry.getValue()), MAP_TYPE);
+        return new TopicMetadata(topicId, properties);
+      }
+
+      @Override
+      public void close() {
+        try {
+          iterator.close();
+        } finally {
+          endOfData();
+          closed = true;
+        }
+      }
+    };
   }
 
   @Override
   public void close() throws IOException {
     // no op
-  }
-
-  private List<TopicId> scanTopics(@Nullable byte[] startKey, @Nullable byte[] stopKey) throws IOException {
-    List<TopicId> topicIds = new ArrayList<>();
-    try (CloseableIterator<Map.Entry<byte[], byte[]>> iterator = new DBScanIterator(levelDB, startKey, stopKey)) {
-      while (iterator.hasNext()) {
-        Map.Entry<byte[], byte[]> entry = iterator.next();
-        TopicId topicId = MessagingUtils.toTopicId(entry.getKey());
-        Map<String, String> properties = GSON.fromJson(Bytes.toString(entry.getValue()), MAP_TYPE);
-        TopicMetadata metadata = new TopicMetadata(topicId, properties);
-        if (metadata.exists()) {
-          topicIds.add(topicId);
-        }
-      }
-    }
-    return topicIds;
   }
 }

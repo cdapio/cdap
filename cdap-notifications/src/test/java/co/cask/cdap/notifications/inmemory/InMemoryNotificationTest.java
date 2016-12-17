@@ -16,8 +16,6 @@
 
 package co.cask.cdap.notifications.inmemory;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.notifications.NotificationTest;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
@@ -35,12 +33,10 @@ public class InMemoryNotificationTest extends NotificationTest {
 
   @BeforeClass
   public static void start() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
     Injector injector = Guice.createInjector(
       Iterables.concat(
         getCommonModules(),
         ImmutableList.of(
-          new ConfigModule(cConf),
           new NotificationServiceRuntimeModule().getInMemoryModules(),
           new NotificationFeedServiceRuntimeModule().getInMemoryModules()
         )

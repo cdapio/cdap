@@ -20,6 +20,7 @@ import co.cask.cdap.operations.OperationalStats;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CommonConfigurationKeys;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.ha.HAServiceProtocol;
 import org.apache.hadoop.ha.HAServiceStatus;
@@ -27,6 +28,7 @@ import org.apache.hadoop.ha.HAServiceTarget;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.HAUtil;
+import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.hadoop.hdfs.tools.NNHAServiceTarget;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.VersionInfo;
@@ -49,6 +51,8 @@ public class HDFSInfo extends AbstractHDFSStats implements HDFSInfoMXBean {
 
   @VisibleForTesting
   static final String STAT_TYPE = "info";
+
+  private boolean lastCollectFailed = false;
 
   @SuppressWarnings("unused")
   public HDFSInfo() {
@@ -86,8 +90,13 @@ public class HDFSInfo extends AbstractHDFSStats implements HDFSInfoMXBean {
           }
         }
       }
-    } catch (IOException e) {
-      LOG.warn("Error in determining HDFS URL. Web URL of HDFS will not be available in HDFS operational stats.", e);
+      lastCollectFailed = false;
+    } catch (Exception e) {
+      // TODO: remove once CDAP-7887 is fixed
+      if (!lastCollectFailed) {
+        LOG.warn("Error in determining HDFS URL. Web URL of HDFS will not be available in HDFS operational stats.", e);
+      }
+      lastCollectFailed = true;
     }
     return null;
   }
@@ -125,14 +134,19 @@ public class HDFSInfo extends AbstractHDFSStats implements HDFSInfoMXBean {
   private URL getHAWebURL() throws IOException {
     String activeNamenode = null;
     String nameService = getNameService();
+    HdfsConfiguration hdfsConf = new HdfsConfiguration(conf);
+    String nameNodePrincipal = conf.get(DFSConfigKeys.DFS_NAMENODE_USER_NAME_KEY, "");
+
+    hdfsConf.set(CommonConfigurationKeys.HADOOP_SECURITY_SERVICE_USER_NAME_KEY, nameNodePrincipal);
+
     for (String nnId : DFSUtil.getNameNodeIds(conf, nameService)) {
-      HAServiceTarget haServiceTarget = new NNHAServiceTarget(conf, nameService, nnId);
-      HAServiceProtocol proxy = haServiceTarget.getProxy(conf, 10000);
+      HAServiceTarget haServiceTarget = new NNHAServiceTarget(hdfsConf, nameService, nnId);
+      HAServiceProtocol proxy = haServiceTarget.getProxy(hdfsConf, 10000);
       HAServiceStatus serviceStatus = proxy.getServiceStatus();
       if (HAServiceProtocol.HAServiceState.ACTIVE != serviceStatus.getState()) {
         continue;
       }
-      activeNamenode = DFSUtil.getNamenodeServiceAddr(conf, nameService, nnId);
+      activeNamenode = DFSUtil.getNamenodeServiceAddr(hdfsConf, nameService, nnId);
     }
     if (activeNamenode == null) {
       throw new IllegalStateException("Could not find an active namenode");

@@ -23,7 +23,6 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
 import java.util.Map;
@@ -176,12 +175,14 @@ public interface MetadataStore {
    * @param cursor the cursor that acts as the starting index for the requested page. This is only applicable when
    *               #sortInfo is not {@link SortInfo#DEFAULT}. If offset is also specified, it is applied starting at
    *               the cursor. If {@code null}, the first row is used as the cursor
+   * @param showHidden boolean which specifies whether to display hidden entities (entity whose name start with "_")
+   *                    or not.
    * @return the {@link MetadataSearchResponse} containing search results for the specified search query and filters
    */
   MetadataSearchResponse search(String namespaceId, String searchQuery,
                                 Set<MetadataSearchTargetType> types,
                                 SortInfo sortInfo, int offset, int limit,
-                                int numCursors, String cursor) throws BadRequestException;
+                                int numCursors, String cursor, boolean showHidden) throws BadRequestException;
 
   /**
    * Returns the snapshot of the metadata for entities on or before the given time in both {@link MetadataScope#USER}

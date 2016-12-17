@@ -45,8 +45,7 @@ doesn't do anything for initialization or destruction::
       output.emit(Math.round(number));
     }
 
-
-The most interesting method of this flowlet is ``round()``, the method
+The most important method of this flowlet is ``round()``, the method
 that does the actual processing. It uses an output emitter to send data
 to its output. This is the only way that a flowlet can emit output to
 another connected flowlet::
@@ -78,6 +77,10 @@ flowlet will call the method that matches the object’s type::
   public void round(Float number) {
     output.emit((long)Math.round(number));
   }
+
+Flowlets can have multiple process methods. Such methods are either annotated with
+``@ProcessInput`` or are named ``process()``. These methods can both
+process inputs and emit outputs, as required.
 
 If you define multiple process methods, a method will be selected based
 on the input object’s origin; that is, the name of a stream or the name

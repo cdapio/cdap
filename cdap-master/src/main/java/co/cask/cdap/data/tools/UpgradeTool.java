@@ -67,6 +67,7 @@ import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeSchedule
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
@@ -74,6 +75,7 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
@@ -121,7 +123,6 @@ public class UpgradeTool {
   private final DatasetUpgrader dsUpgrade;
   private final QueueAdmin queueAdmin;
   private final DatasetSpecificationUpgrader dsSpecUpgrader;
-  private final MetadataStore metadataStore;
   private final ExistingEntitySystemMetadataWriter existingEntitySystemMetadataWriter;
   private final UpgradeDatasetServiceManager upgradeDatasetServiceManager;
   private final NamespaceStore nsStore;
@@ -174,7 +175,6 @@ public class UpgradeTool {
     this.txService = injector.getInstance(TransactionService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.dsFramework = injector.getInstance(DatasetFramework.class);
-    this.metadataStore = injector.getInstance(MetadataStore.class);
     this.streamStateStoreUpgrader = injector.getInstance(StreamStateStoreUpgrader.class);
     this.dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     this.dsSpecUpgrader = injector.getInstance(DatasetSpecificationUpgrader.class);
@@ -209,6 +209,7 @@ public class UpgradeTool {
       new LocationRuntimeModule().getDistributedModules(),
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
+      new MessagingClientModule(),
       Modules.override(new DataSetsModules().getDistributedModules()).with(
         new AbstractModule() {
           @Override
@@ -439,6 +440,7 @@ public class UpgradeTool {
 
     // TODO: CDAP-7835: This should be moved out (probably to MetadataService) so it can be run after CDAP starts up.
     LOG.info("Writing system metadata to existing entities...");
+    MetadataStore metadataStore = upgradeDatasetServiceManager.getMetadataStore();
     try {
       existingEntitySystemMetadataWriter.write(upgradeDatasetServiceManager.getDSFramework());
       LOG.info("Removing metadata for deleted datasets...");
@@ -455,11 +457,11 @@ public class UpgradeTool {
   }
 
   private void upgradeMetadataDatasetSpecs() {
-    upgradeMetadataDatasetSpec(DefaultMetadataStore.BUSINESS_METADATA_INSTANCE_ID);
-    upgradeMetadataDatasetSpec(DefaultMetadataStore.SYSTEM_METADATA_INSTANCE_ID);
+    upgradeMetadataDatasetSpec(MetadataScope.USER, DefaultMetadataStore.BUSINESS_METADATA_INSTANCE_ID);
+    upgradeMetadataDatasetSpec(MetadataScope.SYSTEM, DefaultMetadataStore.SYSTEM_METADATA_INSTANCE_ID);
   }
 
-  private void upgradeMetadataDatasetSpec(DatasetId metadataDatasetId) {
+  private void upgradeMetadataDatasetSpec(MetadataScope scope, DatasetId metadataDatasetId) {
     DatasetSpecification oldMetadataDatasetSpec = datasetInstanceManager.get(metadataDatasetId);
     if (oldMetadataDatasetSpec == null) {
       LOG.info("Metadata Dataset {} not found. No upgrade necessary.", metadataDatasetId);
@@ -473,17 +475,22 @@ public class UpgradeTool {
     // TODO: CDAP-7835: This should be moved out (probably to MetadataService) so it can be run after CDAP starts up.
     Gson gson = new Gson();
     JsonObject jsonObject = gson.toJsonTree(oldMetadataDatasetSpec, DatasetSpecification.class).getAsJsonObject();
+    JsonObject metadataDatasetProperties = jsonObject.get("properties").getAsJsonObject();
+    metadataDatasetProperties.addProperty("scope", scope.name());
     // change the columnsToIndex since in 4.0 we added 4 more index columns
     JsonObject metadataIndexObject = jsonObject.get("datasetSpecs").getAsJsonObject()
       .get("metadata_index").getAsJsonObject();
     JsonObject properties = metadataIndexObject.get("properties").getAsJsonObject();
     properties.addProperty("columnsToIndex", MetadataDataset.COLUMNS_TO_INDEX);
+    properties.addProperty("scope", scope.name());
     JsonObject dProperties = metadataIndexObject.get("datasetSpecs").getAsJsonObject().get("d").getAsJsonObject()
       .get("properties").getAsJsonObject();
     JsonObject iProperties = metadataIndexObject.get("datasetSpecs").getAsJsonObject().get("i").getAsJsonObject()
       .get("properties").getAsJsonObject();
     dProperties.addProperty("columnsToIndex", MetadataDataset.COLUMNS_TO_INDEX);
+    dProperties.addProperty("scope", scope.name());
     iProperties.addProperty("columnsToIndex", MetadataDataset.COLUMNS_TO_INDEX);
+    iProperties.addProperty("scope", scope.name());
 
     DatasetSpecification newMetadataDatasetSpec = gson.fromJson(jsonObject, DatasetSpecification.class);
     datasetInstanceManager.delete(metadataDatasetId);

@@ -59,12 +59,6 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-kafka</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-cli</artifactId>
       <version>${project.version}</version>
       <!--
@@ -151,16 +145,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.twill</groupId>
-      <artifactId>twill-zookeeper</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.twill</groupId>
       <artifactId>twill-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.zookeeper</groupId>
-      <artifactId>zookeeper</artifactId>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.xerial.snappy</groupId>
@@ -216,13 +201,9 @@
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
         <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
-        <stage.security.ext.dir>${stage.opt.dir}/ext/security</stage.security.ext.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
         <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
-        <security.ext.jar.pattern>**/target/*.jar</security.ext.jar.pattern>
-        <security.ext.config.pattern>**/target/*.json</security.ext.config.pattern>
-        <security.ext.exclude.pattern>**/target/*-tests.jar</security.ext.exclude.pattern>
       </properties>
 
       <!-- Add dependencies on spark api and core. It just for making sure those artifacts are built before this -->
@@ -403,17 +384,10 @@
                         <exclude>**/target/stage-packaging*/**</exclude>
                       </excludes>
                     </resource>
-                    <!-- Copy runtime extensions. Currently only has Spark and Kafka (for audit logging) -->
+                    <!-- Copy runtime extensions. Currently only has Spark -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-spark-core/target/libexec</directory>
                       <targetPath>ext/runtimes/spark</targetPath>
-                      <includes>
-                        <include>*.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-kafka/target/libexec</directory>
-                      <targetPath>ext/runtimes/kafka</targetPath>
                       <includes>
                         <include>*.jar</include>
                       </includes>
@@ -563,26 +537,12 @@
                         <exclude name="${additional.artifacts.exclude.pattern}"/>
                         <exclude name="**/target/*-sources.jar"/>
                         <exclude name="**/target/*-javadoc.jar"/>
-                      </fileset>
-                    </copy>
-                  </target>
-                </configuration>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-              </execution>
-              <execution>
-                <id>copy-security-extensions-artifacts</id>
-                <phase>process-resources</phase>
-                <configuration>
-                  <target if="security.extensions.dir">
-                    <copy todir="${stage.security.ext.dir}" flatten="true">
-                      <fileset dir="${security.extensions.dir}">
-                        <include name="${security.ext.jar.pattern}"/>
-                        <include name="${security.ext.config.pattern}"/>
-                        <exclude name="${security.ext.exclude.pattern}"/>
-                        <exclude name="**/target/*-sources.jar"/>
-                        <exclude name="**/target/*-javadoc.jar"/>
+                        <!--We don't want to package the following plugins with CDAP-->
+                        <exclude name="**/target/solrsearch-plugins*"/>
+                        <exclude name="**/target/hive-plugins*"/>
+                        <exclude name="**/target/elasticsearch-plugins*"/>
+                        <exclude name="**/target/mongodb-plugins*"/>
+                        <exclude name="**/target/cassandra-plugins*"/>
                       </fileset>
                     </copy>
                   </target>

@@ -30,6 +30,7 @@ import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -160,6 +161,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
     final DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     final SecureStore secureStore = injector.getInstance(SecureStore.class);
     final SecureStoreManager secureStoreManager = injector.getInstance(SecureStoreManager.class);
+    final MessagingService messagingService = injector.getInstance(MessagingService.class);
     // Multiple instances of BasicMapReduceTaskContext can shares the same program.
     final AtomicReference<Program> programRef = new AtomicReference<>();
 
@@ -213,7 +215,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
           contextConfig.getTx(), programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
-          authorizationEnforcer, authenticationContext
+          authorizationEnforcer, authenticationContext, messagingService
         );
       }
     };

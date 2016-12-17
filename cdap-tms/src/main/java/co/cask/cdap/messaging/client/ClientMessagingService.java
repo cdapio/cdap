@@ -41,6 +41,7 @@ import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
@@ -100,13 +101,18 @@ public final class ClientMessagingService implements MessagingService {
   private static final Type TOPIC_PROPERTY_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type TOPIC_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
 
-  private final EndpointStrategy endpointStrategy;
+  private final Supplier<EndpointStrategy> endpointStrategy;
 
   @VisibleForTesting
   @Inject
-  public ClientMessagingService(DiscoveryServiceClient discoveryServiceClient) {
-    this.endpointStrategy = new RandomEndpointStrategy(
-      discoveryServiceClient.discover(Constants.Service.MESSAGING_SERVICE));
+  public ClientMessagingService(final DiscoveryServiceClient discoveryServiceClient) {
+    // Use a supplier to delay the discovery until the first time it is being used.
+    this.endpointStrategy = Suppliers.memoize(new Supplier<EndpointStrategy>() {
+      @Override
+      public EndpointStrategy get() {
+        return new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.MESSAGING_SERVICE));
+      }
+    });
   }
 
   @Override
@@ -286,7 +292,7 @@ public final class ClientMessagingService implements MessagingService {
    * Creates a URL for making HTTP requests to the messaging system.
    */
   private URL createURL(String path) throws MalformedURLException {
-    Discoverable discoverable = endpointStrategy.pick(DISCOVERY_PICK_TIMEOUT_SECS, TimeUnit.SECONDS);
+    Discoverable discoverable = endpointStrategy.get().pick(DISCOVERY_PICK_TIMEOUT_SECS, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new ServiceUnavailableException("No endpoint available for messaging service");
     }

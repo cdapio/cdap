@@ -42,13 +42,16 @@ import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import RouteToNamespace from 'components/RouteToNamespace';
 import Helmet from 'react-helmet';
 import SchemaEditor from 'components/SchemaEditor';
+import MyCDAPVersionApi from 'api/version.js';
+import VersionStore from 'services/VersionStore';
+import VersionActions from 'services/VersionStore/VersionActions';
 
 class CDAP extends Component {
   constructor(props) {
     super(props);
-    this.version = '4.0.0';
     this.state = {
-      selectedNamespace : NamespaceStore.getState().selectedNamespace
+      selectedNamespace : NamespaceStore.getState().selectedNamespace,
+      version: ''
     };
   }
 
@@ -70,6 +73,18 @@ class CDAP extends Component {
           }
         }
       );
+
+      if(!VersionStore.getState().version){
+        MyCDAPVersionApi.get().subscribe((res) => {
+          this.setState({ version : res.version });
+          VersionStore.dispatch({
+            type: VersionActions.updateVersion,
+            payload: {
+              version: res.version
+            }
+          });
+        });
+      }
   }
 
   render() {
@@ -102,7 +117,7 @@ class CDAP extends Component {
             <Match pattern="/schemaeditor" component={SchemaEditor} />
             <Miss component={Missed} />
           </div>
-          <Footer version={this.version} />
+          <Footer version={this.state.version} />
         </div>
       </Router>
     );

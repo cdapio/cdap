@@ -840,7 +840,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              // 2147483647 is Integer.MAX_VALUE
                              @QueryParam("limit") @DefaultValue("2147483647") int limit,
                              @QueryParam("numCursors") @DefaultValue("0") int numCursors,
-                             @QueryParam("cursor") @DefaultValue("") String cursor) throws Exception {
+                             @QueryParam("cursor") @DefaultValue("") String cursor,
+                             @QueryParam("showHidden") @DefaultValue("false") boolean showHidden) throws Exception {
     Set<MetadataSearchTargetType> types = Collections.emptySet();
     if (targets != null) {
       types = ImmutableSet.copyOf(Iterables.transform(targets, STRING_TO_TARGET_TYPE));
@@ -853,7 +854,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     }
     MetadataSearchResponse response =
       metadataAdmin.search(namespaceId, URLDecoder.decode(searchQuery, "UTF-8"), types,
-                           sortInfo, offset, limit, numCursors, cursor);
+                           sortInfo, offset, limit, numCursors, cursor, showHidden);
     responder.sendJson(HttpResponseStatus.OK, response, MetadataSearchResponse.class, GSON);
   }
 

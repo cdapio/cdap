@@ -325,20 +325,32 @@ public class MetadataStoreTest {
     ProgramId flow = ns.app("app").flow("flow");
     StreamId stream = ns.stream("stream");
     DatasetId dataset = ns.dataset("dataset");
+    // add a dummy entity which starts with _ to test that it doesnt show up see: CDAP-7910
+    DatasetId trackerDataset = ns.dataset("_auditLog");
 
     store.addTags(MetadataScope.USER, flow, "tag", "tag1");
     store.addTags(MetadataScope.USER, stream, "tag2", "tag3 tag4");
     store.addTags(MetadataScope.USER, dataset, "tag5 tag6", "tag7 tag8");
+    // add bunch of tags to ensure higher weight to this entity in search result
+    store.addTags(MetadataScope.USER, trackerDataset, "tag9", "tag10", "tag11", "tag12", "tag13");
 
     MetadataSearchResultRecord flowSearchResult = new MetadataSearchResultRecord(flow);
     MetadataSearchResultRecord streamSearchResult = new MetadataSearchResultRecord(stream);
     MetadataSearchResultRecord datasetSearchResult = new MetadataSearchResultRecord(dataset);
+    MetadataSearchResultRecord trackerDatasetSearchResult = new MetadataSearchResultRecord(trackerDataset);
 
-    // relevance order for searchQuery "tag*" is dataset, stream, flow
-
+    // relevance order for searchQuery "tag*" is trackerDataset, dataset, stream, flow
+    // (this depends on how many tags got matched with the search query)
+    // trackerDataset entity should not be part
     Assert.assertEquals(
       ImmutableList.of(datasetSearchResult, streamSearchResult, flowSearchResult),
       ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1)))
+    );
+
+    // trackerDataset entity should be be part since showHidden is true
+    Assert.assertEquals(
+      ImmutableList.of(trackerDatasetSearchResult, datasetSearchResult, streamSearchResult, flowSearchResult),
+      ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1, true)))
     );
 
     Assert.assertEquals(
@@ -346,9 +358,16 @@ public class MetadataStoreTest {
       ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 0, 2, 1)))
     );
 
+    // skipping trackerDataset should not affect the offset
     Assert.assertEquals(
       ImmutableList.of(streamSearchResult, flowSearchResult),
       ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 1, 2, 1)))
+    );
+
+    // if showHidden is true trackerDataset should affect the offset
+    Assert.assertEquals(
+      ImmutableList.of(datasetSearchResult, streamSearchResult, flowSearchResult),
+      ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 1, 3, 1, true)))
     );
 
     Assert.assertEquals(
@@ -373,9 +392,15 @@ public class MetadataStoreTest {
 
   private Set<MetadataSearchResultRecord> search(String ns, String searchQuery,
                                                  int offset, int limit, int numCursors) throws BadRequestException {
+    return search(ns, searchQuery, offset, limit, numCursors, false);
+  }
+
+  private Set<MetadataSearchResultRecord> search(String ns, String searchQuery,
+                                                 int offset, int limit, int numCursors, boolean showHidden)
+    throws BadRequestException {
     return store.search(
       ns, searchQuery, EnumSet.allOf(MetadataSearchTargetType.class),
-      SortInfo.DEFAULT, offset, limit, numCursors, null).getResults();
+      SortInfo.DEFAULT, offset, limit, numCursors, null, showHidden).getResults();
   }
 
   private void generateMetadataUpdates() {

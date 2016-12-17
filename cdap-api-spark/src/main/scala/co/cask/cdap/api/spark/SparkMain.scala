@@ -56,7 +56,7 @@ import scala.reflect.ClassTag
   *       .saveAsDataset("output")
   *
   *     // Perform multiple operations in the same transaction
-  *     Transaction {
+  *     Transaction(() => {
   *       // Create a standard wordcount RDD
   *       val wordCountRDD = streamRDD
   *         .flatMap(_.split(" "))
@@ -72,7 +72,7 @@ import scala.reflect.ClassTag
   *       wordCountRDD.saveAsDataset("allcounts")
   *
   *       // Updates to both "aboveten" and "allcounts" dataset will be committed within the same Transaction.
-  *     }
+  *     })
   *
   *     // Access to Dataset instance in the driver can be done through Transaction as well
   *     Transaction((context: DatasetContext) => {
@@ -448,8 +448,8 @@ trait SparkMain extends Serializable {
       * @param f the function to execute
       * @param transactional the [[co.cask.cdap.api.Transactional]] to use for the execution
       */
-    def apply[T: ClassTag](f: => T)(implicit transactional: Transactional): T = {
-      apply((context: DatasetContext) => f)
+    def apply[T: ClassTag](f: () => T)(implicit transactional: Transactional): T = {
+      apply((context: DatasetContext) => f())
     }
 
     /**
@@ -459,7 +459,7 @@ trait SparkMain extends Serializable {
       * @param f the function to execute
       * @param transactional the [[co.cask.cdap.api.Transactional]] to use for the execution
       */
-    def apply[T: ClassTag](f: DatasetContext => T)(implicit transactional: Transactional): T = {
+    def apply[T: ClassTag](f: (DatasetContext) => T)(implicit transactional: Transactional): T = {
       val result = new Array[T](1)
       transactional.execute(new TxRunnable {
         override def run(context: DatasetContext) = result(0) = f(context)

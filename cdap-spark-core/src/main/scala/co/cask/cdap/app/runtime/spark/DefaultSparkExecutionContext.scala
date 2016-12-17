@@ -27,6 +27,7 @@ import co.cask.cdap.api.data.batch.{BatchWritable, DatasetOutputCommitter, Outpu
 import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.dataset.Dataset
 import co.cask.cdap.api.flow.flowlet.StreamEvent
+import co.cask.cdap.api.messaging.MessagingContext
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.preview.DataTracer
@@ -77,7 +78,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
                                                      runtimeContext.getDatasetCache)
   private val workflowInfo = Option(runtimeContext.getWorkflowInfo)
   private val sparkTxService = new SparkTransactionService(runtimeContext.getTransactionSystemClient,
-                                                           runtimeContext.getHostname)
+                                                           runtimeContext.getHostname, runtimeContext.getProgramName)
   private val applicationEndLatch = new CountDownLatch(1)
   private val authorizationEnforcer = runtimeContext.getAuthorizationEnforcer
   private val authenticationContext = runtimeContext.getAuthenticationContext
@@ -145,6 +146,9 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   override def getMetrics: Metrics = new SparkUserMetrics(runtimeContext)
 
   override def getSecureStore: SecureStore = new SparkSecureStore(runtimeContext)
+
+  // TODO: CDAP-7807. Returns one that is serializable
+  override def getMessagingContext: MessagingContext = runtimeContext
 
   override def getPluginContext: PluginContext = new SparkPluginContext(runtimeContext)
 

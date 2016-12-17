@@ -18,7 +18,6 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.cdap.common.utils.Networks;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
@@ -27,7 +26,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -45,7 +43,6 @@ import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -72,7 +69,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.URI;
@@ -97,9 +93,7 @@ public abstract class NettyRouterTestBase {
   protected static final String HOSTNAME = "127.0.0.1";
   protected static final DiscoveryService DISCOVERY_SERVICE = new InMemoryDiscoveryService();
   protected static final String DEFAULT_SERVICE = Constants.Router.GATEWAY_DISCOVERY_NAME;
-  protected static final String WEBAPP_SERVICE = Constants.Router.WEBAPP_DISCOVERY_NAME;
   protected static final String APP_FABRIC_SERVICE = Constants.Service.APP_FABRIC_HTTP;
-  protected static final String WEB_APP_SERVICE_PREFIX = "webapp/";
   protected static final int CONNECTION_IDLE_TIMEOUT_SECS = 2;
 
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTestBase.class);
@@ -113,53 +107,10 @@ public abstract class NettyRouterTestBase {
     }
   };
 
-  private final Supplier<String> webappServiceSupplier = new Supplier<String>() {
-    @Override
-    public String get() {
-      try {
-        return WEB_APP_SERVICE_PREFIX + Networks.normalizeWebappDiscoveryName(HOSTNAME + ":" +
-                                                                                lookupService(WEBAPP_SERVICE));
-      } catch (UnsupportedEncodingException e) {
-        LOG.error("Got exception: ", e);
-        throw Throwables.propagate(e);
-      }
-    }
-  };
-
-  private final Supplier<String> defaultWebappServiceSupplier1 = new Supplier<String>() {
-    @Override
-    public String get() {
-      try {
-        return WEB_APP_SERVICE_PREFIX + Networks.normalizeWebappDiscoveryName("default/abc");
-      } catch (UnsupportedEncodingException e) {
-        LOG.error("Got exception: ", e);
-        throw Throwables.propagate(e);
-      }
-    }
-  };
-
-  private final Supplier<String> defaultWebappServiceSupplier2 = new Supplier<String>() {
-    @Override
-    public String get() {
-      try {
-        return WEB_APP_SERVICE_PREFIX + Networks.normalizeWebappDiscoveryName("default/def");
-      } catch (UnsupportedEncodingException e) {
-        LOG.error("Got exception: ", e);
-        throw Throwables.propagate(e);
-      }
-    }
-  };
-
   public final RouterService routerService = createRouterService();
   public final ServerService defaultServer1 = new ServerService(HOSTNAME, DISCOVERY_SERVICE, defaultServiceSupplier);
   public final ServerService defaultServer2 = new ServerService(HOSTNAME, DISCOVERY_SERVICE, defaultServiceSupplier);
-  public final ServerService webappServer = new ServerService(HOSTNAME, DISCOVERY_SERVICE, webappServiceSupplier);
-  public final ServerService defaultWebappServer1 = new ServerService(HOSTNAME, DISCOVERY_SERVICE,
-                                                                      defaultWebappServiceSupplier1);
-  public final ServerService defaultWebappServer2 = new ServerService(HOSTNAME, DISCOVERY_SERVICE,
-                                                                      defaultWebappServiceSupplier2);
-  public final List<ServerService> allServers = Lists.newArrayList(defaultServer1, defaultServer2, webappServer,
-                                                                   defaultWebappServer1, defaultWebappServer2);
+  public final List<ServerService> allServers = Lists.newArrayList(defaultServer1, defaultServer2);
 
   protected abstract RouterService createRouterService();
   protected abstract String getProtocol();
@@ -191,24 +142,6 @@ public abstract class NettyRouterTestBase {
     Iterable<Discoverable> discoverables = ((DiscoveryServiceClient) DISCOVERY_SERVICE).discover(
       defaultServiceSupplier.get());
     for (int i = 0; i < 50 && Iterables.size(discoverables) != 2; ++i) {
-      TimeUnit.MILLISECONDS.sleep(50);
-    }
-
-    // Wait for server of webappService to be registered
-    discoverables = ((DiscoveryServiceClient) DISCOVERY_SERVICE).discover(webappServiceSupplier.get());
-    for (int i = 0; i < 50 && Iterables.size(discoverables) != 1; ++i) {
-      TimeUnit.MILLISECONDS.sleep(50);
-    }
-
-    // Wait for server of defaultWebappServiceSupplier1 to be registered
-    discoverables = ((DiscoveryServiceClient) DISCOVERY_SERVICE).discover(defaultWebappServiceSupplier1.get());
-    for (int i = 0; i < 50 && Iterables.size(discoverables) != 1; ++i) {
-      TimeUnit.MILLISECONDS.sleep(50);
-    }
-
-    // Wait for server of defaultWebappServiceSupplier2 to be registered
-    discoverables = ((DiscoveryServiceClient) DISCOVERY_SERVICE).discover(defaultWebappServiceSupplier2.get());
-    for (int i = 0; i < 50 && Iterables.size(discoverables) != 1; ++i) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
   }
@@ -314,29 +247,6 @@ public abstract class NettyRouterTestBase {
     HttpResponse response = get(resolveURI(DEFAULT_SERVICE, String.format("%s/%s", "/v1/ping", "sync")));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(defaultServiceSupplier.get(), EntityUtils.toString(response.getEntity()));
-
-    // Test webappService
-    response = get(resolveURI(WEBAPP_SERVICE, String.format("%s/%s", "/v1/ping", "sync")));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(webappServiceSupplier.get(), EntityUtils.toString(response.getEntity()));
-
-    // Test default
-    response = get(resolveURI(WEBAPP_SERVICE, String.format("%s/%s", "/abc/v1/ping", "sync")),
-                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, "www.abc.com")});
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(defaultWebappServiceSupplier1.get(), EntityUtils.toString(response.getEntity()));
-
-    // Test default, port 80
-    response = get(resolveURI(WEBAPP_SERVICE, String.format("%s/%s", "/abc/v1/ping", "sync")),
-                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, "www.def.com" + ":80")});
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(defaultWebappServiceSupplier1.get(), EntityUtils.toString(response.getEntity()));
-
-    // Test default, port random port
-    response = get(resolveURI(WEBAPP_SERVICE, String.format("%s/%s", "/def/v1/ping", "sync")),
-                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, "www.ghi.net" + ":" + "5678")});
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(defaultWebappServiceSupplier2.get(), EntityUtils.toString(response.getEntity()));
   }
 
   @Test

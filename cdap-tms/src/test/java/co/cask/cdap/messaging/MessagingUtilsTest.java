@@ -32,4 +32,13 @@ public class MessagingUtilsTest {
     TopicId topicId = MessagingUtils.toTopicId(topicBytes);
     Assert.assertEquals(id, topicId);
   }
+
+  @Test
+  public void testGenerations() throws Exception {
+    Assert.assertTrue(MessagingUtils.isOlderGeneration(3, 5));
+    Assert.assertTrue(MessagingUtils.isOlderGeneration(3, -3));
+    Assert.assertFalse(MessagingUtils.isOlderGeneration(6, 5));
+    Assert.assertFalse(MessagingUtils.isOlderGeneration(6, 6));
+    Assert.assertFalse(MessagingUtils.isOlderGeneration(6, -5));
+  }
 }

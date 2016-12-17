@@ -32,6 +32,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.metadata.MetadataHttpHandler;
@@ -1251,6 +1252,56 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   }
 
   @Test
+  public void testSearchResultPaginationWithTargetType() throws Exception {
+    // note that the ordering of the entity creations and the sort param used in this test case matter, in order to
+    // reproduce the scenario that caused the issue CDAP-7881
+    NamespaceId namespace = new NamespaceId("pagination_with_target_type");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
+    StreamId stream1 = namespace.stream("text1");
+    StreamId stream2 = namespace.stream("text2");
+    DatasetId trackerDataset = namespace.dataset("_auditLog");
+    DatasetId mydataset = namespace.dataset("mydataset");
+
+    // the creation order below will determine how we see the entities in search result sorted by entity creation time
+    // in ascending order
+    datasetClient.create(
+      trackerDataset,
+      new DatasetInstanceConfiguration(Table.class.getName(), Collections.<String, String>emptyMap())
+    );
+    datasetClient.create(
+      mydataset,
+      new DatasetInstanceConfiguration(Table.class.getName(), Collections.<String, String>emptyMap())
+    );
+
+    // create entities so system metadata is annotated
+    streamClient.create(stream1);
+    streamClient.create(stream2);
+
+    // do sorting with creation time here since the testSearchResultPagination does with entity name
+    // the sorted result order _auditLog mydataset text2 text1 (ascending: creation from earliest time)
+    String sort = AbstractSystemMetadataWriter.CREATION_TIME_KEY + " " + SortInfo.SortOrder.ASC;
+
+    // offset 1, limit 2, 2 cursors, should return 2nd result, with 0 cursors since we don't have enough data
+    // set showHidden to true which will show the trackerDataset but will not be in search response since its not stream
+    MetadataSearchResponse searchResponse = searchMetadata(namespace, "*",
+                                                           ImmutableSet.of(MetadataSearchTargetType.STREAM),
+                                                           sort, 1, 2, 2, null, true);
+    List<MetadataSearchResultRecord> expectedResults = ImmutableList.of(new MetadataSearchResultRecord(stream2));
+    List<String> expectedCursors = ImmutableList.of();
+    Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertEquals(expectedCursors, searchResponse.getCursors());
+
+    // offset 1, limit 2, 2 cursors, should return just the dataset created above other than trackerDataset even
+    // though it was created before since showHidden is false and it should not affect pagination
+    searchResponse = searchMetadata(namespace, "*", ImmutableSet.of(MetadataSearchTargetType.DATASET),
+                                    sort, 0, 2, 2, null);
+    expectedResults = ImmutableList.of(new MetadataSearchResultRecord(mydataset));
+    expectedCursors = ImmutableList.of();
+    Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertEquals(expectedCursors, searchResponse.getCursors());
+  }
+
+  @Test
   public void testSearchResultPagination() throws Exception {
     NamespaceId namespace = new NamespaceId("pagination");
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
@@ -1258,6 +1309,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     StreamId stream = namespace.stream("text");
     DatasetId dataset = namespace.dataset("mydataset");
     StreamViewId view = stream.view("view");
+    DatasetId trackerDataset = namespace.dataset("_auditLog");
 
     // create entities so system metadata is annotated
     streamClient.create(stream);
@@ -1266,13 +1318,29 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       dataset,
       new DatasetInstanceConfiguration(Table.class.getName(), Collections.<String, String>emptyMap())
     );
+    datasetClient.create(
+      trackerDataset,
+      new DatasetInstanceConfiguration(Table.class.getName(), Collections.<String, String>emptyMap())
+    );
 
+    // search with showHidden to true
     EnumSet<MetadataSearchTargetType> targets = EnumSet.allOf(MetadataSearchTargetType.class);
     String sort = AbstractSystemMetadataWriter.ENTITY_NAME_KEY + " asc";
+    // search to get all the above entities offset 0, limit interger max  and cursors 0
+    MetadataSearchResponse searchResponse = searchMetadata(namespace, "*", targets, sort, 0, Integer.MAX_VALUE, 0,
+                                                           null, true);
+    List<MetadataSearchResultRecord> expectedResults = ImmutableList.of(new MetadataSearchResultRecord(trackerDataset),
+                                                                        new MetadataSearchResultRecord(dataset),
+                                                                        new MetadataSearchResultRecord(stream),
+                                                                        new MetadataSearchResultRecord(view));
+    List<String>  expectedCursors = ImmutableList.of();
+    Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertEquals(expectedCursors, searchResponse.getCursors());
+
     // no offset, limit 1, no cursors
-    MetadataSearchResponse searchResponse = searchMetadata(namespace, "*", targets, sort, 0, 1, 0, null);
-    List<MetadataSearchResultRecord> expectedResults = ImmutableList.of(new MetadataSearchResultRecord(dataset));
-    List<String> expectedCursors = ImmutableList.of();
+    searchResponse = searchMetadata(namespace, "*", targets, sort, 0, 1, 0, null);
+    expectedResults = ImmutableList.of(new MetadataSearchResultRecord(dataset));
+    expectedCursors = ImmutableList.of();
     Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
     Assert.assertEquals(expectedCursors, searchResponse.getCursors());
     // no offset, limit 1, 2 cursors, should return 1st result, with 2 cursors
@@ -1730,16 +1798,24 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   protected MetadataSearchResponse searchMetadata(NamespaceId namespaceId, String query,
                                                   Set<MetadataSearchTargetType> targets,
                                                   @Nullable String sort, int offset, int limit,
-                                                  int numCursors, @Nullable String cursor) throws Exception {
+                                                  int numCursors, @Nullable String cursor, boolean showHidden)
+    throws Exception {
     MetadataSearchResponse searchResponse = super.searchMetadata(namespaceId, query, targets, sort, offset,
-                                                                 limit, numCursors, cursor);
+                                                                 limit, numCursors, cursor, showHidden);
     Set<MetadataSearchResultRecord> transformed = new LinkedHashSet<>();
     for (MetadataSearchResultRecord result : searchResponse.getResults()) {
       transformed.add(new MetadataSearchResultRecord(result.getEntityId()));
     }
     return new MetadataSearchResponse(searchResponse.getSort(), searchResponse.getOffset(), searchResponse.getLimit(),
                                       searchResponse.getNumCursors(), searchResponse.getTotal(), transformed,
-                                      searchResponse.getCursors());
+                                      searchResponse.getCursors(), searchResponse.isShowHidden());
+  }
+
+  private MetadataSearchResponse searchMetadata(NamespaceId namespaceId, String query,
+                                                Set<MetadataSearchTargetType> targets,
+                                                @Nullable String sort, int offset, int limit,
+                                                int numCursors, @Nullable String cursor) throws Exception {
+    return searchMetadata(namespaceId, query, targets, sort, offset, limit, numCursors, cursor, false);
   }
 
   private Set<MetadataRecord> removeCreationTime(Set<MetadataRecord> original) {

@@ -33,9 +33,12 @@ export default class PlusButtonModal extends Component {
       viewMode: 'marketplace'
     };
   }
-  toggleView() {
+  toggleView(tab) {
+    if (this.state.viewMode === tab) {
+      return;
+    }
     this.setState({
-      viewMode: this.state.viewMode === 'marketplace' ? 'resourcecenter' : 'marketplace'
+      viewMode: tab
     });
   }
   closeHandler() {
@@ -81,7 +84,7 @@ export default class PlusButtonModal extends Component {
                 className={classNames("btn btn-sm navigation-button", {
                   'active': this.state.viewMode === 'marketplace'
                 })}
-                onClick={this.toggleView.bind(this)}
+                onClick={this.toggleView.bind(this, 'marketplace')}
               >
                 <span className="plus-button-modal-toggle-text">
                   {market}
@@ -91,7 +94,7 @@ export default class PlusButtonModal extends Component {
                 className={classNames("btn btn-sm navigation-button resource-center", {
                   'active': this.state.viewMode === 'resourcecenter'
                 })}
-                onClick={this.toggleView.bind(this)}
+                onClick={this.toggleView.bind(this, 'resourcecenter')}
               >
                 <span className="plus-button-modal-toggle-text">
                   {resourceCenter}

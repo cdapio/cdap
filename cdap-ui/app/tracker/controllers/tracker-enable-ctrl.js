@@ -85,25 +85,16 @@ class TrackerEnableController{
           return c.name === 'zookeeper.quorum';
         })[0].value;
 
-        let kafkaNamespace = res.filter( (c) => {
-          return c.name === 'kafka.zookeeper.namespace';
-        })[0].value;
-
-        let numPartitions = res.filter( (c) => {
-          return c.name === 'kafka.server.num.partitions';
-        })[0].value;
-
         let topic = res.filter( (c) => {
-          return c.name === 'audit.kafka.topic';
+          return c.name === 'audit.topic';
         })[0].value;
 
         let config = {
           artifact: this.CDAP_UI_CONFIG.tracker.artifact,
           config: {
-            auditLogKafkaConfig: {
-              zookeeperString: zookeeper + '/' + kafkaNamespace,
-              topic: topic,
-              numPartitions: numPartitions
+            auditLogConfig: {
+              zookeeperString: zookeeper,
+              topic: topic
             }
           }
         };

@@ -17,7 +17,6 @@
 package co.cask.cdap.messaging;
 
 import co.cask.cdap.proto.id.TopicId;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.HashMap;
@@ -29,8 +28,8 @@ import java.util.Objects;
  */
 public class TopicMetadata {
 
-  public static final String TTL_KEY = "ttl";
-  public static final String GENERATION_KEY = "generation";
+  public static final String GENERATION_KEY = MessagingUtils.Constants.GENERATION_KEY;
+  public static final String TTL_KEY = MessagingUtils.Constants.TTL_KEY;
 
   private final TopicId topicId;
   private final Map<String, String> properties;
@@ -65,7 +64,6 @@ public class TopicMetadata {
    * @param topicId topic id
    * @param properties a list of key/value pairs that will get converted into a {@link Map}.
    */
-  @VisibleForTesting
   public TopicMetadata(TopicId topicId, Object...properties) {
     this(topicId, toMap(properties));
   }

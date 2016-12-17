@@ -28,6 +28,9 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.api.messaging.MessagePublisher;
+import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -56,7 +59,10 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.preview.DataTracerFactoryProvider;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
+import co.cask.cdap.internal.app.runtime.messaging.BasicMessagingAdmin;
+import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -68,8 +74,6 @@ import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,9 +85,7 @@ import javax.annotation.Nullable;
  * Base class for program runtime context
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
-  implements SecureStore, DatasetContext, Transactional, RuntimeContext, PluginContext {
-
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
+  implements SecureStore, DatasetContext, Transactional, RuntimeContext, PluginContext, MessagingContext {
 
   private final Program program;
   private final ProgramOptions programOptions;
@@ -100,6 +102,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final SecureStore secureStore;
   private final Transactional transactional;
   private final int defaultTxTimeout;
+  private final MultiThreadMessagingContext messagingContext;
   protected final DynamicDatasetCache datasetCache;
 
   private final DataTracerFactory dataTracerFactory = new DataTracerFactory() {
@@ -116,9 +119,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             Set<String> datasets, DatasetFramework dsFramework, TransactionSystemClient txClient,
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
-                            SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                            SecureStore secureStore, SecureStoreManager secureStoreManager,
+                            MessagingService messagingService) {
     this(program, programOptions, cConf, datasets, dsFramework, txClient,
-         discoveryServiceClient, multiThreaded, metricsService, metricsTags, secureStore, secureStoreManager, null);
+         discoveryServiceClient, multiThreaded, metricsService, metricsTags,
+         secureStore, secureStoreManager, messagingService, null);
   }
 
   /**
@@ -129,6 +134,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
                             SecureStore secureStore, SecureStoreManager secureStoreManager,
+                            MessagingService messagingService,
                             @Nullable PluginInstantiator pluginInstantiator) {
     super(program.getId());
 
@@ -150,18 +156,26 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     }
     SystemDatasetInstantiator instantiator =
       new SystemDatasetInstantiator(dsFramework, program.getClassLoader(), owners);
+
+    this.messagingContext = new MultiThreadMessagingContext(messagingService);
+
     this.datasetCache = multiThreaded
       ? new MultiThreadDatasetCache(instantiator, txClient, new NamespaceId(program.getId().getNamespace()),
-                                    runtimeArguments, programMetrics, staticDatasets)
+                                    runtimeArguments, programMetrics, staticDatasets, messagingContext)
       : new SingleThreadDatasetCache(instantiator, txClient, new NamespaceId(program.getId().getNamespace()),
                                      runtimeArguments, programMetrics, staticDatasets);
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
-    this.admin = new DefaultAdmin(dsFramework, new NamespaceId(program.getId().getNamespace()), secureStoreManager);
+    this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespaceId(), secureStoreManager,
+                                  new BasicMessagingAdmin(messagingService, program.getId().getNamespaceId()));
     this.secureStore = secureStore;
     this.defaultTxTimeout = determineTransactionTimeout(cConf);
     this.transactional = Transactions.createTransactional(getDatasetCache(), defaultTxTimeout);
+
+    if (!multiThreaded) {
+      datasetCache.addExtraTransactionAware(messagingContext);
+    }
   }
 
   /**
@@ -169,7 +183,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    * for example, in a flowlet, the more specific "flowlet.[name].system.tx.timeout" would prevail.
    *
    * @return the default transaction timeout, if specified in the runtime arguments. Otherwise returns the
-   *         default tranaction timeout from the cConf.
+   *         default transaction timeout from the cConf.
    */
   private int determineTransactionTimeout(CConfiguration cConf) {
     return SystemArguments.getTransactionTimeout(getRuntimeArguments(), cConf);
@@ -544,5 +558,20 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private ClassLoader setContextCombinedClassLoader() {
     return ClassLoaders.setContextClassLoader(
       new CombineClassLoader(null, ImmutableList.of(program.getClassLoader(), getClass().getClassLoader())));
+  }
+
+  @Override
+  public MessagePublisher getMessagePublisher() {
+    return messagingContext.getMessagePublisher();
+  }
+
+  @Override
+  public MessagePublisher getDirectMessagePublisher() {
+    return messagingContext.getDirectMessagePublisher();
+  }
+
+  @Override
+  public MessageFetcher getMessageFetcher() {
+    return messagingContext.getMessageFetcher();
   }
 }

@@ -74,7 +74,7 @@ public final class SparkRuntimeUtils {
 
     @Override
     public boolean acceptResource(final String resource) {
-      // All Spark API, Spark, Scala and Akka classes should come from parent.
+      // All Spark API, Spark, Scala, Akka and Kryo classes should come from parent.
       if (resource.startsWith("co/cask/cdap/api/spark/")) {
         return true;
       }
@@ -82,6 +82,9 @@ public final class SparkRuntimeUtils {
         return true;
       }
       if (resource.startsWith("akka/")) {
+        return true;
+      }
+      if (resource.startsWith("com/esotericsoftware/kryo/")) {
         return true;
       }
       if (resource.startsWith("org/apache/spark/")) {
@@ -117,6 +120,9 @@ public final class SparkRuntimeUtils {
         return true;
       }
       if (packageName.equals("akka") || packageName.startsWith("akka.")) {
+        return true;
+      }
+      if (packageName.equals("com.esotericsoftware.kryo") || packageName.startsWith("com.esotericsoftware.kryo.")) {
         return true;
       }
       // cdh 5.5 and on package kafka and flume streaming in their assembly jar

@@ -166,7 +166,8 @@ window.getOldCDAPUrl = function(navigationObj = {}) {
     'datasets.detail.overview.status': '/datasets/:datasetId/overview/status',
     'datasets.detail.overview.explore': '/datasets/:datasetId/overview/explore',
     'streams.detail.overview.status': '/streams/:streamId/overview/status',
-    'streams.detail.overview.explore': '/streams/:streamId/overview/explore'
+    'streams.detail.overview.explore': '/streams/:streamId/overview/explore',
+    'apps.detail.overview.status': '/apps/:appId/overview/status'
   };
   let url = baseUrl + stateToUrlMap[stateName || 'hydrator'];
   url = buildCustomUrl(url, stateParams);

@@ -23,20 +23,20 @@ import co.cask.cdap.proto.id.TopicId;
 /**
  * An immutable implementation of {@link PayloadTable.Entry}.
  */
-final class ImmutablePayloadTableEntry implements PayloadTable.Entry {
+public final class ImmutablePayloadTableEntry implements PayloadTable.Entry {
   private final TopicId topicId;
   private final int generation;
   private final long transactionWriterPointer;
-  private final long publishTimestamp;
+  private final long writeTimestamp;
   private final short sequenceId;
   private final byte[] payload;
 
-  ImmutablePayloadTableEntry(byte[] row, byte[] payload) {
+  public ImmutablePayloadTableEntry(byte[] row, byte[] payload) {
     this.topicId = MessagingUtils.toTopicId(row, 0, row.length - Bytes.SIZEOF_SHORT - (2 * Bytes.SIZEOF_LONG)
       - Bytes.SIZEOF_INT);
     this.generation = Bytes.toInt(row, row.length - Bytes.SIZEOF_SHORT - (2 * Bytes.SIZEOF_LONG) - Bytes.SIZEOF_INT);
     this.transactionWriterPointer = Bytes.toLong(row, row.length - Bytes.SIZEOF_SHORT - (2 * Bytes.SIZEOF_LONG));
-    this.publishTimestamp = Bytes.toLong(row, row.length - Bytes.SIZEOF_SHORT - Bytes.SIZEOF_LONG);
+    this.writeTimestamp = Bytes.toLong(row, row.length - Bytes.SIZEOF_SHORT - Bytes.SIZEOF_LONG);
     this.sequenceId = Bytes.toShort(row, row.length - Bytes.SIZEOF_SHORT);
     this.payload = payload;
   }
@@ -63,7 +63,7 @@ final class ImmutablePayloadTableEntry implements PayloadTable.Entry {
 
   @Override
   public long getPayloadWriteTimestamp() {
-    return publishTimestamp;
+    return writeTimestamp;
   }
 
   @Override

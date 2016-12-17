@@ -108,7 +108,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       stopped = jssc.awaitTerminationOrTimeout(Long.MAX_VALUE);
     } finally {
       if (!stopped) {
-        jssc.stop(true, true);
+        jssc.stop(true, pipelineSpec.isStopGracefully());
       }
     }
   }

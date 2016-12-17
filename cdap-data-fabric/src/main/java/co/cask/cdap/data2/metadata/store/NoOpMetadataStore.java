@@ -118,10 +118,11 @@ public class NoOpMetadataStore implements MetadataStore {
   @Override
   public MetadataSearchResponse search(String namespaceId, String searchQuery,
                                        Set<MetadataSearchTargetType> types,
-                                       SortInfo sort, int offset, int limit, int numCursors, String cursor) {
+                                       SortInfo sort, int offset, int limit, int numCursors, String cursor,
+                                       boolean showHidden) {
     return new MetadataSearchResponse(sort.toString(), offset, limit, numCursors, 0,
                                       Collections.<MetadataSearchResultRecord>emptySet(),
-                                      Collections.<String>emptyList());
+                                      Collections.<String>emptyList(), showHidden);
   }
 
   @Override

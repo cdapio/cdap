@@ -99,7 +99,7 @@ public abstract class AbstractMetadataClient {
   public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
                                                Set<MetadataSearchTargetType> targets)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
-    return searchMetadata(namespace, query, targets, null, 0, Integer.MAX_VALUE, 0, null);
+    return searchMetadata(namespace, query, targets, null, 0, Integer.MAX_VALUE, 0, null, false);
   }
 
   /**
@@ -116,12 +116,14 @@ public abstract class AbstractMetadataClient {
    * @param cursor the cursor that acts as the starting index for the requested page. This is only applicable when
    *               #sortInfo is not default. If offset is also specified, it is applied starting at
    *               the cursor. If {@code null}, the first row is used as the cursor
+   * @param showHidden boolean which specifies whether to display hidden entities (entity whose name start with "_")
+   *                    or not.
    * @return A set of {@link MetadataSearchResultRecord} for the given query.
    */
   public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
                                                Set<MetadataSearchTargetType> targets, @Nullable String sort,
                                                int offset, int limit, int numCursors,
-                                               @Nullable String cursor)
+                                               @Nullable String cursor, boolean showHidden)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
 
     String path = String.format("metadata/search?query=%s", query);
@@ -136,6 +138,9 @@ public abstract class AbstractMetadataClient {
     path += "&numCursors=" + numCursors;
     if (cursor != null) {
       path += "&cursor=" + cursor;
+    }
+    if (showHidden) {
+      path += "&showHidden=" + true;
     }
     URL searchURL = resolve(namespace, path);
     HttpResponse response = execute(HttpRequest.get(searchURL).build(), HttpResponseStatus.BAD_REQUEST.getCode());

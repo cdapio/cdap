@@ -263,14 +263,16 @@
          ng-click="TopPanelCtrl.exportConfig()">
       <span class="fa icon-export"></span>
     </div>
-    <div class="btn"
-         uib-tooltip="View in CDAP"
-         tooltip-placement="bottom"
-         tooltip-append-to-body="true"
-         tooltip-class="toppanel-tooltip"
-         ui-sref="apps.detail.overview.status({ appId: TopPanelCtrl.app.name })">
-         <span class="icon-fist"></span>
-    </div>
+    <!-- For styling consistency, wrapping the div on <a> -->
+    <a href="{{TopPanelCtrl.viewInCdapLink}}">
+      <div class="btn"
+           uib-tooltip="View in CDAP"
+           tooltip-placement="bottom"
+           tooltip-append-to-body="true"
+           tooltip-class="toppanel-tooltip">
+           <span class="icon-fist"></span>
+      </div>
+    </a>
     <div class="btn"
       uib-tooltip="Delete"
       tooltip-placement="left"

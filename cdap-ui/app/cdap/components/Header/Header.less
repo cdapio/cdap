@@ -19,6 +19,13 @@
 @navbar-brand-bg: #363945;
 
 .cask-header {
+  @media(max-width: 1260px) {
+    .navbar {
+      .navbar-list {
+        padding-left: 10px;
+      }
+    }
+  }
   .navbar {
     height: @height-of-header;
     background-color: @navbar-bg;
@@ -130,9 +137,6 @@
         color: @active-link-color;
       }
       color: #ccc;
-      &.old-ui-link {
-        color: white;
-      }
     }
   }
 }

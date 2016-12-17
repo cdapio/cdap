@@ -88,10 +88,9 @@ Running the Spark Program
 -------------------------
 There are three ways to start the Spark program:
 
-1. Go to the |example-italic| `application overview page, programs tab
-   <http://localhost:11011/ns/default/apps/SpamClassifier/overview/programs>`__,
-   click |example-spark-literal| to get to the Spark program detail page, and add these runtime
-   arguments/preferences::
+1. Go to the |example-italic| :cdap-ui-apps-programs:`application overview page, programs
+   tab <SpamClassifier>`, click |example-spark-literal| to get to the Spark program detail
+   page, and add these runtime arguments/preferences::
 
      kafka.brokers:broker1-host:port
      kafka.topics:topic1,topic2

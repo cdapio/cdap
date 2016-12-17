@@ -22,6 +22,7 @@ import {MyDatasetApi} from 'api/dataset';
 import {MyStreamApi} from 'api/stream';
 import FastActionButton from '../FastActionButton';
 import ConfirmationModal from 'components/ConfirmationModal';
+import {Tooltip} from 'reactstrap';
 import T from 'i18n-react';
 
 export default class DeleteAction extends Component {
@@ -30,10 +31,12 @@ export default class DeleteAction extends Component {
 
     this.action = this.action.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
+    this.toggleTooltip = this.toggleTooltip.bind(this);
 
     this.state = {
       modal: false,
       loading: false,
+      tooltipOpen: false,
       errorMessage: '',
       extendedMessage: '',
       disabled: this.props.entity.type === 'artifact' && this.props.entity.scope === 'SYSTEM'
@@ -46,6 +49,10 @@ export default class DeleteAction extends Component {
       event.stopPropagation();
       event.nativeEvent.stopImmediatePropagation();
     }
+  }
+
+  toggleTooltip(){
+    this.setState({ tooltipOpen : !this.state.tooltipOpen});
   }
 
   action() {
@@ -88,13 +95,28 @@ export default class DeleteAction extends Component {
   render() {
     const actionLabel = T.translate('features.FastAction.deleteLabel');
     const headerTitle = `${actionLabel} ${this.props.entity.type}`;
+    const tooltipID = `${this.props.entity.uniqueId}-delete`;
+
     return (
       <span>
         <FastActionButton
           icon="fa fa-trash"
           action={this.toggleModal}
           disabled={this.state.disabled}
+          id={tooltipID}
         />
+        <Tooltip
+          placement="top"
+          className="fast-action-tooltip"
+          isOpen={this.state.tooltipOpen}
+          target={tooltipID}
+          toggle={this.toggleTooltip}
+          delay={0}
+        >
+          {T.translate('features.FastAction.deleteLabel')}
+        </Tooltip>
+
+
         {
           this.state.modal ? (
             <ConfirmationModal
@@ -119,6 +141,7 @@ export default class DeleteAction extends Component {
 DeleteAction.propTypes = {
   entity: PropTypes.shape({
     id: PropTypes.string.isRequired,
+    uniqueId: PropTypes.string,
     version: PropTypes.string,
     scope: PropTypes.oneOf(['SYSTEM', 'USER']),
     type: PropTypes.oneOf(['application', 'artifact', 'datasetinstance', 'stream']).isRequired

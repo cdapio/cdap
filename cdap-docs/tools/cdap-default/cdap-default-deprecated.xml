@@ -28,6 +28,14 @@
   </property>
 
   <property>
+    <name>audit.kafka.topic</name>
+    <value>audit</value>
+    <description>
+      Apache Kafka topic name to which audit messages are published
+    </description>
+  </property>
+
+  <property>
     <name>dataset.service.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -134,27 +142,19 @@
   </property>
 
   <property>
-    <name>router.ssl.webapp.bind.port</name>
-    <value>20443</value>
+    <name>notification.kafka.topic</name>
+    <value>notifications</value>
     <description>
-      CDAP Router service bind port for webapp for HTTPS (deprecated)
+      Kafka topic name used to publish notifications
     </description>
   </property>
 
   <property>
-    <name>router.webapp.bind.port</name>
-    <value>20000</value>
+    <name>notification.transport.system</name>
+    <value>kafka</value>
     <description>
-      CDAP Router service bind port for webapp (deprecated)
-    </description>
-  </property>
-
-  <property>
-    <name>router.webapp.enabled</name>
-    <value>false</value>
-    <description>
-      Determines if the webapp listening service should be started
-      (deprecated)
+      Transport system used by the notification system; can be either
+      'kafka' or 'stream'
     </description>
   </property>
 

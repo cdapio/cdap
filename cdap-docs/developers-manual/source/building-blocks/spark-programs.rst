@@ -306,6 +306,8 @@ Spark programs in CDAP can also be added to a :ref:`workflow <workflows>`, simil
 through the ``SparkExecutionContext.getWorkflowInfo`` method.
 
 
+.. _spark-transactions:
+
 Transactions and Spark
 ======================
 When a Spark program interacts with datasets, CDAP will automatically create a

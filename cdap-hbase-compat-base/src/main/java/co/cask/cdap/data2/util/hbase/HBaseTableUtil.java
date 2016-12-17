@@ -381,7 +381,7 @@ public abstract class HBaseTableUtil {
           // Assuming the endpoint and protocol class doesn't have dependencies
           // other than those comes with HBase, Java and fastutil.
           if (className.startsWith("co.cask") || className.startsWith("it.unimi.dsi.fastutil")
-            || className.startsWith("org.apache.tephra")) {
+            || className.startsWith("org.apache.tephra") || className.startsWith("com.google.gson")) {
             if (!dependentClasses.containsKey(className)) {
               dependentClasses.put(className, classUrl);
             }
@@ -757,6 +757,8 @@ public abstract class HBaseTableUtil {
   public abstract Class<? extends Coprocessor> getQueueRegionObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getDequeueScanObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getIncrementHandlerClassForVersion();
+  public abstract Class<? extends Coprocessor> getMessageTableRegionObserverClassForVersion();
+  public abstract Class<? extends Coprocessor> getPayloadTableRegionObserverClassForVersion();
 
   protected abstract HTableNameConverter getHTableNameConverter();
 

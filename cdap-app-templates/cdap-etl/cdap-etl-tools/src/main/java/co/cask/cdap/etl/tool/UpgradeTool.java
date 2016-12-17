@@ -16,20 +16,13 @@
 
 package co.cask.cdap.etl.tool;
 
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.etl.proto.UpgradeContext;
-import co.cask.cdap.etl.proto.UpgradeableConfig;
-import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLConfig;
-import co.cask.cdap.etl.proto.v2.ETLRealtimeConfig;
-import co.cask.cdap.etl.proto.v2.ETLStage;
-import co.cask.cdap.etl.tool.config.ClientUpgradeContext;
+import co.cask.cdap.etl.tool.config.Upgrader;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -38,7 +31,6 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authentication.client.AccessToken;
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -68,29 +60,19 @@ import javax.annotation.Nullable;
  */
 public class UpgradeTool {
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeTool.class);
-  private static final String BATCH_NAME = "cdap-etl-batch";
-  private static final String REALTIME_NAME = "cdap-etl-realtime";
-  private static final String DATA_PIPELINE_NAME = "cdap-data-pipeline";
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final int DEFAULT_READ_TIMEOUT_MILLIS = 90 * 1000;
   private final NamespaceClient namespaceClient;
   private final ApplicationClient appClient;
-  private final ArtifactSummary batchArtifact;
-  private final ArtifactSummary realtimeArtifact;
-  private final ArtifactSummary dataPipelineArtifact;
-  private final ArtifactClient artifactClient;
+  private final Upgrader upgrader;
   @Nullable
   private final File errorDir;
 
   private UpgradeTool(ClientConfig clientConfig, @Nullable File errorDir) {
-    String version = ETLVersion.getVersion();
-    this.dataPipelineArtifact = new ArtifactSummary(DATA_PIPELINE_NAME, version, ArtifactScope.SYSTEM);
-    this.batchArtifact = new ArtifactSummary(BATCH_NAME, version, ArtifactScope.SYSTEM);
-    this.realtimeArtifact = new ArtifactSummary(REALTIME_NAME, version, ArtifactScope.SYSTEM);
     this.appClient = new ApplicationClient(clientConfig);
     this.namespaceClient = new NamespaceClient(clientConfig);
-    this.artifactClient = new ArtifactClient(clientConfig);
     this.errorDir = errorDir;
+    this.upgrader = new Upgrader(new ArtifactClient(clientConfig));
   }
 
   private Set<ApplicationId> upgrade() throws Exception {
@@ -104,8 +86,7 @@ public class UpgradeTool {
 
   private Set<ApplicationId> upgrade(NamespaceId namespace) throws Exception {
     Set<ApplicationId> upgraded = new HashSet<>();
-    Set<String> artifactNames = ImmutableSet.of(BATCH_NAME, REALTIME_NAME, DATA_PIPELINE_NAME);
-    for (ApplicationRecord appRecord : appClient.list(namespace, artifactNames, null)) {
+    for (ApplicationRecord appRecord : appClient.list(namespace, Upgrader.ARTIFACT_NAMES, null)) {
       ApplicationId appId = namespace.app(appRecord.getName());
       if (upgrade(appId)) {
         upgraded.add(appId);
@@ -114,53 +95,36 @@ public class UpgradeTool {
     return upgraded;
   }
 
-  private boolean upgrade(ApplicationId appId) throws Exception {
+  private boolean upgrade(final ApplicationId appId) throws Exception {
     ApplicationDetail appDetail = appClient.get(appId);
 
-    if (!shouldUpgrade(appDetail.getArtifact())) {
-      return false;
+    if (!upgrader.shouldUpgrade(appDetail.getArtifact())) {
+      LOG.debug("Skipping app {} since its not an upgradeable hydrator pipeline.", appId);
     }
 
     LOG.info("Upgrading pipeline: {}", appId);
-    String artifactName = appDetail.getArtifact().getName();
-    String artifactVersion = appDetail.getArtifactVersion();
-    if (BATCH_NAME.equals(artifactName)) {
-      UpgradeContext upgradeContext = ClientUpgradeContext.getBatchContext(appId.getParent(), artifactClient);
-      ETLBatchConfig upgradedConfig = convertBatchConfig(artifactVersion, appDetail.getConfiguration(), upgradeContext);
-      upgrade(appId, batchArtifact, upgradedConfig);
-    } else if (DATA_PIPELINE_NAME.equals(artifactName)) {
-      UpgradeContext upgradeContext = ClientUpgradeContext.getDataPipelineContext(appId.getParent(), artifactClient);
-      ETLBatchConfig upgradedConfig = convertBatchConfig(artifactVersion, appDetail.getConfiguration(), upgradeContext);
-      upgrade(appId, dataPipelineArtifact, upgradedConfig);
-    } else if (REALTIME_NAME.equals(artifactName)) {
-      UpgradeContext upgradeContext = ClientUpgradeContext.getRealtimeContext(appId.getParent(), artifactClient);
-      ETLRealtimeConfig upgradedConfig =
-        convertRealtimeConfig(artifactVersion, appDetail.getConfiguration(), upgradeContext);
-      upgrade(appId, realtimeArtifact, upgradedConfig);
-    } else {
-      // should never happen
-      LOG.warn("Unknown app artifact {}. Skipping pipeline.", artifactName);
-      return false;
-    }
-    return true;
-  }
-
-  private <T extends ETLConfig> void upgrade(ApplicationId appId, ArtifactSummary appArtifact,
-                                             T config) throws IOException {
-    AppRequest<T> updateRequest = new AppRequest<>(appArtifact, config);
-    try {
-      appClient.update(appId, updateRequest);
-    } catch (Exception e) {
-      LOG.error("Error upgrading pipeline {}.", appId, e);
-      if (errorDir != null) {
-        File errorFile = new File(errorDir, String.format("%s-%s.json", appId.getParent(), appId.getEntityName()));
-        LOG.error("Writing config for pipeline {} to {} for further manual investigation.",
-                  appId, errorFile.getAbsolutePath());
-        try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(errorFile))) {
-          outputStreamWriter.write(GSON.toJson(updateRequest));
+    return upgrader.upgrade(appDetail.getArtifact(), appDetail.getConfiguration(), new Upgrader.UpgradeAction() {
+      @Override
+      public boolean upgrade(AppRequest<? extends ETLConfig> appRequest) {
+        try {
+          appClient.update(appId, appRequest);
+          return true;
+        } catch (Exception e) {
+          LOG.error("Error upgrading pipeline {}.", appId, e);
+          if (errorDir != null) {
+            File errorFile = new File(errorDir, String.format("%s-%s.json", appId.getParent(), appId.getEntityName()));
+            LOG.error("Writing config for pipeline {} to {} for further manual investigation.",
+                      appId, errorFile.getAbsolutePath());
+            try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(errorFile))) {
+              outputStreamWriter.write(GSON.toJson(appRequest));
+            } catch (IOException e1) {
+              LOG.error("Error writing config out for manual investigation.", e1);
+            }
+          }
+          return false;
         }
       }
-    }
+    });
   }
 
   public static void main(String[] args) throws Exception {
@@ -201,10 +165,8 @@ public class UpgradeTool {
       HelpFormatter helpFormatter = new HelpFormatter();
       helpFormatter.printHelp(
         UpgradeTool.class.getName() + " upgrade",
-        "Upgrades Hydrator pipelines created for 3.2.x versions" +
-        "of the cdap-etl-batch and cdap-etl-realtime artifacts into pipelines compatible with 3.3.x versions of " +
-        "cdap-etl-batch and cdap-etl-realtime. Connects to an instance of CDAP to find any 3.2.x pipelines, then " +
-        "upgrades those pipelines.", options, "");
+        "Upgrades Hydrator 3.2 - 3.6 pipelines into 4.0 pipelines. If the plugins used are not backwards compatible, " +
+          "a best effort will be made and output to and error directory for manual upgrade.", options, "");
       System.exit(0);
     }
 
@@ -213,7 +175,7 @@ public class UpgradeTool {
     if (commandLine.hasOption("f")) {
       String inputFilePath = commandLine.getOptionValue("f");
       String outputFilePath = commandLine.hasOption("o") ? commandLine.getOptionValue("o") : inputFilePath + ".new";
-      convertFile(inputFilePath, outputFilePath, new ArtifactClient(clientConfig));
+      convertFile(inputFilePath, outputFilePath, new Upgrader(new ArtifactClient(clientConfig)));
       System.exit(0);
     }
 
@@ -307,8 +269,8 @@ public class UpgradeTool {
     return clientConfigBuilder.build();
   }
 
-  private static void convertFile(String configFilePath, String outputFilePath,
-                                  ArtifactClient artifactClient) throws Exception {
+  private static void convertFile(String configFilePath, final String outputFilePath,
+                                  Upgrader upgrader) throws Exception {
     File configFile = new File(configFilePath);
     if (!configFile.exists()) {
       throw new IllegalArgumentException(configFilePath + " does not exist.");
@@ -319,42 +281,22 @@ public class UpgradeTool {
     String fileContents = new String(Files.readAllBytes(configFile.toPath()), StandardCharsets.UTF_8);
 
     ETLAppRequest artifactFile = GSON.fromJson(fileContents, ETLAppRequest.class);
-    if (!shouldUpgrade(artifactFile.artifact)) {
-      throw new IllegalArgumentException(
-        "Cannot update for artifact " + artifactFile.artifact + ". " +
-          "Please check the artifact is cdap-etl-batch or cdap-etl-realtime in the system scope of version 3.2.x.");
+
+    if (!upgrader.shouldUpgrade(artifactFile.artifact)) {
+      LOG.error("{} is not an artifact for an upgradeable Hydrator pipeline.", artifactFile.artifact);
+      return;
     }
 
-    String version = ETLVersion.getVersion();
-
-    File outputFile = new File(outputFilePath);
-    String oldArtifactVersion = artifactFile.artifact.getVersion();
-    if (BATCH_NAME.equals(artifactFile.artifact.getName())) {
-      ArtifactSummary artifact = new ArtifactSummary(BATCH_NAME, version, ArtifactScope.SYSTEM);
-      UpgradeContext upgradeContext = ClientUpgradeContext.getBatchContext(NamespaceId.DEFAULT, artifactClient);
-      ETLBatchConfig config = convertBatchConfig(oldArtifactVersion, artifactFile.config.toString(), upgradeContext);
-      AppRequest<ETLBatchConfig> updated = new AppRequest<>(artifact, config);
-      try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath(), StandardCharsets.UTF_8)) {
-        writer.write(GSON.toJson(updated));
+    upgrader.upgrade(artifactFile.artifact, artifactFile.config.toString(), new Upgrader.UpgradeAction() {
+      @Override
+      public boolean upgrade(AppRequest<? extends ETLConfig> appRequest) throws IOException {
+        File outputFile = new File(outputFilePath);
+        try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath(), StandardCharsets.UTF_8)) {
+          writer.write(GSON.toJson(appRequest));
+        }
+        return true;
       }
-    } else if (DATA_PIPELINE_NAME.equals(artifactFile.artifact.getName())) {
-      ArtifactSummary artifact = new ArtifactSummary(DATA_PIPELINE_NAME, version, ArtifactScope.SYSTEM);
-      UpgradeContext upgradeContext = ClientUpgradeContext.getDataPipelineContext(NamespaceId.DEFAULT, artifactClient);
-      ETLBatchConfig config = convertBatchConfig(oldArtifactVersion, artifactFile.config.toString(), upgradeContext);
-      AppRequest<ETLBatchConfig> updated = new AppRequest<>(artifact, config);
-      try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath(), StandardCharsets.UTF_8)) {
-        writer.write(GSON.toJson(updated));
-      }
-    } else {
-      ArtifactSummary artifact = new ArtifactSummary(REALTIME_NAME, version, ArtifactScope.SYSTEM);
-      UpgradeContext upgradeContext = ClientUpgradeContext.getRealtimeContext(NamespaceId.DEFAULT, artifactClient);
-      ETLRealtimeConfig config =
-        convertRealtimeConfig(oldArtifactVersion, artifactFile.config.toString(), upgradeContext);
-      AppRequest<ETLRealtimeConfig> updated = new AppRequest<>(artifact, config);
-      try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath(), StandardCharsets.UTF_8)) {
-        writer.write(GSON.toJson(updated));
-      }
-    }
+    });
 
     LOG.info("Successfully converted application details from file " + configFilePath + ". " +
                "Results have been written to " + outputFilePath);
@@ -365,91 +307,5 @@ public class UpgradeTool {
   private static class ETLAppRequest {
     private ArtifactSummary artifact;
     private JsonObject config;
-  }
-
-  private static boolean shouldUpgrade(ArtifactSummary artifactSummary) {
-    // check its the system etl artifacts
-    if (artifactSummary.getScope() != ArtifactScope.SYSTEM) {
-      return false;
-    }
-
-    if (!BATCH_NAME.equals(artifactSummary.getName()) &&
-      !REALTIME_NAME.equals(artifactSummary.getName()) &&
-      !DATA_PIPELINE_NAME.equals(artifactSummary.getName())) {
-      return false;
-    }
-
-    // check its 3.x.x versions of etl
-    ArtifactVersion artifactVersion = new ArtifactVersion(artifactSummary.getVersion());
-    Integer majorVersion = artifactVersion.getMajor();
-    Integer minorVersion = artifactVersion.getMinor();
-    return majorVersion != null && majorVersion == 3 &&
-      minorVersion != null && minorVersion >= 2 && minorVersion < 5;
-  }
-
-  private static ETLBatchConfig convertBatchConfig(String artifactVersion, String configStr,
-                                                   UpgradeContext upgradeContext) {
-    UpgradeableConfig config;
-    if (artifactVersion.startsWith("3.2.")) {
-      config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v0.ETLBatchConfig.class);
-    } else if (artifactVersion.startsWith("3.3.")) {
-      config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v1.ETLBatchConfig.class);
-    } else if (artifactVersion.startsWith("3.4.")) {
-      // 3.4.x has the same config format as 3.5.x, but the plugin artifacts may need to be upgraded
-      ETLBatchConfig batchConfig = GSON.fromJson(configStr, ETLBatchConfig.class);
-      ETLBatchConfig.Builder builder = ETLBatchConfig.builder(batchConfig.getSchedule())
-        .addConnections(batchConfig.getConnections())
-        .setResources(batchConfig.getResources())
-        .setDriverResources(batchConfig.getDriverResources())
-        .setEngine(batchConfig.getEngine());
-      // upgrade any of the plugin artifact versions if needed
-      for (ETLStage postAction : batchConfig.getPostActions()) {
-        builder.addPostAction(postAction.upgradeStage(upgradeContext));
-      }
-      for (ETLStage stage : batchConfig.getStages()) {
-        builder.addStage(stage.upgradeStage(upgradeContext));
-      }
-      return builder.build();
-    } else {
-      LOG.warn("Unknown artifact version {}. Skipping pipeline.", artifactVersion);
-      // should never happen
-      return null;
-    }
-
-    while (config.canUpgrade()) {
-      config = config.upgrade(upgradeContext);
-    }
-    return (ETLBatchConfig) config;
-  }
-
-  private static ETLRealtimeConfig convertRealtimeConfig(String artifactVersion, String configStr,
-                                                         UpgradeContext upgradeContext) {
-    UpgradeableConfig config;
-    if (artifactVersion.startsWith("3.2.")) {
-      config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v0.ETLRealtimeConfig.class);
-    } else if (artifactVersion.startsWith("3.3.")) {
-      config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v1.ETLRealtimeConfig.class);
-    } else if (artifactVersion.startsWith("3.4.")) {
-      // 3.4.x has the same config format as 3.5.x, but the plugin artifacts may need to be upgraded
-      ETLRealtimeConfig realtimeConfig = GSON.fromJson(configStr, ETLRealtimeConfig.class);
-      ETLRealtimeConfig.Builder builder = ETLRealtimeConfig.builder()
-        .addConnections(realtimeConfig.getConnections())
-        .setInstances(realtimeConfig.getInstances())
-        .setResources(realtimeConfig.getResources());
-      // upgrade any of the plugin artifact versions if needed
-      for (ETLStage stage : realtimeConfig.getStages()) {
-        builder.addStage(stage.upgradeStage(upgradeContext));
-      }
-      return builder.build();
-    } else {
-      LOG.warn("Unknown artifact version {}. Skipping pipeline.", artifactVersion);
-      // should never happen
-      return null;
-    }
-
-    while (config.canUpgrade()) {
-      config = config.upgrade(upgradeContext);
-    }
-    return (ETLRealtimeConfig) config;
   }
 }

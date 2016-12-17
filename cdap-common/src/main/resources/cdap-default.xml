@@ -405,18 +405,25 @@
     <name>audit.enabled</name>
     <value>true</value>
     <description>
-      Determines whether to publish audit messages to Apache Kafka
+      Determines whether to publish audit messages
     </description>
   </property>
 
   <property>
-    <name>audit.kafka.topic</name>
+    <name>audit.topic</name>
     <value>audit</value>
     <description>
-      Apache Kafka topic name to which audit messages are published
+      The topic name in the messaging system to which audit messages are published
     </description>
   </property>
 
+  <property>
+    <name>audit.publish.timeout.ms</name>
+    <value>2000</value>
+    <description>
+      Audit message publishing timeout in milliseconds
+    </description>
+  </property>
 
   <!-- Datasets Configuration -->
 
@@ -942,9 +949,7 @@
       the Kafka service used by CDAP. If the same Kafka service ZooKeeper quorum
       and namespace are shared by multiple CDAP instances, each CDAP instance
       needs to distinguish its Kafka topics from those of other CDAP instances
-      with unique values for ${audit.kafka.topic}, ${log.kafka.topic},
-      ${notification.kafka.topic}, ${metadata.updates.kafka.topic}, and
-      ${metrics.kafka.topic.prefix}.
+      with unique values for ${log.kafka.topic} and ${metrics.kafka.topic.prefix}.
     </description>
   </property>
 
@@ -1178,10 +1183,27 @@
   </property>
 
   <property>
+    <name>messaging.local.data.cleanup.frequency.secs</name>
+    <value>3600</value>
+    <description>
+      Scheduling frequency of TTL cleanup thread in seconds (only used in Standalone CDAP)
+    </description>
+  </property>
+
+  <property>
     <name>messaging.hbase.max.scan.threads</name>
     <value>48</value>
     <description>
       Maximum number of threads used for scanning HBase tables
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.hbase.scan.cache.rows</name>
+    <value>1000</value>
+    <description>
+      Number of rows for caching that will be passed to HBase scanners.
+      Higher caching values will enable faster scanning but will use more memory.
     </description>
   </property>
 
@@ -1267,6 +1289,14 @@
   </property>
 
   <property>
+    <name>messaging.system.topics</name>
+    <value>${audit.topic},${notification.topic}</value>
+    <description>
+      A comma-separated list of topics that is always available in the system namespace
+    </description>
+  </property>
+
+  <property>
     <name>messaging.table.expiration.seconds</name>
     <value>300</value>
     <description>
@@ -1282,6 +1312,21 @@
     </description>
   </property>
 
+  <property>
+    <name>messaging.coprocessor.metadata.cache.expiration.seconds</name>
+    <value>120</value>
+    <description>
+      The default value of expiration time in seconds for metadata cache in hbase data tables coprocessors
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.coprocessor.dir</name>
+    <value>tms</value>
+    <description>
+      Directory to store Messaging Service Table coprocessors. This path is relative to ${hdfs.namespace}.
+    </description>
+  </property>
 
   <!-- Metadata Configuration -->
 
@@ -1534,23 +1579,13 @@
   <!-- Notification System Configuration -->
 
   <property>
-    <name>notification.kafka.topic</name>
+    <name>notification.topic</name>
     <value>notifications</value>
     <description>
-      Kafka topic name used to publish notifications
+      Topic name used to publish notifications
     </description>
   </property>
 
-  <property>
-    <name>notification.transport.system</name>
-    <value>kafka</value>
-    <description>
-      Transport system used by the notification system; can be either
-      'kafka' or 'stream'
-    </description>
-  </property>
-
-  
   <!-- Operational Statistics Configuration -->
   
   <property>
@@ -1698,7 +1733,7 @@
     <name>router.server.port</name>
     <value>${router.bind.port}</value>
     <description>
-      CDAP Router service port to which CDAP UI connects
+      CDAP Router service port, for clients and webapps
     </description>
   </property>
 
@@ -1722,14 +1757,7 @@
     <name>router.ssl.server.port</name>
     <value>${router.ssl.bind.port}</value>
     <description>
-    </description>
-  </property>
-
-  <property>
-    <name>router.ssl.webapp.bind.port</name>
-    <value>20443</value>
-    <description>
-      CDAP Router service bind port for webapp for HTTPS (deprecated)
+      CDAP Router service bind port for HTTPS, for clients and webapps
     </description>
   </property>
 
@@ -1742,23 +1770,6 @@
       "largest", or "drop". A string comparison of the versions of the user service is
       used for "smallest" or "largest". The "drop" option will not route the request to
       any service and will return "service not found".
-    </description>
-  </property>
-
-  <property>
-    <name>router.webapp.bind.port</name>
-    <value>20000</value>
-    <description>
-      CDAP Router service bind port for webapp (deprecated)
-    </description>
-  </property>
-
-  <property>
-    <name>router.webapp.enabled</name>
-    <value>false</value>
-    <description>
-      Determines if the webapp listening service should be started
-      (deprecated)
     </description>
   </property>
 

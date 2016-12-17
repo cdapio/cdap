@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.server.FetchHandler;
 import co.cask.cdap.messaging.server.MessagingHttpService;
@@ -79,6 +80,7 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
     handlerBinder.addBinding().to(MetadataHandler.class);
     handlerBinder.addBinding().to(StoreHandler.class);
     handlerBinder.addBinding().to(FetchHandler.class);
+    CommonHandlers.add(handlerBinder);
   }
 
   /**

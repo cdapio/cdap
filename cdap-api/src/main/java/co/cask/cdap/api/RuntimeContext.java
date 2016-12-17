@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.preview.DataTracer;
 import org.apache.twill.api.RunId;
@@ -60,7 +61,8 @@ public interface RuntimeContext {
   /**
    * @param dataTracerName the name of the logger using which the debug information will be logged
    *
-   * @return an {@link DataTracer} to perform log operations.
+   * @return an {@link DataTracer} to perform data trace operations.
    */
+  @Beta
   DataTracer getDataTracer(String dataTracerName);
 }

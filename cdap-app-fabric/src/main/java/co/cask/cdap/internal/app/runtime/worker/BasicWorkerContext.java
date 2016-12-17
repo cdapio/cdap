@@ -34,6 +34,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tephra.TransactionSystemClient;
@@ -66,11 +67,12 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
                      StreamWriterFactory streamWriterFactory,
                      @Nullable PluginInstantiator pluginInstantiator,
                      SecureStore secureStore,
-                     SecureStoreManager secureStoreManager) {
+                     SecureStoreManager secureStoreManager,
+                     MessagingService messagingService) {
     super(program, programOptions, cConf, spec.getDatasets(),
           datasetFramework, transactionSystemClient, discoveryServiceClient, true,
           metricsCollectionService, ImmutableMap.of(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
-          secureStore, secureStoreManager, pluginInstantiator);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator);
 
     this.specification = spec;
     this.instanceId = instanceId;

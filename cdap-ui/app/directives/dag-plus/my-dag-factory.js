@@ -207,7 +207,8 @@ angular.module(PKG.name + '.commons')
         'httppoller': 'icon-httppoller',
         'window': 'icon-window',
         'run': 'icon-Run',
-        'oracleexport': 'icon-OracleDump'
+        'oracleexport': 'icon-OracleDump',
+        'snapshottext': 'icon-SnapshotTextSink'
       };
 
       var pluginName = plugin.toLowerCase();
