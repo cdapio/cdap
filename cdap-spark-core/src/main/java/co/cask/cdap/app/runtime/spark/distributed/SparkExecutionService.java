@@ -69,6 +69,9 @@ public final class SparkExecutionService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(SparkExecutionService.class);
   private static final Gson GSON = new Gson();
   private static final Type TOKEN_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  // make sure this is less than twill's shutdown wait (30 seconds),
+  // otherwise it causes really confusing behavior as this service will begin shutting down
+  // and then twill may or may not kill it partway through.
   private static final long SHUTDOWN_WAIT_SECONDS = 20L;
 
   private final LocationFactory locationFactory;
