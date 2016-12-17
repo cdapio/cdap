@@ -330,9 +330,9 @@ features:
       actionbtn0: Create
     Artifact:
       label: Driver
-      description: A driver is a JAR file that contains either a native application or collection of plugins.
+      description: Driver is a jar file that contains third-party code to talk to external systems, such as mysql, oracle, postgres.
       actionbtn0: Upload
-      modalheadertitle: Upload Artifact
+      modalheadertitle: Add Driver
     Plugins:
       label: Plugins
       description: A plugin is an easy way to extend the functionality of an application.
@@ -375,6 +375,7 @@ features:
         uploadHelperText: Upload the JAR for your application that you wish to deploy
         filePathLabel: Choose file
     ArtifactUpload:
+      headerlabel: Add Third party Driver
       Step1:
         description: Upload your Driver
         shorttitle: Upload Driver
@@ -394,16 +395,15 @@ features:
         typePlaceholder: Driver Type
         classnameLabel: Class Name
         classnamePlaceholder: Driver Class Name
-      headerlabel: Upload Driver
     Done: Done
     Informational:
       Step1:
         description: Please follow the steps specified below to configure Hydrator plugin to read from your database
-        shorttitle: Third Party Artifact Information
+        shorttitle: Download Information
         title: Information
-      headerlabel: Third Party Artifact
+      headerlabel: Download Information
     MarketHydratorPluginUpload:
-      headerlabel: Hydrator Plugin
+      headerlabel: Add Hydrator Plugin
     Skip: Skipped
     FailedMessage: Failed to {step}
     StreamCreate:
