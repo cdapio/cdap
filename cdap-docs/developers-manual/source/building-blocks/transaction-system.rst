@@ -151,7 +151,7 @@ consistency of the data it reads from the dataset:
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
    :lines: 118-135
-   :dedent: 4
+   :dedent: 2
 
 For flowlet process methods, this starting of implicit transactions cannot be disabled,
 because that would impact the semantics of flow execution.
@@ -159,9 +159,9 @@ because that would impact the semantics of flow execution.
 For MapReduce programs, the lifecycle methods of MapReduce tasks (mappers and reducers)
 and MapReduce helpers (such as partitioners and comparators) are always run inside a
 transaction: the long-running transaction that encapsulates an entire MapReduce job (see
-:ref:`Transactions and MapReduce <transaction-system-transactions-mapreduce>`).
+:ref:`mapreduce-transactions`).
 
-For Spark programs, see :ref:`Transactions and Spark <spark-transactions>` for how to use
+For Spark programs, see :ref:`Transactions and Spark <spark-transactions>` for using
 transactions in Spark programs.
 
 For all other lifecycle methods and for service handlers, the implicit transaction can be
@@ -302,37 +302,6 @@ You have these options:
 
   See the :ref:`UserProfile example <examples-user-profiles>`
   for a sample use case.
-
-
-.. _transaction-system-transactions-mapreduce:
-
-Transactions and MapReduce
-==========================
-When you run a MapReduce that interacts with datasets, the system creates a
-long-running transaction. Similar to the transaction of a flowlet, here are
-some rules to follow:
-
-- Reads can only see the writes of other transactions that were committed
-  at the time the long-running transaction was started.
-
-- All writes of the long-running transaction are committed atomically,
-  and only become visible to others after they are committed.
-
-- The long-running transaction can read its own writes.
-
-However, there is a key difference: long-running transactions do not participate in
-conflict detection. If another transaction overlaps with the long-running transaction and
-writes to the same row, it will not cause a conflict but simply overwrite it.
-
-It is not efficient to fail the long-running job based on a single conflict. Because of
-this, it is not recommended to write to the same dataset from both real-time and MapReduce
-programs. It is better to use different datasets, or at least ensure that the real-time
-processing writes to a disjoint set of columns.
-
-It's important to note that the MapReduce framework will reattempt a task (Mapper or
-Reducer) if it fails. If the task is writing to a dataset, the reattempt of the task will
-most likely repeat the writes that were already performed in the failed attempt. Therefore
-it is highly advisable that all writes performed by MapReduce programs be idempotent.
 
 
 Transaction Examples
