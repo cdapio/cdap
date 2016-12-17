@@ -20,6 +20,7 @@ import {MyProgramApi} from 'api/program';
 import FastActionButton from '../FastActionButton';
 import {convertProgramToApi} from 'services/program-api-converter';
 import ConfirmationModal from 'components/ConfirmationModal';
+import {Tooltip} from 'reactstrap';
 import T from 'i18n-react';
 
 export default class StartStopAction extends Component {
@@ -36,15 +37,21 @@ export default class StartStopAction extends Component {
     this.state = {
       status: 'loading',
       modal: false,
+      tooltipOpen: false,
       errorMessage: '',
       extendedMessage: '',
     };
 
+    this.startStop;
+    this.toggleTooltip = this.toggleTooltip.bind(this);
     this.onClick = this.onClick.bind(this);
     this.doStartStop = this.doStartStop.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
   }
 
+  toggleTooltip(){
+    this.setState({ tooltipOpen : !this.state.tooltipOpen });
+  }
   toggleModal(){
     this.setState({
       modal: !this.state.modal,
@@ -89,7 +96,10 @@ export default class StartStopAction extends Component {
       params.action = 'start';
     }
 
-    this.setState({status: 'loading'});
+    this.setState({
+      status: 'loading',
+      startStop: params.action
+    });
 
     MyProgramApi.action(params)
       .subscribe((res) => {
@@ -114,13 +124,16 @@ export default class StartStopAction extends Component {
     let confirmBtnText;
     let headerText;
     let confirmationText;
+    let tooltipID = `${this.props.entity.uniqueId}-${this.startStop}`;
 
     if (this.state.status === 'RUNNING' || this.state.status === 'STARTING') {
+      this.startStop = 'stop';
       icon = 'fa fa-stop text-danger';
       confirmBtnText = "stopConfirmLabel";
       headerText = T.translate('features.FastAction.startProgramHeader');
       confirmationText = T.translate('features.FastAction.stopConfirmation', {entityId: this.props.entity.id});
     } else {
+      this.startStop = 'start';
       icon = 'fa fa-play text-success';
       confirmBtnText = "startConfirmLabel";
       headerText = T.translate('features.FastAction.stopProgramHeader');
@@ -153,10 +166,22 @@ export default class StartStopAction extends Component {
             </button>
           ) :
           (
-            <FastActionButton
-              icon={icon}
-              action={this.onClick}
-            />
+            <div>
+              <FastActionButton
+                icon={icon}
+                action={this.onClick}
+                id={tooltipID}
+              />
+              <Tooltip
+                placement="top"
+                isOpen={this.state.tooltipOpen}
+                target={tooltipID}
+                toggle={this.toggleTooltip}
+                delay={0}
+              >
+                {T.translate(`features.FastAction.${this.startStop}`)}
+              </Tooltip>
+            </div>
           )
         }
       </div>
@@ -167,6 +192,7 @@ export default class StartStopAction extends Component {
 StartStopAction.propTypes = {
   entity: PropTypes.shape({
     id: PropTypes.string.isRequired,
+    uniqueId: PropTypes.string,
     applicationId: PropTypes.string.isRequired,
     programType: PropTypes.string.isRequired
   }),
