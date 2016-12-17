@@ -101,8 +101,16 @@ my-global-navbar {
           background-color: inherit;
         }
       }
+      .old-ui-link {
+        a {
+          font-size: 11px;
+        }
+      }
     }
 
+    .search-box-holder {
+      float: left;
+    }
     .environment {
       display: inline-block;
       line-height: @navbar-height;
@@ -117,6 +125,17 @@ my-global-navbar {
     /* RIGHT MENU */
     .right-menu {
       height: 50px;
+      .navbar-item {
+        .form-control {
+          margin-top: 9px;
+          padding: 10px;
+        }
+      }
+      .search-open {
+        ~ .environment {
+          display: none;
+        }
+      }
     }
     .navbar-item {
       font-size: 17px;
@@ -173,6 +192,25 @@ my-global-navbar {
     // TODO: Look into switching this to behave like the Settings uib dropdown
     .popover.bottom > .arrow {
       border-bottom-color: #999999;
+    }
+
+    @media (max-width: 1260px) {
+      .brand-header {
+        width: 50px;
+        .cdap-brand-text {
+          display: none;
+        }
+      }
+      .navbar-list {
+        a {
+          padding-right: 20px;
+        }
+      }
+      .right-menu {
+        .search-open {
+          width: 150px;
+        }
+      }
     }
   }
 

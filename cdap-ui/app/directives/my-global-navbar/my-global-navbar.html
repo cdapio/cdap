@@ -40,7 +40,9 @@
            ng-class="{ 'active': Navbar.highlightTab === 'management' }">
           Management
         </a>
-        <a href="{{'/cdap/ns/'+$stateParams.namespace}}"> Switch to new UI</a>
+      </li>
+      <li class="old-ui-link">
+        <a href="{{'/cdap/ns/'+$stateParams.namespace}}"> Switch to New UI</a>
       </li>
     </ul>
 
@@ -85,14 +87,16 @@
 
     <!-- RIGHT MENUS -->
     <div class="pull-right right-menu">
-      <div class="environment pull-left">
-        <span>{{ ::Navbar.environment }}</span>
-        <span class="icon-lock_close" ng-if="Navbar.securityEnabled"></span>
-        <span class="icon-lock_open" ng-if="!Navbar.securityEnabled"></span>
+
+      <div class="clearfix search-box-holder">
+        <my-search class="pull-right"></my-search>
+        <div class="environment pull-left">
+          <span>{{ ::Navbar.environment }}</span>
+          <span class="icon-lock_close" ng-if="Navbar.securityEnabled"></span>
+          <span class="icon-lock_open" ng-if="!Navbar.securityEnabled"></span>
+        </div>
+
       </div>
-
-      <my-search></my-search>
-
       <div class="navbar-item">
         <my-error></my-error>
       </div>

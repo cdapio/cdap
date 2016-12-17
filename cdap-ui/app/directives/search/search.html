@@ -14,7 +14,7 @@
   the License.
 -->
 
-<div class="navbar-item" ng-class="{ 'has-results': SearchCtrl.searchEntered }">
+<div class="navbar-item my-global-search" ng-class="{ 'has-results': SearchCtrl.searchEntered, 'search-open': SearchCtrl.showSearchBox }">
   <span class="fa fa-search"
         ng-click="SearchCtrl.showSearch()"
         ng-if="!SearchCtrl.showSearchBox"></span>

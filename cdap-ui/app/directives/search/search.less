@@ -21,8 +21,8 @@
 @navbar-bg: #464a56;
 @border-color: #cdcdcd;
 
-my-search {
-  .navbar-item { // this is because of specificity
+.my-global-search {
+  &.navbar-item { // this is because of specificity
     .search-box {
       z-index: 955;
       .form-group {

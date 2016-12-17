@@ -41,7 +41,7 @@ angular.module(PKG.name + '.services')
       getProgramTags: myHelpers.getConfig('GET', 'REQUEST', programPath + metadataPath, true),
       getDatasetTags: myHelpers.getConfig('GET', 'REQUEST', datasetPath + metadataPath, true),
       getStreamTags: myHelpers.getConfig('GET', 'REQUEST', streamsPath + metadataPath, true),
-      searchTags: myHelpers.getConfig('GET', 'REQUEST', searchPath , true)
+      searchTags: myHelpers.getConfig('GET', 'REQUEST', searchPath)
     }
   );
 });

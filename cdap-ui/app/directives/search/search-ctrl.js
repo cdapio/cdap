@@ -49,14 +49,16 @@ angular.module(PKG.name + '.commons')
       vm.loading = true;
       var params = {
         namespaceId: $stateParams.namespace || $stateParams.nsadmin,
-        query: vm.searchTerm
+        query: vm.searchTerm,
+        numCursors: 10,
+        sort: 'creation-time desc'
       };
       myTagsApi.searchTags(params)
         .$promise
         .then(function (res) {
           vm.loading = false;
 
-          var result = res.slice(0, 20);
+          var result = res.results.slice(0, 20);
 
           var parsedSearch = [];
           angular.forEach(result, function (entity) {

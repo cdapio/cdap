@@ -19,6 +19,7 @@ angular.module(PKG.name + '.commons')
     return {
       controller: 'MySearchCtrl',
       controllerAs: 'SearchCtrl',
-      templateUrl: 'search/search.html'
+      templateUrl: 'search/search.html',
+      replace: true
     };
   });
