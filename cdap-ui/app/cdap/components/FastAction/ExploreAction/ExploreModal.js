@@ -297,7 +297,8 @@ export default class ExploreModal extends Component {
           Explore Dataset
           <div
            onClick={this.props.onClose}
-           className="pull-right">
+           className="pull-right"
+          >
             <span className="fa fa-times" />
           </div>
         </ModalHeader>
