@@ -59,12 +59,6 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-kafka</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-cli</artifactId>
       <version>${project.version}</version>
       <!--
@@ -151,16 +145,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.twill</groupId>
-      <artifactId>twill-zookeeper</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.twill</groupId>
       <artifactId>twill-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.zookeeper</groupId>
-      <artifactId>zookeeper</artifactId>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.xerial.snappy</groupId>
@@ -399,17 +384,10 @@
                         <exclude>**/target/stage-packaging*/**</exclude>
                       </excludes>
                     </resource>
-                    <!-- Copy runtime extensions. Currently only has Spark and Kafka (for audit logging) -->
+                    <!-- Copy runtime extensions. Currently only has Spark -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-spark-core/target/libexec</directory>
                       <targetPath>ext/runtimes/spark</targetPath>
-                      <includes>
-                        <include>*.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-kafka/target/libexec</directory>
-                      <targetPath>ext/runtimes/kafka</targetPath>
                       <includes>
                         <include>*.jar</include>
                       </includes>
