@@ -1707,7 +1707,7 @@
     <name>router.server.port</name>
     <value>${router.bind.port}</value>
     <description>
-      CDAP Router service port to which CDAP UI connects
+      CDAP Router service port, for clients and webapps
     </description>
   </property>
 
@@ -1731,7 +1731,7 @@
     <name>router.ssl.server.port</name>
     <value>${router.ssl.bind.port}</value>
     <description>
-      CDAP Router service port to which CDAP UI connects for HTTPS
+      CDAP Router service bind port for HTTPS, for clients and webapps
     </description>
   </property>
 
