@@ -45,6 +45,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.hive.datasets.DatasetSerDe;
 import co.cask.cdap.hive.stream.StreamSerDe;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.StreamId;
@@ -148,6 +149,7 @@ public class ContextManager {
       new AuthorizationEnforcementModule().getDistributedModules(),
       new SecureStoreModules().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
+      new MessagingClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
