@@ -193,6 +193,8 @@ Programs
      - *ADMIN*
    * - Set runtime arguments
      - *ADMIN*
+   * - Retrieve runtime arguments
+     - * READ*
    * - Retrieving status
      - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
    * - List
