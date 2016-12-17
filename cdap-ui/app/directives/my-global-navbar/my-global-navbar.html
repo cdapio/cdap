@@ -24,7 +24,6 @@
     <!-- CDAP -->
     <ul class="navbar-list" ng-if="Navbar.activeProduct === 'cdap'">
       <li>
-        <a class="new-ui-link" href="{{'/cdap/ns/'+$stateParams.namespace}}"> Switch to new UI</a>
         <a ui-sref="overview({namespace: $stateParams.namespace})"
            ng-class="{ 'active': Navbar.highlightTab === 'development' }">
           Home
@@ -41,6 +40,7 @@
            ng-class="{ 'active': Navbar.highlightTab === 'management' }">
           Management
         </a>
+        <a href="{{'/cdap/ns/'+$stateParams.namespace}}"> Switch to new UI</a>
       </li>
     </ul>
 

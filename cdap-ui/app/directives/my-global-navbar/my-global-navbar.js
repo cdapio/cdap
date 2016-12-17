@@ -21,6 +21,10 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
   vm.getHydratorUrl = getHydratorUrl;
   vm.getTrackerUrl = getTrackerUrl;
   vm.$cookies = $cookies;
+  // If it comes here the user has opted to switch to old ui.
+  // Set the cookie here so that the sidebar in hydrator & tracker knows
+  // and generates the cdap url appropraitely.
+  vm.$cookies.put('DEFAULT_UI', 'OLD', { path: '/'});
 
   function findActiveProduct() {
     if ($state.includes('hydratorplusplus.**')) {
