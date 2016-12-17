@@ -194,7 +194,7 @@ Programs
    * - Set runtime arguments
      - *ADMIN*
    * - Retrieve runtime arguments
-     - * READ*
+     - *READ*
    * - Retrieving status
      - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
    * - List
