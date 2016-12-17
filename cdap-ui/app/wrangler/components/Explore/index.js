@@ -48,6 +48,8 @@ export default class Explore extends Component {
           type: table[0],
           name: table.slice(1).join('_')
         };
+      }).filter((exploreTable) => {
+        return exploreTable.name.charAt(0) !== '_';
       });
 
       this.setState({

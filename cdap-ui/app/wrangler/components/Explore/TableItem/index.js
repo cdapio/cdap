@@ -18,7 +18,7 @@ import React, { Component, PropTypes } from 'react';
 import classnames from 'classnames';
 import NamespaceStore from 'services/NamespaceStore';
 import myExploreApi from 'api/explore';
-import {Modal, ModalHeader, ModalBody} from 'reactstrap';
+import {Modal, ModalHeader, ModalBody, Tooltip} from 'reactstrap';
 import shortid from 'shortid';
 import Papa from 'papaparse';
 import T from 'i18n-react';
@@ -31,6 +31,7 @@ export default class TableItem extends Component {
 
     this.state = {
       isModalOpen: false,
+      tooltipOpen: false,
       loading: false,
       columns: [],
       preview: [],
@@ -45,6 +46,7 @@ export default class TableItem extends Component {
     this.handleSetHeaders = this.handleSetHeaders.bind(this);
     this.handleSetSkipEmptyLines = this.handleSetSkipEmptyLines.bind(this);
     this.setDelimiter = this.setDelimiter.bind(this);
+    this.tooltipToggle = this.tooltipToggle.bind(this);
   }
 
   setDelimiter(e) {
@@ -117,6 +119,10 @@ export default class TableItem extends Component {
 
   toggleModal() {
     this.setState({isModalOpen: !this.state.isModalOpen});
+  }
+
+  tooltipToggle() {
+    this.setState({tooltipOpen: !this.state.tooltipOpen});
   }
 
   onWrangleClick() {
@@ -262,6 +268,8 @@ export default class TableItem extends Component {
       </div>
     );
 
+    const id = `explore-item-${this.props.table.name}`;
+
     return (
       <div
         className="explore-table-item text-center"
@@ -274,7 +282,18 @@ export default class TableItem extends Component {
           })} />
         </div>
         <div className="explore-table-item-name">
-          <span>{this.props.table.name}</span>
+          <span id={id}>{this.props.table.name}</span>
+
+          <Tooltip
+            placement="top"
+            isOpen={this.state.tooltipOpen}
+            toggle={this.tooltipToggle}
+            target={id}
+            className="wrangler-tooltip"
+            delay={0}
+          >
+            {T.translate(`commons.entity.${this.props.table.type}.singular`)}: {this.props.table.name}
+          </Tooltip>
         </div>
 
         <Modal
