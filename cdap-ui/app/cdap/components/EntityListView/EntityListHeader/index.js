@@ -57,6 +57,9 @@ export default class EntityListHeader extends Component {
   }
 
   handleSortToggle() {
+    if (this.props.isSortDisabled) {
+      return;
+    }
     this.setState({isSortExpanded: !this.state.isSortExpanded});
   }
 
@@ -76,38 +79,39 @@ export default class EntityListHeader extends Component {
     const placeholder = T.translate('features.EntityListView.Header.search-placeholder');
 
     const sortDropdown = (
-      <Dropdown
-        isOpen={this.state.isSortExpanded}
-        toggle={this.handleSortToggle.bind(this)}
-      >
-        <DropdownToggle tag='div'>
-          {this.state.isSortExpanded ?
-            <span>{T.translate('features.EntityListView.Header.sort')}</span> :
-            <span>{this.state.activeSort.displayName}</span>
-          }
-          <span className="fa fa-caret-down pull-right"></span>
-        </DropdownToggle>
-        <DropdownMenu>
-          {
-            this.state.sortOptions.map((option, index) => {
-              return (
-                <DropdownItem
-                  key={index}
-                  onClick={this.props.onSortClick.bind(this, option)}
-                >
-                  {option.displayName}
-                  {
-                    this.state.activeSort.fullSort === option.fullSort ?
-                      <span className="fa fa-check pull-right"></span>
-                    :
-                      null
-                  }
-                </DropdownItem>
-              );
-            })
-          }
-        </DropdownMenu>
-      </Dropdown>
+        <Dropdown
+          disabled={this.props.isSortDisabled}
+          isOpen={this.state.isSortExpanded}
+          toggle={this.handleSortToggle.bind(this)}
+        >
+          <DropdownToggle tag='div'>
+            {this.state.isSortExpanded ?
+              <span>{T.translate('features.EntityListView.Header.sort')}</span> :
+              <span>{this.state.activeSort.displayName}</span>
+            }
+            <span className="fa fa-caret-down pull-right"></span>
+          </DropdownToggle>
+          <DropdownMenu>
+            {
+              this.state.sortOptions.map((option, index) => {
+                return (
+                  <DropdownItem
+                    key={index}
+                    onClick={this.props.onSortClick.bind(this, option)}
+                  >
+                    {option.displayName}
+                    {
+                      this.state.activeSort.fullSort === option.fullSort ?
+                        <span className="fa fa-check pull-right"></span>
+                      :
+                        null
+                    }
+                  </DropdownItem>
+                );
+              })
+            }
+          </DropdownMenu>
+        </Dropdown>
     );
 
     const filterDropdown = (
@@ -152,6 +156,7 @@ export default class EntityListHeader extends Component {
               {T.translate('features.EntityListView.Header.search-placeholder')}
             </label>
             <input
+              disabled={this.props.isSearchDisabled ? 'disabled': null}
               type="text"
               className="form-control"
               placeholder={placeholder}
@@ -204,8 +209,10 @@ EntityListHeader.propTypes = {
     order: PropTypes.string,
     fullSort: PropTypes.string
   }),
+  isSortDisabled: PropTypes.bool,
   onSortClick: PropTypes.func,
   onSearch: PropTypes.func,
+  isSearchDisabled: PropTypes.bool,
   searchText: PropTypes.string,
   numberOfPages: PropTypes.number,
   currentPage: PropTypes.number,
