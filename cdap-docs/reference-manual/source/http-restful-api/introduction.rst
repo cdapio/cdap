@@ -42,7 +42,7 @@ where:
 
 
 **Note:** If SSL is enabled for CDAP, then the base URL uses ``https`` instead and ``port`` becomes the port that is set
-as the ``router.ssl.bind.port`` in ``cdap-site.xml`` (default: 10443).
+as the ``router.ssl.server.port`` in ``cdap-site.xml`` (default: 10443).
 
 In this API, each endpoint is documented with the HTTP method for the request and a
 resource identifier. The base URL is assumed to precede each API's resource identifier.

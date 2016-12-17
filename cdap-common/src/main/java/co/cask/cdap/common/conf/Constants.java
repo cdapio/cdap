@@ -460,10 +460,7 @@ public final class Constants {
   public static final class Router {
     public static final String ADDRESS = "router.bind.address";
     public static final String ROUTER_PORT = "router.bind.port";
-    public static final String WEBAPP_PORT = "router.webapp.bind.port";
-    public static final String WEBAPP_ENABLED = "router.webapp.enabled";
     public static final String ROUTER_SSL_PORT = "router.ssl.bind.port";
-    public static final String WEBAPP_SSL_PORT = "router.ssl.webapp.bind.port";
     public static final String BACKLOG_CONNECTIONS = "router.connection.backlog";
     public static final String SERVER_BOSS_THREADS = "router.server.boss.threads";
     public static final String SERVER_WORKER_THREADS = "router.server.worker.threads";
