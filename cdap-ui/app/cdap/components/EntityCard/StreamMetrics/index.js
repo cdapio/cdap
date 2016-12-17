@@ -33,12 +33,13 @@ export default class StreamMetrics extends Component {
   }
 
   componentWillMount() {
+    let currentNamespace = NamespaceStore.getState().selectedNamespace;
     const streamParams = {
-      namespace: NamespaceStore.getState().selectedNamespace,
+      namespace: currentNamespace,
       streamId: this.props.entity.id
     };
     const metricsParams = {
-      tag: ['namespace:default', `stream:${this.props.entity.id}`],
+      tag: [`namespace:${currentNamespace}`, `stream:${this.props.entity.id}`],
       metric: ['system.collect.events', 'system.collect.bytes'],
       aggregate: true
     };
