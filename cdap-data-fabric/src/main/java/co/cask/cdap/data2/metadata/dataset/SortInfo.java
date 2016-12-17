@@ -83,18 +83,23 @@ public class SortInfo {
     }
     Iterable<String> sortSplit = Splitter.on(SPACE_SPLIT_PATTERN).trimResults().omitEmptyStrings().split(sort);
     if (Iterables.size(sortSplit) != 2) {
-      throw new BadRequestException("'sort' parameter should be a space separated string containing the field " +
-                                      "('name' or 'create_time') and the sort order ('asc' or 'desc'). Found " + sort);
+      throw new BadRequestException(
+        String.format("'sort' parameter should be a space separated string containing the field ('%s' or '%s') and " +
+                        "the sort order ('%s' or '%s'). Found %s.", AbstractSystemMetadataWriter.ENTITY_NAME_KEY,
+                      AbstractSystemMetadataWriter.CREATION_TIME_KEY, SortOrder.ASC, SortOrder.DESC, sort));
     }
     Iterator<String> iterator = sortSplit.iterator();
     String sortBy = iterator.next();
     String sortOrder = iterator.next();
     if (!AbstractSystemMetadataWriter.ENTITY_NAME_KEY.equalsIgnoreCase(sortBy) &&
       !AbstractSystemMetadataWriter.CREATION_TIME_KEY.equalsIgnoreCase(sortBy)) {
-      throw new BadRequestException("Sort field must be 'name' or 'create_time'. Found " + sortBy);
+      throw new BadRequestException(
+        String.format("Sort field must be '%s' or '%s'. Found %s.", AbstractSystemMetadataWriter.ENTITY_NAME_KEY,
+                      AbstractSystemMetadataWriter.CREATION_TIME_KEY, sortBy));
     }
     if (!"asc".equalsIgnoreCase(sortOrder) && !"desc".equalsIgnoreCase(sortOrder)) {
-      throw new BadRequestException("Sort order must be one of 'asc' or 'desc'. Found " + sortOrder);
+      throw new BadRequestException(
+        String.format("Sort order must be one of '%s' or '%s'. Found %s.", SortOrder.ASC, SortOrder.DESC, sortOrder));
     }
 
     return new SortInfo(sortBy, SortInfo.SortOrder.valueOf(sortOrder.toUpperCase()));
