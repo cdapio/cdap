@@ -165,19 +165,19 @@ in the ``cdap-site.xml`` as described above, need to follow these steps:
 
 .. highlight:: json  
 
-- Create an application configuration file (``appconfig.txt``) that contains the Kafka
-  Audit Log reader configuration (the property ``auditLogKafkaConfig``). It is the Kafka
-  Consumer Flowlet configuration information. For example::
+- Create an application configuration file (``appconfig.txt``) that contains the
+  Audit Log reader configuration (the property ``auditLogConfig``). For example::
     
     {
       "config": {
-        "auditLogKafkaConfig": {
-          "zookeeperString": "<host>:<port>/cdap/kafka"
+        "auditLogConfig" : {
+          "topic" : "<audit.topic>",
+          "zookeeperString" : "<zookeeper.quorum>"
         }
       }
     }
 
-  substituting for ``<host>`` and ``<port>`` with appropriate values.
+  substituting for ``<audit.topic>`` and ``<zookeeper.quorum>`` with appropriate values from ``cdap-site.xml``.
   
 - Create a CDAP application using the configuration file:
 

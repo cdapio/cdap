@@ -16,46 +16,48 @@
 
 package co.cask.cdap.data2.audit;
 
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.service.RetryStrategies;
+import co.cask.cdap.common.service.RetryStrategy;
+import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.MessagingServices;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
-import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.twill.kafka.client.Compression;
-import org.apache.twill.kafka.client.KafkaClient;
-import org.apache.twill.kafka.client.KafkaPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Publish audit messages on Kafka.
+ * A default implementation of {@link AuditPublisher} that publishes to TMS.
  */
-public class KafkaAuditPublisher implements AuditPublisher {
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaAuditPublisher.class);
+public final class DefaultAuditPublisher implements AuditPublisher {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultAuditPublisher.class);
   private static final Gson GSON = new Gson();
 
-  private final Supplier<KafkaPublisher> publisherSupplier;
-  private final String kafkaTopic;
+  private final MessagingService messagingService;
+  private final TopicId auditTopic;
+  private final RetryStrategy retryStrategy;
 
   @Inject
-  public KafkaAuditPublisher(final KafkaClient kafkaClient, CConfiguration cConf) {
-    this.publisherSupplier = Suppliers.memoize(new Supplier<KafkaPublisher>() {
-      @Override
-      public KafkaPublisher get() {
-        return kafkaClient.getPublisher(KafkaPublisher.Ack.LEADER_RECEIVED, Compression.SNAPPY);
-      }
-    });
-    this.kafkaTopic = cConf.get(Constants.Audit.KAFKA_TOPIC);
+  DefaultAuditPublisher(CConfiguration cConf, MessagingService messagingService) {
+    this.messagingService = messagingService;
+    this.auditTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Audit.TOPIC));
+    this.retryStrategy = RetryStrategies.timeLimit(
+      cConf.getLong(Constants.Audit.PUBLISH_TIMEOUT_MS), TimeUnit.MILLISECONDS,
+      RetryStrategies.exponentialDelay(10, 200, TimeUnit.MILLISECONDS));
   }
 
   @Override
@@ -65,11 +67,10 @@ public class KafkaAuditPublisher implements AuditPublisher {
     LOG.trace("Publishing audit message {}", auditMessage);
 
     try {
-      ByteBuffer message = Charsets.UTF_8.encode((GSON.toJson(auditMessage)));
-
-      KafkaPublisher.Preparer preparer = publisherSupplier.get().prepare(kafkaTopic);
-      preparer.add(message, entityId);
-      preparer.send().get();
+      MessagingServices.publishWithRetry(messagingService, auditTopic, retryStrategy,
+                                         GSON.toJson(auditMessage).getBytes(StandardCharsets.UTF_8));
+    } catch (TopicNotFoundException e) {
+      LOG.error("Missing topic for audit publish: {}", auditTopic);
     } catch (Exception e) {
       LOG.error("Got exception publishing audit message {}. Exception:", auditMessage, e);
     }

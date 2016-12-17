@@ -47,7 +47,7 @@ public class ConfigurationCheckTest {
   }
 
   @Test (expected = RuntimeException.class)
-  public void invalidAuditKafkaTopicTest() {
-    runConfigurationCheck(Constants.Audit.KAFKA_TOPIC, "invalid*topic");
+  public void invalidAuditTopicTest() {
+    runConfigurationCheck(Constants.Audit.TOPIC, "invalid*topic");
   }
 }

@@ -1063,7 +1063,8 @@ public final class Constants {
    */
   public static final class Audit {
     public static final String ENABLED = "audit.enabled";
-    public static final String KAFKA_TOPIC = "audit.kafka.topic";
+    public static final String TOPIC = "audit.topic";
+    public static final String PUBLISH_TIMEOUT_MS = "audit.publish.timeout.ms";
   }
 
   /**
@@ -1080,6 +1081,7 @@ public final class Constants {
     public static final String MESSAGE_TABLE_HBASE_SPLITS = "messaging.message.table.hbase.splits";
     public static final String PAYLOAD_TABLE_NAME = "messaging.payload.table.name";
     public static final String PAYLOAD_TABLE_HBASE_SPLITS = "messaging.payload.table.hbase.splits";
+    public static final String SYSTEM_TOPICS = "messaging.system.topics";
     public static final String TABLE_CACHE_EXPIRATION_SECONDS = "messaging.table.expiration.seconds";
     public static final String TOPIC_DEFAULT_TTL_SECONDS = "messaging.topic.default.ttl.seconds";
     public static final String COPROCESSOR_METADATA_CACHE_EXPIRATION_SECONDS =

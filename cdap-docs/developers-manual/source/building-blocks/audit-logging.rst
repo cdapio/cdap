@@ -67,7 +67,7 @@ Audit publishing is controlled by these properties set in the ``cdap-site.xml``,
 :ref:`Administration Manual <appendix-cdap-site.xml>`:
 
 - ``audit.enabled``: Determines if publishing of audit logs is enabled; defaults to ``true``
-- ``audit.kafka.topic``: Determines the Kafka topic to publish to; defaults to ``audit``
+- ``audit.topic``: Determines the topic to publish to; defaults to ``audit``
 
 .. _audit-logging-consuming-audit-events:
 
