@@ -18,11 +18,12 @@ import React, {Component, PropTypes} from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 import FastActionButton from '../FastActionButton';
 import T from 'i18n-react';
-import { Modal, ModalHeader, ModalBody } from 'reactstrap';
+import { Modal, Tooltip, ModalHeader, ModalBody } from 'reactstrap';
 import {MyStreamApi} from 'api/stream';
 import FileDnD from 'components/FileDnD';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
 require('./SendEventAction.less');
+
 import cookie from 'react-cookie';
 import Rx from 'rx';
 import classnames from 'classnames';
@@ -39,6 +40,7 @@ export default class SendEventAction extends Component {
       textarea: false,
       textInput: '',
       droppedFile: {},
+      tooltipOpen: false,
       error: ''
     };
 
@@ -50,8 +52,11 @@ export default class SendEventAction extends Component {
     this.onDrop = this.onDrop.bind(this);
     this.toggleTextareaOff = this.toggleTextareaOff.bind(this);
     this.FileDnDClickHandler = this.FileDnDClickHandler.bind(this);
+    this.toggleTooltip = this.toggleTooltip.bind(this);
   }
-
+  toggleTooltip() {
+    this.setState({ tooltipOpen : !this.state.tooltipOpen });
+  }
   toggleModal(event) {
     this.setState({
       modal: !this.state.modal,
@@ -184,13 +189,24 @@ export default class SendEventAction extends Component {
   render() {
     const actionLabel = T.translate('features.FastAction.sendEventsLabel');
     const headerTitle = `${actionLabel} to ${this.props.entity.id}`;
-
+    let tooltipID = `${this.props.entity.uniqueId}-sendevents`;
     return (
       <span>
         <FastActionButton
           icon="fa fa-upload"
           action={this.toggleModal}
+          id={tooltipID}
         />
+        <Tooltip
+          placement="top"
+          isOpen={this.state.tooltipOpen}
+          target={tooltipID}
+          toggle={this.toggleTooltip}
+          delay={0}
+        >
+          {T.translate('features.FastAction.sendEventsLabel')}
+        </Tooltip>
+
         {
           this.state.modal ? (
             <Modal
@@ -253,6 +269,7 @@ export default class SendEventAction extends Component {
 SendEventAction.propTypes = {
   entity: PropTypes.shape({
     id: PropTypes.string.isRequired,
+    uniqueId: PropTypes.string,
     type: PropTypes.oneOf(['datasetinstance', 'stream']).isRequired,
   }),
   onSuccess: PropTypes.func

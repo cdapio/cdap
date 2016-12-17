@@ -17,22 +17,29 @@
 import React, {Component, PropTypes} from 'react';
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import FastActionButton from '../FastActionButton';
+import {Tooltip} from 'reactstrap';
 import ExploreModal from 'components/FastAction/ExploreAction/ExploreModal';
+import T from 'i18n-react';
 
 export default class ExploreAction extends Component {
   constructor(props) {
     super(props);
     this.state = {
       disabled: true,
-      showModal: false
+      showModal: false,
+      tooltipOpen: false
     };
     this.subscription = null;
+    this.toggleTooltip = this.toggleTooltip.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
   }
   toggleModal() {
     this.setState({
       showModal: !this.state.showModal
     });
+  }
+  toggleTooltip() {
+    this.setState({ tooltipOpen : !this.state.tooltipOpen });
   }
   componentDidMount() {
     const updateDisabledProp = () => {
@@ -53,13 +60,25 @@ export default class ExploreAction extends Component {
     this.subscription();
   }
   render() {
+    let tooltipID = `${this.props.entity.uniqueId}-explore`;
     return (
       <span>
         <FastActionButton
           icon="fa fa-eye"
           action={this.toggleModal}
           disabled={this.state.disabled}
+          id={tooltipID}
         />
+        <Tooltip
+          placement="top"
+          className="fast-action-tooltip"
+          isOpen={this.state.tooltipOpen}
+          target={tooltipID}
+          toggle={this.toggleTooltip}
+          delay={0}
+        >
+          {T.translate('features.FastAction.exploreLabel')}
+        </Tooltip>
         {
           this.state.showModal ?
             <ExploreModal
@@ -78,6 +97,7 @@ ExploreAction.propTypes = {
   entity: PropTypes.shape({
     id: PropTypes.string.isRequired,
     version: PropTypes.string,
+    uniqueId: PropTypes.string,
     scope: PropTypes.oneOf(['SYSTEM', 'USER']),
     type: PropTypes.oneOf(['application', 'artifact', 'datasetinstance', 'stream']).isRequired
   })

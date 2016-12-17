@@ -95,12 +95,15 @@ features:
     clickLabel: Click to select file from your computer
   FastAction:
     deleteConfirmation: Are you sure you want to delete *_{entityId}_*?
+    exploreLabel: Explore
     deleteLabel: Delete
     deleteFailed: Failed to delete {entityId}.
     truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
     truncateLabel: Truncate
     truncateFailed: Failed to truncate {entityId}.
     sendEventsLabel: Send Events
+    start: Start
+    stop: Stop
     sendEventsButtonLabel: Send
     sendEventsClickLabel: Click to input events.
     sendEventsFailed: Error - Send Events Failed.
