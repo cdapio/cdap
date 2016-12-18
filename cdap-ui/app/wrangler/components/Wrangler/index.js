@@ -101,11 +101,10 @@ export default class Wrangler extends Component {
   }
 
   handleData(papa) {
-    if (papa.errors.length > 0) {
+    if (papa.errors.length > 0 && papa.data.length === 0) {
       this.setState({errors: papa.errors, loading: false});
       return;
     }
-
     let formattedData;
     if (Array.isArray(papa.data[0])) {
       // Get length of the longest column
@@ -124,14 +123,21 @@ export default class Wrangler extends Component {
 
         return obj;
       });
+
+      headers = Object.keys(papa.data[0]);
     } else {
       formattedData = papa.data;
     }
+
+    let headers = papa.meta.fields || Object.keys(formattedData[0]);
+
+    // need to validate headers
 
     WranglerStore.dispatch({
       type: WranglerActions.setData,
       payload: {
         data: formattedData,
+        headers
       }
     });
 
