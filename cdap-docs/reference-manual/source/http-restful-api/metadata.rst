@@ -495,58 +495,7 @@ Searching for Metadata
 CDAP supports searching metadata of entities. To find which applications, datasets, streams, etc. have a particular
 metadata property or metadata tag, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace-id>/metadata/search?query=<term>[&target=<entity-type>&target=<entity-type2>...][&showHidden=false]
-
-Entities that match the specified query and entity type are returned in the body of the response in JSON format::
-
-  [
-     {
-        "entityId":{
-           "id":{
-              "applicationId":"PurchaseHistory",
-              "namespace":{
-                 "id":"default"
-              }
-           },
-           "type":"application"
-        },
-        "metadata":{
-           "SYSTEM":{
-              "properties":{
-                 "Flow:PurchaseFlow":"PurchaseFlow",
-                 "MapReduce:PurchaseHistoryBuilder":"PurchaseHistoryBuilder"
-              },
-              "tags":[
-                 "Purchase",
-                 "PurchaseHistory"
-              ]
-           }
-        }
-     },
-     {
-        "entityId":{
-           "id":{
-              "instanceId":"history",
-              "namespace":{
-                 "id":"default"
-              }
-           },
-           "type":"datasetinstance"
-        },
-        "metadata":{
-           "SYSTEM":{
-              "properties":{
-                 "type":"co.cask.cdap.examples.purchase.PurchaseHistoryStore"
-              },
-              "tags":[
-                 "history",
-                 "explore",
-                 "batch"
-              ]
-           }
-        }
-     }
-  ]
+  GET /v3/namespaces/<namespace-id>/metadata/search?query=<term>[&target=<entity-type>&target=<entity-type2>...][&<option>=<option-value>&...]
 
 .. list-table::
    :widths: 20 80
@@ -556,14 +505,115 @@ Entities that match the specified query and entity type are returned in the body
      - Description
    * - ``namespace-id``
      - Namespace ID
+   * - ``query``
+     - :ref:`Query term <http-restful-api-metadata-query-terms>`, as described below. Query terms are case-insensitive.
    * - ``entity-type``
      - Restricts the search to either all or specified entity types: ``all``, ``artifact``, ``app``, ``dataset``,
-       ``program``, ``stream``, or ``view``
-   * - ``showHidden``
-     - Metadata search hides entities whose name starts with "_" (underscore) from search results. 
-       Set this to ``true`` to include these hidden entities in search results. Default is ``false``.
-   * - ``term``
-     - :ref:`Query term <http-restful-api-metadata-query-terms>`, as described below. Query terms are case-insensitive.
+       ``program``, ``stream``, ``view``
+   * - ``option``
+     - Options for controlling cursors, limits, offsets, the inclusion of hidden entities, and sorting:
+
+       .. list-table::
+          :widths: 20 80
+          :header-rows: 1
+
+          * - Option Name
+            - Option Value, Description, and Notes
+          * - ``sort``
+            - The sorting order for the ``results`` being returned. Default is to sort search results as a function of
+              relative weights for the specified search query. Specify the sort order as the field name followed by the 
+              sort order (either ``asc`` or ``desc``) with a space separating the two. Using URL-encoding, an example:
+              ``&sort=creation-time+asc``. Note that this field is only applicable when the search query is ``*``.
+          * - ``offset``
+            - The number of search results to skip before including them in the returned ``results``. Default is ``0``.
+          * - ``limit``
+            - The number of metadata search entities to return in the ``results``. By default, there is no limit.
+          * - ``cursor``
+            - Cursor to move to in the search results. This would be a value returned in the ``cursors`` field of a
+              response of a previous metadata search request. Note that this field is only applicable when the search
+              query is ``*``.
+          * - ``numCursors``
+            - Determines the number of chunks of search results of size ``limit`` to fetch after the first chunk of
+              size ``limit``. This parameter can be used to roughly estimate the total number of results that match
+              the search query. Only used when the search query is ``*``.
+          * - ``showHidden``
+            - By default, metadata search hides entities whose name starts with an ``_`` (underscore) from the search
+              results. Set this to ``true`` to include these hidden entities in search results. Default is ``false``.
+
+       Format for an option: ``&<option-name>=<option-value>``
+
+Entities that match the specified query and entity type are returned in the body of the response in JSON format::
+
+  {
+    "cursors": [ ],
+    "limit": 20,
+    "numCursors": 0,
+    "offset": 0,
+    "showHidden": false,
+    "sort": "creation-time DESC",
+    "total": 2,
+    "results": [
+        {
+            "entityId": {
+                "id": {
+                    "application": {
+                        "applicationId": "WordCount",
+                        "namespace": {
+                            "id": "default"
+                        }
+                    },
+                    "id": "RetrieveCounts",
+                    "type": "Service"
+                },
+                "type": "program"
+            },
+            "metadata": {
+                "SYSTEM": {
+                    "properties": {
+                        "creation-time": "1482091087438",
+                        "description": "A service to retrieve statistics, word counts, and associations.",
+                        "entity-name": "RetrieveCounts",
+                        "version": "-SNAPSHOT"
+                    },
+                    "tags": [
+                        "Realtime",
+                        "Service"
+                    ]
+                }
+            }
+        },
+        {
+            "entityId": {
+                "id": {
+                    "application": {
+                        "applicationId": "WordCount",
+                        "namespace": {
+                            "id": "default"
+                        }
+                    },
+                    "id": "WordCounter",
+                    "type": "Flow"
+                },
+                "type": "program"
+            },
+            "metadata": {
+                "SYSTEM": {
+                    "properties": {
+                        "creation-time": "1482091087390",
+                        "description": "Example Word Count Flow",
+                        "entity-name": "WordCounter",
+                        "version": "-SNAPSHOT"
+                    },
+                    "tags": [
+                        "Flow",
+                        "Realtime"
+                    ]
+                }
+            }
+        }
+    ]
+  }
+
 
 .. rubric:: HTTP Responses
 
