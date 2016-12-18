@@ -251,12 +251,11 @@ features:
     connectErrorMessage: Cannot connect to Market
     tabs:
       all: All
-      applications: Applications
       artifacts: Drivers
       dashboards: Dashboards
       datapacks: Datapacks
       datasets: Datasets
-      examples: Application
+      examples: Applications
       pipelines: Pipelines
       plugins: Plugins
       useCases: Use Cases
