@@ -15,10 +15,12 @@
  */
 
 import React, { Component, PropTypes } from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter, Tooltip } from 'reactstrap';
 
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
+import validateColumnName from 'wrangler/components/Wrangler/column-validation';
+import T from 'i18n-react';
 
 export default class SplitAction extends Component {
   constructor(props) {
@@ -26,17 +28,23 @@ export default class SplitAction extends Component {
 
     this.state = {
       isOpen: false,
-      error: false
+      error: false,
+      tooltipOpen: false
     };
 
     this.toggle = this.toggle.bind(this);
     this.onSave = this.onSave.bind(this);
+    this.tooltipToggle = this.tooltipToggle.bind(this);
   }
 
   componentDidUpdate() {
     if (this.state.isOpen) {
       this.delimiterInput.focus();
     }
+  }
+
+  tooltipToggle() {
+    this.setState({tooltipOpen: !this.state.tooltipOpen});
   }
 
   toggle() {
@@ -49,7 +57,12 @@ export default class SplitAction extends Component {
     const secondSplit = this.secondSplit;
 
     if (!delimiter || !firstSplit || !secondSplit ) {
-      this.setState({error: true});
+      this.setState({error: 'MISSING_REQUIRED_FIELDS'});
+      return;
+    }
+    let error = validateColumnName(firstSplit) || validateColumnName(secondSplit);
+    if (error) {
+      this.setState({error});
       return;
     }
 
@@ -71,7 +84,7 @@ export default class SplitAction extends Component {
 
     const error = (
       <p className="error-text pull-left">
-        Please fill out all fields
+        {T.translate(`features.Wrangler.Errors.${this.state.error}`)}
       </p>
     );
 
@@ -82,10 +95,26 @@ export default class SplitAction extends Component {
         className="wrangler-actions"
         zIndex="1070"
       >
-        <ModalHeader>Split Column: {this.props.column}</ModalHeader>
+        <ModalHeader>
+          <span>
+            {T.translate('features.Wrangler.ColumnActions.Split.header', {
+              columnName: this.props.column
+            })}
+          </span>
+
+          <div
+            className="close-section pull-right"
+            onClick={this.toggle}
+          >
+            <span className="fa fa-times" />
+          </div>
+        </ModalHeader>
         <ModalBody>
           <div>
-            <label className="control-label">Split by first occurrence of</label>
+            <label className="control-label">
+              {T.translate('features.Wrangler.ColumnActions.Split.splitBy')}
+              <span className="fa fa-asterisk error-text"></span>
+            </label>
             <input
               type="text"
               className="form-control"
@@ -95,7 +124,10 @@ export default class SplitAction extends Component {
           </div>
 
           <div>
-            <label className="control-label">First Split Column Name</label>
+            <label className="control-label">
+              {T.translate('features.Wrangler.ColumnActions.Split.firstColumn')}
+              <span className="fa fa-asterisk error-text"></span>
+            </label>
             <input
               type="text"
               className="form-control"
@@ -104,7 +136,10 @@ export default class SplitAction extends Component {
           </div>
 
           <div>
-            <label className="control-label">Second Split Column Name</label>
+            <label className="control-label">
+              {T.translate('features.Wrangler.ColumnActions.Split.secondColumn')}
+              <span className="fa fa-asterisk error-text"></span>
+            </label>
             <input
               type="text"
               className="form-control"
@@ -116,10 +151,10 @@ export default class SplitAction extends Component {
         <ModalFooter>
           {this.state.error ? error : null}
           <button
-            className="btn btn-success"
+            className="btn btn-wrangler"
             onClick={this.onSave}
           >
-            Split
+            {T.translate('features.Wrangler.ColumnActions.Split.label')}
           </button>
         </ModalFooter>
       </Modal>
@@ -127,12 +162,26 @@ export default class SplitAction extends Component {
   }
 
   render() {
+    const id = 'column-action-split';
+
     return (
       <span className="column-actions split-action">
         <span
-          className="fa fa-columns"
+          id={id}
+          className="fa icon-split"
           onClick={this.toggle}
         />
+
+        <Tooltip
+          placement="top"
+          isOpen={this.state.tooltipOpen}
+          toggle={this.tooltipToggle}
+          target={id}
+          className="wrangler-tooltip"
+          delay={0}
+        >
+          {T.translate('features.Wrangler.ColumnActions.Split.label')}
+        </Tooltip>
 
         {this.renderModal()}
       </span>

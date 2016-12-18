@@ -17,7 +17,6 @@
 package co.cask.cdap.messaging;
 
 import co.cask.cdap.proto.id.TopicId;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.HashMap;
@@ -29,11 +28,12 @@ import java.util.Objects;
  */
 public class TopicMetadata {
 
-  public static final String TTL_KEY = "ttl";
+  public static final String GENERATION_KEY = MessagingUtils.Constants.GENERATION_KEY;
+  public static final String TTL_KEY = MessagingUtils.Constants.TTL_KEY;
 
   private final TopicId topicId;
   private final Map<String, String> properties;
-  private final boolean validated;
+  private final transient boolean validated;
 
   /**
    * Creates a new instance for the given topic with the associated properties.
@@ -64,7 +64,6 @@ public class TopicMetadata {
    * @param topicId topic id
    * @param properties a list of key/value pairs that will get converted into a {@link Map}.
    */
-  @VisibleForTesting
   public TopicMetadata(TopicId topicId, Object...properties) {
     this(topicId, toMap(properties));
   }
@@ -81,6 +80,23 @@ public class TopicMetadata {
    */
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  /**
+   * Returns the generation id for the topic.
+   */
+  public int getGeneration() {
+    if (!validated) {
+      validateGeneration();
+    }
+    return Integer.parseInt(properties.get(GENERATION_KEY));
+  }
+
+  /**
+   * Check whether the topic exists.
+   */
+  public boolean exists() {
+    return getGeneration() > 0;
   }
 
   /**
@@ -125,6 +141,7 @@ public class TopicMetadata {
    */
   private void validateProperties() {
     validateTTL();
+    validateGeneration();
   }
 
   /**
@@ -143,6 +160,26 @@ public class TopicMetadata {
       }
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException("The ttl property must be a number greater than zero for topic " + topicId, e);
+    }
+  }
+
+  /**
+   * Validates the "generation" property of the given topic.
+   *
+   * @throws IllegalArgumentException if the generation is missing, not a number, or if it is equal to 0.
+   */
+  private void validateGeneration() {
+    String generation = properties.get(GENERATION_KEY);
+    if (generation == null) {
+      throw new IllegalArgumentException("Missing generation property from the metadata of topic " + topicId);
+    }
+    try {
+      if (Integer.parseInt(generation) == 0) {
+        throw new IllegalArgumentException("The generation property must not be zero for topic " + topicId);
+      }
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("The generation property must be a number other " +
+                                           "than zero for topic " + topicId);
     }
   }
 

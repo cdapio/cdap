@@ -16,12 +16,15 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
@@ -52,17 +55,34 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream printStream) throws Exception {
+    printStream.print(joinMapEntries(parsePreferences(arguments)));
+  }
+
+  protected String determinePattern() {
+    String action = resolved ? "get resolved" : "get";
+      switch (type) {
+        case INSTANCE:
+        case NAMESPACE:
+          return String.format("%s preferences %s", action, type.getShortName());
+        case APP:
+        case FLOW:
+        case MAPREDUCE:
+        case WORKFLOW:
+        case SERVICE:
+        case WORKER:
+        case SPARK:
+          return String.format("%s preferences %s <%s>", action, type.getShortName(), type.getArgumentName());
+      }
+      throw new RuntimeException("Unrecognized element type: " + type.getShortName());
+  }
+
+  private Map<String, String> parsePreferences(Arguments arguments)
+    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
+
     String[] programIdParts = new String[0];
     if (arguments.hasArgument(type.getArgumentName().toString())) {
       programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
     }
-
-    printStream.print(joinMapEntries(parsePreferences(programIdParts)));
-  }
-
-  private Map<String, String> parsePreferences(String[] programIdParts)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
-
     switch(type) {
       case INSTANCE:
         checkInputLength(programIdParts, 0);
@@ -71,13 +91,13 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
         checkInputLength(programIdParts, 0);
         return client.getNamespacePreferences(cliConfig.getCurrentNamespace(), resolved);
       case APP:
-        return client.getApplicationPreferences(parseAppId(programIdParts), resolved);
+        return client.getApplicationPreferences(parseApplicationId(arguments), resolved);
       case FLOW:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:
       case SPARK:
-        return client.getProgramPreferences(parseProgramId(programIdParts, type.getProgramType()), resolved);
+        return client.getProgramPreferences(parseProgramId(arguments, type), resolved);
       default:
         throw new IllegalArgumentException("Unrecognized element type for preferences: "  + type.getShortName());
     }

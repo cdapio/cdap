@@ -18,6 +18,8 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.data2.increment.hbase10cdh550.IncrementHandler;
 import co.cask.cdap.data2.transaction.coprocessor.hbase10cdh550.DefaultTransactionProcessor;
+import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase10cdh550.MessageTableRegionObserver;
+import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase10cdh550.PayloadTableRegionObserver;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase10cdh550.DequeueScanObserver;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase10cdh550.HBaseQueueRegionObserver;
 import co.cask.cdap.data2.util.TableId;
@@ -255,6 +257,16 @@ public class HBase10CDH550TableUtil extends HBaseTableUtil {
   @Override
   public Class<? extends Coprocessor> getIncrementHandlerClassForVersion() {
     return IncrementHandler.class;
+  }
+
+  @Override
+  public Class<? extends Coprocessor> getMessageTableRegionObserverClassForVersion() {
+    return MessageTableRegionObserver.class;
+  }
+
+  @Override
+  public Class<? extends Coprocessor> getPayloadTableRegionObserverClassForVersion() {
+    return PayloadTableRegionObserver.class;
   }
 
   @Override

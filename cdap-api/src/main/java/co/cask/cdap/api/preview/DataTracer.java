@@ -15,13 +15,16 @@
  */
 package co.cask.cdap.api.preview;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
- * Interface used by the CDAP applications to log the debug data.
+ * Interface used by the CDAP applications to trace the data.
  */
+@Beta
 public interface DataTracer {
 
   /**
-   * Logs the data at INFO level. Multiple values can be logged against the same property.
+   * Traces the data. Multiple values can be traced against the same property.
    *
    * @param propertyName the the name of the property
    * @param propertyValue the value associated with the property
@@ -34,7 +37,7 @@ public interface DataTracer {
   String getName();
 
   /**
-   * Returns {@code true} if application is running in debug mode otherwise false is returned.
+   * Returns {@code true} if application is running in preview mode otherwise false is returned.
    */
   boolean isEnabled();
 }

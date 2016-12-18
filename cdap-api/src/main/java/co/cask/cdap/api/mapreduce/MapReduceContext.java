@@ -25,6 +25,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
+import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.workflow.WorkflowInfoProvider;
@@ -33,7 +34,7 @@ import co.cask.cdap.api.workflow.WorkflowInfoProvider;
  * MapReduce job execution context.
  */
 public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer, Transactional,
-                                          PluginContext, ClientLocalizationContext, WorkflowInfoProvider, SecureStore {
+  PluginContext, ClientLocalizationContext, WorkflowInfoProvider, SecureStore, MessagingContext {
 
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.

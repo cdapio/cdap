@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.transaction.AbstractTransactionContext;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
@@ -45,8 +46,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -68,7 +70,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   private final CacheLoader<DatasetCacheKey, Dataset> datasetLoader;
   private final Map<DatasetCacheKey, TransactionAware> activeTxAwares = new HashMap<>();
   private final Map<DatasetCacheKey, Dataset> staticDatasets = new HashMap<>();
-  private final Set<TransactionAware> extraTxAwares = Sets.newIdentityHashSet();
+  private final Deque<TransactionAware> extraTxAwares = new LinkedList<>();
 
   private DelayedDiscardingTransactionContext txContext = null;
 
@@ -261,7 +263,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
                                               txContext.getCurrentTransaction().getTransactionId());
     }
     dismissTransactionContext();
-    txContext = new DelayedDiscardingTransactionContext(activeTxAwares.values(), extraTxAwares);
+    txContext = new DelayedDiscardingTransactionContext(txClient, activeTxAwares.values());
     return txContext;
   }
 
@@ -280,25 +282,36 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
 
   @Override
   public Iterable<TransactionAware> getTransactionAwares() {
-    if (txContext == null) {
-      return NO_TX_AWARES;
-    }
-    return Iterables.concat(extraTxAwares, activeTxAwares.values());
+    return (txContext == null) ? NO_TX_AWARES : Iterables.concat(activeTxAwares.values(), extraTxAwares);
+  }
+
+  @Override
+  public Iterable<TransactionAware> getExtraTransactionAwares() {
+    return extraTxAwares;
   }
 
   @Override
   public void addExtraTransactionAware(TransactionAware txAware) {
-    extraTxAwares.add(txAware);
-    if (txContext != null) {
-      txContext.addTransactionAware(txAware);
+    // Use LIFO ordering. This method is only used for internal TransactionAware
+    // like Flow Queue publisher/consumer and TMS publisher/fetcher
+    // Using LIFO ordering is to allow TMS tx aware always be the last.
+    if (!extraTxAwares.contains(txAware)) {
+      extraTxAwares.addFirst(txAware);
+
+      // Starts the transaction on the tx aware if there is an active transaction
+      Transaction currentTx = txContext == null ? null : txContext.getCurrentTransaction();
+      if (currentTx != null) {
+        txAware.startTx(currentTx);
+      }
     }
   }
 
   @Override
   public void removeExtraTransactionAware(TransactionAware txAware) {
-    extraTxAwares.remove(txAware);
-    if (txContext != null) {
-      txContext.removeTransactionAware(txAware);
+    if (extraTxAwares.contains(txAware)) {
+      Preconditions.checkState(txContext == null || txContext.getCurrentTransaction() == null,
+                               "Cannot remove TransactionAware while there is an active transaction.");
+      extraTxAwares.remove(txAware);
     }
   }
 
@@ -337,133 +350,60 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
    * and needs to continue to do so until the transaction has ended. Therefore this class will put
    * that dataset on a toDiscard set, which is inspected after every transaction.
    */
-  private class DelayedDiscardingTransactionContext extends TransactionContext {
+  private final class DelayedDiscardingTransactionContext extends AbstractTransactionContext {
 
-    private final Collection<TransactionAware> txAwares;
-    private final Collection<TransactionAware> toDiscard;
-    private TransactionContext txContext;
+    private final Set<TransactionAware> regularTxAwares;
+    private final Set<TransactionAware> toDiscard;
+    private final Iterable<TransactionAware> allTxAwares;
+
+    DelayedDiscardingTransactionContext(TransactionSystemClient txClient, Iterable<TransactionAware> txAwares) {
+      super(txClient);
+      this.regularTxAwares = Sets.newIdentityHashSet();
+      this.toDiscard = Sets.newIdentityHashSet();
+
+      Iterables.addAll(regularTxAwares, txAwares);
+      this.allTxAwares = Iterables.concat(regularTxAwares, toDiscard, extraTxAwares);
+    }
+
+    @Override
+    protected Iterable<TransactionAware> getTransactionAwares() {
+      return allTxAwares;
+    }
+
+    @Override
+    protected boolean doAddTransactionAware(TransactionAware txAware) {
+      if (!regularTxAwares.add(txAware)) {
+        return false;
+      }
+      // In case this was marked for discarding, remove that mark.
+      // If the txAware is in the discard set, treat it as non-new tx awares, hence it won't try to start a new TX on it
+      return !toDiscard.remove(txAware);
+    }
+
+    @Override
+    protected boolean doRemoveTransactionAware(TransactionAware txAware) {
+      // This method only gets called when there is no active transaction,
+      // hence no need to memorize the tx aware in the discard set
+      return regularTxAwares.remove(txAware);
+    }
 
     /**
-     * Constructs the context from the transaction system client (needed by TransactionContext).
+     * Discards all datasets marked for discarding, through the dataset cache, and set the tx context to null.
      */
-    private DelayedDiscardingTransactionContext(Collection<TransactionAware> txAwares,
-                                                Collection<TransactionAware> extraTxAwares) {
-      super(txClient);
-      this.toDiscard = Sets.newIdentityHashSet();
-      this.txAwares = Sets.newIdentityHashSet();
-      this.txAwares.addAll(txAwares);
-      this.txAwares.addAll(extraTxAwares);
-    }
-
     @Override
-    public boolean addTransactionAware(TransactionAware txAware) {
-      if (!txAwares.add(txAware)) {
-        return false; // it must already be in the actual tx-context
+    protected void cleanup() {
+      for (TransactionAware txAware : toDiscard) {
+        SingleThreadDatasetCache.this.discardSafely(txAware);
       }
-      // this is new, add it to current tx context
-      if (txContext != null) {
-        txContext.addTransactionAware(txAware);
-      }
-      // in case this was marked for discarding, remove that mark
-      toDiscard.remove(txAware);
-      return true;
-    }
-
-    @Override
-    public boolean removeTransactionAware(TransactionAware txAware) {
-      // if the actual tx-context is non-null, we are in the middle of a transaction, and can't remove the tx-aware
-      // so just remove this from the tx-awares here, and the next transaction will be started without it.
-      return txAwares.remove(txAware);
+      toDiscard.clear();
     }
 
     /**
      * Mark a tx-aware for discarding after the transaction is complete.
      */
     private void discardAfterTx(TransactionAware txAware) {
-      toDiscard.add(txAware);
-      txAwares.remove(txAware);
-    }
-
-    /**
-     * Discards all datasets marked for discarding, through the dataset cache, and set the tx context to null.
-     */
-    public void cleanup() {
-      for (TransactionAware txAware : toDiscard) {
-        SingleThreadDatasetCache.this.discardSafely(txAware);
-      }
-      toDiscard.clear();
-      txContext = null;
-    }
-
-    @Override
-    public void start() throws TransactionFailureException {
-      newTxContext();
-      txContext.start();
-    }
-
-    @Override
-    public void start(int timeout) throws TransactionFailureException {
-      newTxContext();
-      txContext.start(timeout);
-    }
-
-    private void newTxContext() throws TransactionFailureException {
-      if (getCurrentTransaction() != null) {
-        throw new TransactionFailureException("Attempted to start a transaction within active transaction " +
-                                                getCurrentTransaction().getTransactionId());
-      }
-      txContext = new TransactionContext(SingleThreadDatasetCache.this.txClient, txAwares);
-    }
-
-    @Override
-    public void finish() throws TransactionFailureException {
-      // copied from TransactionContext so it behaves exactly the same in this case
-      Preconditions.checkState(txContext != null, "Cannot finish tx that has not been started");
-      try {
-        txContext.finish();
-      } finally {
-        cleanup();
-      }
-    }
-
-    @Override
-    public void checkpoint() throws TransactionFailureException {
-      // copied from TransactionContext so it behaves exactly the same in this case
-      Preconditions.checkState(txContext != null, "Cannot checkpoint tx that has not been started");
-      txContext.checkpoint();
-    }
-
-    @Nullable
-    @Override
-    public Transaction getCurrentTransaction() {
-      return txContext == null ? null : txContext.getCurrentTransaction();
-    }
-
-    @Override
-    public void abort() throws TransactionFailureException {
-      if (txContext == null) {
-        // same behavior as Tephra's TransactionContext
-        // might be called by some generic exception handler even though already aborted/finished - we allow that
-        return;
-      }
-      try {
-        txContext.abort();
-      } finally {
-        cleanup();
-      }
-    }
-
-    @Override
-    public void abort(TransactionFailureException cause) throws TransactionFailureException {
-      if (txContext == null) {
-        // same behavior as Tephra's TransactionContext
-        // might be called by some generic exception handler even though already aborted/finished - we allow that
-        return;
-      }
-      try {
-        txContext.abort(cause);
-      } finally {
-        cleanup();
+      if (regularTxAwares.remove(txAware)) {
+        toDiscard.add(txAware);
       }
     }
   }

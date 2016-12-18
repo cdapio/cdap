@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.messaging.MessagingUtils;
+import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
 
@@ -33,15 +34,6 @@ import java.util.NoSuchElementException;
 public abstract class AbstractPayloadTable implements PayloadTable {
 
   private final StoreIterator storeIterator = new StoreIterator();
-
-  /**
-   * Delete the messages in the Table, given a key range.
-   *
-   * @param startRow start row prefix
-   * @param stopRow stop row prefix
-   * @throws IOException thrown if there was an error while trying to delete the entries
-   */
-  protected abstract void delete(byte[] startRow, byte[] stopRow) throws IOException;
 
   /**
    * Store the {@link RawPayloadTableEntry}s persistently.
@@ -64,24 +56,14 @@ public abstract class AbstractPayloadTable implements PayloadTable {
                                                                   int limit) throws IOException;
 
   @Override
-  public void delete(TopicId topicId, long transactionWritePointer) throws IOException {
-    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG];
-    Bytes.putBytes(startRow, 0, topic, 0, topic.length);
-    Bytes.putLong(startRow, topic.length, transactionWritePointer);
-    byte[] stopRow = Bytes.stopKeyForPrefix(startRow);
-    delete(startRow, stopRow);
-  }
-
-  @Override
   public void store(Iterator<? extends Entry> entries) throws IOException {
     persist(storeIterator.reset(entries));
   }
 
   @Override
-  public CloseableIterator<Entry> fetch(TopicId topicId, long transactionWritePointer, MessageId messageId,
-                                        final boolean inclusive, int limit) throws IOException {
-    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
+  public CloseableIterator<Entry> fetch(TopicMetadata metadata, long transactionWritePointer,
+                                        MessageId messageId, final boolean inclusive, int limit) throws IOException {
+    byte[] topic = MessagingUtils.toDataKeyPrefix(metadata.getTopicId(), metadata.getGeneration());
     final byte[] startRow = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
     byte[] stopRow = new byte[topic.length + Bytes.SIZEOF_LONG];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
@@ -139,6 +121,7 @@ public abstract class AbstractPayloadTable implements PayloadTable {
 
     private Iterator<? extends Entry> entries;
     private TopicId topicId;
+    private int generation;
     private byte[] topic;
     private byte[] rowKey;
     private Entry nextEntry;
@@ -163,9 +146,10 @@ public abstract class AbstractPayloadTable implements PayloadTable {
       Entry entry = nextEntry;
       nextEntry = null;
 
-      if (topicId == null || (!topicId.equals(entry.getTopicId()))) {
+      if (topicId == null || (!topicId.equals(entry.getTopicId())) || (generation != entry.getGeneration())) {
         topicId = entry.getTopicId();
-        topic = MessagingUtils.toRowKeyPrefix(topicId);
+        generation = entry.getGeneration();
+        topic = MessagingUtils.toDataKeyPrefix(topicId, entry.getGeneration());
         rowKey = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
       }
 

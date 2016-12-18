@@ -42,9 +42,11 @@ import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
@@ -86,6 +88,7 @@ class UpgradeDatasetServiceManager extends AbstractIdleService {
   private final DatasetFramework datasetFramework;
   private final DatasetOpExecutorService datasetOpExecutorService;
   private final RemoteSystemOperationsService remoteSystemOperationsService;
+  private final MetadataStore metadataStore;
 
   @Inject
   UpgradeDatasetServiceManager(CConfiguration cConf, Configuration hConf,
@@ -96,10 +99,15 @@ class UpgradeDatasetServiceManager extends AbstractIdleService {
     this.datasetFramework = injector.getInstance(DatasetFramework.class);
     this.datasetOpExecutorService = injector.getInstance(DatasetOpExecutorService.class);
     this.remoteSystemOperationsService = injector.getInstance(RemoteSystemOperationsService.class);
+    this.metadataStore = injector.getInstance(MetadataStore.class);
   }
 
-  public DatasetFramework getDSFramework() {
+  DatasetFramework getDSFramework() {
     return datasetFramework;
+  }
+
+  MetadataStore getMetadataStore() {
+    return metadataStore;
   }
 
   @Override
@@ -145,6 +153,7 @@ class UpgradeDatasetServiceManager extends AbstractIdleService {
       new LocationRuntimeModule().getDistributedModules(),
       new IOModule(),
       new KafkaClientModule(),
+      new MessagingClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),

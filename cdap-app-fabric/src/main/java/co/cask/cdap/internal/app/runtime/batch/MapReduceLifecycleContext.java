@@ -31,6 +31,8 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
+import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.security.store.SecureStoreData;
@@ -176,6 +178,11 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
+  public String getClusterName() {
+    return delegate.getClusterName();
+  }
+
+  @Override
   public String getNamespace() {
     return delegate.getNamespace();
   }
@@ -292,5 +299,23 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
     return "MapReduceLifecycleContext{" +
       "delegate=" + delegate +
       '}';
+  }
+
+  @Override
+  public MessagePublisher getMessagePublisher() {
+    // TODO: CDAP-7807
+    throw new UnsupportedOperationException("Messaging is not supported in MapReduce task-level context");
+  }
+
+  @Override
+  public MessagePublisher getDirectMessagePublisher() {
+    // TODO: CDAP-7807
+    throw new UnsupportedOperationException("Messaging is not supported in MapReduce task-level context");
+  }
+
+  @Override
+  public MessageFetcher getMessageFetcher() {
+    // TODO: CDAP-7807
+    throw new UnsupportedOperationException("Messaging is not supported in MapReduce task-level context");
   }
 }

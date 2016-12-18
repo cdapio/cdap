@@ -724,6 +724,8 @@ public class AuthorizationTest extends TestBase {
     // alice should also be able to save runtime arguments for all future runs of the program
     Map<String, String> args = ImmutableMap.of("key", "value");
     greetingService.setRuntimeArgs(args);
+    // Alice should be able to get runtime arguments as she has ADMIN on it
+    Assert.assertEquals(args, greetingService.getRuntimeArgs());
     dummyAppManager.stopProgram(serviceId.toId());
     Tasks.waitFor(false, new Callable<Boolean>() {
       @Override
@@ -770,6 +772,15 @@ public class AuthorizationTest extends TestBase {
     } catch (UnauthorizedException expected) {
       // expected
     }
+
+    try {
+      greetingService.getRuntimeArgs();
+      Assert.fail("Getting runtime arguments should have failed because bob does not have READ privileges on the " +
+                    "service");
+    } catch (UnauthorizedException expected) {
+      // expected
+    }
+
     SecurityRequestContext.setUserId(ALICE.getName());
     dummyAppManager.delete();
     assertNoAccess(appId);

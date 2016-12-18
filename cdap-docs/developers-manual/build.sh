@@ -72,13 +72,17 @@ function download_includes() {
   download_readme_file_and_test ${includes_dir} ${ingest_url} b798091f24f6ecfe05d614f1dd1f7a03 cdap-stream-clients/ruby
 
   echo_red_bold "Check included example files for changes"
-  test_an_include 9e137848822e63101b699af03af7f45e ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+  test_an_include 8fdb325ac2ad92bca959bd2f12fc91d7 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+
+  test_an_include 4255a2e3d417e928ac5182ddd932139f ../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
 
   test_an_include bb7344dd2c55c5ef70653ff0b5fcd6df ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
   test_an_include 29fe1471372678115e643b0ad431b28d ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
 
   test_an_include f9acd1e2ed73ba5e83b9a0cd6c75f988 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+
+  test_an_include fb8055d43cb481c1d5b404d0d1278f51 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
 
   test_an_include 95092c8859fd97b6b327d774255e5dac ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
 

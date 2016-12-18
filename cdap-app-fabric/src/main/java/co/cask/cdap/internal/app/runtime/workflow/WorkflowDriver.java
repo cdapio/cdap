@@ -20,12 +20,10 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
@@ -52,8 +50,6 @@ import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -66,6 +62,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.DatasetId;
@@ -88,7 +85,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -140,6 +136,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final PluginInstantiator pluginInstantiator;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
+  private final MessagingService messagingService;
 
   private NettyHttpService httpService;
   private volatile Thread runningThread;
@@ -152,7 +149,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                  DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                  TransactionSystemClient txClient, RuntimeStore runtimeStore, CConfiguration cConf,
                  @Nullable PluginInstantiator pluginInstantiator, SecureStore secureStore,
-                 SecureStoreManager secureStoreManager) {
+                 SecureStoreManager secureStoreManager, MessagingService messagingService) {
     this.program = program;
     this.programOptions = options;
     this.hostname = hostname;
@@ -172,7 +169,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                          basicWorkflowToken, program, programOptions, cConf,
                                                          metricsCollectionService, datasetFramework, txClient,
                                                          discoveryServiceClient, nodeStates, pluginInstantiator,
-                                                         secureStore, secureStoreManager);
+                                                         secureStore, secureStoreManager, messagingService);
 
     this.workflowRunId = program.getId().run(basicWorkflowContext.getRunId());
     this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
@@ -183,6 +180,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.pluginInstantiator = pluginInstantiator;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
+    this.messagingService = messagingService;
+
   }
 
   @Override
@@ -217,30 +216,11 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     final TransactionControl txControl =
       Transactions.getTransactionControl(TransactionControl.IMPLICIT, Workflow.class,
                                          workflow, "initialize", WorkflowContext.class);
-    if (TransactionControl.EXPLICIT == txControl) {
-      doInitialize(workflow);
-    } else {
-      basicWorkflowContext.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          doInitialize(workflow);
-        }
-      });
-    }
+    basicWorkflowToken.setCurrentNode(workflowSpec.getName());
+    basicWorkflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
+    basicWorkflowContext.initializeProgram((ProgramLifecycle) workflow, basicWorkflowContext, txControl, false);
     runtimeStore.updateWorkflowToken(workflowRunId, basicWorkflowToken);
     return workflow;
-  }
-
-  private void doInitialize(Workflow workflow) throws Exception {
-    basicWorkflowToken.setCurrentNode(workflowSpec.getName());
-    ClassLoader oldClassLoader = setContextCombinedClassLoader(workflow);
-    try {
-      basicWorkflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
-      //noinspection unchecked
-      ((ProgramLifecycle<WorkflowContext>) workflow).initialize(basicWorkflowContext);
-    } finally {
-      ClassLoaders.setContextClassLoader(oldClassLoader);
-    }
   }
 
   private void blockIfSuspended() {
@@ -304,29 +284,11 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     final TransactionControl txControl =
       Transactions.getTransactionControl(TransactionControl.IMPLICIT, Workflow.class, workflow, "destroy");
     try {
-      if (TransactionControl.EXPLICIT == txControl) {
-        doDestroy();
-      } else {
-        basicWorkflowContext.execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            doDestroy();
-          }
-        });
-      }
+      basicWorkflowToken.setCurrentNode(workflowSpec.getName());
+      basicWorkflowContext.destroyProgram((ProgramLifecycle) workflow, basicWorkflowContext, txControl, false);
       runtimeStore.updateWorkflowToken(workflowRunId, basicWorkflowToken);
     } catch (Throwable t) {
       LOG.error(String.format("Failed to destroy the Workflow %s", workflowRunId), t);
-    }
-  }
-
-  private void doDestroy() {
-    basicWorkflowToken.setCurrentNode(workflowSpec.getName());
-    ClassLoader oldClassLoader = setContextCombinedClassLoader(workflow);
-    try {
-      ((ProgramLifecycle<WorkflowContext>) workflow).destroy();
-    } finally {
-      ClassLoaders.setContextClassLoader(oldClassLoader);
     }
   }
 
@@ -464,7 +426,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                       metricsCollectionService, datasetFramework,
                                                                       txClient, discoveryServiceClient,
                                                                       pluginInstantiator, secureStore,
-                                                                      secureStoreManager);
+                                                                      secureStoreManager, messagingService);
       customActionExecutor = new CustomActionExecutor(workflowRunId, context, instantiator, classLoader);
     }
 
@@ -522,7 +484,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, token, program, programOptions, cConf,
                                                        metricsCollectionService, datasetFramework, txClient,
                                                        discoveryServiceClient, nodeStates, pluginInstantiator,
-                                                       secureStore, secureStoreManager);
+                                                       secureStore, secureStoreManager, messagingService);
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(context)) {
       // execute the if branch
@@ -632,7 +594,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return new BasicWorkflowContext(workflowSpec, actionSpec, token,
                                     program, programOptions, cConf, metricsCollectionService,
                                     datasetFramework, txClient, discoveryServiceClient, nodeStates,
-                                    pluginInstantiator, secureStore, secureStoreManager);
+                                    pluginInstantiator, secureStore, secureStoreManager, messagingService);
   }
 
   private Supplier<List<WorkflowActionNode>> createStatusSupplier() {
@@ -665,10 +627,5 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         terminationLatch.countDown();
       }
     };
-  }
-
-  private ClassLoader setContextCombinedClassLoader(Workflow workflow) {
-    return ClassLoaders.setContextClassLoader(
-      new CombineClassLoader(null, Arrays.asList(workflow.getClass().getClassLoader(), getClass().getClassLoader())));
   }
 }

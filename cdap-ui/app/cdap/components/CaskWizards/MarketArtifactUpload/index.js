@@ -20,11 +20,12 @@ import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUp
 import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
 import {MyMarketApi} from 'api/market';
 import find from 'lodash/find';
+import T from 'i18n-react';
 
 export default function MarketArtifactUploadWizard({input, onClose, isOpen}) {
   const args = input.action.arguments;
   let config = find(args, {name: 'config'});
-
+  input.headerLabel = T.translate('features.Wizard.ArtifactUpload.headerlabel');
   let params = {
     entityName: input.package.name,
     entityVersion: input.package.version,

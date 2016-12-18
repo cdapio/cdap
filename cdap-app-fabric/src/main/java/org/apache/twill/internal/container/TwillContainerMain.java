@@ -72,12 +72,6 @@ public final class TwillContainerMain extends ServiceMain {
 
   private static final Logger LOG = LoggerFactory.getLogger(TwillContainerMain.class);
 
-  private final Map<String, String> logLevels;
-
-  private TwillContainerMain(Map<String, String> logLevels) {
-    this.logLevels = logLevels;
-  }
-
   /**
    * Main method for launching a {@link TwillContainerService} which runs
    * a {@link org.apache.twill.api.TwillRunnable}.
@@ -148,19 +142,13 @@ public final class TwillContainerMain extends ServiceMain {
                                                               createAppLocation(conf, twillRuntimeSpec.getFsUser(),
                                                                                 twillRuntimeSpec.getTwillAppDir()),
                                                               defaultLogLevels, logLevels);
-    new TwillContainerMain(logLevels).doMain(
+    new TwillContainerMain().doMain(
       service,
       zkClientService,
       new LogFlushService(),
       new TwillZKPathService(containerZKClient, runId),
       new CloseableServiceWrapper(discoveryService)
     );
-  }
-
-  @Override
-  protected String getLoggerLevel(Logger logger) {
-    String logLevel = logLevels.get(Logger.ROOT_LOGGER_NAME);
-    return logLevel == null ? super.getLoggerLevel(logger) : logLevel;
   }
 
   private static void loadSecureStore() throws IOException {

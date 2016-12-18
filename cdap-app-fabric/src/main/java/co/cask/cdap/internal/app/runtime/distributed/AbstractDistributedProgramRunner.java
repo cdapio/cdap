@@ -275,6 +275,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
               if (logbackURI != null) {
                 twillPreparer.addJVMOptions("-Dlogback.configurationFile=" + LOGBACK_FILE_NAME);
               }
+              setLogLevels(twillPreparer, program, options);
 
               String logLevelConf = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
               if ("OFF".equals(logLevelConf)) {
@@ -444,6 +445,23 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
       conf.writeXml(writer);
     }
     return file;
+  }
+
+  protected TwillPreparer setLogLevels(TwillPreparer twillPreparer, Program program, ProgramOptions options) {
+    Map<String, String> logLevels = SystemArguments.getLogLevels(options.getUserArguments().asMap());
+    if (logLevels.isEmpty()) {
+      return twillPreparer;
+    }
+    return twillPreparer.setLogLevels(transformLogLevels(logLevels));
+  }
+
+  protected Map<String, LogEntry.Level> transformLogLevels(Map<String, String> logLevels) {
+    return Maps.transformValues(logLevels, new Function<String, LogEntry.Level>() {
+      @Override
+      public LogEntry.Level apply(String input) {
+        return LogEntry.Level.valueOf(input.toUpperCase());
+      }
+    });
   }
 
   private File saveCConf(CConfiguration conf, File file, List<String> newExtraJars) throws IOException {

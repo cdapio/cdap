@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeProvider;
 import co.cask.cdap.messaging.MessageFetcher;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.RollbackDetail;
 import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.TopicMetadata;
@@ -45,14 +46,21 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
@@ -72,7 +80,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   private final LoadingCache<TopicId, ConcurrentMessageWriter> messageTableWriterCache;
   private final LoadingCache<TopicId, ConcurrentMessageWriter> payloadTableWriterCache;
   private final TimeProvider timeProvider;
-  private final MetricsContext metricsContext;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   CoreMessagingService(CConfiguration cConf, TableFactory tableFactory,
@@ -89,10 +97,17 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     this.messageTableWriterCache = createTableWriterCache(true, cConf);
     this.payloadTableWriterCache = createTableWriterCache(false, cConf);
     this.timeProvider = timeProvider;
-    this.metricsContext = metricsCollectionService.getContext(ImmutableMap.of(
-      Constants.Metrics.Tag.COMPONENT, Constants.Service.MESSAGING_SERVICE,
-      Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.MessagingSystem.CONTAINER_INSTANCE_ID, "0")
-    ));
+
+    // Due to circular dependency in our class hierarchy (which is bad), we cannot use metricsCollectionService
+    // to construct metricsContext in here. The circular dependency is
+
+    // metrics collection ->
+    //   metrics store ->
+    //    lineage dataset framework ->
+    //      audit publisher ->
+    //        messaging service ->
+    //          "metrics collection"
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -119,6 +134,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     try (MetadataTable metadataTable = createMetadataTable()) {
       metadataTable.deleteTopic(topicId);
       topicCache.invalidate(topicId);
+      messageTableWriterCache.invalidate(topicId);
+      payloadTableWriterCache.invalidate(topicId);
     }
   }
 
@@ -160,7 +177,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   public RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException {
     try {
-      return messageTableWriterCache.get(request.getTopicId()).persist(request);
+      TopicMetadata metadata = topicCache.get(request.getTopicId());
+      return messageTableWriterCache.get(request.getTopicId()).persist(request, metadata);
     } catch (ExecutionException e) {
       Throwable cause = Objects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
@@ -171,7 +189,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   public void storePayload(StoreRequest request) throws TopicNotFoundException, IOException {
     try {
-      payloadTableWriterCache.get(request.getTopicId()).persist(request);
+      TopicMetadata metadata = topicCache.get(request.getTopicId());
+      payloadTableWriterCache.get(request.getTopicId()).persist(request, metadata);
     } catch (ExecutionException e) {
       Throwable cause = Objects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
@@ -185,20 +204,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
 
     Exception failure = null;
     try (MessageTable messageTable = createMessageTable(metadata)) {
-      // Safe to cast to short because message table only use the sequence id as unsigned bytes.
-      messageTable.delete(topicId, rollbackDetail.getStartTimestamp(), (short) rollbackDetail.getStartSequenceId(),
-                          rollbackDetail.getEndTimestamp(), (short) rollbackDetail.getEndSequenceId());
+      messageTable.rollback(metadata, rollbackDetail);
     } catch (Exception e) {
       failure = e;
-    }
-    try (PayloadTable payloadTable = createPayloadTable(metadata)) {
-      payloadTable.delete(topicId, rollbackDetail.getTransactionWritePointer());
-    } catch (Exception e) {
-      if (failure != null) {
-        failure.addSuppressed(e);
-      } else {
-        failure = e;
-      }
     }
 
     // Throw if there is any failure in rollback.
@@ -210,6 +218,32 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
 
   @Override
   protected void startUp() throws Exception {
+    Queue<TopicId> asyncCreationTopics = new LinkedList<>();
+
+    for (String topic : new HashSet<>(cConf.getTrimmedStringCollection(Constants.MessagingSystem.SYSTEM_TOPICS))) {
+      TopicId topicId;
+      try {
+        topicId = NamespaceId.SYSTEM.topic(topic);
+      } catch (IllegalArgumentException e) {
+        // Ignore invalid topic
+        LOG.warn("Ignore creation of invalid topic '{}'.", topic);
+        continue;
+      }
+
+      try {
+        createTopicIfNotExists(topicId);
+      } catch (Exception e) {
+        // If failed, add it to a list so that the retry will happen asynchronously
+        LOG.warn("Topic {} creation failed with exception {}. Will retry.", topicId, e.getMessage());
+        LOG.debug("Topic {} creation failure stacktrace", topicId, e);
+        asyncCreationTopics.add(topicId);
+      }
+    }
+
+    if (!asyncCreationTopics.isEmpty()) {
+      startAsyncTopicCreation(asyncCreationTopics, 5, TimeUnit.SECONDS);
+    }
+
     LOG.info("Core Messaging Service started");
   }
 
@@ -219,6 +253,50 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     messageTableWriterCache.invalidateAll();
     payloadTableWriterCache.invalidateAll();
     LOG.info("Core Messaging Service stopped");
+  }
+
+  /**
+   * Starts a thread to create the give list of topics. The thread will keep trying the creation until
+   * all of the given topics are created.
+   */
+  private void startAsyncTopicCreation(final Queue<TopicId> topics, final long delay, final TimeUnit unit) {
+    final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
+      Threads.createDaemonThreadFactory("async-topic-creation"));
+
+    executor.schedule(new Runnable() {
+      @Override
+      public void run() {
+        Iterator<TopicId> iterator = topics.iterator();
+        while (iterator.hasNext()) {
+          TopicId topicId = iterator.next();
+          try {
+            createTopicIfNotExists(topicId);
+            // Successfully created, remove it from the async list
+            iterator.remove();
+          } catch (Exception e) {
+            LOG.warn("Topic {} creation failed with exception {}. Will retry.", topicId, e.getMessage());
+            LOG.debug("Topic {} creation failure stacktrace", topicId, e);
+          }
+        }
+
+        if (!topics.isEmpty()) {
+          executor.schedule(this, delay, unit);
+        }
+      }
+    }, delay, unit);
+  }
+
+  /**
+   * Creates the given topic if it is not yet created.
+   */
+  private void createTopicIfNotExists(TopicId topicId) throws IOException {
+    try {
+      createTopic(new TopicMetadata(topicId));
+      LOG.info("System topic created: {}", topicId);
+    } catch (TopicAlreadyExistsException e) {
+      // OK for the topic already created. Just log a debug as it happens on every restart.
+      LOG.debug("System topic already exists: {}", topicId);
+    }
   }
 
   /**
@@ -245,7 +323,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
    * @return a {@link LoadingCache} for
    */
   private LoadingCache<TopicId, ConcurrentMessageWriter> createTableWriterCache(final boolean messageTable,
-                                                                                CConfiguration cConf) {
+                                                                                final CConfiguration cConf) {
     long expireSecs = cConf.getLong(Constants.MessagingSystem.TABLE_CACHE_EXPIRATION_SECONDS);
 
     return CacheBuilder.newBuilder()
@@ -271,12 +349,14 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
             ? new MessageTableStoreRequestWriter(createMessageTable(metadata), timeProvider)
             : new PayloadTableStoreRequestWriter(createPayloadTable(metadata), timeProvider);
 
-          MetricsContext writerMetricsContext = metricsContext.childContext(ImmutableMap.of(
+          MetricsContext metricsContext = metricsCollectionService.getContext(ImmutableMap.of(
+            Constants.Metrics.Tag.COMPONENT, Constants.Service.MESSAGING_SERVICE,
+            Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.MessagingSystem.CONTAINER_INSTANCE_ID, "0"),
             Constants.Metrics.Tag.NAMESPACE, topicId.getNamespace(),
             Constants.Metrics.Tag.TABLE, messageTable ? "message" : "payload"
           ));
 
-          return new ConcurrentMessageWriter(messagesWriter, writerMetricsContext);
+          return new ConcurrentMessageWriter(messagesWriter, metricsContext);
         }
       });
   }
@@ -285,20 +365,19 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
    * Creates a new instance of {@link MetadataTable}.
    */
   private MetadataTable createMetadataTable() throws IOException {
-    return tableFactory.createMetadataTable(NamespaceId.SYSTEM,
-                                            cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME));
+    return tableFactory.createMetadataTable(cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME));
   }
 
   private MessageTable createMessageTable(@SuppressWarnings("unused") TopicMetadata topicMetadata) throws IOException {
     // Currently we don't support customizable table name yet, hence always get it from cConf.
     // Later on it can be done by topic properties, with impersonation setting as well.
-    return tableFactory.createMessageTable(NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
+    return tableFactory.createMessageTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
   }
 
   private PayloadTable createPayloadTable(@SuppressWarnings("unused") TopicMetadata topicMetadata) throws IOException {
     // Currently we don't support customizable table name yet, hence always get it from cConf.
     // Later on it can be done by topic properties, with impersonation setting as well.
-    return tableFactory.createPayloadTable(NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
+    return tableFactory.createPayloadTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
   }
 
   /**
@@ -307,8 +386,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   private Map<String, String> createDefaultProperties() {
     Map<String, String> properties = new HashMap<>();
 
-    // Default the TTL
+    // Default properties
     properties.put(TopicMetadata.TTL_KEY, cConf.get(Constants.MessagingSystem.TOPIC_DEFAULT_TTL_SECONDS));
+    properties.put(TopicMetadata.GENERATION_KEY, MessagingUtils.Constants.DEFAULT_GENERATION);
     return properties;
   }
 }

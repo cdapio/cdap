@@ -16,8 +16,6 @@
 
 package co.cask.cdap.messaging.store;
 
-import co.cask.cdap.proto.id.NamespaceId;
-
 import java.io.IOException;
 
 /**
@@ -25,9 +23,9 @@ import java.io.IOException;
  */
 public interface TableFactory {
 
-  MetadataTable createMetadataTable(NamespaceId namespace, String tableName) throws IOException;
+  MetadataTable createMetadataTable(String tableName) throws IOException;
 
-  MessageTable createMessageTable(NamespaceId namespace, String tableName) throws IOException;
+  MessageTable createMessageTable(String tableName) throws IOException;
 
-  PayloadTable createPayloadTable(NamespaceId namespace, String tableName) throws IOException;
+  PayloadTable createPayloadTable(String tableName) throws IOException;
 }

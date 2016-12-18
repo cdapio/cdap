@@ -17,12 +17,23 @@
 import React, { Component, PropTypes } from 'react';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
+import {Tooltip} from 'reactstrap';
+import T from 'i18n-react';
 
 export default class DropAction extends Component {
   constructor(props) {
     super(props);
 
+    this.state = {
+      tooltipOpen: false
+    };
+
     this.onClick = this.onClick.bind(this);
+    this.toggle = this.toggle.bind(this);
+  }
+
+  toggle() {
+    this.setState({tooltipOpen: !this.state.tooltipOpen});
   }
 
   onClick() {
@@ -35,12 +46,26 @@ export default class DropAction extends Component {
   }
 
   render() {
+    const id = 'column-action-drop';
+
     return (
       <span className="column-actions drop-action">
         <span
+          id={id}
           className="fa fa-trash"
           onClick={this.onClick}
         />
+
+        <Tooltip
+          placement="top"
+          isOpen={this.state.tooltipOpen}
+          toggle={this.toggle}
+          target={id}
+          className="wrangler-tooltip"
+          delay={0}
+        >
+          {T.translate('features.Wrangler.ColumnActions.Drop.label')}
+        </Tooltip>
       </span>
     );
   }

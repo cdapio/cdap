@@ -20,9 +20,12 @@ import co.cask.cdap.AppUsingNamespace;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
@@ -81,6 +84,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.apache.twill.filesystem.Location;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
@@ -99,9 +103,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -113,6 +119,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -123,8 +130,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTestRun.class);
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
-
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
+                                                                       Constants.CLUSTER_NAME, "testCluster");
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
@@ -172,24 +179,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testFlowRuntimeArguments() throws Exception {
-    ApplicationManager applicationManager = deployApplication(FilterApp.class);
-    Map<String, String> args = Maps.newHashMap();
-    args.put("threshold", "10");
-    applicationManager.getFlowManager("FilterFlow").start(args);
-
-    StreamManager input = getStreamManager("input");
-    input.send("1");
-    input.send("11");
-
-    ServiceManager serviceManager = applicationManager.getServiceManager("CountService").start();
-    serviceManager.waitForStatus(true, 2, 1);
-
-    Assert.assertEquals("1", new Gson().fromJson(
-      callServiceGet(serviceManager.getServiceURL(), "result"), String.class));
-  }
-
-  @Test
-  public void testNewFlowRuntimeArguments() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterAppWithNewFlowAPI.class);
     Map<String, String> args = Maps.newHashMap();
     args.put("threshold", "10");
@@ -269,7 +258,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testServiceManager() throws Exception {
-    ApplicationManager applicationManager = deployApplication(FilterApp.class);
+    ApplicationManager applicationManager = deployApplication(FilterAppWithNewFlowAPI.class);
     final ServiceManager countService = applicationManager.getServiceManager("CountService");
     countService.setInstances(2);
     Assert.assertEquals(0, countService.getProvisionedInstances());
@@ -1874,6 +1863,107 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDatasetTypeShortcut() throws Exception {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeployTypeShortcut.class, "MyService");
+  }
+
+  @Test
+  public void testClusterName() throws Exception {
+    String clusterName = getConfiguration().get(Constants.CLUSTER_NAME);
+
+    ApplicationManager appManager = deployApplication(ClusterNameTestApp.class);
+    final DataSetManager<KeyValueTable> datasetManager = getDataset(ClusterNameTestApp.CLUSTER_NAME_TABLE);
+    final KeyValueTable clusterNameTable = datasetManager.get();
+
+    // A callable for reading the cluster name from the ClusterNameTable.
+    // It is used for Tasks.waitFor call down below.
+    final AtomicReference<String> key = new AtomicReference<>();
+    Callable<String> readClusterName = new Callable<String>() {
+      @Nullable
+      @Override
+      public String call() throws Exception {
+        datasetManager.flush();
+        byte[] bytes = clusterNameTable.read(key.get());
+        return bytes == null ? null : new String(bytes, StandardCharsets.UTF_8);
+      }
+    };
+
+    // Service
+    ServiceManager serviceManager = appManager.getServiceManager(
+      ClusterNameTestApp.ClusterNameServiceHandler.class.getSimpleName()).start();
+    Assert.assertEquals(clusterName, callServiceGet(serviceManager.getServiceURL(10, TimeUnit.SECONDS), "clusterName"));
+    serviceManager.stop();
+
+    // Worker
+    WorkerManager workerManager = appManager.getWorkerManager(
+      ClusterNameTestApp.ClusterNameWorker.class.getSimpleName()).start();
+    key.set("worker.cluster.name");
+    Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    // The worker will stop by itself. No need to call stop
+    workerManager.waitForFinish(10, TimeUnit.SECONDS);
+
+    // Flow
+    FlowManager flowManager = appManager.getFlowManager(
+      ClusterNameTestApp.ClusterNameFlow.class.getSimpleName()).start();
+    key.set("flow.cluster.name");
+    Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    flowManager.stop();
+
+    // MapReduce
+    // Setup the input file used by MR
+    Location location = this.<FileSet>getDataset(ClusterNameTestApp.INPUT_FILE_SET).get().getLocation("input");
+    try (PrintStream printer = new PrintStream(location.getOutputStream(), true, "UTF-8")) {
+      for (int i = 0; i < 10; i++) {
+        printer.println("Hello World " + i);
+      }
+    }
+
+    // Setup input and output dataset arguments
+    Map<String, String> inputArgs = new HashMap<>();
+    FileSetArguments.setInputPath(inputArgs, "input");
+    Map<String, String> outputArgs = new HashMap<>();
+    FileSetArguments.setOutputPath(outputArgs, "output");
+
+    Map<String, String> args = new HashMap<>();
+    args.putAll(RuntimeArguments.addScope(Scope.DATASET, ClusterNameTestApp.INPUT_FILE_SET, inputArgs));
+    args.putAll(RuntimeArguments.addScope(Scope.DATASET, ClusterNameTestApp.OUTPUT_FILE_SET, outputArgs));
+
+    MapReduceManager mrManager = appManager.getMapReduceManager(
+      ClusterNameTestApp.ClusterNameMapReduce.class.getSimpleName()).start(args);
+    key.set("mr.client.cluster.name");
+    Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    key.set("mapper.cluster.name");
+    Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    key.set("reducer.cluster.name");
+    Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    mrManager.waitForFinish(60, TimeUnit.SECONDS);
+
+    // Spark
+    SparkManager sparkManager = appManager.getSparkManager(
+      ClusterNameTestApp.ClusterNameSpark.class.getSimpleName()).start();
+    key.set("spark.cluster.name");
+    Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    sparkManager.waitForFinish(60, TimeUnit.SECONDS);
+
+    // Workflow
+    // Cleanup the output path for the MR job in the workflow first
+    this.<FileSet>getDataset(ClusterNameTestApp.OUTPUT_FILE_SET).get().getLocation("output").delete(true);
+    args = RuntimeArguments.addScope(Scope.MAPREDUCE,
+                                     ClusterNameTestApp.ClusterNameMapReduce.class.getSimpleName(), args);
+    WorkflowManager workflowManager = appManager.getWorkflowManager(
+      ClusterNameTestApp.ClusterNameWorkflow.class.getSimpleName()).start(args);
+
+    String prefix = ClusterNameTestApp.ClusterNameWorkflow.class.getSimpleName() + ".";
+    key.set(prefix + "mr.client.cluster.name");
+    Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    key.set(prefix + "mapper.cluster.name");
+    Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    key.set(prefix + "reducer.cluster.name");
+    Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    key.set(prefix + "spark.cluster.name");
+    Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    key.set(prefix + "action.cluster.name");
+    Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+    workerManager.waitForFinish(120, TimeUnit.SECONDS);
   }
 
   private void testAppWithDataset(Class<? extends Application> app, String serviceName) throws Exception {

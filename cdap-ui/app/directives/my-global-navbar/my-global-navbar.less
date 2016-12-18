@@ -72,6 +72,9 @@ my-global-navbar {
         text-decoration: none;
         font-size: 14px;
       }
+      .top-product-link {
+        padding-right: 0;
+      }
     }
 
     .environment {
@@ -145,6 +148,28 @@ my-global-navbar {
         overflow: hidden;
         text-overflow: ellipsis;
       }
+    }
+
+    @media (max-width: 1260px) {
+      .navbar-list {
+        padding-left: 20px;
+        a {
+          padding-right: 20px;
+        }
+        .navbar-item {
+          .spotlight-search-container {
+            .form-control {
+              width: 150px;
+            }
+          }
+        }
+      }
+      .right-menu {
+        .search-open {
+          width: 150px;
+        }
+      }
+
     }
     // TODO: Look into switching this to behave like the Settings uib dropdown
     .popover.bottom > .arrow {

@@ -15,32 +15,38 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.app.runtime.LogLevelUpdater;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.Futures;
 import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
+import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.common.Threads;
 import org.apache.twill.yarn.YarnTwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
+
 /**
  * A {@link ProgramController} that control program through twill.
  */
-public abstract class AbstractTwillProgramController extends AbstractProgramController implements ProgramController {
+public abstract class AbstractTwillProgramController extends AbstractProgramController
+  implements ProgramController, LogLevelUpdater {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTwillProgramController.class);
 
-  protected final ProgramId programId;
   private final TwillController twillController;
   private volatile boolean stopRequested;
 
   protected AbstractTwillProgramController(ProgramId programId, TwillController twillController, RunId runId) {
     super(programId, runId);
-    this.programId = programId;
     this.twillController = twillController;
   }
 
@@ -62,7 +68,7 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
     twillController.onRunning(new Runnable() {
       @Override
       public void run() {
-        LOG.info("Twill program running: {} {}", programId, twillController.getRunId());
+        LOG.info("Twill program running: {}, twill runId: {}", getProgramRunId(), twillController.getRunId());
         started();
       }
     }, Threads.SAME_THREAD_EXECUTOR);
@@ -70,7 +76,7 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
     twillController.onTerminated(new Runnable() {
       @Override
       public void run() {
-        LOG.info("Twill program terminated: {} {}", programId, twillController.getRunId());
+        LOG.info("Twill program terminated: {}, twill runId: {}", getProgramRunId(), twillController.getRunId());
         if (stopRequested) {
           // Service was killed
           stop();
@@ -101,6 +107,24 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
       }
     }, Threads.SAME_THREAD_EXECUTOR);
     return this;
+  }
+
+  @Override
+  public void updateLogLevels(Map<String, LogEntry.Level> logLevels, @Nullable String componentName) throws Exception {
+    if (componentName == null) {
+      twillController.updateLogLevels(logLevels).get();
+    } else {
+      twillController.updateLogLevels(componentName, logLevels).get();
+    }
+  }
+
+  @Override
+  public void resetLogLevels(Set<String> loggerNames, @Nullable String componentName) throws Exception {
+    if (componentName == null) {
+      twillController.resetLogLevels(loggerNames.toArray(new String[loggerNames.size()])).get();
+    } else {
+      twillController.resetRunnableLogLevels(componentName, loggerNames.toArray(new String[loggerNames.size()])).get();
+    }
   }
 
   @Override

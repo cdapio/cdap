@@ -25,26 +25,36 @@ import javax.annotation.Nullable;
 /**
  * An immutable implementation of {@link MessageTable.Entry}.
  */
-final class ImmutableMessageTableEntry implements MessageTable.Entry {
+public final class ImmutableMessageTableEntry implements MessageTable.Entry {
   private final TopicId topicId;
+  private final int generation;
   private final boolean transactional;
   private final long transactionWritePointer;
   private final byte[] payload;
   private final long publishTimestamp;
   private final short sequenceId;
 
-  ImmutableMessageTableEntry(byte[] row, @Nullable byte[] payload, @Nullable byte[] txPtr) {
-    this.payload = payload;
-    this.publishTimestamp = Bytes.toLong(row, row.length - Bytes.SIZEOF_SHORT - Bytes.SIZEOF_LONG);
-    this.sequenceId = Bytes.toShort(row, row.length - Bytes.SIZEOF_SHORT);
+  public ImmutableMessageTableEntry(byte[] row, @Nullable byte[] payload, @Nullable byte[] txPtr) {
+    int topicLength = MessagingUtils.getTopicLengthMessageEntry(row.length);
+    this.publishTimestamp = Bytes.toLong(row, topicLength);
+    this.sequenceId = Bytes.toShort(row, topicLength + Bytes.SIZEOF_LONG);
     this.transactional = (txPtr != null);
-    this.transactionWritePointer = txPtr == null ? -1 : Bytes.toLong(txPtr);
-    this.topicId = MessagingUtils.toTopicId(row, 0, row.length - Bytes.SIZEOF_SHORT - Bytes.SIZEOF_LONG);
+    // since we mark tx as negative when tx is rolled back, we return the absolute value of tx
+    this.transactionWritePointer = txPtr == null ? -1 : Math.abs(Bytes.toLong(txPtr));
+    this.generation = Bytes.toInt(row, row.length - Bytes.SIZEOF_SHORT - Bytes.SIZEOF_LONG - Bytes.SIZEOF_INT);
+    this.topicId = MessagingUtils.toTopicId(row, 0, row.length - Bytes.SIZEOF_SHORT - Bytes.SIZEOF_LONG
+      - Bytes.SIZEOF_INT);
+    this.payload = payload;
   }
 
   @Override
   public TopicId getTopicId() {
     return topicId;
+  }
+
+  @Override
+  public int getGeneration() {
+    return generation;
   }
 
   @Override

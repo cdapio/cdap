@@ -192,8 +192,9 @@ const visualization = (state = defaultInitialState.visualization, action = defau
 };
 
 function _setData(payload) {
-  const headersList = Object.keys(payload.data[0]);
-  const initialHeaders = Object.keys(payload.data[0]);
+  let headersList = cloneDeep(payload.headers);
+  let initialHeaders = cloneDeep(payload.headers);
+
   const data = payload.data;
   const originalData = cloneDeep(data);
 

@@ -120,6 +120,7 @@ This will return a JSON array that lists each package and its metadata:
         "org": "Cask Data, Inc.",
         "cdapVersion": "|release-range|",
         "created": 1473901763,
+        "beta": false,
         "categories": [ "datapack" ]
       },
       {
@@ -135,6 +136,8 @@ This will return a JSON array that lists each package and its metadata:
         "org": "Cask Data, Inc.",
         "cdapVersion": "|release-range|",
         "created": 1473901763,
+        "beta": false,
+        "license": "license.txt",
         "categories": [ "usecase" ]
       },
       ...
@@ -170,6 +173,8 @@ and a list of actions required to install the package:
       "org": "Cask Data, Inc.",
       "created": 1473901763,
       "categories": [ "usecase" ],
+      "beta": false,
+      "license": "license.txt",
       "cdapVersion": "|release-range|",
       "actions": [
         {
@@ -264,10 +269,11 @@ Some arguments will reference package resources.
 These actions are available:
 
 - `informational`_
-- `create_artifact`_
+- `create_driver_artifact`_
+- `create_plugin_artifact`_
 - `create_stream`_
 - `load_datapack`_
-- `create_app`_
+- `deploy_app`_
 - `create_pipeline`_
 - `create_pipeline_draft`_
 
@@ -310,9 +316,9 @@ Example action::
     ]
   }
 
-create_artifact
-...............
-Creates a CDAP artifact.
+create_driver_artifact
+......................
+Creates a CDAP artifact containing a third-party JDBC Driver.
 
 .. list-table::
    :widths: 20 50 10 20
@@ -343,16 +349,12 @@ Creates a CDAP artifact.
      - No
      -
 
-If the artifact is a plugin artifact, the config argument is used to specify its
-parent artifacts, any third-party plugins contained in the artifact, and any properties
-of the artifact.
-
 .. highlight:: json-ellipsis
 
 Example action::
 
   {
-    "type": "create_artifact",
+    "type": "create_driver_artifact",
     "label": "MySQL Driver Plugin",
     "arguments": [
       {
@@ -391,6 +393,78 @@ where ``mysql-connector-java.json`` is a package resource with content such as::
     ],
     "properties": { }
   }
+
+create_plugin_artifact
+......................
+Creates a CDAP artifact that contains plugins that extend another artifact.
+For example, it may contain plugins for Hydrator.
+
+.. list-table::
+   :widths: 20 50 10 20
+   :header-rows: 1
+
+   * - Argument
+     - Description
+     - Required?
+     - Default
+   * - ``name``
+     - Artifact name
+     - Yes
+     -
+   * - ``jar``
+     - Package resource containing the artifact JAR contents
+     - Yes
+     -
+   * - ``scope``
+     - Artifact scope
+     - No
+     - ``user``
+   * - ``version``
+     - Artifact version
+     - No
+     - Version contained in the JAR manifest
+   * - ``config``
+     - Package resource containing artifact parents, plugins, and properties
+     - No
+     -
+
+.. highlight:: json-ellipsis
+
+Example action::
+
+  {
+    "type": "create_plugin_artifact",
+    "label": "Hydrator Solr Plugin",
+    "arguments": [
+      {
+        "name": "name",
+        "value": "solrsearch-plugins"
+      },
+      {
+        "name": "version",
+        "value": "1.5.0"
+      },
+      {
+        "name": "scope",
+        "value": "user"
+      },
+      {
+        "name": "config",
+        "value": "solrsearch-plugins.json"
+      }
+    ]
+  }
+
+where ``solrsearch-plugins.json`` is a package resource with content such as::
+
+  {
+    "parents": [
+      "system:cdap-data-pipeline[3.0.0,10.0.0]",
+      "system:cdap-data-streams[3.0.0,10.0.0]"
+    ],
+    "properties": { }
+  }
+
 
 create_stream
 .............
@@ -500,30 +574,11 @@ Example action::
 
 where ``texts1.tsv`` and ``texts2.tsv`` are package resources containing the data to load into the stream.
 
-create_app
+deploy_app
 ..........
-Creates a CDAP application from an existing CDAP artifact.
-
-.. list-table::
-   :widths: 20 50 10 20
-   :header-rows: 1
-
-   * - Argument
-     - Description
-     - Required?
-     - Default
-   * - ``artifact``
-     - JSON Object containing the application's artifact scope, name, and version
-     - Yes
-     -
-   * - ``name``
-     - Application name
-     - Yes
-     -
-   * - ``config``
-     - Package resource containing the application config
-     - No
-     -
+Deploys a CDAP application by prompting the user to upload the application JAR.
+Does not take any arguments. In a future release, you will be able to specify
+the JAR as a package resource.
 
 .. highlight:: json-ellipsis
 
@@ -534,44 +589,13 @@ Example action:
   .. parsed-literal::
 
     {
-      "type": "create_app",
-      "label": "Word Count Example App",
-      "arguments": [
-        {
-          "name": "artifact",
-          "value": {
-            "scope": "user",
-            "name": "WordCount",
-            "version": "|release|"
-          }
-        },
-        {
-          "name": "name",
-          "value": "WordCount",
-          "canModify": true
-        },
-        {
-          "name": "config",
-          "value": "config.json"
-        }
-      ]
+      "type": "deploy_app",
+      "label": "Word Count Example App"
     }
-
-where ``config.json`` is a package resource that contains the application configuration::
-
-  {
-    "stream": "wordStream",
-    "wordStatsTable": "wordStats",
-    "wordCountTable": "wordCounts",
-    "uniqueCountTable": "uniqueCount",
-    "wordAssocTable": "wordAssocs"
-  }
 
 create_pipeline
 ...............
-Creates a Hydrator pipeline. Very similar to the `create_app`_ pipeline,
-except that the config is required and the UI will take the user to the Hydrator UI
-instead of the CDAP UI after installation is complete.
+Creates a Hydrator pipeline. 
 
 .. list-table::
    :widths: 20 50 10 20

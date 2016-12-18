@@ -35,7 +35,7 @@ public class GetResolvedPreferencesCommand extends AbstractGetPreferencesCommand
 
   @Override
   public String getPattern() {
-    return String.format("get resolved preferences %s [<%s>]", type.getShortName(), type.getArgumentName());
+    return determinePattern();
   }
 
   @Override

@@ -56,6 +56,18 @@
   </property>
 
   <property>
+    <name>cluster.name</name>
+    <value></value>
+    <description>
+      A cluster-based name for CDAP. It is used for scope resolution of preferences and
+      runtime arguments. For example: the preference key "cluster.[cluster.name].my.key"
+      would be resolved to "my.key" at runtime; a program can then retrieve the preference
+      value by using just "my.key". The administrator can use this property to set
+      different preferences for each cluster.
+    </description>
+  </property>
+
+  <property>
     <name>local.data.dir</name>
     <value>data</value>
     <description>
@@ -260,14 +272,6 @@
   </property>
 
   <property>
-    <name>app.ssl.bind.port</name>
-    <value>30443</value>
-    <description>
-      App Fabric service bind port
-    </description>
-  </property>
-
-  <property>
     <name>app.output.dir</name>
     <value>/programs</value>
     <description>
@@ -279,7 +283,9 @@
     <name>app.program.extra.classpath</name>
     <value></value>
     <description>
-      Extra Java classpath for CDAP programs
+      Additional Java classpath for CDAP programs. These extra classpaths must
+      be present on all nodes in the cluster. Supports wildcard suffix "*"
+      to include all JAR files under a directory.
     </description>
   </property>
 
@@ -288,6 +294,22 @@
     <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts}</value>
     <description>
       Java options for all program containers
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.max.start.seconds</name>
+    <value>300</value>
+    <description>
+      Maximum number of seconds to wait for a program to start before killing it
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.max.stop.seconds</name>
+    <value>300</value>
+    <description>
+      Maximum number of seconds to wait for a program to stop before killing it
     </description>
   </property>
 
@@ -313,8 +335,22 @@
     <name>app.program.spark.yarn.client.rewrite.enabled</name>
     <value>true</value>
     <description>
-      Specify whether to rewrite the yarn.client class in Spark to work
-      around the issue SPARK-13441 in CDH clusters
+      Specify whether to rewrite the YARN 'Client.scala' class in Spark to work
+      around issue SPARK-13441 in CDH clusters
+    </description>
+  </property>
+
+  <property>
+    <name>apps.scheduler.queue</name>
+    <value></value>
+    <description>Scheduler queue for CDAP programs and CDAP Explore queries</description>
+  </property>
+
+  <property>
+    <name>app.ssl.bind.port</name>
+    <value>30443</value>
+    <description>
+      App Fabric service bind port
     </description>
   </property>
 
@@ -327,32 +363,30 @@
   </property>
 
   <property>
-    <name>apps.scheduler.queue</name>
+    <name>program.container.dist.jars</name>
     <value></value>
-    <description>Scheduler queue for CDAP programs and CDAP Explore queries</description>
-  </property>
-
-  <property>
-    <name>app.program.max.start.seconds</name>
-    <value>300</value>
     <description>
-      Maximum number of seconds to wait for a program to start before killing it
+      Additional jars to be localized to every program container and to be
+      added to classpaths of CDAP programs. They can be local file paths
+      on the CDAP Master or URIs of remote files. Multiple JAR files
+      are comma-separated.
     </description>
   </property>
-
-  <property>
-    <name>app.program.max.stop.seconds</name>
-    <value>300</value>
-    <description>
-      Maximum number of seconds to wait for a program to stop before killing it
-    </description>
-  </property>
-
+  
   <property>
     <name>scheduler.max.thread.pool.size</name>
     <value>100</value>
     <description>
       Size of the scheduler thread pool
+    </description>
+  </property>
+
+  <property>
+    <name>scheduler.misfire.threshold.ms</name>
+    <value>60000</value>
+    <description>
+      The number of milliseconds by which a schedule execution can miss its
+      next-fire-time and still run
     </description>
   </property>
 
@@ -372,15 +406,23 @@
     <name>audit.enabled</name>
     <value>true</value>
     <description>
-      Determines whether to publish audit messages to Apache Kafka
+      Determines whether to publish audit messages
     </description>
   </property>
 
   <property>
-    <name>audit.kafka.topic</name>
+    <name>audit.publish.timeout.ms</name>
+    <value>2000</value>
+    <description>
+      Audit message publishing timeout in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>audit.topic</name>
     <value>audit</value>
     <description>
-      Apache Kafka topic name to which audit messages are published
+      Topic name in the messaging system to which audit messages are published
     </description>
   </property>
 
@@ -909,9 +951,7 @@
       the Kafka service used by CDAP. If the same Kafka service ZooKeeper quorum
       and namespace are shared by multiple CDAP instances, each CDAP instance
       needs to distinguish its Kafka topics from those of other CDAP instances
-      with unique values for ${audit.kafka.topic}, ${log.kafka.topic},
-      ${notification.kafka.topic}, ${metadata.updates.kafka.topic}, and
-      ${metrics.kafka.topic.prefix}.
+      with unique values for ${log.kafka.topic} and ${metrics.kafka.topic.prefix}.
     </description>
   </property>
 
@@ -1104,7 +1144,9 @@
   <property>
     <name>master.services.scheduler.queue</name>
     <value></value>
-    <description>Scheduler queue for CDAP master services</description>
+    <description>
+      Scheduler queue for CDAP Master services
+    </description>
   </property>
 
 
@@ -1145,10 +1187,27 @@
   </property>
 
   <property>
+    <name>messaging.local.data.cleanup.frequency.secs</name>
+    <value>3600</value>
+    <description>
+      Scheduling frequency of TTL cleanup thread in seconds (only used in Standalone CDAP)
+    </description>
+  </property>
+
+  <property>
     <name>messaging.hbase.max.scan.threads</name>
     <value>48</value>
     <description>
       Maximum number of threads used for scanning HBase tables
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.hbase.scan.cache.rows</name>
+    <value>1000</value>
+    <description>
+      Number of rows for caching that will be passed to HBase scanners.
+      Higher caching values will enable faster scanning but will use more memory.
     </description>
   </property>
 
@@ -1234,6 +1293,14 @@
   </property>
 
   <property>
+    <name>messaging.system.topics</name>
+    <value>${audit.topic},${notification.topic}</value>
+    <description>
+      A comma-separated list of topics that is always available in the system namespace
+    </description>
+  </property>
+
+  <property>
     <name>messaging.table.expiration.seconds</name>
     <value>300</value>
     <description>
@@ -1249,6 +1316,21 @@
     </description>
   </property>
 
+  <property>
+    <name>messaging.coprocessor.metadata.cache.expiration.seconds</name>
+    <value>120</value>
+    <description>
+      The default value of expiration time in seconds for metadata cache in hbase data tables coprocessors
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.coprocessor.dir</name>
+    <value>tms</value>
+    <description>
+      Directory to store Messaging Service Table coprocessors. This path is relative to ${hdfs.namespace}.
+    </description>
+  </property>
 
   <!-- Metadata Configuration -->
 
@@ -1501,23 +1583,14 @@
   <!-- Notification System Configuration -->
 
   <property>
-    <name>notification.kafka.topic</name>
+    <name>notification.topic</name>
     <value>notifications</value>
     <description>
-      Kafka topic name used to publish notifications
+      Topic name used to publish notifications
     </description>
   </property>
 
-  <property>
-    <name>notification.transport.system</name>
-    <value>kafka</value>
-    <description>
-      Transport system used by the notification system; can be either
-      'kafka' or 'stream'
-    </description>
-  </property>
 
-  
   <!-- Operational Statistics Configuration -->
   
   <property>
@@ -1665,7 +1738,7 @@
     <name>router.server.port</name>
     <value>${router.bind.port}</value>
     <description>
-      CDAP Router service port to which CDAP UI connects
+      CDAP Router service port, for clients and webapps
     </description>
   </property>
 
@@ -1689,14 +1762,7 @@
     <name>router.ssl.server.port</name>
     <value>${router.ssl.bind.port}</value>
     <description>
-    </description>
-  </property>
-
-  <property>
-    <name>router.ssl.webapp.bind.port</name>
-    <value>20443</value>
-    <description>
-      CDAP Router service bind port for webapp for HTTPS (deprecated)
+      CDAP Router service bind port for HTTPS, for clients and webapps
     </description>
   </property>
 
@@ -1709,23 +1775,6 @@
       "largest", or "drop". A string comparison of the versions of the user service is
       used for "smallest" or "largest". The "drop" option will not route the request to
       any service and will return "service not found".
-    </description>
-  </property>
-
-  <property>
-    <name>router.webapp.bind.port</name>
-    <value>20000</value>
-    <description>
-      CDAP Router service bind port for webapp (deprecated)
-    </description>
-  </property>
-
-  <property>
-    <name>router.webapp.enabled</name>
-    <value>false</value>
-    <description>
-      Determines if the webapp listening service should be started
-      (deprecated)
     </description>
   </property>
 

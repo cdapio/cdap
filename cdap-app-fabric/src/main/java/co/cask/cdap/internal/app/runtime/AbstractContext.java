@@ -17,15 +17,20 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.api.messaging.MessagePublisher;
+import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -43,6 +48,8 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
@@ -52,18 +59,21 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.preview.DataTracerFactoryProvider;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
+import co.cask.cdap.internal.app.runtime.messaging.BasicMessagingAdmin;
+import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -75,9 +85,7 @@ import javax.annotation.Nullable;
  * Base class for program runtime context
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
-  implements SecureStore, DatasetContext, Transactional, RuntimeContext, PluginContext {
-
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
+  implements SecureStore, DatasetContext, Transactional, RuntimeContext, PluginContext, MessagingContext {
 
   private final Program program;
   private final ProgramOptions programOptions;
@@ -94,6 +102,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final SecureStore secureStore;
   private final Transactional transactional;
   private final int defaultTxTimeout;
+  private final MultiThreadMessagingContext messagingContext;
   protected final DynamicDatasetCache datasetCache;
 
   private final DataTracerFactory dataTracerFactory = new DataTracerFactory() {
@@ -110,9 +119,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             Set<String> datasets, DatasetFramework dsFramework, TransactionSystemClient txClient,
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
-                            SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                            SecureStore secureStore, SecureStoreManager secureStoreManager,
+                            MessagingService messagingService) {
     this(program, programOptions, cConf, datasets, dsFramework, txClient,
-         discoveryServiceClient, multiThreaded, metricsService, metricsTags, secureStore, secureStoreManager, null);
+         discoveryServiceClient, multiThreaded, metricsService, metricsTags,
+         secureStore, secureStoreManager, messagingService, null);
   }
 
   /**
@@ -123,6 +134,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
                             SecureStore secureStore, SecureStoreManager secureStoreManager,
+                            MessagingService messagingService,
                             @Nullable PluginInstantiator pluginInstantiator) {
     super(program.getId());
 
@@ -144,18 +156,26 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     }
     SystemDatasetInstantiator instantiator =
       new SystemDatasetInstantiator(dsFramework, program.getClassLoader(), owners);
+
+    this.messagingContext = new MultiThreadMessagingContext(messagingService);
+
     this.datasetCache = multiThreaded
       ? new MultiThreadDatasetCache(instantiator, txClient, new NamespaceId(program.getId().getNamespace()),
-                                    runtimeArguments, programMetrics, staticDatasets)
+                                    runtimeArguments, programMetrics, staticDatasets, messagingContext)
       : new SingleThreadDatasetCache(instantiator, txClient, new NamespaceId(program.getId().getNamespace()),
                                      runtimeArguments, programMetrics, staticDatasets);
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
-    this.admin = new DefaultAdmin(dsFramework, new NamespaceId(program.getId().getNamespace()), secureStoreManager);
+    this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespaceId(), secureStoreManager,
+                                  new BasicMessagingAdmin(messagingService, program.getId().getNamespaceId()));
     this.secureStore = secureStore;
     this.defaultTxTimeout = determineTransactionTimeout(cConf);
     this.transactional = Transactions.createTransactional(getDatasetCache(), defaultTxTimeout);
+
+    if (!multiThreaded) {
+      datasetCache.addExtraTransactionAware(messagingContext);
+    }
   }
 
   /**
@@ -163,7 +183,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    * for example, in a flowlet, the more specific "flowlet.[name].system.tx.timeout" would prevail.
    *
    * @return the default transaction timeout, if specified in the runtime arguments. Otherwise returns the
-   *         default tranaction timeout from the cConf.
+   *         default transaction timeout from the cConf.
    */
   private int determineTransactionTimeout(CConfiguration cConf) {
     return SystemArguments.getTransactionTimeout(getRuntimeArguments(), cConf);
@@ -312,6 +332,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
+  public String getClusterName() {
+    return programOptions.getArguments().getOption(Constants.CLUSTER_NAME);
+  }
+
+  @Override
   public RunId getRunId() {
     return runId;
   }
@@ -381,17 +406,172 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
-  public void execute(TxRunnable runnable) throws TransactionFailureException {
-    transactional.execute(runnable);
+  public void execute(final TxRunnable runnable) throws TransactionFailureException {
+    execute(runnable, false);
+  }
+
+  /**
+   * Execute in a transaction with optional retry on conflict.
+   */
+  public void execute(final TxRunnable runnable, boolean retryOnConflict) throws TransactionFailureException {
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
+    try {
+      Transactional txnl = retryOnConflict
+        ? Transactions.createTransactionalWithRetry(transactional, RetryStrategies.retryOnConflict(20, 100))
+        : transactional;
+      txnl.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          ClassLoader oldClassLoader = setContextCombinedClassLoader();
+          try {
+            runnable.run(context);
+          } finally {
+            ClassLoaders.setContextClassLoader(oldClassLoader);
+          }
+        }
+      });
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
   }
 
   @Override
-  public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
-    transactional.execute(timeoutInSeconds, runnable);
+  public void execute(int timeoutInSeconds, final TxRunnable runnable) throws TransactionFailureException {
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
+    try {
+      transactional.execute(timeoutInSeconds, new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          ClassLoader oldClassLoader = setContextCombinedClassLoader();
+          try {
+            runnable.run(context);
+          } finally {
+            ClassLoaders.setContextClassLoader(oldClassLoader);
+          }
+        }
+      });
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
   }
 
   @Override
   public DataTracer getDataTracer(String dataTracerName) {
     return dataTracerFactory.getDataTracer(program.getId().getParent(), dataTracerName);
+  }
+
+  /**
+   * Run some code with the context class loader combined from the program class loader and the system class loader.
+   */
+  public void executeChecked(final ThrowingRunnable runnable) throws Exception {
+    ClassLoader oldClassloader = setContextCombinedClassLoader();
+    try {
+      runnable.run();
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassloader);
+    }
+  }
+
+  /**
+   * Run some code with the context class loader combined from the program class loader and the system class loader.
+   */
+  public void executeUnchecked(final Runnable runnable) {
+    ClassLoader oldClassloader = setContextCombinedClassLoader();
+    try {
+      runnable.run();
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassloader);
+    }
+  }
+
+  /**
+   * Runnable that can throw an exception.
+   */
+  public interface ThrowingRunnable {
+    void run() throws Exception;
+  }
+
+  /**
+   * Initialize a program. The initialize() method is executed with the context class loader combined from the
+   * program class loader and the system class loader. If the transaction control is implicit, then this code
+   * is wrapped into a transaction, possibly with retry on conflict.
+   *
+   * @param program the program to be initialized
+   * @param programContext the program context
+   * @param txControl the transaction control
+   * @param retryOnConflict if true, transactional execution will be retried on conflict
+   * @param <T> the type of the program context
+   */
+  public <T extends AbstractContext> void initializeProgram(final ProgramLifecycle<? super T> program,
+                                                            final T programContext, TransactionControl txControl,
+                                                            boolean retryOnConflict)
+    throws Exception {
+    if (TransactionControl.IMPLICIT == txControl) {
+      programContext.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          program.initialize(programContext);
+        }
+      }, retryOnConflict);
+    } else {
+      programContext.executeChecked(new ThrowingRunnable() {
+        @Override
+        public void run() throws Exception {
+          program.initialize(programContext);
+        }
+      });
+    }
+  }
+
+  /**
+   * Destroy a program. The destroy() method is executed with the context class loader combined from the
+   * program class loader and the system class loader. If the transaction control is implicit, then this code
+   * is wrapped into a transaction, possibly with retry on conflict.
+   *
+   * @param program the program to be destroyed
+   * @param programContext the program context
+   * @param txControl the transaction control
+   * @param retryOnConflict if true, transactional execution will be retried on conflict
+   * @param <T> the type of the program context
+   */
+  public <T extends AbstractContext> void destroyProgram(final ProgramLifecycle<? super T> program,
+                                                         final T programContext, TransactionControl txControl,
+                                                         boolean retryOnConflict)
+    throws TransactionFailureException {
+    if (TransactionControl.IMPLICIT == txControl) {
+      programContext.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          program.destroy();
+        }
+      }, retryOnConflict);
+    } else {
+      programContext.executeUnchecked(new Runnable() {
+        @Override
+        public void run() {
+          program.destroy();
+        }
+      });
+    }
+  }
+
+  private ClassLoader setContextCombinedClassLoader() {
+    return ClassLoaders.setContextClassLoader(
+      new CombineClassLoader(null, ImmutableList.of(program.getClassLoader(), getClass().getClassLoader())));
+  }
+
+  @Override
+  public MessagePublisher getMessagePublisher() {
+    return messagingContext.getMessagePublisher();
+  }
+
+  @Override
+  public MessagePublisher getDirectMessagePublisher() {
+    return messagingContext.getDirectMessagePublisher();
+  }
+
+  @Override
+  public MessageFetcher getMessageFetcher() {
+    return messagingContext.getMessageFetcher();
   }
 }

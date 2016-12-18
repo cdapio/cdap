@@ -83,12 +83,13 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
     Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s", program.getName());
 
     // Launch service runnables program runners
-    LOG.info("Launching distributed service: {}:{}", program.getName(), serviceSpec.getName());
+    RunId runId = ProgramRunners.getRunId(options);
+    LOG.info("Launching distributed service: {}", program.getId().run(runId));
 
     TwillController controller = launcher.launch(new ServiceTwillApplication(program, options.getUserArguments(),
                                                                              serviceSpec,
                                                                              localizeResources, eventHandler));
-    return createProgramController(controller, program.getId(), ProgramRunners.getRunId(options));
+    return createProgramController(controller, program.getId(), runId);
   }
 
   @Override

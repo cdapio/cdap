@@ -16,15 +16,12 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.InstanceNotFoundException;
+import co.cask.cdap.common.test.NoopAdmin;
 import co.cask.cdap.security.auth.context.AuthenticationTestContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.store.DummySecureStore;
@@ -39,7 +36,7 @@ import java.util.Properties;
 public class NoOpAuthorizationContextFactory implements AuthorizationContextFactory {
   @Override
   public AuthorizationContext create(Properties extensionProperties) {
-    return new DefaultAuthorizationContext(extensionProperties, new NoOpDatasetContext(), new NoOpAdmin(),
+    return new DefaultAuthorizationContext(extensionProperties, new NoOpDatasetContext(), new NoopAdmin(),
                                            new NoOpTransactional(), new AuthenticationTestContext(),
                                            new DummySecureStore());
   }
@@ -86,55 +83,6 @@ public class NoOpAuthorizationContextFactory implements AuthorizationContextFact
 
     @Override
     public void discardDataset(Dataset dataset) {
-      // no-op
-    }
-  }
-
-  private static class NoOpAdmin implements Admin {
-    @Override
-    public boolean datasetExists(String name) throws DatasetManagementException {
-      return false;
-    }
-
-    @Override
-    public String getDatasetType(String name) throws DatasetManagementException {
-      throw new InstanceNotFoundException(name);
-    }
-
-    @Override
-    public DatasetProperties getDatasetProperties(String name) throws DatasetManagementException {
-      throw new InstanceNotFoundException(name);
-    }
-
-    @Override
-    public void createDataset(String name, String type,
-                              DatasetProperties properties) throws DatasetManagementException {
-      //no-op
-    }
-
-    @Override
-    public void updateDataset(String name, DatasetProperties properties) throws DatasetManagementException {
-      //no-op
-    }
-
-    @Override
-    public void dropDataset(String name) throws DatasetManagementException {
-      //no-op
-    }
-
-    @Override
-    public void truncateDataset(String name) throws DatasetManagementException {
-      //no-op
-    }
-
-    @Override
-    public void putSecureData(String namespace, String name, String data, String description,
-                              Map<String, String> properties) throws Exception {
-      // no-op
-    }
-
-    @Override
-    public void deleteSecureData(String namespace, String name) throws Exception {
       // no-op
     }
   }

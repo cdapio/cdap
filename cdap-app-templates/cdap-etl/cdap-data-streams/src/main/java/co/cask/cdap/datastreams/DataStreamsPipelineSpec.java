@@ -29,29 +29,30 @@ import java.util.Set;
  */
 public class DataStreamsPipelineSpec extends PipelineSpec {
   private final long batchIntervalMillis;
-  private final Resources driverResources;
   private final String extraJavaOpts;
+  private final boolean stopGracefully;
 
   private DataStreamsPipelineSpec(Set<StageSpec> stages, Set<Connection> connections,
-                                  Resources resources, Resources driverResources,
+                                  Resources resources, Resources driverResources, Resources clientResources,
                                   boolean stageLoggingEnabled, long batchIntervalMillis,
-                                  String extraJavaOpts, int numOfRecordsPreview) {
-    super(stages, connections, resources, stageLoggingEnabled, numOfRecordsPreview);
-    this.driverResources = driverResources;
+                                  String extraJavaOpts, int numOfRecordsPreview,
+                                  boolean stopGracefully) {
+      super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, numOfRecordsPreview);
     this.batchIntervalMillis = batchIntervalMillis;
     this.extraJavaOpts = extraJavaOpts;
+    this.stopGracefully = stopGracefully;
   }
 
   public long getBatchIntervalMillis() {
     return batchIntervalMillis;
   }
 
-  public Resources getDriverResources() {
-    return driverResources;
-  }
-
   public String getExtraJavaOpts() {
     return extraJavaOpts;
+  }
+
+  public boolean isStopGracefully() {
+    return stopGracefully;
   }
 
   @Override
@@ -69,21 +70,21 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     DataStreamsPipelineSpec that = (DataStreamsPipelineSpec) o;
 
     return batchIntervalMillis == that.batchIntervalMillis &&
-      Objects.equals(driverResources, that.driverResources) &&
-      Objects.equals(extraJavaOpts, that.extraJavaOpts);
+      Objects.equals(extraJavaOpts, that.extraJavaOpts) &&
+      stopGracefully == that.stopGracefully;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), driverResources, batchIntervalMillis, extraJavaOpts);
+    return Objects.hash(super.hashCode(), batchIntervalMillis, extraJavaOpts);
   }
 
   @Override
   public String toString() {
     return "DataStreamsPipelineSpec{" +
       "batchIntervalMillis=" + batchIntervalMillis +
-      ", driverResources=" + driverResources +
       ", extraJavaOpts='" + extraJavaOpts + '\'' +
+      ", stopGracefully=" + stopGracefully +
       "} " + super.toString();
   }
 
@@ -96,16 +97,12 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
    */
   public static class Builder extends PipelineSpec.Builder<Builder> {
     private final long batchIntervalMillis;
-    private Resources driverResources;
     private String extraJavaOpts;
+    private boolean stopGracefully;
 
     public Builder(long batchIntervalMillis) {
       this.batchIntervalMillis = batchIntervalMillis;
-    }
-
-    public Builder setDriverResources(Resources resources) {
-      this.driverResources = resources;
-      return this;
+      this.stopGracefully = false;
     }
 
     public Builder setExtraJavaOpts(String extraJavaOpts) {
@@ -113,10 +110,15 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
       return this;
     }
 
+    public Builder setStopGracefully(boolean stopGracefully) {
+      this.stopGracefully = stopGracefully;
+      return this;
+    }
+
     public DataStreamsPipelineSpec build() {
-      return new DataStreamsPipelineSpec(stages, connections, resources,
-                                         driverResources == null ? resources : driverResources,
-                                         stageLoggingEnabled, batchIntervalMillis, extraJavaOpts, numOfRecordsPreview);
+      return new DataStreamsPipelineSpec(stages, connections, resources, driverResources, clientResources,
+                                         stageLoggingEnabled, batchIntervalMillis, extraJavaOpts,
+                                         numOfRecordsPreview, stopGracefully);
     }
   }
 }

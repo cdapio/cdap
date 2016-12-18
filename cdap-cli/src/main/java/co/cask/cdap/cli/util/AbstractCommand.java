@@ -143,14 +143,4 @@ public abstract class AbstractCommand extends AbstractAuthCommand {
       throw new CommandInputError(this, "Invalid number value: " + arg + ". Reason: " + e.getMessage());
     }
   }
-
-  protected ApplicationId parseAppId(String[] programIdParts) {
-    checkInputLength(programIdParts, 1);
-    return cliConfig.getCurrentNamespace().app(programIdParts[0]);
-  }
-
-  protected ProgramId parseProgramId(String[] programIdParts, ProgramType programType) {
-    checkInputLength(programIdParts, 2);
-    return cliConfig.getCurrentNamespace().app(programIdParts[0]).program(programType, programIdParts[1]);
-  }
 }

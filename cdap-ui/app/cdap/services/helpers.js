@@ -102,7 +102,7 @@ function convertBytesToHumanReadable(bytes) {
   if (!bytes || typeof bytes !== 'number') {
     return bytes;
   }
-  return numeral(bytes).format('0.000b');
+  return numeral(bytes).format('0.00b');
 }
 
 function isDescendant(parent, child) {

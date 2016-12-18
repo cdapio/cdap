@@ -19,9 +19,12 @@ import Papa from 'papaparse';
 import WrangleData from 'wrangler/components/Wrangler/WrangleData';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
-import shortid from 'shortid';
+import classnames from 'classnames';
 import Dropzone from 'react-dropzone';
 import {convertHistoryToDml} from 'wrangler/components/Wrangler/dml-converter';
+import Explore from 'wrangler/components/Explore';
+import T from 'i18n-react';
+import CardActionFeedback from 'components/CardActionFeedback';
 
 require('./Wrangler.less');
 
@@ -44,7 +47,7 @@ export default class Wrangler extends Component {
       wranglerInput: '',
       isDataSet: false,
       file: '',
-      errors: []
+      error: null
     };
 
     this.handleSetHeaders = this.handleSetHeaders.bind(this);
@@ -55,104 +58,40 @@ export default class Wrangler extends Component {
     this.handleTextInput = this.handleTextInput.bind(this);
     this.onPlusButtonClick = this.onPlusButtonClick.bind(this);
     this.onWrangleClick = this.onWrangleClick.bind(this);
-    this.onWrangleFile = this.onWrangleFile.bind(this);
     this.getWranglerOutput = this.getWranglerOutput.bind(this);
+    this.onTextInputBlur = this.onTextInputBlur.bind(this);
   }
 
   getChildContext() {
     return {source: this.props.source};
   }
 
-  // componentDidMount() {
-  //   this.wrangle();
-  // }
-
   componentWillUnmount() {
     WranglerStore.dispatch({
       type: WranglerActions.reset
     });
   }
-
   onWrangleClick() {
-    this.setState({loading: true});
-    this.wrangle();
-  }
-
-  onWrangleFile() {
-    this.setState({loading: true});
-    this.wrangle(true);
-  }
-
-  wrangle() {
     let input = this.state.wranglerInput;
 
     if (this.state.file) {
       input = this.state.file;
     }
 
-    // Keeping these for dev purposes
+    this.wrangle(input, this.state.delimiter, this.state.header, this.state.skipEmptyLines);
+  }
 
-//     input = `name,num1,num2,num3
-// Hakeem Gillespie,91,753,599,a
-// Arsenio Gardner,,754,641
-// Darius Mcdonald,567,473,520
-// Zachary Small,981,271,385
-// Travis Rutledge,468,91,578
-// Thaddeus Clemons,346,1106,367
-// Yardley Merrill,278,1028,473
-// Lars Fowler,494,1268,354
-// Omar Rocha,856,694,318
-// Ryan Chapman,553,1009,565
-// Drew Murray,912,402,272
-// Henry Reynolds,734,848,643
-// Hu Noel,655,668,599
-// Abraham Ellis,914,304,307
-// Kenyon Newman,83,1040,606
-// James Winters,473,327,569
-// Asher Mcclure,548,86,458
-// Quamar Watts,393,454,547
-// Alfonso Webster,986,848,525
-// Darius Sharpe,710,931,581
-// Gavin Baldwin,139,302,572
-// Lyle Hardin,989,857,612
-// Nathan Glenn,807,464,334
-// Ethan Figueroa,70,834,276
-// Silas Wheeler,827,1353,259
-// Isaiah Franklin,290,508,259
-// Sean Schneider,655,828,622
-// Quinlan Hewitt,417,944,671
-// Brody Sharp,245,162,511
-// Bruno Whitaker,805,1453,390
-// Nolan Combs,70,302,696
-// Ray Larsen,538,444,232
-// Garth Mckee,919,420,379
-// Wesley Rivera,122,476,363
-// Louis Thornton,731,1288,356
-// Jackson Waller,906,801,239
-// Beck Singleton,196,391,559
-// Abel Anthony,13,572,459
-// Victor Gray,856,826,280
-// Vance Colon,349,906,264
-// Solomon Herrera,128,1181,370
-// Drake Church,258,1048,291
-// Rafael Ramsey,475,231,428
-// Timon Bowen,481,1090,439
-// Eric Dunlap,205,1357,582
-// Joel Mcbride,794,1237,423
-// Kane Richardson,956,241,597
-// Luke Zamora,666,1293,200
-// Zeus Herrera,84,577,379
-// Jeremy Acosta,668,1039,426
-// Boris Jimenez,69,406,232`;
+  wrangle(input, delimiter, header, skipEmptyLines) {
+    this.setState({loading: true});
 
     let papaConfig = {
-      header: this.state.header,
-      skipEmptyLines: this.state.skipEmptyLines,
+      header: header,
+      skipEmptyLines: skipEmptyLines,
       complete: this.handleData
     };
 
-    if (this.state.delimiter) {
-      papaConfig.delimiter = this.state.delimiter;
+    if (delimiter) {
+      papaConfig.delimiter = delimiter;
     }
 
     Papa.parse(input, papaConfig);
@@ -163,11 +102,15 @@ export default class Wrangler extends Component {
   }
 
   handleData(papa) {
-    if (papa.errors.length > 0) {
-      this.setState({errors: papa.errors, loading: false});
+    if (papa.data.length === 0) {
+      this.setState({
+        loading: false,
+        error: {
+          type: 'NO_DATA'
+        }
+      });
       return;
     }
-
     let formattedData;
     if (Array.isArray(papa.data[0])) {
       // Get length of the longest column
@@ -186,14 +129,26 @@ export default class Wrangler extends Component {
 
         return obj;
       });
+
+      headers = Object.keys(papa.data[0]);
     } else {
       formattedData = papa.data;
+    }
+
+    let headers = papa.meta.fields || Object.keys(formattedData[0]);
+
+    let error = this.validateHeaders(headers);
+
+    if (error) {
+      this.setState({error, loading: false});
+      return;
     }
 
     WranglerStore.dispatch({
       type: WranglerActions.setData,
       payload: {
         data: formattedData,
+        headers
       }
     });
 
@@ -202,6 +157,46 @@ export default class Wrangler extends Component {
       loading: false,
       delimiter: papa.meta.delimiter
     });
+  }
+
+  validateHeaders(headers) {
+    // Check for duplicates
+
+    let duplicates = [];
+    let uniqueHeaders = {};
+
+    headers.forEach((column) => {
+      if (!uniqueHeaders[column]) {
+        uniqueHeaders[column] = true;
+      } else {
+        duplicates.push(column);
+      }
+    });
+
+    if (duplicates.length > 0) {
+      return {
+        type: 'DUPLICATE_COLUMNS',
+        columns: duplicates
+      };
+    }
+
+    // Check for valid names
+    let invalidNames = [];
+    headers.forEach((column) => {
+      const NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+      if (!NAME_PATTERN.test(column)) {
+        invalidNames.push(column);
+      }
+    });
+
+    if (invalidNames.length > 0) {
+      return {
+        type: 'INVALID_COLUMNS',
+        columns: invalidNames
+      };
+    }
+
+    return null;
   }
 
   setDelimiter(e) {
@@ -219,33 +214,22 @@ export default class Wrangler extends Component {
   }
 
   renderErrors() {
-    if (this.state.errors.length === 0) {
+    if (!this.state.error) {
       return null;
+    }
+
+    let errorType = this.state.error.type;
+    let columns;
+    if (this.state.error.columns && this.state.error.columns.length > 0) {
+      columns = this.state.error.columns.join(', ');
     }
 
     return (
       <div className="wrangler-error-container">
-        <h4 className="error text-center">Errors:</h4>
-        <table className="table table-bordered error-table">
-          <thead>
-            <tr>
-              <th>Row</th>
-              <th>Error</th>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              this.state.errors.map((error) => {
-                return (
-                  <tr key={shortid.generate()}>
-                    <td>{error.row}</td>
-                    <td>{error.message}</td>
-                  </tr>
-                );
-              })
-            }
-          </tbody>
-        </table>
+        <CardActionFeedback
+          type="DANGER"
+          message={T.translate(`features.Wrangler.Errors.${errorType}`, {columns})}
+        />
       </div>
     );
 
@@ -292,9 +276,13 @@ export default class Wrangler extends Component {
                 :
               (
                 <div>
-                  <h4>Click <span className="fa fa-plus-circle" /> to upload a file</h4>
-                  <h5>or</h5>
-                  <h4>Click anywhere else to copy paste data</h4>
+                  <h4>
+                    {T.translate('features.Wrangler.InputScreen.HelperText.click')}
+                    <span className="fa fa-plus-circle" />
+                    {T.translate('features.Wrangler.InputScreen.HelperText.upload')}
+                  </h4>
+                  <h5>{T.translate('features.Wrangler.InputScreen.HelperText.or')}</h5>
+                  <h4>{T.translate('features.Wrangler.InputScreen.HelperText.paste')}</h4>
                 </div>
               )
             }
@@ -308,8 +296,15 @@ export default class Wrangler extends Component {
         className="form-control"
         onChange={this.handleTextInput}
         autoFocus={true}
+        onBlur={this.onTextInputBlur}
       />
     );
+  }
+
+  onTextInputBlur() {
+    if (this.state.wranglerInput) { return; }
+
+    this.setState({textarea: false});
   }
 
   getWranglerOutput() {
@@ -366,15 +361,22 @@ export default class Wrangler extends Component {
           <div>
             <span className="fa fa-spinner fa-spin"></span>
           </div>
-          <h3>Parsing...</h3>
+          <h3>{T.translate('features.Wrangler.parsing')}</h3>
         </div>
       );
     }
 
     return (
-      <div>
-        <div className="wrangler-copy-paste">
+      <div className="wrangler-input-container">
+        <div className="wrangler-title"></div>
 
+        <Explore wrangle={this.wrangle} />
+
+        <div
+          className={classnames('wrangler-copy-paste', {
+            'with-error': this.state.error
+          })}
+        >
           {this.renderWranglerCopyPaste()}
 
           <div className="parse-options">
@@ -384,7 +386,7 @@ export default class Wrangler extends Component {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Set delimiter"
+                  placeholder={T.translate('features.Wrangler.InputScreen.Options.delimiter')}
                   onChange={this.setDelimiter}
                 />
               </div>
@@ -397,7 +399,7 @@ export default class Wrangler extends Component {
                   <input type="checkbox"
                     onChange={this.handleSetHeaders}
                     checked={this.state.headers}
-                  /> First line as column name
+                  /> {T.translate('features.Wrangler.InputScreen.Options.firstLineAsColumns')}
                 </label>
               </div>
 
@@ -406,26 +408,25 @@ export default class Wrangler extends Component {
                 <label>
                   <input type="checkbox"
                     onChange={this.handleSetSkipEmptyLines}
-                  /> Skip empty lines
+                  /> {T.translate('features.Wrangler.InputScreen.Options.skipEmptyLines')}
                 </label>
               </div>
             </form>
           </div>
 
         </div>
+        {this.renderErrors()}
 
         <br/>
 
         <div className="text-center">
           <button
-            className="btn btn-primary"
+            className="btn btn-wrangler wrangle-button"
             onClick={this.onWrangleClick}
           >
-            Wrangle
+            {T.translate('features.Wrangler.wrangleButton')}
           </button>
         </div>
-
-        {this.renderErrors()}
 
       </div>
     );
@@ -434,6 +435,7 @@ export default class Wrangler extends Component {
   render() {
     return (
       <div className="wrangler-container">
+
         {this.renderWranglerInputBox()}
 
         {

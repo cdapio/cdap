@@ -81,8 +81,9 @@ angular.module(PKG.name + '.services')
         deletePluginMethod: myHelpers.getConfig('DELETE', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
 
         // PREVIEW
-        runPreview: myHelpers.getConfig('POST', 'REQUEST', '/namespaces/:namespace/preview', false, { suppressErrors: true }),
-        getStagePreview: myHelpers.getConfig('GET', 'REQUEST', previewPath + '/:previewId/stages/:stage', false, { suppressErrors: true })
+        runPreview: myHelpers.getConfig('POST', 'REQUEST', '/namespaces/:namespace/previews', false, { suppressErrors: true }),
+        stopPreview: myHelpers.getConfig('POST', 'REQUEST', '/namespaces/:namespace/previews/:previewId/stop', false, { suppressErrors: true }),
+        getStagePreview: myHelpers.getConfig('POST', 'REQUEST', previewPath + '/:previewId/tracers', false, { suppressErrors: true })
       }
     );
   });

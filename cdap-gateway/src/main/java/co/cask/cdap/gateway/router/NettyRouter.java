@@ -60,6 +60,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -121,14 +122,9 @@ public class NettyRouter extends AbstractIdleService {
     this.discoveryServiceClient = discoveryServiceClient;
     this.configuration = cConf;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED);
-    boolean webAppEnabled = cConf.getBoolean(Constants.Router.WEBAPP_ENABLED);
     if (isSSLEnabled()) {
       this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
                                 cConf.getInt(Constants.Router.ROUTER_SSL_PORT));
-      if (webAppEnabled) {
-        this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
-                                  cConf.getInt(Constants.Router.WEBAPP_SSL_PORT));
-      }
 
       File keystore;
       try {
@@ -145,9 +141,6 @@ public class NettyRouter extends AbstractIdleService {
                                                      sConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
     } else {
       this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME, cConf.getInt(Constants.Router.ROUTER_PORT));
-      if (webAppEnabled) {
-        this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME, cConf.getInt(Constants.Router.WEBAPP_PORT));
-      }
       this.sslHandlerFactory = null;
     }
     this.connectionTimeout = cConf.getInt(Constants.Router.CONNECTION_TIMEOUT_SECS);
@@ -156,7 +149,7 @@ public class NettyRouter extends AbstractIdleService {
   }
 
   @Override
-  protected void startUp() throws Exception {
+  protected void startUp() throws ServiceBindException {
     ChannelUpstreamHandler connectionTracker = new SimpleChannelUpstreamHandler() {
       @Override
       public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e)
@@ -288,11 +281,11 @@ public class NettyRouter extends AbstractIdleService {
 
         LOG.info("Started Netty Router for service {} on address {}.", service, boundAddress);
       } catch (ChannelException e) {
-        if (!(Throwables.getRootCause(e) instanceof BindException)) {
-          throw e;
+        if ((Throwables.getRootCause(e) instanceof BindException)) {
+          throw new ServiceBindException("Router", hostname.getCanonicalHostName(), port, e);
         }
 
-        throw new ServiceBindException("Router", hostname.getCanonicalHostName(), port);
+        throw e;
       }
     }
   }

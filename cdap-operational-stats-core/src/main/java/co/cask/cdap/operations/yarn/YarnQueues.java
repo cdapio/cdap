@@ -21,9 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.records.QueueInfo;
 import org.apache.hadoop.yarn.client.api.YarnClient;
-import org.apache.hadoop.yarn.exceptions.YarnException;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -65,14 +63,12 @@ public class YarnQueues extends AbstractYarnStats implements YarnQueuesMXBean {
   }
 
   @Override
-  public synchronized void collect() throws IOException {
+  public synchronized void collect() throws Exception {
     reset();
     List<QueueInfo> queues;
     YarnClient yarnClient = createYARNClient();
     try {
       queues = yarnClient.getAllQueues();
-    } catch (YarnException e) {
-      throw new IOException(e);
     } finally {
       yarnClient.stop();
     }

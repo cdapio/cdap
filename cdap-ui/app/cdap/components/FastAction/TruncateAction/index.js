@@ -20,6 +20,7 @@ import {MyDatasetApi} from 'api/dataset';
 import {MyStreamApi} from 'api/stream';
 import FastActionButton from '../FastActionButton';
 import ConfirmationModal from 'components/ConfirmationModal';
+import {Tooltip} from 'reactstrap';
 import T from 'i18n-react';
 
 export default class TruncateAction extends Component {
@@ -33,8 +34,10 @@ export default class TruncateAction extends Component {
       modal: false,
       loading: false,
       errorMessage: '',
-      extendedMessage: ''
+      extendedMessage: '',
+      tooltipOpen: false
     };
+    this.toggleTooltip = this.toggleTooltip.bind(this);
   }
 
   toggleModal(event) {
@@ -44,7 +47,9 @@ export default class TruncateAction extends Component {
       event.nativeEvent.stopImmediatePropagation();
     }
   }
-
+  toggleTooltip(){
+    this.setState({ tooltipOpen : !this.state.tooltipOpen });
+  }
   action() {
     this.setState({loading: true});
     let api;
@@ -75,13 +80,24 @@ export default class TruncateAction extends Component {
   render() {
     const actionLabel = T.translate('features.FastAction.truncateLabel');
     const headerTitle = `${actionLabel} ${this.props.entity.type}`;
-
+    const tooltipID = `${this.props.entity.uniqueId}-truncate`;
     return (
       <span>
         <FastActionButton
           icon="fa fa-scissors"
           action={this.toggleModal}
+          id={tooltipID}
         />
+        <Tooltip
+          placement="top"
+          isOpen={this.state.tooltipOpen}
+          target={tooltipID}
+          toggle={this.toggleTooltip}
+          delay={0}
+        >
+          {T.translate('features.FastAction.truncateLabel')}
+        </Tooltip>
+
         {
           this.state.modal ? (
             <ConfirmationModal
@@ -106,6 +122,7 @@ export default class TruncateAction extends Component {
 TruncateAction.propTypes = {
   entity: PropTypes.shape({
     id: PropTypes.string.isRequired,
+    uniqueId: PropTypes.string,
     type: PropTypes.oneOf(['datasetinstance', 'stream']).isRequired,
   }),
   onSuccess: PropTypes.func

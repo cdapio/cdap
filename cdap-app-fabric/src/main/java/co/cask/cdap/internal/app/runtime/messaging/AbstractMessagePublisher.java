@@ -19,6 +19,8 @@ package co.cask.cdap.internal.app.runtime.messaging;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.io.ByteBuffers;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
@@ -61,4 +63,20 @@ abstract class AbstractMessagePublisher implements MessagePublisher {
       }
     }));
   }
+
+  @Override
+  public final void publish(String namespace, String topic,
+                            Iterator<byte[]> payloads) throws TopicNotFoundException, IOException {
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    if (NamespaceId.SYSTEM.equals(namespaceId)) {
+      throw new IllegalArgumentException("Publish to '" + namespace + "' namespace is not allowed");
+    }
+    publish(namespaceId.topic(topic), payloads);
+  }
+
+  /**
+   * Publishes payloads to the given topic.
+   */
+  protected abstract void publish(TopicId topicId,
+                                  Iterator<byte[]> payloads) throws IOException, TopicNotFoundException;
 }

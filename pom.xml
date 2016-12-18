@@ -100,6 +100,7 @@
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
     <cask.common.cli.version>0.8.0</cask.common.cli.version>
     <cask.common.version>0.7.1</cask.common.version>
+    <fastutil.version>6.5.6</fastutil.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
     <geronimo.version>2.0.0</geronimo.version>
@@ -139,9 +140,9 @@
     <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.10.0-incubating-SNAPSHOT</tephra.version>
+    <tephra.version>0.10.0-incubating</tephra.version>
     <thrift.version>0.9.3</thrift.version>
-    <twill.version>0.9.0-SNAPSHOT</twill.version>
+    <twill.version>0.9.0</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.6.1</spark.version>
@@ -1215,6 +1216,11 @@
         <groupId>javax.servlet</groupId>
         <artifactId>javax.servlet-api</artifactId>
         <version>${servlet.api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>it.unimi.dsi</groupId>
+        <artifactId>fastutil</artifactId>
+        <version>${fastutil.version}</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
@@ -2473,6 +2479,7 @@
 
       <modules>
         <module>cdap-data-fabric-tests</module>
+        <module>cdap-tms-tests</module>
         <module>cdap-cli-tests</module>
         <module>cdap-client-tests</module>
         <module>cdap-app-fabric-tests</module>

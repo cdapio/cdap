@@ -20,11 +20,12 @@ import Page404 from 'components/404';
 import EntityListView from 'components/EntityListView';
 import AppDetailedView from 'components/AppDetailedView';
 import NamespaceStore from 'services/NamespaceStore';
+import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 
 export default class Home extends Component {
   componentWillMount() {
     NamespaceStore.dispatch({
-      type: 'SELECT_NAMESPACE',
+      type: NamespaceActions.selectNamespace,
       payload: {
         selectedNamespace: this.props.params.namespace
       }

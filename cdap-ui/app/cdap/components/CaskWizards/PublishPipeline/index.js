@@ -39,7 +39,7 @@ export default class PublishPipelineWizard extends Component {
   }
 
   setDefaultConfig() {
-    const args = this.props.input.action.arguments;
+    const args = this.props.input.action.arguments || [];
 
     args.forEach((arg) => {
       switch(arg.name) {

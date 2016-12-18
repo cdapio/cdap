@@ -58,7 +58,6 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
   @SuppressWarnings("unchecked")
   @Override
   public void perform(Arguments arguments, PrintStream printStream) throws Exception {
-    String[] programIdParts = new String[0];
     String contentType = arguments.getOptional(ArgumentName.CONTENT_TYPE.toString(), "");
     File file = new File(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
 
@@ -77,11 +76,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
       throw new BadRequestException(
         String.format("JSON syntax in file is invalid. Support only for string-to-string map. %s", e.getMessage()));
     }
-
-    if (arguments.hasArgument(type.getArgumentName().toString())) {
-      programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
-    }
-    setPreferences(programIdParts, printStream, args);
+    setPreferences(arguments, printStream, args);
   }
 
   @Override

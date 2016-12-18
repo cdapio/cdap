@@ -187,4 +187,9 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   public void setRuntimeArgs(ProgramId programId, Map<String, String> args) throws Exception {
     programClient.setRuntimeArgs(programId, args);
   }
+
+  @Override
+  public Map<String, String> getRuntimeArgs(ProgramId programId) throws Exception {
+    return programClient.getRuntimeArgs(programId);
+  }
 }

@@ -105,9 +105,8 @@ Running the Example
 
 Injecting Sentences
 -------------------
-In the application's `detail page
-<http://localhost:11011/ns/default/apps/WordCount/overview/programs>`__, click on the
-*WordCounter* flow. This takes you to the flow details page. 
+In the application's :cdap-ui-apps:`detail page <WordCount/overview/programs>`, click on
+the *WordCounter* flow. This takes you to the flow details page. 
 
 Now double-click on the *wordStream* stream on the left side of the flow visualization,
 which brings up a pop-up window. Enter a sentence such as ``"Hello CDAP"`` (without the

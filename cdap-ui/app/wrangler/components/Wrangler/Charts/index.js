@@ -59,7 +59,7 @@ export default class Charts extends Component {
           type: 'category',
           tick: {
             fit: true,
-            multiline: true,
+            multiline: false,
             count: 5,
             culling: {
               max: 5

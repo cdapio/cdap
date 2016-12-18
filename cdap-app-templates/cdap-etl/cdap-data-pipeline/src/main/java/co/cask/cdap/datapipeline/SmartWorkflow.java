@@ -274,6 +274,7 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
     BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(programName, phase, spec.getResources(),
                                                        spec.getDriverResources(),
+                                                       spec.getClientResources(),
                                                        spec.isStageLoggingEnabled(), phaseConnectorDatasets,
                                                        spec.getNumOfRecordsPreview());
 

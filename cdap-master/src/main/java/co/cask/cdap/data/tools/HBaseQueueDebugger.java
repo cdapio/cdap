@@ -71,6 +71,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
@@ -512,6 +513,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new SecureStoreModules().getDistributedModules(),
+      new MessagingClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

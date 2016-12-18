@@ -27,6 +27,7 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -97,6 +98,14 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
    * @return A {@link Serializable} {@link SecureStore}.
    */
   public abstract SecureStore getSecureStore();
+
+  /**
+   * Returns a {@link MessagingContext} which can be used to interact with the transactional
+   * messaging system. Currently the returned instance can only be used in the Spark driver process.
+   *
+   * @return A {@link MessagingContext}
+   */
+  public abstract MessagingContext getMessagingContext();
 
   /**
    * Returns a {@link Serializable} {@link TaskLocalizationContext} which can be used to retrieve files localized to

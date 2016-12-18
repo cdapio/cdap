@@ -27,6 +27,8 @@ import NamespaceStore from 'services/NamespaceStore';
 import Rx from 'rx';
 import {MyArtifactApi} from 'api/artifact';
 import find from 'lodash/find';
+import {Tooltip} from 'reactstrap';
+import T from 'i18n-react';
 
 export default class WrangleData extends Component {
   constructor(props, context) {
@@ -38,6 +40,9 @@ export default class WrangleData extends Component {
       loading: false,
       activeSelection: null,
       showVisualization: false,
+      undoTooltipOpen: false,
+      redoTooltipOpen: false,
+      sortTooltipOpen: false
     });
 
     this.state = stateObj;
@@ -46,32 +51,38 @@ export default class WrangleData extends Component {
     this.onVisualizationDisplayClick = this.onVisualizationDisplayClick.bind(this);
     this.undo = this.undo.bind(this);
     this.generateLinks = this.generateLinks.bind(this);
+    this.toggleUndoTooltip = this.toggleUndoTooltip.bind(this);
+    this.toggleRedoTooltip = this.toggleRedoTooltip.bind(this);
+    this.toggleSortTooltip = this.toggleSortTooltip.bind(this);
 
-    this.tableHeader = null;
-    this.tableBody = null;
-
-   this.sub = WranglerStore.subscribe(() => {
+    this.sub = WranglerStore.subscribe(() => {
       let state = WranglerStore.getState().wrangler;
       this.setState(state);
     });
-
   }
 
   componentDidMount() {
     this.forceUpdate();
 
-    setTimeout(() => {
+    const getContainerSize = () => {
       let container = document.getElementsByClassName('data-table');
 
       let height = container[0].clientHeight;
       let width = container[0].clientWidth;
 
       this.setState({height, width});
-    });
+    };
+
+    setTimeout(getContainerSize.bind(this));
+
+    this.windowResize$ = Rx.Observable.fromEvent(window, 'resize')
+      .debounce(500)
+      .subscribe(getContainerSize.bind(this));
   }
 
   componentWillUnmount() {
     this.sub();
+    this.windowResize$.dispose();
   }
 
   onColumnClick(column) {
@@ -89,6 +100,16 @@ export default class WrangleData extends Component {
 
   onVisualizationDisplayClick() {
     this.setState({showVisualization: !this.state.showVisualization});
+  }
+
+  toggleUndoTooltip() {
+    this.setState({undoTooltipOpen: !this.state.undoTooltipOpen});
+  }
+  toggleRedoTooltip() {
+    this.setState({redoTooltipOpen: !this.state.redoTooltipOpen});
+  }
+  toggleSortTooltip() {
+    this.setState({sortTooltipOpen: !this.state.sortTooltipOpen});
   }
 
   undo() {
@@ -161,7 +182,7 @@ export default class WrangleData extends Component {
         onClick={this.props.onHydratorApply}
       >
         <span className="fa icon-hydrator" />
-        Apply to Hydrator
+        {T.translate('features.Wrangler.WrangleData.applyToHydrator')}
       </button>
     );
 
@@ -179,7 +200,7 @@ export default class WrangleData extends Component {
           <div>
             <span className="fa fa-spinner fa-spin"></span>
           </div>
-          <h3>Wrangling...</h3>
+          <h3>{T.translate('features.Wrangler.WrangleData.wrangling')}</h3>
         </div>
       );
     }
@@ -192,19 +213,54 @@ export default class WrangleData extends Component {
       return prev + count;
     }, 0);
 
+    const undoId = 'wrangler-undo';
+    const redoId = 'wrangler-redo';
+    const sortId = 'wrangler-sort';
 
     return (
       <div className="wrangler-data row">
         <div className="wrangle-transforms">
           <div className="wrangle-filters text-center">
-            <span
-              className="fa fa-undo"
-              onClick={this.undo}
-            />
-            <span
-              className="fa fa-repeat"
-              onClick={this.forward}
-            />
+            <span>
+              <span
+                id={undoId}
+                className={classnames('fa fa-undo', {
+                  disabled: this.state.historyLocation === 0
+                })}
+                onClick={this.undo}
+              />
+
+              <Tooltip
+                placement="top"
+                isOpen={this.state.undoTooltipOpen}
+                toggle={this.toggleUndoTooltip}
+                target={undoId}
+                className="wrangler-tooltip"
+                delay={0}
+              >
+                {T.translate('features.Wrangler.Tooltips.undo')}
+              </Tooltip>
+            </span>
+
+            <span>
+              <span
+                id={redoId}
+                className={classnames('fa fa-repeat', {
+                  disabled: this.state.historyLocation === this.state.history.length
+                })}
+                onClick={this.forward}
+              />
+              <Tooltip
+                placement="bottom"
+                isOpen={this.state.redoTooltipOpen}
+                toggle={this.toggleRedoTooltip}
+                target={redoId}
+                className="wrangler-tooltip"
+                delay={0}
+              >
+                {T.translate('features.Wrangler.Tooltips.redo')}
+              </Tooltip>
+            </span>
           </div>
 
           <div
@@ -213,7 +269,28 @@ export default class WrangleData extends Component {
           >
             <span className="fa fa-long-arrow-up" />
             <span className="fa fa-long-arrow-down" />
-            <span className="transform-item-text">Sort</span>
+            <span
+              id={sortId}
+              className="transform-item-text"
+            >
+              {T.translate('features.Wrangler.LeftPanel.sort')}
+            </span>
+
+            {
+              !this.state.activeSelection ? (
+                <Tooltip
+                  placement="right"
+                  isOpen={this.state.sortTooltipOpen}
+                  toggle={this.toggleSortTooltip}
+                  target={sortId}
+                  className="wrangler-tooltip"
+                  delay={{show: 300, hide: 0}}
+                  tether={{offset: '0 -10px'}}
+                >
+                  {T.translate('features.Wrangler.LeftPanel.selectColumn', {type: 'sort'})}
+                </Tooltip>
+              ) : null
+            }
 
             <span className="pull-right sort-indicator">
               <span className={classnames('fa', {
@@ -237,17 +314,17 @@ export default class WrangleData extends Component {
           <div className="wrangler-data-metrics">
             <div className="metric-block">
               <h3 className="text-success">{this.state.data.length}</h3>
-              <h5>Rows</h5>
+              <h5>{T.translate('features.Wrangler.MetricsBar.rows')}</h5>
             </div>
 
             <div className="metric-block">
               <h3 className="text-success">{this.state.headersList.length}</h3>
-              <h5>Columns</h5>
+              <h5>{T.translate('features.Wrangler.MetricsBar.columns')}</h5>
             </div>
 
             <div className="metric-block">
               <h3 className="text-danger">{errorCount}</h3>
-              <h5>Errors</h5>
+              <h5>{T.translate('features.Wrangler.MetricsBar.nulls')}</h5>
             </div>
 
             <div className="pull-right action-button-container">

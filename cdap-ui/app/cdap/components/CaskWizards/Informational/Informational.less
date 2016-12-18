@@ -16,14 +16,46 @@
 @import '../../WizardModal/WizardModal.less';
 
  // Specific hack for hydrator.
- body {
+body {
    .modal {
-     .wizard-modal.create-stream-wizard {
-       &.upload-data-wizard {
+      .wizard-modal {
          &.modal-dialog {
-           margin-top: @wizard-modal-margin-top;
+            &.informational-wizard {
+               margin-top: @wizard-modal-margin-top;
+
+               .modal-body {
+                  .license-container {
+                     background: white;
+                     height: 100%;
+                     padding: 20px;
+                     h2 {
+                       margin-top: 10px;
+                       font-weight: bold;
+                     }
+                     .license-text {
+                        height: ~"calc(100% - 100px)";
+                        height: ~"-webkit-calc(100% - 100px)";
+                        height: ~"-moz-calc(100% - 100px)";
+                        margin-bottom: 10px;
+                        overflow-y: auto;
+                     }
+                     .agree-btn {
+                        background: #ff6600;
+                        border-color: #ff6600;
+                        display: inline-block;
+                        padding-right: 30px;
+                        padding-left: 30px;
+                     }
+                     .back-to-cdap-link {
+                        display: inline-block;
+                        margin-left: 10px;
+                        color: #ff6600;
+                        cursor: pointer;
+                     }
+                  }
+               }
+            }
          }
-       }
-     }
+      }
    }
- }
+}

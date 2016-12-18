@@ -22,7 +22,10 @@ import InformationalWizard from 'components/CaskWizards/Informational';
 import ArtifactUploadWizard from 'components/CaskWizards/ArtifactUpload';
 import PluginArtifactUploadWizard from 'components/CaskWizards/PluginArtifactUpload';
 import ApplicationUploadWizard from 'components/CaskWizards/ApplicationUpload';
+
 import MarketArtifactUploadWizard from 'components/CaskWizards/MarketArtifactUpload';
+import MarketHydratorPluginUpload from 'components/CaskWizards/MarketHydratorPluginUpload';
+
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import PublishPipelineStore from 'services/WizardStores/PublishPipeline/PublishPipelineStore';
@@ -30,18 +33,27 @@ import AddNamespaceWizard from 'components/CaskWizards/AddNamespace';
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
 import InformationalStore from 'services/WizardStores/Informational/InformationalStore';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
+import ApplicationUploadStore from 'services/WizardStores/ApplicationUpload/ApplicationUploadStore';
 
 const WizardTypesMap = {
   'create_app': {
-    tag: PublishPipelineWizard,
-    store: PublishPipelineStore
+    tag: ApplicationUploadWizard,
+    store: ApplicationUploadStore
   },
-  'create_artifact': {
+  'create_driver_artifact': {
     tag: MarketArtifactUploadWizard,
     store: ArtifactUploadStore
   },
+  'deploy_app': {
+    tag: ApplicationUploadWizard,
+    store: ApplicationUploadStore
+  },
   'create_artifact_rc': {
     tag: ArtifactUploadWizard,
+    store: ArtifactUploadStore
+  },
+  'create_plugin_artifact': {
+    tag: MarketHydratorPluginUpload,
     store: ArtifactUploadStore
   },
   'create_plugin_artifact_rc': {

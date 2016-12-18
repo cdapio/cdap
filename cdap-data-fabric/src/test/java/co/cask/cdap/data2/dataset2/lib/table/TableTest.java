@@ -35,6 +35,7 @@ import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.TableAssert;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -56,6 +57,8 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -103,11 +106,15 @@ public abstract class TableTest<T extends Table> {
   protected TransactionSystemClient txClient;
 
   protected abstract T getTable(DatasetContext datasetContext, String name,
-                                DatasetProperties props) throws Exception;
+                                DatasetProperties props, Map<String, String> runtimeArguments) throws Exception;
   protected abstract DatasetAdmin getTableAdmin(DatasetContext datasetContext, String name,
                                                 DatasetProperties props) throws Exception;
 
   protected abstract boolean isReadlessIncrementSupported();
+
+  protected T getTable(DatasetContext datasetContext, String name, DatasetProperties props) throws Exception {
+    return getTable(datasetContext, name, props, Collections.<String, String>emptyMap());
+  }
 
   protected T getTable(DatasetContext datasetContext, String name) throws Exception {
     return getTable(datasetContext, name, PROPS_CONFLICT_LEVEL_ROW);
@@ -1862,33 +1869,42 @@ public abstract class TableTest<T extends Table> {
   }
 
   @Test
-  public void testIncrementWithFlush() throws Exception {
-    testIncrementWithFlush(false);
+  public void testMultiIncrementWithFlush() throws Exception {
+    testMultiIncrementWithFlush(false);
     if (isReadlessIncrementSupported()) {
-      // TODO (CDAP-7624): enable this once readless increments with multi-flush are fixed
-      // testIncrementWithFlush(true);
+      testMultiIncrementWithFlush(true);
     }
   }
 
-  private void testIncrementWithFlush(boolean readless) throws Exception {
+  private void testMultiIncrementWithFlush(boolean readless) throws Exception {
     final String tableName = "incrFlush";
     DatasetProperties props = DatasetProperties.builder()
       .add(Table.PROPERTY_READLESS_INCREMENT, String.valueOf(readless)).build();
     DatasetAdmin admin = getTableAdmin(CONTEXT1, tableName, props);
     admin.create();
-    Table table = getTable(CONTEXT1, tableName, props);
+    Map<String, String> args = new HashMap<>();
+    if (readless) {
+      args.put(HBaseTable.SAFE_INCREMENTS, "true");
+    }
+    Table table = getTable(CONTEXT1, tableName, props, args);
 
     Transaction tx = txClient.startShort();
     try {
       ((TransactionAware) table).startTx(tx);
 
       // Write an increment, then flush it by calling commitTx.
-      table.increment(new Increment(R1, C1, 1L));
+      table.increment(new Increment(R1, C1, 10L));
       ((TransactionAware) table).commitTx();
+    } finally {
+      // invalidate the tx, leaving an excluded write in the table
+      txClient.invalidate(tx.getTransactionId());
+    }
 
-      // Write another increment.
-      table.increment(new Increment(R1, C1, 1L));
-      ((TransactionAware) table).commitTx();
+    // validate the first write is not visible
+    tx = txClient.startShort();
+    try {
+      ((TransactionAware) table).startTx(tx);
+      Assert.assertEquals(null, table.get(new Get(R1, C1)).getLong(C1));
     } finally {
       txClient.commit(tx);
     }
@@ -1898,7 +1914,30 @@ public abstract class TableTest<T extends Table> {
       ((TransactionAware) table).startTx(tx);
 
       // Write an increment, then flush it by calling commitTx.
-      Assert.assertEquals(new Long(2L), table.get(new Get(R1, C1)).getLong(C1));
+      table.increment(new Increment(R1, C1, 1L));
+      ((TransactionAware) table).commitTx();
+
+      // Write another increment, from both table instances
+      table.increment(new Increment(R1, C1, 1L));
+
+      if (readless) {
+        Table table2 = getTable(CONTEXT1, tableName, props, args);
+        ((TransactionAware) table2).startTx(tx);
+        table2.increment(new Increment(R1, C1, 1L));
+        ((TransactionAware) table2).commitTx();
+      }
+
+      ((TransactionAware) table).commitTx();
+
+    } finally {
+      txClient.commit(tx);
+    }
+
+    // validate all increments are visible to a new tx
+    tx = txClient.startShort();
+    try {
+      ((TransactionAware) table).startTx(tx);
+      Assert.assertEquals(new Long(readless ? 3L : 2L), table.get(new Get(R1, C1)).getLong(C1));
     } finally {
       txClient.commit(tx);
     }
@@ -1918,7 +1957,7 @@ public abstract class TableTest<T extends Table> {
     return value == null ? 0 : value;
   }
 
-  static long[] la(long... elems) {
+  private static long[] la(long... elems) {
     return elems;
   }
 

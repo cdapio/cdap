@@ -18,12 +18,7 @@ package co.cask.cdap.internal.app.runtime.messaging;
 
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
-import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.messaging.MessagingService;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 
@@ -31,184 +26,108 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * The basic implementation of {@link MessagingContext} for supporting message publishing/fetching in both
- * non-transactional context and short transaction context (hence not for MR and Spark).
- *
- * Each program context should have an instance of this class, which is added as an extra {@link TransactionAware}
- * through the {@link DynamicDatasetCache#addExtraTransactionAware(TransactionAware)} method so that it can tap into
- * all transaction lifecycle events across all threads.
+ * A {@link TransactionAware} that maintains {@link MessagePublisher},
+ * {@link MessageFetcher} and {@link Transaction} information for a thread.
  */
-public class BasicMessagingContext implements MessagingContext, TransactionAware {
+final class BasicMessagingContext implements TransactionAware {
 
   private final MessagingService messagingService;
-  private final LoadingCache<Thread, ThreadLocalMessagingContext> threadLocalTransactionAwares;
+  private final String name;
+  private Transaction transaction;
+  private BasicMessagePublisher publisher;
+  private BasicMessageFetcher fetcher;
 
-  public BasicMessagingContext(final MessagingService messagingService) {
+  BasicMessagingContext(MessagingService messagingService) {
     this.messagingService = messagingService;
-    this.threadLocalTransactionAwares = CacheBuilder.newBuilder()
-      .weakKeys()
-      .build(new CacheLoader<Thread, ThreadLocalMessagingContext>() {
-        @Override
-        public ThreadLocalMessagingContext load(Thread key) throws Exception {
-          return new ThreadLocalMessagingContext(messagingService);
-        }
-      });
+    this.name = "MessagingContext-" + Thread.currentThread().getName();
   }
 
-  @Override
-  public MessagePublisher getMessagePublisher() {
-    return threadLocalTransactionAwares.getUnchecked(Thread.currentThread()).getPublisher();
+  /**
+   * Returns a {@link MessagePublisher}.
+   */
+  MessagePublisher getPublisher() {
+    if (publisher == null) {
+      publisher = new BasicMessagePublisher(messagingService);
+
+      // If there is an active transaction, notify the publisher as well
+      if (transaction != null) {
+        publisher.startTx(transaction);
+      }
+    }
+    return publisher;
   }
 
-  @Override
-  public MessagePublisher getDirectMessagePublisher() {
-    return new DirectMessagePublisher(messagingService);
-  }
+  /**
+   * Returns a {@link MessageFetcher}.
+   */
+  MessageFetcher getFetcher() {
+    if (fetcher == null) {
+      fetcher = new BasicMessageFetcher(messagingService);
 
-  @Override
-  public MessageFetcher getMessageFetcher() {
-    return threadLocalTransactionAwares.getUnchecked(Thread.currentThread()).getFetcher();
+      // If there is an active transaction, notify the publisher as well
+      if (transaction != null) {
+        fetcher.startTx(transaction);
+      }
+    }
+    return fetcher;
   }
 
   @Override
   public void startTx(Transaction transaction) {
-    threadLocalTransactionAwares.getUnchecked(Thread.currentThread()).startTx(transaction);
+    this.transaction = transaction;
+    if (publisher != null) {
+      publisher.startTx(transaction);
+    }
+    if (fetcher != null) {
+      fetcher.startTx(transaction);
+    }
   }
 
   @Override
   public void updateTx(Transaction transaction) {
-    threadLocalTransactionAwares.getUnchecked(Thread.currentThread()).updateTx(transaction);
+    // Currently CDAP doesn't support checkpoint.
+    throw new UnsupportedOperationException("Transaction checkpoints are not supported");
   }
 
   @Override
   public Collection<byte[]> getTxChanges() {
-    return threadLocalTransactionAwares.getUnchecked(Thread.currentThread()).getTxChanges();
+    // Messaging system is append only, hence never has write conflict.
+    // We controlled both DefaultMessageFetcher and DefaultMessagePublisher, hence not bother to call them.
+    return Collections.emptySet();
   }
 
   @Override
   public boolean commitTx() throws Exception {
-    return threadLocalTransactionAwares.getUnchecked(Thread.currentThread()).commitTx();
+    // No need to call fetch.commitTx() as it always just return true
+    return publisher == null || publisher.commitTx();
   }
 
   @Override
   public void postTxCommit() {
-    threadLocalTransactionAwares.getUnchecked(Thread.currentThread()).postTxCommit();
+    transaction = null;
+
+    if (publisher != null) {
+      publisher.postTxCommit();
+    }
+    if (fetcher != null) {
+      fetcher.postTxCommit();
+    }
   }
 
   @Override
   public boolean rollbackTx() throws Exception {
-    return threadLocalTransactionAwares.getUnchecked(Thread.currentThread()).rollbackTx();
+    transaction = null;
+
+    // Call the fetcher.rollbackTx() first, as it will never throw and always return true.
+    // We need to call it for resetting internal states.
+    if (fetcher != null) {
+      fetcher.rollbackTx();
+    }
+    return publisher == null || publisher.rollbackTx();
   }
 
   @Override
   public String getTransactionAwareName() {
-    return threadLocalTransactionAwares.getUnchecked(Thread.currentThread()).getTransactionAwareName();
-  }
-
-  /**
-   * Maintains {@link MessagePublisher}, {@link MessageFetcher} and {@link Transaction} information
-   * for a thread.
-   */
-  private static final class ThreadLocalMessagingContext implements TransactionAware {
-
-    private final MessagingService messagingService;
-    private final String name;
-    private Transaction transaction;
-    private BasicMessagePublisher publisher;
-    private BasicMessageFetcher fetcher;
-
-    ThreadLocalMessagingContext(MessagingService messagingService) {
-      this.messagingService = messagingService;
-      this.name = "MessagingContext-" + Thread.currentThread().getName();
-    }
-
-    /**
-     * Returns a {@link MessagePublisher}.
-     */
-    MessagePublisher getPublisher() {
-      if (publisher == null) {
-        publisher = new BasicMessagePublisher(messagingService);
-
-        // If there is an active transaction, notify the publisher as well
-        if (transaction != null) {
-          publisher.startTx(transaction);
-        }
-      }
-      return publisher;
-    }
-
-    /**
-     * Returns a {@link MessageFetcher}.
-     */
-    MessageFetcher getFetcher() {
-      if (fetcher == null) {
-        fetcher = new BasicMessageFetcher(messagingService);
-
-        // If there is an active transaction, notify the publisher as well
-        if (transaction != null) {
-          fetcher.startTx(transaction);
-        }
-      }
-      return fetcher;
-    }
-
-    @Override
-    public void startTx(Transaction transaction) {
-      this.transaction = transaction;
-      if (publisher != null) {
-        publisher.startTx(transaction);
-      }
-      if (fetcher != null) {
-        fetcher.startTx(transaction);
-      }
-    }
-
-    @Override
-    public void updateTx(Transaction transaction) {
-      // Currently CDAP doesn't support checkpoint.
-      throw new UnsupportedOperationException("Transaction checkpoints are not supported");
-    }
-
-    @Override
-    public Collection<byte[]> getTxChanges() {
-      // Messaging system is append only, hence never has write conflict.
-      // We controlled both DefaultMessageFetcher and DefaultMessagePublisher, hence not bother to call them.
-      return Collections.emptySet();
-    }
-
-    @Override
-    public boolean commitTx() throws Exception {
-      // No need to call fetch.commitTx() as it always just return true
-      return publisher == null || publisher.commitTx();
-    }
-
-    @Override
-    public void postTxCommit() {
-      transaction = null;
-
-      if (publisher != null) {
-        publisher.postTxCommit();
-      }
-      if (fetcher != null) {
-        fetcher.postTxCommit();
-      }
-    }
-
-    @Override
-    public boolean rollbackTx() throws Exception {
-      transaction = null;
-
-      // Call the fetcher.rollbackTx() first, as it will never throw and always return true.
-      // We need to call it for resetting internal states.
-      if (fetcher != null) {
-        fetcher.rollbackTx();
-      }
-      return publisher == null || publisher.rollbackTx();
-    }
-
-    @Override
-    public String getTransactionAwareName() {
-      return name;
-    }
+    return name;
   }
 }

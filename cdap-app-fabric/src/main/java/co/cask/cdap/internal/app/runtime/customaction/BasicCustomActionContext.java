@@ -30,6 +30,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.messaging.MessagingService;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -52,12 +53,13 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
                                   DatasetFramework datasetFramework, TransactionSystemClient txClient,
                                   DiscoveryServiceClient discoveryServiceClient,
                                   @Nullable PluginInstantiator pluginInstantiator,
-                                  SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                                  SecureStore secureStore, SecureStoreManager secureStoreManager,
+                                  MessagingService messagingService) {
 
     super(workflow, programOptions, cConf, customActionSpecification.getDatasets(),
           datasetFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, workflowProgramInfo.updateMetricsTags(new HashMap<String, String>()), secureStore,
-          secureStoreManager, pluginInstantiator);
+          secureStoreManager, messagingService, pluginInstantiator);
 
     this.customActionSpecification = customActionSpecification;
     this.workflowProgramInfo = workflowProgramInfo;

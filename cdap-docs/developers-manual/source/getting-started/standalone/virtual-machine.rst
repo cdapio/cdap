@@ -34,7 +34,7 @@ It has pre-installed all the software that you need to run and develop CDAP appl
   virtual machine has started.
 - Links on the desktop are provided to the CDAP SDK, CDAP UI, and CDAP documentation.
 - The Chromium web browser is included. The default page for the CDAP UI, available through a desktop link, is
-  ``http://localhost:11011``.
+  :cdap-ui:`http://localhost:11011/ <>`.
 
 No password is required to enter the virtual machine; however, should you need to install or
 remove software, the admin user and password are both ``cdap``.
@@ -72,7 +72,7 @@ Note that starting CDAP is not necessary if you use the Virtual Machine, as it
 starts the Standalone CDAP automatically on startup.
 
 Once CDAP is started successfully, in a web browser you will be able to see the CDAP
-UI running at ``http://localhost:11011``, where you can deploy example applications and
+UI running at :cdap-ui:`http://localhost:11011/ <>`, where you can deploy example applications and
 interact with CDAP. 
 
 .. include:: /_includes/building-apps.txt

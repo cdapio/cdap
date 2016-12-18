@@ -70,11 +70,13 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class DefaultMetadataStore implements MetadataStore {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadataStore.class);
-  private static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("business.metadata");
-  private static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("system.metadata");
   private static final Map<String, String> EMPTY_PROPERTIES = ImmutableMap.of();
   private static final Set<String> EMPTY_TAGS = ImmutableSet.of();
   private static final int BATCH_SIZE = 1000;
+
+  // TODO: Can be made private after CDAP-7835 is fixed
+  public static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("business.metadata");
+  public static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("system.metadata");
 
   private static final Comparator<Map.Entry<NamespacedEntityId, Integer>> SEARCH_RESULT_DESC_SCORE_COMPARATOR =
     new Comparator<Map.Entry<NamespacedEntityId, Integer>>() {
@@ -373,7 +375,7 @@ public class DefaultMetadataStore implements MetadataStore {
   public MetadataSearchResponse search(String namespaceId, String searchQuery,
                                        Set<MetadataSearchTargetType> types,
                                        SortInfo sortInfo, int offset, int limit,
-                                       int numCursors, String cursor) throws BadRequestException {
+                                       int numCursors, String cursor, boolean showHidden) throws BadRequestException {
     Set<MetadataScope> searchScopes = EnumSet.allOf(MetadataScope.class);
     if ("*".equals(searchQuery)) {
       if (SortInfo.DEFAULT.equals(sortInfo)) {
@@ -388,18 +390,20 @@ public class DefaultMetadataStore implements MetadataStore {
         searchScopes = EnumSet.of(MetadataScope.SYSTEM);
       }
     }
-    return search(searchScopes, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor);
+    return search(searchScopes, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor,
+                  showHidden);
   }
 
   private MetadataSearchResponse search(Set<MetadataScope> scopes, String namespaceId,
                                         String searchQuery, Set<MetadataSearchTargetType> types,
                                         SortInfo sortInfo, int offset, int limit,
-                                        int numCursors, String cursor) throws BadRequestException {
+                                        int numCursors, String cursor, boolean showHidden) throws BadRequestException {
     List<MetadataEntry> results = new ArrayList<>();
     List<String> cursors = new ArrayList<>();
     for (MetadataScope scope : scopes) {
       SearchResults searchResults =
-        getSearchResults(scope, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor);
+        getSearchResults(scope, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor,
+                         showHidden);
       results.addAll(searchResults.getResults());
       cursors.addAll(searchResults.getCursors());
     }
@@ -440,7 +444,7 @@ public class DefaultMetadataStore implements MetadataStore {
 
     return new MetadataSearchResponse(
       sortInfo.getSortBy() + " " + sortInfo.getSortOrder(), offset, limit, numCursors, total,
-      addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors
+      addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors, showHidden
     );
   }
 
@@ -448,12 +452,12 @@ public class DefaultMetadataStore implements MetadataStore {
                                          final String searchQuery, final Set<MetadataSearchTargetType> types,
                                          final SortInfo sortInfo, final int offset,
                                          final int limit, final int numCursors,
-                                         final String cursor) throws BadRequestException {
+                                         final String cursor, final boolean showHidden) throws BadRequestException {
     return execute(
       new TransactionExecutor.Function<MetadataDataset, SearchResults>() {
         @Override
         public SearchResults apply(MetadataDataset input) throws Exception {
-          return input.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor);
+          return input.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden);
         }
       }, scope);
   }

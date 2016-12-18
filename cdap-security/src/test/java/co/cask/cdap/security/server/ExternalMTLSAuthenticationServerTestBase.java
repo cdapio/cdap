@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
@@ -31,8 +32,6 @@ import org.eclipse.jetty.plus.jaas.spi.PropertyFileLoginModule;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.security.SecureRandom;
@@ -47,7 +46,6 @@ import static org.junit.Assert.assertEquals;
  * Base test class for Mutual TLS Based ExternalAuthenticationServer.
  */
 public abstract class ExternalMTLSAuthenticationServerTestBase extends ExternalAuthenticationServerTestBase  {
-  private static final Logger LOG = LoggerFactory.getLogger(ExternalMTLSAuthenticationServerTestBase.class);
 
   protected abstract KeyManager[] getInvalidKeyManagers() throws Exception;
 
@@ -66,7 +64,7 @@ public abstract class ExternalMTLSAuthenticationServerTestBase extends ExternalA
     cConf.setInt(Constants.Security.AUTH_SERVER_BIND_PORT, Networks.getRandomPort());
     cConf.setInt(Constants.Security.AuthenticationServer.SSL_PORT, Networks.getRandomPort());
 
-    // Setting the Authentication Handler to the Certifcate Handler
+    // Setting the Authentication Handler to the Certificate Handler
     cConf.set(Constants.Security.AUTH_HANDLER_CLASS, CertificateAuthenticationHandler.class.getName());
     cConf.set(Constants.Security.LOGIN_MODULE_CLASS_NAME, PropertyFileLoginModule.class.getName());
     cConf.set(configBase.concat("debug"), "true");
@@ -99,7 +97,7 @@ public abstract class ExternalMTLSAuthenticationServerTestBase extends ExternalA
     return getHTTPClient(getKeyManagers(), getTrustManagers());
   }
 
-  protected HttpClient getHTTPClient(KeyManager[] kms, TrustManager[] tms) throws Exception {
+  private HttpClient getHTTPClient(KeyManager[] kms, TrustManager[] tms) throws Exception {
     SSLContext sslContext = SSLContext.getInstance("SSL");
     sslContext.init(kms, tms, new SecureRandom());
     // only for test purposes ignoring check of certificate hostname matching host on which server runs

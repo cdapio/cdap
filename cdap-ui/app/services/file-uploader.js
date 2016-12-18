@@ -19,6 +19,7 @@ angular.module(PKG.name + '.services')
     function upload(fileObj, header){
       var deferred = $q.defer();
       var path, customHeaderNames, xhr;
+      //This conditional block gets excuted - issue with auth
       if ($window.CDAP_CONFIG.securityEnabled && !myAuth.currentUser) {
         deferred.reject(400);
         myAlert({

@@ -64,6 +64,7 @@ import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.master.startup.ServiceResourceKeys;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
@@ -249,6 +250,7 @@ public class MasterServiceMain extends DaemonMain {
     createDirectory("twill");
     createDirectory(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
                               QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
+    createDirectory(cConf.get(Constants.MessagingSystem.COPROCESSOR_DIR));
     createSystemHBaseNamespace();
     updateConfigurationTable();
     Services.startAndWait(zkClient, cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
@@ -286,7 +288,7 @@ public class MasterServiceMain extends DaemonMain {
         // file context does ( permission AND  (NOT of umask) ) and uses that as permission, by default umask is 022,
         // if we want 777 permission, we have to set umask to 000
         fileContext.setUMask(new FsPermission(FsAction.NONE, FsAction.NONE, FsAction.NONE));
-        fileContext.mkdir(fPath, permission, false);
+        fileContext.mkdir(fPath, permission, true);
       }
     } catch (FileAlreadyExistsException e) {
       // should not happen as we create only if dir exists
@@ -511,6 +513,7 @@ public class MasterServiceMain extends DaemonMain {
       new DataSetsModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
+      new MessagingClientModule(),
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getDistributedModules(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
@@ -985,25 +988,36 @@ public class MasterServiceMain extends DaemonMain {
       }
     }
 
+
     // Filter out jar files that are already in the master classpath as those will get localized by twill automatically,
     // hence no need to localize again.
-    Iterable<File> exploreJars = Iterables.filter(ExploreUtils.getExploreClasspathJarFiles(), new Predicate<File>() {
-      @Override
-      public boolean apply(File file) {
-        return !masterJars.contains(file);
-      }
-    });
+    Iterable<File> exploreFiles = Iterables.filter(
+      ExploreUtils.getExploreClasspathJarFiles("tgz", "gz"), new Predicate<File>() {
+        @Override
+        public boolean apply(File file) {
+          return !masterJars.contains(file);
+        }
+      });
 
     Map<String, LocalizeResource> resources = new HashMap<>();
-    for (File exploreJar : exploreJars) {
-      File targetJar = tempDir.resolve(System.currentTimeMillis() + "-" + exploreJar.getName()).toFile();
-      File resultFile = ExploreServiceUtils.rewriteHiveAuthFactory(exploreJar, targetJar);
-      if (resultFile == targetJar) {
-        LOG.info("Rewritten HiveAuthFactory from jar file {} to jar file {}", exploreJar, resultFile);
+    for (File file : exploreFiles) {
+      if (file.getName().endsWith(".tgz") || file.getName().endsWith(".gz")) {
+        // It's an archive, hence localize it archive so that it will be expanded to a directory on the container
+        resources.put(file.getName(), new LocalizeResource(file, true));
+        // Includes the expanded directory, jars under that directory and jars under the "lib" to classpath
+        extraClassPaths.add(file.getName());
+        extraClassPaths.add(file.getName() + "/*");
+        extraClassPaths.add(file.getName() + "/lib/*");
+      } else {
+        File targetFile = tempDir.resolve(System.currentTimeMillis() + "-" + file.getName()).toFile();
+        File resultFile = ExploreServiceUtils.rewriteHiveAuthFactory(file, targetFile);
+        if (resultFile == targetFile) {
+          LOG.info("Rewritten HiveAuthFactory from jar file {} to jar file {}", file, resultFile);
+        }
+        resources.put(resultFile.getName(), new LocalizeResource(resultFile));
+        extraClassPaths.add(resultFile.getName());
       }
 
-      resources.put(resultFile.getName(), new LocalizeResource(resultFile));
-      extraClassPaths.add(resultFile.getName());
     }
 
     // Explore also depends on MR, hence adding MR jars to the classpath.

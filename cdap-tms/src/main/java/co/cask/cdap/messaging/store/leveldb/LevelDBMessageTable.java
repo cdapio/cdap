@@ -19,9 +19,13 @@ package co.cask.cdap.messaging.store.leveldb;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.messaging.MessagingUtils;
+import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.store.AbstractMessageTable;
+import co.cask.cdap.messaging.store.ImmutableMessageTableEntry;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.RawMessageTableEntry;
+import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Preconditions;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
@@ -33,6 +37,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -95,7 +100,6 @@ final class LevelDBMessageTable extends AbstractMessageTable {
     };
   }
 
-
   @Override
   protected void persist(Iterator<RawMessageTableEntry> entries) throws IOException {
     try (WriteBatch writeBatch = levelDB.createWriteBatch()) {
@@ -112,19 +116,71 @@ final class LevelDBMessageTable extends AbstractMessageTable {
   }
 
   @Override
-  protected void delete(byte[] startKey, byte[] stopKey) throws IOException {
+  protected void rollback(byte[] startKey, byte[] stopKey, byte[] txWritePtr) throws IOException {
     WriteBatch writeBatch = levelDB.createWriteBatch();
     try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startKey, stopKey)) {
       while (rowIterator.hasNext()) {
-        writeBatch.delete(rowIterator.next().getKey());
+        Map.Entry<byte[], byte[]> rowValue = rowIterator.next();
+        byte[] value = rowValue.getValue();
+        Map<String, byte[]> columns = decodeValue(value);
+        writeBatch.put(rowValue.getKey(), encodeValue(txWritePtr, columns.get(PAYLOAD_COL)));
       }
     }
-    levelDB.write(writeBatch, WRITE_OPTIONS);
+
+    try {
+      levelDB.write(writeBatch, WRITE_OPTIONS);
+    } catch (DBException ex) {
+      throw new IOException(ex);
+    }
   }
 
   @Override
   public void close() throws IOException {
     // no-op
+  }
+
+  /**
+   * Delete messages of a {@link TopicId} that has exceeded the TTL or if it belongs to an older generation
+   *
+   * @param topicMetadata {@link TopicMetadata}
+   * @param currentTime current timestamp
+   * @throws IOException error occurred while trying to delete a row in LevelDB
+   */
+  public void pruneMessages(TopicMetadata topicMetadata, long currentTime) throws IOException {
+    WriteBatch writeBatch = levelDB.createWriteBatch();
+    long ttlInMs = TimeUnit.SECONDS.toMillis(topicMetadata.getTTL());
+    byte[] startRow = MessagingUtils.toDataKeyPrefix(topicMetadata.getTopicId(),
+                                                     Integer.parseInt(MessagingUtils.Constants.DEFAULT_GENERATION));
+    byte[] stopRow = Bytes.stopKeyForPrefix(startRow);
+
+    try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startRow, stopRow)) {
+      while (rowIterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = rowIterator.next();
+        MessageTable.Entry messageTableEntry = new ImmutableMessageTableEntry(entry.getKey(), null, null);
+
+        int dataGeneration = messageTableEntry.getGeneration();
+        int currGeneration = topicMetadata.getGeneration();
+        if (MessagingUtils.isOlderGeneration(dataGeneration, currGeneration)) {
+          writeBatch.delete(entry.getKey());
+          continue;
+        }
+
+        if ((dataGeneration == Math.abs(currGeneration)) &&
+          ((currentTime - messageTableEntry.getPublishTimestamp()) > ttlInMs)) {
+          writeBatch.delete(entry.getKey());
+        } else {
+          // terminate scanning table once an entry with publish time after TTL is found, to avoid scanning whole table,
+          // since the entries are sorted by time.
+          break;
+        }
+      }
+    }
+
+    try {
+      levelDB.write(writeBatch, WRITE_OPTIONS);
+    } catch (DBException ex) {
+      throw new IOException(ex);
+    }
   }
 
   // Encoding:

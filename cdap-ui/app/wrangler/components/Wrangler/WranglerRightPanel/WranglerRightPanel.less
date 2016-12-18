@@ -20,7 +20,7 @@
   position: absolute;
   right: 0;
   top: 0;
-  height: calc(~"100vh - 103px");
+  bottom: 0;
   width: 400px;
   border-left: @border;
   background-color: white;
@@ -80,26 +80,6 @@
       .graph-content {
         padding: 10px;
         border-bottom: @border;
-
-        .y-values-list {
-          span.fa { cursor: pointer; }
-        }
-
-        .y-value-selector,
-        .add-y-value-button {
-          display: inline-block;
-        }
-
-        .y-value-selector {
-          width: 80%;
-        }
-
-        .add-y-value-button {
-          width: 20%;
-          font-size: 18px;
-
-          span { cursor: pointer; }
-        }
       }
     }
   }

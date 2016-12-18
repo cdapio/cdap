@@ -30,9 +30,10 @@ public class MetadataSearchResponse {
   private final int total;
   private final Set<MetadataSearchResultRecord> results;
   private final List<String> cursors;
+  private final boolean showHidden;
 
   public MetadataSearchResponse(String sort, int offset, int limit, int numCursors, int total,
-                                Set<MetadataSearchResultRecord> results, List<String> cursors) {
+                                Set<MetadataSearchResultRecord> results, List<String> cursors, boolean showHidden) {
     this.sort = sort;
     this.offset = offset;
     this.limit = limit;
@@ -40,6 +41,7 @@ public class MetadataSearchResponse {
     this.total = total;
     this.results = results;
     this.cursors = cursors;
+    this.showHidden = showHidden;
   }
 
   public String getSort() {
@@ -68,5 +70,9 @@ public class MetadataSearchResponse {
 
   public List<String> getCursors() {
     return cursors;
+  }
+
+  public boolean isShowHidden() {
+    return showHidden;
   }
 }

@@ -39,7 +39,7 @@ See the instructions for either a :ref:`distribution-specific <installation-inde
 
 - A production, staging, and QA mode; runs in a distributed environment
 - Currently uses Apache HBase and HDFS as the underlying storage technology
-- Uses Apache Yarn Containers as the processing abstraction (via Apache Twill)
+- Uses Apache YARN Containers as the processing abstraction (via `Apache™ Twill® <http://twill.apache.org>`__)
 
 
 .. _standalone-data-application-platform:
@@ -58,7 +58,7 @@ SDK* for information on how to start and manage your Standalone CDAP.
 
 - Designed to run in a standalone environment, for development and testing
 - Uses LevelDB/Local File System as the storage technology
-- Uses Java Threads as the processing abstraction (via Apache Twill)
+- Uses Java Threads as the processing abstraction (via `Apache™ Twill® <http://twill.apache.org>`__)
 
 
 .. _in-memory-data-application-platform:
@@ -77,7 +77,7 @@ See :ref:`test-cdap` for information and examples on using this mode.
 - Purpose-built for writing unit tests and CI pipelines
 - Mimics storage technologies as in-memory data structures; for example, 
   `Java NavigableMap <http://docs.oracle.com/javase/7/docs/api/java/util/NavigableMap.html>`__
-- Uses Java Threads as the processing abstraction (via Apache Twill)
+- Uses Java Threads as the processing abstraction (via `Apache™ Twill® <http://twill.apache.org>`__)
 
 
 Components

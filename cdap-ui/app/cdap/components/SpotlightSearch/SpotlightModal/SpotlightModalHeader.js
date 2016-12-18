@@ -51,7 +51,7 @@ require('./SpotlightModal.less');
            }
          </span>
          <div
-           className="close-section pull-right"
+           className="close-section pull-right text-right"
          >
            <span className="search-results-total">
              {

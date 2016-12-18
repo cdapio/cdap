@@ -174,9 +174,9 @@ export default class MarketPlaceEntity extends Component {
             <div className="package-icon-container">
               <img src={MyMarketApi.getIcon(this.props.entity)} />
             </div>
-            <div>
-              <div>{this.props.entity.version}</div>
-              <div>{this.props.entity.name}</div>
+            <div className="package-metadata-container">
+              <strong className="package-label">{this.props.entity.label}</strong>
+              <div>v {this.props.entity.version}</div>
             </div>
           </Card>
         )
@@ -194,13 +194,13 @@ export default class MarketPlaceEntity extends Component {
               :
                 null
             }
-            <div className="clearfix">
+            <div className="text-center">
               <div
                 className="package-icon-container">
                 <img src={MyMarketApi.getIcon(this.props.entity)} />
               </div>
 
-              <div className="package-metadata-container">
+              <div className="package-metadata-container text-left">
                 <strong className="package-label"> {this.props.entity.label} </strong>
                 <div className="package-metadata">
                   <div>

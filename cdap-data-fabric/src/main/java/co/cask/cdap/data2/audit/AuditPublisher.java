@@ -24,7 +24,6 @@ import co.cask.cdap.proto.id.EntityId;
 /**
  * AuditPublisher is used to publish non-data changes to entities that need to be logged for audit purpose.
  */
-@Beta
 public interface AuditPublisher {
 
   /**

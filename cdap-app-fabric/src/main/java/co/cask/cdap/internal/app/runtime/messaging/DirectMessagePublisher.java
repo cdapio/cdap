@@ -20,7 +20,7 @@ import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
-import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.TopicId;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -37,11 +37,7 @@ final class DirectMessagePublisher extends AbstractMessagePublisher {
   }
 
   @Override
-  public void publish(String namespace, String topic,
-                      Iterator<byte[]> payloads) throws IOException, TopicNotFoundException {
-    messagingService.publish(StoreRequestBuilder.of(new NamespaceId(namespace).topic(topic))
-      .addPayloads(payloads)
-      .build()
-    );
+  public void publish(TopicId topicId, Iterator<byte[]> payloads) throws IOException, TopicNotFoundException {
+    messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(payloads).build());
   }
 }

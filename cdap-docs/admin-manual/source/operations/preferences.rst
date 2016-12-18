@@ -14,6 +14,8 @@ pairs. Preferences can be retrieved, saved, and deleted through a RESTful API an
 When programs are started, all the preferences at the different levels are collapsed into a single map. Preferences
 are persisted across a restart of either programs or CDAP itself.
 
+.. _preferences-order-of:
+
 Order of Preferences
 ====================
 

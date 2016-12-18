@@ -30,19 +30,21 @@ public class BatchPhaseSpec {
   private final PipelinePhase phase;
   private final Resources resources;
   private final Resources driverResources;
+  private final Resources clientResources;
   private final boolean isStageLoggingEnabled;
   private final Map<String, String> connectorDatasets;
   private final String description;
   private final int numOfRecordsPreview;
 
   public BatchPhaseSpec(String phaseName, PipelinePhase phase,
-                        Resources resources, Resources driverResources,
+                        Resources resources, Resources driverResources, Resources clientResources,
                         boolean isStageLoggingEnabled,
                         Map<String, String> connectorDatasets, int numOfRecordsPreview) {
     this.phaseName = phaseName;
     this.phase = phase;
     this.resources = resources;
     this.driverResources = driverResources;
+    this.clientResources = clientResources;
     this.isStageLoggingEnabled = isStageLoggingEnabled;
     this.connectorDatasets = connectorDatasets;
     this.description = createDescription();
@@ -63,6 +65,10 @@ public class BatchPhaseSpec {
 
   public Resources getDriverResources() {
     return driverResources;
+  }
+
+  public Resources getClientResources() {
+    return clientResources;
   }
 
   public boolean isStageLoggingEnabled() {

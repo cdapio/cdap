@@ -17,7 +17,11 @@
 package co.cask.cdap.examples.sportresults;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
@@ -29,6 +33,7 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 import com.google.common.io.Closeables;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +42,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -67,37 +73,56 @@ public class UploadService extends AbstractService {
 
     @GET
     @Path("leagues/{league}/seasons/{season}")
+    @TransactionPolicy(TransactionControl.EXPLICIT)
     public void read(HttpServiceRequest request, HttpServiceResponder responder,
-                     @PathParam("league") String league, @PathParam("season") int season) {
+                     @PathParam("league") final String league,
+                     @PathParam("season") final int season) throws TransactionFailureException {
 
+      final PartitionKey key = PartitionKey.builder()
+        .addStringField("league", league)
+        .addIntField("season", season)
+        .build();
+      final AtomicReference<PartitionDetail> partitionDetail = new AtomicReference<>();
 
-      PartitionDetail partitionDetail = results.getPartition(PartitionKey.builder()
-                                                   .addStringField("league", league)
-                                                   .addIntField("season", season)
-                                                   .build());
-      if (partitionDetail == null) {
+      getContext().execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          partitionDetail.set(results.getPartition(key));
+        }
+      });
+      if (partitionDetail.get() == null) {
         responder.sendString(404, "Partition not found.", Charsets.UTF_8);
         return;
       }
 
       try {
-        responder.send(200, partitionDetail.getLocation().append("file"), "text/plain");
+        responder.send(200, partitionDetail.get().getLocation().append("file"), "text/plain");
       } catch (IOException e) {
-        responder.sendError(400, String.format("Unable to read path '%s'", partitionDetail.getRelativePath()));
+        responder.sendError(400, String.format("Unable to read path '%s'", partitionDetail.get().getRelativePath()));
       }
     }
 
     @PUT
     @Path("leagues/{league}/seasons/{season}")
+    @TransactionPolicy(TransactionControl.EXPLICIT)
     public HttpContentConsumer write(HttpServiceRequest request, HttpServiceResponder responder,
-                                     @PathParam("league") String league, @PathParam("season") int season) {
+                                     @PathParam("league") String league, @PathParam("season") int season)
+      throws TransactionFailureException {
 
-      PartitionKey key = PartitionKey.builder()
+      final PartitionKey key = PartitionKey.builder()
         .addStringField("league", league)
         .addIntField("season", season)
         .build();
+      final AtomicReference<PartitionDetail> partitionDetail = new AtomicReference<>();
 
-      if (results.getPartition(key) != null) {
+      getContext().execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          partitionDetail.set(results.getPartition(key));
+        }
+      });
+
+      if (partitionDetail.get() != null) {
         responder.sendString(409, "Partition exists.", Charsets.UTF_8);
         return null;
       }

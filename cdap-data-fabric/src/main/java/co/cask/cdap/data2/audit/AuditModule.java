@@ -49,7 +49,7 @@ public class AuditModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(AuditPublisher.class).toProvider(KafkaAuditPublisherProvider.class).in(Scopes.SINGLETON);
+        bind(AuditPublisher.class).toProvider(AuditPublisherProvider.class).in(Scopes.SINGLETON);
         expose(AuditPublisher.class);
       }
     };
@@ -60,19 +60,18 @@ public class AuditModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(AuditPublisher.class).toProvider(KafkaAuditPublisherProvider.class).in(Scopes.SINGLETON);
+        bind(AuditPublisher.class).toProvider(AuditPublisherProvider.class).in(Scopes.SINGLETON);
         expose(AuditPublisher.class);
       }
     };
   }
 
-  @SuppressWarnings("unused")
-  private static class KafkaAuditPublisherProvider implements Provider<AuditPublisher> {
+  private static final class AuditPublisherProvider implements Provider<AuditPublisher> {
     private final Injector injector;
     private final CConfiguration cConf;
 
     @Inject
-    KafkaAuditPublisherProvider(Injector injector, CConfiguration cConf) {
+    AuditPublisherProvider(Injector injector, CConfiguration cConf) {
       this.injector = injector;
       this.cConf = cConf;
     }
@@ -80,7 +79,7 @@ public class AuditModule extends RuntimeModule {
     @Override
     public AuditPublisher get() {
       if (cConf.getBoolean(Constants.Audit.ENABLED, false)) {
-        return injector.getInstance(KafkaAuditPublisher.class);
+        return injector.getInstance(DefaultAuditPublisher.class);
       }
       return injector.getInstance(NoOpAuditPublisher.class);
     }

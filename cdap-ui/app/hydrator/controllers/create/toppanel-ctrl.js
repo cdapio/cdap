@@ -35,7 +35,11 @@ class HydratorPlusPlusTopPanelCtrl{
     this.$state = $state;
     this.dataSrc = new MyCDAPDataSource($scope);
     this.myAlertOnValium = myAlertOnValium;
-
+    this.currentPreviewId = null;
+    this.showRunTimeArguments = false;
+    // This is for now run time arguments. It is will be a map of macroMap
+    // in the future once we get list of macros for a pipeline config.
+    this.macrosMap = {};
     this.$stateParams = $stateParams;
     this.setState();
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
@@ -46,8 +50,7 @@ class HydratorPlusPlusTopPanelCtrl{
     }
 
     this.isPreviewEnabled = angular.isObject(MY_CONFIG.hydrator) &&
-                            MY_CONFIG.hydrator.previewEnabled === true &&
-                            this.state.artifact.name === this.GLOBALS.etlDataPipeline;
+                            MY_CONFIG.hydrator.previewEnabled === true;
 
     this.previewMode = false;
     this.previewStartTime = null;
@@ -57,6 +60,7 @@ class HydratorPlusPlusTopPanelCtrl{
     };
     this.previewTimerInterval = null;
     this.previewLoading = false;
+    this.previewRunning = false;
 
     let unsub = this.previewStore.subscribe(() => {
       let state = this.previewStore.getState().preview;
@@ -65,6 +69,7 @@ class HydratorPlusPlusTopPanelCtrl{
 
     $scope.$on('$destroy', () => {
       unsub();
+      this.stopPreview();
       this.$interval.cancel(this.previewTimerInterval);
       this.$timeout.cancel(this.focusTimeout);
 
@@ -182,8 +187,17 @@ class HydratorPlusPlusTopPanelCtrl{
     this.$interval.cancel(this.previewTimerInterval);
   }
 
+  toggleRuntimeArguments() {
+    if (!this.currentPreviewId) {
+      this.showRunTimeArguments = !this.showRunTimeArguments;
+    } else {
+      this.stopPreview();
+    }
+  }
   runPreview() {
     this.previewLoading = true;
+    this.showRunTimeArguments = false;
+
     this.displayDuration = {
       minutes: '--',
       seconds: '--'
@@ -205,10 +219,22 @@ class HydratorPlusPlusTopPanelCtrl{
     let previewConfig = {
       startStages: [],
       endStages: [],
-      // useSinks: [], // we are not using sinks for now
-      numOfRecords: 25
+      runTimeArguments: this.macrosMap
     };
 
+    if (this.state.artifact.name === this.GLOBALS.etlDataPipeline) {
+      pipelineConfig.preview = Object.assign({}, previewConfig, {
+        'realDatasets' :[],
+        'programName' : 'DataPipelineWorkflow',
+        'programType': 'Workflow'
+      });
+    } else if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
+      pipelineConfig.preview = Object.assign({}, previewConfig, {
+        'realDatasets' :[],
+        'programName' : 'DataStreamsSparkStreaming',
+        'programType': 'Spark'
+      });
+    }
     // Get start stages and end stages
     // Current implementation:
     //    - start stages mean sources
@@ -234,7 +260,7 @@ class HydratorPlusPlusTopPanelCtrl{
     this.myPipelineApi.runPreview(params, pipelineConfig).$promise
       .then((res) => {
         this.previewStore.dispatch(
-          this.previewActions.setPreviewId(res.preview)
+          this.previewActions.setPreviewId(res.application)
         );
         let startTime = new Date();
         this.previewStartTime = startTime;
@@ -242,10 +268,11 @@ class HydratorPlusPlusTopPanelCtrl{
         this.previewStore.dispatch(
           this.previewActions.setPreviewStartTime(startTime)
         );
-
-        this.startPollPreviewStatus(res.preview);
+        this.currentPreviewId = res.application;
+        this.startPollPreviewStatus(res.application);
       }, (err) => {
         this.previewLoading = false;
+        this.currentPreviewId = null;
         this.myAlertOnValium.show({
           type: 'danger',
           content: err.data
@@ -253,16 +280,39 @@ class HydratorPlusPlusTopPanelCtrl{
       });
   }
 
+  stopPreview() {
+    if (!this.currentPreviewId) {
+      return;
+    }
+    let params = {
+      namespace: this.$state.params.namespace,
+      scope: this.$scope,
+      previewId: this.currentPreviewId
+    };
+    this.previewLoading = true;
+    this.stopTimer();
+    this.myPipelineApi
+        .stopPreview(params, {})
+        .$promise
+        .then(() => {
+          this.currentPreviewId = null;
+          this.previewLoading = false;
+          this.previewRunning = false;
+        });
+  }
+
   startPollPreviewStatus(previewId) {
+    this.previewLoading = false;
+    this.previewRunning = true;
     let poll = this.dataSrc.poll({
       _cdapNsPath: '/previews/' + previewId + '/status',
       interval: 5000
     }, (res) => {
       if (res.status !== 'RUNNING') {
         this.stopTimer();
-        this.previewLoading = false;
+        this.previewRunning = false;
         this.dataSrc.stopPoll(res.__pollId__);
-
+        this.currentPreviewId = null;
         if (res.status === 'COMPLETED') {
           this.myAlertOnValium.show({
             type: 'success',
@@ -271,18 +321,18 @@ class HydratorPlusPlusTopPanelCtrl{
         } else {
           this.myAlertOnValium.show({
             type: 'danger',
-            content: 'Pipeline preview failed with status: ' + res.status
+            content: 'Pipeline preview stopped with status: ' + res.status
           });
         }
       }
     }, (err) => {
-      this.previewLoading = false;
+      this.currentPreviewId = null;
       this.stopTimer();
-      this.myAlertOnValium.show({
-        type: 'danger',
-        content: err
-      });
-
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: err
+        });
+      this.previewRunning = false;
       this.dataSrc.stopPoll(poll.__pollId__);
     });
   }

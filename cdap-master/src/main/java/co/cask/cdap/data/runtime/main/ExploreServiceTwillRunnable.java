@@ -43,6 +43,7 @@ import co.cask.cdap.explore.service.hive.BaseHiveExploreService;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -254,21 +255,24 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
               System.getProperty(BaseHiveExploreService.SPARK_YARN_DIST_FILES));
 
     // Rewrite the yarn-site.xml, mapred-site.xml, hive-site.xml and tez-site.xml for classpath manipulation
-    String extraClassPath = Joiner.on(',').join(
+    Iterable<String> extraClassPath = Iterables.concat(
       Iterables.transform(hiveExtraJars.keySet(), new Function<String, String>() {
         @Override
         public String apply(String name) {
           return "$PWD/" + name;
         }
-      }));
-    extraClassPath += ",$PWD/*";
+      }), Collections.singleton("$PWD/*"));
 
     rewriteConfigClasspath("yarn-site.xml", YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-                           Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH), extraClassPath);
+                           Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH),
+                           Joiner.on(",").join(extraClassPath));
     rewriteConfigClasspath("mapred-site.xml", MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH,
-                           MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH, extraClassPath);
+                           MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH,
+                           Joiner.on(",").join(extraClassPath));
+
+    // Tez takes the value as actual classpath, rather than comma-separated list
     rewriteConfigClasspath("tez-site.xml", TezConfiguration.TEZ_CLUSTER_ADDITIONAL_CLASSPATH_PREFIX, null,
-                           extraClassPath);
+                           Joiner.on(File.pathSeparatorChar).join(extraClassPath));
     rewriteHiveConfig();
 
     // add hive-exec.jar to the HADOOP_CLASSPATH, which is used by the local mapreduce job launched by hive ,
@@ -395,6 +399,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new ConfigModule(cConf, hConf),
       new IOModule(), new ZKClientModule(),
       new KafkaClientModule(),
+      new MessagingClientModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),

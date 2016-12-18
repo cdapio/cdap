@@ -36,7 +36,8 @@
   <logger name="org.eclipse.jetty" level="WARN"/>
   <logger name="io.netty.util.internal" level="WARN"/>
 
-  <logger name="org.apache.twill" level="WARN"/>
+  <logger name="org.apache.twill" level="INFO"/>
+  <logger name="org.apache.twill.internal.kafka.client.SimpleKafkaConsumer" level="WARN"/>
   <logger name="co.cask.cdap" level="INFO"/>
 
   <!-- Redirected stdout and stderr of Hive operations -->

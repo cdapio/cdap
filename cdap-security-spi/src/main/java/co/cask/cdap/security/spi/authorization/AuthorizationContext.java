@@ -19,10 +19,14 @@ package co.cask.cdap.security.spi.authorization;
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 
+import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -45,4 +49,34 @@ public interface AuthorizationContext extends DatasetContext, Admin, Transaction
    * @return the {@link Properties} for the authorization extension
    */
   Properties getExtensionProperties();
+
+  /**
+   * Currently messaging is not supported. Calling this method always result in {@link UnsupportedOperationException}.
+   */
+  @Override
+  void createTopic(String topic) throws TopicAlreadyExistsException, IOException;
+
+  /**
+   * Currently messaging is not supported. Calling this method always result in {@link UnsupportedOperationException}.
+   */
+  @Override
+  void createTopic(String topic, Map<String, String> properties) throws TopicAlreadyExistsException, IOException;
+
+  /**
+   * Currently messaging is not supported. Calling this method always result in {@link UnsupportedOperationException}.
+   */
+  @Override
+  Map<String, String> getTopicProperties(String topic) throws TopicNotFoundException, IOException;
+
+  /**
+   * Currently messaging is not supported. Calling this method always result in {@link UnsupportedOperationException}.
+   */
+  @Override
+  void updateTopic(String topic, Map<String, String> properties) throws TopicNotFoundException, IOException;
+
+  /**
+   * Currently messaging is not supported. Calling this method always result in {@link UnsupportedOperationException}.
+   */
+  @Override
+  void deleteTopic(String topic) throws TopicNotFoundException, IOException;
 }

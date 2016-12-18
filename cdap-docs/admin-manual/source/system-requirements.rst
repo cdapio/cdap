@@ -218,9 +218,10 @@ cluster. They need unrestricted client access to the cluster with the ability to
 connections to cluster nodes, on any port that a container may choose to open.
 
 Taking this same picture, if the firewall were moved to the left of the CDAP Router/Auth
-Server, then two ports (11015 and 10009) would need to be opened to allow access by
+Server, then two ports (``router.bind.port``, 11015 and
+``security.auth.server.bind.port``, 10009) would need to be opened to allow access by
 clients to the hosts running the CDAP Router/Auth Server. There could be another firewall
-between the CDAP Router/Auth Server and the cluster, as long as it provids client access
+between the CDAP Router/Auth Server and the cluster, as long as it provides client access
 from the CDAP Auth Server to the ZooKeeper nodes. The same is true for the CDAP Router
 (access to the Zookeeper nodes), except it also needs unrestricted client access, so it
 usually doesn't make sense to firewall the CDAP Router when essentially you're allowing

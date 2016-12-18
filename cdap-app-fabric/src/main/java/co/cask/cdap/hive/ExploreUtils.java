@@ -21,6 +21,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,13 +94,19 @@ public final class ExploreUtils {
    * separated by the {@link File#pathSeparatorChar}. Only jar files will be included in the result set and paths
    * ended with a '*' will be expanded to include all jars under the given path.
    *
+   * @param extraExtensions if provided, the set of file extensions that is also accepted when resolving the
+   *                        classpath wildcard
+   *
    * @throws IllegalArgumentException if the system property {@link #EXPLORE_CLASSPATH} is missing.
    */
-  public static Iterable<File> getExploreClasspathJarFiles() {
+  public static Iterable<File> getExploreClasspathJarFiles(String...extraExtensions) {
     String property = System.getProperty(EXPLORE_CLASSPATH);
     if (property == null) {
       throw new RuntimeException("System property " + EXPLORE_CLASSPATH + " is not set.");
     }
+
+    Set<String> acceptedExts = Sets.newHashSet(extraExtensions);
+    acceptedExts.add("jar");
 
     Set<File> result = new LinkedHashSet<>();
     for (String path : Splitter.on(File.pathSeparator).split(property)) {
@@ -107,7 +114,7 @@ public final class ExploreUtils {
       // The path has to either ends with "*" or is a jar file. This is because we are only interested in JAR files
       // in the hive classpath.
       if (path.endsWith("*")) {
-        jarFiles = DirUtils.listFiles(new File(path.substring(0, path.length() - 1)).getAbsoluteFile(), "jar");
+        jarFiles = DirUtils.listFiles(new File(path.substring(0, path.length() - 1)).getAbsoluteFile(), acceptedExts);
       } else if (path.endsWith(".jar")) {
         jarFiles = Collections.singletonList(new File(path));
       } else {

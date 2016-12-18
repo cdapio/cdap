@@ -53,7 +53,9 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Tests for {@link MessagingHttpService}.
@@ -174,6 +176,46 @@ public class MessagingHttpServiceTest {
   }
 
   @Test
+  public void testGeMetadata() throws Exception {
+    TopicId topicId = new NamespaceId("ns2").topic("d");
+    TopicMetadata metadata = new TopicMetadata(topicId, "ttl", "100");
+    for (int i = 1; i <= 5; i++) {
+      client.createTopic(metadata);
+      TopicMetadata topicMetadata = client.getTopic(topicId);
+      Assert.assertEquals(100, topicMetadata.getTTL());
+      Assert.assertEquals(i, topicMetadata.getGeneration());
+      client.deleteTopic(topicId);
+    }
+  }
+
+  @Test
+  public void testDeletes() throws Exception {
+    TopicId topicId = new NamespaceId("ns1").topic("del");
+    TopicMetadata metadata = new TopicMetadata(topicId, "ttl", "100");
+    for (int j = 0; j < 10; j++) {
+      client.createTopic(metadata);
+      String m1 = String.format("m%d", j);
+      String m2 = String.format("m%d", j + 1);
+      Assert.assertNull(client.publish(StoreRequestBuilder.of(topicId).addPayloads(m1, m2).build()));
+
+      // Fetch messages non-transactionally
+      List<RawMessage> messages = new ArrayList<>();
+      try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).fetch()) {
+        Iterators.addAll(messages, iterator);
+      }
+      Assert.assertEquals(2, messages.size());
+      Set<String> receivedMessages = new HashSet<>();
+      for (RawMessage message : messages) {
+        receivedMessages.add(Bytes.toString(message.getPayload()));
+      }
+
+      Assert.assertTrue(receivedMessages.contains(m1));
+      Assert.assertTrue(receivedMessages.contains(m2));
+      client.deleteTopic(topicId);
+    }
+  }
+
+  @Test
   public void testBasicPubSub() throws Exception {
     TopicId topicId = new NamespaceId("ns1").topic("testBasicPubSub");
 
@@ -214,30 +256,60 @@ public class MessagingHttpServiceTest {
     // Rollback the published message
     client.rollback(topicId, rollbackDetail);
 
-    // Fetch messages non-transactionally
+    // Fetch messages non-transactionally (should be able to read all the messages since rolled back messages
+    // are still visible until ttl kicks in)
     List<RawMessage> messages = new ArrayList<>();
     try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).fetch()) {
       Iterators.addAll(messages, iterator);
     }
-    Assert.assertEquals(2, messages.size());
+    Assert.assertEquals(3, messages.size());
+    for (int i = 0; i < 3; i++) {
+      Assert.assertEquals("m" + i, Bytes.toString(messages.get(i).getPayload()));
+    }
+
+    // Consume transactionally. It should get only m0 and m1 since m2 has been rolled back
+    List<RawMessage> txMessages = new ArrayList<>();
+    Transaction transaction = new Transaction(3L, 3L, new long[0], new long[]{2L}, 2L);
+    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
+      .setStartTime(0)
+      .setTransaction(transaction)
+      .fetch()) {
+      Iterators.addAll(txMessages, iterator);
+    }
+    Assert.assertEquals(2, txMessages.size());
     for (int i = 0; i < 2; i++) {
       Assert.assertEquals("m" + i, Bytes.toString(messages.get(i).getPayload()));
     }
 
     // Fetch again from a given message offset exclusively.
-    // Expects no messages fetched
+    // Expects one message to be fetched
     byte[] startMessageId = messages.get(1).getId();
     try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-                                                     .setStartMessage(startMessageId, false)
-                                                     .fetch()) {
+                                                        .setStartMessage(startMessageId, false)
+                                                        .fetch()) {
+      // It should have only one message (m2)
+      Assert.assertTrue(iterator.hasNext());
+      RawMessage msg = iterator.next();
+      Assert.assertEquals("m2", Bytes.toString(msg.getPayload()));
+    }
+
+    // Fetch again from the last message offset exclusively
+    // Expects no message to be fetched
+    startMessageId = messages.get(2).getId();
+    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
+                                                        .setStartMessage(startMessageId, false)
+                                                        .fetch()) {
       Assert.assertFalse(iterator.hasNext());
     }
 
     // Fetch with start time. It should get both m0 and m1 since they are published in the same request, hence
     // having the same publish time
+    startMessageId = messages.get(1).getId();
     try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-                                                     .setStartTime(new MessageId(startMessageId).getPublishTimestamp())
-                                                     .fetch()) {
+                                                        .setStartTime(new MessageId(startMessageId)
+                                                                        .getPublishTimestamp())
+                                                        .setLimit(2)
+                                                        .fetch()) {
       messages.clear();
       Iterators.addAll(messages, iterator);
     }
@@ -250,24 +322,25 @@ public class MessagingHttpServiceTest {
     client.publish(StoreRequestBuilder.of(topicId).addPayloads("m3").setTransaction(2L).build());
     client.publish(StoreRequestBuilder.of(topicId).addPayloads("m4").build());
 
-    // Consume without transactional, it should see m3 and m4
+    // Consume without transactional, it should see m2, m3 and m4
+    startMessageId = messages.get(1).getId();
     try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-                                                     .setStartMessage(startMessageId, false)
-                                                     .fetch()) {
+                                                        .setStartMessage(startMessageId, false)
+                                                        .fetch()) {
       messages.clear();
       Iterators.addAll(messages, iterator);
     }
-    Assert.assertEquals(2, messages.size());
-    for (int i = 0; i < 2; i++) {
-      Assert.assertEquals("m" + (i + 3), Bytes.toString(messages.get(i).getPayload()));
+    Assert.assertEquals(3, messages.size());
+    for (int i = 0; i < 3; i++) {
+      Assert.assertEquals("m" + (i + 2), Bytes.toString(messages.get(i).getPayload()));
     }
 
     // Consume using a transaction that doesn't have tx = 2L visible. It should get no message as it should block on m3
-    Transaction transaction = new Transaction(3L, 3L, new long[0], new long[]{2L}, 2L);
+    transaction = new Transaction(3L, 3L, new long[0], new long[]{2L}, 2L);
     try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-                                                     .setStartMessage(startMessageId, false)
-                                                     .setTransaction(transaction)
-                                                     .fetch()) {
+                                                        .setStartMessage(startMessageId, false)
+                                                        .setTransaction(transaction)
+                                                        .fetch()) {
       Assert.assertFalse(iterator.hasNext());
     }
 

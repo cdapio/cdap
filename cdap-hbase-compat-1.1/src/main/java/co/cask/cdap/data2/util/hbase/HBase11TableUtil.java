@@ -18,6 +18,8 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.data2.increment.hbase11.IncrementHandler;
 import co.cask.cdap.data2.transaction.coprocessor.hbase11.DefaultTransactionProcessor;
+import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase11.MessageTableRegionObserver;
+import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase11.PayloadTableRegionObserver;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase11.DequeueScanObserver;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase11.HBaseQueueRegionObserver;
 import co.cask.cdap.data2.util.TableId;
@@ -262,6 +264,16 @@ public class HBase11TableUtil extends HBaseTableUtil {
   }
 
   @Override
+  public Class<? extends Coprocessor> getMessageTableRegionObserverClassForVersion() {
+    return MessageTableRegionObserver.class;
+  }
+
+  @Override
+  public Class<? extends Coprocessor> getPayloadTableRegionObserverClassForVersion() {
+    return PayloadTableRegionObserver.class;
+  }
+
+  @Override
   protected HTableNameConverter getHTableNameConverter() {
     return nameConverter;
   }
@@ -274,6 +286,11 @@ public class HBase11TableUtil extends HBaseTableUtil {
   @Override
   public ScanBuilder buildScan(Scan scan) throws IOException {
     return new HBase11ScanBuilder(scan);
+  }
+
+  @Override
+  public IncrementBuilder buildIncrement(byte[] row) {
+    return new HBase11IncrementBuilder(row);
   }
 
   @Override

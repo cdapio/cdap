@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.utils.TimeProvider;
 import co.cask.cdap.messaging.StoreRequest;
+import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -36,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
@@ -58,9 +60,12 @@ public class ConcurrentMessageWriterTest {
     TopicId topicId1 = new NamespaceId("ns1").topic("t1");
     TopicId topicId2 = new NamespaceId("ns2").topic("t2");
 
+    TopicMetadata metadata1 = new TopicMetadata(topicId1, new HashMap<String, String>(), 1);
+    TopicMetadata metadata2 = new TopicMetadata(topicId2, new HashMap<String, String>(), 1);
+
     TestStoreRequestWriter testWriter = new TestStoreRequestWriter(new TimeProvider.IncrementalTimeProvider());
     ConcurrentMessageWriter writer = new ConcurrentMessageWriter(testWriter);
-    writer.persist(new TestStoreRequest(topicId1, Arrays.asList("1", "2", "3")));
+    writer.persist(new TestStoreRequest(topicId1, Arrays.asList("1", "2", "3")), metadata1);
 
     // There should be 3 messages being written
     List<RawMessage> messages = testWriter.getMessages().get(topicId1);
@@ -75,7 +80,7 @@ public class ConcurrentMessageWriterTest {
     Assert.assertEquals(Arrays.asList("1", "2", "3"), payloads);
 
     // Write to another topic
-    writer.persist(new TestStoreRequest(topicId2, Arrays.asList("a", "b", "c")));
+    writer.persist(new TestStoreRequest(topicId2, Arrays.asList("a", "b", "c")), metadata2);
 
     // There should be 3 messages being written to topic2
     messages = testWriter.getMessages().get(topicId2);
@@ -102,11 +107,12 @@ public class ConcurrentMessageWriterTest {
     }
 
     TopicId topicId = new NamespaceId("ns1").topic("t1");
+    TopicMetadata metadata = new TopicMetadata(topicId, new HashMap<String, String>(), 1);
 
     // Write the payloads
     TestStoreRequestWriter testWriter = new TestStoreRequestWriter(new TimeProvider.IncrementalTimeProvider());
     ConcurrentMessageWriter writer = new ConcurrentMessageWriter(testWriter);
-    writer.persist(new TestStoreRequest(topicId, payloads));
+    writer.persist(new TestStoreRequest(topicId, payloads), metadata);
 
     List<RawMessage> messages = testWriter.getMessages().get(topicId);
     Assert.assertEquals(msgCount, messages.size());
@@ -126,6 +132,7 @@ public class ConcurrentMessageWriterTest {
   @Test
   public void testMultiMaxSequence() throws IOException, InterruptedException {
     TopicId topicId = new NamespaceId("ns1").topic("t1");
+    final TopicMetadata metadata = new TopicMetadata(topicId, new HashMap<String, String>(), 1);
 
     // This test the case when multiple StoreRequests combined exceeding the 65536 payload.
     // See testMaxSequence() for more details when it matters
@@ -168,7 +175,7 @@ public class ConcurrentMessageWriterTest {
         @Override
         public void run() {
           try {
-            writer.persist(request);
+            writer.persist(request, metadata);
           } catch (IOException e) {
             LOG.error("Failed to persist", e);
           }
@@ -205,6 +212,8 @@ public class ConcurrentMessageWriterTest {
     final int requestPerThread = 20;
     long writeLatencyMillis = 50L;
 
+    final TopicId topicId = NamespaceId.DEFAULT.topic("t");
+    final TopicMetadata metadata = new TopicMetadata(topicId, new HashMap<String, String>(), 1);
     TestStoreRequestWriter testWriter = new TestStoreRequestWriter(new TimeProvider.IncrementalTimeProvider(),
                                                                    writeLatencyMillis);
     final ConcurrentMessageWriter writer = new ConcurrentMessageWriter(testWriter);
@@ -214,7 +223,7 @@ public class ConcurrentMessageWriterTest {
       payload.add(Integer.toString(i));
     }
 
-    final TopicId topicId = NamespaceId.DEFAULT.topic("t");
+
     ExecutorService executor = Executors.newFixedThreadPool(threadCount);
     final CyclicBarrier barrier = new CyclicBarrier(threadCount + 1);
     for (int i = 0; i < threadCount; i++) {
@@ -227,7 +236,7 @@ public class ConcurrentMessageWriterTest {
             barrier.await();
             stopwatch.start();
             for (int i = 0; i < requestPerThread; i++) {
-              writer.persist(new TestStoreRequest(topicId, payload));
+              writer.persist(new TestStoreRequest(topicId, payload), metadata);
             }
             LOG.info("Complete time for thread {} is {} ms", threadId, stopwatch.elapsedMillis());
           } catch (Exception e) {
@@ -280,9 +289,10 @@ public class ConcurrentMessageWriterTest {
     }
 
     @Override
-    TestEntry getEntry(TopicId topicId, boolean transactional, long transactionWritePointer,
+    TestEntry getEntry(TopicMetadata metadata, boolean transactional, long transactionWritePointer,
                        long writeTimestamp, short sequenceId, @Nullable byte[] payload) {
-      return new TestEntry(topicId, transactional, transactionWritePointer, writeTimestamp, sequenceId, payload);
+      return new TestEntry(metadata.getTopicId(), transactional, transactionWritePointer, writeTimestamp,
+                           sequenceId, payload);
     }
 
     @Override

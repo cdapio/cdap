@@ -21,6 +21,7 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.PreferencesClient;
+import co.cask.common.cli.Arguments;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -41,8 +42,12 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
 
   protected abstract void printSuccessMessage(PrintStream printStream, ElementType type);
 
-  protected void setPreferences(String[] programIdParts, PrintStream printStream,
+  protected void setPreferences(Arguments arguments, PrintStream printStream,
                                 Map<String, String> args) throws Exception {
+    String[] programIdParts = new String[0];
+    if (arguments.hasArgument(type.getArgumentName().toString())) {
+      programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
+    }
     switch (type) {
       case INSTANCE:
         checkInputLength(programIdParts, 0);
@@ -57,7 +62,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
         break;
 
       case APP:
-        client.setApplicationPreferences(parseAppId(programIdParts), args);
+        client.setApplicationPreferences(parseApplicationId(arguments), args);
         printSuccessMessage(printStream, type);
         break;
 
@@ -66,7 +71,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
       case WORKFLOW:
       case SERVICE:
       case SPARK:
-        client.setProgramPreferences(parseProgramId(programIdParts, type.getProgramType()), args);
+        client.setProgramPreferences(parseProgramId(arguments, type), args);
         printSuccessMessage(printStream, type);
         break;
 

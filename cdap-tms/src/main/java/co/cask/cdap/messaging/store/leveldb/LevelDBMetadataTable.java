@@ -17,6 +17,7 @@
 package co.cask.cdap.messaging.store.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
@@ -36,6 +37,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /**
@@ -56,13 +58,17 @@ final class LevelDBMetadataTable implements MetadataTable {
   @Override
   public TopicMetadata getMetadata(TopicId topicId) throws IOException, TopicNotFoundException {
     try {
-      byte[] value = levelDB.get(MessagingUtils.toRowKeyPrefix(topicId));
+      byte[] value = levelDB.get(MessagingUtils.toMetadataRowKey(topicId));
       if (value == null) {
         throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
       }
 
       Map<String, String> properties = GSON.fromJson(Bytes.toString(value), MAP_TYPE);
-      return new TopicMetadata(topicId, properties);
+      TopicMetadata topicMetadata = new TopicMetadata(topicId, properties);
+      if (!topicMetadata.exists()) {
+        throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
+      }
+      return topicMetadata;
     } catch (DBException e) {
       // DBException is a RuntimeException. Turn it to IOException so that it forces caller to handle it.
       throw new IOException(e);
@@ -73,12 +79,23 @@ final class LevelDBMetadataTable implements MetadataTable {
   public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
     try {
       TopicId topicId = topicMetadata.getTopicId();
-      byte[] key = MessagingUtils.toRowKeyPrefix(topicId);
-      byte[] value = Bytes.toBytes(GSON.toJson(topicMetadata.getProperties()));
+      byte[] key = MessagingUtils.toMetadataRowKey(topicId);
+      TreeMap<String, String> properties = new TreeMap<>(topicMetadata.getProperties());
+      properties.put(TopicMetadata.GENERATION_KEY, MessagingUtils.Constants.DEFAULT_GENERATION);
+
       synchronized (this) {
-        if (levelDB.get(key) != null) {
-          throw new TopicAlreadyExistsException(topicId.getNamespace(), topicId.getTopic());
+        byte[] tableValue = levelDB.get(key);
+        if (tableValue != null) {
+          Map<String, String> oldProperties = GSON.fromJson(Bytes.toString(tableValue), MAP_TYPE);
+          TopicMetadata metadata = new TopicMetadata(topicId, oldProperties);
+          if (metadata.exists()) {
+            throw new TopicAlreadyExistsException(topicId.getNamespace(), topicId.getTopic());
+          }
+
+          int newGenerationId = (metadata.getGeneration() * -1) + 1;
+          properties.put(TopicMetadata.GENERATION_KEY, Integer.toString(newGenerationId));
         }
+        byte[] value = Bytes.toBytes(GSON.toJson(properties, MAP_TYPE));
         levelDB.put(key, value, WRITE_OPTIONS);
       }
     } catch (DBException e) {
@@ -90,13 +107,22 @@ final class LevelDBMetadataTable implements MetadataTable {
   public void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException {
     try {
       TopicId topicId = topicMetadata.getTopicId();
-      byte[] key = MessagingUtils.toRowKeyPrefix(topicId);
-      byte[] value = Bytes.toBytes(GSON.toJson(topicMetadata.getProperties()));
+      byte[] key = MessagingUtils.toMetadataRowKey(topicId);
       synchronized (this) {
-        if (levelDB.get(key) == null) {
+        byte[] tableValue = levelDB.get(key);
+        if (tableValue == null) {
           throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
         }
-        levelDB.put(key, value, WRITE_OPTIONS);
+
+        Map<String, String> oldProperties = GSON.fromJson(Bytes.toString(tableValue), MAP_TYPE);
+        TopicMetadata oldMetadata = new TopicMetadata(topicId, oldProperties);
+        if (!oldMetadata.exists()) {
+          throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
+        }
+
+        TreeMap<String, String> newProperties = new TreeMap<>(topicMetadata.getProperties());
+        newProperties.put(TopicMetadata.GENERATION_KEY, Integer.toString(oldMetadata.getGeneration()));
+        levelDB.put(key, Bytes.toBytes(GSON.toJson(newProperties, MAP_TYPE)), WRITE_OPTIONS);
       }
     } catch (DBException e) {
       throw new IOException(e);
@@ -105,13 +131,24 @@ final class LevelDBMetadataTable implements MetadataTable {
 
   @Override
   public void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException {
-    byte[] rowKey = MessagingUtils.toRowKeyPrefix(topicId);
+    byte[] rowKey = MessagingUtils.toMetadataRowKey(topicId);
     try {
       synchronized (this) {
-        if (levelDB.get(rowKey) == null) {
+        byte[] tableValue = levelDB.get(rowKey);
+        if (tableValue == null) {
           throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
         }
-        levelDB.delete(rowKey);
+
+        Map<String, String> oldProperties = GSON.fromJson(Bytes.toString(tableValue), MAP_TYPE);
+        TopicMetadata metadata = new TopicMetadata(topicId, oldProperties);
+        if (!metadata.exists()) {
+          throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
+        }
+
+        // Mark the topic as deleted
+        TreeMap<String, String> newProperties = new TreeMap<>(metadata.getProperties());
+        newProperties.put(TopicMetadata.GENERATION_KEY, Integer.toString(-1 * metadata.getGeneration()));
+        levelDB.put(rowKey, Bytes.toBytes(GSON.toJson(newProperties, MAP_TYPE)), WRITE_OPTIONS);
       }
     } catch (DBException e) {
       throw new IOException(e);
@@ -122,27 +159,69 @@ final class LevelDBMetadataTable implements MetadataTable {
   public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException {
     byte[] startKey = MessagingUtils.topicScanKey(namespaceId);
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
-    return scanTopics(startKey, stopKey);
+    return listTopics(startKey, stopKey);
   }
 
   @Override
   public List<TopicId> listTopics() throws IOException {
+    return listTopics(null, null);
+  }
+
+  /**
+   * Returns an iterator of {@link TopicMetadata} of all the topics including the ones that were deleted.
+   *
+   * @return {@link CloseableIterator} of {@link TopicMetadata}
+   * @throws IOException if failed to scan topics
+   */
+  public CloseableIterator<TopicMetadata> scanTopics() throws IOException {
     return scanTopics(null, null);
+  }
+
+  private List<TopicId> listTopics(@Nullable byte[] startKey, @Nullable byte[] stopKey) throws IOException {
+    List<TopicId> topicList = new ArrayList<>();
+    try (CloseableIterator<TopicMetadata> iterator = scanTopics(startKey, stopKey)) {
+      while (iterator.hasNext()) {
+        TopicMetadata metadata = iterator.next();
+        if (metadata.exists()) {
+          topicList.add(metadata.getTopicId());
+        }
+      }
+    }
+    return topicList;
+  }
+
+  private CloseableIterator<TopicMetadata> scanTopics(@Nullable byte[] startKey,
+                                                     @Nullable byte[] stopKey) throws IOException {
+    final CloseableIterator<Map.Entry<byte[], byte[]>> iterator = new DBScanIterator(levelDB, startKey, stopKey);
+    return new AbstractCloseableIterator<TopicMetadata>() {
+      private boolean closed = false;
+
+      @Override
+      protected TopicMetadata computeNext() {
+        if (closed || (!iterator.hasNext())) {
+          return endOfData();
+        }
+
+        Map.Entry<byte[], byte[]> entry = iterator.next();
+        TopicId topicId = MessagingUtils.toTopicId(entry.getKey());
+        Map<String, String> properties = GSON.fromJson(Bytes.toString(entry.getValue()), MAP_TYPE);
+        return new TopicMetadata(topicId, properties);
+      }
+
+      @Override
+      public void close() {
+        try {
+          iterator.close();
+        } finally {
+          endOfData();
+          closed = true;
+        }
+      }
+    };
   }
 
   @Override
   public void close() throws IOException {
     // no op
-  }
-
-  private List<TopicId> scanTopics(@Nullable byte[] startKey, @Nullable byte[] stopKey) throws IOException {
-    List<TopicId> topicIds = new ArrayList<>();
-    try (CloseableIterator<Map.Entry<byte[], byte[]>> iterator = new DBScanIterator(levelDB, startKey, stopKey)) {
-      while (iterator.hasNext()) {
-        Map.Entry<byte[], byte[]> entry = iterator.next();
-        topicIds.add(MessagingUtils.toTopicId(entry.getKey()));
-      }
-    }
-    return topicIds;
   }
 }

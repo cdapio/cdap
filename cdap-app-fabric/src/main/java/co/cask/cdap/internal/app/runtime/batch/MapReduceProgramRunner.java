@@ -46,6 +46,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -96,6 +97,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final SecureStoreManager secureStoreManager;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final MessagingService messagingService;
 
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
@@ -107,7 +109,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 DiscoveryServiceClient discoveryServiceClient, RuntimeStore runtimeStore,
                                 SecureStore secureStore, SecureStoreManager secureStoreManager,
                                 AuthorizationEnforcer authorizationEnforcer,
-                                AuthenticationContext authenticationContext) {
+                                AuthenticationContext authenticationContext,
+                                MessagingService messagingService) {
     super(cConf);
     this.injector = injector;
     this.cConf = cConf;
@@ -123,6 +126,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.secureStoreManager = secureStoreManager;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.messagingService = messagingService;
   }
 
   @Override
@@ -138,7 +142,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
-    // Optionally get runId. If the map-reduce started by other program (e.g. Workflow), it inherit the runId.
     Arguments arguments = options.getArguments();
     RunId runId = ProgramRunners.getRunId(options);
 
@@ -170,10 +173,10 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       }
 
       final BasicMapReduceContext context =
-        new BasicMapReduceContext(program, options, cConf, spec,
-                                  workflowInfo, discoveryServiceClient,
+        new BasicMapReduceContext(program, options, cConf, spec, workflowInfo, discoveryServiceClient,
                                   metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
-                                  getPluginArchive(options), pluginInstantiator, secureStore, secureStoreManager);
+                                  getPluginArchive(options), pluginInstantiator, secureStore, secureStoreManager,
+                                  messagingService);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),

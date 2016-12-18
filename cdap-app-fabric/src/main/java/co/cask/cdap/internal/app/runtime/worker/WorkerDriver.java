@@ -16,22 +16,18 @@
 
 package co.cask.cdap.internal.app.runtime.worker;
 
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
-import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.Service;
@@ -76,17 +72,19 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     LOG.debug("Starting Worker Program {}", program.getId());
 
     // Initialize worker
-    initialize();
+    TransactionControl txControl = Transactions.getTransactionControl(
+      TransactionControl.EXPLICIT, Worker.class, worker, "initialize", WorkerContext.class);
+    context.initializeProgram(worker, context, txControl, false);
   }
 
   @Override
   protected void run() throws Exception {
-    ClassLoader classLoader = setContextCombinedClassLoader();
-    try {
-      worker.run();
-    } finally {
-      ClassLoaders.setContextClassLoader(classLoader);
-    }
+    context.executeChecked(new AbstractContext.ThrowingRunnable() {
+      @Override
+      public void run() throws Exception {
+        worker.run();
+      }
+    });
   }
 
   @Override
@@ -94,26 +92,10 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     if (worker == null) {
       return;
     }
-    TxRunnable runnable = new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        LOG.debug("Shutting down Worker Program {}", program.getId());
-        ClassLoader classLoader = setContextCombinedClassLoader();
-        try {
-          worker.destroy();
-        } finally {
-          ClassLoaders.setContextClassLoader(classLoader);
-        }
-      }
-    };
     try {
       TransactionControl txControl = Transactions.getTransactionControl(
         TransactionControl.EXPLICIT, Worker.class, worker, "destroy");
-      if (TransactionControl.EXPLICIT == txControl) {
-        runnable.run(context);
-      } else {
-        context.execute(runnable);
-      }
+      context.destroyProgram(worker, context, txControl, false);
     } finally {
       context.close();
     }
@@ -125,12 +107,12 @@ public class WorkerDriver extends AbstractExecutionThreadService {
       return;
     }
     LOG.debug("Stopping Worker Program {}", program.getId());
-    ClassLoader classLoader = setContextCombinedClassLoader();
-    try {
-      worker.stop();
-    } finally {
-      ClassLoaders.setContextClassLoader(classLoader);
-    }
+    context.executeUnchecked(new Runnable() {
+      @Override
+      public void run() {
+        worker.stop();
+      }
+    });
   }
 
   @Override
@@ -147,31 +129,5 @@ public class WorkerDriver extends AbstractExecutionThreadService {
 
   public void setInstanceCount(int instanceCount) {
     context.setInstanceCount(instanceCount);
-  }
-
-  private void initialize() throws Exception {
-    TxRunnable runnable = new TxRunnable() {
-      @Override
-      public void run(DatasetContext ctxt) throws Exception {
-        ClassLoader classLoader = setContextCombinedClassLoader();
-        try {
-          worker.initialize(context);
-        } finally {
-          ClassLoaders.setContextClassLoader(classLoader);
-        }
-      }
-    };
-    TransactionControl txControl = Transactions.getTransactionControl(
-      TransactionControl.EXPLICIT, Worker.class, worker, "initialize", WorkerContext.class);
-    if (TransactionControl.EXPLICIT == txControl) {
-      runnable.run(context);
-    } else {
-      context.execute(runnable);
-    }
-  }
-
-  private ClassLoader setContextCombinedClassLoader() {
-    return ClassLoaders.setContextClassLoader(
-      new CombineClassLoader(null, ImmutableList.of(worker.getClass().getClassLoader(), getClass().getClassLoader())));
   }
 }

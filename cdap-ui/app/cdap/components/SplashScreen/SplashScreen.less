@@ -23,7 +23,7 @@
 
 @keyframes topTransition {
   from { top: 0%; }
-  to { top: 50%; }
+  to { top: 350px; }
 }
 .splash-screen-backdrop {
   position: fixed;
@@ -39,7 +39,7 @@
   display: block;
   position: absolute;
   left: 50%;
-  top: 50%;
+  top: 350px;
   transform: translate(-50%, -65%);
   animation: topTransition ease-in-out 500ms;
   min-height: 400px;
@@ -47,14 +47,28 @@
   min-width: 600px;
   max-width: 640px;
 
+  .card-header {
+    position: relative;
+  }
+  .card-close-btn {
+    position: absolute;
+  }
+
+  .card-header-splash {
+    padding-top: 25px;
+
+    h3{
+      text-align: center;
+    }
+  }
+
   .second-line-form {
     padding-top: 5px;
   }
   .splash-checkbox {
-    margin-right: 5px;
-    margin-left: 78px;
     padding-top: 10px;
     text-align: left;
+    margin-bottom: -3px;
   }
   .registration-form {
     padding: 10px;
@@ -104,6 +118,7 @@
   }
 
   .version-label {
+    padding-top: 10px;
     font-size: 11px;
     color: @splash-font-color;
   }
@@ -149,16 +164,15 @@
     }
   }
 }
-
 .splash-screen .btn-icon {
   position: relative;
   right: 5px;
 }
-
 .splash-screen .cask-card {
   background: @cdap-orange;
-  border-radius: 28px;
-  padding-top: 15px;
+  border-radius: 10px;
+  border: 1px solid #993300;
+  padding-top: 0;
   color: @card-font-color;
   box-shadow: 0 0 15px #000000;
   height: 100%;
@@ -168,22 +182,23 @@
   &.card-LG { width: 100%; }
 
   .card-header {
-    span.fa.fa-times {
+    div.fa.fa-times {
       color: @card-font-color;
-      top: 8px;
-      right: 20px;
+      top: 12px;
+      right: 15px;
     }
   }
 }
-
 .cask-video-container {
-  padding-top: 35px;
+  margin-top: 40px;
+  padding-bottom: 35px;
 }
 .splash-screen .fa.fa-times:hover {
   color: #00008B;
 }
 .splash-main-container {
-  height: 245px;
+  padding-top: 10px;
+  height: 220px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -195,7 +210,6 @@
     margin-top: 0;
   }
 }
-
 .splash-screen .card-body {
-  padding: 0 15px 15px 15px;
+  padding-top: 0;
 }

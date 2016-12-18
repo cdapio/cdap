@@ -30,9 +30,9 @@ export default class ApplicationUploadWizard extends Component {
       showWizard: props.isOpen || false
     };
   }
-  toggleWizard() {
+  toggleWizard(returnResult) {
     if (this.state.showWizard && this.props.onClose) {
-      this.props.onClose();
+      this.props.onClose(returnResult);
     }
     this.setState({
       showWizard: !this.state.showWizard
@@ -49,7 +49,7 @@ export default class ApplicationUploadWizard extends Component {
   render() {
     let input = this.props.input;
     let headerLabel = input.headerLabel;
-    let wizardModalTitle = (headerLabel ? headerLabel : T.translate('features.Resource-Center.Application.modelheadertitle')) ;
+    let wizardModalTitle = (headerLabel ? headerLabel : T.translate('features.Resource-Center.Application.modalheadertitle')) ;
     return (
       <WizardModal
         title={wizardModalTitle}
@@ -59,7 +59,7 @@ export default class ApplicationUploadWizard extends Component {
       >
         <Wizard
           wizardConfig={ApplicationUploadWizardConfig}
-          wizardType="AplicationUpload"
+          wizardType="ApplicationUpload"
           store={ApplicationUploadStore}
           onSubmit={this.onSubmit.bind(this)}
           onClose={this.toggleWizard.bind(this)}/>

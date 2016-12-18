@@ -59,6 +59,7 @@ public class PropertiesResolver {
 
   public Map<String, String> getSystemProperties(Id.Program id) throws Exception {
     Map<String, String> systemArgs = Maps.newHashMap();
+    systemArgs.put(Constants.CLUSTER_NAME, cConf.get(Constants.CLUSTER_NAME, ""));
     systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(id.getNamespace()));
     if (SecurityUtil.isKerberosEnabled(cConf)) {
       ImpersonationInfo impersonationInfo = new ImpersonationInfo(

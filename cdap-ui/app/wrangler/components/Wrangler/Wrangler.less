@@ -14,14 +14,38 @@
  * the License.
  */
 
+@import '../../styles/variables.less';
 @error-color: #e74c3c;
 @wrangler-left-panel-width: 175px;
 @border: 1px solid #dddddd;
 
 .error-text { color: @error-color; }
 
+.btn.btn-wrangler {
+  color: @wrangler-dark-color;
+  background-color: @wrangler-yellow;
+  font-weight: 500;
+
+  &:hover {
+    background-color: darken(@wrangler-yellow, 7%);
+    color: @wrangler-dark-color;
+  }
+}
+
 .wrangler-container {
-  margin-bottom: 60px;
+  height: 100%;
+
+  .wrangler-title {
+    margin-top: 10px;
+    background: url('/wrangler_assets/img/wrangler_logo_sm.png') no-repeat center center;
+    height: 60px;
+  }
+
+  .wrangler-input-container {
+    overflow-y: auto;
+    height: 100%;
+    padding-bottom: 50px;
+  }
 
   .wrangler-copy-paste,
   .wrangler-error-container,
@@ -30,16 +54,14 @@
     margin: 0 auto;
   }
 
-  .wrangler-error-container {
-    .error-table.table.table-bordered {
-      width: inherit;
-      border: none;
-    }
+  .wrangle-button {
+    font-size: 18px;
+    padding: 5px 35px;
   }
 
   .dropzone-container {
     position: absolute;
-    top: 45px;
+    top: 15px;
     left: 50%;
     transform: translateX(-50%);
     width: 60px;
@@ -49,7 +71,9 @@
     position: absolute;
     right: 0;
     left: 0;
-    top: 110px;
+    top: 80px;
+
+    h4 { margin: 0; }
   }
 
   .wrangler-file-drop-container {
@@ -66,9 +90,14 @@
   .wrangler-copy-paste {
     border: 2px solid #dedede;
     border-radius: 4px;
-    height: 350px;
-    margin: 100px auto 0;
+    height: 270px;
+    margin: 0 auto;
     position: relative;
+
+    &.with-error {
+      border-bottom-right-radius: 0;
+      border-bottom-left-radius: 0;
+    }
 
     .wrangler-plus-button {
       position: absolute;
@@ -87,8 +116,8 @@
 
     textarea {
       max-width: 100%;
-      min-height: 240px;
-      max-height: 240px;
+      min-height: calc(~"100% - 100px");
+      max-height: calc(~"100% - 100px");
       border: 0;
 
       &:focus { box-shadow: none; }
@@ -137,12 +166,13 @@
   .wrangler-data {
     position: relative;
     margin: 0;
+    height: 100%;
 
     .wrangle-transforms,
     .wrangle-results {
       position: absolute;
       top: 0;
-      height: calc(~"100vh - 103px");
+      bottom: 0;
     }
 
     .wrangle-transforms {
@@ -158,10 +188,18 @@
         display: flex;
         justify-content: space-around;
 
-        span {
+        & > span {
           line-height: 60px;
           vertical-align: middle;
-          cursor: pointer;
+
+          span.fa {
+            cursor: pointer;
+
+            &.disabled {
+              cursor: not-allowed;
+              color: #999999;
+            }
+          }
         }
       }
 
@@ -171,7 +209,7 @@
         cursor: pointer;
 
         &.expanded {
-          border-left: 4px solid #ff6600;
+          border-left: 4px solid @wrangler-yellow;
           .filter-input {
             margin-top: 10px;
             font-size: 13px;
@@ -244,16 +282,14 @@
       background-color: #cccccc;
     }
     .active {
-      @active-border: 2px solid #f39c12;
+      @active-border: 2px solid @wrangler-yellow;
 
       border-right: @active-border;
       border-left: @active-border;
 
-      &.top-header { border-top: @active-border; }
-    }
-
-    .top-header.active {
-      border-top: 2px solid #f39c12;
+      &.top-header {
+        border-top: @active-border;
+      }
     }
 
     .header-content-container {

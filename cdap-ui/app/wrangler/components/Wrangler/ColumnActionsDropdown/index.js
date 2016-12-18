@@ -25,8 +25,8 @@ import TitleCaseAction from 'wrangler/components/Wrangler/ColumnActions/TitleCas
 import SubstringAction from 'wrangler/components/Wrangler/ColumnActions/SubstringAction';
 import MergeAction from 'wrangler/components/Wrangler/ColumnActions/MergeAction';
 import RenameAction from 'wrangler/components/Wrangler/ColumnActions/RenameAction';
-
-import {Popover, PopoverContent} from 'reactstrap';
+import T from 'i18n-react';
+import {Popover, PopoverContent, Tooltip} from 'reactstrap';
 
 require('./ColumnActionsDropdown.less');
 
@@ -35,10 +35,12 @@ export default class ColumnActionsDropdown extends Component {
     super(props);
 
     this.state = {
-      isOpen: false
+      isOpen: false,
+      tooltipOpen: false
     };
 
     this.toggle = this.toggle.bind(this);
+    this.toggleTooltip = this.toggleTooltip.bind(this);
   }
 
   toggle() {
@@ -60,6 +62,10 @@ export default class ColumnActionsDropdown extends Component {
     } else {
       this.documentClick$.dispose();
     }
+  }
+
+  toggleTooltip() {
+    this.setState({tooltipOpen: !this.state.tooltipOpen});
   }
 
   componentWillUnmount() {
@@ -102,6 +108,17 @@ export default class ColumnActionsDropdown extends Component {
           id={columnId}
           onClick={this.toggle}
         />
+
+        <Tooltip
+          placement="top"
+          isOpen={this.state.tooltipOpen}
+          toggle={this.toggleTooltip}
+          target={columnId}
+          className="wrangler-tooltip"
+          delay={0}
+        >
+          {T.translate('features.Wrangler.Tooltips.actions')}
+        </Tooltip>
 
         {this.renderPopover()}
       </span>

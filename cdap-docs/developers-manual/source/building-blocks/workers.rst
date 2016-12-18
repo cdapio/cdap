@@ -70,6 +70,7 @@ be specified using a ``setResources`` method in the worker ``initialize`` method
 In this example, each worker container will be initialized with 1024 MB of memory and 2
 virtual cores.
 
+.. _workers-datasets:
 
 Workers and Datasets
 ====================

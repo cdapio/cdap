@@ -16,10 +16,8 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -32,8 +30,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -48,6 +44,7 @@ import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
@@ -58,7 +55,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -116,7 +112,8 @@ public class ServiceHttpServer extends AbstractIdleService {
                            MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                            TransactionSystemClient txClient, DiscoveryServiceClient discoveryServiceClient,
                            @Nullable PluginInstantiator pluginInstantiator,
-                           SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                           SecureStore secureStore, SecureStoreManager secureStoreManager,
+                           MessagingService messagingService) {
     this.program = program;
     this.cConf = cConf;
     this.instanceCount = new AtomicInteger(instanceCount);
@@ -126,7 +123,7 @@ public class ServiceHttpServer extends AbstractIdleService {
                                                                          metricsCollectionService,
                                                                          datasetFramework, discoveryServiceClient,
                                                                          txClient, pluginInstantiator, secureStore,
-                                                                         secureStoreManager);
+                                                                         secureStoreManager, messagingService);
     this.handlerContexts = createHandlerDelegatorContexts(program, spec, contextFactory);
     this.context = contextFactory.create(null);
     this.service = createNettyHttpService(program, host, handlerContexts, context.getProgramMetrics());
@@ -190,7 +187,7 @@ public class ServiceHttpServer extends AbstractIdleService {
       nettyHttpHandlers.add(versionedFactory.createHttpHandler(context.getHandlerType(), context));
     }
 
-    NettyHttpService.Builder builder = NettyHttpService.builder()
+    NettyHttpService.Builder builder = NettyHttpService.builder(program.getName() + "-http")
       .setHost(host)
       .setPort(0)
       .addHttpHandlers(nettyHttpHandlers);
@@ -217,13 +214,15 @@ public class ServiceHttpServer extends AbstractIdleService {
                                                               final TransactionSystemClient txClient,
                                                               @Nullable final PluginInstantiator pluginInstantiator,
                                                               final SecureStore secureStore,
-                                                              final SecureStoreManager secureStoreManager) {
+                                                              final SecureStoreManager secureStoreManager,
+                                                              final MessagingService messagingService) {
     return new BasicHttpServiceContextFactory() {
       @Override
       public BasicHttpServiceContext create(@Nullable HttpServiceHandlerSpecification spec) {
         return new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
                                            metricsCollectionService, datasetFramework, discoveryServiceClient,
-                                           txClient, pluginInstantiator, secureStore, secureStoreManager);
+                                           txClient, pluginInstantiator, secureStore, secureStoreManager,
+                                           messagingService);
       }
     };
   }
@@ -299,57 +298,23 @@ public class ServiceHttpServer extends AbstractIdleService {
   private void initHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
     TransactionControl txCtrl = Transactions.getTransactionControl(TransactionControl.IMPLICIT, Object.class,
                                                                    handler, "initialize", HttpServiceContext.class);
-    ClassLoader classLoader = setContextCombinedClassLoader(handler);
     try {
-      if (TransactionControl.IMPLICIT == txCtrl) {
-        Transactions.createTransactionalWithRetry(
-          serviceContext, org.apache.tephra.RetryStrategies.retryOnConflict(20, 100))
-          .execute(new TxRunnable() {
-            @Override
-            public void run(DatasetContext context) throws Exception {
-              handler.initialize(serviceContext);
-            }
-          });
-      } else {
-        handler.initialize(serviceContext);
-      }
+      serviceContext.initializeProgram(handler, serviceContext, txCtrl, true);
     } catch (Throwable t) {
       LOG.error("Exception raised in HttpServiceHandler.initialize of class {}", handler.getClass(), t);
       throw Throwables.propagate(t);
-    } finally {
-      ClassLoaders.setContextClassLoader(classLoader);
     }
   }
 
   private void destroyHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
     TransactionControl txCtrl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
                                                                    Object.class, handler, "destroy");
-    ClassLoader classLoader = setContextCombinedClassLoader(handler);
     try {
-      if (TransactionControl.IMPLICIT == txCtrl) {
-        Transactions.createTransactionalWithRetry(
-          serviceContext, org.apache.tephra.RetryStrategies.retryOnConflict(20, 100))
-          .execute(new TxRunnable() {
-            @Override
-            public void run(DatasetContext context) throws Exception {
-              handler.destroy();
-            }
-          });
-      } else {
-        handler.destroy();
-      }
+      serviceContext.destroyProgram(handler, serviceContext, txCtrl, true);
     } catch (Throwable t) {
       LOG.error("Exception raised in HttpServiceHandler.destroy of class {}", handler.getClass(), t);
       // Don't propagate
-    } finally {
-      ClassLoaders.setContextClassLoader(classLoader);
     }
-  }
-
-
-  private ClassLoader setContextCombinedClassLoader(HttpServiceHandler handler) {
-    return ClassLoaders.setContextClassLoader(
-      new CombineClassLoader(null, ImmutableList.of(handler.getClass().getClassLoader(), getClass().getClassLoader())));
   }
 
   /**

@@ -31,6 +31,7 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewDetail;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.id.DatasetId;
@@ -177,16 +178,18 @@ public final class MDSViewStore implements ViewStore {
   }
 
   private static final class StreamViewEntry {
-    private final StreamViewId id;
+    // This must use the deprecated stream view Id class, since this class is used for serialization and deserialization
+    // in the persistence layer. See CDAP-7844 for more details.
+    private final Id.Stream.View id;
     private final ViewSpecification spec;
 
     private StreamViewEntry(StreamViewId id, ViewSpecification spec) {
-      this.id = id;
+      this.id = id.toId();
       this.spec = spec;
     }
 
     public StreamViewId getId() {
-      return id;
+      return id.toEntityId();
     }
 
     public ViewSpecification getSpec() {

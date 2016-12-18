@@ -53,7 +53,6 @@ export default class WranglerTable extends Component {
 
     this.tableHeader = null;
     this.tableBody = null;
-    this.typesBody = null;
   }
 
   componentWillMount() {
@@ -181,7 +180,9 @@ export default class WranglerTable extends Component {
                 <span>
                   <span className="content">{value}</span>
                   {
-                    errors[header] && errors[header][extra.rowData._index] ?
+                    // this works because right now the error is only on null
+                    // Need a more scalable way
+                    !value ?
                       <span className="pull-right">{errorCircle}</span> : null
                   }
                 </span>
@@ -193,6 +194,8 @@ export default class WranglerTable extends Component {
       };
     });
 
+
+    // Adding index column
     columns.unshift({
       property: '_index',
       header: {

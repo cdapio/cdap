@@ -125,12 +125,14 @@
       <span class="fa icon-eye"></span>
     </div>
     <div class="btn"
-         ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.runPreview()"
+         ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.toggleRuntimeArguments()"
          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading">
       <span class="fa fa-play"
-            ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading">
+            ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning">
       </span>
-
+      <span class="fa fa-stop text-danger"
+            ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.previewRunning">
+      </span>
       <span ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">
         <span class="fa fa-refresh fa-spin"></span>
       </span>
@@ -140,12 +142,31 @@
         {{ HydratorPlusPlusTopPanelCtrl.displayDuration.minutes }}:{{ HydratorPlusPlusTopPanelCtrl.displayDuration.seconds }}
       </span>
     </div>
+    <div class="pipeline-run-section text-left" ng-if="HydratorPlusPlusTopPanelCtrl.showRunTimeArguments">
+      <h5>
+        <strong>Runtime Arguments</strong>
+      </h5>
+      <div class="arguments-container">
+        <key-value-widget
+          ng-model="HydratorPlusPlusTopPanelCtrl.macrosMap"
+          data-config="HydratorPlusPlusTopPanelCtrl.runTimeWidgetConfig"
+        ></key-value-widget>
+      </div>
+      <div class="clearfix">
+        <div class="pull-right">
+          <button class="btn btn-blue"
+            ng-click="HydratorPlusPlusTopPanelCtrl.runPreview()">
+            Start Now
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>
 <div class="pipeline-settings-backdrop"
-     ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings"
-     ng-click="HydratorPlusPlusTopPanelCtrl.state.viewSettings = false"></div>
+     ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings || HydratorPlusPlusTopPanelCtrl.showRunTimeArguments"
+     ng-click="HydratorPlusPlusTopPanelCtrl.state.viewSettings = HydratorPlusPlusTopPanelCtrl.showRunTimeArguments = false"></div>
 <div class="pipeline-settings">
   <div
     store="HydratorPlusPlusTopPanelCtrl.HydratorPlusPlusConfigStore"
