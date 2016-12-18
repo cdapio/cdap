@@ -91,7 +91,11 @@ class HydratorDetailTopPanelController {
       for(let i = 0; i < macrosSpec.length; i++){
         if(this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties') &&
           this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties').length > 0){
-            macrosObj[this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties')] = '';
+            let macrosKeys = this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties');
+
+            macrosKeys.forEach((key) => {
+              macrosObj[key] = '';
+            });
         }
       }
       return macrosObj;
