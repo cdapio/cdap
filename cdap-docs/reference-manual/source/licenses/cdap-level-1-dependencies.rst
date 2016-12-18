@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
-    :version: 3.5.2
+    :version: 4.0.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -91,8 +91,6 @@ Cask Data Application Platform Level 1 Dependencies
    "org.apache.hive","hive-jdbc","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hive","hive-metastore","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hive","hive-service","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.httpcomponents","httpclient","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.httpcomponents","httpcore","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.kafka","kafka_2.10","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.spark","spark-core_2.10","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.spark","spark-mllib_2.10","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -105,7 +103,6 @@ Cask Data Application Platform Level 1 Dependencies
    "org.apache.tephra","tephra-hbase-compat-1.0","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.tephra","tephra-hbase-compat-1.0-cdh","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.tephra","tephra-hbase-compat-1.1","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.tez","tez-api","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.thrift","libthrift","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.twill","twill-api","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.twill","twill-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -114,7 +111,6 @@ Cask Data Application Platform Level 1 Dependencies
    "org.apache.twill","twill-discovery-core","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.twill","twill-yarn","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.twill","twill-zookeeper","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.zookeeper","zookeeper","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.eclipse.jetty","jetty-jaspi","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.eclipse.jetty","jetty-plus","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.eclipse.jetty","jetty-security","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -126,5 +122,6 @@ Cask Data Application Platform Level 1 Dependencies
    "org.ow2.asm","asm-all","BSD 3-Clause License","http://asm.ow2.org/license.html"
    "org.quartz-scheduler","quartz","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.quartz-scheduler","quartz-jobs","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.slf4j","jcl-over-slf4j","MIT License","http://www.opensource.org/licenses/mit-license.php"
    "org.slf4j","slf4j-api","MIT License","http://www.slf4j.org/license.html"
    "org.xerial.snappy","snappy-java","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
