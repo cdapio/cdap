@@ -417,7 +417,7 @@ public class DefaultMetadataStore implements MetadataStore {
     // TODO: Figure out how all of this can be done server (HBase) side
     int startIndex = 0;
     int maxEndIndex;
-    int total = results.size();
+    int total = sortedEntities.size();
     if (SortInfo.DEFAULT.equals(sortInfo)) {
       // offset needs to be applied
       if (offset > sortedEntities.size()) {
