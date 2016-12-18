@@ -398,7 +398,7 @@ features:
     Done: Done
     Informational:
       Step1:
-        description: Please follow the steps specified below to configure Hydrator plugin to read from your database
+        description: Please follow the steps specified below to download and configure
         shorttitle: Download Information
         title: Information
       headerlabel: Download Information
