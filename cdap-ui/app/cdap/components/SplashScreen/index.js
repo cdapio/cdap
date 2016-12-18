@@ -113,64 +113,72 @@ import VersionActions from 'services/VersionStore/VersionActions';
         />
       </div>
     );
-
-    return (
-      <div className={!this.state.showSplashScreen ? 'hide' : ''}>
-        <div className="splash-screen-backdrop"></div>
-        <div className="splash-screen">
-          <Card
-            className="splash-screen-card"
-            header={cardHeader}
-          >
-            <div className="text-center">
-              <div className="splash-main-container">
-              {
-                this.state.videoOpen ?
-                  <div className="cask-video-container">
-                    <CaskVideo />
-                  </div>
-                :
-                  <div>
-                    <img width="100px" src="cdap_assets/img/cdaplogo_white.png" />
-                    <div className="version-label">
-                      {T.translate('features.SplashScreen.version-label')}
+    const splashScreen = () => {
+      return (
+        <div>
+          <div className="splash-screen-backdrop"></div>
+          <div className="splash-screen">
+            <Card
+              className="splash-screen-card"
+              header={cardHeader}
+            >
+              <div className="text-center">
+                <div className="splash-main-container">
+                {
+                  this.state.videoOpen ?
+                    <div className="cask-video-container">
+                      <CaskVideo />
                     </div>
-                    <h4>
-                      {T.translate('features.SplashScreen.intro-message')}
-                    </h4>
-                  </div>
-              }
-              </div>
-              <br />
-              <div className={'group'}>
-                <a className="spash-screen-btn" target="_blank" href={`http://docs.cask.co/cdap/${this.state.version}/en/index.html`}>
-                  <div className="btn btn-default">
-                    <span className="fa fa-book btn-icon"></span>{T.translate('features.SplashScreen.buttons.getStarted')}
-                  </div>
-                </a>
-                <div
-                  className={'btn btn-default spash-screen-btn'}
-                  onClick={this.toggleVideo}
-                >
-                  <span className="fa fa-youtube-play btn-icon"></span>{T.translate('features.SplashScreen.buttons.introduction')}
+                  :
+                    <div>
+                      <img width="100px" src="cdap_assets/img/cdaplogo_white.png" />
+                      <div className="version-label">
+                        {T.translate('features.SplashScreen.version-label')}
+                      </div>
+                      <h4>
+                        {T.translate('features.SplashScreen.intro-message')}
+                      </h4>
+                    </div>
+                }
                 </div>
-                <a target="_blank" href="http://cask.co/company/contact/#mailing-list">
+                <br />
+                <div className={'group'}>
+                  <a className="spash-screen-btn" target="_blank" href={`http://docs.cask.co/cdap/${this.state.version}/en/index.html`}>
+                    <div className="btn btn-default">
+                      <span className="fa fa-book btn-icon"></span>{T.translate('features.SplashScreen.buttons.getStarted')}
+                    </div>
+                  </a>
                   <div
                     className={'btn btn-default spash-screen-btn'}
+                    onClick={this.toggleVideo}
                   >
-                    <span className="fa fa-pencil-square btn-icon" />{T.translate('features.SplashScreen.getUpdates')}
+                    <span className="fa fa-youtube-play btn-icon"></span>{T.translate('features.SplashScreen.buttons.introduction')}
                   </div>
-                </a>
+                  <a target="_blank" href="http://cask.co/company/contact/#mailing-list">
+                    <div
+                      className={'btn btn-default spash-screen-btn'}
+                    >
+                      <span className="fa fa-pencil-square btn-icon" />{T.translate('features.SplashScreen.getUpdates')}
+                    </div>
+                  </a>
+                </div>
+                <div className="splash-checkbox">
+                  <input onChange={this.toggleCheckbox} type="checkbox" />
+                  <span className="splash-checkbox-label"> {T.translate('features.SplashScreen.dontShow')} </span>
+                </div>
               </div>
-              <div className="splash-checkbox">
-                <input onChange={this.toggleCheckbox} type="checkbox" />
-                <span className="splash-checkbox-label"> {T.translate('features.SplashScreen.dontShow')} </span>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
         </div>
-      </div>
-    );
+      );
+    };
+
+      return (
+        this.state.showSplashScreen ?
+          splashScreen()
+        :
+          null
+      );
   }
 }
 

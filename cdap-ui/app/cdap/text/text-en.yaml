@@ -347,7 +347,7 @@ features:
     intro-message: Unified Integration Platform for Big Data
     title: Welcome to
     titleTwo: Cask Data Application Platform
-    version-label: Version 4.0 Beta
+    version-label: Version 4.0
     registration-zero: I
     registration-one: would like to receive product updates and
     registration-two: newsletters from Cask at this email address
@@ -396,6 +396,7 @@ features:
         classnamePlaceholder: Driver Class Name
     Done: Done
     Informational:
+      termsandconditions: Terms and Conditions
       Step1:
         description: Please follow the steps specified below to download and configure
         shorttitle: Download Information
