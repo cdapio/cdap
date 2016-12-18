@@ -105,6 +105,7 @@ export default class InformationalWizard extends Component {
       } else {
         return (
           <div className="license-container">
+            <h2>{T.translate('features.Wizard.Informational.termsandconditions')}</h2>
             <div className="license-text">{this.state.license}</div>
             <div>
               <div
