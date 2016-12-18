@@ -61,7 +61,7 @@
     <description>
       A cluster-based name for CDAP. It is used for scope resolution of preferences and
       runtime arguments. For example: the preference key "cluster.[cluster.name].my.key"
-      would be resolved to "my.key" at runtime; a program can then retreive the preference
+      would be resolved to "my.key" at runtime; a program can then retrieve the preference
       value by using just "my.key". The administrator can use this property to set
       different preferences for each cluster.
     </description>
@@ -182,8 +182,7 @@
     <name>twill.no.container.timeout</name>
     <value>120000</value>
     <description>
-      Amount of time in milliseconds to wait for at least one container for
-      Apache Twill runnable
+      Duration in milliseconds to wait for at least one container for Apache Twill runnable
     </description>
   </property>
 
@@ -221,7 +220,7 @@
     <description>
       By default, any changes made to existing datasets are not deployed
       when an app is redeployed; setting this value to true allows the
-      dataset changes to be deployed upon app redeployment.
+      dataset changes to be deployed upon app redeployment
     </description>
   </property>
 
@@ -275,7 +274,9 @@
     <name>app.program.extra.classpath</name>
     <value></value>
     <description>
-      Extra Java classpath for CDAP programs
+      Additional Java classpath for CDAP programs. These extra classpaths must
+      be present on all nodes in the cluster. Supports wildcard suffix "*"
+      to include all JAR files under a directory.
     </description>
   </property>
 
@@ -288,11 +289,27 @@
   </property>
 
   <property>
+    <name>app.program.max.start.seconds</name>
+    <value>300</value>
+    <description>
+      Maximum number of seconds to wait for a program to start before killing it
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.max.stop.seconds</name>
+    <value>300</value>
+    <description>
+      Maximum number of seconds to wait for a program to stop before killing it
+    </description>
+  </property>
+
+  <property>
     <name>app.program.runid.corrector.interval</name>
     <value>180</value>
     <description>
-      The interval of how often the run id corrector thread will run in
-      seconds; this value should be greater than 0
+      Interval in seconds of how often the run id corrector thread will run; this value
+      should be greater than 0
     </description>
   </property>
 
@@ -309,16 +326,8 @@
     <name>app.program.spark.yarn.client.rewrite.enabled</name>
     <value>true</value>
     <description>
-      Specify whether to rewrite the yarn.Client class in Spark to work
-      around the issue SPARK-13441 in CDM clusters.
-    </description>
-  </property>
-
-  <property>
-    <name>app.temp.dir</name>
-    <value>/tmp</value>
-    <description>
-      Temp directory
+      Specify whether to rewrite the YARN 'Client.scala' class in Spark to work
+      around issue SPARK-13441 in CDH clusters
     </description>
   </property>
 
@@ -329,18 +338,10 @@
   </property>
 
   <property>
-    <name>app.program.max.start.seconds</name>
-    <value>300</value>
+    <name>app.temp.dir</name>
+    <value>/tmp</value>
     <description>
-      The maximum number of seconds to wait for a program to start before killing it.
-    </description>
-  </property>
-
-  <property>
-    <name>app.program.max.stop.seconds</name>
-    <value>300</value>
-    <description>
-      The maximum number of seconds to wait for a program to stop before killing it.
+      Temp directory
     </description>
   </property>
 
@@ -365,7 +366,7 @@
     <name>workflow.token.max.size.mb</name>
     <value>30</value>
     <description>
-      Maximum allowed size of a Workflow Token, in megabytes; if the
+      Maximum allowed size in megabytes of a workflow token; if the
       workflow token exceeds this size, no further updates are allowed
     </description>
   </property>
@@ -429,7 +430,7 @@
     <name>data.tx.bind.port</name>
     <value>0</value>
     <description>
-      Transaction service bind port. Binds to random port by default.
+      Transaction service bind port; binds to a random port by default
     </description>
   </property>
 
@@ -488,7 +489,7 @@
     <name>data.tx.memory.mb</name>
     <value>${master.service.memory.mb}</value>
     <description>
-      Memory in megabytes of the transaction service
+      Memory in megabytes for each transaction service instance
     </description>
   </property>
 
@@ -496,7 +497,7 @@
     <name>data.tx.num.cores</name>
     <value>${master.service.num.cores}</value>
     <description>
-      Number of cores for the transaction service
+      Number of virtual cores for the transaction service
     </description>
   </property>
 
@@ -610,7 +611,7 @@
     <name>dataset.executor.container.memory.mb</name>
     <value>512</value>
     <description>
-      Size of Memory in megabytes for each dataset executor instance
+      Memory in megabytes for each dataset executor instance
     </description>
   </property>
 
@@ -686,7 +687,7 @@
     <name>explore.cleanup.job.schedule.secs</name>
     <value>60</value>
     <description>
-      Time in seconds to schedule clean-up job to timeout operations
+      Interval in seconds to schedule the clean-up of timed-out operations
     </description>
   </property>
 
@@ -857,8 +858,8 @@
     <name>kafka.server.log.flush.interval.messages</name>
     <value>10000</value>
     <description>
-      The interval length at which will force an fsync of data written to
-      the log
+      The interval length (in number of messages) at which to force an fsync of data
+      written to the log
     </description>
   </property>
 
@@ -890,8 +891,8 @@
     <name>kafka.server.zookeeper.connection.timeout.ms</name>
     <value>1000000</value>
     <description>
-      The maximum time (in milliseconds) that the client will wait to
-      establish a connection to Zookeeper
+      Maximum time in milliseconds that the client will wait to
+      establish a connection to ZooKeeper
     </description>
   </property>
 
@@ -966,7 +967,7 @@
     <name>log.retention.duration.days</name>
     <value>7</value>
     <description>
-      Log file HDFS retention duration in days
+      Duration in days of log file HDFS retention
     </description>
   </property>
 
@@ -998,7 +999,7 @@
     <name>log.saver.run.num.cores</name>
     <value>2</value>
     <description>
-      Number of cores for each log saver instance in YARN
+      Number of virtual cores for each log saver instance in YARN
     </description>
   </property>
 
@@ -1076,7 +1077,7 @@
     <name>master.service.memory.mb</name>
     <value>512</value>
     <description>
-      Size of memory in megabytes for master service instance
+      Memory in megabytes for each master service instance
     </description>
   </property>
 
@@ -1084,7 +1085,7 @@
     <name>master.service.num.cores</name>
     <value>2</value>
     <description>
-      Number of cores for master service instance
+      Number of virtual cores for each master service instance
     </description>
   </property>
 
@@ -1106,7 +1107,9 @@
   <property>
     <name>master.services.scheduler.queue</name>
     <value></value>
-    <description>Scheduler queue for CDAP Master Services</description>
+    <description>
+      Scheduler queue for CDAP Master services
+    </description>
   </property>
 
 
@@ -1204,7 +1207,7 @@
     <name>metrics.data.table.retention.resolution.1.seconds</name>
     <value>7200</value>
     <description>
-      Retention resolution of the 1-second resolution table in seconds;
+      Retention resolution in seconds of the 1-second resolution table;
       default retention period is 2 hours
     </description>
   </property>
@@ -1213,7 +1216,7 @@
     <name>metrics.data.table.retention.resolution.3600.seconds</name>
     <value>2592000</value>
     <description>
-      Retention resolution 1-hour resolution table (in seconds); default
+      Retention resolution in seconds of the 1-hour resolution table; default
       retention period is 30 days
     </description>
   </property>
@@ -1222,7 +1225,7 @@
     <name>metrics.data.table.retention.resolution.60.seconds</name>
     <value>2592000</value>
     <description>
-      Retention resolution for 1-minute resolution table (in seconds);
+      Retention resolution in seconds for the 1-minute resolution table;
       default retention period is 30 days
     </description>
   </property>
@@ -1247,7 +1250,7 @@
     <name>metrics.dataset.hbase.stats.report.interval</name>
     <value>60</value>
     <description>
-      Report interval for HBase stats, in seconds
+      Report interval in seconds for HBase stats
     </description>
   </property>
 
@@ -1255,7 +1258,7 @@
     <name>metrics.dataset.leveldb.stats.report.interval</name>
     <value>60</value>
     <description>
-      Report interval for LevelDB stats, in seconds
+      Report interval in seconds for LevelDB stats
     </description>
   </property>
 
@@ -1287,7 +1290,7 @@
     <name>metrics.memory.mb</name>
     <value>${master.service.memory.mb}</value>
     <description>
-      Memory assigned to the metrics service in megabytes
+      Memory in megabytes for each metrics service instance
     </description>
   </property>
 
@@ -1320,8 +1323,8 @@
     <name>metrics.processor.memory.mb</name>
     <value>512</value>
     <description>
-      Size of memory in megabytes for metrics processor service Apache Twill
-      runnable
+      Memory in megabytes for each metrics processor service Apache Twill
+      runnable instance
     </description>
   </property>
 
@@ -1329,7 +1332,7 @@
     <name>metrics.processor.num.cores</name>
     <value>1</value>
     <description>
-      Number of cores for metrics processor service Apache Twill runnable
+      Number of virtual cores for metrics processor service Apache Twill runnable
     </description>
   </property>
 
@@ -1413,7 +1416,7 @@
     <name>data.queue.config.update.interval</name>
     <value>5</value>
     <description>
-      Frequency, in seconds, of updates to the queue consumer configuration
+      Frequency in seconds of updates to the queue consumer configuration
       used in evicting queue entries on flush and compaction
     </description>
   </property>
@@ -1509,7 +1512,7 @@
     <name>router.connection.idle.timeout.secs</name>
     <value>15</value>
     <description>
-      The number of seconds after an HTTP request completes that idle router
+      Time in seconds after an HTTP request completes that idle router
       connections are closed
     </description>
   </property>
@@ -1558,6 +1561,7 @@
     <name>router.ssl.server.port</name>
     <value>${router.ssl.bind.port}</value>
     <description>
+      CDAP Router service bind port for HTTPS, for clients and webapps
     </description>
   </property>
 
@@ -1968,7 +1972,7 @@
     <name>stream.container.num.cores</name>
     <value>2</value>
     <description>
-      Number of virtual core for the YARN container that runs the stream
+      Number of virtual cores for the YARN container that runs the stream
       handler
     </description>
   </property>
@@ -1977,7 +1981,7 @@
     <name>stream.event.ttl</name>
     <value>9223372036854775807</value>
     <description>
-      Default time to live in milliseconds (Long.MAX_VALUE) for stream
+      Default time-to-live in milliseconds (Long.MAX_VALUE) for stream
       events
     </description>
   </property>
@@ -1986,8 +1990,7 @@
     <name>stream.file.cleanup.period</name>
     <value>300000</value>
     <description>
-      Default time interval in milliseconds for running the stream file
-      cleanup process
+      Interval in milliseconds for running the stream file cleanup process
     </description>
   </property>
 
@@ -2003,7 +2006,7 @@
     <name>stream.index.interval</name>
     <value>10000</value>
     <description>
-      Default time interval in milliseconds for emitting new index entry in
+      Interval in milliseconds for emitting new index entry in
       stream file
     </description>
   </property>
@@ -2021,7 +2024,7 @@
     <name>stream.notification.threshold</name>
     <value>1024</value>
     <description>
-      Size of data, in megabytes, to be ingested by a stream before a
+      Size of data in megabytes to be ingested by a stream before a
       notification is published
     </description>
   </property>
@@ -2030,7 +2033,7 @@
     <name>stream.partition.duration</name>
     <value>3600000</value>
     <description>
-      The default duration of a stream partition in milliseconds
+      Duration in milliseconds of a stream partition
     </description>
   </property>
 
@@ -2038,7 +2041,7 @@
     <name>stream.size.schedule.polling.delay</name>
     <value>600</value>
     <description>
-      Delay, in seconds, to poll a stream in a StreamSizeSchedule if no
+      Delay in seconds to poll a stream in a StreamSizeSchedule if no
       notification is received
     </description>
   </property>
@@ -2074,9 +2077,8 @@
     <name>dashboard.router.check.timeout.secs</name>
     <value>0</value>
     <description>
-      Amount of time, in seconds, CDAP UI waits before exiting when unable
-      to connect to CDAP Router service on startup; use a timeout of 0 to
-      wait indefinitely
+      Interval in seconds that the CDAP UI waits before exiting when unable to connect to
+      the CDAP Router service on startup; use a timeout of 0 to wait indefinitely
     </description>
   </property>
 
