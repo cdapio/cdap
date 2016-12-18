@@ -34,6 +34,7 @@
     <logger name="io.netty.util.internal" level="WARN"/>
 
     <logger name="org.apache.twill" level="INFO"/>
+    <logger name="org.apache.twill.internal.kafka.client.SimpleKafkaConsumer" level="WARN"/>
     <logger name="co.cask.cdap" level="INFO"/>
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">

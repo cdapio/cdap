@@ -91,7 +91,11 @@ class HydratorDetailTopPanelController {
       for(let i = 0; i < macrosSpec.length; i++){
         if(this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties') &&
           this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties').length > 0){
-            macrosObj[this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties')] = '';
+            let macrosKeys = this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties');
+
+            macrosKeys.forEach((key) => {
+              macrosObj[key] = '';
+            });
         }
       }
       return macrosObj;
@@ -154,19 +158,14 @@ class HydratorDetailTopPanelController {
   }
 
   setState() {
-    var runs = this.HydratorPlusPlusDetailRunsStore.getRuns();
-    var status, i;
+    var latestRun = this.HydratorPlusPlusDetailRunsStore.getLatestRun();
     var lastRunDuration;
-    for (i=0 ; i<runs.length; i++) {
-      status = runs[i].status;
-      if (['RUNNING', 'STARTING', 'STOPPING'].indexOf(status) === -1) {
-        this.lastFinished = runs[i];
-        break;
-      }
+    if (latestRun) {
+      this.lastFinished = latestRun;
     }
     if (this.lastFinished) {
       lastRunDuration = this.lastFinished.end - this.lastFinished.start;
-      this.lastRunTime = this.moment.utc(lastRunDuration * 1000).format('HH:mm:ss');
+      this.lastRunTime = typeof this.lastFinished.end === 'number' ? this.moment.utc(lastRunDuration * 1000).format('HH:mm:ss') : 'N/A';
     } else {
       this.lastRunTime = 'N/A';
     }

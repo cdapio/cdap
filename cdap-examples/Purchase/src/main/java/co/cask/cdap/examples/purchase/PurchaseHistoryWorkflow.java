@@ -26,7 +26,7 @@ public class PurchaseHistoryWorkflow extends AbstractWorkflow {
   @Override
   public void configure() {
       setName("PurchaseHistoryWorkflow");
-      setDescription("Workflow that runs the PurchaseHistoryBuilder MapReduce");
+      setDescription("Workflow that runs the PurchaseHistoryBuilder");
       addMapReduce("PurchaseHistoryBuilder");
   }
 }

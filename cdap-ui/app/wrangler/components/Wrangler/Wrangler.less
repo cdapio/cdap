@@ -59,13 +59,6 @@
     padding: 5px 35px;
   }
 
-  .wrangler-error-container {
-    .error-table.table.table-bordered {
-      width: inherit;
-      border: none;
-    }
-  }
-
   .dropzone-container {
     position: absolute;
     top: 15px;
@@ -100,6 +93,11 @@
     height: 270px;
     margin: 0 auto;
     position: relative;
+
+    &.with-error {
+      border-bottom-right-radius: 0;
+      border-bottom-left-radius: 0;
+    }
 
     .wrangler-plus-button {
       position: absolute;

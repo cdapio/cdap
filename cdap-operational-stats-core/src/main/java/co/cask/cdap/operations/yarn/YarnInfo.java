@@ -19,12 +19,15 @@ package co.cask.cdap.operations.yarn;
 import co.cask.cdap.operations.OperationalStats;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CommonConfigurationKeys;
 import org.apache.hadoop.ha.HAServiceProtocol;
 import org.apache.hadoop.ha.HAServiceStatus;
 import org.apache.hadoop.yarn.client.RMHAServiceTarget;
 import org.apache.hadoop.yarn.conf.HAUtil;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.util.YarnVersionInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -36,9 +39,11 @@ import java.util.Collection;
  * {@link OperationalStats} for collecting Yarn info.
  */
 public class YarnInfo extends AbstractYarnStats implements YarnInfoMXBean {
+  private static final Logger LOG = LoggerFactory.getLogger(YarnInfo.class);
 
   private String webUrl;
   private String logsUrl;
+  private boolean lastCollectFailed = false;
 
   @SuppressWarnings("unused")
   public YarnInfo() {
@@ -72,8 +77,17 @@ public class YarnInfo extends AbstractYarnStats implements YarnInfoMXBean {
 
   @Override
   public synchronized void collect() throws IOException {
-    webUrl = getResourceManager().toString();
-    logsUrl = webUrl + "/logs";
+    try {
+      webUrl = getResourceManager().toString();
+      logsUrl = webUrl + "/logs";
+      lastCollectFailed = false;
+    } catch (Exception e) {
+      // TODO: remove once CDAP-7887 is fixed
+      if (!lastCollectFailed) {
+        LOG.warn("Error in determining YARN URL. Web URL of YARN will not be available in YARN operational stats.", e);
+      }
+      lastCollectFailed = true;
+    }
   }
 
   private URL getResourceManager() throws IOException {
@@ -111,6 +125,8 @@ public class YarnInfo extends AbstractYarnStats implements YarnInfoMXBean {
     for (String rmId : rmIds) {
       YarnConfiguration yarnConf = new YarnConfiguration(conf);
       yarnConf.set(YarnConfiguration.RM_HA_ID, rmId);
+      yarnConf.set(CommonConfigurationKeys.HADOOP_SECURITY_SERVICE_USER_NAME_KEY,
+                   conf.get(YarnConfiguration.RM_PRINCIPAL, ""));
       RMHAServiceTarget rmhaServiceTarget = new RMHAServiceTarget(yarnConf);
       HAServiceProtocol proxy = rmhaServiceTarget.getProxy(yarnConf, 10000);
       HAServiceStatus serviceStatus = proxy.getServiceStatus();
