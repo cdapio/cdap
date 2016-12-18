@@ -16,6 +16,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import PlusButtonModal from '../PlusButtonModal';
+import PlusButtonStore from 'services/PlusButtonStore';
 
 export default class PlusButton extends Component {
   constructor(props) {
@@ -23,6 +24,17 @@ export default class PlusButton extends Component {
     this.state = {
       showMarketPlace: false
     };
+  }
+  componentDidMount() {
+    this.plusButtonSubscription = PlusButtonStore.subscribe(() => {
+      let modalState = PlusButtonStore.getState().modalState;
+      this.setState({
+        showMarketPlace: modalState
+      });
+    });
+  }
+  componentWillUnmount() {
+    this.plusButtonSubscription();
   }
   onClickHandler() {
     this.setState({
