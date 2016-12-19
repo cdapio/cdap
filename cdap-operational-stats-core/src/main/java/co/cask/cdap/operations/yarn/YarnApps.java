@@ -21,6 +21,8 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
 import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -28,6 +30,8 @@ import java.util.List;
  * {@link OperationalStats} for collecting Yarn app statistics.
  */
 public class YarnApps extends AbstractYarnStats implements OperationalStats, YarnAppsMXBean {
+
+  private static final Logger LOG = LoggerFactory.getLogger(YarnApps.class);
 
   private int newApps;
   private int accepted;
@@ -37,6 +41,8 @@ public class YarnApps extends AbstractYarnStats implements OperationalStats, Yar
   private int failed;
   private int killed;
   private int total;
+
+  private boolean lastCollectFailed = false;
 
   @SuppressWarnings("unused")
   public YarnApps() {
@@ -95,6 +101,17 @@ public class YarnApps extends AbstractYarnStats implements OperationalStats, Yar
 
   @Override
   public synchronized void collect() throws Exception {
+    try {
+      doCollect();
+    } catch (Exception e) {
+      if (!lastCollectFailed) {
+        LOG.warn("Error in collecting YARN application stats. They may not be available in YARN operational stats.", e);
+      }
+      lastCollectFailed = true;
+    }
+  }
+
+  private void doCollect() throws Exception {
     reset();
     YarnClient yarnClient = createYARNClient();
     List<ApplicationReport> applications;
