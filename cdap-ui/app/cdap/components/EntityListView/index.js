@@ -465,6 +465,7 @@ class EntityListView extends Component {
 
   dismissSplash() {
     let updateObj = Object.assign({}, this.state.userStoreObj);
+    updateObj.property = updateObj.property || {};
     updateObj.property['user-has-visited'] = true;
     MyUserStoreApi.set({}, updateObj.property);
     this.setState({
@@ -487,40 +488,37 @@ class EntityListView extends Component {
       return (
         <div className="splash-screen-container">
           <div className="splash-screen-first-time">
-            <div className="welcome-message">
-              Welcome to CDAP 4.0
-            </div>
+            <h2 className="welcome-message">
+              {T.translate('features.EntityListView.SplashScreen.welcomeMessage')}
+            </h2>
             <div className="beta-notice">
-              Beta UI*
+              {T.translate('features.EntityListView.SplashScreen.welcomeMessage1')}*
             </div>
             <div className="cdap-fist-icon">
               <span className="icon-fist" />
             </div>
             <div className="introducing">
-              Introducing Cask Market
+              {T.translate('features.EntityListView.SplashScreen.introText')}
             </div>
             <div className="app-store-bd">
-              The App Store for Big Data
+              {T.translate('features.EntityListView.SplashScreen.introText1')}
             </div>
             <div
               className="splash-screen-first-time-btn"
               onClick={this.openMarketModal.bind(this)}
             >
               <span className="icon-CaskMarket" />
-              Cask Market
+              {T.translate('features.EntityListView.SplashScreen.caskmarket')}
             </div>
             <div
               className="go-to-cdap"
               onClick={this.dismissSplash.bind(this)}
             >
-              Go to CDAP
+              {T.translate('features.EntityListView.SplashScreen.gotoLabel')}
             </div>
             <div className="splash-screen-disclaimer">
               <p>
-                *The new CDAP BETA UI is still in development and doesn’t offer full feature parity.
-              </p>
-              <p>
-                Switch to the original UI and its features by using the “VIEW ORIGINAL UI” button in the top navigation bar.
+                * {T.translate('features.EntityListView.SplashScreen.disclaimerMessage')}
               </p>
             </div>
           </div>

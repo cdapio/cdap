@@ -74,6 +74,14 @@ features:
     emptyMessage: No entities found in the system.
     Cards:
       type: "Type: "
+    SplashScreen:
+      welcomeMessage: Welcome to CDAP 4.0
+      welcomeMessage1: New User Interface
+      introText: Introducing Cask Market
+      introText1: Cask's App Store for Big Data
+      caskmarket: Cask Market
+      gotoLabel: Go to CDAP
+      disclaimerMessage: For full feature parity, switch to original UI by clicking "VIEW ORIGINAL UI" in top navigation bar.
     Header:
       filters: Filters
       search-placeholder: Search entities...
