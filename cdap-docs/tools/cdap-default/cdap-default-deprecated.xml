@@ -167,4 +167,13 @@
     </description>
   </property>
 
+  <property>
+    <name>ssl.enabled</name>
+    <value>false</value>
+    <description>
+      Determines if SSL is enabled
+      (deprecated; use ${ssl.external.enabled} instead)
+    </description>
+  </property>
+
 </configuration>

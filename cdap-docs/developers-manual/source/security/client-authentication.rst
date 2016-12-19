@@ -66,7 +66,7 @@ Obtain a new access token by calling::
    
 The ``<base-auth-url>`` can be found either by making a request and retrieving the
 authentication URI (``auth_uri``) in the response body or by knowing the configuration of
-the CDAP server for the ``security.auth.server.bind.address`` and port, as described in the
+the CDAP server for the ``security.auth.server.announce.address`` and port, as described in the
 :ref:`Administration Manual: Security <admin:admin-security>`.
 
 The required header and request parameters may vary according to the external

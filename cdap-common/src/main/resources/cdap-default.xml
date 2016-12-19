@@ -1762,7 +1762,7 @@
     <name>router.ssl.server.port</name>
     <value>${router.ssl.bind.port}</value>
     <description>
-      CDAP Router service bind port for HTTPS, for clients and webapps
+      CDAP Router service port for HTTPS, for clients and webapps
     </description>
   </property>
 
@@ -2083,6 +2083,7 @@
       Enable SSL between Router and App Fabric
     </description>
   </property>
+
 
   <!-- Stream Configuration -->
 

@@ -237,13 +237,15 @@ function build_docs_cli() {
 function build_docs_inner_level() {
 # Change to each manual, and run the local ./build.sh from there.
 # Each manual can (and does) have a customised build script, using the common-build.sh as a base.
+local build_target=${1}
+local errors
   for i in ${MANUALS}; do
     echo "========================================================"
-    echo "Building \"${i}\", target \"${1}\"..."
+    echo "Building \"${i}\", target \"${build_target}\"..."
     echo "--------------------------------------------------------"
     echo
     cd $SCRIPT_PATH/${i}
-    ./build.sh ${1}
+    ./build.sh ${build_target}
     echo
   done
 }
