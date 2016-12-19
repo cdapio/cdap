@@ -19,6 +19,7 @@ import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap
 import T from 'i18n-react';
 import debounce from 'lodash/debounce';
 import PaginationDropdown from 'components/Pagination/PaginationDropdown';
+import {Tooltip} from 'reactstrap';
 
 require('./EntityListHeader.less');
 
@@ -74,15 +75,26 @@ export default class EntityListHeader extends Component {
     this.props.onSearch(this.state.searchText);
   }
 
+  toggleSortDropdownTooltip() {
+    if (this.props.isSortDisabled) {
+      this.setState({sortDropdownTooltip: !this.state.sortDropdownTooltip});
+    }
+  }
   render() {
 
-    const placeholder = T.translate('features.EntityListView.Header.search-placeholder');
+    let tooltipId = 'filter-tooltip-target-id';
+    const placeholder = this.props.isSearchDisabled ?
+      T.translate('features.EntityListView.Header.search-disabled-placeholder')
+    :
+      T.translate('features.EntityListView.Header.search-placeholder')
+    ;
 
     const sortDropdown = (
         <Dropdown
           disabled={this.props.isSortDisabled}
           isOpen={this.state.isSortExpanded}
           toggle={this.handleSortToggle.bind(this)}
+          id={tooltipId}
         >
           <DropdownToggle tag='div'>
             {this.state.isSortExpanded ?
@@ -168,6 +180,15 @@ export default class EntityListHeader extends Component {
         </div>
         <div className="filter">
           {filterDropdown}
+          <Tooltip
+            placement="top"
+            isOpen={this.state.sortDropdownTooltip}
+            target={tooltipId}
+            toggle={this.toggleSortDropdownTooltip.bind(this)}
+            delay={0}
+          >
+            {T.translate(`features.EntityListView.Header.sortdropdown-tooltip`)}
+          </Tooltip>
         </div>
         <div className="view-selector pull-right">
           <div className="sort">
