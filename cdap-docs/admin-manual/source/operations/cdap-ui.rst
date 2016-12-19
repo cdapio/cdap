@@ -33,3 +33,14 @@ with access to the main Cask Website, Support, and logging out.
 On the **Development** page, datasets and applications are displayed. The **Operations** page
 gives you views of current system and user metrics, with customizable dashboards. The
 **Management** page provides features and controls for administering the CDAP installation.
+
+Beginning with CDAP 4.0, a new beta UI was added. Here is a screen-capture of the CDAP UI
+running on a Standalone CDAP:
+
+.. figure:: ../_images/ui/ui_01_overview.png
+   :figwidth: 100%
+   :width: 800px
+   :align: center
+   :class: bordered-image
+
+   **CDAP UI:** Showing started-up page, after an application has been deployed
