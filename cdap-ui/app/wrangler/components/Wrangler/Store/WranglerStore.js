@@ -230,7 +230,8 @@ function _deleteHistory(state, payload) {
   let history = cloneDeep(state.history);
 
   let newPayload = {
-    data: cloneDeep(state.originalData)
+    data: cloneDeep(state.originalData),
+    headers: cloneDeep(state.initialHeaders)
   };
 
   let stateCopy = Object.assign({}, defaultInitialState.wrangler, _setData(newPayload));
