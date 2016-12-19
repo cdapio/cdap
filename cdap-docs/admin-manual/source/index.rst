@@ -65,6 +65,11 @@ installation and its security configuration.
 
     - |mapr|_ Installing on the `MapR Converged Data Platform <https://www.mapr.com>`__.
 
+    .. |emr| replace:: **Amazon Hadoop (EMR):**
+    .. _emr: installation/emr.html
+
+    - |emr|_ Installing on `Amazon EMR (Elastic MapReduce) <https://aws.amazon.com/emr/>`__.
+
     .. |packages| replace:: **Manual Installation using Packages**
     .. _packages: installation/packages.html
 
