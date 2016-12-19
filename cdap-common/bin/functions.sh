@@ -800,10 +800,10 @@ cdap_sdk_start() {
   if [[ -f ${__pidfile} ]]; then
     local readonly __pid=$(<${__pidfile})
     if kill -0 ${__pid} >/dev/null 2>&1; then
-      echo "Standalone running as PID ${__pid}"
+      echo "Standalone process with process id ${__pid} is already running." 
       return 0
     fi
-  fi
+  fi 
 
   cdap_create_local_dir || die "Failed to create LOCAL_DIR: ${LOCAL_DIR}"
   cdap_create_log_dir || die "Failed to create LOG_DIR: ${LOG_DIR}"
