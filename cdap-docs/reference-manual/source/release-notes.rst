@@ -130,6 +130,12 @@ API Changes
       }
     }
   
+- :cask-issue:`CDAP-7544` - The :ref:`Metadata HTTP RESTful API
+  <http-restful-api-metadata-searching>` has been modified to support sorting and
+  pagination. To do so, the API now uses cursors and chunking, and the format of the results
+  returned when searching has changed. Whereas previous to CDAP 4.0.0 the API returned
+  results as a list of results, the API now returns the results as a field in a JSON object.
+
 - :cask-issue:`CDAP-7796` - Two properties are changing in version 4.0.0 of the CSD:
 
   - ``log.saver.run.memory.megs`` is replaced with ``log.saver.container.memory.mb``
