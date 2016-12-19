@@ -23,6 +23,7 @@ import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.guice.TwillModule;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -89,6 +90,7 @@ class UpgradeDatasetServiceManager extends AbstractIdleService {
   private final DatasetOpExecutorService datasetOpExecutorService;
   private final RemoteSystemOperationsService remoteSystemOperationsService;
   private final MetadataStore metadataStore;
+  private final Store store;
 
   @Inject
   UpgradeDatasetServiceManager(CConfiguration cConf, Configuration hConf,
@@ -100,6 +102,7 @@ class UpgradeDatasetServiceManager extends AbstractIdleService {
     this.datasetOpExecutorService = injector.getInstance(DatasetOpExecutorService.class);
     this.remoteSystemOperationsService = injector.getInstance(RemoteSystemOperationsService.class);
     this.metadataStore = injector.getInstance(MetadataStore.class);
+    this.store = injector.getInstance(Store.class);
   }
 
   DatasetFramework getDSFramework() {
@@ -108,6 +111,10 @@ class UpgradeDatasetServiceManager extends AbstractIdleService {
 
   MetadataStore getMetadataStore() {
     return metadataStore;
+  }
+
+  Store getStore() {
+    return store;
   }
 
   @Override

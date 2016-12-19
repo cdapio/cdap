@@ -29,6 +29,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
+import co.cask.cdap.internal.app.store.ApplicationMeta;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.app.store.WorkflowDataset;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -201,6 +202,15 @@ public interface Store extends RuntimeStore {
    * @return collection of all application specs in the namespace
    */
   Collection<ApplicationSpecification> getAllApplications(NamespaceId id);
+
+  /**
+   * Returns a collection of all {@link ApplicationMeta} in the specified namespace. This is needed to retrieve the
+   * application update time
+   *
+   * @param id the namespace to get application specs from
+   * @return collection of all {@link ApplicationMeta} in the namespace
+   */
+  Collection<ApplicationMeta> getAllAppMeta(NamespaceId id);
 
   /**
    * Returns a collection of all application specs of all the versions of the application by id

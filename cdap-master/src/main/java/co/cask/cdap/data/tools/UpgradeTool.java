@@ -26,6 +26,7 @@ import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.guice.TwillModule;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -441,6 +442,8 @@ public class UpgradeTool {
     // TODO: CDAP-7835: This should be moved out (probably to MetadataService) so it can be run after CDAP starts up.
     LOG.info("Writing system metadata to existing entities...");
     MetadataStore metadataStore = upgradeDatasetServiceManager.getMetadataStore();
+    Store store = upgradeDatasetServiceManager.getStore();
+    updateCreationTime(metadataStore, store);
     try {
       existingEntitySystemMetadataWriter.write(upgradeDatasetServiceManager.getDSFramework());
       LOG.info("Removing metadata for deleted datasets...");
@@ -454,6 +457,10 @@ public class UpgradeTool {
     } finally {
       upgradeDatasetServiceManager.shutDown();
     }
+  }
+
+  private void updateCreationTime(MetadataStore metadataStore, Store store) {
+
   }
 
   private void upgradeMetadataDatasetSpecs() {

@@ -82,6 +82,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -108,7 +109,7 @@ public class DefaultStore implements Store {
   private final Transactional transactional;
 
   @Inject
-  public DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionSystemClient txClient) {
+  DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionSystemClient txClient) {
     this.configuration = conf;
     this.dsFramework = framework;
     this.transactional = Transactions.createTransactionalWithRetry(
@@ -705,6 +706,16 @@ public class DefaultStore implements Store {
               return input.getSpec();
             }
         });
+      }
+    });
+  }
+
+  @Override
+  public Collection<ApplicationMeta> getAllAppMeta(final NamespaceId namespaceId) {
+    return txExecute(transactional, new TxCallable<Collection<ApplicationMeta>>() {
+      @Override
+      public Collection<ApplicationMeta> call(DatasetContext context) throws Exception {
+        return getAppMetadataStore(context).getAllApplications(namespaceId.getNamespace());
       }
     });
   }

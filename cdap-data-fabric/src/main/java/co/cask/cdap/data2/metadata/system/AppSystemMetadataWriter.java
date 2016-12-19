@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * A {@link AbstractSystemMetadataWriter} for an {@link Id.Application application}.
@@ -41,18 +42,33 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   private final ApplicationSpecification appSpec;
   private final ApplicationId appId;
-  private final boolean existing;
+  private final Long creationTime;
 
   public AppSystemMetadataWriter(MetadataStore metadataStore, ApplicationId appId, ApplicationSpecification appSpec) {
-    this(metadataStore, appId, appSpec, true);
+    this(metadataStore, appId, appSpec, true, -1L);
   }
 
   public AppSystemMetadataWriter(MetadataStore metadataStore, ApplicationId entityId,
                                  ApplicationSpecification appSpec, boolean existing) {
+    this(metadataStore, entityId, appSpec, existing, null);
+  }
+
+  private AppSystemMetadataWriter(MetadataStore metadataStore, ApplicationId entityId,
+                                  ApplicationSpecification appSpec, boolean existing, long creationTime) {
     super(metadataStore, entityId);
+    if (!existing && creationTime != -1) {
+      throw new IllegalArgumentException("Creation time cannot be provided for non-existing apps");
+    }
     this.appSpec = appSpec;
     this.appId = entityId;
-    this.existing = existing;
+    if (!existing) {
+      this.creationTime = System.currentTimeMillis();
+    } else if (creationTime != -1) {
+      this.creationTime = creationTime;
+    } else {
+      // creation time will be null if it is an existing app, and we could not find its creation-time
+      this.creationTime = null;
+    }
   }
 
   @Override
@@ -64,8 +80,8 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
     if (!Strings.isNullOrEmpty(description)) {
       properties.put(DESCRIPTION_KEY, description);
     }
-    if (!existing) {
-      properties.put(CREATION_TIME_KEY, String.valueOf(System.currentTimeMillis()));
+    if (creationTime != null) {
+      properties.put(CREATION_TIME_KEY, String.valueOf(creationTime));
     }
     addPrograms(properties);
     addSchedules(properties);
