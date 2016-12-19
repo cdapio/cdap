@@ -3,6 +3,13 @@
     :description: Cask Tracker
     :copyright: Copyright © 2016 Cask Data, Inc.
 
+.. |tracker-sdk-url| replace:: http://localhost:11011/tracker/ns/default
+.. |literal-tracker-sdk-url| replace:: ``http://localhost:11011/tracker/ns/default``
+
+.. |tracker-distributed-cdap-url| replace:: http://<host>:<dashboard-bind-port>/tracker/ns/default
+.. |literal-tracker-distributed-cdap-url| replace:: ``http://<host>:<dashboard-bind-port>/tracker/ns/default``
+
+
 .. _cask-tracker-index:
 
 ============
@@ -108,15 +115,15 @@ Cask Tracker consists of an application in CDAP with two programs and six datase
 
 The Tracker UI is shipped with CDAP, started automatically in standalone CDAP as part of the
 CDAP UI. It is available at:
-
-  :cdap-ui:`http://localhost:11011/tracker/ns/default/home <tracker/home>`
+ 
+  |literal-tracker-sdk-url|
   
 or (Distributed CDAP):
-
-  http://host:dashboard-bind-port/tracker/ns/default/home
   
+  |literal-tracker-distributed-cdap-url|
 
 Tracker is built from a system artifact included with CDAP, |literal-cask-tracker-version-jar|.
+
 
 .. highlight:: xml  
 
@@ -128,11 +135,9 @@ the application after starting CDAP.
 
 Enabling Tracker
 ----------------
-Tracker is enabled automatically in Standalone CDAP and the UI is available at
-http://localhost:11011/ns/default/tracker/home. In the Distributed version of CDAP,
-you must manually enable Tracker by visiting
-http://host:dashboard-bind-port/ns/default/tracker/home and pressing the
-``"Enable Tracker"`` button.
+Tracker is enabled automatically in Standalone CDAP and the UI is available at |tracker-sdk-url|.
+In the Distributed version of CDAP, you must manually enable Tracker by visiting
+|literal-tracker-distributed-cdap-url| and pressing the ``"Enable Tracker"`` button.
 
 Once pressed, the application will be deployed, the datasets created (if necessary), the
 flow and service started, and search and audit logging will become available.
@@ -390,4 +395,3 @@ connecting to a Navigator instance:
 
 Details on completing this form are described in CDAP's documentation on the
 :ref:`Navigator Integration Application <navigator-integration>`.
-
