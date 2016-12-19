@@ -25,6 +25,18 @@
     .header-actions {
       .plus-button {
         color: @plus-button-color;
+        &:after {
+          content: 'NEW';
+          position: absolute;
+          background: #ff6600;
+          font-size: 9px;
+          color: white;
+          border-radius: 4px;
+          top: 11px;
+          padding: 2px;
+          font-weight: bold;
+          font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
       }
       .navbar-cog:hover,
       .menu-open {
