@@ -79,6 +79,7 @@ features:
       search-placeholder: Search entities...
       sort: Sort
       sortOptions:
+        none: Relevance
         entityNameAsc:
           displayName: A - Z
         entityNameDesc:

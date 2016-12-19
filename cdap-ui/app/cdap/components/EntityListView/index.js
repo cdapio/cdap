@@ -69,6 +69,11 @@ class EntityListView extends Component {
 
     this.sortOptions = [
       {
+        displayName: T.translate('features.EntityListView.Header.sortOptions.none'),
+        sort: 'none',
+        fullSort: 'none'
+      },
+      {
         displayName: T.translate('features.EntityListView.Header.sortOptions.entityNameAsc.displayName'),
         sort: 'name',
         order: 'asc',
@@ -96,8 +101,10 @@ class EntityListView extends Component {
 
     this.state = {
       filter: defaultFilter,
-      sortObj: this.sortOptions[3],
+      sortObj: this.sortOptions[4],
+      isSortDisabled: false,
       query: '',
+      isSearchDisabled: false,
       entities: [],
       selectedEntity: null,
       numPages: 1,
@@ -124,8 +131,14 @@ class EntityListView extends Component {
     }
 
     let query = nextProps.location.query || {};
-    let {filter = defaultFilter, q = '', page = 1, sort } = query;
-    let sortObj = !sort ? this.sortOptions[0] : this.sortOptions.find(sortOption => sortOption.sort === sort);
+    let {filter = defaultFilter, q , page = 1, sort, order } = query;
+    let sortObj;
+    if (typeof q === 'undefined'){
+      let matchedSort = this.sortOptions.find(sortOption => sortOption.sort === sort && sortOption.order === order);
+      sortObj = matchedSort ? matchedSort : this.sortOptions[0];
+    } else {
+      sortObj = this.sortOptions[0];
+    }
     this.updateData(q, filter, sortObj, nextProps.params.namespace, page);
     this.setState({
       sortObj,
@@ -180,7 +193,6 @@ class EntityListView extends Component {
   //Retrieve entities for rendering
   componentDidMount(){
     this.calculatePageSize();
-    this.updateData();
   }
 
   //Construct and return query object from query parameters
@@ -197,8 +209,10 @@ class EntityListView extends Component {
 
     //Get filters, order, sort, search from query
     if(query){
-      orderBy = typeof query.order === 'string' ? query.order : '';
-      sortBy = typeof query.sort === 'string' ? query.sort : '';
+      if (typeof query.q === 'undefined') {
+        sortBy = typeof query.sort === 'string' ? query.sort : '';
+        orderBy = typeof query.order === 'string' ? query.order : '';
+      }
       searchTerm = typeof query.q === 'string' ? query.q : '';
       page = isNaN(query.page) ? this.state.currentPage : Number(query.page);
 
@@ -263,13 +277,20 @@ class EntityListView extends Component {
 
     let params = {
       namespace: namespace,
-      query: `${query}*`,
       target: filter,
       limit: this.pageSize,
-      offset: offset,
-      sort: sortObj.fullSort
+      offset: offset
     };
 
+    let isSortDisabled = typeof query === 'string' && query.length ? true : false;
+    let isSearchDisabled = sortObj.fullSort === 'none' ? false : true;
+    if (typeof query === 'string' && query.length) {
+      params.query = `${query}*`;
+    } else {
+      params.sort = sortObj.fullSort === 'none' ? this.sortOptions[3].fullSort : sortObj.fullSort;
+      params.query = '*';
+      params.numCursors = 10;
+    }
     let total;
     MySearchApi.search(params)
       .map((res) => {
@@ -283,16 +304,20 @@ class EntityListView extends Component {
       })
       .subscribe((res) => {
         this.setState({
+          isSortDisabled,
+          isSearchDisabled,
           entities: res,
           loading: false,
           entityErr: false,
           numPages: Math.ceil(total / this.pageSize)
         });
-      }, () => {
+      }, (err) => {
         //On Error: render page as if there are no results found
         this.setState({
+          isSortDisabled,
+          isSearchDisabled,
           loading : false,
-          entityErr : true
+          entityErr : typeof err === 'object' ? err.response : err
         });
       });
   }
@@ -337,16 +362,21 @@ class EntityListView extends Component {
   }
 
   handleSortClick(option) {
+    let isSearchDisabled = option.fullSort === 'none' ? false : true;
     this.setState({
-      sortObj : option
+      sortObj : option,
+      isSearchDisabled
     }, () => {
       this.search(this.state.query, this.state.filter, option);
     });
   }
 
   handleSearch(query) {
+    let isSortDisabled = typeof query === 'string' && query.length ? true : false;
     this.setState({
-      query
+      query,
+      isSortDisabled,
+      sortObj: this.sortOptions[0]
     }, () => {
       this.search(query, this.state.filter, this.state.sortObj);
     });
@@ -366,7 +396,7 @@ class EntityListView extends Component {
     let queryParams = [];
 
     //Generate sort params
-    if(this.state.sortObj.sort){
+    if(this.state.sortObj.sort !== 'none'){
       sort = 'sort=' + this.state.sortObj.sort + '&order=' + this.state.sortObj.order;
     }
 
@@ -417,6 +447,13 @@ class EntityListView extends Component {
       </h3>
     );
 
+    const errorContainer = (
+      <h3 className="text-center empty-message text-danger">
+        <span className="fa fa-exclamation-triangle"></span>
+        <span>{this.state.entityErr}</span>
+      </h3>
+    );
+
     const loading = (
       <h3 className="text-center">
         <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
@@ -428,8 +465,8 @@ class EntityListView extends Component {
 
     if(this.state.loading){
       bodyContent = loading;
-    } else if(this.state.entities.length === 0 || this.state.entityErr) {
-      entitiesToBeRendered = empty;
+    } else if(this.state.entities.length === 0) {
+      entitiesToBeRendered = this.state.entityErr ? errorContainer : empty;
 
       bodyContent = (
         <div className="entities-container">
@@ -465,9 +502,11 @@ class EntityListView extends Component {
           onFilterClick={this.handleFilterClick.bind(this)}
           activeFilter={this.state.filter}
           sortOptions={this.sortOptions}
+          isSortDisabled={this.state.isSortDisabled}
           activeSort={this.state.sortObj}
           onSortClick={this.handleSortClick.bind(this)}
           onSearch={this.handleSearch.bind(this)}
+          isSearchDisabled={this.state.isSearchDisabled}
           searchText={this.state.query}
           numberOfPages={this.state.numPages}
           currentPage={this.state.currentPage}
