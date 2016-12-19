@@ -409,7 +409,7 @@ copies in each transform is emitted. The user metrics can be queried by using th
 Script Transformations
 ----------------------
 In the script transformations (*JavaScriptTransform*, *PythonEvaluator*,
-*ScriptFilterTransform*, and the *ValidatorTransform*), a ``ScriptContext`` object is
+and the *ValidatorTransform*), a ``ScriptContext`` object is
 passed to the ``transform()`` method::
 
   function transform(input, context);
@@ -426,8 +426,6 @@ The different Transforms that are passed this context object have similar signat
      - ``{{function transform(input, emitter, context)}}``
    * - ``PythonEvaluator``
      - ``{{function transform(input, emitter, context)}}``
-   * - ``ScriptFilterTransform``
-     - ``{{function shouldFilter(input, context)}}``
    * - ``ValidatorTransform``
      - ``{{function isValid(input, context)}}``
 

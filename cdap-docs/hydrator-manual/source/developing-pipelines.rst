@@ -512,7 +512,7 @@ filtering logic is applied by using an included script in the step
           {
             "name": "spendingUsersScript",
             "plugin": {
-              "name": "ScriptFilter",
+              "name": "JavaScript",
               "type": "transform",
               "artifact": {
                 "name": "core-plugins",
@@ -520,7 +520,7 @@ filtering logic is applied by using an included script in the step
                 "scope": "SYSTEM"
               },
               "properties": {
-                "script": "function shouldFilter(input, context) {\\n  return (input.purchasePrice <= 1000);\\n}"
+                "script": "function transform(input, emitter, context) {\\n  if (input.purchasePrice <= 1000) {\\n  emitter.emit(input);\\n  }  \\n}"
               }
             }
           }
