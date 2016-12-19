@@ -142,14 +142,12 @@ def merge(master, new, manual):
         # Append all new.titles to master.titles
         master[FILENAMES] = master[FILENAMES] + [ "%s/%s" % (manual, filename) for filename in new[FILENAMES]]
         master[TITLES] = master[TITLES] + new[TITLES]
-    
         # Merge to terms
         merger(master[TERMS], new[TERMS], offset)
         # Merge to titleterms
         merger(master[TITLETERMS], new[TITLETERMS], offset)
     else:
         print "No new items to merge: new: %s manual: %s" % (new, manual)
-    
     return master
 
 
