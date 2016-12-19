@@ -13,6 +13,7 @@ Installation
 .. toctree::
    
     Cloudera Manager <cloudera>
+    Amazon EMR <emr>
     Apache Ambari <ambari>
     MapR <mapr>
     Packages <packages>
@@ -24,6 +25,13 @@ Installation and configuration instructions for either **specific distributions*
 
   - :ref:`Advanced Topics: <cloudera-installation-advanced-topics>`
     enabling perimeter security, Kerberos, CDAP high availability, and CDAP Explore engines
+
+..
+
+- :ref:`Installation for Amazon EMR <admin-installation-emr>`
+
+  - **Advanced Topics:** enabling perimeter security, CDAP high availability, CDAP
+    Explore engines, and enabling Kerberos is currently not available for Amazon EMR
 
 ..
 

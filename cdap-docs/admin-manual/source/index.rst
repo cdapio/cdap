@@ -53,6 +53,11 @@ installation and its security configuration.
       clusters managed with `Cloudera Manager
       <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__.
 
+    .. |emr| replace:: **Amazon Hadoop (EMR):**
+    .. _emr: installation/emr.html
+
+    - |emr|_ Installing on `Amazon EMR (Elastic MapReduce) <https://aws.amazon.com/emr/>`__.
+
     .. |ambari| replace:: **Apache Ambari:**
     .. _ambari: installation/ambari.html
 
