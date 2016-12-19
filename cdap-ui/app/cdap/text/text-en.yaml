@@ -330,11 +330,11 @@ features:
       actionbtn0: Create
     Artifact:
       label: Driver
-      description: Driver is a jar file that contains third-party code to talk to external systems, such as mysql, oracle, postgres.
+      description: A driver is a JAR file that contains third-party code to talk to external systems, such as MySQL, Oracle, and PostgreSQL.
       actionbtn0: Upload
       modalheadertitle: Add Driver
     Plugins:
-      label: Plugins
+      label: Plugin
       description: A plugin is an easy way to extend the functionality of an application.
       actionbtn0: Upload
       modalheadertitle: Upload Plugin Artifact
