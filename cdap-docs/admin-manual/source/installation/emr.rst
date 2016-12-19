@@ -26,6 +26,9 @@ to:
 Information on Amazon EMR is `available online
 <http://docs.aws.amazon.com/ElasticMapReduce/latest/ManagementGuide/emr-what-is-emr.html>`__.
 
+CDAP |short-version| is compatible with Amazon EMR 4.6.0 through 4.8.2.
+
+
 Using the Create Cluster Wizard
 ===============================
 
@@ -38,7 +41,7 @@ Using the Create Cluster Wizard
 #. In the *Advanced Options*, *Step 1: Software and Steps*, set:
 
    - Vendor: Amazon
-   - Release: ``emr-4.x.x``
+   - Release: ``emr-4.6.0`` through ``emr-4.8.2`` 
    - Software: Hadoop, HBase, Hive, Spark
    - No auto-terminate
 
