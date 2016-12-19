@@ -44,3 +44,7 @@ running on a Standalone CDAP:
    :class: bordered-image
 
    **CDAP UI:** Showing started-up page, after an application has been deployed
+
+The new UI is has not yet reached feature parity with the original UI, and is still under development.
+It includes access to the Cask Market and Resource Centre, which provides user interfaces for deploying applications,
+downloading applications and datasets from the Cask Market, and 
