@@ -368,8 +368,6 @@ export default class Wrangler extends Component {
 
     return (
       <div className="wrangler-input-container">
-        <div className="wrangler-title"></div>
-
         <Explore wrangle={this.wrangle} />
 
         <div
