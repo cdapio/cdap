@@ -399,9 +399,31 @@
                 </configuration>
               </execution>
 
-              <!-- Copy operations extensions -->
+              <!-- Copy basic operations extensions -->
               <execution>
-                <id>copy-operations-extensions</id>
+                <id>copy-basic-operations-extensions</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.operations.ext.dir}/basic</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-operational-stats-basic/target/
+                      </directory>
+                      <includes>
+                        <include>co.cask.cdap.cdap-operational-stats-basic-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <!-- Copy core operations extensions -->
+              <execution>
+                <id>copy-core-operations-extensions</id>
                 <phase>process-resources</phase>
                 <goals>
                   <goal>copy-resources</goal>
