@@ -2533,6 +2533,7 @@
         <module>cdap-proto</module>
         <module>cdap-notifications</module>
         <module>cdap-notifications-api</module>
+        <module>cdap-operational-stats-basic</module>
         <module>cdap-operational-stats-core</module>
         <module>cdap-client</module>
         <module>cdap-cli</module>

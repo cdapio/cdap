@@ -392,6 +392,14 @@
                         <include>*.jar</include>
                       </includes>
                     </resource>
+                    <!-- copy basic operational stats extensions -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-operational-stats-basic/target/libexec</directory>
+                      <targetPath>ext/operations/basic</targetPath>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
                   </resources>
                 </configuration>
               </execution>

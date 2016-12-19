@@ -69,6 +69,8 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.operations.OperationalStatsLoader;
+import co.cask.cdap.operations.OperationalStatsService;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
@@ -85,6 +87,8 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.apache.tephra.inmemory.InMemoryTransactionService;
@@ -129,6 +133,7 @@ public class StandaloneMain {
   private final AuthorizationEnforcementService authorizationEnforcementService;
   private final AuthorizationBootstrapper authorizationBootstrapper;
   private final MessagingService messagingService;
+  private final OperationalStatsService operationalStatsService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -159,6 +164,7 @@ public class StandaloneMain {
     datasetService = injector.getInstance(DatasetService.class);
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
+    operationalStatsService = injector.getInstance(OperationalStatsService.class);
 
     if (cConf.getBoolean(DISABLE_UI, false)) {
       userInterfaceService = null;
@@ -263,6 +269,8 @@ public class StandaloneMain {
 
     remoteSystemOperationsService.startAndWait();
 
+    operationalStatsService.startAndWait();
+
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
       cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
@@ -289,6 +297,8 @@ public class StandaloneMain {
 
       //  shut down router to stop all incoming traffic
       router.stopAndWait();
+
+      operationalStatsService.stopAndWait();
 
       remoteSystemOperationsService.stopAndWait();
       // now the stream writer and the explore service (they need tx)
@@ -484,7 +494,15 @@ public class StandaloneMain {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new PreviewHttpModule(),
-      new MessagingServerRuntimeModule().getStandaloneModules()
+      new MessagingServerRuntimeModule().getStandaloneModules(),
+      new PrivateModule() {
+        @Override
+        protected void configure() {
+          bind(OperationalStatsLoader.class).in(Scopes.SINGLETON);
+          bind(OperationalStatsService.class).in(Scopes.SINGLETON);
+          expose(OperationalStatsService.class);
+        }
+      }
     );
   }
 }
