@@ -34,15 +34,17 @@ const propTypes = {
 
 function AdminOverviewPane({services}) {
   let cards = services.map((service) => {
-    return (
-      <OverviewPaneCard
-        key={shortid.generate()}
-        name={service.name}
-        version={service.version}
-        url={service.url}
-        logs={service.logs}
-      />
-    );
+    if(service.name !== 'CDAP'){
+      return (
+        <OverviewPaneCard
+          key={shortid.generate()}
+          name={service.name}
+          version={service.version}
+          url={service.url}
+          logs={service.logs}
+        />
+      );
+    }
   });
 
   return (

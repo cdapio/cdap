@@ -57,6 +57,14 @@ class CDAP extends Component {
 
   componentWillMount(){
     cookie.save('DEFAULT_UI', 'NEW', {path: '/'});
+    if (window.CDAP_CONFIG.securityEnabled) {
+      NamespaceStore.dispatch({
+        type: NamespaceActions.updateUsername,
+        payload: {
+          username: cookie.load('CDAP_Auth_User')
+        }
+      });
+    }
     // Polls for namespace data
     MyNamespaceApi.pollList()
       .subscribe(
@@ -88,14 +96,6 @@ class CDAP extends Component {
   }
 
   render() {
-    if (window.CDAP_CONFIG.securityEnabled) {
-      NamespaceStore.dispatch({
-        type: NamespaceActions.updateUsername,
-        payload: {
-          username: cookie.load('CDAP_Auth_User')
-        }
-      });
-    }
 
     return (
       <Router basename="/cdap" history={history}>
