@@ -61,7 +61,7 @@ class CDAP extends Component {
       NamespaceStore.dispatch({
         type: NamespaceActions.updateUsername,
         payload: {
-          username: cookie.load('CDAP_Auth_User')
+          username: cookie.load('CDAP_Auth_User') || ''
         }
       });
     }
