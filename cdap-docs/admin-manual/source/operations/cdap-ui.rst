@@ -34,6 +34,9 @@ On the **Development** page, datasets and applications are displayed. The **Oper
 gives you views of current system and user metrics, with customizable dashboards. The
 **Management** page provides features and controls for administering the CDAP installation.
 
+
+.. rubric:: CDAP 4.0 New Beta UI
+
 Beginning with CDAP 4.0, a new beta UI was added. Here is a screen-capture of the CDAP UI
 running on a Standalone CDAP:
 
@@ -46,5 +49,6 @@ running on a Standalone CDAP:
    **CDAP UI:** Showing started-up page, after an application has been deployed
 
 The new UI is has not yet reached feature parity with the original UI, and is still under development.
-It includes access to the Cask Market and Resource Centre, which provides user interfaces for deploying applications,
-downloading applications and datasets from the Cask Market, and 
+It includes access to: the Cask Market, with use cases, pipelines, applications, plugins, datapacks, and drivers;
+the Resource Centre, which provides wizards for adding streams, drivers, applications, Hydrator pipelines, and
+plugins; access to CDAP extensions including Cask Hydrator, Cask Tracker, and Cask Wrangler.
