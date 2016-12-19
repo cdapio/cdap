@@ -26,6 +26,8 @@ const shortid = require('shortid');
 const classNames = require('classnames');
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import {fetchTables} from 'services/ExploreTables/ActionCreator';
+import MyUserStoreApi from 'api/userstore';
+import PlusButtonStore from 'services/PlusButtonStore';
 
 require('./EntityListView.less');
 
@@ -110,11 +112,14 @@ class EntityListView extends Component {
       numPages: 1,
       loading: true,
       currentPage: 1,
-      animationDirection: 'next'
+      animationDirection: 'next',
+      showSplash: true,
+      userStoreObj : ''
     };
 
     //By default, expect a single page -- update when search is performed and we can parse it
     this.pageSize = 1;
+    this.dismissSplash = this.dismissSplash.bind(this);
     this.calculatePageSize = this.calculatePageSize.bind(this);
     this.updateQueryString = this.updateQueryString.bind(this);
     this.getQueryObject = this.getQueryObject.bind(this);
@@ -151,6 +156,15 @@ class EntityListView extends Component {
 
   //Update Store and State to correspond to query parameters before component renders
   componentWillMount() {
+    MyUserStoreApi.get().subscribe((res) => {
+      let userProperty = typeof res.property === 'object' ? res.property : {};
+      let showSplash = userProperty['user-has-visited'] || false;
+      this.setState({
+        userStoreObj : res,
+        showSplash : showSplash
+      });
+    });
+
     // To enable explore fastaction on each card in Entity list view
      ExploreTablesStore.dispatch(
       fetchTables(this.props.params.namespace)
@@ -168,9 +182,14 @@ class EntityListView extends Component {
   }
 
   calculatePageSize() {
+    let entityListViewEle = document.getElementsByClassName('entity-list-view');
+
+    if (!entityListViewEle.length) {
+      return;
+    }
     // Performs calculations to determine number of entities to render per page
     // minus 60px of padding in entity-list-view (30px each side)
-    let containerWidth = document.getElementsByClassName('entity-list-view')[0].offsetWidth - 60;
+    let containerWidth = entityListViewEle[0].offsetWidth - 60;
 
     // Subtract 55px to account for entity-list-header's height (30px) and container's top margin (25px)
     // minus 20px of padding from top and bottom (10px each)
@@ -440,7 +459,72 @@ class EntityListView extends Component {
     });
   }
 
+  dismissSplash() {
+    let updateObj = Object.assign({}, this.state.userStoreObj);
+    updateObj.property['user-has-visited'] = true;
+    MyUserStoreApi.set({}, updateObj.property);
+    this.setState({
+      showSplash: true
+    });
+  }
+
+  openMarketModal() {
+    PlusButtonStore.dispatch({
+      type: 'TOGGLE_PLUSBUTTON_MODAL',
+      payload: {
+        modalState: true
+      }
+    });
+  }
+
   render() {
+
+    if(!this.state.showSplash){
+      return (
+        <div className="splash-screen-container">
+          <div className="splash-screen-first-time">
+            <div className="welcome-message">
+              Welcome to CDAP 4.0
+            </div>
+            <div className="beta-notice">
+              Beta UI*
+            </div>
+            <div className="cdap-fist-icon">
+              <span className="icon-fist" />
+            </div>
+            <div className="introducing">
+              Introducing Cask Market
+            </div>
+            <div className="app-store-bd">
+              The App Store for Big Data
+            </div>
+            <div
+              className="splash-screen-first-time-btn"
+              onClick={this.openMarketModal.bind(this)}
+            >
+              <span className="icon-CaskMarket" />
+              Cask Market
+            </div>
+            <div
+              className="go-to-cdap"
+              onClick={this.dismissSplash.bind(this)}
+            >
+              Go to CDAP
+            </div>
+            <div className="splash-screen-disclaimer">
+              <p>
+                *The new CDAP BETA UI is still in development and doesn’t offer full feature parity.
+              </p>
+              <p>
+                Switch to the original UI and its features by using the “VIEW ORIGINAL UI” button in the top navigation bar.
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+
     const empty = (
       <h3 className="text-center empty-message">
         {T.translate('features.EntityListView.emptyMessage')}
