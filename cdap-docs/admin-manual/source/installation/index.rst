@@ -15,6 +15,7 @@ Installation
     Cloudera Manager <cloudera>
     Apache Ambari <ambari>
     MapR <mapr>
+    Amazon EMR <emr>
     Packages <packages>
 
 Installation and configuration instructions for either **specific distributions** or
@@ -40,6 +41,10 @@ Installation and configuration instructions for either **specific distributions*
   - :ref:`Advanced Topics: <mapr-installation-advanced-topics>`
     enabling perimeter security, CDAP high availability, and CDAP Explore engines;
     enabling Kerberos is currently not available for MapR
+
+..
+
+- :ref:`Installation for Amazon EMR <admin-installation-emr>`
 
 ..
 
