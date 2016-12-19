@@ -607,6 +607,7 @@ public class MetadataDataset extends AbstractDataset {
     // in addition, we want to pre-fetch 'numCursors' chunks of size 'limit'
     int fetchSize = offset + ((numCursors + 1) * limit);
     List<String> cursors = new ArrayList<>(numCursors);
+    int count = 0;
     for (String searchTerm : getSearchTerms(namespaceId, "*")) {
       byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
       byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
@@ -622,7 +623,6 @@ public class MetadataDataset extends AbstractDataset {
       int mod = limit == 1 ? 0 : 1;
       try (Scanner scanner = indexedTable.scanByIndex(Bytes.toBytes(indexColumn), startKey, stopKey)) {
         Row next;
-        int count = 0;
         while ((next = scanner.next()) != null && count < fetchSize) {
           // skip until we reach offset
           if (count < offset) {
