@@ -17,12 +17,12 @@
 Cask Data Application Platform Release Notes
 ============================================
 
-.. Known Issues
-.. API Changes
-.. Deprecated and Removed Features
 .. New Features
 .. Improvements
 .. Bug Fixes
+.. Known Issues
+.. API Changes
+.. Deprecated and Removed Features
 
 .. contents::
    :local:
@@ -33,232 +33,121 @@ Cask Data Application Platform Release Notes
 `Release 4.0.0 <http://docs.cask.co/cdap/4.0.0/index.html>`__
 =============================================================
 
-Known Issues
-------------
-
-- :cask-issue:`CDAP-6099` - Due to a limitation in the CDAP MapReduce implementation,
-  writing to a dataset does not work in a MapReduce Mapper's ``destroy()`` method.
-
-- :cask-issue:`CDAP-7444` - If a MapReduce program fails during startup, the program's
-  ``destroy()`` method is never called, preventing any cleanup or action there being taken.
-
-API Changes
------------
-
-.. _release-notes-cdap-6837:
-
-- :cask-issue:`CDAP-6837` - Fixed an issue in ``WorkerContext`` that did not properly
-  implement the contract of the Transactional interface. **Note that this fix may cause
-  incompatibilities with previous releases in certain cases.** See below for details on
-  how to handle this change in existing code.
-
-  The Transactional API defines::
-
-    void execute(TxRunnable runnable) throws TransactionFailureException;
-  
-  and ``WorkerContext`` implements ``Transactional``. However, it declares this method to
-  not throw checked exceptions::
-
-    void execute(TxRunnable runnable);
-  
-  That means that any ``TransactionFailureException`` thrown from a
-  ``WorkerContext.execute()`` is wrapped into a ``RuntimeException``, and callers must
-  write code similar to this to handle the exception::
-
-    try {
-      getContext().execute(...);
-    } catch (Exception e) {
-      if (e.getCause() instanceof TransactionFailureException) {
-        // Handle it
-      } else {
-        // What else to expect? It's not clear...
-        throw Throwables.propagate(e);
-      } 
-    } 
-  
-  This is ugly and inconsistent with other implementations of Transactional. We have
-  addressed this by altering the ``WorkerContext`` to directly raise the
-  ``TransactionFailureException``. **However, code must change to accomodate this.**
-
-  To address this in existing code, such that it will work both in 4.0.0 and earlier
-  versions of CDAP, use code similar to this::
-
-      @Override
-      public void run() {
-        try {
-          getContext().execute(new TxRunnable() {
-            @Override
-            public void run(DatasetContext context) throws Exception {
-              if (getContext().getRuntimeArguments().containsKey("fail")) {
-                throw new RuntimeException("fail");
-              }
-            }
-          });
-        } catch (Exception e) {
-          if (e instanceof TransactionFailureException) {
-            LOG.error("transaction failure");
-          } else if (e.getCause() instanceof TransactionFailureException) {
-            LOG.error("exception with cause transaction failure");
-          } else {
-            LOG.error("other failure");
-          }
-        }
-      }
-    }
-  
-  This code will succeed because it handles both the "new style" of the ``WorkerContext``
-  directly throwing a ``TransactionFailureException`` and at the same time handle the
-  previous style of the ``TransactionFailureException`` being wrapped in a
-  ``RuntimeException``.
-
-  Code that is only used in CDAP 4.0.0 and higher can use a simpler version of this::
-
-      @Override
-      public void run() {
-        try {
-          getContext().execute(new TxRunnable() {
-            @Override
-            public void run(DatasetContext context) throws Exception {
-              if (getContext().getRuntimeArguments().containsKey("fail")) {
-                throw new RuntimeException("fail");
-              }
-            }
-          });
-        } catch (TransactionFailureException e) {
-          ...
-        }
-      }
-    }
-  
-- :cask-issue:`CDAP-7544` - The :ref:`Metadata HTTP RESTful API
-  <http-restful-api-metadata-searching>` has been modified to support sorting and
-  pagination. To do so, the API now uses additional parameters |---| ``sort``, ``offset``,
-  ``limit``, ``numCursors``, and ``cursor`` |---| and the format of the results
-  returned when searching has changed. Whereas previous to CDAP 4.0.0 the API returned
-  results as a list of results, the API now returns the results as a field in a JSON object.
-
-- :cask-issue:`CDAP-7796` - Two properties are changing in version 4.0.0 of the CSD:
-
-  - ``log.saver.run.memory.megs`` is replaced with ``log.saver.container.memory.mb``
-  - ``log.saver.run.num.cores`` is replaced with ``log.saver.container.num.cores``
-
-  Anyone who has modified these properties in previous versions will have to update them
-  after upgrading.
-
-Deprecated and Removed Features
--------------------------------
-
-- :cask-issue:`CDAP-5246` - Removed the deprecated Kafka feed for metadata updates. Users
-  should instead subscribe to the CDAP Audit feed, which contains metadata update
-  notifications in messages with audit type ``METADATA_CHANGE``.
-
-- :cask-issue:`CDAP-6862` - Deprecated "log.saver.run.memory.megs" and
-  "log.saver.run.num.cores", in favor of "log.saver.container.memory.mb" and
-  "log.saver.container.num.cores", respectively.
-
-- :cask-issue:`CDAP-7475` - Removes deprecated methods ``setInputDataset()``,
-  ``setOutputDataset()``, and ``useStreamInput()`` from the MapReduce API, and related
-  methods from the MapReduceContext.
-
-- :cask-issue:`CDAP-7718` - Removed the deprecated ``StreamBatchReadable`` class.
-
-- :cask-issue:`CDAP-7127` - The deprecated CDAP Explore service instance property has been
-  removed.
-
-- :cask-issue:`CDAP-7205` - Removes the deprecated ``useDatasets()`` method from API and
-  documentation.
-
-- :cask-issue:`CDAP-7563` - Removed the usage of deprecated methods from examples.
-
-- :cask-issue:`HYDRATOR-1094` - Removed the deprecated
-  ``cdap-etl-batch-source-archetype``, ``cdap-etl-batch-sink-archetype``, and
-  ``cdap-etl-transform-archetype`` in favor of the ``cdap-data-pipeline-plugins-archetype``.
-
-
 New Features
 ------------
 
-- :cask-issue:`CDAP-5479` - Allow updating or resetting of log levels for program types
-  worker, flow, and service dynamically using REST endpoints.
+#. Cask Market
 
-- :cask-issue:`CDAP-5632` - New menu option in Cloudera Manager when running the CDAP CSD
-  enables running utilities such as the HBaseQueueDebugger.
+   - :cask-issue:`CDAP-7203` - Adds the new Cask Market view in the CDAP UI for users to
+     interact and create CDAP entities in a much easier fashion. The market hosts use cases,
+     pipelines, datapacks, drivers, Hydrator plugins, and CDAP applications as examples.
 
-- :cask-issue:`CDAP-6577` - Improved the UpgradeTool to upgrade tables in namespaces with
-  impersonation configured.
+#. Cask Wrangler
 
-- :cask-issue:`CDAP-6587` - Added support for impersonation with CDAP Explore (Hive)
-  operations, including enabling exploring of a dataset or running queries against it.
+   - :cask-issue:`WRANGLER-2` - Added Cask Wrangler: a new CDAP extension for data
+     preparation.
 
-- :cask-issue:`CDAP-7214` - Allow setting the log levels for all program types through
-  runtime arguments or preferences.
+#. CDAP Transactional Messaging System
 
-- :cask-issue:`CDAP-7287` - Added support for enabling client certificate-based
-  authentication to the CDAP Authentication server.
+   - :cask-issue:`CDAP-7211` - Adds a transactional messaging system that can be used to
+     communicate between components.
 
-- :cask-issue:`CDAP-7670` - Added support for reporting of operational statistics from
-  CDAP as extensions.
+#. Dynamic Log Level
 
-- :cask-issue:`CDAP-7703` - Added reporting operational statistics for YARN. They can be
-  retrieved using JMX with the domain name ``co.cask.cdap.operations`` and the property
-  ``name`` set to ``yarn``.
+   - :cask-issue:`CDAP-5479` - Allow updating or resetting of log levels for program types
+     worker, flow, and service dynamically using REST endpoints.
+ 
+   - :cask-issue:`CDAP-7214` - Allow setting the log levels for all program types through
+     runtime arguments or preferences.
 
-- :cask-issue:`CDAP-7704` - Added reporting operational statistics for HBase. They can be
-  retrieved using JMX with the domain name ``co.cask.cdap.operations`` and the property
-  ``name`` set to ``hbase`` as well as through the CDAP UI Administration page.
+#. Operational Statistics
 
-- :cask-issue:`HYDRATOR-504` - Added to the Hydrator plugins a Tokenizer Spark compute
-  plugin.
+   - :cask-issue:`CDAP-7670` - Added support for reporting of operational statistics from
+     CDAP as extensions.
+ 
+   - :cask-issue:`CDAP-7703` - Added reporting operational statistics for YARN. They can be
+     retrieved using JMX with the domain name ``co.cask.cdap.operations`` and the property
+     ``name`` set to ``yarn``.
+ 
+   - :cask-issue:`CDAP-7704` - Added reporting operational statistics for HBase. They can be
+     retrieved using JMX with the domain name ``co.cask.cdap.operations`` and the property
+     ``name`` set to ``hbase`` as well as through the CDAP UI Administration page.
 
-- :cask-issue:`HYDRATOR-512` - Added to the Hydrator plugins a Sink plugin to write to
-  Solr search.
+#. New Versions of Distributions Supported
 
-- :cask-issue:`HYDRATOR-517` - Added to the Hydrator plugins a Logistic Regression Spark
-  Machine Learning plugin.
+   - :cask-issue:`CDAP-6938` - Added support for Amazon EMR 4.6.0+ installation of CDAP via a
+     bootstrap action script.
+ 
+   - :cask-issue:`CDAP-7291` - Added support for CDH 5.9.
 
-- :cask-issue:`HYDRATOR-668` - Added to the Hydrator plugins a Decision Tree Regression
-  Spark Machine Learning plugin.
+#. New Hydrator Plugins Added
 
-- :cask-issue:`HYDRATOR-909` - Added to the Hydrator plugins a SparkCompute Hydrator
-  plugin to compute N-Grams of any given String.
+   - :cask-issue:`HYDRATOR-504` - Added to the Hydrator plugins a Tokenizer Spark compute
+     plugin.
+ 
+   - :cask-issue:`HYDRATOR-512` - Added to the Hydrator plugins a Sink plugin to write to
+     Solr search.
+ 
+   - :cask-issue:`HYDRATOR-517` - Added to the Hydrator plugins a Logistic Regression Spark
+     Machine Learning plugin.
+ 
+   - :cask-issue:`HYDRATOR-668` - Added to the Hydrator plugins a Decision Tree Regression
+     Spark Machine Learning plugin.
+ 
+   - :cask-issue:`HYDRATOR-909` - Added to the Hydrator plugins a SparkCompute Hydrator
+     plugin to compute N-Grams of any given String.
+ 
+   - :cask-issue:`HYDRATOR-935` - Added to the Hydrator plugins a Windows share copy Action
+     plugin.
+ 
+   - :cask-issue:`HYDRATOR-971` - Added to the Hydrator plugins a Hydrator plugin that
+     watches a directory and streams file content when new files are added.
+ 
+   - :cask-issue:`HYDRATOR-973` - Added to the Hydrator plugins an HTTP Poller source plugin
+     for streaming pipelines.
+ 
+   - :cask-issue:`HYDRATOR-977` - Added to the Hydrator plugins an XML parser plugin that can
+     parse out multiple records from a single XML document.
+ 
+   - :cask-issue:`HYDRATOR-981` - Added to the Hydrator plugins an Action plugin to run any
+     executable binary.
+ 
+   - :cask-issue:`HYDRATOR-1029` - Added to the Hydrator plugins an Action plugin to export
+     data in an Oracle database.
+ 
+   - :cask-issue:`HYDRATOR-1091` - Added the ability to run a Hydrator pipeline in a preview
+     mode without publishing. It allows users to view the data in each stage of the preview
+     run.
+ 
+   - :cask-issue:`HYDRATOR-1111` - Added to the Hydrator plugins a plugin for transforming
+     data according to commands provided by the Cask Wrangler tool.
+ 
+   - :cask-issue:`HYDRATOR-1146` - Added to the Hydrator plugins a Sink plugin to write to
+     Amazon Kinesis from Batch pipelines.
 
-- :cask-issue:`HYDRATOR-935` - Added to the Hydrator plugins a Windows share copy Action
-  plugin.
+#. Cask Tracker
 
-- :cask-issue:`HYDRATOR-971` - Added to the Hydrator plugins a Hydrator plugin that
-  watches a directory and streams file content when new files are added.
+   - :cask-issue:`TRACKER-233` - Added a data dictionary to Cask Tracker for users to define
+     columns for datasets, enforce a common naming convention, and apply masking to PII
+     (personally identifiable information).
 
-- :cask-issue:`HYDRATOR-973` - Added to the Hydrator plugins an HTTP Poller source plugin
-  for streaming pipelines.
+#. Additional New Features
 
-- :cask-issue:`HYDRATOR-977` - Added to the Hydrator plugins an XML parser plugin that can
-  parse out multiple records from a single XML document.
+   - :cask-issue:`CDAP-5632` - New menu option in Cloudera Manager when running the CDAP CSD
+     enables running utilities such as the HBaseQueueDebugger.
+ 
+   - :cask-issue:`CDAP-6577` - Improved the UpgradeTool to upgrade tables in namespaces with
+     impersonation configured.
 
-- :cask-issue:`HYDRATOR-981` - Added to the Hydrator plugins an Action plugin to run any
-  executable binary.
+   - :cask-issue:`CDAP-6587` - Added support for impersonation with CDAP Explore (Hive)
+     operations, including enabling exploring of a dataset or running queries against it.
+ 
+   - :cask-issue:`CDAP-7287` - Added support for enabling client certificate-based
+     authentication to the CDAP Authentication server.
 
-- :cask-issue:`HYDRATOR-1029` - Added to the Hydrator plugins an Action plugin to export
-  data in an Oracle database.
 
-- :cask-issue:`HYDRATOR-1091` - Added the ability to run a Hydrator pipeline in a preview
-  mode without publishing. It allows users to view the data in each stage of the preview
-  run.
-
-- :cask-issue:`HYDRATOR-1111` - Added to the Hydrator plugins a plugin for transforming
-  data according to commands provided by the Cask Wrangler tool.
-
-- :cask-issue:`HYDRATOR-1146` - Added to the Hydrator plugins a Sink plugin to write to
-  Amazon Kinesis from Batch pipelines.
-
-- :cask-issue:`TRACKER-233` - Added a data dictionary to Cask Tracker for users to define
-  columns for datasets, enforce a common naming convention, and apply masking to PII
-  (personally identifiable information).
-
-- :cask-issue:`WRANGLER-2` - Added Cask Wrangler: a new CDAP extension for data
-  preparation.
-
-Improvement
------------
+Improvements
+------------
 
 - :cask-issue:`CDAP-1280` - Merged various shell scripts into a single script to interface
   with CDAP, called ``cdap``, shipped with both the SDK and Distributed CDAP.
@@ -643,6 +532,146 @@ Bug Fixes
 - :cask-issue:`TRACKER-229` - Fixed an issue that was sending program run ids instead of
   program names.
 
+Known Issues
+------------
+
+- :cask-issue:`CDAP-6099` - Due to a limitation in the CDAP MapReduce implementation,
+  writing to a dataset does not work in a MapReduce Mapper's ``destroy()`` method.
+
+- :cask-issue:`CDAP-7444` - If a MapReduce program fails during startup, the program's
+  ``destroy()`` method is never called, preventing any cleanup or action there being taken.
+
+API Changes
+-----------
+
+.. _release-notes-cdap-6837:
+
+- :cask-issue:`CDAP-6837` - Fixed an issue in ``WorkerContext`` that did not properly
+  implement the contract of the Transactional interface. **Note that this fix may cause
+  incompatibilities with previous releases in certain cases.** See below for details on
+  how to handle this change in existing code.
+
+  The Transactional API defines::
+
+    void execute(TxRunnable runnable) throws TransactionFailureException;
+  
+  and ``WorkerContext`` implements ``Transactional``. However, it declares this method to
+  not throw checked exceptions::
+
+    void execute(TxRunnable runnable);
+  
+  That means that any ``TransactionFailureException`` thrown from a
+  ``WorkerContext.execute()`` is wrapped into a ``RuntimeException``, and callers must
+  write code similar to this to handle the exception::
+
+    try {
+      getContext().execute(...);
+    } catch (Exception e) {
+      if (e.getCause() instanceof TransactionFailureException) {
+        // Handle it
+      } else {
+        // What else to expect? It's not clear...
+        throw Throwables.propagate(e);
+      } 
+    } 
+  
+  This is ugly and inconsistent with other implementations of Transactional. We have
+  addressed this by altering the ``WorkerContext`` to directly raise the
+  ``TransactionFailureException``. **However, code must change to accomodate this.**
+
+  To address this in existing code, such that it will work both in 4.0.0 and earlier
+  versions of CDAP, use code similar to this::
+
+      @Override
+      public void run() {
+        try {
+          getContext().execute(new TxRunnable() {
+            @Override
+            public void run(DatasetContext context) throws Exception {
+              if (getContext().getRuntimeArguments().containsKey("fail")) {
+                throw new RuntimeException("fail");
+              }
+            }
+          });
+        } catch (Exception e) {
+          if (e instanceof TransactionFailureException) {
+            LOG.error("transaction failure");
+          } else if (e.getCause() instanceof TransactionFailureException) {
+            LOG.error("exception with cause transaction failure");
+          } else {
+            LOG.error("other failure");
+          }
+        }
+      }
+    }
+  
+  This code will succeed because it handles both the "new style" of the ``WorkerContext``
+  directly throwing a ``TransactionFailureException`` and at the same time handle the
+  previous style of the ``TransactionFailureException`` being wrapped in a
+  ``RuntimeException``.
+
+  Code that is only used in CDAP 4.0.0 and higher can use a simpler version of this::
+
+      @Override
+      public void run() {
+        try {
+          getContext().execute(new TxRunnable() {
+            @Override
+            public void run(DatasetContext context) throws Exception {
+              if (getContext().getRuntimeArguments().containsKey("fail")) {
+                throw new RuntimeException("fail");
+              }
+            }
+          });
+        } catch (TransactionFailureException e) {
+          ...
+        }
+      }
+    }
+  
+- :cask-issue:`CDAP-7544` - The :ref:`Metadata HTTP RESTful API
+  <http-restful-api-metadata-searching>` has been modified to support sorting and
+  pagination. To do so, the API now uses additional parameters |---| ``sort``, ``offset``,
+  ``limit``, ``numCursors``, and ``cursor`` |---| and the format of the results
+  returned when searching has changed. Whereas previous to CDAP 4.0.0 the API returned
+  results as a list of results, the API now returns the results as a field in a JSON object.
+
+- :cask-issue:`CDAP-7796` - Two properties are changing in version 4.0.0 of the CSD:
+
+  - ``log.saver.run.memory.megs`` is replaced with ``log.saver.container.memory.mb``
+  - ``log.saver.run.num.cores`` is replaced with ``log.saver.container.num.cores``
+
+  Anyone who has modified these properties in previous versions will have to update them
+  after upgrading.
+
+Deprecated and Removed Features
+-------------------------------
+
+- :cask-issue:`CDAP-5246` - Removed the deprecated Kafka feed for metadata updates. Users
+  should instead subscribe to the CDAP Audit feed, which contains metadata update
+  notifications in messages with audit type ``METADATA_CHANGE``.
+
+- :cask-issue:`CDAP-6862` - Deprecated "log.saver.run.memory.megs" and
+  "log.saver.run.num.cores", in favor of "log.saver.container.memory.mb" and
+  "log.saver.container.num.cores", respectively.
+
+- :cask-issue:`CDAP-7475` - Removes deprecated methods ``setInputDataset()``,
+  ``setOutputDataset()``, and ``useStreamInput()`` from the MapReduce API, and related
+  methods from the MapReduceContext.
+
+- :cask-issue:`CDAP-7718` - Removed the deprecated ``StreamBatchReadable`` class.
+
+- :cask-issue:`CDAP-7127` - The deprecated CDAP Explore service instance property has been
+  removed.
+
+- :cask-issue:`CDAP-7205` - Removes the deprecated ``useDatasets()`` method from API and
+  documentation.
+
+- :cask-issue:`CDAP-7563` - Removed the usage of deprecated methods from examples.
+
+- :cask-issue:`HYDRATOR-1094` - Removed the deprecated
+  ``cdap-etl-batch-source-archetype``, ``cdap-etl-batch-sink-archetype``, and
+  ``cdap-etl-transform-archetype`` in favor of the ``cdap-data-pipeline-plugins-archetype``.
 
 
 `Release 3.6.0 <http://docs.cask.co/cdap/3.6.0/index.html>`__
