@@ -2,22 +2,22 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _admin-internal-security:
+.. _admin-security-system-services:
 
-=================
-Internal Security
-=================
+================================
+Enabling SSL for System Services
+================================
 
 Internal security governs the transmission of data between the :ref:`different components
 of CDAP <admin-manual-cdap-components>`. In CDAP 4.0, SSL can be enabled between the CDAP
 Router and CDAP Master (or App Fabric) components.
 
-To enable external security, see the section on :ref:`Perimeter Security <admin-perimeter-security>`.
+To enable perimeter security, see the section on :ref:`Perimeter Security <admin-perimeter-security>`.
 
-.. _enabling-internal-security:
+.. _admin-security-system-services-master:
 
-Enabling Internal Security
-===========================
+Enabling SSL for Master Service
+===============================
 
 To enable communication between the CDAP Router and App Fabric using SSL in CDAP, add this property to ``cdap-site.xml``:
 
@@ -30,7 +30,7 @@ Property                                          Value                Descripti
 Default Ports
 =============
 
-**Without SSL**, these properties have |---| unless set specifically |---| these default values:
+**Without SSL**, these properties |---| unless set specifically |---| have these default values:
 
 ================================================= ==================== ======================================================
 Property                                          Default Value        Description
@@ -38,7 +38,7 @@ Property                                          Default Value        Descripti
 ``app.bind.port``                                 ``0``                App Fabric service bind port
 ================================================= ==================== ======================================================
 
-**With SSL**, these properties have |---| unless set specifically |---| these default values:
+**With SSL**, these properties |---| unless set specifically |---| have these default values:
 
 ================================================= ==================== ======================================================
 Property                                          Default Value        Description

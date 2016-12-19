@@ -88,7 +88,7 @@ installation and its security configuration.
 .. _security: security/index.html
 
 - |security|_ CDAP supports securing clusters using a **perimeter security**,
-  **authorization**, **impersonation**, **internal security**, and **secure storage**.
+  **authorization**, **impersonation**, **SSL for system services**, and **secure storage**.
   This section describes enabling, configuring, and testing security. It also provides
   example configuration files.
 
