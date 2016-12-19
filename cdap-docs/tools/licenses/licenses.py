@@ -26,12 +26,13 @@ import subprocess
 import sys
 import traceback
 
+from datetime import date
 from optparse import OptionParser
 from pprint import pprint
 
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 
-COPYRIGHT_YEAR = '2016'
+COPYRIGHT_YEAR = date.today().year
 
 MASTER_CSV = 'cdap-dependencies-master.csv'
 MASTER_CSV_COMMENTS = {'bower': """# Bower Dependencies
@@ -73,12 +74,6 @@ SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 DEBUG = False
 QUIET = False
-
-def startup_checks():
-    from datetime import date
-    current_year = str(date.today().year)
-    if current_year != COPYRIGHT_YEAR:
-        print "\nWARNING: COPYRIGHT_YEAR of %s does not match current year of %s\n" % (COPYRIGHT_YEAR, current_year)
 
 def get_sdk_version():
     # Sets the Build Version
@@ -203,6 +198,14 @@ def parse_options():
         action='store_true',
         dest='list_special',
         help='Lists dependencies that require special handling (typically those not Apache or MIT licenses)',
+        default=False)
+
+    parser.add_option(
+        '-y', '--use-next-year',
+        action='store_true',
+        dest='use_next_year',
+        help=("Instead of using the current year " +
+              "(%d), uses the next year (%d) for copyright year in the PDFs" % (COPYRIGHT_YEAR, COPYRIGHT_YEAR+1)),
         default=False)
 
     (options, args) = parser.parse_args()
@@ -330,8 +333,40 @@ def process_cdap_ui(options):
     cdap_ui_dict = {}
     missing_libs_dict = {}
     new_versions_dict = {}
-
+    old_versions_dict = {}
+    
     print_quiet()
+
+    def clean_version(version):
+        # Cleans up a version: either
+        # extracts it from an HTTP(S) URL
+        # strips off any leading '~', '^'
+        if version.startswith('http'):
+            # "https://registry.npmjs.org/copy-webpack-plugin/-/copy-webpack-plugin-3.0.1.tgz"
+            version = version.split('/')[-1]
+            if version.find('-') != -1:
+                version = version.split('-')[-1]
+            if version.split('.')[-1].lower() in ('jar', 'tgz', 'zip'):
+                version = version[:-4]
+        elif version[0] in ('~', '^'):
+            version = version[1:]
+        return version
+        
+    def higher_version(v1, v2):
+        """Compare v1 and v2 and is true if v2 > v1 (v2 is a higher version than v1)"""
+        v1 = clean_version(v1)
+        v2 = clean_version(v2)
+        if v1 == v2:
+            return False
+        else:
+            v1_list = v1.split('.')
+            v2_list = v2.split('.')
+            if len(v1_list) != len(v2_list):
+                if len(v1_list) > len(v2_list):
+                    v2_list = v2_list + ['0'] * (len(v1_list) - len(v2_list))
+                else:
+                    v1_list = v1_list + ['0'] * (len(v2_list) - len(v1_list))
+            return cmp(v2_list, v1_list) == 1            
 
     for type in CDAP_UI_SOURCES.keys():
         source = CDAP_UI_SOURCES[type][0]
@@ -344,20 +379,19 @@ def process_cdap_ui(options):
             for dependency in data[CDAP_UI_DEPENDENCIES_KEY]:
                 if not dependency.startswith(CDAP_UI_CASK_DEPENDENCIES):
                     version = data[CDAP_UI_DEPENDENCIES_KEY][dependency]
+                    version = clean_version(version)
                     if master_libs_dict.has_key(dependency):
                         # Look up reference in dictionary
 #                         cdap_ui_dict[dependency] = master_libs_dict[dependency]
                         # Compare versions
-                        # TO-DO: if versions differ by a prefix (~ or ^) this comparison fails
-                        # need to strip off the prefix for the comparison but retain it
-                        # perhaps add a function that does the comparison
-                        if master_libs_dict[dependency].version != version:
+                        if higher_version(master_libs_dict[dependency].version, version):
                             if new_versions_dict.has_key(dependency):
                                 print_quiet("Dependency already in new versions: %s current: %s new: %s newer: %s" % (dependency, 
                                     master_libs_dict[dependency].version, new_versions_dict[dependency], version))
                             else:
                                 print_quiet("New version: %s for %s (old %s)" % (version, dependency, master_libs_dict[dependency].version))
                                 new_versions_dict[dependency]=version
+                                old_versions_dict[dependency]=master_libs_dict[dependency].version
                                 master_libs_dict[dependency].version = version
                         cdap_ui_dict[dependency] = master_libs_dict[dependency]
                         
@@ -370,7 +404,7 @@ def process_cdap_ui(options):
         print_quiet("\nCDAP UI: New Versions: %s" % count_new)
         keys.sort()
         for key in keys:
-            print_quiet("%s : current: %s new: %s" % (key, master_libs_dict[key].version, new_versions_dict[key]))
+            print_quiet("%s : current: %s new: %s" % (key, old_versions_dict[key], new_versions_dict[key]))
         
     keys = missing_libs_dict.keys()
     count_missing = len(keys)
@@ -678,7 +712,7 @@ def _print_dependencies(title, file_base, header, widths, data_list):
 # Example: 'Level 1', LEVEL_1, ...
     RST_HEADER=""".. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © %(year)s Cask Data, Inc.
+    :copyright: Copyright © %(year)d Cask Data, Inc.
     :version: %(version)s
 
 =================================================
@@ -965,12 +999,16 @@ class UI_Library(Library):
 def main():
     """ Main program entry point.
     """
-    startup_checks()
+    global COPYRIGHT_YEAR
     options, input_file = parse_options()
 
     try:
         options.logger = log
 
+        if options.use_next_year:
+            COPYRIGHT_YEAR +=1
+            print "\nWARNING: COPYRIGHT_YEAR of %s does not match current year of %s\n" % (COPYRIGHT_YEAR, COPYRIGHT_YEAR -1)
+            
         if options.cdap_ui:
             process_cdap_ui(options)
 
