@@ -66,6 +66,8 @@ commons:
 features:
   AppDetailedView:
     Title: Application - {appId}
+    History:
+      emptyMessage: No Runs
   ConfirmationModal:
     confirmDefaultText: OK
     cancelDefaultText: Cancel

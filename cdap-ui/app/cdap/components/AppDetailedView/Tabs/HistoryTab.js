@@ -120,7 +120,7 @@ export default class HistoryTab extends Component {
         } else {
           return (
             <h3 className="text-center empty-message">
-              {T.translate('features.EntityListView.emptyMessage')}
+              {T.translate('features.AppDetailedView.History.emptyMessage')}
             </h3>
           );
         }
