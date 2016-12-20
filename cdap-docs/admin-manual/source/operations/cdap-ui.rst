@@ -34,6 +34,7 @@ On the **Development** page, datasets and applications are displayed. The **Oper
 gives you views of current system and user metrics, with customizable dashboards. The
 **Management** page provides features and controls for administering the CDAP installation.
 
+.. _cdap-ui-beta:
 
 .. rubric:: CDAP 4.0 New Beta UI
 
