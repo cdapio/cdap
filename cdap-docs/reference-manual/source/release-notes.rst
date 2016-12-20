@@ -49,21 +49,15 @@ New Features
 
 #. CDAP Transactional Messaging System
 
-   - :cask-issue:`CDAP-7211` - Adds a transactional messaging system that can be used to
-     communicate between components.
-
-#. Dynamic Log Level
-
-   - :cask-issue:`CDAP-5479` - Allow updating or resetting of log levels for program types
-     worker, flow, and service dynamically using REST endpoints.
- 
-   - :cask-issue:`CDAP-7214` - Allow setting the log levels for all program types through
-     runtime arguments or preferences.
+   - :cask-issue:`CDAP-7211` - Adds a transactional messaging system that is used for
+     reliable communication of messages between components. In CDAP 4.0.0, the transactional
+     messaging system replaces Kafka for publishing and subscribing audit logs that is used
+     within CDAP for computing data lineage.
 
 #. Operational Statistics
 
-   - :cask-issue:`CDAP-7670` - Added support for reporting of operational statistics from
-     CDAP as extensions.
+   - :cask-issue:`CDAP-7670` - Added a pluggable extension to retrieve operational statistics
+     in CDAP. Provided extensions for operational stats from YARN, HDFS, HBase, and CDAP.
  
    - :cask-issue:`CDAP-7703` - Added reporting operational statistics for YARN. They can be
      retrieved using JMX with the domain name ``co.cask.cdap.operations`` and the property
@@ -73,12 +67,24 @@ New Features
      retrieved using JMX with the domain name ``co.cask.cdap.operations`` and the property
      ``name`` set to ``hbase`` as well as through the CDAP UI Administration page.
 
+#. Dynamic Log Level
+
+   - :cask-issue:`CDAP-5479` - Allow updating or resetting of log levels for program types
+     worker, flow, and service dynamically using REST endpoints.
+ 
+   - :cask-issue:`CDAP-7214` - Allow setting the log levels for all program types through
+     runtime arguments or preferences.
+
 #. New Versions of Distributions Supported
 
    - :cask-issue:`CDAP-6938` - Added support for Amazon EMR 4.6.0+ installation of CDAP via a
      bootstrap action script.
  
+   - :cask-issue:`CDAP-7249` - Added support for HDInsights 3.5.
+
    - :cask-issue:`CDAP-7291` - Added support for CDH 5.9.
+
+   - :cask-issue:`CDAP-7901` - Added support for HDP 2.5.
 
 #. New Hydrator Plugins Added
 
