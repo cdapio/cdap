@@ -251,6 +251,7 @@ features:
 
     Component-Overview:
       label: Component Overview
+      emptyMessage: Available only in Distributed mode
       headers:
         cdap: CDAP
         cdh: CDH
