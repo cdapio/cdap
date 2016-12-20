@@ -42,7 +42,7 @@
         </a>
       </li>
       <li class="old-ui-link">
-        <a href="{{'/cdap/ns/'+$stateParams.namespace}}"> Switch to New UI</a>
+        <a href="{{'/cdap/ns/'+$stateParams.namespace}}"> VIEW BETA UI</a>
       </li>
     </ul>
 
@@ -134,7 +134,7 @@
           </li>
 
           <li role="presentation" ng-show="Navbar.securityEnabled && Navbar.currentUser">
-            <a href="" ng-click="Navbar.securityEnabled && Navbar.logout()">
+            <a ng-click="Navbar.securityEnabled && Navbar.logout()">
               <span class="fa fa-fw fa-sign-out"></span>
               <span>Log Out</span>
             </a>

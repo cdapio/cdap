@@ -50,8 +50,7 @@ angular.module(PKG.name + '.commons')
       var params = {
         namespaceId: $stateParams.namespace || $stateParams.nsadmin,
         query: vm.searchTerm,
-        numCursors: 10,
-        sort: 'creation-time desc'
+        numCursors: 10
       };
       myTagsApi.searchTags(params)
         .$promise

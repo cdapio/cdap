@@ -97,7 +97,7 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
         var user = new MyAuthUser(data);
         persist(user);
 
-        $cookies.put('CDAP_Auth_Token', user.token);
+        $cookies.put('CDAP_Auth_Token', user.token, {path: '/'});
         $cookies.put('CDAP_Auth_User', user.username);
         $localStorage.remember = cred.remember && user.storable();
         $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
@@ -114,8 +114,8 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
   this.logout = function () {
     if (this.currentUser){
       persist(null);
-      $cookies.remove('CDAP_Auth_Token');
-      $cookies.remove('CDAP_Auth_User');
+      $cookies.remove('CDAP_Auth_Token', {path: '/'});
+      $cookies.remove('CDAP_Auth_User', {path: '/'});
       $rootScope.$broadcast(MYAUTH_EVENT.logoutSuccess);
     }
   };
