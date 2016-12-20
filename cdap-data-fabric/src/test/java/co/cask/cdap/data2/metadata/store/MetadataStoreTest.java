@@ -39,6 +39,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.Metadata;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -284,7 +285,9 @@ public class MetadataStoreTest {
     store.setProperties(MetadataScope.USER, dataset1, datasetUserProps);
 
     // Test score and metadata match
-    List<MetadataSearchResultRecord> actual = Lists.newArrayList(search("ns1", "value1 multiword:av2"));
+    MetadataSearchResponse response = search("ns1", "value1 multiword:av2");
+    Assert.assertEquals(2, response.getTotal());
+    List<MetadataSearchResultRecord> actual = Lists.newArrayList(response.getResults());
 
     Map<MetadataScope, Metadata> expectedFlowMetadata =
       ImmutableMap.of(MetadataScope.USER, new Metadata(flowUserProps, flowUserTags),
@@ -302,7 +305,9 @@ public class MetadataStoreTest {
       );
     Assert.assertEquals(expected, actual);
 
-    actual = Lists.newArrayList(search("ns1", "value1 sValue*"));
+    response = search("ns1", "value1 sValue*");
+    Assert.assertEquals(3, response.getTotal());
+    actual = Lists.newArrayList(response.getResults());
     expected = Lists.newArrayList(
       new MetadataSearchResultRecord(stream1,
                                      expectedStreamMetadata),
@@ -313,7 +318,9 @@ public class MetadataStoreTest {
     );
     Assert.assertEquals(expected, actual);
 
-    actual = Lists.newArrayList(search("ns1", "*"));
+    response = search("ns1", "*");
+    Assert.assertEquals(3, response.getTotal());
+    actual = Lists.newArrayList(response.getResults());
     Assert.assertTrue(actual.containsAll(expected));
   }
 
@@ -342,42 +349,56 @@ public class MetadataStoreTest {
     // relevance order for searchQuery "tag*" is trackerDataset, dataset, stream, flow
     // (this depends on how many tags got matched with the search query)
     // trackerDataset entity should not be part
+    MetadataSearchResponse response = search(ns.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1);
+    Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
       ImmutableList.of(datasetSearchResult, streamSearchResult, flowSearchResult),
-      ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1)))
+      ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
     // trackerDataset entity should be be part since showHidden is true
+    response = search(ns.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1, true);
+    Assert.assertEquals(4, response.getTotal());
     Assert.assertEquals(
       ImmutableList.of(trackerDatasetSearchResult, datasetSearchResult, streamSearchResult, flowSearchResult),
-      ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1, true)))
+      ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
+    response = search(ns.getNamespace(), "tag*", 0, 2, 1);
+    Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
       ImmutableList.of(datasetSearchResult, streamSearchResult),
-      ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 0, 2, 1)))
+      ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
     // skipping trackerDataset should not affect the offset
+    response = search(ns.getNamespace(), "tag*", 1, 2, 1);
+    Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
       ImmutableList.of(streamSearchResult, flowSearchResult),
-      ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 1, 2, 1)))
+      ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
     // if showHidden is true trackerDataset should affect the offset
+    response = search(ns.getNamespace(), "tag*", 1, 3, 1, true);
+    Assert.assertEquals(4, response.getTotal());
     Assert.assertEquals(
       ImmutableList.of(datasetSearchResult, streamSearchResult, flowSearchResult),
-      ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 1, 3, 1, true)))
+      ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
+    response = search(ns.getNamespace(), "tag*", 2, 2, 1);
+    Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
       ImmutableList.of(flowSearchResult),
-      ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 2, 2, 1)))
+      ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
+    response = search(ns.getNamespace(), "tag*", 4, 2, 1);
+    Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
       ImmutableList.<MetadataSearchResultRecord>of(),
-      ImmutableList.copyOf(stripMetadata(search(ns.getNamespace(), "tag*", 4, 2, 1)))
+      ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
   }
 
@@ -386,21 +407,21 @@ public class MetadataStoreTest {
     txManager.stopAndWait();
   }
 
-  private Set<MetadataSearchResultRecord> search(String ns, String searchQuery) throws BadRequestException {
+  private MetadataSearchResponse search(String ns, String searchQuery) throws BadRequestException {
     return search(ns, searchQuery, 0, Integer.MAX_VALUE, 0);
   }
 
-  private Set<MetadataSearchResultRecord> search(String ns, String searchQuery,
-                                                 int offset, int limit, int numCursors) throws BadRequestException {
+  private MetadataSearchResponse search(String ns, String searchQuery,
+                                        int offset, int limit, int numCursors) throws BadRequestException {
     return search(ns, searchQuery, offset, limit, numCursors, false);
   }
 
-  private Set<MetadataSearchResultRecord> search(String ns, String searchQuery,
-                                                 int offset, int limit, int numCursors, boolean showHidden)
+  private MetadataSearchResponse search(String ns, String searchQuery,
+                                        int offset, int limit, int numCursors, boolean showHidden)
     throws BadRequestException {
     return store.search(
       ns, searchQuery, EnumSet.allOf(MetadataSearchTargetType.class),
-      SortInfo.DEFAULT, offset, limit, numCursors, null, showHidden).getResults();
+      SortInfo.DEFAULT, offset, limit, numCursors, null, showHidden);
   }
 
   private void generateMetadataUpdates() {

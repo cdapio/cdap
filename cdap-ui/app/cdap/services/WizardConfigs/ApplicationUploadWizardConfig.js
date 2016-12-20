@@ -20,9 +20,9 @@ import T from 'i18n-react';
 let commonSteps = [
  {
    id: 'upload',
-   shorttitle: T.translate('features.Wizard.ArtifactUpload.Step1.shorttitle'),
-   title: T.translate('features.Wizard.ArtifactUpload.Step1.title'),
-   description: T.translate('features.Wizard.ArtifactUpload.Step1.description'),
+   shorttitle: T.translate('features.Wizard.ApplicationUpload.Step1.shorttitle'),
+   title: T.translate('features.Wizard.ApplicationUpload.Step1.title'),
+   description: T.translate('features.Wizard.ApplicationUpload.Step1.description'),
    content: (<ApplicationUploadStep />),
    requiredFields: ['file']
  }

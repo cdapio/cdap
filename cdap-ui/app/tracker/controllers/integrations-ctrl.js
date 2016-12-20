@@ -36,8 +36,7 @@ class TrackerIntegrationsController {
     this.showConfig = false;
 
     this.optionalSettings = {
-      navigator: false,
-      kafka: false
+      navigator: false
     };
 
     this.navigatorInfo = {
@@ -53,11 +52,11 @@ class TrackerIntegrationsController {
         navigatorURL: '',
         metadataParentURI: ''
       },
-      auditKafkaConfig: {
-        zookeeperString: '',
-        topic: '',
-        numPartitions: '',
-        offsetDataset: ''
+      auditLogConfig: {
+        limit: '',
+        offsetDataset: '',
+        namespace: '',
+        topic: ''
       }
     };
 
@@ -92,27 +91,7 @@ class TrackerIntegrationsController {
         this.cancelSetup();
       }
       this.optionalSettings.navigator = false;
-      this.optionalSettings.kafka = false;
     });
-  }
-
-  getKafkaBrokerList() {
-    this.myTrackerApi.getCDAPConfig({ scope: this.$scope })
-      .$promise
-      .then( (res) => {
-        let zookeeperQuorum = res.filter( (config) => {
-          return config.name === 'zookeeper.quorum';
-        });
-
-        let zookeeperKafka = res.filter( (config) => {
-          return config.name === 'kafka.zookeeper.namespace';
-        });
-
-        let zookeeperString = zookeeperQuorum[0].value + '/' + zookeeperKafka[0].value;
-
-        this.navigatorInfo.auditKafkaConfig.zookeeperString = zookeeperString;
-        this.originalConfig.auditKafkaConfig.zookeeperString = zookeeperString;
-      });
   }
 
   getNavigatorApp() {
@@ -126,7 +105,6 @@ class TrackerIntegrationsController {
         this.navigatorSetup.isSetup = true;
         this.navigatorSetup.popoverEnabled = false;
         this.optionalSettings.navigator = false;
-        this.optionalSettings.kafka = false;
 
         let config = {};
         try {
@@ -135,14 +113,12 @@ class TrackerIntegrationsController {
           this.originalConfig = angular.copy(config);
 
           this.navigatorInfo.navigatorConfig = config.navigatorConfig;
-          this.navigatorInfo.auditKafkaConfig = config.auditKafkaConfig;
+          this.navigatorInfo.auditLogConfig = config.auditLogConfig;
 
           this.getNavigatorStatus();
         } catch (e) {
           console.log('Cannot parse configuration JSON');
         }
-      }, () => {
-        this.getKafkaBrokerList();
       });
   }
 
@@ -277,16 +253,16 @@ class TrackerIntegrationsController {
 
     let appConfig = {
       navigatorConfig: {},
-      auditKafkaConfig: {}
+      auditLogConfig: {}
     };
     angular.forEach(this.navigatorInfo.navigatorConfig, (value, key) => {
       if (value.length) {
         appConfig.navigatorConfig[key] = value;
       }
     });
-    angular.forEach(this.navigatorInfo.auditKafkaConfig, (value, key) => {
+    angular.forEach(this.navigatorInfo.auditLogConfig, (value, key) => {
       if (value.length) {
-        appConfig.auditKafkaConfig[key] = value;
+        appConfig.auditLogConfig[key] = value;
       }
     });
 
@@ -313,16 +289,14 @@ class TrackerIntegrationsController {
   validateFields() {
     return this.navigatorInfo.navigatorConfig.navigatorHostName &&
     this.navigatorInfo.navigatorConfig.username &&
-    this.navigatorInfo.navigatorConfig.password &&
-    this.navigatorInfo.auditKafkaConfig.zookeeperString;
+    this.navigatorInfo.navigatorConfig.password;
   }
 
   cancelSetup() {
     this.navigatorSetup.isOpen = false;
     this.navigatorInfo.navigatorConfig = angular.copy(this.originalConfig.navigatorConfig);
-    this.navigatorInfo.auditKafkaConfig = angular.copy(this.originalConfig.auditKafkaConfig);
+    this.navigatorInfo.auditLogConfig = angular.copy(this.originalConfig.auditLogConfig);
     this.optionalSettings.navigator = false;
-    this.optionalSettings.kafka = false;
   }
 
 }

@@ -31,7 +31,10 @@ const defaultConfigureState = Object.assign({
   type: '',
   description: '',
   classname: '',
-  parentArtifact: []
+  parentArtifact: [
+    'system:cdap-data-pipeline[3.0.0,10.0.0]',
+    'system:cdap-data-streams[3.0.0,10.0.0]'
+  ]
 }, defaultState);
 
 const defaultUploadState = Object.assign({

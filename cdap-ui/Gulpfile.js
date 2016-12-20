@@ -201,6 +201,7 @@ gulp.task('js:lib', function() {
       './bower_components/sockjs-client/dist/sockjs.js',
 
       './bower_components/d3/d3.min.js',
+      // './bower_components/d3-tip/index.js', FIXME: add this when we fix multiple versions of d3 issue.
       './bower_components/d3-timeline/src/d3-timeline.js',
 
       './bower_components/epoch/epoch.min.js',
@@ -231,7 +232,6 @@ gulp.task('js:lib', function() {
       './bower_components/angular-file-saver/dist/angular-file-saver.bundle.js',
       './bower_components/ngInfiniteScroll/build/ng-infinite-scroll.min.js',
       './bower_components/angular-inview/angular-inview.js',
-      './bower_components/d3-tip/index.js',
       './bower_components/esprima/esprima.js',
       './node_modules/react/dist/react-with-addons.min.js',
       './node_modules/react-dom/dist/react-dom.min.js',

@@ -124,8 +124,8 @@ export default class JumpButton extends Component {
   render() {
     return (
       <ButtonDropdown isOpen={this.state.dropdownOpen} toggle={() => {}}>
-        <DropdownToggle className="jump-button" onClick={this.toggle}>
-          <span>{T.translate('features.JumpButton.buttonLabel')}</span>
+        <DropdownToggle className="jump-button clearfix" onClick={this.toggle}>
+          <span className="pull-left">{T.translate('features.JumpButton.buttonLabel')}</span>
           <span className={classnames('fa pull-right', {
             'fa-chevron-down': !this.state.dropdownOpen,
             'fa-chevron-up': this.state.dropdownOpen

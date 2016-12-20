@@ -192,8 +192,9 @@ const visualization = (state = defaultInitialState.visualization, action = defau
 };
 
 function _setData(payload) {
-  const headersList = Object.keys(payload.data[0]);
-  const initialHeaders = Object.keys(payload.data[0]);
+  let headersList = cloneDeep(payload.headers);
+  let initialHeaders = cloneDeep(payload.headers);
+
   const data = payload.data;
   const originalData = cloneDeep(data);
 
@@ -229,7 +230,8 @@ function _deleteHistory(state, payload) {
   let history = cloneDeep(state.history);
 
   let newPayload = {
-    data: cloneDeep(state.originalData)
+    data: cloneDeep(state.originalData),
+    headers: cloneDeep(state.initialHeaders)
   };
 
   let stateCopy = Object.assign({}, defaultInitialState.wrangler, _setData(newPayload));

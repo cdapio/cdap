@@ -53,6 +53,11 @@ installation and its security configuration.
       clusters managed with `Cloudera Manager
       <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__.
 
+    .. |emr| replace:: **Amazon Hadoop (EMR):**
+    .. _emr: installation/emr.html
+
+    - |emr|_ Installing on `Amazon EMR (Elastic MapReduce) <https://aws.amazon.com/emr/>`__.
+
     .. |ambari| replace:: **Apache Ambari:**
     .. _ambari: installation/ambari.html
 
@@ -88,8 +93,9 @@ installation and its security configuration.
 .. _security: security/index.html
 
 - |security|_ CDAP supports securing clusters using a **perimeter security**,
-  **authorization**, **impersonation** and **secure storage**. This section describes
-  enabling, configuring, and testing security. It also provides example configuration files.
+  **authorization**, **impersonation**, **SSL for system services**, and **secure storage**.
+  This section describes enabling, configuring, and testing security. It also provides
+  example configuration files.
 
 
 .. |operations| replace:: **Operations:**

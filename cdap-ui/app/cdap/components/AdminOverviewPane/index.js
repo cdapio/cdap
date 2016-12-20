@@ -19,37 +19,52 @@ require('./AdminOverviewPane.less');
 import OverviewPaneCard from '../OverviewPaneCard/index.js';
 var shortid = require('shortid');
 import T from 'i18n-react';
+import classnames from 'classnames';
 
 const propTypes = {
   isLoading: PropTypes.bool,
-  services: PropTypes.arrayOf(
-    PropTypes.shape({
-      name : PropTypes.string,
-      version: PropTypes.string,
-      url: PropTypes.string,
-      logs: PropTypes.string
-    })
-  )
+  services: PropTypes.oneOfType([
+    PropTypes.arrayOf(
+      PropTypes.shape({
+        name : PropTypes.string,
+        version: PropTypes.string,
+        url: PropTypes.string,
+        logs: PropTypes.string
+      })
+    ),
+    PropTypes.string
+  ])
 };
 
 function AdminOverviewPane({services}) {
-  let cards = services.map((service) => {
-    return (
-      <OverviewPaneCard
-        key={shortid.generate()}
-        name={service.name}
-        version={service.version}
-        url={service.url}
-        logs={service.logs}
-      />
-    );
-  });
+  let cards;
+  let isEmpty = services.length === 1 && services[0].name === 'CDAP';
+  cards = services
+    .filter(service => service.name !== 'CDAP')
+    .map((service) => {
+      if(service.name !== 'CDAP'){
+        return (
+          <OverviewPaneCard
+            key={shortid.generate()}
+            name={service.name}
+            version={service.version}
+            url={service.url}
+            logs={service.logs}
+          />
+        );
+      }
+    });
 
   return (
     <div className="overview-pane">
       <span>{T.translate('features.Management.Component-Overview.label')}</span>
-      <div className="overview-pane-container">
-       {cards}
+      <div className={classnames('overview-pane-container', {'empty-container': !cards.length})}>
+      {
+        isEmpty ?
+          <h3>{T.translate('features.Management.Component-Overview.emptyMessage')}</h3>
+        :
+          cards
+      }
       </div>
     </div>
   );

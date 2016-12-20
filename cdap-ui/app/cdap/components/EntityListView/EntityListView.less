@@ -14,6 +14,8 @@
  * the License.
  */
 
+@import "../../styles/variables.less";
+
  /* Animation - Slide in direction of Next */
 .entity-animation--next-enter {
   &:not(h3) {
@@ -73,6 +75,85 @@
   }
 }
 
+.splash-screen-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: ~"calc(100vh - 80px)";
+
+  .splash-screen-first-time {
+    color: @cdap-orange;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    .app-store-bd {
+      font-size: 2rem;
+    }
+    .welcome-message {
+      font-weight: bold;
+      font-size: 5rem;
+    }
+    .beta-notice {
+      font-size: 4rem;
+    }
+    .cdap-fist-icon {
+      margin-top: 20px;
+      margin-bottom: 20px;
+      span {
+        color: @cdap-orange;
+        font-size: 12rem;
+      }
+    }
+    .introducing {
+      font-size: 3rem;
+    }
+    .go-to-cdap {
+      color: @cdap-orange;
+      cursor: pointer;
+      font-size: 16px;
+      text-decoration: underline;
+    }
+    .splash-screen-first-time-btn {
+      width: 50%;
+      height: 40px;
+      padding: 1px;
+      border-radius: 4px;
+      box-shadow: 0 0 2px black;
+      margin-top: 30px;
+      margin-bottom: 15px;
+      font-size: 1.5rem;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: @cdap-orange;
+      cursor: pointer;
+
+      .icon-CaskMarket {
+        margin-right: 5px;
+      }
+
+      &:hover {
+        color: @cdap-orange;
+        background-color: white;
+        box-shadow: 0 0 2px @cdap-orange;
+      }
+    }
+
+    .splash-screen-disclaimer {
+      color: black;
+      margin-top: 15px;
+
+      p {
+        margin: 0;
+        text-align: center;
+      }
+    }
+  }
+}
 
 .entity-list-view {
   height: ~"calc(100vh - 132px)";
@@ -105,6 +186,12 @@
      transform: translate(-50%, -50%);
      font-size: 20px;
      font-weight: 500;
+
+    &.text-danger {
+      .fa-exclamation-triangle {
+        margin-right: 5px;
+      }
+    }
   }
 
 }

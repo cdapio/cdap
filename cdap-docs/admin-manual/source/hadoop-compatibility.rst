@@ -47,6 +47,7 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 .. |cdh-version|       replace:: 5.1 through 5.9
 .. |hdp-version|       replace:: 2.0 through 2.5
 .. |mapr-version|      replace:: 4.1 through 5.2
+.. |emr-version|       replace:: 4.6 through 4.8
 
 +----------------+---------------------------------+---------------------------------------+
 | Component      | Source                          | Supported Versions                    |
@@ -60,6 +61,8 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 |                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-version| (with Apache HBase)    |
++                +---------------------------------+---------------------------------------+
+|                | Amazon Hadoop (EMR)             | |emr-version| (with Apache HBase)     |
 +----------------+---------------------------------+---------------------------------------+
 | **HDFS**       | Apache Hadoop                   | 2.0.2-alpha through 2.6               |
 +                +---------------------------------+---------------------------------------+
@@ -68,6 +71,8 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 |                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-version| (with MapR-FS)         |
++                +---------------------------------+---------------------------------------+
+|                | Amazon Hadoop (EMR)             | |emr-version|                         |
 +----------------+---------------------------------+---------------------------------------+
 | **YARN** and   | Apache Hadoop                   | 2.0.2-alpha through 2.7               |
 + **MapReduce2** +---------------------------------+---------------------------------------+
@@ -76,6 +81,8 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 |                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-version|                        |
++                +---------------------------------+---------------------------------------+
+|                | Amazon Hadoop (EMR)             | |emr-version|                         |
 +----------------+---------------------------------+---------------------------------------+
 | **ZooKeeper**  | Apache                          | Version 3.4.3 through 3.4             |
 +                +---------------------------------+---------------------------------------+
@@ -84,6 +91,8 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 |                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-version|                        |
++                +---------------------------------+---------------------------------------+
+|                | Amazon Hadoop (EMR)             | |emr-version|                         |
 +----------------+---------------------------------+---------------------------------------+
 
 For a Distributed CDAP cluster, version |release|, you *can* (optionally) install these
@@ -99,6 +108,8 @@ Hadoop components, as required:
 |                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-version|                        |
++                +---------------------------------+---------------------------------------+
+|                | Amazon Hadoop (EMR)             | |emr-version|                         |
 +----------------+---------------------------------+---------------------------------------+
 | **Spark**      | Apache                          | Versions 1.2.x through 1.6.x          |
 +                +---------------------------------+---------------------------------------+
@@ -107,6 +118,8 @@ Hadoop components, as required:
 |                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-version|                        |
++                +---------------------------------+---------------------------------------+
+|                | Amazon Hadoop (EMR)             | |emr-version|                         |
 +----------------+---------------------------------+---------------------------------------+
 
 **Note:** Component versions shown in these tables are those that we have tested and are

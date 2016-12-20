@@ -61,7 +61,7 @@
     <description>
       A cluster-based name for CDAP. It is used for scope resolution of preferences and
       runtime arguments. For example: the preference key "cluster.[cluster.name].my.key"
-      would be resolved to "my.key" at runtime; a program can then retreive the preference
+      would be resolved to "my.key" at runtime; a program can then retrieve the preference
       value by using just "my.key". The administrator can use this property to set
       different preferences for each cluster.
     </description>
@@ -272,14 +272,6 @@
   </property>
 
   <property>
-    <name>app.ssl.bind.port</name>
-    <value>30443</value>
-    <description>
-      App Fabric service bind port
-    </description>
-  </property>
-
-  <property>
     <name>app.output.dir</name>
     <value>/programs</value>
     <description>
@@ -291,9 +283,9 @@
     <name>app.program.extra.classpath</name>
     <value></value>
     <description>
-      Extra Java classpath for CDAP programs. These extra classpaths must
+      Additional Java classpath for CDAP programs. These extra classpaths must
       be present on all nodes in the cluster. Supports wildcard suffix "*"
-      to include all jar files under a directory.
+      to include all JAR files under a directory.
     </description>
   </property>
 
@@ -302,6 +294,22 @@
     <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts}</value>
     <description>
       Java options for all program containers
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.max.start.seconds</name>
+    <value>300</value>
+    <description>
+      Maximum number of seconds to wait for a program to start before killing it
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.max.stop.seconds</name>
+    <value>300</value>
+    <description>
+      Maximum number of seconds to wait for a program to stop before killing it
     </description>
   </property>
 
@@ -327,8 +335,22 @@
     <name>app.program.spark.yarn.client.rewrite.enabled</name>
     <value>true</value>
     <description>
-      Specify whether to rewrite the yarn.client class in Spark to work
-      around the issue SPARK-13441 in CDH clusters
+      Specify whether to rewrite the YARN 'Client.scala' class in Spark to work
+      around issue SPARK-13441 in CDH clusters
+    </description>
+  </property>
+
+  <property>
+    <name>apps.scheduler.queue</name>
+    <value></value>
+    <description>Scheduler queue for CDAP programs and CDAP Explore queries</description>
+  </property>
+
+  <property>
+    <name>app.ssl.bind.port</name>
+    <value>30443</value>
+    <description>
+      App Fabric service bind port
     </description>
   </property>
 
@@ -341,27 +363,16 @@
   </property>
 
   <property>
-    <name>apps.scheduler.queue</name>
+    <name>program.container.dist.jars</name>
     <value></value>
-    <description>Scheduler queue for CDAP programs and CDAP Explore queries</description>
-  </property>
-
-  <property>
-    <name>app.program.max.start.seconds</name>
-    <value>300</value>
     <description>
-      Maximum number of seconds to wait for a program to start before killing it
+      Additional jars to be localized to every program container and to be
+      added to classpaths of CDAP programs. They can be local file paths
+      on the CDAP Master or URIs of remote files. Multiple JAR files
+      are comma-separated.
     </description>
   </property>
-
-  <property>
-    <name>app.program.max.stop.seconds</name>
-    <value>300</value>
-    <description>
-      Maximum number of seconds to wait for a program to stop before killing it
-    </description>
-  </property>
-
+  
   <property>
     <name>scheduler.max.thread.pool.size</name>
     <value>100</value>
@@ -388,16 +399,6 @@
     </description>
   </property>
 
-  <property>
-    <name>program.container.dist.jars</name>
-    <value></value>
-    <description>
-      Extra jars to be localized to every program container and to be
-      added to classpaths of CDAP programs. They can be local file paths
-      on the CDAP master or URI's of remote files. Multiple jar files
-      are comma separated.
-    </description>
-  </property>
 
   <!-- Audit Configuration -->
 
@@ -410,20 +411,21 @@
   </property>
 
   <property>
-    <name>audit.topic</name>
-    <value>audit</value>
-    <description>
-      The topic name in the messaging system to which audit messages are published
-    </description>
-  </property>
-
-  <property>
     <name>audit.publish.timeout.ms</name>
     <value>2000</value>
     <description>
       Audit message publishing timeout in milliseconds
     </description>
   </property>
+
+  <property>
+    <name>audit.topic</name>
+    <value>audit</value>
+    <description>
+      Topic name in the messaging system to which audit messages are published
+    </description>
+  </property>
+
 
   <!-- Datasets Configuration -->
 
@@ -1142,7 +1144,9 @@
   <property>
     <name>master.services.scheduler.queue</name>
     <value></value>
-    <description>Scheduler queue for CDAP master services</description>
+    <description>
+      Scheduler queue for CDAP Master services
+    </description>
   </property>
 
 
@@ -1586,6 +1590,7 @@
     </description>
   </property>
 
+
   <!-- Operational Statistics Configuration -->
   
   <property>
@@ -1757,7 +1762,7 @@
     <name>router.ssl.server.port</name>
     <value>${router.ssl.bind.port}</value>
     <description>
-      CDAP Router service bind port for HTTPS, for clients and webapps
+      CDAP Router service port for HTTPS, for clients and webapps
     </description>
   </property>
 
@@ -2078,6 +2083,7 @@
       Enable SSL between Router and App Fabric
     </description>
   </property>
+
 
   <!-- Stream Configuration -->
 

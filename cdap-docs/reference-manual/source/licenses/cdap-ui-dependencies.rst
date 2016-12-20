@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
-    :version: 3.5.2
+    :version: 4.0.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -21,7 +21,7 @@ Cask Data Application Platform UI Dependencies
    :header: "Dependency","Version","Type","License","License Source URL"
    :widths: 20, 10, 10, 20, 40
 
-   "angular","1.4.3","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/angular/angular.js/blob/v1.4.3/LICENSE"
+   "angular","1.5.8","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/angular/angular.js/blob/v1.4.3/LICENSE"
    "angular-animate","1.4.3","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/angular/bower-angular-animate"
    "angular-bootstrap","1.1.2","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/angular-ui/bootstrap-bower/blob/1.1.2/package.json"
    "angular-breadcrumb","0.3.3","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/ncuillery/angular-breadcrumb"
@@ -42,7 +42,7 @@ Cask Data Application Platform UI Dependencies
    "angular-ui-router","0.3.0","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/angular-ui/ui-router/blob/0.3.0/LICENSE"
    "angularjs-dropdown-multiselect","1.5.2","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/dotansimha/angularjs-dropdown-multiselect"
    "body-parser","1.14.2","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/expressjs/body-parser"
-   "bootstrap","3.3.6","bower","`MIT License <http://opensource.org/licenses/MIT>`__","http://getbootstrap.com"
+   "bootstrap","3.3.7","bower","`MIT License <http://opensource.org/licenses/MIT>`__","http://getbootstrap.com"
    "c3","0.4.10","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/masayuki0812/c3"
    "compression","1.6.1","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/expressjs/compression"
    "cookie-parser","1.4.1","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/expressjs/cookie-parser"
@@ -53,7 +53,7 @@ Cask Data Application Platform UI Dependencies
    "esprima","2.0.0","bower","`BSD License <https://github.com/ariya/esprima/blob/2.0.0/LICENSE.BSD>`__","https://github.com/ariya/esprima/blob/2.0.0/LICENSE.BSD"
    "express","4.13.4","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/strongloop/express"
    "finalhandler","0.4.1","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/pillarjs/finalhandler"
-   "font-awesome","4.5.0","bower","`MIT License <http://opensource.org/licenses/MIT>`__","http://fontawesome.io"
+   "font-awesome","4.6.3","bower","`MIT License <http://opensource.org/licenses/MIT>`__","http://fontawesome.io"
    "js-beautify","1.6.2","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/einars/js-beautify"
    "jsPlumb","2.0.6","bower","`MIT+GPLv2 <http://opensource.org/licenses/MIT>`__","https://github.com/sporritt/jsplumb/"
    "lodash","4.0.1","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/lodash/lodash/4.0.1/LICENSE"
@@ -68,3 +68,4 @@ Cask Data Application Platform UI Dependencies
    "request","2.69.0","npm","`Apache License, Version 2.0 <http://www.apache.org/licenses/LICENSE-2.0.html>`__","https://github.com/request/request/blob/v2.69.0/LICENSE"
    "serve-favicon","2.3.0","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/expressjs/serve-favicon"
    "sockjs","0.3.15","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/sockjs/sockjs-node/blob/v0.3.15/LICENSE"
+   "sockjs-client","1.1.1","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/sockjs/sockjs-client/blob/v1.0.2/LICENSE"

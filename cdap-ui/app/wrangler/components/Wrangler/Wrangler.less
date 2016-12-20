@@ -35,16 +35,11 @@
 .wrangler-container {
   height: 100%;
 
-  .wrangler-title {
-    margin-top: 10px;
-    background: url('/wrangler_assets/img/wrangler_logo_sm.png') no-repeat center center;
-    height: 60px;
-  }
-
   .wrangler-input-container {
     overflow-y: auto;
     height: 100%;
     padding-bottom: 50px;
+    padding-top: 10px;
   }
 
   .wrangler-copy-paste,
@@ -57,13 +52,6 @@
   .wrangle-button {
     font-size: 18px;
     padding: 5px 35px;
-  }
-
-  .wrangler-error-container {
-    .error-table.table.table-bordered {
-      width: inherit;
-      border: none;
-    }
   }
 
   .dropzone-container {
@@ -100,6 +88,11 @@
     height: 270px;
     margin: 0 auto;
     position: relative;
+
+    &.with-error {
+      border-bottom-right-radius: 0;
+      border-bottom-left-radius: 0;
+    }
 
     .wrangler-plus-button {
       position: absolute;

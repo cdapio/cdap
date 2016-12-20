@@ -19,11 +19,12 @@ import Papa from 'papaparse';
 import WrangleData from 'wrangler/components/Wrangler/WrangleData';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
-import shortid from 'shortid';
+import classnames from 'classnames';
 import Dropzone from 'react-dropzone';
 import {convertHistoryToDml} from 'wrangler/components/Wrangler/dml-converter';
 import Explore from 'wrangler/components/Explore';
 import T from 'i18n-react';
+import CardActionFeedback from 'components/CardActionFeedback';
 
 require('./Wrangler.less');
 
@@ -46,7 +47,7 @@ export default class Wrangler extends Component {
       wranglerInput: '',
       isDataSet: false,
       file: '',
-      errors: []
+      error: null
     };
 
     this.handleSetHeaders = this.handleSetHeaders.bind(this);
@@ -101,11 +102,15 @@ export default class Wrangler extends Component {
   }
 
   handleData(papa) {
-    if (papa.errors.length > 0) {
-      this.setState({errors: papa.errors, loading: false});
+    if (papa.data.length === 0) {
+      this.setState({
+        loading: false,
+        error: {
+          type: 'NO_DATA'
+        }
+      });
       return;
     }
-
     let formattedData;
     if (Array.isArray(papa.data[0])) {
       // Get length of the longest column
@@ -124,14 +129,26 @@ export default class Wrangler extends Component {
 
         return obj;
       });
+
+      headers = Object.keys(papa.data[0]);
     } else {
       formattedData = papa.data;
+    }
+
+    let headers = papa.meta.fields || Object.keys(formattedData[0]);
+
+    let error = this.validateHeaders(headers);
+
+    if (error) {
+      this.setState({error, loading: false});
+      return;
     }
 
     WranglerStore.dispatch({
       type: WranglerActions.setData,
       payload: {
         data: formattedData,
+        headers
       }
     });
 
@@ -140,6 +157,46 @@ export default class Wrangler extends Component {
       loading: false,
       delimiter: papa.meta.delimiter
     });
+  }
+
+  validateHeaders(headers) {
+    // Check for duplicates
+
+    let duplicates = [];
+    let uniqueHeaders = {};
+
+    headers.forEach((column) => {
+      if (!uniqueHeaders[column]) {
+        uniqueHeaders[column] = true;
+      } else {
+        duplicates.push(column);
+      }
+    });
+
+    if (duplicates.length > 0) {
+      return {
+        type: 'DUPLICATE_COLUMNS',
+        columns: duplicates
+      };
+    }
+
+    // Check for valid names
+    let invalidNames = [];
+    headers.forEach((column) => {
+      const NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+      if (!NAME_PATTERN.test(column)) {
+        invalidNames.push(column);
+      }
+    });
+
+    if (invalidNames.length > 0) {
+      return {
+        type: 'INVALID_COLUMNS',
+        columns: invalidNames
+      };
+    }
+
+    return null;
   }
 
   setDelimiter(e) {
@@ -157,33 +214,22 @@ export default class Wrangler extends Component {
   }
 
   renderErrors() {
-    if (this.state.errors.length === 0) {
+    if (!this.state.error) {
       return null;
+    }
+
+    let errorType = this.state.error.type;
+    let columns;
+    if (this.state.error.columns && this.state.error.columns.length > 0) {
+      columns = this.state.error.columns.join(', ');
     }
 
     return (
       <div className="wrangler-error-container">
-        <h4 className="error text-center">Errors:</h4>
-        <table className="table table-bordered error-table">
-          <thead>
-            <tr>
-              <th>{T.translate('features.Wrangler.InputScreen.ErrorTable.row')}</th>
-              <th>{T.translate('features.Wrangler.InputScreen.ErrorTable.error')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              this.state.errors.map((error) => {
-                return (
-                  <tr key={shortid.generate()}>
-                    <td>{error.row}</td>
-                    <td>{error.message}</td>
-                  </tr>
-                );
-              })
-            }
-          </tbody>
-        </table>
+        <CardActionFeedback
+          type="DANGER"
+          message={T.translate(`features.Wrangler.Errors.${errorType}`, {columns})}
+        />
       </div>
     );
 
@@ -322,11 +368,13 @@ export default class Wrangler extends Component {
 
     return (
       <div className="wrangler-input-container">
-        <div className="wrangler-title"></div>
-
         <Explore wrangle={this.wrangle} />
 
-        <div className="wrangler-copy-paste">
+        <div
+          className={classnames('wrangler-copy-paste', {
+            'with-error': this.state.error
+          })}
+        >
           {this.renderWranglerCopyPaste()}
 
           <div className="parse-options">
@@ -365,6 +413,7 @@ export default class Wrangler extends Component {
           </div>
 
         </div>
+        {this.renderErrors()}
 
         <br/>
 
@@ -376,8 +425,6 @@ export default class Wrangler extends Component {
             {T.translate('features.Wrangler.wrangleButton')}
           </button>
         </div>
-
-        {this.renderErrors()}
 
       </div>
     );

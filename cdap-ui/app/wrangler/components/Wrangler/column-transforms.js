@@ -38,7 +38,8 @@ export function dropColumn(table, columnToDrop) {
 export function splitColumn(table, delimiter, columnToSplit, firstSplit, secondSplit) {
   let formattedData = table.map((row) => {
     let newObj = Object.assign({}, row);
-    let split = newObj[columnToSplit];
+
+    let split = newObj[columnToSplit] || '';
     let index = split.indexOf(delimiter);
 
     newObj[firstSplit] = split.slice(0,index);
@@ -71,6 +72,10 @@ export function uppercaseColumn(table, column) {
   let formattedData = table.map((row) => {
     let newObj = Object.assign({}, row);
 
+    if (!newObj[column]) {
+      return '';
+    }
+
     newObj[column] = newObj[column].toUpperCase();
 
     return newObj;
@@ -83,6 +88,10 @@ export function lowercaseColumn(table, column) {
   let formattedData = table.map((row) => {
     let newObj = Object.assign({}, row);
 
+    if (!newObj[column]) {
+      return '';
+    }
+
     newObj[column] = newObj[column].toLowerCase();
 
     return newObj;
@@ -94,6 +103,10 @@ export function lowercaseColumn(table, column) {
 export function titlecaseColumn(table, column) {
   let formattedData = table.map((row) => {
     let newObj = Object.assign({}, row);
+
+    if (!newObj[column]) {
+      return '';
+    }
 
     let titleCase = newObj[column].split(' ')
       .map((word) => {
@@ -113,6 +126,10 @@ export function titlecaseColumn(table, column) {
 export function substringColumn(table, columnToSub, begin, end, columnName) {
   let formattedData = table.map((row) => {
     let newObj = Object.assign({}, row);
+
+    if (!newObj[columnToSub]) {
+      return '';
+    }
 
     newObj[columnName] = newObj[columnToSub].substr(begin, end);
 

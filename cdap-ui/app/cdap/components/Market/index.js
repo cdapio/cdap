@@ -44,7 +44,7 @@ export default class Market extends Component {
         MarketAction.setError();
         console.log('Error', err);
       });
-      MarketStore.subscribe(() => {
+      this.marketStoreSubscription = MarketStore.subscribe(() => {
         let state = MarketStore.getState();
         let tabConfig = this.state.tabConfig;
         let tabsList = sortedUniq(state.list.map(a => a.categories).reduce((prev, curr) => prev.concat(curr), []) || []);
@@ -77,6 +77,7 @@ export default class Market extends Component {
 
   componentWillUnmount() {
     MarketStore.dispatch({type: 'RESET'});
+    this.marketStoreSubscription();
   }
   render() {
     return (

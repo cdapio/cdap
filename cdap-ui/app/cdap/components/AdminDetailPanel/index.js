@@ -50,7 +50,6 @@ class AdminDetailPanel extends Component {
         //Convert number into human readable text
         let pairs = [];
         Object.keys(this.props.serviceData[key]).map((item) => {
-
           let humanReadableNum;
 
           if(key === 'storage' || key === 'memory'){

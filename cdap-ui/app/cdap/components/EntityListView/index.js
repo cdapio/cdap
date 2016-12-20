@@ -26,6 +26,8 @@ const shortid = require('shortid');
 const classNames = require('classnames');
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import {fetchTables} from 'services/ExploreTables/ActionCreator';
+import MyUserStoreApi from 'api/userstore';
+import PlusButtonStore from 'services/PlusButtonStore';
 
 require('./EntityListView.less');
 
@@ -69,6 +71,11 @@ class EntityListView extends Component {
 
     this.sortOptions = [
       {
+        displayName: T.translate('features.EntityListView.Header.sortOptions.none'),
+        sort: 'none',
+        fullSort: 'none'
+      },
+      {
         displayName: T.translate('features.EntityListView.Header.sortOptions.entityNameAsc.displayName'),
         sort: 'name',
         order: 'asc',
@@ -96,18 +103,23 @@ class EntityListView extends Component {
 
     this.state = {
       filter: defaultFilter,
-      sortObj: this.sortOptions[3],
+      sortObj: this.sortOptions[4],
+      isSortDisabled: false,
       query: '',
+      isSearchDisabled: false,
       entities: [],
       selectedEntity: null,
       numPages: 1,
       loading: true,
       currentPage: 1,
-      animationDirection: 'next'
+      animationDirection: 'next',
+      showSplash: true,
+      userStoreObj : ''
     };
 
     //By default, expect a single page -- update when search is performed and we can parse it
     this.pageSize = 1;
+    this.dismissSplash = this.dismissSplash.bind(this);
     this.calculatePageSize = this.calculatePageSize.bind(this);
     this.updateQueryString = this.updateQueryString.bind(this);
     this.getQueryObject = this.getQueryObject.bind(this);
@@ -123,28 +135,42 @@ class EntityListView extends Component {
      );
     }
 
-    let query = nextProps.location.query || {};
-    let {filter = defaultFilter, q = '', page = 1, sort } = query;
-    let sortObj = !sort ? this.sortOptions[0] : this.sortOptions.find(sortOption => sortOption.sort === sort);
-    this.updateData(q, filter, sortObj, nextProps.params.namespace, page);
-    this.setState({
-      sortObj,
-      query: q,
-      loading: true,
-      filter,
-      currentPage: parseInt(page, 10)
-    });
+    let queryObject = this.getQueryObject(nextProps.location.query);
+    if (
+      queryObject.filter !== this.state.filter &&
+      queryObject.sort.fullSort !== this.state.sortObj.fullSort &&
+      queryObject.query !== this.state.query &&
+      queryObject.page !== this.state.currentPage
+    ) {
+      this.updateData(queryObject.query, queryObject.filter, queryObject.sort, nextProps.params.namespace, queryObject.page);
+      this.setState({
+        filter: queryObject.filter,
+        sortObj: queryObject.sort,
+        query: queryObject.query,
+        currentPage: queryObject.page,
+        loading: true,
+      });
+    }
   }
 
   //Update Store and State to correspond to query parameters before component renders
   componentWillMount() {
+    MyUserStoreApi.get().subscribe((res) => {
+      let userProperty = typeof res.property === 'object' ? res.property : {};
+      let showSplash = userProperty['user-has-visited'] || false;
+      this.setState({
+        userStoreObj : res,
+        showSplash : showSplash
+      });
+    });
+
     // To enable explore fastaction on each card in Entity list view
      ExploreTablesStore.dispatch(
       fetchTables(this.props.params.namespace)
     );
 
     //Process and return valid query parameters
-    let queryObject = this.getQueryObject();
+    let queryObject = this.getQueryObject(this.props.location.query);
 
     this.setState({
       filter: queryObject.filter,
@@ -155,9 +181,14 @@ class EntityListView extends Component {
   }
 
   calculatePageSize() {
+    let entityListViewEle = document.getElementsByClassName('entity-list-view');
+
+    if (!entityListViewEle.length) {
+      return;
+    }
     // Performs calculations to determine number of entities to render per page
     // minus 60px of padding in entity-list-view (30px each side)
-    let containerWidth = document.getElementsByClassName('entity-list-view')[0].offsetWidth - 60;
+    let containerWidth = entityListViewEle[0].offsetWidth - 60;
 
     // Subtract 55px to account for entity-list-header's height (30px) and container's top margin (25px)
     // minus 20px of padding from top and bottom (10px each)
@@ -184,12 +215,11 @@ class EntityListView extends Component {
   }
 
   //Construct and return query object from query parameters
-  getQueryObject() {
+  getQueryObject(query) {
     let sortBy = '';
     let orderBy = '';
     let searchTerm = '';
     let sortOption = '';
-    let query = this.props.location.query;
     let filters = '';
     let page = this.state.currentPage;
     let verifiedFilters = null;
@@ -197,8 +227,10 @@ class EntityListView extends Component {
 
     //Get filters, order, sort, search from query
     if(query){
-      orderBy = typeof query.order === 'string' ? query.order : '';
-      sortBy = typeof query.sort === 'string' ? query.sort : '';
+      if (typeof query.q === 'undefined') {
+        sortBy = typeof query.sort === 'string' ? query.sort : '';
+        orderBy = typeof query.order === 'string' ? query.order : '';
+      }
       searchTerm = typeof query.q === 'string' ? query.q : '';
       page = isNaN(query.page) ? this.state.currentPage : Number(query.page);
 
@@ -238,11 +270,16 @@ class EntityListView extends Component {
         }
       });
     }
-
+    let sort;
+    if (!searchTerm) {
+      sort = sortOption.length === 0 ? this.state.sortObj : sortOption[0];
+    } else {
+      sort = this.sortOptions[0];
+    }
     //Return valid query parameters or return current state values if query params are invalid
     return ({
       'query' : searchTerm ? searchTerm : this.state.query,
-      'sort' : sortOption.length === 0 ? this.state.sortObj : sortOption[0],
+      'sort': sort,
       'filter' : verifiedFilters ? verifiedFilters : this.state.filter,
       'page' : page
     });
@@ -263,13 +300,20 @@ class EntityListView extends Component {
 
     let params = {
       namespace: namespace,
-      query: `${query}*`,
       target: filter,
       limit: this.pageSize,
-      offset: offset,
-      sort: sortObj.fullSort
+      offset: offset
     };
 
+    let isSortDisabled = typeof query === 'string' && query.length ? true : false;
+    let isSearchDisabled = sortObj.fullSort === 'none' ? false : true;
+    if (typeof query === 'string' && query.length) {
+      params.query = `${query}*`;
+    } else {
+      params.sort = sortObj.fullSort === 'none' ? this.sortOptions[3].fullSort : sortObj.fullSort;
+      params.query = '*';
+      params.numCursors = 10;
+    }
     let total;
     MySearchApi.search(params)
       .map((res) => {
@@ -283,16 +327,20 @@ class EntityListView extends Component {
       })
       .subscribe((res) => {
         this.setState({
+          isSortDisabled,
+          isSearchDisabled,
           entities: res,
           loading: false,
           entityErr: false,
           numPages: Math.ceil(total / this.pageSize)
         });
-      }, () => {
+      }, (err) => {
         //On Error: render page as if there are no results found
         this.setState({
+          isSortDisabled,
+          isSearchDisabled,
           loading : false,
-          entityErr : true
+          entityErr : typeof err === 'object' ? err.response : err
         });
       });
   }
@@ -337,16 +385,21 @@ class EntityListView extends Component {
   }
 
   handleSortClick(option) {
+    let isSearchDisabled = option.fullSort === 'none' ? false : true;
     this.setState({
-      sortObj : option
+      sortObj : option,
+      isSearchDisabled
     }, () => {
       this.search(this.state.query, this.state.filter, option);
     });
   }
 
   handleSearch(query) {
+    let isSortDisabled = typeof query === 'string' && query.length ? true : false;
     this.setState({
-      query
+      query,
+      isSortDisabled,
+      sortObj: this.sortOptions[0]
     }, () => {
       this.search(query, this.state.filter, this.state.sortObj);
     });
@@ -366,7 +419,7 @@ class EntityListView extends Component {
     let queryParams = [];
 
     //Generate sort params
-    if(this.state.sortObj.sort){
+    if(this.state.sortObj.sort !== 'none'){
       sort = 'sort=' + this.state.sortObj.sort + '&order=' + this.state.sortObj.order;
     }
 
@@ -410,10 +463,80 @@ class EntityListView extends Component {
     });
   }
 
+  dismissSplash() {
+    let updateObj = Object.assign({}, this.state.userStoreObj);
+    updateObj.property = updateObj.property || {};
+    updateObj.property['user-has-visited'] = true;
+    MyUserStoreApi.set({}, updateObj.property);
+    this.setState({
+      showSplash: true
+    });
+  }
+
+  openMarketModal() {
+    PlusButtonStore.dispatch({
+      type: 'TOGGLE_PLUSBUTTON_MODAL',
+      payload: {
+        modalState: true
+      }
+    });
+  }
+
   render() {
+
+    if(!this.state.showSplash){
+      return (
+        <div className="splash-screen-container">
+          <div className="splash-screen-first-time">
+            <h2 className="welcome-message">
+              {T.translate('features.EntityListView.SplashScreen.welcomeMessage')}
+            </h2>
+            <div className="beta-notice">
+              {T.translate('features.EntityListView.SplashScreen.welcomeMessage1')}*
+            </div>
+            <div className="cdap-fist-icon">
+              <span className="icon-fist" />
+            </div>
+            <div className="introducing">
+              {T.translate('features.EntityListView.SplashScreen.introText')}
+            </div>
+            <div className="app-store-bd">
+              {T.translate('features.EntityListView.SplashScreen.introText1')}
+            </div>
+            <div
+              className="splash-screen-first-time-btn"
+              onClick={this.openMarketModal.bind(this)}
+            >
+              <span className="icon-CaskMarket" />
+              {T.translate('features.EntityListView.SplashScreen.caskmarket')}
+            </div>
+            <div
+              className="go-to-cdap"
+              onClick={this.dismissSplash.bind(this)}
+            >
+              {T.translate('features.EntityListView.SplashScreen.gotoLabel')}
+            </div>
+            <div className="splash-screen-disclaimer">
+              <p>
+                * {T.translate('features.EntityListView.SplashScreen.disclaimerMessage')}
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+
     const empty = (
       <h3 className="text-center empty-message">
         {T.translate('features.EntityListView.emptyMessage')}
+      </h3>
+    );
+
+    const errorContainer = (
+      <h3 className="text-center empty-message text-danger">
+        <span className="fa fa-exclamation-triangle"></span>
+        <span>{this.state.entityErr}</span>
       </h3>
     );
 
@@ -428,8 +551,8 @@ class EntityListView extends Component {
 
     if(this.state.loading){
       bodyContent = loading;
-    } else if(this.state.entities.length === 0 || this.state.entityErr) {
-      entitiesToBeRendered = empty;
+    } else if(this.state.entities.length === 0) {
+      entitiesToBeRendered = this.state.entityErr ? errorContainer : empty;
 
       bodyContent = (
         <div className="entities-container">
@@ -465,9 +588,11 @@ class EntityListView extends Component {
           onFilterClick={this.handleFilterClick.bind(this)}
           activeFilter={this.state.filter}
           sortOptions={this.sortOptions}
+          isSortDisabled={this.state.isSortDisabled}
           activeSort={this.state.sortObj}
           onSortClick={this.handleSortClick.bind(this)}
           onSearch={this.handleSearch.bind(this)}
+          isSearchDisabled={this.state.isSearchDisabled}
           searchText={this.state.query}
           numberOfPages={this.state.numPages}
           currentPage={this.state.currentPage}

@@ -24,14 +24,16 @@ const propTypes = {
     PropTypes.string,
     PropTypes.number
   ]),
+  date: PropTypes.bool,
   label: PropTypes.string,
   isLoading: PropTypes.bool
 };
 
-function StatContainer({number, label}) {
+function StatContainer({number, label, date}) {
+  let statClasses = date ? 'stat date-stat' : 'stat';
   return (
     <div className={classNames("stat-container")}>
-      <div className="stat">
+      <div className={statClasses}>
         {number}
       </div>
       <div className="stat-label">

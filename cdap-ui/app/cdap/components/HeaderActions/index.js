@@ -49,6 +49,11 @@ export default class HeaderActions extends Component {
     let topRow = '';
     let signoutRow = '';
 
+    let mode = {
+      enterprise: window.CDAP_CONFIG.isEnterprise,
+      secured: window.CDAP_CONFIG.securityEnabled
+    };
+
     if(this.state.name && window.CDAP_CONFIG.securityEnabled){
       topRow = (
         <div>
@@ -79,6 +84,17 @@ export default class HeaderActions extends Component {
     return (
       <div className="header-actions">
         <ul className="navbar-list pull-right">
+          <div className="navbar-item environment">
+            <span>
+              {
+                mode.enterprise ?
+                  T.translate('features.Navbar.HeaderActions.distributelabel')
+                :
+                  T.translate('features.Navbar.HeaderActions.standalonelabel')
+              }
+            </span>
+            <span className={classNames("fa", {'fa-unlock': !mode.secured, 'fa-lock': mode.secured})}></span>
+          </div>
           <div className="navbar-item">
             <SpotlightSearch />
           </div>

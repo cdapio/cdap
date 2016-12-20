@@ -65,7 +65,7 @@ class Login extends Component {
         }
       })
       .then((res) => {
-        cookie.save('CDAP_Auth_Token', res.access_token);
+        cookie.save('CDAP_Auth_Token', res.access_token, { path: '/'});
         cookie.save('CDAP_Auth_User', this.state.username);
         var queryObj = util.getQueryParams(location.search);
         queryObj.redirectUrl = queryObj.redirectUrl || '/';

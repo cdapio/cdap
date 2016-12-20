@@ -516,54 +516,70 @@ on the specified plugin. Each element in the array is a JSON object containing t
 artifact that the plugin originated from, and the plugin's class name, description, name,
 type, and properties.
 
-Example output for the ``ScriptFilter`` plugin available to version |literal-release|
+Example output for the ``JavaScript`` plugin available to version |literal-release|
 of the ``cdap-data-pipeline`` artifact (pretty-printed and reformatted to fit):
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET /v3/namespaces/default/artifacts/cdap-data-pipeline/versions/|release|/extensions/transform/plugins/ScriptFilter?scope=system
+    |$| GET /v3/namespaces/default/artifacts/cdap-data-pipeline/versions/|release|/extensions/transform/plugins/JavaScript?scope=system
 
     [
         {
-            "properties": {
-                "lookup": {
-                    "name": "lookup",
-                    "description": "Lookup tables to use during transform. Currently supports KeyValueTable.",
-                    "type": "string",
-                    "required": false
-                },
-                "script": {
-                    "name": "script",
-                    "description": "JavaScript that must implement a function
-                      'shouldFilter' that takes a JSON object representation of the input
-                      record and a context object (which encapsulates CDAP metrics and
-                      logger) and returns true if the input record should be filtered and
-                      false if not. For example:\n'function shouldFilter(input, context)
-                      {\nif (input.count < 0) {\ncontext.getLogger().info(\"Got input record
-                      with negative
-                      count\");\ncontext.getMetrics().count(\"negative.count\",
-                      1);\n}\nreturn input.count > 100;\n}\n' will filter out any records
-                      whose 'count' field is greater than 100.",
-                    "type": "string",
-                    "required": true
-                }
-            },
-            "endpoints": [
-
-            ],
-            "name": "ScriptFilter",
+            "name": "JavaScript",
             "type": "transform",
-            "description": "A transform plugin that filters records using a custom
-                JavaScript provided in the plugin's config.",
-            "className": "co.cask.hydrator.plugin.transform.ScriptFilterTransform",
+            "description": "Executes user-provided JavaScript that transforms one record into zero or more records.",
+            "className": "co.cask.hydrator.plugin.transform.JavaScriptTransform",
             "artifact": {
                 "name": "core-plugins",
                 "version": "|cask-hydrator-version|",
                 "scope": "SYSTEM"
-            }
+            },
+            "properties": {
+                "schema": {
+                    "name": "schema",
+                    "description": "The schema of output objects. If no schema is given,
+                    it is assumed that the output schema is the same as the input schema.",
+                    "type": "string",
+                    "required": false,
+                    "macroSupported": false
+                },
+                "lookup": {
+                    "name": "lookup",
+                    "description": "Lookup tables to use during transform. Currently
+                    supports KeyValueTable.",
+                    "type": "string",
+                    "required": false,
+                    "macroSupported": false
+                },
+                "script": {
+                    "name": "script",
+                    "description": "JavaScript defining how to transform input record into
+                    zero or more records. The script must implement a function called
+                    'transform', which takes as input a JSON object (representing the
+                    input record) emitter object, which can be used to emit records and
+                    error messagesand a context object (which contains CDAP metrics,
+                    logger and lookup)For example:\n'function transform(input, emitter,
+                    context) {\n  if(context.getLookup('blacklist').lookup(input.id) !=
+                    null) {\n     emitter.emitError({\"errorCode\":31,
+                    \"errorMsg\":\"blacklisted id\", \"invalidRecord\": input}); \n  }
+                    else {\n     if(input.count < 0) {\n      
+                    context.getMetrics().count(\"negative.count\", 1);\n      
+                    context.getLogger().debug(\"Received record with negative count\");\n 
+                       }\n  input.count = input.count * 1024;\n  emitter.emit(input);   }
+                    \n}'\nwill emit an error if the input id is present in blacklist
+                    table, else scale the 'count' field by 1024",
+                    "type": "string",
+                    "required": true,
+                    "macroSupported": false
+                }
+            },
+            "endpoints": [
+            ]
         }
     ]
+
+
 
 
 .. _http-restful-api-artifact-delete:
@@ -647,7 +663,7 @@ To list application classes, submit an HTTP GET request::
 
 This will return a JSON array that lists all application classes contained in artifacts.
 Each element in the array is a JSON object that describes the artifact the class originates in
-as well as the class name. Example output for the ``ScriptFilter`` (pretty-printed and reformatted to fit):
+as well as the class name. Example output (pretty-printed and reformatted to fit):
 
 .. container:: highlight
 
@@ -671,6 +687,7 @@ as well as the class name. Example output for the ``ScriptFilter`` (pretty-print
         },
         "className": "co.cask.cdap.etl.realtime.ETLRealtimeApplication"
       },
+      . . .
       {
         "artifact": {
           "name": "Purchase",
@@ -712,6 +729,7 @@ Example output for the ``WordCount`` application (pretty-printed and reformatted
 
   .. parsed-literal::
     |$| GET /v3/namespaces/default/classes/apps/co.cask.cdap.examples.wordcount.WordCount
+    
     [
       {
         "artifact": {

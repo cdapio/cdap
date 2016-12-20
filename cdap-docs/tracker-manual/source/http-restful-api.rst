@@ -12,8 +12,8 @@ Cask Tracker HTTP RESTful API
 .. highlight:: console  
 
 All Cask Tracker features are available via HTTP RESTful endpoints. It supports searching
-of the *_auditLog* dataset, managing preferred tags, and querying metrics, using a set of
-HTTP RESTful APIs. (See the :ref:`Reference Manual: HTTP RESTful API
+of the *_auditLog* dataset, managing preferred tags, querying metrics, managing the data dictionary,
+and updating configurations, all using a set of HTTP RESTful APIs. (See the :ref:`Reference Manual: HTTP RESTful API
 <http-restful-api-introduction>` for details on the conventions used for these HTTP RESTful APIs.)
 
 Searching the *_auditLog* Dataset
@@ -71,7 +71,7 @@ Example:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/auditlog/stream/who?limit=1&startTime=now-5d-12h&endTime=now-12h"
+  $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/auditlog/stream/who?limit=1&startTime=now-5d-12h&endTime=now-12h"
 
 .. highlight:: json-ellipsis
 
@@ -187,7 +187,7 @@ Example:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tags"
+  $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tags"
 
 .. highlight:: json-ellipsis
 
@@ -249,7 +249,7 @@ Example:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tags/validate" \
+  $ curl -w"\n" -X POST "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tags/validate" \
   -d '["newtag","new Tag","inval!d"]'
 
 .. highlight:: json-ellipsis
@@ -308,7 +308,7 @@ Example:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tags/promote" \
+  $ curl -w"\n" -X POST "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tags/promote" \
   -d '["newtag","new Tag"]'
 
 .. highlight:: json-ellipsis
@@ -364,7 +364,7 @@ Example:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X DELETE "http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tags/preferred?tag=example"
+  $ curl -w"\n" -X DELETE "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tags/preferred?tag=example"
 
 .. rubric:: HTTP Responses
 
@@ -406,7 +406,7 @@ Example:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tags/stream/exampleStream"
+  $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tags/stream/exampleStream"
   
 .. highlight:: json-ellipsis
 
@@ -467,7 +467,7 @@ Example:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tags/stream/exampleStream" \
+  $ curl -w"\n" -X POST "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tags/stream/exampleStream" \
   -d '["tag1","tag2"]'
 
 .. rubric:: HTTP Responses
@@ -513,7 +513,7 @@ Example:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tags/stream/exampleStream?tagname=tag1"
+  $ curl -w"\n" -X POST "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tags/stream/exampleStream?tagname=tag1"
 
 .. rubric:: HTTP Responses
 
@@ -573,7 +573,7 @@ Example:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/auditmetrics/top-entities/applications?end=now&limit=5&start=now-7d"
+  $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/auditmetrics/top-entities/applications?end=now&limit=5&start=now-7d"
 
 .. highlight:: json-ellipsis
 
@@ -648,7 +648,7 @@ Example:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/auditmetrics/time-since?entityType=stream&entityName=events"
+  $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/auditmetrics/time-since?entityType=stream&entityName=events"
 
 .. highlight:: json
 
@@ -709,7 +709,7 @@ Example:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/auditmetrics/audit-histogram?entityType=stream&entityName=events"
+  $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/auditmetrics/audit-histogram?entityType=stream&entityName=events"
 
 .. highlight:: json
 
@@ -769,7 +769,7 @@ Example:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/auditmetrics/tracker-meter" \
+  $ curl -w"\n" -X POST "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/tracker-meter" \
   -d '{"datasets":["ds1","ds2","ds3","ds4"],"streams":["strm1","strm2","strm3","strm4"]}'
 
 .. highlight:: json
@@ -807,5 +807,464 @@ Results (reformatted for display)::
      - Returns the results in the body of the response
    * - ``404 NOT FOUND``
      - Returned if the entity does not exist
+   * - ``500 SERVER ERROR``
+     - Unknown server error
+
+Data Dictionary
+===============
+
+Retrieve the Data Dictionary for a Namespace
+--------------------------------------------
+Returns the entire data dictionary for a namespace::
+
+  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary
+
+A successful query will return a 200 response with a body containing the data dictionary for the namespace. If no
+data dictionary exists, a response with an empty array of results is returned.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -X GET "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/dictionary"
+
+.. highlight:: json
+
+Results (reformatted for display)::
+
+  {
+     "results" : [
+       {
+         "columnName" : "testColumn1",
+         "columnType" : "string",
+         "isNullable" : true,
+         "isPII" : false,
+         "description" : "something something something"
+       },
+       {
+         "columnName" : "testColumn2",
+         "columnType" : "long",
+         "isNullable" : false,
+         "isPII" : true,
+         "description" : "else else else"
+       },
+       {
+         "columnName" : "testColumn3",
+         "columnType" : "string",
+         "isNullable" : false,
+         "isPII" : false,
+         "description" : "this is the third column"
+       }
+     ]
+   }
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Returns the results in the body of the response
+   * - ``500 SERVER ERROR``
+     - Unknown server error
+
+Retrieve the Data Dictionary for a Schema
+-----------------------------------------
+Returns the data dictionary related to a specified schema::
+
+  POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary
+
+where the payload is a JSON-formatted schema:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``payload``
+     - A JSON-formatted schema
+
+A successful query will return a 200 response with a body containing the data dictionary for the specified schema. If no
+data dictionary exists, a response with an empty array of results is returned.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X POST "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/dictionary" \
+  -d '["col1","col2"]'
+
+.. highlight:: json
+
+Results (reformatted for display)::
+
+  {
+     "results" : [
+       {
+         "columnName" : "col1",
+         "columnType" : "string",
+         "isNullable" : true,
+         "isPII" : false,
+         "description" : "something something something"
+       },
+       {
+         "columnName" : "col2",
+         "columnType" : "long",
+         "isNullable" : false,
+         "isPII" : true,
+         "description" : "else else else"
+       }
+     ]
+   }
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Returns the results in the body of the response
+   * - ``500 SERVER ERROR``
+     - Unknown server error
+
+Adding a Column to the Data Dictionary
+--------------------------------------
+This endpoint will add a column to the data dictionary::
+
+  POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary/<column-name>
+
+where the payload is a JSON-formatted schema of the column:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``column-name``
+     - Name of the column
+   * - ``payload``
+     - A JSON-formatted schema of the column
+
+A successful query will return a 200 response.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X POST "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/dictionary/testColumn" \
+  -d '{ "columnType" : "String", "isNullable" : true, "isPII : false, "description" : "this is a description of the column" }'
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The column was successfully added
+   * - ``500 SERVER ERROR``
+     - Unknown server error
+
+Updating a Column in the Data Dictionary
+----------------------------------------
+This endpoint will update a column in the data dictionary::
+
+  PUT /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary/<column-name>
+
+where the payload is a JSON-formatted schema of the column:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``column-name``
+     - Name of the column
+   * - ``payload``
+     - A JSON-formatted schema of the column
+
+A successful query will return a 200 response.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X POST "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/dictionary/testColumn" \
+  -d '{ "columnType" : "String", "isNullable" : true, "isPII : false, "description" : "this is a description of the column" }'
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The column was successfully updated
+   * - ``500 SERVER ERROR``
+     - Unknown server error
+
+Deleting a Column in the Data Dictionary
+----------------------------------------
+This endpoint will delete a column in the data dictionary::
+
+  DELETE /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/dictionary/<column-name>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``column-name``
+     - Name of the column
+
+A successful query will return a 200 response.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -X DELETE "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/dictionary/testColumn"
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The column was successfully deleted
+   * - ``404 NOT FOUND``
+     - Could not find the column specified
+   * - ``500 SERVER ERROR``
+     - Unknown server error
+
+Configuration API
+=================
+
+Retrieve All Configuration Settings for a Namespace
+---------------------------------------------------
+Returns the entire Tracker configuration as a key-value map::
+
+  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config
+
+A successful query will return a 200 response with a body containing the entire configuration for the namespace. If no
+configuration exists, a response with an empty map is returned.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -X GET "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/config"
+
+.. highlight:: json
+
+Results (reformatted for display)::
+
+  {
+     "config-key-1" : "config-value-1",
+     "config-key-2" : "config-value-2"
+   }
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Returns the results in the body of the response
+   * - ``500 SERVER ERROR``
+     - Unknown server error
+
+Retrieve Configuration Settings by Key
+--------------------------------------
+Returns the set of configurations that match a given key::
+
+  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/<config-key>?strict={true|false}
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``config-key``
+     - Configuration key
+   * - ``strict``
+     - Either ``true`` or ``false`` (default if unspecified); determines if singular values are returned
+
+A successful query will return a 200 response with a body containing the configurations for the given key. 
+If ``strict`` is set to ``true``, only a single value will be returned, exactly matching the key provided. 
+If no configuration key exists, a 404 will be returned.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -X GET "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/config/sample-key?strict=true"
+
+.. highlight:: json
+
+Results (reformatted for display)::
+
+  [ { "sample-key" : "sample-value" } ]
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Returns the results in the body of the response
+   * - ``404 NOT FOUND``
+     - The config key was not found
+   * - ``500 SERVER ERROR``
+     - Unknown server error
+
+Set a Configuration Setting
+---------------------------
+Sets the configuration value for a specified key::
+
+  POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/<config-key>
+
+where the payload is a JSON-formatted key-value map of the configuration setting:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``config-key``
+     - Configuration key
+   * - ``payload``
+     - A JSON-formatted key-value map of the configuration setting
+
+A successful query will return a 200 response. If the value or key was invalid, it will return a 400 with an error message.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -X POST "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/config/sample-key"
+    -d '{ "value" : "configValue" }'
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Returns the results in the body of the response
+   * - ``400 INVALID``
+     - The config key or value was invalid
+   * - ``500 SERVER ERROR``
+     - Unknown server error
+
+Update a Configuration Setting
+------------------------------
+Sets the configuration value for a specified key::
+
+  PUT /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/<config-key>
+
+where the payload is a JSON-formatted key-value map of the configuration setting:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``config-key``
+     - Configuration key
+   * - ``payload``
+     - A JSON-formatted key-value map of the configuration setting
+
+A successful query will return a 200 response. If the ``config-key`` was not found, it will return a 404. 
+If the value or key was invalid, it will return a 400 with an error message.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -X PUT "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/config/sample-key"
+    -d '{ "value" : "configValue" }'
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Returns the results in the body of the response
+   * - ``400 INVALID``
+     - The config key or value was invalid
+   * - ``404 NOT FOUND``
+     - The config key was not found
+   * - ``500 SERVER ERROR``
+     - Unknown server error
+
+Delete a Configuration Setting
+------------------------------
+Deletes the configuration value for a specified key::
+
+  DELETE /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config/<config-key>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``config-key``
+     - Configuration key
+
+A successful query will return a 200 response. If the config-key was not found, it will return a 404.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -X DELETE "http://localhost:11015/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/config/sample-key"
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Returns the results in the body of the response
+   * - ``404 NOT FOUND``
+     - The config key was not found
    * - ``500 SERVER ERROR``
      - Unknown server error

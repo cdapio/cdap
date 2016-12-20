@@ -66,6 +66,8 @@ commons:
 features:
   AppDetailedView:
     Title: Application - {appId}
+    History:
+      emptyMessage: No Runs
   ConfirmationModal:
     confirmDefaultText: OK
     cancelDefaultText: Cancel
@@ -74,11 +76,22 @@ features:
     emptyMessage: No entities found in the system.
     Cards:
       type: "Type: "
+    SplashScreen:
+      welcomeMessage: Welcome to CDAP 4.0
+      welcomeMessage1: New User Interface
+      introText: Introducing Cask Market
+      introText1: Cask's App Store for Big Data
+      caskmarket: Cask Market
+      gotoLabel: Go to CDAP
+      disclaimerMessage: For full feature parity, switch to original UI by clicking "VIEW ORIGINAL UI" in top navigation bar.
     Header:
       filters: Filters
       search-placeholder: Search entities...
+      sortdropdown-tooltip: Clear Search to enable Sort
+      search-disabled-placeholder: Sort by Relevance to Search
       sort: Sort
       sortOptions:
+        none: Relevance
         entityNameAsc:
           displayName: A - Z
         entityNameDesc:
@@ -129,6 +142,9 @@ features:
       updated-label:
         plural: seconds ago
         singular: second ago
+      primaryLabelOne: DAY
+      primaryLabelTwo: HR
+      primaryLabelThree: MIN
     Panels:
       nodes: Nodes
       virtual-cores: Virtual Cores
@@ -136,6 +152,7 @@ features:
       application: Application
     Services:
       appfabric: App Fabric
+      messaging_service: Messaging Service
       log_saver: Log Saver
       metrics_processor: Metrics Processor
       dataset_executor: Dataset Executor
@@ -236,6 +253,7 @@ features:
 
     Component-Overview:
       label: Component Overview
+      emptyMessage: Available only in Distributed mode
       headers:
         cdap: CDAP
         cdh: CDH
@@ -251,12 +269,11 @@ features:
     connectErrorMessage: Cannot connect to Market
     tabs:
       all: All
-      applications: Applications
       artifacts: Drivers
       dashboards: Dashboards
       datapacks: Datapacks
       datasets: Datasets
-      examples: Application
+      examples: Applications
       pipelines: Pipelines
       plugins: Plugins
       useCases: Use Cases
@@ -303,6 +320,8 @@ features:
       logout: Logout
       signedInAs: Signed in as
       support: Support
+      standalonelabel: Standalone
+      distributelabel: Distributed
     Sidebar:
       extension: "Extensions:"
     NamespaceDropdown:
@@ -330,11 +349,11 @@ features:
       actionbtn0: Create
     Artifact:
       label: Driver
-      description: An artifact is a JAR file that contains either a native application or collection of plugins.
+      description: A driver is a JAR file that contains third-party code to talk to external systems, such as MySQL, Oracle, and PostgreSQL.
       actionbtn0: Upload
-      modalheadertitle: Upload Artifact
+      modalheadertitle: Add Driver
     Plugins:
-      label: Plugins
+      label: Plugin
       description: A plugin is an easy way to extend the functionality of an application.
       actionbtn0: Upload
       modalheadertitle: Upload Plugin Artifact
@@ -348,7 +367,7 @@ features:
     intro-message: Unified Integration Platform for Big Data
     title: Welcome to
     titleTwo: Cask Data Application Platform
-    version-label: Version 4.0 Beta
+    version-label: Version 4.0
     registration-zero: I
     registration-one: would like to receive product updates and
     registration-two: newsletters from Cask at this email address
@@ -375,35 +394,36 @@ features:
         uploadHelperText: Upload the JAR for your application that you wish to deploy
         filePathLabel: Choose file
     ArtifactUpload:
+      headerlabel: Add Third party Driver
       Step1:
-        description: Upload your artifact JAR
-        shorttitle: Upload Artifact
+        description: Upload your Driver
+        shorttitle: Upload Driver
         title: Upload JAR
-        uploadHelperText: Upload the third party artifact that was downloaded from the previous step
+        uploadHelperText: Upload the third party driver that was downloaded from the previous step
         filePathLabel: Choose file
       Step2:
-        description: Configure the settings for your artifact
-        shorttitle: Artifact Configuration
-        title: Configure Artifact
+        description: Configure the settings for your driver
+        shorttitle: Driver Configuration
+        title: Configure Driver
         parentArtifactLabel: Parent Artifact
         nameLabel: Name
-        namePlaceholder: Artifact Name
+        namePlaceholder: Driver Name
         descriptionLabel: Description
-        decriptionPlaceholder: Artifact Description
+        decriptionPlaceholder: Driver Description
         typeLabel: Type
-        typePlaceholder: Artifact Type
+        typePlaceholder: Driver Type
         classnameLabel: Class Name
-        classnamePlaceholder: Artifact Class Name
-      headerlabel: Upload Artifact
+        classnamePlaceholder: Driver Class Name
     Done: Done
     Informational:
+      termsandconditions: Terms and Conditions
       Step1:
-        description: Please follow the steps specified below to configure Hydrator plugin to read from your database
-        shorttitle: Third Party Artifact Information
+        description: Please follow the steps specified below to download and configure
+        shorttitle: Download Information
         title: Information
-      headerlabel: Third Party Artifact
+      headerlabel: Download Information
     MarketHydratorPluginUpload:
-      headerlabel: Hydrator Plugin
+      headerlabel: Add Hydrator Plugin
     Skip: Skipped
     FailedMessage: Failed to {step}
     StreamCreate:
@@ -455,11 +475,11 @@ features:
       realtimeLinkLabel: Realtime Pipeline
     PluginArtifact:
       Step1:
-        shorttitle: Upload Plugin Artifact
-        title: Upload Plugin Artifact
-        description: Upload your plugin artifact JAR.
+        shorttitle: Upload Plugin JAR
+        title: Upload Plugin JAR
+        description: Upload your plugin JAR.
         filePathLabel: Choose File
-        errorMessage: Invalid plugin artifact. Artifact must be a JAR file.
+        errorMessage: Invalid plugin. Plugin must be a JAR file.
       Step2:
         shorttitle: Upload Plugin Configuration JSON
         title: Upload Plugin Configuration JSON
@@ -550,6 +570,9 @@ features:
       MISSING_REQUIRED_FIELDS: Please fill out all required fields
       INVALID_NAME: "Invalid column name. Column name can only be alphanumeric, '_', or '-'"
       DUPLICATE_NAME: "Column name already exist. Please choose a different name"
+      INVALID_COLUMNS: "Invalid column name {columns}. Column names can contain only A-Z, a-z, 0-9 and underscores"
+      DUPLICATE_COLUMNS: Duplicate column name {columns}
+      NO_DATA: No data to process, please upload a file, enter data to process or choose data from existing datasets
     Explore:
       browse: "Browse Dataset ({count})"
       noData: No data

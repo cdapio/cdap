@@ -30,17 +30,11 @@ import VersionActions from 'services/VersionStore/VersionActions';
 import MyCDAPVersionApi from 'api/version';
 import {MyServiceProviderApi} from 'api/serviceproviders';
 import Mousetrap from 'mousetrap';
+import moment from 'moment';
 
 import T from 'i18n-react';
 var shortid = require('shortid');
 var classNames = require('classnames');
-
-var dummyData = {
-  uptime: {
-    duration: '--',
-    unit: '-'
-  }
-};
 
 class Management extends Component {
 
@@ -53,6 +47,7 @@ class Management extends Component {
       version: '',
       loading: false,
       lastUpdated : 0,
+      uptime: 0,
       wizard : {
         actionIndex : null,
         actionType : null
@@ -69,21 +64,41 @@ class Management extends Component {
           for(let key in res){
             if(res.hasOwnProperty(key)){
               apps.push(key);
-              services.push({
-                name: T.translate(`features.Management.Component-Overview.headers.${key}`),
-                version: res[key].Version,
-                url: res[key].WebURL,
-                logs: res[key].LogsURL
-              });
+              if(key !== 'cdap'){
+                services.push({
+                  name: T.translate(`features.Management.Component-Overview.headers.${key}`),
+                  version: res[key].Version,
+                  url: res[key].WebURL,
+                  logs: res[key].LogsURL
+                });
+              } else {
+                //Uptime is attached to cdap response object
+                let uptime = res[key].Uptime;
+                let tempTime = moment.duration(uptime);
+                let days = tempTime.days() < 10 ? '0' + tempTime.days() : tempTime.days();
+                let hours = tempTime.hours() < 10 ? '0' + tempTime.hours() : tempTime.hours();
+                let minutes = tempTime.minutes() < 10 ? '0' + tempTime.minutes() : tempTime.minutes();
+                let time = `${days}:${hours}:${minutes}`;
+                this.setState({uptime: time});
+                services.push({
+                  name: T.translate(`features.Management.Component-Overview.headers.${key}`)
+                });
+              }
             }
           }
           this.getServices(apps);
-          let current = apps[0];
-          this.setState({
-            application : current,
-            applications : apps,
-            services : services
-          });
+          if(!this.state.application){
+            this.setState({
+              application : apps[0],
+              applications : apps,
+              services : !services.length ? 'empty' : services
+            });
+          } else {
+            this.setState({
+              applications : apps,
+              services : !services.length ? 'empty' : services
+            });
+          }
         }
       );
 
@@ -147,6 +162,7 @@ class Management extends Component {
   }
   componentWillUnmount(){
     document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
+    clearInterval(this.updatingInterval);
   }
   clickLeft() {
     var index = this.state.applications.indexOf(this.state.application);
@@ -165,7 +181,6 @@ class Management extends Component {
   }
 
   setToContext(contextName) {
-
     if(this.state.application !== contextName){
 
       this.setState({
@@ -213,17 +228,17 @@ class Management extends Component {
           title={T.translate('features.Management.Title')}
         />
         <div className="top-panel">
+          <div className="cdap-version-label">
+            {T.translate('features.Management.Top.version-label')} - {this.state.version}
+          </div>
           <div className="admin-row top-row">
             <InfoCard
               isLoading={this.state.loading}
-              primaryText={this.state.version}
-              secondaryText={T.translate('features.Management.Top.version-label')}
-            />
-            <InfoCard
-              isLoading={this.state.loading}
-              primaryText={dummyData.uptime.duration}
+              primaryText={this.state.uptime}
+              primaryLabelOne={T.translate('features.Management.Top.primaryLabelOne')}
+              primaryLabelTwo={T.translate('features.Management.Top.primaryLabelTwo')}
+              primaryLabelThree={T.translate('features.Management.Top.primaryLabelThree')}
               secondaryText={T.translate('features.Management.Top.time-label')}
-              superscriptText={dummyData.uptime.unit}
             />
             <ServiceLabel/>
             <ServiceStatusPanel
