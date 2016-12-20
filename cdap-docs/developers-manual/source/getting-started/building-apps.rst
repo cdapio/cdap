@@ -23,6 +23,13 @@ Building and Running CDAP Applications
 .. |datasets| replace:: *Management Datasets*
 .. _datasets: http://localhost:11011/oldcdap/admin/namespace/detail/default/data
 
+.. |home-page| replace:: *Home*
+.. _home-page: http://localhost:11011/cdap/ns/default
+
+.. |management-page| replace:: *Management*
+.. _management-page: http://localhost:11011/cdap/management
+
+
 
 .. highlight:: console
 
@@ -113,6 +120,16 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
 - In the CDAP UI, use the *Add App* button |---| found on either the |development|_ or 
   |management|_ pages |---| selecting the *Custom App* menu item, and then browse and upload an
   artifact to create an app:
+
+  .. tabbed-parsed-literal::
+
+    examples/|example-dir|/target/|example|-|release|.jar
+
+- In the :ref:`new beta CDAP UI <cdap-ui-beta>`,  use the green "plus" button |---| found on either
+  the |home-page|_ or |management-page|_ pages |---| to bring up the *Cask Market/Resource
+  Center*. Click the button to change to the *Resource Center* if it is not already
+  visible. Click the *Upload* button on the *Application* card, and then either
+  drag-and-drop the JAR file to be uploaded or browse and upload the artifact to create an app:
 
   .. tabbed-parsed-literal::
 
