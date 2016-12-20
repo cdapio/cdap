@@ -520,7 +520,7 @@ filtering logic is applied by using an included script in the step
                 "scope": "SYSTEM"
               },
               "properties": {
-                "script": "function transform(input, emitter, context) {\\n  if (input.purchasePrice <= 1000) {\\n  emitter.emit(input);\\n  }  \\n}"
+                "script": "function transform(input, emitter, context) {\\n  if (input.purchasePrice > 1000) {\\n  emitter.emit(input);\\n  }  \\n}"
               }
             }
           }
