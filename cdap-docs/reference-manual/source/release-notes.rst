@@ -44,8 +44,8 @@ New Features
 
 #. Cask Wrangler
 
-   - :cask-issue:`WRANGLER-2` - Added Cask Wrangler: a new CDAP extension for data
-     preparation.
+   - :cask-issue:`WRANGLER-2` - Added Cask Wrangler: a new CDAP extension for interactive
+     data preparation.
 
 #. CDAP Transactional Messaging System
 
