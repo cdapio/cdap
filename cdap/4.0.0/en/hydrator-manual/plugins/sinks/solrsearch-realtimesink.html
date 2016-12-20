@@ -1,0 +1,324 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    
+    
+    <meta name="git_release" content="4.0.0">
+    <meta name="git_hash" content="b42fa316137c37affef8cfa3f20d0e4b966b41ec">
+    <meta name="git_timestamp" content="2016-12-19 22:18:59 -0800">
+    <title>SolrSearch Realtime Sink &mdash; Cask Data Application Platform 4.0.0 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/4.0.0/en/hydrator-manual/plugins/sinks/solrsearch-realtimesink.html">
+
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '4.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 4.0.0 Documentation" href="../../index.html" />
+    <link rel="up" title="Sink Plugins" href="index.html" />
+    <link rel="next" title="Stream" href="stream-realtimesink.html" />
+    <link rel="prev" title="MongoDB" href="mongodb-realtimesink.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="stream-realtimesink.html" title="Stream"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="mongodb-realtimesink.html" title="MongoDB"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('4.0.0');</script>
+       
+        <li><a href="../../table-of-contents.html">Cask Hydrator</a> &raquo;</li>
+          <li><a href="../index.html" >Plugin Reference</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Sink Plugins</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="solrsearch-realtime-sink">
+<span id="solrsearch-realtime-sink"></span><h1><a class="headerlink" href="#solrsearch-realtime-sink" title="Perma-link to this heading">🔗</a>SolrSearch Realtime Sink</h1>
+<div class="section" id="description">
+<span id="description"></span><h2><a class="headerlink" href="#description" title="Perma-link to this heading">🔗</a>Description</h2>
+<p>The Solr search realtime sink takes the structured record from the input source and indexes it into the Solr server
+or SolrCloud using the collection and key field specified by the user.</p>
+<p>The incoming fields from the previous stage in pipelines are mapped to Solr fields. Also, user is able to specify the
+mode of the Solr to connect to. For example, SingleNode Solr or SolrCloud.</p>
+</div>
+<div class="section" id="use-case">
+<span id="use-case"></span><h2><a class="headerlink" href="#use-case" title="Perma-link to this heading">🔗</a>Use Case</h2>
+<p>Solr search realtime sink is used to write data to the Solr server or SolrCloud. For example, the plugin can be used in
+conjuction with a realtime source to parse a file and read its contents in Solr.</p>
+</div>
+<div class="section" id="properties">
+<span id="properties"></span><h2><a class="headerlink" href="#properties" title="Perma-link to this heading">🔗</a>Properties</h2>
+<p><strong>referenceName:</strong> This will be used to uniquely identify this sink for lineage, annotating metadata, etc.</p>
+<p><strong>solrMode:</strong> Solr mode to connect to. For example, SingleNode Solr or SolrCloud.</p>
+<p><strong>solrHost:</strong> The hostname and port for the Solr server. For example, localhost:8983 if SingleNode Solr or
+zkHost1:2181,zkHost2:2181,zkHost3:2181 for SolrCloud.</p>
+<p><strong>collectionName:</strong> Name of the collection where data will be indexed and stored in Solr.</p>
+<p><strong>keyField:</strong> Field that will determine the unique key for the document to be indexed. It must match a field name
+in the structured record of the input.</p>
+<p><strong>outputFieldMappings:</strong> List of the input fields to map to the output Solr fields. This is a comma-separated list of
+key-value pairs, where each pair is separated by a colon ':' and specifies the input and output names. For example,
+'firstname:fname,lastname:lname' specifies that the 'firstname' should be renamed to 'fname' and the 'lastname'
+should be renamed to 'lname'.</p>
+</div>
+<div class="section" id="conditions">
+<span id="conditions"></span><h2><a class="headerlink" href="#conditions" title="Perma-link to this heading">🔗</a>Conditions</h2>
+<p>The Solr server should be running prior to creating the application.</p>
+<p>All the fields that user wants to index into the Solr server, should be properly declared and defined in Solr's
+schema.xml file. The Solr server schema should be properly defined prior to creating the application.</p>
+<p>If idField('id') in the input record is NULL, then that particular record will be filtered out.</p>
+</div>
+<div class="section" id="example">
+<span id="example"></span><h2><a class="headerlink" href="#example" title="Perma-link to this heading">🔗</a>Example</h2>
+<p>This example connects to a 'SinlgeNode Solr' server, running locally at the default port of 8983, and writes the
+data to the specified collection (test_collection). The data is indexed using the id field coming in the input record
+. And also the fieldname 'office address' is mapped to the 'address' field in Solr's index.</p>
+<pre class="literal-block">
+{
+  &quot;name&quot;: &quot;SolrSearch&quot;,
+  &quot;type&quot;: &quot;realtimesink&quot;,
+    &quot;properties&quot;: {
+      &quot;solrMode&quot;: &quot;SingleNode&quot;,
+      &quot;solrHost&quot;: &quot;localhost:8983&quot;,
+      &quot;collectionName&quot;: &quot;test_collection&quot;,
+      &quot;keyField&quot;: &quot;id&quot;,
+            &quot;outputFieldMappings&quot;: &quot;office address:address&quot;
+    }
+}
+</pre>
+<p>For example, suppose the Solr search sink receives the input record:</p>
+<pre class="literal-block">
++===================================================================================================+
+| id : STRING | firstname : STRING  | lastname : STRING |  office address : STRING  | pincode : INT |
++===================================================================================================+
+| 100A        | John                | Wagh              |  NE Lakeside              | 480001        |
+| 100B        | Brett               | Lee               |  SE Lakeside              | 480001        |
++===================================================================================================+
+</pre>
+<p>Once Solr search sink plugin execution is completed, all the rows from input data will be indexed in the
+test_collection with the fields id, firstname, lastname, address and pincode.</p>
+<hr class="docutils" />
+<ul class="simple">
+<li>Hydrator Plugin Type: realtimesink</li>
+<li>Hydrator Version: 1.5.0</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v4.0.0</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../../table-of-contents.html">Cask Hydrator: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts-design.html"> Concepts and Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../studio.html"> Hydrator Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../creating-pipelines.html"> Creating Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../running-pipelines.html"> Running Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-management.html"> Plugin Management</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Plugin Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../actions/index.html"> Action Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sources/index.html"> Source Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../transforms/index.html"> Transform Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../analytics/index.html"> Analytic Plugins</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"> Sink Plugins</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="cassandra-batchsink.html">Cassandra</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cube-batchsink.html">Cube</a></li>
+<li class="toctree-l3"><a class="reference internal" href="database-batchsink.html">Database</a></li>
+<li class="toctree-l3"><a class="reference internal" href="elasticsearch-batchsink.html">Elasticsearch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hbase-batchsink.html">HBase</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hdfs-batchsink.html">HDFS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hive-batchsink.html">Hive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kvtable-batchsink.html">KeyValueTable</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mongodb-batchsink.html">MongoDB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="s3avro-batchsink.html">Amazon S3 Avro</a></li>
+<li class="toctree-l3"><a class="reference internal" href="s3parquet-batchsink.html">Amazon S3 Parquet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snapshotavro-batchsink.html">Snapshot Avro</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snapshotparquet-batchsink.html">Snapshot Parquet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="solrsearch-batchsink.html">SolrSearch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="table-batchsink.html">Table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tpfsavro-batchsink.html">TimePartitionedFileSet Avro</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tpfsorc-batchsink.html">TimePartitionedFileSet ORC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tpfsparquet-batchsink.html">TimePartitionedFileSet Parquet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cassandra-realtimesink.html">Cassandra</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cube-realtimesink.html">Cube</a></li>
+<li class="toctree-l3"><a class="reference internal" href="elasticsearch-realtimesink.html">Elasticsearch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kafkaproducer-realtimesink.html">Kafka Producer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mongodb-realtimesink.html">MongoDB</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">SolrSearch Realtime Sink</a></li>
+<li class="toctree-l3"><a class="reference internal" href="stream-realtimesink.html">Stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="table-realtimesink.html">Table</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../shared-plugins/index.html"> Shared Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../post-run-plugins/index.html"> Post-run Plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../developing-pipelines.html"> Developing Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developing-plugins/index.html"> Developing Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how-hydrator-works.html"> How Hydrator Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faqs.html"> FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html"> Glossary</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/4.0.0/cdap-docs-4.0.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="MongoDB" href="mongodb-realtimesink.html" />MongoDB</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Stream" href="stream-realtimesink.html" />Stream</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,480 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="4.0.0">
+    <meta name="git_hash" content="b42fa316137c37affef8cfa3f20d0e4b966b41ec">
+    <meta name="git_timestamp" content="2016-12-19 22:18:59 -0800">
+    <title>Program Lifecycle &mdash; Cask Data Application Platform 4.0.0 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/4.0.0/en/developers-manual/building-blocks/program-lifecycle.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 4.0.0 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Metadata and Lineage" href="metadata-lineage.html" />
+    <link rel="prev" title="Artifacts" href="artifacts.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="metadata-lineage.html" title="Metadata and Lineage"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="artifacts.html" title="Artifacts"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('4.0.0');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="program-lifecycle">
+<span id="id1"></span><h1><a class="headerlink" href="#program-lifecycle" title="Perma-link to this heading">🔗</a>Program Lifecycle</h1>
+<p>Every program in CDAP goes through a <em>program lifecycle</em>, with a specific set of methods
+called in succession at different points of the lifecycle.</p>
+<p>Though there are slight differences between program types, in general all programs follow
+the same lifecycle. The exceptions are flows and services, as they have sub-programs
+(flowlets and service handlers).</p>
+<p><strong>When an application is deployed,</strong> the application is configured, followed by the
+configuring of all programs and sub-programs of the application, recursively. The
+configuration happens by calling the <code class="docutils literal"><span class="pre">configure()</span></code> method of each entity, which creates
+a specification for that entity. These specifications are bundled together to create the
+application.</p>
+<p>This results in application, program, and sub-program specifications. In a specification,
+you can set the name, description, resources, programs and sub-programs used, plugins used
+and required. (An example of the latter is a requirement for a JDBC driver.)</p>
+<p>Any member variables created in the <code class="docutils literal"><span class="pre">configure()</span></code> methods are available only at
+deployment. No dataset operations are possible, as there is no access to datasets or
+transactions.</p>
+<p><strong>When an application is run,</strong> each program of an application (and any sub-programs) is
+executed by calling first <code class="docutils literal"><span class="pre">initialize()</span></code> and (eventually) <code class="docutils literal"><span class="pre">destroy()</span></code> for each program
+and sub-program. In these methods, dataset operations and transactions are allowed.</p>
+<p>The following of the program lifecycle is a combination of CDAP's conventions and the
+implementation of specific interfaces. They can be summarized as:</p>
+<ul class="simple">
+<li>At deployment time:<ul>
+<li><code class="docutils literal"><span class="pre">configure()</span></code> By convention, all CDAP applications and programs have this method.
+It produces an immutable program specification.</li>
+</ul>
+</li>
+<li>At runtime:<ul>
+<li><code class="docutils literal"><span class="pre">initialize()</span></code> A requirement of the <code class="docutils literal"><span class="pre">ProgramLifecycle</span></code> interface.</li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code> A requirement of the <code class="docutils literal"><span class="pre">ProgramLifecycle</span></code> interface.</li>
+</ul>
+</li>
+</ul>
+<p>The <code class="docutils literal"><span class="pre">initialize()</span></code> method is called once, at the start of the program. The <code class="docutils literal"><span class="pre">destroy()</span></code>
+method is called once, at the end of program before it is shutdown. If there is any
+cleanup required, it can be implemented in this method.</p>
+<p>Flows and services do not have an <code class="docutils literal"><span class="pre">initialize()</span></code> because they have a sub-program (flowlets
+for a flow, service handlers for a service) which has an <code class="docutils literal"><span class="pre">initialize()</span></code> method instead.</p>
+<p>Note that the instance of the object called at deployment <strong>is not the same</strong> instance of
+the object called at runtime. Because the result of the deployment stage is an immutable
+program specification, any local member variables set during deployment will not be
+available during runtime. This behavior can cause unexpected null-pointer exceptions. The
+solution is instead to set these as properties in the specification, which is
+available at runtime, as in the examples on <a class="reference internal" href="../advanced/best-practices.html#best-practices-initializing"><span>initializing instance fields</span></a>. For example, in a flowlet:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">getContext</span><span class="o">().</span><span class="na">getSpecification</span><span class="o">().</span><span class="na">getProperties</span><span class="o">()</span>
+</pre></div>
+</div>
+<div class="section" id="transactions">
+<h2><a class="headerlink" href="#transactions" title="Perma-link to this heading">🔗</a>Transactions</h2>
+<p>The relationship between transactions and lifecycle depends on the method involved:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">configure()</span></code> No transactions</li>
+<li><code class="docutils literal"><span class="pre">initialize()</span></code> Inside a transaction</li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code> Inside a transaction</li>
+</ul>
+<p>The exception to this are <a class="reference internal" href="workers.html#workers-datasets"><span>Workers</span></a>, which have to execute their
+own, explicit transactions. See <a class="reference internal" href="workers.html#workers-datasets"><span>workers and datasets</span></a> for details.</p>
+<p>Details on transactions in these methods are covered in the section on <a class="reference internal" href="transaction-system.html#transaction-system-using-in-programs"><span>using the
+transaction system in programs</span></a>.</p>
+</div>
+<div class="section" id="program-types">
+<h2><a class="headerlink" href="#program-types" title="Perma-link to this heading">🔗</a>Program Types</h2>
+<p>For convenience, most program types have a corresponding abstract program class. It is
+recommended to always extend the abstract class instead of implementing the program interface.
+The abstract classes provide:</p>
+<ul class="simple">
+<li>proxy methods for the program configurer's methods;</li>
+<li>an <code class="docutils literal"><span class="pre">initialize()</span></code> method that stores the program context in a class member and makes
+it available via <code class="docutils literal"><span class="pre">getContext()</span></code>; and</li>
+<li>a <code class="docutils literal"><span class="pre">destroy()</span></code> method that does nothing.</li>
+</ul>
+<p>This table summarizes, for each program or sub-program type, the methods available,
+abstract class, and their signatures:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="20%" />
+<col width="30%" />
+<col width="30%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Program Type</th>
+<th class="head">Sub-program Type</th>
+<th class="head">Abstract Class</th>
+<th class="head">Runtime Methods</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Flow</td>
+<td>&nbsp;</td>
+<td><code class="docutils literal"><span class="pre">AbstractFlow</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">configure()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">destroy()</span></code></div>
+<div class="line"><br /></div>
+<div class="line"><em>Note: no</em> <code class="docutils literal"><span class="pre">initialize()</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td>&nbsp;</td>
+<td>Flowlet</td>
+<td><code class="docutils literal"><span class="pre">AbstractFlowlet</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">configure()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">initialize()</span></code></div>
+<div class="line"><br /></div>
+<div class="line"><em>If annotated or</em> <code class="docutils literal"><span class="pre">process()</span></code>:</div>
+<div class="line"><code class="docutils literal"><span class="pre">&#64;ProcessInput</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">process()</span></code></div>
+<div class="line"><br /></div>
+<div class="line"><em>If annotated or</em> <code class="docutils literal"><span class="pre">generate()</span></code>:</div>
+<div class="line"><code class="docutils literal"><span class="pre">&#64;Tick</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">generate()</span></code></div>
+<div class="line"><br /></div>
+<div class="line"><code class="docutils literal"><span class="pre">destroy()</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td>MapReduce</td>
+<td>&nbsp;</td>
+<td><code class="docutils literal"><span class="pre">AbstractMapReduce</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">configure()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">initialize()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">destroy()</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td>&nbsp;</td>
+<td>Mappper</td>
+<td><code class="docutils literal"><span class="pre">Mapper</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">initialize()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">map()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">destroy()</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td>&nbsp;</td>
+<td>Reducer</td>
+<td><code class="docutils literal"><span class="pre">Reducer</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">initialize()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">reduce()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">destroy()</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td>Service</td>
+<td>&nbsp;</td>
+<td><code class="docutils literal"><span class="pre">AbstractService</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">configure()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">destroy()</span></code></div>
+<div class="line"><br /></div>
+<div class="line"><em>Note: no</em> <code class="docutils literal"><span class="pre">initialize()</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td>&nbsp;</td>
+<td>ServiceHandler</td>
+<td><code class="docutils literal"><span class="pre">AbstractHttpServiceHandler</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">configure()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">initialize()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">destroy()</span></code></div>
+<div class="line"><br /></div>
+<div class="line"><code class="docutils literal"><span class="pre">&#64;GET</span></code> <em>or</em></div>
+<div class="line"><code class="docutils literal"><span class="pre">&#64;PUT</span></code> <em>or</em></div>
+<div class="line"><code class="docutils literal"><span class="pre">&#64;POST</span></code> <em>or</em></div>
+<div class="line"><code class="docutils literal"><span class="pre">&#64;DELETE</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&#64;Path{&quot;handlerPath&quot;}</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">handlerMethod()</span></code></div>
+<div class="line"><br /></div>
+<div class="line"><em>Note: classes extending</em> <code class="docutils literal"><span class="pre">AbstractHttpServiceHandler</span></code> <em>are only required to implement</em> <code class="docutils literal"><span class="pre">configure()</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td>Spark</td>
+<td>&nbsp;</td>
+<td><code class="docutils literal"><span class="pre">AbstractSpark</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">configure()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">initialize()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">destroy()</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td>&nbsp;</td>
+<td>SparkMain</td>
+<td><code class="docutils literal"><span class="pre">SparkMain</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">run()</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td>&nbsp;</td>
+<td>JavaSparkMain</td>
+<td><code class="docutils literal"><span class="pre">JavaSparkMain</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">run()</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td>Worker</td>
+<td>&nbsp;</td>
+<td><code class="docutils literal"><span class="pre">AbstractWorker</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">configure()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">initialize()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">destroy()</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td>Workflow</td>
+<td>&nbsp;</td>
+<td><code class="docutils literal"><span class="pre">AbstractWorkflow</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">configure()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">initialize()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">destroy()</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td>&nbsp;</td>
+<td>Custom Action</td>
+<td><code class="docutils literal"><span class="pre">AbstractCustomAction</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">configure()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">initialize()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">run()</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">destroy()</span></code></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v4.0.0</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html"> Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html"> Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-keys.html"> Secure Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifacts.html"> Artifacts</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Program Lifecycle</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#transactions">Transactions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#program-types">Program Types</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="metadata-lineage.html"> Metadata and Lineage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="audit-logging.html"> Audit Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/4.0.0/cdap-docs-4.0.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Artifacts" href="artifacts.html" />Artifacts</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Metadata and Lineage" href="metadata-lineage.html" />Metadata and Lineage</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

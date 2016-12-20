@@ -1,0 +1,346 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="4.0.0">
+    <meta name="git_hash" content="b42fa316137c37affef8cfa3f20d0e4b966b41ec">
+    <meta name="git_timestamp" content="2016-12-19 22:18:59 -0800">
+    <title>Installation on Amazon EMR using Bootstrap Actions &mdash; Cask Data Application Platform 4.0.0 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/4.0.0/en/admin-manual/installation/emr.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 4.0.0 Documentation" href="../index.html" />
+    <link rel="up" title="Installation" href="index.html" />
+    <link rel="next" title="Installation using Apache Ambari" href="ambari.html" />
+    <link rel="prev" title="Installation using Cloudera Manager" href="cloudera.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="ambari.html" title="Installation using Apache Ambari"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="cloudera.html" title="Installation using Cloudera Manager"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('4.0.0');</script>
+       
+        <li><a href="../table-of-contents.html">Administration Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Installation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installation-on-amazon-emr-using-bootstrap-actions">
+<span id="admin-installation-emr"></span><h1><a class="headerlink" href="#installation-on-amazon-emr-using-bootstrap-actions" title="Perma-link to this heading">🔗</a>Installation on Amazon EMR using Bootstrap Actions</h1>
+<div class="section" id="introduction">
+<h2><a class="headerlink" href="#introduction" title="Perma-link to this heading">🔗</a>Introduction</h2>
+<p>This section describes installing CDAP on Amazon EMR clusters using
+the <a class="reference external" href="http://docs.aws.amazon.com/ElasticMapReduce/latest/ManagementGuide/emr-plan-bootstrap.html#emr-bootstrap-runif">Amazon EMR &quot;Run If&quot; Bootstrap Action</a>
+to:</p>
+<ul class="simple">
+<li>Install necessary EMR components;</li>
+<li>Restrict CDAP installation to the EMR master node;</li>
+<li>Download, install, and automatically configure CDAP for EMR; and</li>
+<li>Run all services as the <code class="docutils literal"><span class="pre">'cdap'</span></code> user</li>
+</ul>
+<p>Information on Amazon EMR is <a class="reference external" href="http://docs.aws.amazon.com/ElasticMapReduce/latest/ManagementGuide/emr-what-is-emr.html">available online</a>.</p>
+<p>CDAP 4.0 is compatible with Amazon EMR 4.6.0 through 4.8.2.</p>
+</div>
+<div class="section" id="using-the-create-cluster-wizard">
+<h2><a class="headerlink" href="#using-the-create-cluster-wizard" title="Perma-link to this heading">🔗</a>Using the Create Cluster Wizard</h2>
+<p><strong>Note:</strong> For any settings not listed or specified below, we recommend using the default settings.</p>
+<ol class="arabic">
+<li><p class="first">Open the Amazon EMR console at <a class="reference external" href="https://console.aws.amazon.com/elasticmapreduce/">https://console.aws.amazon.com/elasticmapreduce/</a>.</p>
+</li>
+<li><p class="first">Choose &quot;Create cluster.&quot;</p>
+</li>
+<li><p class="first">In the <em>Advanced Options</em>, <em>Step 1: Software and Steps</em>, set:</p>
+<ul class="simple">
+<li>Vendor: Amazon</li>
+<li>Release: <code class="docutils literal"><span class="pre">emr-4.6.0</span></code> through <code class="docutils literal"><span class="pre">emr-4.8.2</span></code></li>
+<li>Software: Hadoop, HBase, Hive, Spark</li>
+<li>No auto-terminate</li>
+</ul>
+<div class="figure align-center" id="id1" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/emr-step1-software-and-steps.png"><img alt="../_images/emr-step1-software-and-steps.png" class="bordered-image" src="../_images/emr-step1-software-and-steps.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>EMR Create Cluster Wizard:</strong> Step 1: Software and Steps</span></p>
+</div>
+</li>
+<li><p class="first">In <em>Step 2: Hardware</em>, set:</p>
+<ul class="simple">
+<li>Network: use defaults</li>
+<li>EC2 Subnet: use defaults</li>
+<li>Master<ul>
+<li>EC2 Instance type: <code class="docutils literal"><span class="pre">m3.xlarge</span></code></li>
+<li>Instance count: 1</li>
+</ul>
+</li>
+<li>Core<ul>
+<li>EC2 Instance type: <code class="docutils literal"><span class="pre">m3.xlarge</span></code></li>
+<li>Instance count: 4 (as a minimum)</li>
+</ul>
+</li>
+<li>Task<ul>
+<li>Instance count: 0 (not required)</li>
+</ul>
+</li>
+</ul>
+<div class="figure align-center" id="id2" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/emr-step2-hardware.png"><img alt="../_images/emr-step2-hardware.png" class="bordered-image" src="../_images/emr-step2-hardware.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>EMR Create Cluster Wizard:</strong> Step 2: Hardware</span></p>
+</div>
+</li>
+<li><p class="first">In <em>Step 3: General Cluster Settings</em>, set:</p>
+<ul class="simple">
+<li>Logging</li>
+<li>Debugging</li>
+<li>Termination protection (no auto-terminate)</li>
+</ul>
+<div class="figure align-center" id="id3" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/emr-step3-general-cluster-settings.png"><img alt="../_images/emr-step3-general-cluster-settings.png" class="bordered-image" src="../_images/emr-step3-general-cluster-settings.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>EMR Create Cluster Wizard:</strong> Step 3: General Cluster Settings</span></p>
+</div>
+</li>
+<li><p class="first">In <em>Step 3: General Cluster Settings</em>, add a <em>Bootstrap Action:</em></p>
+<ul class="simple">
+<li>Type: <em>Run If</em></li>
+<li>Optional arguments: <code class="docutils literal"><span class="pre">instance.isMaster=true</span> <span class="pre">&quot;curl</span> <span class="pre">http://downloads.cask.co/emr/install-4.0.0.sh</span> <span class="pre">|</span> <span class="pre">sudo</span> <span class="pre">bash</span> <span class="pre">-s&quot;</span></code></li>
+</ul>
+<div class="figure align-center" id="id4" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/emr-step3b-bootstrap-action-run-if.png"><img alt="../_images/emr-step3b-bootstrap-action-run-if.png" class="bordered-image" src="../_images/emr-step3b-bootstrap-action-run-if.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>EMR Create Cluster Wizard:</strong> Add Bootstrap Action</span></p>
+</div>
+</li>
+<li><p class="first">In <em>Step 4: Security</em>, set following defaults, and then add a security group (next step).</p>
+<div class="figure align-center" id="id5" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/emr-step4-security.png"><img alt="../_images/emr-step4-security.png" class="bordered-image" src="../_images/emr-step4-security.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>EMR Create Cluster Wizard:</strong> Step 4: Security</span></p>
+</div>
+</li>
+<li><p class="first">In <em>Step 4: Security</em>, set additional <em>EC2 Security Groups</em> to the master node:</p>
+<ul class="simple">
+<li>Master (one of the following):<ul>
+<li>A Security Group with ports 11011/11015 open; <em>or</em></li>
+<li>An <a class="reference external" href="https://docs.aws.amazon.com/ElasticMapReduce/latest/ManagementGuide/emr-web-interfaces.html">SSH Tunnel</a></li>
+</ul>
+</li>
+</ul>
+<div class="figure align-center" id="id6" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/emr-step4b-additional-security-group.png"><img alt="../_images/emr-step4b-additional-security-group.png" class="bordered-image" src="../_images/emr-step4b-additional-security-group.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>EMR Create Cluster Wizard:</strong> Assigning additional security group to master node</span></p>
+</div>
+</li>
+</ol>
+<p>Once the cluster is created, CDAP services will start up. This will take about 10 minutes
+after the cluster is in a <em>Waiting</em> state.</p>
+</div>
+<div class="section" id="verification">
+<h2><a class="headerlink" href="#verification" title="Perma-link to this heading">🔗</a>Verification</h2>
+<div class="section" id="cdap-smoke-test">
+<h3><a class="headerlink" href="#cdap-smoke-test" title="Perma-link to this heading">🔗</a>CDAP Smoke Test</h3>
+<p>The CDAP UI may initially show errors while all of the CDAP YARN containers are
+starting up. Allow for up to a few minutes for this. The <em>System Health</em> link in the CDAP
+UI in the left side shows the status of the CDAP services.</p>
+<div class="figure align-center" id="id7" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/console-distributed.png"><img alt="../_images/console-distributed.png" class="bordered-image" src="../_images/console-distributed.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>CDAP UI:</strong> Showing started-up before data or applications are deployed.</span></p>
+</div>
+<p>Further instructions for verifying your installation are contained in <a class="reference internal" href="../verification.html#admin-manual-verification"><span>Verification</span></a>.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v4.0.0</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdap-components.html"> CDAP Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deployment-architectures.html"> Deployment Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hadoop-compatibility.html"> Hadoop Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system-requirements.html"> System Requirements</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Installation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cloudera.html">Cloudera Manager</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Amazon EMR</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-the-create-cluster-wizard">Using the Create Cluster Wizard</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#verification">Verification</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ambari.html">Apache Ambari</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapr.html">MapR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages.html">Packages</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../verification.html"> Verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../upgrading/index.html"> Upgrading</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendices/index.html"> Appendices</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/4.0.0/cdap-docs-4.0.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Installation using Cloudera Manager" href="cloudera.html" />Installation using Cloudera Manager</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Installation using Apache Ambari" href="ambari.html" />Installation using Apache Ambari</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
