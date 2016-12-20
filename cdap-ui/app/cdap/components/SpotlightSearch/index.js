@@ -104,7 +104,6 @@ export default class SpotlightSearch extends Component {
     MySearchApi.search({
       namespace: NamespaceStore.getState().selectedNamespace,
       query: query + '*',
-      sort: 'creation-time asc',
       limit: VIEW_RESULT_LIMIT
     }).subscribe( (res) => {
       this.setState({

@@ -318,6 +318,8 @@ features:
       logout: Logout
       signedInAs: Signed in as
       support: Support
+      standalonelabel: Standalone
+      distributelabel: Distributed
     Sidebar:
       extension: "Extensions:"
     NamespaceDropdown:
