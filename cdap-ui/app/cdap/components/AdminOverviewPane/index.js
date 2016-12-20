@@ -38,8 +38,10 @@ const propTypes = {
 
 function AdminOverviewPane({services}) {
   let cards;
-  if (typeof services !== 'string') {
-    cards = services.map((service) => {
+  let isEmpty = services.length === 1 && services[0].name === 'CDAP';
+  cards = services
+    .filter(service => service.name !== 'CDAP')
+    .map((service) => {
       if(service.name !== 'CDAP'){
         return (
           <OverviewPaneCard
@@ -52,17 +54,16 @@ function AdminOverviewPane({services}) {
         );
       }
     });
-  }
 
   return (
     <div className="overview-pane">
       <span>{T.translate('features.Management.Component-Overview.label')}</span>
-      <div className={classnames('overview-pane-container', {'empty-container': !cards})}>
+      <div className={classnames('overview-pane-container', {'empty-container': !cards.length})}>
       {
-        cards ?
-          cards
-        :
+        isEmpty ?
           <h3>{T.translate('features.Management.Component-Overview.emptyMessage')}</h3>
+        :
+          cards
       }
       </div>
     </div>

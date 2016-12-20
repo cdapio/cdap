@@ -162,6 +162,7 @@ class Management extends Component {
   }
   componentWillUnmount(){
     document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
+    clearInterval(this.updatingInterval);
   }
   clickLeft() {
     var index = this.state.applications.indexOf(this.state.application);
