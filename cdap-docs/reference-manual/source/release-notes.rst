@@ -38,9 +38,10 @@ New Features
 
 #. Cask Market
 
-   - :cask-issue:`CDAP-7203` - Adds the new Cask Market view in the CDAP UI for users to
-     interact and create CDAP entities in a much easier fashion. The market hosts use cases,
-     pipelines, datapacks, drivers, Hydrator plugins, and CDAP applications as examples.
+   - :cask-issue:`CDAP-7203` - Adds Cask Market: Cask's *Big Data* app store, providing an
+     ecosystem of pre-built Hadoop solutions, re-usable templates, and plugins. Within CDAP,
+     users can access the market and create Hadoop solutions or *Big Data* applications with
+     easy-to-use guided wizards.
 
 #. Cask Wrangler
 
