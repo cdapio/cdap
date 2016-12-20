@@ -105,10 +105,19 @@ export default class ProductsDrawer extends Component {
   }
   render() {
 
+    let topItemClasses = classnames(
+      "top-product",
+      this.state.products[0].name,
+      {
+        'open' : this.state.productsDropdown,
+        'closed' : !this.state.productsDropdown,
+        'current-selection' : this.state.products[0].name === this.props.currentChoice
+      }
+    );
     // The top item is always going to CDAP.
     let topItem = (
       <div
-        className={classnames("top-product", this.state.products[0].name, {'open': this.state.productsDropdown})}
+        className={topItemClasses}
         onClick={this.toggle}
       >
         <div className={classnames("top-product-highlight", `${this.state.products[0].name}`)} />
@@ -132,7 +141,7 @@ export default class ProductsDrawer extends Component {
       // else the product drawer is closed so just show the current product the user is in
       topItem = (
         <div
-          className={classnames("top-product", this.state.topProduct.name, {'open': this.state.productsDropdown})}
+          className={topItemClasses}
           onClick={this.toggle}
         >
           <div className={classnames("top-product-highlight", `${this.state.topProduct.name}`)} />
@@ -164,7 +173,7 @@ export default class ProductsDrawer extends Component {
                       <a className={classnames("product-link", product.name)}>
                         <div className="menu-item">
                           <div className={classnames("product-drawer-highlight", `${product.name}`)} />
-                          <div className="product-drawer-label">
+                          <div className="product-drawer-label current-selection">
                             <span className={classnames("fa", product.icon)}></span>
                             <span>{product.label}</span>
                           </div>
