@@ -178,14 +178,21 @@ angular.module(PKG.name + '.feature.tracker')
           .attr('class', 'y axis')
           .call(yAxis);
 
-        /* CREATING TOOLTIP */
-        let tip = d3.tip()
-          .attr('class', 'd3-tip tracker-audit-histogram')
-          .offset([-10, 0])
-          .html(function(d) {
-            return '<strong>' + timeFormat(d.time) + ' - ' + d.count +  '</strong>';
-          });
-        svg.call(tip);
+        /*
+          FIXME: We have added d3 as part of wrangler which gets included in
+          in common-lib.js. That has a version of 3.5.17 and we include
+          d3 with version of 3.5.5 from bower for visualizations in hydrator & tracker.
+          Since one overwrites the other the extension d3.tip and that is causing issues with UI.
+          commenting out for release/4.0 and this has to be fixed ASAP in either 4.0.1 or 4.1.0
+        */
+        // /* CREATING TOOLTIP */
+        // let tip = d3.tip()
+        //   .attr('class', 'd3-tip tracker-audit-histogram')
+        //   .offset([-10, 0])
+        //   .html(function(d) {
+        //     return '<strong>' + timeFormat(d.time) + ' - ' + d.count +  '</strong>';
+        //   });
+        // svg.call(tip);
 
         /* BARS */
         svg.selectAll('.bar')
@@ -199,9 +206,9 @@ angular.module(PKG.name + '.feature.tracker')
             .attr('width', () => {
               return barWidth;
             })
-            .attr('height', (d) => { return height - y(d.count); })
-          .on('mouseover', tip.show)
-          .on('mouseout', tip.hide);
+            .attr('height', (d) => { return height - y(d.count); });
+          // .on('mouseover', tip.show)
+          // .on('mouseout', tip.hide);
       };
     }
 
