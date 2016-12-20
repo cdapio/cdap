@@ -240,7 +240,6 @@ function download_includes() {
   download_md_file core-plugins S3-batchsource.md
   download_md_file core-plugins S3Avro-batchsink.md
   download_md_file core-plugins S3Parquet-batchsink.md
-  download_md_file core-plugins ScriptFilter-transform.md
   download_md_file core-plugins SnapshotAvro-batchsink.md
   download_md_file core-plugins SnapshotAvro-batchsource.md
   download_md_file core-plugins SnapshotParquet-batchsink.md
