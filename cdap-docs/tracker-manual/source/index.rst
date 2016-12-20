@@ -3,6 +3,13 @@
     :description: Cask Tracker
     :copyright: Copyright © 2016 Cask Data, Inc.
 
+.. |tracker-sdk-url| replace:: http://localhost:11011/tracker/ns/default
+.. |literal-tracker-sdk-url| replace:: ``http://localhost:11011/tracker/ns/default``
+
+.. |tracker-distributed-cdap-url| replace:: http://<host>:<dashboard-bind-port>/tracker/ns/default
+.. |literal-tracker-distributed-cdap-url| replace:: ``http://<host>:<dashboard-bind-port>/tracker/ns/default``
+
+
 .. _cask-tracker-index:
 
 ============
@@ -23,7 +30,7 @@ retrieve, use, and manage datasets.
 
 Tracker also allows users to update metadata for datasets and streams. Users can add,
 remove, and update tags and user properties directly in the UI. It allows users to set
-a preferred dictionary of terms so that teams can use the same lexicon when updating metadata.
+a preferred dictionary of tags so that teams can use the same lexicon when updating metadata.
 
 Tracker's UI shows a graphical visualization of the :ref:`lineage
 <metadata-lineage-lineage>` of an entity. A lineage shows |---| for a specified time range
@@ -31,12 +38,17 @@ Tracker's UI shows a graphical visualization of the :ref:`lineage
 
 Tracker also captures activity metrics for datasets. You can see the datasets that are
 being used the most and view usage metrics for each dataset. This allows teams to easily
-determine the appropriate dataset to use for an analysis. The Tracker Meter rates each
-dataset on a scale that shows how active a dataset is in the system. Users can see the
+determine the appropriate dataset to use for an analysis. The Tracker Meter (currently in beta)
+rates each dataset on a scale that shows how active a dataset is in the system. Users can see the
 datasets that are being used the most and view usage metrics for each dataset. This
 allows teams to easily find the right dataset to use for analysis. The Tracker Meter
 also rates each dataset on a scale to quickly show you how active a dataset is in the
 system.
+
+Tracker provides users with the ability to define a Data Dictionary that can be applied across
+all datasets in a namespace. The Data Dictionary allows users to standarize column names, types,
+if the column contains Personally Identifiable Information (PII) data, and a description of the column.
+This can be useful for new team members, allowing them to understand the data stored in datasets quickly.
 
 **Harvest, Index, Track, and Analyze Datasets**
 
@@ -67,6 +79,8 @@ system.
 
 - It helps you in the understanding of the lineage of your business-critical data.
 
+- The Data Dictionary allows you to standarize column names and definitions across datasets.
+
 **Blends Metadata Analytics and Integrations**
 
 - See how your datasets are being created, accessed, and processed.
@@ -85,30 +99,31 @@ three billion records <http://customers.cask.co/rs/882-OYR-915/images/tracker-ca
 
 Tracker Application
 ===================
-Cask Tracker consists of an application in CDAP with two programs and four datasets:
+Cask Tracker consists of an application in CDAP with two programs and six datasets:
 
 - ``_Tracker`` application: names begins with an underscore
 - ``TrackerService``: Service exposing the Tracker API endpoints
 - ``AuditLogFlow``: Flow that subscribes to Kafka audit messages and stores them in the
   ``_auditLog`` dataset
 - ``_auditLog``: Custom dataset for storing audit messages
-- ``_kafkaOffset``: Key-value table for storing Kafka offsets
 - ``_auditMetrics``: Custom cube dataset for collecting dataset metrics
 - ``_auditTagsTable``: Custom dataset for storing preferred tags
 - ``_timeSinceTable``: Custom dataset for storing the last time a specific audit
   message was received
+- ``_dataDictionary``: A Table dataset containing the columns and definitions of the Data Dictionary
+- ``_configurationTable``: A Key-value table containing Tracker config options
 
 The Tracker UI is shipped with CDAP, started automatically in standalone CDAP as part of the
 CDAP UI. It is available at:
-
-  :cdap-ui:`http://localhost:11011/tracker/ns/default/home <tracker/home>`
+ 
+  |literal-tracker-sdk-url|
   
 or (Distributed CDAP):
-
-  http://host:dashboard-bind-port/tracker/ns/default/home
   
+  |literal-tracker-distributed-cdap-url|
 
 Tracker is built from a system artifact included with CDAP, |literal-cask-tracker-version-jar|.
+
 
 .. highlight:: xml  
 
@@ -118,42 +133,16 @@ Cask Tracker is deployed from its system artifact included with CDAP. A CDAP adm
 does not need to build anything to add Cask Tracker to CDAP; they merely need to enable
 the application after starting CDAP.
 
-These two properties are used by Tracker for its audit log functionality::
-  
-  <!-- Audit Configuration -->
-
-  <property>
-    <name>audit.enabled</name>
-    <value>true</value>
-    <description>
-      Determines whether to publish audit messages to Apache Kafka
-    </description>
-  </property>
-
-  <property>
-    <name>audit.kafka.topic</name>
-    <value>audit</value>
-    <description>
-      Apache Kafka topic name to which audit messages are published
-    </description>
-  </property>
-
-As these are the default settings for these properties, they do not need to be included in the
-``cdap-site.xml`` file.
-
 Enabling Tracker
 ----------------
-Tracker is enabled automatically in Standalone CDAP and the UI is available at
-http://localhost:9999/ns/default/tracker/home. In the Distributed version of CDAP,
-you must manually enable Tracker by visiting
-http://host:dashboard-bind-port/ns/default/tracker/home and pressing the
-``"Enable Tracker"`` button.
+Tracker is enabled automatically in Standalone CDAP and the UI is available at |tracker-sdk-url|.
+In the Distributed version of CDAP, you must manually enable Tracker by visiting
+|literal-tracker-distributed-cdap-url| and pressing the ``"Enable Tracker"`` button.
 
 Once pressed, the application will be deployed, the datasets created (if necessary), the
 flow and service started, and search and audit logging will become available.
 
-If you are enabling Tracker from outside the UI, you will, in addition to enabling auditing 
-in the ``cdap-site.xml`` as described above, need to follow these steps:
+If you are enabling Tracker from outside the UI, you will need to follow these steps:
 
 - Using the CDAP CLI, load the artifact (|literal-cask-tracker-version-jar|):
 
@@ -185,27 +174,7 @@ in the ``cdap-site.xml`` as described above, need to follow these steps:
 
     .. parsed-literal::
 
-      |cdap >| create app TrackerApp tracker |cask-tracker-version| USER appconfig.txt
-
-**Audit Log Kafka Config:**
-
-This key contains a property map with:
-
-- Required Properties:
-
-  - ``zookeeperString``: Kafka Zookeeper string that can be used to subscribe to the CDAP
-    audit log updates
-  - ``brokerString``: Kafka Broker string to which CDAP audit log data is published
-
-  *Note:* Specify either the ``zookeeperString`` or the ``brokerString``.
-
-- Optional Properties:
-
-  - ``topic``: Kafka Topic to which CDAP audit updates are published; default is ``audit``
-    which corresponds to the default topic used in CDAP for audit log updates
-  - ``numPartitions``: Number of Kafka partitions; default is set to ``10``
-  - ``offsetDataset``: Name of the dataset where Kafka offsets are stored; default is
-    ``_kafkaOffset``
+      |cdap >| create app TrackerApp tracker |cask-tracker-version| USER
 
 Restarting CDAP
 ---------------
@@ -397,6 +366,20 @@ in CDAP, it will be added in the *Preferred Tags* list.
   :align: center
   :class: bordered-image
 
+**Data Dictionary**
+
+The *Dictionary* tab at the top of the page allows you to add a set of columns and descriptions that
+can be viewed by anyone in the namespace. This allows you to provide more detailed descriptions about
+columns as well as the preferred naming convention, type, and whether the column contains personally
+identifying information (PII) or not. These definitions will be applied to all datasets in the namespace.
+For example, any dataset containing the column ``customerId`` will have the same definition and type.
+
+.. figure:: /_images/tracker-dictionary.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
+
 Integrations
 ------------
 
@@ -412,4 +395,3 @@ connecting to a Navigator instance:
 
 Details on completing this form are described in CDAP's documentation on the
 :ref:`Navigator Integration Application <navigator-integration>`.
-
