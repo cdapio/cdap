@@ -49,7 +49,11 @@ import VersionActions from 'services/VersionStore/VersionActions';
         this.setState({
           showSplashScreen : window.CDAP_CONFIG.cdap.standaloneWebsiteSDKDownload &&
             !window.CDAP_CONFIG.isEnterprise &&
-            !res.property["user-choice-hide-welcome-message"]
+            (
+              typeof res === 'object' &&
+              typeof res.property === 'object' && 
+              !res.property["user-choice-hide-welcome-message"]
+            )
         });
       }, 1000);
     });

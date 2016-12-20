@@ -30,6 +30,8 @@ import ConfigurableTab from 'components/ConfigurableTab';
 import ApplicationMetrics from 'components/EntityCard/ApplicationMetrics';
 
 require('./AppDetailedView.less');
+import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
+import {fetchTables} from 'services/ExploreTables/ActionCreator';
 
 export default class AppDetailedView extends Component {
   constructor(props) {
@@ -51,6 +53,9 @@ export default class AppDetailedView extends Component {
   }
   componentWillMount() {
     let {namespace, appId} = this.props.params;
+    ExploreTablesStore.dispatch(
+     fetchTables(namespace)
+   );
     if (this.state.entityDetail.programs.length === 0) {
       MyAppApi
         .get({

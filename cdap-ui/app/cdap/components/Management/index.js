@@ -91,12 +91,12 @@ class Management extends Component {
             this.setState({
               application : apps[0],
               applications : apps,
-              services : services
+              services : !services.length ? 'empty' : services
             });
           } else {
             this.setState({
               applications : apps,
-              services : services
+              services : !services.length ? 'empty' : services
             });
           }
         }

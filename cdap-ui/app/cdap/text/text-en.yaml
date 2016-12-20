@@ -66,6 +66,8 @@ commons:
 features:
   AppDetailedView:
     Title: Application - {appId}
+    History:
+      emptyMessage: No Runs
   ConfirmationModal:
     confirmDefaultText: OK
     cancelDefaultText: Cancel
@@ -74,9 +76,19 @@ features:
     emptyMessage: No entities found in the system.
     Cards:
       type: "Type: "
+    SplashScreen:
+      welcomeMessage: Welcome to CDAP 4.0
+      welcomeMessage1: New User Interface
+      introText: Introducing Cask Market
+      introText1: Cask's App Store for Big Data
+      caskmarket: Cask Market
+      gotoLabel: Go to CDAP
+      disclaimerMessage: For full feature parity, switch to original UI by clicking "VIEW ORIGINAL UI" in top navigation bar.
     Header:
       filters: Filters
       search-placeholder: Search entities...
+      sortdropdown-tooltip: Clear Search to enable Sort
+      search-disabled-placeholder: Sort by Relevance to Search
       sort: Sort
       sortOptions:
         none: Relevance
@@ -241,6 +253,7 @@ features:
 
     Component-Overview:
       label: Component Overview
+      emptyMessage: Available only in Distributed mode
       headers:
         cdap: CDAP
         cdh: CDH
@@ -307,6 +320,8 @@ features:
       logout: Logout
       signedInAs: Signed in as
       support: Support
+      standalonelabel: Standalone
+      distributelabel: Distributed
     Sidebar:
       extension: "Extensions:"
     NamespaceDropdown:

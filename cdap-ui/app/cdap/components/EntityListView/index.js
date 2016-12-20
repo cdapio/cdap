@@ -135,23 +135,22 @@ class EntityListView extends Component {
      );
     }
 
-    let query = nextProps.location.query || {};
-    let {filter = defaultFilter, q , page = 1, sort, order } = query;
-    let sortObj;
-    if (typeof q === 'undefined'){
-      let matchedSort = this.sortOptions.find(sortOption => sortOption.sort === sort && sortOption.order === order);
-      sortObj = matchedSort ? matchedSort : this.sortOptions[0];
-    } else {
-      sortObj = this.sortOptions[0];
+    let queryObject = this.getQueryObject(nextProps.location.query);
+    if (
+      queryObject.filter !== this.state.filter &&
+      queryObject.sort.fullSort !== this.state.sortObj.fullSort &&
+      queryObject.query !== this.state.query &&
+      queryObject.page !== this.state.currentPage
+    ) {
+      this.updateData(queryObject.query, queryObject.filter, queryObject.sort, nextProps.params.namespace, queryObject.page);
+      this.setState({
+        filter: queryObject.filter,
+        sortObj: queryObject.sort,
+        query: queryObject.query,
+        currentPage: queryObject.page,
+        loading: true,
+      });
     }
-    this.updateData(q, filter, sortObj, nextProps.params.namespace, page);
-    this.setState({
-      sortObj,
-      query: q,
-      loading: true,
-      filter,
-      currentPage: parseInt(page, 10)
-    });
   }
 
   //Update Store and State to correspond to query parameters before component renders
@@ -171,7 +170,7 @@ class EntityListView extends Component {
     );
 
     //Process and return valid query parameters
-    let queryObject = this.getQueryObject();
+    let queryObject = this.getQueryObject(this.props.location.query);
 
     this.setState({
       filter: queryObject.filter,
@@ -212,15 +211,15 @@ class EntityListView extends Component {
   //Retrieve entities for rendering
   componentDidMount(){
     this.calculatePageSize();
+    this.updateData();
   }
 
   //Construct and return query object from query parameters
-  getQueryObject() {
+  getQueryObject(query) {
     let sortBy = '';
     let orderBy = '';
     let searchTerm = '';
     let sortOption = '';
-    let query = this.props.location.query;
     let filters = '';
     let page = this.state.currentPage;
     let verifiedFilters = null;
@@ -271,11 +270,16 @@ class EntityListView extends Component {
         }
       });
     }
-
+    let sort;
+    if (!searchTerm) {
+      sort = sortOption.length === 0 ? this.state.sortObj : sortOption[0];
+    } else {
+      sort = this.sortOptions[0];
+    }
     //Return valid query parameters or return current state values if query params are invalid
     return ({
       'query' : searchTerm ? searchTerm : this.state.query,
-      'sort' : sortOption.length === 0 ? this.state.sortObj : sortOption[0],
+      'sort': sort,
       'filter' : verifiedFilters ? verifiedFilters : this.state.filter,
       'page' : page
     });
@@ -461,6 +465,7 @@ class EntityListView extends Component {
 
   dismissSplash() {
     let updateObj = Object.assign({}, this.state.userStoreObj);
+    updateObj.property = updateObj.property || {};
     updateObj.property['user-has-visited'] = true;
     MyUserStoreApi.set({}, updateObj.property);
     this.setState({
@@ -483,40 +488,37 @@ class EntityListView extends Component {
       return (
         <div className="splash-screen-container">
           <div className="splash-screen-first-time">
-            <div className="welcome-message">
-              Welcome to CDAP 4.0
-            </div>
+            <h2 className="welcome-message">
+              {T.translate('features.EntityListView.SplashScreen.welcomeMessage')}
+            </h2>
             <div className="beta-notice">
-              Beta UI*
+              {T.translate('features.EntityListView.SplashScreen.welcomeMessage1')}*
             </div>
             <div className="cdap-fist-icon">
               <span className="icon-fist" />
             </div>
             <div className="introducing">
-              Introducing Cask Market
+              {T.translate('features.EntityListView.SplashScreen.introText')}
             </div>
             <div className="app-store-bd">
-              The App Store for Big Data
+              {T.translate('features.EntityListView.SplashScreen.introText1')}
             </div>
             <div
               className="splash-screen-first-time-btn"
               onClick={this.openMarketModal.bind(this)}
             >
               <span className="icon-CaskMarket" />
-              Cask Market
+              {T.translate('features.EntityListView.SplashScreen.caskmarket')}
             </div>
             <div
               className="go-to-cdap"
               onClick={this.dismissSplash.bind(this)}
             >
-              Go to CDAP
+              {T.translate('features.EntityListView.SplashScreen.gotoLabel')}
             </div>
             <div className="splash-screen-disclaimer">
               <p>
-                *The new CDAP BETA UI is still in development and doesn’t offer full feature parity.
-              </p>
-              <p>
-                Switch to the original UI and its features by using the “VIEW ORIGINAL UI” button in the top navigation bar.
+                * {T.translate('features.EntityListView.SplashScreen.disclaimerMessage')}
               </p>
             </div>
           </div>

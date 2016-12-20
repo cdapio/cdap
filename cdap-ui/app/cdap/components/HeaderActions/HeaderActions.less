@@ -23,8 +23,36 @@
   }
   .navbar {
     .header-actions {
+      .navbar-list {
+        .navbar-item {
+          &.environment {
+            position: absolute;
+            right: 410px;
+            color: rgba(117, 117, 117, 0.7);
+            font-size: 13px;
+            color: hsla(0,0%,46%,.7);
+            span {
+              &:nth-child(2) {
+                margin-left: 5px;
+              }
+            }
+          }
+        }
+      }
       .plus-button {
         color: @plus-button-color;
+        &:after {
+          content: 'NEW';
+          position: absolute;
+          background: #ff6600;
+          font-size: 9px;
+          color: white;
+          border-radius: 4px;
+          top: 11px;
+          padding: 2px;
+          font-weight: bold;
+          font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
       }
       .navbar-cog:hover,
       .menu-open {

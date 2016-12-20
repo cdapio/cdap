@@ -45,6 +45,7 @@ let ThresholdTextBox = ({value, onChange}) => {
       <Input
         value={value}
         type="number"
+        min={1}
         onChange={onChange}
       />
     <h3>{T.translate('features.Wizard.StreamCreate.Step3.mblabel')}</h3>
