@@ -21,7 +21,7 @@ Here is a screen-capture of the CDAP UI running on a Distributed CDAP:
    :align: center
    :class: bordered-image
 
-   **CDAP UI:** Showing started-up page
+   **CDAP UI:** Showing the *Home* page
 
 
 Across the top, are three buttons: *Development*, *Operations*, and *Management*. These
@@ -42,18 +42,43 @@ feature parity with the original UI, and is still under development.
 
 It includes access to: the Cask Market, with use cases, pipelines, applications, plugins,
 datapacks, and drivers; the Resource Centre, which provides wizards for adding streams,
-drivers, applications, Hydrator pipelines, and plugins; access to CDAP extensions
+drivers, applications, Hydrator pipelines, and plugins; and access to CDAP extensions
 including Cask Hydrator, Cask Tracker, and Cask Wrangler.
 
-Here is a screen-capture of the CDAP UI running on a Standalone CDAP:
+Here are screen-captures of the new CDAP Beta UI running on a Distributed CDAP:
 
-.. figure:: ../_images/ui/ui_01_overview.png
+.. figure:: ../_images/ui/ui-01-home.png
    :figwidth: 100%
    :width: 800px
    :align: center
    :class: bordered-image
 
-   **CDAP UI:** Showing started-up page, after an application has been deployed
+   **CDAP Beta UI:** The *Home* page, after an application and programs have been deployed
 
 
+.. figure:: ../_images/ui/ui-02-market.png
+   :figwidth: 100%
+   :width: 800px
+   :align: center
+   :class: bordered-image
 
+   **CDAP Beta UI:** The new *Cask Market* and *Resource Center*
+   
+
+.. figure:: ../_images/ui/ui-03-management.png
+   :figwidth: 100%
+   :width: 800px
+   :align: center
+   :class: bordered-image
+
+   **CDAP Beta UI:** The *Management* page, *YARN* tab
+
+
+.. figure:: ../_images/ui/ui-04-wrangler.png
+   :figwidth: 100%
+   :width: 800px
+   :align: center
+   :class: bordered-image
+
+   **CDAP Beta UI:** The *Cask Wrangler* extension, a new CDAP extension for interactive data preparation.
+   
