@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,20 +16,12 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
-
 /**
- * Thrown when an artifact does not exist.
+ * Thrown when an impersonation info does not exist.
  */
-public class ArtifactNotFoundException extends NotFoundException {
+public class ImpersonationInfoNotFound extends NotFoundException {
 
-  public ArtifactNotFoundException(NamespaceId namespace, String name) {
-    super("artifact", namespace.getNamespace() + ":" + name);
-  }
-
-  // first param seems wrong
-  public ArtifactNotFoundException(ArtifactId artifactId) {
-    super("artifact", artifactId.toString());
+  public ImpersonationInfoNotFound(String principal) {
+    super(String.format("Impersonation info was not found for principal %s.", principal));
   }
 }

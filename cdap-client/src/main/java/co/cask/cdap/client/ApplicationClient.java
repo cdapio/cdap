@@ -52,6 +52,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -520,9 +521,12 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void deploy(NamespaceId namespace, File jarFile,
-                     String appConfig) throws IOException, UnauthenticatedException {
-    Map<String, String> headers = ImmutableMap.of("X-Archive-Name", jarFile.getName(),
-                                                  "X-App-Config", appConfig);
+                     @Nullable String appConfig) throws IOException, UnauthenticatedException {
+    Map<String, String> headers = new HashMap<>();
+    headers.put("X-Archive-Name", jarFile.getName());
+    if (appConfig != null) {
+      headers.put("X-App-Config", appConfig);
+    }
     deployApp(namespace, jarFile, headers);
   }
 

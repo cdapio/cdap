@@ -14,7 +14,7 @@
 * the License.
 */
 
-package co.cask.cdap.notifications.service.kafka;
+package co.cask.cdap.notifications.service.kafka; // tms
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.conf.CConfiguration;

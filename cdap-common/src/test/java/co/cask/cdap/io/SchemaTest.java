@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
@@ -44,6 +45,11 @@ import java.util.Map;
  * Test for schema generation.
  */
 public class SchemaTest {
+
+  @Test
+  public void test() {
+    System.out.println(new StreamId("ns", "stream"));
+  }
 
   /**
    * Test node.

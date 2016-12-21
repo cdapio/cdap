@@ -62,6 +62,7 @@ import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.internal.app.runtime.impersonation.ImpersonationStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedStreamSizeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
@@ -531,6 +532,8 @@ public class UpgradeTool {
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
     // artifacts
     ArtifactStore.setupDatasets(datasetFramework);
+    // impersonation meta
+    ImpersonationStore.setupDatasets(datasetFramework);
     // metadata and lineage
     DefaultMetadataStore.setupDatasets(datasetFramework);
     LineageStore.setupDatasets(datasetFramework);

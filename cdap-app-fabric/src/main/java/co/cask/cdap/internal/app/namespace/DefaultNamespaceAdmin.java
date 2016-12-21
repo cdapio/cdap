@@ -175,7 +175,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     Principal executionUser = new Principal(executionUserName, Principal.PrincipalType.USER);
     privilegesManager.grant(namespace, executionUser, EnumSet.allOf(Action.class));
 
-    // store the meta first in the namespace store because namespacedlocationfactory need to look up location
+    // store the meta first in the namespace store because namespacedLocationFactory needs to look up location
     // mapping from namespace config
     nsStore.create(metadata);
 

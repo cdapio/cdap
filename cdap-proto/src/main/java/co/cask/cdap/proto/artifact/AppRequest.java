@@ -29,6 +29,7 @@ public class AppRequest<T> {
   private final ArtifactSummary artifact;
   private final T config;
   private final PreviewConfig preview;
+  private final String principal;
 
   public AppRequest(ArtifactSummary artifact) {
     this(artifact, null);
@@ -39,9 +40,15 @@ public class AppRequest<T> {
   }
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview) {
+    this(artifact, config, preview, null);
+  }
+
+  public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
+                    @Nullable String principal) {
     this.artifact = artifact;
     this.config = config;
     this.preview = preview;
+    this.principal = principal;
   }
 
   public ArtifactSummary getArtifact() {
@@ -56,5 +63,10 @@ public class AppRequest<T> {
   @Nullable
   public PreviewConfig getPreview() {
     return preview;
+  }
+
+  @Nullable
+  public String getPrincipal() {
+    return principal;
   }
 }

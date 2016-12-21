@@ -139,7 +139,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       return deployAppFromArtifact(applicationId);
     } catch (Exception ex) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
     }
   }
@@ -150,15 +150,16 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/apps")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") final String namespaceId,
-                             @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
+                             @PathParam("namespace-id") String namespaceId,
+                             @HeaderParam(ARCHIVE_NAME_HEADER) String archiveName,
                              @HeaderParam(APP_CONFIG_HEADER) String configString)
+//                             @HeaderParam("principal") String principal)
     throws BadRequestException, NamespaceNotFoundException {
 
     NamespaceId namespace = validateNamespace(namespaceId);
 
-    // null means use name provided by app spec
     try {
+      // null means use name provided by app spec
       return deployApplication(responder, namespace, null, archiveName, configString);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());

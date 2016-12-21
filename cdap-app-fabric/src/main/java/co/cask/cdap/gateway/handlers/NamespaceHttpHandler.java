@@ -115,10 +115,14 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       String configuredKeytabURI = finalMetadata.getConfig().getKeytabURI();
       if (configuredPrincipal != null && configuredKeytabURI == null ||
         configuredPrincipal == null && configuredKeytabURI != null) {
-        throw new BadRequestException(
-          String.format("Either neither or both of the following two configurations must be configured. " +
-                          "Configured principal: %s, Configured keytabURI: %s",
-                        configuredPrincipal, configuredKeytabURI));
+        try {
+          throw new IllegalArgumentException(
+            String.format("Either neither or both of the following two configurations must be configured. " +
+                            "Configured principal: %s, Configured keytabURI: %s",
+                          configuredPrincipal, configuredKeytabURI));
+        } catch (IllegalArgumentException e) {
+          throw new BadRequestException(e);
+        }
       }
     }
 
