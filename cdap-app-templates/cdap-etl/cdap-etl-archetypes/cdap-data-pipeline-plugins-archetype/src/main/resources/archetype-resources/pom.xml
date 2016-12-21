@@ -28,12 +28,12 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <spark.version>1.6.1</spark.version>
-    <cdap.version>3.5.2-SNAPSHOT</cdap.version>
+    <cdap.version>3.5.2</cdap.version>
     <hadoop.version>2.3.0</hadoop.version>
     <!-- properties for script build step that creates the config files for the artifacts -->
     <widgets.dir>widgets</widgets.dir>
     <docs.dir>docs</docs.dir>
-    <app.parents>system:cdap-data-pipeline[3.5.2-SNAPSHOT,3.6.0-SNAPSHOT)</app.parents>
+    <app.parents>system:cdap-data-pipeline[3.5.2,3.6.0-SNAPSHOT)</app.parents>
     <!-- this is here because project.basedir evaluates to null in the script build step -->
     <main.basedir>${project.basedir}</main.basedir>
   </properties>
