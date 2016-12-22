@@ -147,7 +147,7 @@ Bug Fixes
   argument values in excess of 64K characters.
  
  
- `Release 3.5.1 <http://docs.cask.co/cdap/3.5.1/index.html>`__
+`Release 3.5.1 <http://docs.cask.co/cdap/3.5.1/index.html>`__
 =============================================================
 
 Known Issues
