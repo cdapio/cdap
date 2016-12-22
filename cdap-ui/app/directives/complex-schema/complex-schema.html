@@ -60,7 +60,8 @@
                      ng-model="field.name"
                      ng-blur="ComplexSchema.formatOutput()"
                      ng-keypress="$event.keyCode === 13 && ComplexSchema.addField($index)"
-                     placeholder="Field Name">
+                     placeholder="Field Name"
+                     ng-paste="ComplexSchema.pasteFields($event)">
             </div>
           </div>
 
