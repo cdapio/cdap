@@ -56,19 +56,27 @@ Improvements
 - :cask-issue:`CDAP-4322` - For MapReduce programs using a PartitionedFileSet as input,
   expose the partition key corresponding to the input split to the mapper.
 
+- :cask-issue:`CDAP-6183` - Added the property ``program.container.dist.jars`` to set
+  extra jars to be localized to every program container and to be added to classpaths of
+  CDAP programs.
+
 - :cask-issue:`CDAP-6572` - The namespace that integration test cases run against by
   default has been made configurable.
 
 - :cask-issue:`CDAP-6577` - Improve UpgradeTool to upgrade tables in namespaces with
   impersonation configured.
 
+- :cask-issue:`CDAP-6885` - Added support for concurrent runs of a Spark program.
+
 - :cask-issue:`CDAP-6587` - Added support for impersonation with CDAP Explore (Hive)
   operations, such as enabling exploring of a dataset or running queries against it.
-
+  
 - :cask-issue:`CDAP-7291` - Added support for CDH 5.9.
 
 - :cask-issue:`CDAP-7385` - The Log HTTP Handler and Router have been fixed to allow the
   streaming of larger logs files.
+
+- :cask-issue:`CDAP-7387` - Added support to LogSaver for impersonation.
 
 - :cask-issue:`CDAP-7404` - Added authorization for schedules in CDAP.
 
@@ -77,6 +85,12 @@ Improvements
 - :cask-issue:`CDAP-7557` - DynamicPartitioner can now limit the number of open
   RecordWriters to one, if the output partition keys are grouped.
 
+- :cask-issue:`CDAP-7682` - Added a property ``kafka.zookeeper.quorum`` to be used across
+  all internal clients using Kafka.
+  
+- :cask-issue:`CDAP-7761` - Adds ``cluster.name`` as a property that identifies a cluster;
+  this property can be set in the ``cdap-site.xml``.
+
 - :cask-issue:`HYDRATOR-979` - Added the Windows Share Copy plugin to the Hydrator plugins.
 
 - :cask-issue:`HYDRATOR-997` - The SSH hostname and the command to be executed are now
@@ -84,6 +98,15 @@ Improvements
 
 Bug Fixes
 ---------
+- :cask-issue:`CDAP-6981` - Fixed an issue that prevented macros from being used with a
+  secure KMS store.
+
+- :cask-issue:`CDAP-7116` - Fixed an issue so as to significantly reduce the chance of a
+  schedule misfire in the case where the CPU cannot trigger a schedule within a certain time
+  threshold.
+
+- :cask-issue:`CDAP-7177` - Fixed an issue where macros were not being substituted for
+  postaction plugins.
 
 - :cask-issue:`CDAP-7250` - Fixed an issue where dataset usage was not being recorded
   after an application was deleted.
@@ -115,36 +138,78 @@ Bug Fixes
 - :cask-issue:`CDAP-7386` - Fixed an error in the "CDAP Introduction" tutorial's
   "Transforming Your Data" example of an application configuration.
 
-- :cask-issue:`CDAP-7391` - Fixed an issue that caused unit test failures when using
-  ``org.hamcrest`` classes.
+- :cask-issue:`CDAP-7391` - Fixed TestFramework classloading to support classes that
+  depend on ``org.hamcrest``.
 
 - :cask-issue:`CDAP-7392` - Fixed an issue where the Java process corresponding to the
   MapReduce application master kept running even if the application was moved to the
   FINISHED state.
 
+- :cask-issue:`CDAP-7394` - Fixed an issue with impersonation in flows not working by not
+  re-using ``HBaseAdmin`` across different UGI.
+
+- :cask-issue:`CDAP-7396` - Fixed an issue which prevented scheduled jobs from running on
+  a namespace with impersonation.
+
+- :cask-issue:`CDAP-7398` - Fixed an issue which prevented an app in a namespace from
+  being deleted if a program for the same app is running in a different namespace.
+
+- :cask-issue:`CDAP-7403` - Fixed an issue that prevented the CDAP UI from starting if the
+  ``logback.xml`` was configured to log at the INFO or lower level.
+
 - :cask-issue:`CDAP-7404` - Added authorization for schedules in CDAP.
   
-- :cask-issue:`CDAP-7420` - Avoid the caching of ``YarnClient`` in order to fix a problem that
-  occurred in namespaces with impersonation configured.
+- :cask-issue:`CDAP-7420` - Avoid the caching of ``YarnClient`` in order to fix a problem
+  that occurred in namespaces with impersonation configured.
   
+- :cask-issue:`CDAP-7433` - Fixed an issue that prevented ``HBaseQueueDebugger`` from
+  running in an impersonated namespace.
+  
+- :cask-issue:`CDAP-7435` - Fixed an error which prevented the downloading of large logs
+  using the CDAP UI.
+
 - :cask-issue:`CDAP-7438`, :cask-issue:`CDAP-7439` - Removed the requirement of running
   "kinit" prior to running either the Upgrade or Transaction Debugger tools of CDAP on a
   secure Hadoop cluster.
-
+  
+- :cask-issue:`CDAP-7458` - Fixed an issue that prevented the CDAP Upgrade Tool from being
+  run for a namespace with authorization turned on.
+  
 - :cask-issue:`CDAP-7473` - Fix logback-container.xml to work on clusters with multiple
   log directories configured for YARN.
 
-- :cask-issue:`CDAP-7482` - Fixed a problem in CDAP logging that caused system logs from Kafka to
-  not be saved after an upgrade and for previously-saved logs to become inaccessible.
+- :cask-issue:`CDAP-7482` - Fixed a problem in CDAP logging that caused system logs from
+  Kafka to not be saved after an upgrade and for previously-saved logs to become
+  inaccessible.
+  
+- :cask-issue:`CDAP-7500` - Fixed cases where the MapReduce classloader was being closed
+  prematurely.
+
+- :cask-issue:`CDAP-7527` - Fixed a problem that prevented the use of a ``logback.xml``
+  from an application jar.
 
 - :cask-issue:`CDAP-7548` - Fixed a problem in integration tests to allow JDBC connections
   against authorization-enabled and SSL-enabled CDAP instances.
   
+- :cask-issue:`CDAP-7566` - Improved the usability of ServiceManager in integration tests.
+  The ``getServiceURL`` method now waits for the service to be discoverable before
+  returning the service's URL.
+
+- :cask-issue:`CDAP-7612` - Fixed cases where Spark programs could not be started after a
+  master failover or restart.
+  
+- :cask-issue:`CDAP-7660` - The CDAP Ambari service was updated to use scripts for Auth
+  Server/Router alerts in Ambari due to Ambari not supporting CDAP's ``/status`` endpoint
+  with WEB check.
+
 - :cask-issue:`HYDRATOR-791` - Fixed a problem with Hydrator pipelines using a DBSource
   not working in an HDP cluster.
 
 - :cask-issue:`HYDRATOR-948` - Fixed a problem with Spark data pipelines not supporting
   argument values in excess of 64K characters.
+ 
+- :cask-issue:`HYDRATOR-1125` - Fixed a problem that prevented the adding of a schema with
+  hyphens in the Hydrator UI.
  
  
 `Release 3.5.1 <http://docs.cask.co/cdap/3.5.1/index.html>`__
