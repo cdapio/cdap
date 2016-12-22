@@ -56,6 +56,7 @@ export default class MarketPlaceEntity extends Component {
       version: this.props.entity.version
     }).subscribe((res) => {
       this.setState({entityDetail: res});
+      this.toggleDetailedMode();
     }, (err) => {
       console.log('Error', err);
     });
@@ -65,7 +66,6 @@ export default class MarketPlaceEntity extends Component {
       return;
     }
     this.fetchEntityDetail();
-    this.toggleDetailedMode();
   }
   toggleDetailedMode() {
     this.setState({expandedMode: !this.state.expandedMode});
