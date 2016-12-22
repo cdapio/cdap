@@ -94,6 +94,12 @@ export default class MarketPlaceUsecaseEntity extends Component {
         size="LG"
         cardClass="market-place-usecase-package-card"
       >
+        {
+          this.props.entity.beta ?
+          <div className="experimental-banner">BETA</div>
+          :
+          null
+        }
         <div className="title clearfix">
           <span className="pull-left">{this.props.entity.label}</span>
           <span className="pull-right">Version: {this.props.entity.version}</span>
@@ -180,6 +186,7 @@ MarketPlaceUsecaseEntity.propTypes = {
     description: PropTypes.string,
     org: PropTypes.string,
     created: PropTypes.number,
-    cdapVersion: PropTypes.string
+    cdapVersion: PropTypes.string,
+    beta: PropTypes.bool
   })
 };
