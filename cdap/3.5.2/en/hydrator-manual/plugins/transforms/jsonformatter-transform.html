@@ -1,0 +1,270 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>JSON Formatter &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/hydrator-manual/plugins/transforms/jsonformatter-transform.html">
+
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../../index.html" />
+    <link rel="up" title="Transformation Plugins" href="index.html" />
+    <link rel="next" title="JSON Parser" href="jsonparser-transform.html" />
+    <link rel="prev" title="JavaScript" href="javascript-transform.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="jsonparser-transform.html" title="JSON Parser"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="javascript-transform.html" title="JavaScript"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../../table-of-contents.html">Cask Hydrator</a> &raquo;</li>
+          <li><a href="../index.html" >Plugin Reference</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Transformation Plugins</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="json-formatter">
+<span id="json-formatter"></span><h1><a class="headerlink" href="#json-formatter" title="Perma-link to this heading">🔗</a>JSON Formatter</h1>
+<div class="section" id="description">
+<span id="description"></span><h2><a class="headerlink" href="#description" title="Perma-link to this heading">🔗</a>Description</h2>
+<p>Formats a Structured Record as JSON Object. Plugin will convert the Structured Record to a
+JSON object and write to the output record. The output record schema is a single field,
+either type <code class="docutils literal"><span class="pre">STRING</span></code> or type <code class="docutils literal"><span class="pre">BYTE</span></code> array.</p>
+</div>
+<div class="section" id="configuration">
+<span id="configuration"></span><h2><a class="headerlink" href="#configuration" title="Perma-link to this heading">🔗</a>Configuration</h2>
+<p><strong>schema:</strong> Specifies the output schema, a single field either type <code class="docutils literal"><span class="pre">STRING</span></code> or type <code class="docutils literal"><span class="pre">BYTES</span></code>.</p>
+<hr class="docutils" />
+<ul class="simple">
+<li>Hydrator Plugin Type: transform</li>
+<li>Hydrator Version: 1.4.1</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../../table-of-contents.html">Cask Hydrator: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts-design.html"> Concepts and Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../studio.html"> Hydrator Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../creating-pipelines.html"> Creating Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../running-pipelines.html"> Running Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-management.html"> Plugin Management</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Plugin Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../actions/index.html"> Action Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sources/index.html"> Source Plugins</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"> Transform Plugins</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="clonerecord-transform.html">Clone Record</a></li>
+<li class="toctree-l3"><a class="reference internal" href="compressor-transform.html">Compressor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="csvformatter-transform.html">CSV Formatter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="csvparser-transform.html">CSV Parser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="decoder-transform.html">Decoder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="decompressor-transform.html">Decompressor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="decryptor-transform.html">Decryptor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="encoder-transform.html">Encoder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="encryptor-transform.html">Encryptor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hasher-transform.html">Hasher</a></li>
+<li class="toctree-l3"><a class="reference internal" href="javascript-transform.html">JavaScript</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">JSON Formatter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="jsonparser-transform.html">JSON Parser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logparser-transform.html">Log Parser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normalize-transform.html">Normalize</a></li>
+<li class="toctree-l3"><a class="reference internal" href="projection-transform.html">Projection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pythonevaluator-transform.html">Python Evaluator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scriptfilter-transform.html">Script Filter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="streamformatter-transform.html">Stream Formatter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="structuredrecordtogenericrecord-transform.html">StructuredRecord To GenericRecord</a></li>
+<li class="toctree-l3"><a class="reference internal" href="validator-transform.html">Validator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="valuemapper-transform.html">Value Mapper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="window-windower.html">Window Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xmlparser-transform.html">XML Parser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xmltojson-transform.html">XML String to JSON String Converter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../analytics/index.html"> Analytic Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sinks/index.html"> Sink Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../shared-plugins/index.html"> Shared Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../post-run-plugins/index.html"> Post-run Plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../developing-pipelines.html"> Developing Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developing-plugins/index.html"> Developing Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how-hydrator-works.html"> How Hydrator Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faqs.html"> FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html"> Glossary</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="JavaScript" href="javascript-transform.html" />JavaScript</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="JSON Parser" href="jsonparser-transform.html" />JSON Parser</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

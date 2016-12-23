@@ -1,0 +1,377 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Navigator Integration Application &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/integrations/partners/cloudera/navigator-integration.html">
+
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../../index.html" />
+    <link rel="up" title="Cloudera" href="index.html" />
+    <link rel="next" title="Apache Sentry" href="../../apache-sentry.html" />
+    <link rel="prev" title="Ingestion and Exploration" href="ingesting.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../../apache-sentry.html" title="Apache Sentry"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="ingesting.html" title="Ingestion and Exploration"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../../table-of-contents.html">Integrations</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Cloudera</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="navigator-integration-application">
+<span id="navigator-integration"></span><h1><a class="headerlink" href="#navigator-integration-application" title="Perma-link to this heading">🔗</a>Navigator Integration Application</h1>
+<div class="section" id="introduction">
+<h2><a class="headerlink" href="#introduction" title="Perma-link to this heading">🔗</a>Introduction</h2>
+<p>The Navigator Integration App is an application built by the team at Cask for bridging CDAP Metadata
+with Cloudera's data management tool, Navigator. The Navigator Integration App is a CDAP-native application
+that uses a real-time flow to fetch the CDAP Metadata and write it to Cloudera Navigator.</p>
+<div class="section" id="resources">
+<h3><a class="headerlink" href="#resources" title="Perma-link to this heading">🔗</a>Resources</h3>
+<ul class="simple">
+<li><a class="reference external" href="../../source/../../developers-manual/building-blocks/metadata-lineage.html#metadata-lineage-metadata" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Overview of CDAP Metadata</span></a></li>
+<li><a class="reference external" href="http://www.cloudera.com/products/cloudera-navigator.html">Cloudera Navigator</a></li>
+<li><a class="reference external" href="../../source/../../developers-manual/building-blocks/flows-flowlets/index.html#flows-flowlets-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Real-time processing using Flows</span></a></li>
+<li><a class="reference external" href="https://github.com/caskdata/cdap-packs/tree/release/cdap-3.5-compatible/cdap-kafka-pack/cdap-kafka-flow">Kafka Flowlet Library</a></li>
+<li><a class="reference external" href="../../source/../../developers-manual/building-blocks/audit-logging.html#audit-logging" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Overview of Audit Logging in CDAP</span></a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="getting-started">
+<h2><a class="headerlink" href="#getting-started" title="Perma-link to this heading">🔗</a>Getting Started</h2>
+<div class="section" id="prerequisites">
+<h3><a class="headerlink" href="#prerequisites" title="Perma-link to this heading">🔗</a>Prerequisites</h3>
+<p>To use the Navigator Integration App, you need CDAP version 3.3.0 (or higher) and Navigator version 2.4.0 (or higher).</p>
+</div>
+<div class="section" id="metadata-publishing-to-kafka">
+<h3><a class="headerlink" href="#metadata-publishing-to-kafka" title="Perma-link to this heading">🔗</a>Metadata Publishing to Kafka</h3>
+<p>The Navigator Integration App contains a flow that subscribes to the Kafka topic to which the CDAP audit logs are
+published. Hence, before using this application, you should
+<a class="reference external" href="../../source/../../developers-manual/building-blocks/audit-logging.html#audit-logging-configuring-audit-publishing" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">enable audit publishing</span></a>.</p>
+</div>
+</div>
+<div class="section" id="deploying-the-application">
+<h2><a class="headerlink" href="#deploying-the-application" title="Perma-link to this heading">🔗</a>Deploying the Application</h2>
+<p><strong>Step 1:</strong> Start by deploying the artifact JAR (download the <a class="reference external" href="http://search.maven.org/remotecontent?filepath=co/cask/cdap/metadata/navigator/0.1.0/navigator-0.1.0.jar">released JAR from Maven</a>, version 0.1.0).
+Deploy the JAR using the CDAP CLI:</p>
+<blockquote>
+<div><div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh load artifact target/navigator-0.1.0-jar
+</pre>
+</div>
+</div></blockquote>
+<p><strong>Step 2:</strong> Create an application configuration file that contains:</p>
+<ul class="simple">
+<li>Kafka Metadata Config (<code class="docutils literal"><span class="pre">metadataKafkaConfig</span></code>): Kafka Consumer Flowlet configuration information
+(information about where we can fetch metadata updates)</li>
+<li>Navigator Config (<code class="docutils literal"><span class="pre">navigatorConfig</span></code>): Information required by the Navigator Client to publish data to Navigator</li>
+</ul>
+<p>A sample Application Configuration file:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
+  <span class="s">&quot;config&quot;</span><span class="o">:</span> <span class="o">{</span>
+    <span class="s">&quot;metadataKafkaConfig&quot;</span><span class="o">:</span> <span class="o">{</span>
+      <span class="s">&quot;zookeeperString&quot;</span><span class="o">:</span> <span class="s">&quot;hostname:2181/cdap/kafka&quot;</span>
+    <span class="o">},</span>
+    <span class="s">&quot;navigatorConfig&quot;</span><span class="o">:</span> <span class="o">{</span>
+      <span class="s">&quot;navigatorHostName&quot;</span><span class="o">:</span> <span class="s">&quot;navigatormetadataserver&quot;</span><span class="o">,</span>
+      <span class="s">&quot;username&quot;</span><span class="o">:</span> <span class="s">&quot;abcd&quot;</span><span class="o">,</span>
+      <span class="s">&quot;password&quot;</span><span class="o">:</span> <span class="s">&quot;1234&quot;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p><strong>Metadata Kafka Config</strong></p>
+<p>This key contains a property map with these properties:</p>
+<blockquote>
+<div><p>Required Properties:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">zookeeperString</span></code>: Kafka ZooKeeper string that can be used to subscribe to the CDAP metadata updates</li>
+<li><code class="docutils literal"><span class="pre">brokerString</span></code>: Kafka Broker string to which CDAP metadata is published</li>
+</ul>
+<p><em>Note:</em> Specify either the <code class="docutils literal"><span class="pre">zookeeperString</span></code> or the <code class="docutils literal"><span class="pre">brokerString</span></code>.</p>
+<p>Optional Properties:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">topic</span></code>: Kafka Topic to which CDAP metadata updates are published; default is <code class="docutils literal"><span class="pre">cdap-metadata-updates</span></code> which
+corresponds to the default topic used in CDAP for metadata updates</li>
+<li><code class="docutils literal"><span class="pre">numPartitions</span></code>: Number of Kafka partitions; default is set to <code class="docutils literal"><span class="pre">10</span></code></li>
+<li><code class="docutils literal"><span class="pre">offsetDataset</span></code>: Name of the dataset where Kafka offsets are stored; default is <code class="docutils literal"><span class="pre">kafkaOffset</span></code></li>
+</ul>
+</div></blockquote>
+<p><strong>Navigator Config</strong></p>
+<p>This key contains a property map with these properties:</p>
+<blockquote>
+<div><p>Required Properties:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">navigatorHostName</span></code>: Navigator Metadata Server hostname</li>
+<li><code class="docutils literal"><span class="pre">username</span></code>: Navigator Metadata Server username</li>
+<li><code class="docutils literal"><span class="pre">password</span></code>: Navigator Metadata Server password</li>
+</ul>
+<p>Optional Properties:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">navigatorPort</span></code>: Navigator Metadata Server port; default is <code class="docutils literal"><span class="pre">7187</span></code></li>
+<li><code class="docutils literal"><span class="pre">autocommit</span></code>: Navigator SDK's autocommit property; default is <code class="docutils literal"><span class="pre">true</span></code></li>
+<li><code class="docutils literal"><span class="pre">namespace</span></code>: Navigator namespace; default is <code class="docutils literal"><span class="pre">CDAP</span></code></li>
+<li><code class="docutils literal"><span class="pre">applicationURL</span></code>: Navigator Application URL; default is <code class="docutils literal"><span class="pre">http://navigatorHostName</span></code></li>
+<li><code class="docutils literal"><span class="pre">fileFormat</span></code>: Navigator File Format; default is <code class="docutils literal"><span class="pre">JSON</span></code></li>
+<li><code class="docutils literal"><span class="pre">navigatorURL</span></code>: Navigator URL; default is <code class="docutils literal"><span class="pre">http://navigatorHostName:navigatorPort/api/v8</span></code></li>
+<li><code class="docutils literal"><span class="pre">metadataParentURI</span></code>: Navigator Metadata Parent URI; default is <code class="docutils literal"><span class="pre">http://navigatorHostName:navigatorPort/api/v8/metadata/plugin</span></code></li>
+</ul>
+</div></blockquote>
+<p><strong>Step 3:</strong> Create a CDAP Application by providing the configuration file:</p>
+<blockquote>
+<div><div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh create app metaApp navigator 0.1.0 USER appconfig.txt
+</pre>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="starting-the-application">
+<h2><a class="headerlink" href="#starting-the-application" title="Perma-link to this heading">🔗</a>Starting the Application</h2>
+<p>To start the MetadataFlow:</p>
+<blockquote>
+<div><div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh start flow metaApp.MetadataFlow
+</pre>
+</div>
+</div></blockquote>
+<p>You should now be able to view CDAP Metadata in the Cloudera Navigator UI. Note that all CDAP Entities use <code class="docutils literal"><span class="pre">SDK</span></code> as
+the SourceType and use <code class="docutils literal"><span class="pre">CDAP</span></code> as the namespace (this can be modified). Since the Navigator SDK doesn't allow the adding
+of new EntityTypes, we have used this mapping between CDAP and Navigator EntityTypes:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="45%" />
+<col width="55%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">CDAP EntityType</th>
+<th class="head">Navigator EntityType</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Application</td>
+<td>File</td>
+</tr>
+<tr class="row-odd"><td>Artifact</td>
+<td>File</td>
+</tr>
+<tr class="row-even"><td>Dataset</td>
+<td>Dataset</td>
+</tr>
+<tr class="row-odd"><td>Program</td>
+<td>Operation</td>
+</tr>
+<tr class="row-even"><td>Stream</td>
+<td>Dataset</td>
+</tr>
+<tr class="row-odd"><td>StreamView</td>
+<td>Table</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../../table-of-contents.html">Integrations: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Cloudera</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="ingesting.html"> Ingestion and Exploration</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Navigator Integration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#getting-started">Getting Started</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deploying-the-application">Deploying the Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#starting-the-application">Starting the Application</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../apache-sentry.html"> Apache Sentry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hadoop-kms.html"> Apache Hadoop KMS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../jdbc.html"> CDAP JDBC Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../odbc.html"> CDAP ODBC Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pentaho.html"> Pentaho Data Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../squirrel.html"> SquirrelSQL</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Ingestion and Exploration" href="ingesting.html" />Ingestion and Exploration</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Apache Sentry" href="../../apache-sentry.html" />Apache Sentry</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

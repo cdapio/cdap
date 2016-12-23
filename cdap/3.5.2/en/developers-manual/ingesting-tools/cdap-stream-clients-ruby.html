@@ -1,0 +1,384 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<meta content="See LICENSE file in this repository" name="license" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>CDAP Stream Client for Ruby &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/ingesting-tools/cdap-stream-clients-ruby.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Ingesting Data into CDAP" href="index.html" />
+    <link rel="next" title="CDAP Flume" href="cdap-flume.html" />
+    <link rel="prev" title="CDAP Stream Client for Python" href="cdap-stream-clients-python.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cdap-flume.html" title="CDAP Flume"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="cdap-stream-clients-python.html" title="CDAP Stream Client for Python"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Ingesting Data into CDAP</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cdap-stream-client-for-ruby">
+<h1><a class="headerlink" href="#cdap-stream-client-for-ruby" title="Perma-link to this heading">🔗</a>CDAP Stream Client for Ruby</h1>
+<p>The Stream Client Ruby API is a tool for managing Streams via external custom Ruby applications.</p>
+<div class="section" id="supported-actions">
+<h2><a class="headerlink" href="#supported-actions" title="Perma-link to this heading">🔗</a>Supported Actions</h2>
+<ul class="simple">
+<li>Create a Stream with a specified &lt;stream-id&gt;</li>
+<li>Update TTL for an exiting Stream with a specified &lt;stream-id&gt;</li>
+<li>Retrieve the current Stream TTL for a specified &lt;stream-id&gt;</li>
+<li>Truncate an existing Stream (the deletion of all events that were written to the Stream)</li>
+<li>Write an event to an existing Stream</li>
+</ul>
+</div>
+<div class="section" id="build">
+<h2><a class="headerlink" href="#build" title="Perma-link to this heading">🔗</a>Build</h2>
+<p>To build a gem, run:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">gem build stream-client-ruby.gemspec</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="usage">
+<h2><a class="headerlink" href="#usage" title="Perma-link to this heading">🔗</a>Usage</h2>
+<p>To use the Stream Client Ruby API, just add to your application Gemfile:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">gem &#39;stream-client-ruby&#39;</span>
+</pre></div>
+</div>
+<p>If you use gem outside Rails, you should require gem files in your application files:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">require &#39;stream-client-ruby&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example">
+<h2><a class="headerlink" href="#example" title="Perma-link to this heading">🔗</a>Example</h2>
+<p>You can configure <code class="docutils literal"><span class="pre">StreamClient</span></code> settings in your config files. For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> config/stream.yml
+<span class="go">gateway: &#39;localhost&#39;</span>
+<span class="go">port: 10000</span>
+<span class="go">api_version: &#39;v3&#39;</span>
+<span class="go">namespace: &#39;example&#39;</span>
+<span class="go">api_key:</span>
+<span class="go">ssl: false</span>
+
+<span class="gp">#</span> initializers/stream.rb
+<span class="go">require &quot;yaml&quot;</span>
+
+<span class="go">config = YAML.load_file(&quot;config/stream.yml&quot;)</span>
+
+<span class="go">CDAPIngest::Rest.gateway     = config[&#39;gateway&#39;]</span>
+<span class="go">CDAPIngest::Rest.port        = config[&#39;port&#39;]</span>
+<span class="go">CDAPIngest::Rest.api_version = config[&#39;api_version&#39;]</span>
+<span class="go">CDAPIngest::Rest.namespace   = config[&#39;namespace&#39;]</span>
+<span class="go">CDAPIngest::Rest.ssl         = config[&#39;ssl&#39;]</span>
+</pre></div>
+</div>
+<p>Create a StreamClient instance and use it as any Ruby object:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">client = CDAPIngest::StreamClient.new</span>
+</pre></div>
+</div>
+<p>If authentication is required, set authentication client:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">client.set_auth_client auth_client</span>
+</pre></div>
+</div>
+<p>Create a new Stream with the <code class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></code> <em>new_stream_name</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">client.create &quot;new_stream_name&quot;</span>
+</pre></div>
+</div>
+<p>Notes:</p>
+<ul class="simple">
+<li>The <code class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></code> must only contain ASCII letters, digits and hyphens.</li>
+<li>If the Stream already exists, no error is returned, and the existing Stream remains in place.</li>
+</ul>
+<p>Update TTL for the Stream <em>stream_name</em>; TTL is a integer value such as 256:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">client.set_ttl stream_name, 256</span>
+</pre></div>
+</div>
+<p>Get the current TTL value for the Stream <em>stream_name</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">ttl = client.get_ttl &quot;stream_name&quot;</span>
+</pre></div>
+</div>
+<p>Create a <code class="docutils literal"><span class="pre">StreamWriter</span></code> instance for writing events to the Stream <em>stream_name</em> in 3
+threads asynchronously:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">writer = client.create_writer &quot;stream_name&quot;, 3</span>
+</pre></div>
+</div>
+<p>To write new events to the Stream, you can use code:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">test_data = &quot;string to send in stream 10 times&quot;</span>
+
+<span class="go">10.times {</span>
+<span class="go">  writer.write(test_data).then(</span>
+<span class="go">    -&gt;(response) {</span>
+<span class="go">      puts &quot;success: #{response.code}&quot;</span>
+<span class="go">    },</span>
+<span class="go">    -&gt;(error) {</span>
+<span class="go">      puts &quot;error: #{error.response.code} -&gt; #{error.message}&quot;</span>
+<span class="go">    }</span>
+<span class="go">  )</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>To truncate the Stream <em>stream_name</em>, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">client.truncate &quot;stream_name&quot;</span>
+</pre></div>
+</div>
+<p>When you are finished, release all resources by calling this method:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">writer.close</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="additional-notes">
+<h2><a class="headerlink" href="#additional-notes" title="Perma-link to this heading">🔗</a>Additional Notes</h2>
+<p>All methods from the <code class="docutils literal"><span class="pre">StreamClient</span></code> and <code class="docutils literal"><span class="pre">StreamWriter</span></code> throw exceptions using response
+code analysis from the gateway server. These exceptions help determine if the request was
+processed successfully or not.</p>
+<p>In the case of a <code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code> response, no exception will be thrown; other cases will throw
+these exceptions:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">400</span></code>: The request had a combination of parameters that is not recognized</li>
+<li><code class="docutils literal"><span class="pre">401</span></code>: The request did not contain an authentication token</li>
+<li><code class="docutils literal"><span class="pre">403</span></code>: The request was authenticated but the client does not have permission</li>
+<li><code class="docutils literal"><span class="pre">404</span></code>: The request did not address any of the known URIs</li>
+<li><code class="docutils literal"><span class="pre">405</span></code>: A request was received with a method not supported for the URI</li>
+<li><code class="docutils literal"><span class="pre">409</span></code>: A request could not be completed due to a conflict with the current resource state</li>
+<li><code class="docutils literal"><span class="pre">500</span></code>: An internal error occurred while processing the request</li>
+<li><code class="docutils literal"><span class="pre">501</span></code>: A request contained a query that is not supported by this API</li>
+</ul>
+</div>
+<div class="section" id="testing">
+<h2><a class="headerlink" href="#testing" title="Perma-link to this heading">🔗</a>Testing</h2>
+<p>To launch unit tests only, execute:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">rspec --tag ~it</span>
+</pre></div>
+</div>
+<p>To launch integration tests against a Standalone CDAP instance, execute:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">rspec --tag type:it-local</span>
+</pre></div>
+</div>
+<p>To launch integration tests against a Standalone CDAP instance with authentication enabled,
+execute:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">rspec --tag type:it-local-auth</span>
+</pre></div>
+</div>
+<p>To launch integration tests against a Standalone CDAP instance with authentication enabled
+and SSL turned on, execute:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">rspec --tag type:it-local-auth-ssl</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="source-code-repository">
+<h2><a class="headerlink" href="#source-code-repository" title="Perma-link to this heading">🔗</a>Source Code Repository</h2>
+<p>Source code (and other resources) for this page are available at the
+<a class="reference external" href="https://github.com/caskdata/cdap-ingest">CDAP Ingest Project GitHub repository</a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Ingesting Data</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cdap-stream-clients-java.html">CDAP Stream Client for Java</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-stream-clients-python.html">CDAP Stream Client for Python</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">CDAP Stream Client for Ruby</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#supported-actions">Supported Actions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#build">Build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#additional-notes">Additional Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testing">Testing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#source-code-repository">Source Code Repository</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-flume.html">CDAP Flume</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="CDAP Stream Client for Python" href="cdap-stream-clients-python.html" />CDAP Stream Client for Python</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="CDAP Flume" href="cdap-flume.html" />CDAP Flume</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

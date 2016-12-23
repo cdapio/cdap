@@ -1,0 +1,1092 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform Hello World Example" name="description" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Hello World &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/examples-manual/examples/hello-world.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="Clicks and Views" href="clicks-and-views.html" />
+    <link rel="prev" title="Examples" href="index.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="clicks-and-views.html" title="Clicks and Views"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Examples"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="hello-world">
+<span id="examples-hello-world"></span><h1><a class="headerlink" href="#hello-world" title="Perma-link to this heading">🔗</a>Hello World</h1>
+<p>The simplest Cask Data Application Platform (CDAP) example.</p>
+<div class="section" id="overview">
+<h2><a class="headerlink" href="#overview" title="Perma-link to this heading">🔗</a>Overview</h2>
+<p>This application uses one stream, one dataset, one flow, and one service to implement the classic &quot;Hello World&quot;:</p>
+<ul class="simple">
+<li>A stream to send names to;</li>
+<li>A flow with a single flowlet that reads the stream and stores in a dataset each name in a <code class="docutils literal"><span class="pre">KeyValueTable</span></code>; and</li>
+<li>A service that reads the name from the <code class="docutils literal"><span class="pre">KeyValueTable</span></code> and responds with <code class="docutils literal"><span class="pre">&quot;Hello</span> <span class="pre">[Name]!&quot;</span></code></li>
+</ul>
+<div class="section" id="the-helloworld-application">
+<h3><a class="headerlink" href="#the-helloworld-application" title="Perma-link to this heading">🔗</a>The <em>HelloWorld</em> Application</h3>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">HelloWorld</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;HelloWorld&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;A Hello World program for the Cask Data Application Platform&quot;</span><span class="o">);</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="s">&quot;who&quot;</span><span class="o">));</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;whom&quot;</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Store names&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+    <span class="n">addFlow</span><span class="o">(</span><span class="k">new</span> <span class="n">WhoFlow</span><span class="o">());</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">Greeting</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>The application uses a stream called <em>who</em> to ingest data through a flow <em>WhoFlow</em> to a dataset <em>whom</em>.</p>
+</div>
+<div class="section" id="the-whoflow">
+<h3><a class="headerlink" href="#the-whoflow" title="Perma-link to this heading">🔗</a>The <em>WhoFlow</em></h3>
+<p>This is a trivial flow with a single flowlet named <em>saver</em> of type <code class="docutils literal"><span class="pre">NameSaver</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">WhoFlow</span> <span class="kd">extends</span> <span class="n">AbstractFlow</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;WhoFlow&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;A flow that collects names&quot;</span><span class="o">);</span>
+    <span class="n">addFlowlet</span><span class="o">(</span><span class="s">&quot;saver&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">NameSaver</span><span class="o">());</span>
+    <span class="n">connectStream</span><span class="o">(</span><span class="s">&quot;who&quot;</span><span class="o">,</span> <span class="s">&quot;saver&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The flowlet uses a dataset of type <code class="docutils literal"><span class="pre">KeyValueTable</span></code> to store the names it reads from the stream. Every time a new
+name is received, it is stored in the table under the key <code class="docutils literal"><span class="pre">name</span></code>, and it overwrites any name that was previously
+stored:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">NameSaver</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+
+  <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">NAME</span> <span class="o">=</span> <span class="o">{</span> <span class="sc">&#39;n&#39;</span><span class="o">,</span> <span class="sc">&#39;a&#39;</span><span class="o">,</span> <span class="sc">&#39;m&#39;</span><span class="o">,</span> <span class="sc">&#39;e&#39;</span> <span class="o">};</span>
+
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;whom&quot;</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">whom</span><span class="o">;</span>
+
+  <span class="kd">private</span> <span class="n">Metrics</span> <span class="n">metrics</span><span class="o">;</span>
+
+  <span class="nd">@ProcessInput</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">StreamEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">byte</span><span class="o">[]</span> <span class="n">name</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getBody</span><span class="o">());</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">name</span><span class="o">.</span><span class="na">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">whom</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">NAME</span><span class="o">,</span> <span class="n">name</span><span class="o">);</span>
+
+      <span class="k">if</span> <span class="o">(</span><span class="n">name</span><span class="o">.</span><span class="na">length</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">metrics</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="s">&quot;names.longnames&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+      <span class="o">}</span>
+      <span class="n">metrics</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="s">&quot;names.bytes&quot;</span><span class="o">,</span> <span class="n">name</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Note that the flowlet also emits metrics: every time a name longer than 10 characters is received,
+the counter <code class="docutils literal"><span class="pre">names.longnames</span></code> is incremented by one, and the metric <code class="docutils literal"><span class="pre">names.bytes</span></code> is incremented
+by the length of the name. We will see below how to retrieve these metrics using the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v3.5.2)"><span>Metrics HTTP RESTful API</span></a>.</p>
+</div>
+<div class="section" id="the-greeting-service">
+<h3><a class="headerlink" href="#the-greeting-service" title="Perma-link to this heading">🔗</a>The <em>Greeting</em> Service</h3>
+<p>This service has a single endpoint called <code class="docutils literal"><span class="pre">greet</span></code> that does not accept arguments. When invoked, it
+reads the name stored by the <code class="docutils literal"><span class="pre">NameSaver</span></code> from the key-value table. It return a simple greeting with that name:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">Greeting</span> <span class="kd">extends</span> <span class="n">AbstractService</span> <span class="o">{</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">SERVICE_NAME</span> <span class="o">=</span> <span class="s">&quot;Greeting&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="n">SERVICE_NAME</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Service that creates a greeting using a user&#39;s name.&quot;</span><span class="o">);</span>
+    <span class="n">addHandler</span><span class="o">(</span><span class="k">new</span> <span class="n">GreetingHandler</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Note that the service, like the flowlet, also emits metrics: every time the name <em>Jane Doe</em> is received,
+the counter <code class="docutils literal"><span class="pre">greetings.count.jane_doe</span></code> is incremented by one.
+We will see below how to retrieve this metric using the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v3.5.2)"><span>Metrics HTTP RESTful API</span></a>.</p>
+</div>
+</div>
+<div class="section" id="building-and-starting">
+<h2><a class="headerlink" href="#building-and-starting" title="Perma-link to this heading">🔗</a>Building and Starting</h2>
+<ul>
+<li><p class="first">You can either build the example (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-example" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Building an Example Application</span></a>) or use the pre-built JAR file included in the CDAP SDK
+(as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying an Application</span></a>):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral37() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral37 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral37", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral37" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">examples/HelloWorld/target/HelloWorld-3.5.2.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">examples\HelloWorld\target\HelloWorld-3.5.2.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Start CDAP (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Starting and Stopping CDAP</span></a>).</p>
+</li>
+<li><p class="first">Deploy the application, as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying an Application</span></a>.
+For example, from the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral38() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral38 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral38", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral38" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact examples/HelloWorld/target/HelloWorld-3.5.2.jar</span>
+
+<span class="go">Successfully added artifact with name &#39;HelloWorld&#39;</span>
+
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app HelloWorld HelloWorld 3.5.2 user</span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact examples\HelloWorld\target\HelloWorld-3.5.2.jar</span></span>
+
+<span class="go">Successfully added artifact with name &#39;HelloWorld&#39;</span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app HelloWorld HelloWorld 3.5.2 user</span></span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Once the application has been deployed, you can start its components, as described in
+<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-starting-application" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Starting an Application</span></a>, and detailed at the
+start of <a class="reference external" href="#running-the-example">running the example</a>.</p>
+</li>
+<li><p class="first">Once all components are started, <a class="reference external" href="#running-the-example">run the example</a>.</p>
+</li>
+<li><p class="first">When finished, you can <a class="reference external" href="#stopping-and-removing-the-application">stop and remove the application</a>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="running-the-example">
+<h2><a class="headerlink" href="#running-the-example" title="Perma-link to this heading">🔗</a>Running the Example</h2>
+<div class="section" id="starting-the-flow">
+<h3><a class="headerlink" href="#starting-the-flow" title="Perma-link to this heading">🔗</a>Starting the Flow</h3>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>HelloWorld</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/HelloWorld/overview/programs">application overview page, programs tab</a>,
+click <em>WhoFlow</em> to get to the flow detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral39() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral39 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral39", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral39" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start flow HelloWorld.WhoFlow</span>
+
+<span class="go">Successfully started flow &#39;WhoFlow&#39; of application &#39;HelloWorld&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start flow HelloWorld.WhoFlow</span></span>
+
+<span class="go">Successfully started flow &#39;WhoFlow&#39; of application &#39;HelloWorld&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-the-service">
+<h3><a class="headerlink" href="#starting-the-service" title="Perma-link to this heading">🔗</a>Starting the Service</h3>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>HelloWorld</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/HelloWorld/overview/programs">application overview page, programs tab</a>,
+click <em>Greeting</em> to get to the service detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral40() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral40 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral40", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral40" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start service HelloWorld.Greeting</span>
+
+<span class="go">Successfully started service &#39;Greeting&#39; of application &#39;HelloWorld&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start service HelloWorld.Greeting</span></span>
+
+<span class="go">Successfully started service &#39;Greeting&#39; of application &#39;HelloWorld&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="injecting-a-name">
+<h3><a class="headerlink" href="#injecting-a-name" title="Perma-link to this heading">🔗</a>Injecting a Name</h3>
+<p>In the <a class="reference external" href="http://localhost:9999/ns/default/apps/HelloWorld/overview/programs">application overview page, programs tab</a>, click on <em>WhoFlow</em>.
+This takes you to the flow details page. (If you haven't already started the flow, click
+on the <em>Start</em> button in the right-side, below the green arrow.) The flow's <em>status</em> will
+read <em>Running</em> when it is ready to receive events.</p>
+<p>Now double-click on the <em>who</em> stream on the left side of the flow visualization, which brings up
+a pop-up window. Enter a name and click the <em>Inject</em> button. After you close the pop-up
+window, you will see that the counters for both the stream and the <em>saver</em> flowlet
+increase to 1. You can repeat this step to enter more names, but remember that only the
+last name is stored in the key-value table.</p>
+<p>Metrics are collected based on the <code class="docutils literal"><span class="pre">bytes</span></code> metric (the total number of bytes of names),
+the <code class="docutils literal"><span class="pre">longnames</span></code> metric (the number of names, each greater than 10 characters), and the
+<code class="docutils literal"><span class="pre">greetings.count.jane_doe</span></code> metric (the number of times the name <em>Jane Doe</em> has been
+&quot;greeted&quot;).</p>
+<p>To try out these metrics, first send a few long names (each greater than 10 characters)
+and send <em>Jane Doe</em> a number of times.</p>
+<p>You can also use the CDAP CLI:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral41() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral41 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral41", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral41" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh send stream who <span class="s2">&quot;&#39;Alice Cumberbund&#39;&quot;</span></span>
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh send stream who <span class="s2">&quot;Bob&quot;</span></span>
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh send stream who <span class="s2">&quot;&#39;Jane Doe&#39;&quot;</span></span>
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh send stream who <span class="s2">&quot;Tom&quot;</span></span>
+<span class="go">...</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat send stream who &quot;&#39;Alice Cumberbund&#39;&quot;</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat send stream who &quot;Bob&quot;</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat send stream who &quot;&#39;Jane Doe&#39;&quot;</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat send stream who &quot;Tom&quot;</span></span>
+<span class="go">...</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+<div class="section" id="using-the-service">
+<h3><a class="headerlink" href="#using-the-service" title="Perma-link to this heading">🔗</a>Using the Service</h3>
+<p>Go back to the <a class="reference external" href="http://localhost:9999/ns/default/apps/HelloWorld/overview/programs">application overview page, programs tab</a>, and click on the <em>Greeting</em> service. (If you
+haven't already started the service, click on the <em>Start</em> button on the right-side.) The
+service's label will read <em>Running</em> when it is ready to receive events.</p>
+<p>Now you can make a request to the service using <code class="docutils literal"><span class="pre">curl</span></code>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral42() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral42 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral42", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral42" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X GET <span class="s2">&quot;http://localhost:10000/v3/namespaces/default/apps/HelloWorld/services/Greeting/methods/greet&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X GET &quot;http://localhost:10000/v3/namespaces/default/apps/HelloWorld/services/Greeting/methods/greet&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>If the last name you entered was <em>Tom</em>, the service will respond with <code class="docutils literal"><span class="pre">Hello</span> <span class="pre">Tom!</span></code></p>
+<p>There is a <em>Make Request</em> button in the <a class="reference external" href="http://localhost:9999/ns/default/apps/HelloWorld/programs/services/Greeting/runs/">CDAP UI, Greeting service</a> that will make the same request, with a
+similar response.</p>
+</div>
+<div class="section" id="retrieving-metrics">
+<h3><a class="headerlink" href="#retrieving-metrics" title="Perma-link to this heading">🔗</a>Retrieving Metrics</h3>
+<p>You can now query the metrics that are emitted by the flow and service. The results you
+receive will vary depending on the entries you have made to the flow. If a particular
+metric has no value, it will return an empty array in the <code class="docutils literal"><span class="pre">&quot;series&quot;</span></code> of the results,
+such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1429475995,&quot;series&quot;:[]}</span>
+</pre></div>
+</div>
+<p>To see the value of the <code class="docutils literal"><span class="pre">names.bytes</span></code> metric, you can make an HTTP request to the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v3.5.2)"><span>Metrics HTTP RESTful API</span></a> using curl:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral43() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral43 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral43", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral43" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;http://localhost:10000/v3/metrics/query?tag=namespace:default&amp;tag=app:HelloWorld&amp;tag=flow:WhoFlow&amp;tag=flowlet:saver&amp;metric=user.names.bytes&amp;aggregate=true&quot;</span></span>
+
+<span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1458877439,&quot;series&quot;:[{&quot;metricName&quot;:&quot;user.names.bytes&quot;,&quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:79}]}],&quot;resolution&quot;:&quot;2147483647s&quot;}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;http://localhost:10000/v3/metrics/query?tag=namespace:default&amp;tag=app:HelloWorld&amp;tag=flow:WhoFlow&amp;tag=flowlet:saver&amp;metric=user.names.bytes&amp;aggregate=true&quot;</span></span>
+
+<span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1458877439,&quot;series&quot;:[{&quot;metricName&quot;:&quot;user.names.bytes&quot;,&quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:79}]}],&quot;resolution&quot;:&quot;2147483647s&quot;}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>To see the value of the <code class="docutils literal"><span class="pre">names.longnames</span></code> metric (the number of names, each of which is greater than 10 characters in length),
+you can use:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral44() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral44 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral44", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral44" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;http://localhost:10000/v3/metrics/query?tag=namespace:default&amp;tag=app:HelloWorld&amp;tag=flow:WhoFlow&amp;tag=flowlet:saver&amp;metric=user.names.longnames&amp;aggregate=true&quot;</span></span>
+
+<span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1458877544,&quot;series&quot;:[{&quot;metricName&quot;:&quot;user.names.longnames&quot;,&quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:3}]}],&quot;resolution&quot;:&quot;2147483647s&quot;}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;http://localhost:10000/v3/metrics/query?tag=namespace:default&amp;tag=app:HelloWorld&amp;tag=flow:WhoFlow&amp;tag=flowlet:saver&amp;metric=user.names.longnames&amp;aggregate=true&quot;</span></span>
+
+<span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1458877544,&quot;series&quot;:[{&quot;metricName&quot;:&quot;user.names.longnames&quot;,&quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:3}]}],&quot;resolution&quot;:&quot;2147483647s&quot;}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>To see the value of the <code class="docutils literal"><span class="pre">greetings.count.jane_doe</span></code> metric (the number of times the specific name <em>Jane Doe</em> has been &quot;greeted&quot;),
+you can use:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral45() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral45 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral45", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral45" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;http://localhost:10000/v3/metrics/query?tag=namespace:default&amp;tag=app:HelloWorld&amp;tag=service:Greeting&amp;metric=user.greetings.count.jane_doe&amp;aggregate=true&quot;</span></span>
+
+<span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1458877575,&quot;series&quot;:[{&quot;metricName&quot;:&quot;user.greetings.count.jane_doe&quot;,&quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:2}]}],&quot;resolution&quot;:&quot;2147483647s&quot;}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;http://localhost:10000/v3/metrics/query?tag=namespace:default&amp;tag=app:HelloWorld&amp;tag=service:Greeting&amp;metric=user.greetings.count.jane_doe&amp;aggregate=true&quot;</span></span>
+
+<span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1458877575,&quot;series&quot;:[{&quot;metricName&quot;:&quot;user.greetings.count.jane_doe&quot;,&quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:2}]}],&quot;resolution&quot;:&quot;2147483647s&quot;}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+<div class="section" id="stopping-and-removing-the-application">
+<h2><a class="headerlink" href="#stopping-and-removing-the-application" title="Perma-link to this heading">🔗</a>Stopping and Removing the Application</h2>
+<p>Once done, you can stop the application—if it hasn't stopped
+already—as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-stopping" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Stopping an Application</span></a>. Here is an example-specific
+description of the steps:</p>
+<p><strong>Stopping the Flow</strong></p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>HelloWorld</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/HelloWorld/overview/programs">application overview page, programs tab</a>,
+click <em>WhoFlow</em> to get to the flow detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral46() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral46 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral46", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral46" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh stop flow HelloWorld.WhoFlow</span>
+
+<span class="go">Successfully stopped flow &#39;WhoFlow&#39; of application &#39;HelloWorld&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat stop flow HelloWorld.WhoFlow</span></span>
+
+<span class="go">Successfully stopped flow &#39;WhoFlow&#39; of application &#39;HelloWorld&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p><strong>Stopping the Service</strong></p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>HelloWorld</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/HelloWorld/overview/programs">application overview page, programs tab</a>,
+click <em>Greeting</em> to get to the service detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral47() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral47 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral47", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral47" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh stop service HelloWorld.Greeting</span>
+
+<span class="go">Successfully stopped service &#39;Greeting&#39; of application &#39;HelloWorld&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat stop service HelloWorld.Greeting</span></span>
+
+<span class="go">Successfully stopped service &#39;Greeting&#39; of application &#39;HelloWorld&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p><strong>Removing the Application</strong></p>
+<p>You can now remove the application as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-removing" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Removing an Application</span></a>, or:</p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>HelloWorld</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/HelloWorld/overview/programs">application overview page, programs tab</a>,
+click the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management
+pane for the application, then click the <em>Actions</em> menu on the right side and select
+<em>Delete</em> to delete the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral48() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral48 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral48", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral48" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh delete app HelloWorld</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat delete app HelloWorld</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="">Hello World</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stopping-and-removing-the-application">Stopping and Removing the Application</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="clicks-and-views.html">Clicks and Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-cleansing.html">Data Cleansing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fileset-example.html">FileSet Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="log-analysis.html">Log Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spam-classifier.html">Spam Classifier</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sport-results.html">Sport Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream-conversion.html">Stream Conversion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user-profiles.html">User Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wikipedia-data-pipeline.html">Wikipedia Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Examples" href="index.html" />Examples</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Clicks and Views" href="clicks-and-views.html" />Clicks and Views</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

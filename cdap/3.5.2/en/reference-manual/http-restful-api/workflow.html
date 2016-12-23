@@ -1,0 +1,906 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Workflow HTTP RESTful API &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/http-restful-api/workflow.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Java Client API" href="../java-client-api.html" />
+    <link rel="prev" title="Views HTTP RESTful API" href="views.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../java-client-api.html" title="Java Client API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="views.html" title="Views HTTP RESTful API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Reference Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="workflow-http-restful-api">
+<span id="http-restful-api-workflow"></span><h1><a class="headerlink" href="#workflow-http-restful-api" title="Perma-link to this heading">🔗</a>Workflow HTTP RESTful API</h1>
+<p>Use the CDAP Workflow HTTP RESTful API to access workflow tokens; list and delete local
+datasets used in a workflow; retrieve the state of nodes that were executed; and retrieve
+statistics across <em>successful</em> runs of a workflow.</p>
+<p>Additional details and examples are found in the <a class="reference external" href="../source/../../developers-manual/building-blocks/workflows.html#workflows" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Developers' Manual: Workflows</span></a>.</p>
+<p>All methods or endpoints described in this API have a base URL (typically
+<code class="docutils literal"><span class="pre">http://&lt;host&gt;:10000</span></code> or <code class="docutils literal"><span class="pre">https://&lt;host&gt;:10443</span></code>) that precedes the resource
+identifier, as described in the <a class="reference internal" href="introduction.html#http-restful-api-conventions-base-url"><span>RESTful API Conventions</span></a>.
+These methods return a status code, as listed in the <a class="reference internal" href="introduction.html#http-restful-api-status-codes"><span>RESTful API  Status Codes</span></a>.</p>
+<div class="section" id="workflow-tokens">
+<h2><a class="headerlink" href="#workflow-tokens" title="Perma-link to this heading">🔗</a>Workflow Tokens</h2>
+<p>This interface supports accessing the value of workflow tokens set during runs of a workflow.
+Returned values can be specified for a particular scope, node or key.</p>
+<div class="section" id="obtaining-a-token-s-values">
+<h3><a class="headerlink" href="#obtaining-a-token-s-values" title="Perma-link to this heading">🔗</a>Obtaining a Token's Values</h3>
+<p>To retrieve the values that were put into the workflow token for a particular run,
+use an HTTP GET request to the query's URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}[/nodes/{node-id}]/token</span>
+</pre></div>
+</div>
+<p>The request can (optionally) contain a <em>node-id</em> to limit the request to a particular node in workflow.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">workflow-id</span></code></td>
+<td>Name of the workflow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">run-id</span></code></td>
+<td>UUID of the workflow run</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">node-id</span></code></td>
+<td>Name of a node in the workflow (optional)</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Extending the Request</p>
+<p>The request can be extended with query parameters:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">scope</span></code></td>
+<td><em>user</em> (default) returns the token for <code class="docutils literal"><span class="pre">Scope.USER</span></code>; <em>system</em> returns the token for
+<code class="docutils literal"><span class="pre">Scope.SYSTEM</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">key</span></code></td>
+<td>Returns the value for a specified key; if unspecified, returns all keys (optional)</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Comments</p>
+<p>If the query was successful, the body will contain the workflow token for a particular workflow
+run, such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;key1&quot;: [</span>
+<span class="go">      {</span>
+<span class="go">        &quot;nodeName&quot;: &quot;node1&quot;,</span>
+<span class="go">        &quot;value&quot;: &quot;value1&quot;</span>
+<span class="go">      }, {</span>
+<span class="go">        &quot;nodeName&quot;: &quot;node2&quot;,</span>
+<span class="go">        &quot;value&quot;: &quot;value2&quot;</span>
+<span class="go">      }</span>
+<span class="go">    ],</span>
+<span class="go">  &quot;key2&quot;: [</span>
+<span class="go">      {</span>
+<span class="go">          &quot;nodeName&quot;: &quot;node2&quot;,</span>
+<span class="go">          &quot;value&quot;: &quot;v2&quot;</span>
+<span class="go">      }</span>
+<span class="go">    ]</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The query was successfully received and the workflow token was returned in the body</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>The app, workflow, run-id, scope or key was not found</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">500</span></code></td>
+<td>Internal server error</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Request</th>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/57c...75e2/token</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">HTTP Response</th>
+<td><code class="docutils literal"><span class="pre">{&quot;key1&quot;:[{&quot;nodeName&quot;:</span> <span class="pre">&quot;node1&quot;,</span> <span class="pre">&quot;value&quot;:&quot;1&quot;}]}</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td><div class="first last line-block">
+<div class="line">Retrieves the token for a specific run of <em>PurchaseHistoryWorkflow</em></div>
+<div class="line"><br /></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">HTTP Request</th>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/57c...75e2/token?scope=system</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">HTTP Response</th>
+<td><code class="docutils literal"><span class="pre">{&quot;key1&quot;:[{&quot;nodeName&quot;:</span> <span class="pre">&quot;node1&quot;,</span> <span class="pre">&quot;value&quot;:&quot;1&quot;}]}</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td><div class="first last line-block">
+<div class="line">Retrieves the token in the scope <em>System</em> for a specific run of <em>PurchaseHistoryWorkflow</em></div>
+<div class="line"><br /></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">HTTP Request</th>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/v3/namespaces/default/apps/Purchase/workflows/MyWorkflow/runs/57c...75e2/token?key=key1</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">HTTP Response</th>
+<td><code class="docutils literal"><span class="pre">{&quot;key1&quot;:[{&quot;nodeName&quot;:</span> <span class="pre">&quot;node1&quot;,</span> <span class="pre">&quot;value&quot;:&quot;1&quot;}]}</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td><div class="first last line-block">
+<div class="line">Retrieves the values for the key &quot;key1&quot; from the token in the scope <em>User</em> for a specific run of <em>MyWorkflow</em></div>
+<div class="line"><br /></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">HTTP Request</th>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/v3/namespaces/default/apps/Purchase/workflows/MyWorkflow/runs/57c...75e2/nodes/MyExitNode/token?key=key1</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">HTTP Response</th>
+<td><code class="docutils literal"><span class="pre">{&quot;key1&quot;:[{&quot;nodeName&quot;:</span> <span class="pre">&quot;MyExitNode&quot;,</span> <span class="pre">&quot;value&quot;:&quot;1&quot;}]}</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Retrieves the value for the key <em>key1</em> at node <em>MyExitNode</em> from the token in the scope <em>User</em> for a specific run of <em>MyWorkflow</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="workflow-local-datasets">
+<h2><a class="headerlink" href="#workflow-local-datasets" title="Perma-link to this heading">🔗</a>Workflow Local Datasets</h2>
+<p>This interface supports listing and deleting the local datasets associated with a particular workflow run.</p>
+<div class="section" id="listing-local-datasets">
+<h3><a class="headerlink" href="#listing-local-datasets" title="Perma-link to this heading">🔗</a>Listing Local Datasets</h3>
+<p>To retrieve the local datasets associated with a particular run, use an HTTP GET request to the query's URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/workflows/&lt;workflow-id&gt;/runs/&lt;run-id&gt;/localdatasets</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">workflow-id</span></code></td>
+<td>Name of the workflow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">run-id</span></code></td>
+<td>UUID of the workflow run</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="deleting-local-datasets">
+<h3><a class="headerlink" href="#deleting-local-datasets" title="Perma-link to this heading">🔗</a>Deleting Local Datasets</h3>
+<p>To delete the local datasets associated with a particular run, use an HTTP DELETE request to the query's URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/workflows/&lt;workflow-id&gt;/runs/&lt;run-id&gt;/localdatasets</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">workflow-id</span></code></td>
+<td>Name of the workflow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">run-id</span></code></td>
+<td>UUID of the workflow run</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="workflow-state">
+<h2><a class="headerlink" href="#workflow-state" title="Perma-link to this heading">🔗</a>Workflow State</h2>
+<p>The workflow state interface allows you to retrieve the state of all nodes that were executed as
+a part of a given workflow run.</p>
+<p>To retrieve the state of a particular workflow run, use an HTTP GET request to the query's URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/workflows/&lt;workflow-id&gt;/runs/&lt;run-id&gt;/nodes/state</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">workflow-id</span></code></td>
+<td>Name of the workflow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">run-id</span></code></td>
+<td>UUID of the workflow run</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<p>The query:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/53280521-0ce3-11e6-873e-da6a50dd7318/nodes/state</span>
+</pre></div>
+</div>
+<p>would return results similar to these, pretty-printed for display:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">    &quot;PurchaseHistoryBuilder&quot;: {</span>
+<span class="go">        &quot;nodeId&quot;: &quot;PurchaseHistoryBuilder&quot;,</span>
+<span class="go">        &quot;nodeStatus&quot;: &quot;COMPLETED&quot;,</span>
+<span class="go">        &quot;runId&quot;: &quot;53504da2-0ce3-11e6-92bb-da6a50dd7318&quot;</span>
+<span class="go">    },</span>
+<span class="go">    &quot;PurchaseReader&quot;: {</span>
+<span class="go">        &quot;nodeId&quot;: &quot;PurchaseReader&quot;,</span>
+<span class="go">        &quot;nodeStatus&quot;: &quot;COMPLETED&quot;</span>
+<span class="go">    }</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="workflow-statistics">
+<h2><a class="headerlink" href="#workflow-statistics" title="Perma-link to this heading">🔗</a>Workflow Statistics</h2>
+<p>These requests provide statistics across <em>successful</em> runs of a workflow, in a time
+interval, for a succession of runs, or between two specific runs. These requests will help
+in determining which jobs are responsible for delays or problems.</p>
+<div class="section" id="statistics-of-successful-runs">
+<h3><a class="headerlink" href="#statistics-of-successful-runs" title="Perma-link to this heading">🔗</a>Statistics of Successful Runs</h3>
+<p>This request returns general statistics about all <em>successful</em> workflow runs in a particular time interval,
+with an analysis based on a series of (optionally) provided percentiles:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/workflows/&lt;workflow-id&gt;/statistics?</span>
+<span class="go">  start=&lt;start-time&gt;&amp;end=&lt;end-time&gt;&amp;percentile=&lt;percentile-1&gt;&amp;percentile=&lt;percentile-2&gt;...</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">workflow-id</span></code></td>
+<td>Name of the workflow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start-time</span></code></td>
+<td>Start time of runs (in seconds); if not provided, defaults to <code class="docutils literal"><span class="pre">now</span></code> (optional)</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">end-time</span></code></td>
+<td>End time of runs (in seconds); if not provided, defaults to <code class="docutils literal"><span class="pre">now-1d</span></code> (optional)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">percentile-1</span></code></td>
+<td>List of percentiles (each greater than zero and less than 100) to be used for generating statistics;
+if not provided, defaults to 90 (optional)</td>
+</tr>
+</tbody>
+</table>
+<p>If the query was successful, the body will contain a JSON structure of statistics.</p>
+<p><strong>Note:</strong> When specifying start and end times, in addition to giving an absolute timestamp
+in seconds, you can specify a relative time, using <code class="docutils literal"><span class="pre">now</span></code> minus an increment with units.
+Examples: <code class="docutils literal"><span class="pre">now-&lt;n&gt;s</span></code>, <code class="docutils literal"><span class="pre">now-&lt;n&gt;m</span></code>,  <code class="docutils literal"><span class="pre">now-&lt;n&gt;h</span></code>, or <code class="docutils literal"><span class="pre">now-&lt;n&gt;d</span></code>.</p>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The query was successfully received and the statistics were returned in the body in a JSON format</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>The app, workflow, run-id, scope or key was not found</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">500</span></code></td>
+<td>Internal server error</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<p>The query:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/statistics?</span>
+<span class="go">  start=1441918778&amp;end=1442005182&amp;percentile=80&amp;percentile=90&amp;percentile=95&amp;percentile=99</span>
+</pre></div>
+</div>
+<p>would return results similar to these, pretty-printed for display:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">    &quot;startTime&quot;: 0,</span>
+<span class="go">    &quot;endTime&quot;: 1442008469,</span>
+<span class="go">    &quot;runs&quot;: 4,</span>
+<span class="go">    &quot;avgRunTime&quot;: 7.5,</span>
+<span class="go">    &quot;percentileInformationList&quot;: [</span>
+<span class="go">        {</span>
+<span class="go">            &quot;percentile&quot;: 80.0,</span>
+<span class="go">            &quot;percentileTimeInSeconds&quot;: 9,</span>
+<span class="go">            &quot;runIdsOverPercentile&quot;: [</span>
+<span class="go">                &quot;e0cc5b98-58cc-11e5-84a1-8cae4cfd0e64&quot;</span>
+<span class="go">            ]</span>
+<span class="go">        },</span>
+<span class="go">        {</span>
+<span class="go">            &quot;percentile&quot;: 90.0,</span>
+<span class="go">            &quot;percentileTimeInSeconds&quot;: 9,</span>
+<span class="go">            &quot;runIdsOverPercentile&quot;: [</span>
+<span class="go">                &quot;e0cc5b98-58cc-11e5-84a1-8cae4cfd0e64&quot;</span>
+<span class="go">            ]</span>
+<span class="go">        },</span>
+<span class="go">        {</span>
+<span class="go">            &quot;percentile&quot;: 95.0,</span>
+<span class="go">            &quot;percentileTimeInSeconds&quot;: 9,</span>
+<span class="go">            &quot;runIdsOverPercentile&quot;: [</span>
+<span class="go">                &quot;e0cc5b98-58cc-11e5-84a1-8cae4cfd0e64&quot;</span>
+<span class="go">            ]</span>
+<span class="go">        },</span>
+<span class="go">        {</span>
+<span class="go">            &quot;percentile&quot;: 99.0,</span>
+<span class="go">            &quot;percentileTimeInSeconds&quot;: 9,</span>
+<span class="go">            &quot;runIdsOverPercentile&quot;: [</span>
+<span class="go">                &quot;e0cc5b98-58cc-11e5-84a1-8cae4cfd0e64&quot;</span>
+<span class="go">            ]</span>
+<span class="go">        }</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;nodes&quot;: {</span>
+<span class="go">        &quot;PurchaseHistoryBuilder&quot;: {</span>
+<span class="go">            &quot;avgRunTime&quot;: &quot;7.0&quot;,</span>
+<span class="go">            &quot;99.0&quot;: &quot;8&quot;,</span>
+<span class="go">            &quot;80.0&quot;: &quot;8&quot;,</span>
+<span class="go">            &quot;95.0&quot;: &quot;8&quot;,</span>
+<span class="go">            &quot;runs&quot;: &quot;4&quot;,</span>
+<span class="go">            &quot;90.0&quot;: &quot;8&quot;,</span>
+<span class="go">            &quot;type&quot;: &quot;MapReduce&quot;</span>
+<span class="go">        }</span>
+<span class="go">    }</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="comparing-a-run-to-runs-before-and-after">
+<h3><a class="headerlink" href="#comparing-a-run-to-runs-before-and-after" title="Perma-link to this heading">🔗</a>Comparing a Run to Runs Before and After</h3>
+<p>This request returns a list of workflow metrics, based on a workflow run and a surrounding
+number of <em>successful</em> runs of the workflow that are spaced apart by a time interval from
+each other:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/workflows/&lt;workflow-id&gt;/runs/&lt;run-id&gt;/statistics?</span>
+<span class="go">  limit=&lt;limit&gt;&amp;interval=&lt;interval&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">workflow-id</span></code></td>
+<td>Name of the workflow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">run-id</span></code></td>
+<td>UUID of the workflow run</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">limit</span></code></td>
+<td>The number of the records to compare against (before and after) the run; if not provided, defaults to <code class="docutils literal"><span class="pre">10</span></code> (optional)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">interval</span></code></td>
+<td>The time interval with which to space out the runs before and after, with units; if not provided, defaults to <code class="docutils literal"><span class="pre">10s</span></code> (optional)</td>
+</tr>
+</tbody>
+</table>
+<p>If the query was successful, the body will contain a JSON structure of statistics.</p>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The query was successfully received and the statistics were returned in the body in a JSON format</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>The app, workflow, run-id, scope or key was not found</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">500</span></code></td>
+<td>Internal server error</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<p>The query:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/</span>
+<span class="go">  1873ade0-58d9-11e5-b79d-8cae4cfd0e64/statistics?limit=10&amp;interval=10s&#39;</span>
+</pre></div>
+</div>
+<p>would return results similar to these, pretty-printed for display:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">    &quot;startTimes&quot;: {</span>
+<span class="go">        &quot;1dd36962-58d9-11e5-82ac-8cae4cfd0e64&quot;: 1442012523,</span>
+<span class="go">        &quot;2523aa44-58d9-11e5-90fd-8cae4cfd0e64&quot;: 1442012535,</span>
+<span class="go">        &quot;1873ade0-58d9-11e5-b79d-8cae4cfd0e64&quot;: 1442012514</span>
+<span class="go">    },</span>
+<span class="go">    &quot;programNodesList&quot;: [</span>
+<span class="go">        {</span>
+<span class="go">            &quot;programName&quot;: &quot;PurchaseHistoryBuilder&quot;,</span>
+<span class="go">            &quot;workflowProgramDetailsList&quot;: [</span>
+<span class="go">                {</span>
+<span class="go">                    &quot;workflowRunId&quot;: &quot;1dd36962-58d9-11e5-82ac-8cae4cfd0e64&quot;,</span>
+<span class="go">                    &quot;programRunId&quot;: &quot;1e1c3233-58d9-11e5-a7ff-8cae4cfd0e64&quot;,</span>
+<span class="go">                    &quot;programRunStart&quot;: 1442012524,</span>
+<span class="go">                    &quot;metrics&quot;: {</span>
+<span class="go">                        &quot;MAP_INPUT_RECORDS&quot;: 19,</span>
+<span class="go">                        &quot;REDUCE_OUTPUT_RECORDS&quot;: 3,</span>
+<span class="go">                        &quot;timeTaken&quot;: 9,</span>
+<span class="go">                        &quot;MAP_OUTPUT_BYTES&quot;: 964,</span>
+<span class="go">                        &quot;MAP_OUTPUT_RECORDS&quot;: 19,</span>
+<span class="go">                        &quot;REDUCE_INPUT_RECORDS&quot;: 19</span>
+<span class="go">                    }</span>
+<span class="go">                },</span>
+<span class="go">                {</span>
+<span class="go">                    &quot;workflowRunId&quot;: &quot;1873ade0-58d9-11e5-b79d-8cae4cfd0e64&quot;,</span>
+<span class="go">                    &quot;programRunId&quot;: &quot;188a9141-58d9-11e5-88d1-8cae4cfd0e64&quot;,</span>
+<span class="go">                    &quot;programRunStart&quot;: 1442012514,</span>
+<span class="go">                    &quot;metrics&quot;: {</span>
+<span class="go">                        &quot;MAP_INPUT_RECORDS&quot;: 19,</span>
+<span class="go">                        &quot;REDUCE_OUTPUT_RECORDS&quot;: 3,</span>
+<span class="go">                        &quot;timeTaken&quot;: 7,</span>
+<span class="go">                        &quot;MAP_OUTPUT_BYTES&quot;: 964,</span>
+<span class="go">                        &quot;MAP_OUTPUT_RECORDS&quot;: 19,</span>
+<span class="go">                        &quot;REDUCE_INPUT_RECORDS&quot;: 19</span>
+<span class="go">                    }</span>
+<span class="go">                }</span>
+<span class="go">            ],</span>
+<span class="go">            &quot;programType&quot;: &quot;Mapreduce&quot;</span>
+<span class="go">        }</span>
+<span class="go">    ]</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="comparing-two-runs">
+<h3><a class="headerlink" href="#comparing-two-runs" title="Perma-link to this heading">🔗</a>Comparing Two Runs</h3>
+<p>This request compares the metrics of two runs of a workflow:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/workflows/&lt;workflow-id&gt;/runs/&lt;run-id&gt;/compare?</span>
+<span class="go">  other-run-id=&lt;other-run-id&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">workflow-id</span></code></td>
+<td>Name of the workflow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">run-id</span></code></td>
+<td>UUID of the workflow run</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">other-run-id</span></code></td>
+<td>UUID of the other workflow run to be used in the comparison</td>
+</tr>
+</tbody>
+</table>
+<p>If the query was successful, the body will contain a JSON structure of statistics. Note that if either of
+the run-ids is from an <em>unsuccessful</em> run, an error message will be returned:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&#39;The other run-id provided was not found : dbd59091-58cb-11e5-a7c6-8cae4cfd0e64&#39; was not found</span>
+</pre></div>
+</div>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The query was successfully received and the statistics were returned in the body in a JSON format</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>The app, workflow, run-id, scope or key was not found</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">500</span></code></td>
+<td>Internal server error</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<p>Comparing two runs (<code class="docutils literal"><span class="pre">14b8710a-58cd-11e5-98ca-8cae4cfd0e64</span></code> and <code class="docutils literal"><span class="pre">e0cc5b98-58cc-11e5-84a1-8cae4cfd0e64</span></code>):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/</span>
+<span class="go">  runs/14b8710a-58cd-11e5-98ca-8cae4cfd0e64/compare?other-run-id=e0cc5b98-58cc-11e5-84a1-8cae4cfd0e64</span>
+</pre></div>
+</div>
+<p>would return results similar to these, pretty-printed for display:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">    {</span>
+<span class="go">        &quot;programName&quot;: &quot;PurchaseHistoryBuilder&quot;,</span>
+<span class="go">        &quot;workflowProgramDetailsList&quot;: [</span>
+<span class="go">            {</span>
+<span class="go">                &quot;workflowRunId&quot;: &quot;14b8710a-58cd-11e5-98ca-8cae4cfd0e64&quot;,</span>
+<span class="go">                &quot;programRunId&quot;: &quot;14c9d62b-58cd-11e5-9105-8cae4cfd0e64&quot;,</span>
+<span class="go">                &quot;programRunStart&quot;: 1442007354,</span>
+<span class="go">                &quot;metrics&quot;: {</span>
+<span class="go">                    &quot;MAP_INPUT_RECORDS&quot;: 19,</span>
+<span class="go">                    &quot;REDUCE_OUTPUT_RECORDS&quot;: 3,</span>
+<span class="go">                    &quot;timeTaken&quot;: 7,</span>
+<span class="go">                    &quot;MAP_OUTPUT_BYTES&quot;: 964,</span>
+<span class="go">                    &quot;MAP_OUTPUT_RECORDS&quot;: 19,</span>
+<span class="go">                    &quot;REDUCE_INPUT_RECORDS&quot;: 19</span>
+<span class="go">                }</span>
+<span class="go">            },</span>
+<span class="go">            {</span>
+<span class="go">                &quot;workflowRunId&quot;: &quot;e0cc5b98-58cc-11e5-84a1-8cae4cfd0e64&quot;,</span>
+<span class="go">                &quot;programRunId&quot;: &quot;e1497ad9-58cc-11e5-9dfa-8cae4cfd0e64&quot;,</span>
+<span class="go">                &quot;programRunStart&quot;: 1442007268,</span>
+<span class="go">                &quot;metrics&quot;: {</span>
+<span class="go">                    &quot;MAP_INPUT_RECORDS&quot;: 19,</span>
+<span class="go">                    &quot;REDUCE_OUTPUT_RECORDS&quot;: 3,</span>
+<span class="go">                    &quot;timeTaken&quot;: 8,</span>
+<span class="go">                    &quot;MAP_OUTPUT_BYTES&quot;: 964,</span>
+<span class="go">                    &quot;MAP_OUTPUT_RECORDS&quot;: 19,</span>
+<span class="go">                    &quot;REDUCE_INPUT_RECORDS&quot;: 19</span>
+<span class="go">                }</span>
+<span class="go">            }</span>
+<span class="go">        ],</span>
+<span class="go">        &quot;programType&quot;: &quot;Mapreduce&quot;</span>
+<span class="go">    }</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html">Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html">Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security.html">Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html">Transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html">Views</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#workflow-tokens">Workflow Tokens</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#obtaining-a-token-s-values">Obtaining a Token's Values</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#workflow-local-datasets">Workflow Local Datasets</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#listing-local-datasets">Listing Local Datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deleting-local-datasets">Deleting Local Datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#workflow-state">Workflow State</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#workflow-statistics">Workflow Statistics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#statistics-of-successful-runs">Statistics of Successful Runs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#comparing-a-run-to-runs-before-and-after">Comparing a Run to Runs Before and After</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#comparing-two-runs">Comparing Two Runs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Views HTTP RESTful API" href="views.html" />Views HTTP RESTful API</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Java Client API" href="../java-client-api.html" />Java Client API</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

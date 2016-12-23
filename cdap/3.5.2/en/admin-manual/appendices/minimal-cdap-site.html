@@ -1,0 +1,382 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Appendix: Minimal cdap-site.xml &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/admin-manual/appendices/minimal-cdap-site.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Appendices" href="index.html" />
+    <link rel="next" title="Appendix: cdap-site.xml, cdap-default.xml" href="cdap-site.html" />
+    <link rel="prev" title="Appendices" href="index.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cdap-site.html" title="Appendix: cdap-site.xml, cdap-default.xml"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Appendices"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Administration Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Appendices</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="appendix-minimal-cdap-site-xml">
+<span id="id1"></span><h1><a class="headerlink" href="#appendix-minimal-cdap-site-xml" title="Perma-link to this heading">🔗</a>Appendix: Minimal cdap-site.xml</h1>
+<p>The following properties are the minimal required configuration for the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>
+file. They are included in the distribution in the file <code class="docutils literal"><span class="pre">cdap-site.xml.example</span></code>.
+See the <a class="reference internal" href="../installation/index.html#installation-index"><span>installation instructions</span></a> for details on how to
+configure a <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> file for your particular distribution and situtation.</p>
+<p>A complete list of properties possible for the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> is in <a class="reference internal" href="cdap-site.html#appendix-cdap-site-xml"><span>the appendix</span></a>.</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;configuration&gt;</span>
+
+  <span class="c">&lt;!-- General Configuration --&gt;</span>
+
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>hdfs.namespace<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>/${root.namespace}<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      Root directory for HDFS files written by CDAP
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+  
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>hdfs.user<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>yarn<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      User name for accessing HDFS
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>root.namespace<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>cdap<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      Root for this CDAP instance; used as the parent (or root) node for
+      ZooKeeper, as the directory under which all CDAP data and metadata is
+      stored in HDFS, and as the prefix for all HBase tables created by
+      CDAP; must be composed of alphanumeric characters
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>zookeeper.quorum<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>FQDN1:2181,FQDN2:2181/${root.namespace}<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      ZooKeeper quorum string; specifies the ZooKeeper host:port; substitute the quorum
+      (FQDN1:2181,FQDN2:2181,...) for the components shown here
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+
+  <span class="c">&lt;!-- Applications Configuration --&gt;</span>
+
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>app.bind.address<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>0.0.0.0<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      App Fabric service bind address
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+
+  <span class="c">&lt;!-- Datasets Configuration --&gt;</span>
+
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>data.tx.bind.address<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>0.0.0.0<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      Transaction service bind address
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+
+  <span class="c">&lt;!-- Kafka Server Configuration --&gt;</span>
+
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>kafka.default.replication.factor<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>1<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      CDAP Kafka replication factor; used to replicate Kafka messages across
+      multiple machines to prevent data loss in the event of a hardware
+      failure. The recommended setting is to run at least two CDAP Kafka servers.
+      If you are running two Kafka servers, set this value to 2; otherwise,
+      set it to the number of Kafka servers.
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+  
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>kafka.log.dir<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>/tmp/kafka-logs<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      CDAP Kafka service log storage directory
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>kafka.seed.brokers<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>FQDN1:9092,FQDN2:9092<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      Comma-separated list of CDAP Kafka service brokers; for distributed CDAP, 
+      replace with list of FQDN:port brokers
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+
+  <span class="c">&lt;!-- Metrics Configuration --&gt;</span>
+  
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>metrics.query.bind.address<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>0.0.0.0<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      Metrics Query service bind address
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+
+  <span class="c">&lt;!-- Router Configuration --&gt;</span>
+
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>router.bind.address<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>0.0.0.0<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      CDAP Router service bind address
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+  
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>router.bind.port<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>10000<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      CDAP Router service bind port
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>router.server.address<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>{ROUTER-HOST-IP}<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      CDAP Router service address to which CDAP UI connects
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>router.server.port<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>${router.bind.port}<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      CDAP Router service port to which CDAP UI connects
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+
+  <span class="c">&lt;!-- UI Configuration --&gt;</span>
+  
+  <span class="nt">&lt;property&gt;</span>
+    <span class="nt">&lt;name&gt;</span>dashboard.bind.port<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;value&gt;</span>9999<span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;description&gt;</span>
+      CDAP UI bind port
+    <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+
+<span class="nt">&lt;/configuration&gt;</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdap-components.html"> CDAP Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deployment-architectures.html"> Deployment Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hadoop-compatibility.html"> Hadoop Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system-requirements.html"> System Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html"> Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../verification.html"> Verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../upgrading/index.html"> Upgrading</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../operations/index.html"> Operations</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Appendices</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Appendix: Minimal cdap-site.xml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-site.html"> Appendix: cdap-site.xml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-security.html"> Appendix: cdap-security.xml</a></li>
+</ul>
+</li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Appendices" href="index.html" />Appendices</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Appendix: cdap-site.xml, cdap-default.xml" href="cdap-site.html" />Appendix: cdap-site.xml, cdap-default.xml</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

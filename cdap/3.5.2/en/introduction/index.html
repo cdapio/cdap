@@ -1,0 +1,4385 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Introduction to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Introduction to CDAP &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/introduction/index.html">
+
+    
+    <link rel="stylesheet" href="_static/cdap-intro.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="#" />
+    <link rel="prev" title="Introduction Table of Contents" href="table-of-contents.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="table-of-contents.html" title="Introduction Table of Contents"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="table-of-contents.html">Introduction to CDAP</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="introduction-to-cdap">
+<span id="id1"></span><h1><a class="headerlink" href="#introduction-to-cdap" title="Perma-link to this heading">🔗</a>Introduction to CDAP</h1>
+<div class="section" id="simple-access-to-powerful-technology">
+<h2><a class="headerlink" href="#simple-access-to-powerful-technology" title="Perma-link to this heading">🔗</a>Simple Access to Powerful Technology</h2>
+<p>The idea of CDAP is captured in the phrase, <em>Simple Access to Powerful Technology</em>. Our
+goal is to provide access to the powerful technology of Apache Hadoop® through a
+unified big data platform for both the cloud and on-premises.</p>
+<p>In this introduction to CDAP, we're going to show how CDAP provides that access,
+demonstrated through a comparison between using the current technologies available from
+the Hadoop ecosystem and using CDAP—a new paradigm.</p>
+<p>For each example action, we describe a current approach, the steps involved and the
+technologies required, and then show an equivalent CDAP command with the resulting output
+from the CDAP Command Line Interface. (Output has been reformatted to fit the webpage
+as required.)</p>
+<p>To try this yourself, <a class="reference external" href="source/../../developers-manual/getting-started/standalone/index.html#standalone-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">download a copy of the CDAP SDK</span></a>,
+<a class="reference external" href="source/../../developers-manual/getting-started/standalone/index.html#standalone-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">install it</span></a>,
+and then use the resources in its <code class="docutils literal"><span class="pre">examples</span></code> directory as you follow along.</p>
+<dl class="docutils">
+<dt>We'll look at these areas:</dt>
+<dd><ul class="first last simple">
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#data-ingestion">Data Ingestion</a></li>
+<li><a class="reference internal" href="#data-exploration">Data Exploration</a></li>
+<li><a class="reference internal" href="#data-exploration-attaching-a-schema">Data Exploration: Attaching A Schema</a></li>
+<li><a class="reference internal" href="#advanced-data-exploration">Advanced Data Exploration</a></li>
+<li><a class="reference internal" href="#transforming-your-data">Transforming Your Data</a></li>
+<li><a class="reference internal" href="#building-real-world-applications">Building Real World Applications</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="installation">
+<h2><a class="headerlink" href="#installation" title="Perma-link to this heading">🔗</a>Installation</h2>
+<ul class="simple">
+<li>Download and install CDAP to run in standalone mode on a laptop</li>
+<li>Startup CDAP</li>
+<li>Startup CDAP Command Line Interface</li>
+</ul>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="99%" />
+<col width="1%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Install and start Servers</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Install and startup <strong>Hadoop</strong> and related technologies, as required</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><ul class="first last simple">
+<li>Install <strong>CDAP</strong> by <a class="reference external" href="http://cask.co/downloads/">downloading</a> a zipfile, unzipping, and starting the <strong>CDAP Server</strong></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">&nbsp;</th>
+<td><script type="text/javascript">
+
+$(function tabbedparsedliteral1() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral1 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral1", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral1" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="first last highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">unzip cdap-sdk-3.5.2.zip</span>
+<span class="gp">$ </span><span class="copyable-text"><span class="nb">cd </span>cdap-sdk-3.5.2</span>
+<span class="gp">$ </span><span class="copyable-text">./bin/cdap.sh start</span>
+
+<span class="go">Starting Standalone CDAP ................</span>
+<span class="go">Standalone CDAP started successfully.</span>
+<span class="go">Connect to the CDAP UI at http://localhost:9999</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">jar xf cdap-sdk-3.5.2.zip</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cd cdap-sdk-3.5.2</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">bin\cdap.bat start</span></span>
+
+<span class="go">Starting Standalone CDAP ................</span>
+<span class="go">Standalone CDAP started successfully.</span>
+<span class="go">Connect to the CDAP UI at http://localhost:9999</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="99%" />
+<col width="1%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Start command line interface</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Run Hive commands using <strong>Hive CLI</strong> (HiveServer and Beeline)</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><ul class="first last simple">
+<li>Start <strong>CDAP CLI</strong> (Command Line Interface)</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">&nbsp;</th>
+<td><script type="text/javascript">
+
+$(function tabbedparsedliteral2() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral2 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral2", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral2" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="first last highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">./bin/cdap-cli.sh</span>
+
+<span class="go">Successfully connected to CDAP instance at http://localhost:10000/default</span>
+<span class="go">cdap &gt;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">.\bin\cdap-cli.bat</span></span>
+
+<span class="go">Successfully connected to CDAP instance at http://localhost:10000/default</span>
+<span class="go">cdap &gt;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="data-ingestion">
+<h2><a class="headerlink" href="#data-ingestion" title="Perma-link to this heading">🔗</a>Data Ingestion</h2>
+<ul class="simple">
+<li>Data is ingested into CDAP using <a class="reference external" href="source/../../developers-manual/building-blocks/streams.html#streams" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">streams</span></a></li>
+<li>Streams are abstractions over HDFS with an HTTP endpoint</li>
+<li>Data in a stream are ordered and time-partitioned</li>
+<li>CDAP supports easy exploration and processing in both real time and batch</li>
+<li>Ingest using RESTful, Flume, language-specific APIs, or Tools</li>
+<li>The abstraction of streams lets you disconnect how you ingest from how you process</li>
+</ul>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="99%" />
+<col width="1%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Create a stream</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Create a Time partitioned file in <strong>HDFS</strong></li>
+<li>Configure <strong>Kafka</strong> or <strong>Flume</strong> to write to time partitions</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral3_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral3 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral3 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral3 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral3 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral3 .example-tab-" + tab).click(change_tabbedparsedliteral3_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral3" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">create stream logEventStream</span></span>
+
+<span class="go">Successfully created stream with ID &#39;logEventStream&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Send data to the stream</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Write a custom consumer for <strong>Kafka</strong> that reads from source</li>
+<li>Write the data to <strong>HDFS</strong></li>
+<li>Create external table in <strong>Hive</strong> called <code class="docutils literal"><span class="pre">stream_logeventstream</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral4_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral4 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral4 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral4 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral4 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral4 .example-tab-" + tab).click(change_tabbedparsedliteral4_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral4" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">load stream logEventStream examples/resources/accesslog.txt</span></span>
+
+<span class="go">Successfully loaded file to stream &#39;logEventStream&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="data-exploration">
+<h2><a class="headerlink" href="#data-exploration" title="Perma-link to this heading">🔗</a>Data Exploration</h2>
+<ul class="simple">
+<li>Immediately start with the exploration of your ingested data</li>
+<li>Introspect raw data or view data within a time range</li>
+<li>Easily inspect the quality of data by generating data stats</li>
+<li>Easily associate a schema once you know your data: &quot;schema on read&quot;</li>
+<li>Support different data formats; extensible to support custom formats</li>
+<li>Supported data formats include Avro, Text, CSV, TSV, CLF, and Custom</li>
+<li>Query using SQL</li>
+</ul>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Describe ingested Data</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Run Hive command using <strong>Hive CLI</strong></li>
+<li><code class="docutils literal"><span class="pre">DESCRIBE</span> <span class="pre">stream_logeventstream</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral5_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral5 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral5 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral5 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral5 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral5 .example-tab-" + tab).click(change_tabbedparsedliteral5_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral5" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">execute &#39;describe stream_logEventStream&#39;</span></span>
+
+<span class="go">+===========================================================+</span>
+<span class="go">| col_name: STRING | data_type: STRING  | comment: STRING   |</span>
+<span class="go">+===========================================================+</span>
+<span class="go">| ts               | bigint             | from deserializer |</span>
+<span class="go">| headers          | map&lt;string,string&gt; | from deserializer |</span>
+<span class="go">| body             | string             | from deserializer |</span>
+<span class="go">+===========================================================+</span>
+<span class="go">Fetched 3 rows</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Retrieve first two events from the stream</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Run Hive command using <strong>Hive CLI</strong></li>
+<li><code class="docutils literal"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">stream_logeventstream</span> <span class="pre">LIMIT</span> <span class="pre">2</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral6_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral6 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral6 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral6 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral6 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral6 .example-tab-" + tab).click(change_tabbedparsedliteral6_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral6" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">execute &#39;select * from stream_logEventStream limit 2&#39;</span></span>
+
+<span class="go">+==============================================================================================================+</span>
+<span class="go">| stream_logeventstream.ts: | stream_logeventstream.hea | stream_logeventstream.body: STRING                   |</span>
+<span class="go">| BIGINT                    | ders: map&lt;string,string&gt;  |                                                      |</span>
+<span class="go">+==============================================================================================================+</span>
+<span class="go">| 1428969220987             | {&quot;content.type&quot;:&quot;text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:40 +0000] &quot;GET |</span>
+<span class="go">|                           | in&quot;}                      |  /ajax/planStatusHistoryNeighbouringSummaries.action |</span>
+<span class="go">|                           |                           | ?planKey=COOP-DBT&amp;buildNumber=284&amp;_=1423341312519 HT |</span>
+<span class="go">|                           |                           | TP/1.1&quot; 200 508 &quot;http://builds.cask.co/browse/COOP-D |</span>
+<span class="go">|                           |                           | BT-284/log&quot; &quot;Mozilla/5.0 (Macintosh; Intel Mac OS X  |</span>
+<span class="go">|                           |                           | 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chro |</span>
+<span class="go">|                           |                           | me/38.0.2125.122 Safari/537.36&quot;                      |</span>
+<span class="go">|--------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 1428969220987             | {&quot;content.type&quot;:&quot;text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:47 +0000] &quot;GET |</span>
+<span class="go">|                           | in&quot;}                      |  /rest/api/latest/server?_=1423341312520 HTTP/1.1&quot; 2 |</span>
+<span class="go">|                           |                           | 00 45 &quot;http://builds.cask.co/browse/COOP-DBT-284/log |</span>
+<span class="go">|                           |                           | &quot; &quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) A |</span>
+<span class="go">|                           |                           | ppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.21 |</span>
+<span class="go">|                           |                           | 25.122 Safari/537.36&quot;                                |</span>
+<span class="go">+==============================================================================================================+</span>
+<span class="go">Fetched 2 rows</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="data-exploration-attaching-a-schema">
+<h2><a class="headerlink" href="#data-exploration-attaching-a-schema" title="Perma-link to this heading">🔗</a>Data Exploration: Attaching a Schema</h2>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Apply a <em>Combined log format</em> schema to data in the stream</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Drop the external <strong>Hive</strong> table</li>
+<li>Recreate the <strong>Hive</strong> table with new schema</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral7_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral7 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral7 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral7 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral7 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral7 .example-tab-" + tab).click(change_tabbedparsedliteral7_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral7" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">set stream format logEventStream clf</span></span>
+
+<span class="go">Successfully set format of stream &#39;logEventStream&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Describe new format of the ingested data</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Run Hive command using <strong>Hive CLI</strong></li>
+<li><code class="docutils literal"><span class="pre">DESCRIBE</span> <span class="pre">stream_logeventsetream</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral8_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral8 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral8 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral8 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral8 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral8 .example-tab-" + tab).click(change_tabbedparsedliteral8_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral8" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">execute &#39;describe stream_logEventStream&#39;</span></span>
+
+<span class="go">+=============================================================================+</span>
+<span class="go">| col_name: STRING          | data_type: STRING       | comment: STRING       |</span>
+<span class="go">+=============================================================================+</span>
+<span class="go">| ts                        | bigint                  | from deserializer     |</span>
+<span class="go">| headers                   | map&lt;string,string&gt;      | from deserializer     |</span>
+<span class="go">| remote_host               | string                  | from deserializer     |</span>
+<span class="go">| remote_login              | string                  | from deserializer     |</span>
+<span class="go">| auth_user                 | string                  | from deserializer     |</span>
+<span class="go">| request_time              | string                  | from deserializer     |</span>
+<span class="go">| request                   | string                  | from deserializer     |</span>
+<span class="go">| status                    | int                     | from deserializer     |</span>
+<span class="go">| content_length            | int                     | from deserializer     |</span>
+<span class="go">| referrer                  | string                  | from deserializer     |</span>
+<span class="go">| user_agent                | string                  | from deserializer     |</span>
+<span class="go">+=============================================================================+</span>
+<span class="go">Fetched 11 rows</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Retrieve first two events from the stream, in new format</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Run Hive command using <strong>Hive CLI</strong></li>
+<li><code class="docutils literal"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">stream_logeventsetream</span> <span class="pre">LIMIT</span> <span class="pre">2</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral9_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral9 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral9 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral9 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral9 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral9 .example-tab-" + tab).click(change_tabbedparsedliteral9_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral9" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">execute &#39;select * from stream_logEventStream limit 2&#39;</span></span>
+
+<span class="go">+========================================================================================================================+</span>
+<span class="go">| stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l |</span>
+<span class="go">| ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents |</span>
+<span class="go">| tream.ts | tream.he | tream.re | tream.re | tream.au | tream.re | tream.re | tream.st | tream.co | tream.re | tream.us |</span>
+<span class="go">| : BIGINT | aders: m | mote_hos | mote_log | th_user: | quest_ti | quest: S | atus: IN | ntent_le | ferrer:  | er_agent |</span>
+<span class="go">|          | ap&lt;strin | t: STRIN | in: STRI |  STRING  | me: STRI | TRING    | T        | ngth: IN | STRING   | : STRING |</span>
+<span class="go">|          | g,string | G        | NG       |          | NG       |          |          | T        |          |          |</span>
+<span class="go">|          | &gt;        |          |          |          |          |          |          |          |          |          |</span>
+<span class="go">+========================================================================================================================+</span>
+<span class="go">| 14437238 | {&quot;conten | 69.181.1 |          |          | 08/Feb/2 | GET /aja | 200      | 508      | http://b | Mozilla/ |</span>
+<span class="go">| 45737    | t.type&quot;: | 60.120   |          |          | 015:04:3 | x/planSt |          |          | uilds.ca | 5.0 (Mac |</span>
+<span class="go">|          | &quot;text/pl |          |          |          | 6:40 +00 | atusHist |          |          | sk.co/br | intosh;  |</span>
+<span class="go">|          | ain&quot;}    |          |          |          | 00       | oryNeigh |          |          | owse/COO | Intel Ma |</span>
+<span class="go">|          |          |          |          |          |          | bouringS |          |          | P-DBT-28 | c OS X 1 |</span>
+<span class="go">|          |          |          |          |          |          | ummaries |          |          | 4/log    | 0_10_1)  |</span>
+<span class="go">|          |          |          |          |          |          | .action? |          |          |          | AppleWeb |</span>
+<span class="go">|          |          |          |          |          |          | planKey= |          |          |          | Kit/537. |</span>
+<span class="go">|          |          |          |          |          |          | COOP-DBT |          |          |          | 36 (KHTM |</span>
+<span class="go">|          |          |          |          |          |          | &amp;buildNu |          |          |          | L, like  |</span>
+<span class="go">|          |          |          |          |          |          | mber=284 |          |          |          | Gecko) C |</span>
+<span class="go">|          |          |          |          |          |          | &amp;_=14233 |          |          |          | hrome/38 |</span>
+<span class="go">|          |          |          |          |          |          | 41312519 |          |          |          | .0.2125. |</span>
+<span class="go">|          |          |          |          |          |          |  HTTP/1. |          |          |          | 122 Safa |</span>
+<span class="go">|          |          |          |          |          |          | 1        |          |          |          | ri/537.3 |</span>
+<span class="go">|          |          |          |          |          |          |          |          |          |          | 6        |</span>
+<span class="go">|------------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 14437238 | {&quot;conten | 69.181.1 |          |          | 08/Feb/2 | GET /res | 200      | 45       | http://b | Mozilla/ |</span>
+<span class="go">| 45737    | t.type&quot;: | 60.120   |          |          | 015:04:3 | t/api/la |          |          | uilds.ca | 5.0 (Mac |</span>
+<span class="go">|          | &quot;text/pl |          |          |          | 6:47 +00 | test/ser |          |          | sk.co/br | intosh;  |</span>
+<span class="go">|          | ain&quot;}    |          |          |          | 00       | ver?_=14 |          |          | owse/COO | Intel Ma |</span>
+<span class="go">|          |          |          |          |          |          | 23341312 |          |          | P-DBT-28 | c OS X 1 |</span>
+<span class="go">|          |          |          |          |          |          | 520 HTTP |          |          | 4/log    | 0_10_1)  |</span>
+<span class="go">|          |          |          |          |          |          | /1.1     |          |          |          | AppleWeb |</span>
+<span class="go">|          |          |          |          |          |          |          |          |          |          | Kit/537. |</span>
+<span class="go">|          |          |          |          |          |          |          |          |          |          | 36 (KHTM |</span>
+<span class="go">|          |          |          |          |          |          |          |          |          |          | L, like  |</span>
+<span class="go">|          |          |          |          |          |          |          |          |          |          | Gecko) C |</span>
+<span class="go">|          |          |          |          |          |          |          |          |          |          | hrome/38 |</span>
+<span class="go">|          |          |          |          |          |          |          |          |          |          | .0.2125. |</span>
+<span class="go">|          |          |          |          |          |          |          |          |          |          | 122 Safa |</span>
+<span class="go">|          |          |          |          |          |          |          |          |          |          | ri/537.3 |</span>
+<span class="go">|          |          |          |          |          |          |          |          |          |          | 6        |</span>
+<span class="go">+========================================================================================================================+</span>
+<span class="go">Fetched 2 rows</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Retrieve basic stream statistics</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td>Write code to compute the various stats: number of unique elements, histograms, etc.</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral10_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral10 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral10 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral10 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral10 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral10 .example-tab-" + tab).click(change_tabbedparsedliteral10_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral10" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">get stream-stats logEventStream limit 1000</span></span>
+
+<span class="go">column: stream_logeventstream.remote_host, type: STRING</span>
+<span class="go">Unique elements: 6</span>
+
+<span class="go">column: stream_logeventstream.remote_login, type: STRING</span>
+<span class="go">Unique elements: 0</span>
+
+<span class="go">column: stream_logeventstream.auth_user, type: STRING</span>
+<span class="go">Unique elements: 0</span>
+
+<span class="go">column: stream_logeventstream.request_time, type: STRING</span>
+<span class="go">Unique elements: 750</span>
+
+<span class="go">column: stream_logeventstream.request, type: STRING</span>
+<span class="go">Unique elements: 972</span>
+
+<span class="go">column: stream_logeventstream.status, type: INT</span>
+<span class="go">Unique elements: 4</span>
+<span class="go">Histogram:</span>
+<span class="go">  [200, 299]: 977  |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span>
+<span class="go">  [300, 399]: 17   |</span>
+<span class="go">  [400, 499]: 6    |</span>
+
+<span class="go">column: stream_logeventstream.content_length, type: INT</span>
+<span class="go">Unique elements: 142</span>
+<span class="go">Histogram:</span>
+<span class="go">  [0, 99]: 205           |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span>
+<span class="go">  [100, 199]: 1          |</span>
+<span class="go">  [200, 299]: 9          |+</span>
+<span class="go">  [300, 399]: 9          |+</span>
+<span class="go">  [400, 499]: 3          |</span>
+<span class="go">  [500, 599]: 300        |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span>
+<span class="go">  [600, 699]: 4          |</span>
+<span class="go">  [800, 899]: 2          |</span>
+<span class="go">  [900, 999]: 1          |</span>
+<span class="go">  [1300, 1399]: 10       |++</span>
+<span class="go">  [1400, 1499]: 206      |++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span>
+<span class="go">  [1500, 1599]: 2        |</span>
+<span class="go">  [1600, 1699]: 2        |</span>
+<span class="go">  [2500, 2599]: 1        |</span>
+<span class="go">  [2700, 2799]: 1        |</span>
+<span class="go">  [2800, 2899]: 1        |</span>
+<span class="go">  [4200, 4299]: 1        |</span>
+<span class="go">  [5700, 5799]: 5        |</span>
+<span class="go">  [7100, 7199]: 1        |</span>
+<span class="go">  [7300, 7399]: 4        |</span>
+<span class="go">  [7800, 7899]: 1        |</span>
+<span class="go">  [8200, 8299]: 5        |</span>
+<span class="go">  [8700, 8799]: 3        |</span>
+<span class="go">  [8800, 8899]: 12       |++</span>
+<span class="go">  [8900, 8999]: 22       |+++++</span>
+<span class="go">  [9000, 9099]: 16       |+++</span>
+<span class="go">  [9100, 9199]: 9        |+</span>
+<span class="go">  [9200, 9299]: 4        |</span>
+<span class="go">  [9300, 9399]: 3        |</span>
+<span class="go">  [9400, 9499]: 5        |</span>
+<span class="go">  [9600, 9699]: 1        |</span>
+<span class="go">  [9700, 9799]: 2        |</span>
+<span class="go">  [9800, 9899]: 39       |++++++++++</span>
+<span class="go">  [9900, 9999]: 4        |</span>
+<span class="go">  [10000, 10099]: 1      |</span>
+<span class="go">  [10100, 10199]: 8      |+</span>
+<span class="go">  [10200, 10299]: 1      |</span>
+<span class="go">  [10300, 10399]: 3      |</span>
+<span class="go">  [10400, 10499]: 1      |</span>
+<span class="go">  [10500, 10599]: 1      |</span>
+<span class="go">  [10600, 10699]: 9      |+</span>
+<span class="go">  [10700, 10799]: 32     |++++++++</span>
+<span class="go">  [10800, 10899]: 5      |</span>
+<span class="go">  [10900, 10999]: 3      |</span>
+<span class="go">  [11000, 11099]: 4      |</span>
+<span class="go">  [11100, 11199]: 1      |</span>
+<span class="go">  [11200, 11299]: 4      |</span>
+<span class="go">  [11300, 11399]: 2      |</span>
+<span class="go">  [11500, 11599]: 1      |</span>
+<span class="go">  [11800, 11899]: 3      |</span>
+<span class="go">  [17900, 17999]: 2      |</span>
+<span class="go">  [36500, 36599]: 1      |</span>
+<span class="go">  [105800, 105899]: 1    |</span>
+<span class="go">  [397900, 397999]: 2    |</span>
+<span class="go">  [1343400, 1343499]: 1  |</span>
+<span class="go">  [1351600, 1351699]: 1  |</span>
+
+<span class="go">column: stream_logeventstream.referrer, type: STRING</span>
+<span class="go">Unique elements: 8</span>
+
+<span class="go">column: stream_logeventstream.user_agent, type: STRING</span>
+<span class="go">Unique elements: 4</span>
+
+<span class="go">Analyzing 1000 stream events in the time range [0, 9223372036854775807]...</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="advanced-data-exploration">
+<h2><a class="headerlink" href="#advanced-data-exploration" title="Perma-link to this heading">🔗</a>Advanced Data Exploration</h2>
+<ul class="simple">
+<li>CDAP has the ability to join multiple streams using SQL</li>
+<li>Data in a stream can be ingested in real time or batch</li>
+<li>CDAP supports joining with other streams using Hive SQL</li>
+</ul>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Create an additional stream</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Create a file in <strong>Hadoop</strong> file system called <code class="docutils literal"><span class="pre">ip2geo</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral11_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral11 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral11 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral11 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral11 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral11 .example-tab-" + tab).click(change_tabbedparsedliteral11_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral11" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">create stream ip2geo</span></span>
+
+<span class="go">Successfully created stream with ID &#39;ip2geo&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Ingest CSV-formatted &quot;IP-to-geo location&quot; data into stream</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Write a custom consumer that reads from source (example: <strong>Kafka</strong>)</li>
+<li>Write the data to <strong>HDFS</strong></li>
+<li>Create external table in <strong>Hive</strong> called <code class="docutils literal"><span class="pre">stream_ip2geo</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral12_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral12 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral12 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral12 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral12 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral12 .example-tab-" + tab).click(change_tabbedparsedliteral12_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral12" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">load stream ip2geo examples/resources/ip2geo-maps.csv</span></span>
+
+<span class="go">Successfully loaded file to stream &#39;ip2geo&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Send individual event to stream</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td>Write data to <strong>Kafka</strong> or append directly to <strong>HDFS</strong></td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral13_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral13 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral13 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral13 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral13 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral13 .example-tab-" + tab).click(change_tabbedparsedliteral13_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral13" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">send stream ip2geo &#39;69.181.160.120, Los Angeles, CA&#39;</span></span>
+
+<span class="go">Successfully sent stream event to stream &#39;ip2geo&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Retrieve events from the stream</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Run <strong>Hive</strong> command using <strong>Hive CLI</strong></li>
+<li><code class="docutils literal"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">stream_ip2geo</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral14_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral14 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral14 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral14 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral14 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral14 .example-tab-" + tab).click(change_tabbedparsedliteral14_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral14" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">execute &#39;select * from stream_ip2geo&#39;</span></span>
+
+<span class="go">+===========================================================================================================+</span>
+<span class="go">| stream_ip2geo.ts: BIGINT | stream_ip2geo.headers: map&lt;string,string&gt; | stream_ip2geo.body: STRING         |</span>
+<span class="go">+===========================================================================================================+</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 108.206.32.124, Santa Clara, CA    |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 109.63.206.34, San Jose, CA        |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 113.72.144.115, New York, New York |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 123.125.71.19, Palo Alto, CA       |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 123.125.71.27, Redwood, CA         |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 123.125.71.28, Los Altos, CA       |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 123.125.71.58, Mountain View, CA   |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 142.54.173.19, Houston, TX         |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 144.76.137.226, Dallas, TX         |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 144.76.201.175, Bedminister, NJ    |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 162.210.196.97, Milipitas, CA      |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 188.138.17.205, Santa Barbara, CA  |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 195.110.40.7, Orlando, FL          |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 201.91.5.170, Tampa, FL            |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 220.181.108.158, Miami, FL         |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 220.181.108.161, Chicago, IL       |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 220.181.108.184, Philadelphia, PA  |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 222.205.101.211, Indianpolis, IN   |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 24.4.216.155, Denver, CO           |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 66.249.75.153, San Diego, CA       |</span>
+<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 77.75.77.11, Austin, TX            |</span>
+<span class="go">| 1428892981049            | {}                                        | 69.181.160.120, Los Angeles, CA    |</span>
+<span class="go">+===========================================================================================================+</span>
+<span class="go">Fetched 22 rows</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Having reviewed data, set a new format for the stream</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Drop the external <strong>Hive</strong> table</li>
+<li>Recreate the <strong>Hive</strong> table with new schema</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral15_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral15 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral15 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral15 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral15 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral15 .example-tab-" + tab).click(change_tabbedparsedliteral15_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral15" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">set stream format ip2geo csv &quot;ip string, city string, state string&quot;</span></span>
+
+<span class="go">Successfully set format of stream &#39;ip2geo&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Retrieve events from the stream, in new format</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Run <strong>Hive</strong> command using <strong>Hive CLI</strong></li>
+<li><code class="docutils literal"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">stream_ip2geo</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral16_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral16 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral16 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral16 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral16 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral16 .example-tab-" + tab).click(change_tabbedparsedliteral16_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral16" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">execute &#39;select * from stream_ip2geo&#39;</span></span>
+
+<span class="go">+================================================================================================================+</span>
+<span class="go">| stream_ip2geo.ts:| stream_ip2geo.headers:      | stream_ip2geo.ip:| stream_ip2geo.city: | stream_ip2geo.state: |</span>
+<span class="go">| BIGINT           | map&lt;string,string&gt;          | STRING           | STRING              | STRING               |</span>
+<span class="go">+================================================================================================================+</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 108.206.32.124   |  Santa Clara        |  CA                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 109.63.206.34    |  San Jose           |  CA                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 113.72.144.115   |  New York           |  New York            |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 123.125.71.19    |  Palo Alto          |  CA                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 123.125.71.27    |  Redwood            |  CA                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 123.125.71.28    |  Los Altos          |  CA                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 123.125.71.58    |  Mountain View      |  CA                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 142.54.173.19    |  Houston            |  TX                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 144.76.137.226   |  Dallas             |  TX                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 144.76.201.175   |  Bedminister        |  NJ                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 162.210.196.97   |  Milipitas          |  CA                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 188.138.17.205   |  Santa Barbara      |  CA                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 195.110.40.7     |  Orlando            |  FL                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 201.91.5.170     |  Tampa              |  FL                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 220.181.108.158  |  Miami              |  FL                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 220.181.108.161  |  Chicago            |  IL                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 220.181.108.184  |  Philadelphia       |  PA                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 222.205.101.211  |  Indianpolis        |  IN                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 24.4.216.155     |  Denver             |  CO                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 66.249.75.153    |  San Diego          |  CA                  |</span>
+<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 77.75.77.11      |  Austin             |  TX                  |</span>
+<span class="go">| 1428892981049    | {}                          | 69.181.160.120   |  Los Angeles        |  CA                  |</span>
+<span class="go">+================================================================================================================+</span>
+<span class="go">Fetched 22 rows</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Join data in the two streams and retrieve selected events</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Run <strong>Hive</strong> command using <strong>Hive CLI</strong></li>
+<li><code class="docutils literal"><span class="pre">SELECT</span> <span class="pre">remote_host,</span> <span class="pre">city,</span> <span class="pre">state,</span> <span class="pre">request</span> <span class="pre">from</span> <span class="pre">stream_logEventStream</span> <span class="pre">join</span> <span class="pre">stream_ip2geo</span> <span class="pre">on</span> <span class="pre">(stream_logEventStream.remote_host</span> <span class="pre">=</span> <span class="pre">stream_ip2geo.ip)</span> <span class="pre">limit</span> <span class="pre">10</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral17_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral17 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral17 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral17 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral17 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral17 .example-tab-" + tab).click(change_tabbedparsedliteral17_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral17" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">execute &#39;select remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10&#39;</span></span>
+
+<span class="go">+======================================================================================================================+</span>
+<span class="go">| remote_host: STRING | city: STRING | state: STRING | request: STRING                                                 |</span>
+<span class="go">+======================================================================================================================+</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /browse/CDAP-DUT725-8 HTTP/1.1                              |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |</span>
+<span class="go">|                     |              |               | download/batch/bamboo.web.resources:base-model/bamboo.web.resou |</span>
+<span class="go">|                     |              |               | rces:base-model.js HTTP/1.1                                     |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |</span>
+<span class="go">|                     |              |               | download/batch/bamboo.web.resources:model-deployment-version/ba |</span>
+<span class="go">|                     |              |               | mboo.web.resources:model-deployment-version.js HTTP/1.1         |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |</span>
+<span class="go">|                     |              |               | download/batch/bamboo.web.resources:model-deployment-result/bam |</span>
+<span class="go">|                     |              |               | boo.web.resources:model-deployment-result.js HTTP/1.1           |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-T/en_US/4411/1/3.5.7/_/ |</span>
+<span class="go">|                     |              |               | download/batch/com.atlassian.support.stp:stp-license-status-res |</span>
+<span class="go">|                     |              |               | ources/com.atlassian.support.stp:stp-license-status-resources.c |</span>
+<span class="go">|                     |              |               | ss HTTP/1.1                                                     |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |</span>
+<span class="go">|                     |              |               | download/batch/bamboo.web.resources:model-deployment-operations |</span>
+<span class="go">|                     |              |               | /bamboo.web.resources:model-deployment-operations.js HTTP/1.1   |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |</span>
+<span class="go">|                     |              |               | download/batch/bamboo.web.resources:model-deployment-environmen |</span>
+<span class="go">|                     |              |               | t/bamboo.web.resources:model-deployment-environment.js HTTP/1.1 |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |</span>
+<span class="go">|                     |              |               | download/batch/bamboo.web.resources:model-deployment-project/ba |</span>
+<span class="go">|                     |              |               | mboo.web.resources:model-deployment-project.js HTTP/1.1         |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/71095c56c641f2c4a4f189b9dfcd7a38-CDN/en_US/4411/1/5.6.2/ |</span>
+<span class="go">|                     |              |               | _/download/batch/bamboo.deployments:deployment-project-list/bam |</span>
+<span class="go">|                     |              |               | boo.deployments:deployment-project-list.js?locale=en-US HTTP/1. |</span>
+<span class="go">|                     |              |               | 1                                                               |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/5dddb6 |</span>
+<span class="go">|                     |              |               | ea4dc4fd5569d992cf603f31e5/_/download/contextbatch2/css/atl.gen |</span>
+<span class="go">|                     |              |               | eral,bamboo.result/batch.css HTTP/1.1                           |</span>
+<span class="go">+======================================================================================================================+</span>
+<span class="go">Fetched 10 rows</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="transforming-your-data">
+<span id="introduction-to-cdap-transforming-your-data"></span><h2><a class="headerlink" href="#transforming-your-data" title="Perma-link to this heading">🔗</a>Transforming Your Data</h2>
+<ul class="simple">
+<li>CDAP Extensions such as <a class="reference external" href="source/../../hydrator-manual/index.html#cask-hydrator" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Cask Hydrator</span></a> create applications that are
+reusable through the configuration of artifacts and can be used to create an application
+without writing any code at all</li>
+<li>Built-in ETL (Extract, Transform, Load) and data pipeline applications</li>
+<li>Hydrator includes over 30 plugins to build applications merely through configuration of parameters</li>
+<li>Build your own custom plugins, using simple APIs</li>
+<li>Hydrator Transformations provide pre-defined transformations to be applied on streams or other datasets</li>
+<li>In this example, we will use the data pipeline system artifact to create a batch application to convert data in a stream to
+Avro-formatted files in a <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code> that can be queried using either Hive or Impala</li>
+</ul>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Create a stream-conversion application using the batch <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> system artifact</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Write a custom consumer that reads from source (example: <strong>Kafka</strong>)</li>
+<li>Write the data to <strong>HDFS</strong></li>
+<li>Create an external table in <strong>Hive</strong> called <code class="docutils literal"><span class="pre">stream_ip2geo</span></code></li>
+<li>Orchestrate running the custom consumer periodically using <strong>Oozie</strong></li>
+<li>Keep track of last processed times</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><ul class="first last simple">
+<li>Write a configuration file, saving it to <code class="docutils literal"><span class="pre">examples/resources/app-config.json</span></code>, with these contents:</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">&nbsp;</th>
+<td><pre class="copyable copyable-text first last literal-block">
+{
+  &quot;description&quot;: &quot;Batch Data Pipeline Application&quot;,
+  &quot;artifact&quot;: {
+    &quot;name&quot;: &quot;cdap-data-pipeline&quot;,
+    &quot;scope&quot;: &quot;system&quot;,
+    &quot;version&quot;: &quot;3.5.2&quot;
+  },
+  &quot;config&quot;: {
+    &quot;schedule&quot;: &quot;*/5 * * * *&quot;,
+    &quot;engine&quot;: &quot;mapreduce&quot;,
+    &quot;stages&quot;: [
+      {
+        &quot;name&quot;: &quot;Stream&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Stream&quot;,
+          &quot;type&quot;: &quot;batchsource&quot;,
+          &quot;properties&quot;: {
+            &quot;format&quot;: &quot;clf&quot;,
+            &quot;name&quot;: &quot;logEventStream&quot;,
+            &quot;duration&quot;: &quot;5m&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;TPFSAvro&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;TPFSAvro&quot;,
+          &quot;type&quot;: &quot;batchsink&quot;,
+          &quot;properties&quot;: {
+            &quot;schema&quot;: &quot;{
+              \&quot;type\&quot;:\&quot;record\&quot;,
+              \&quot;name\&quot;:\&quot;etlSchemaBody\&quot;,
+              \&quot;fields\&quot;:[
+                {\&quot;name\&quot;:\&quot;ts\&quot;,\&quot;type\&quot;:\&quot;long\&quot;},
+                {\&quot;name\&quot;:\&quot;remote_host\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},
+                {\&quot;name\&quot;:\&quot;remote_login\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},
+                {\&quot;name\&quot;:\&quot;auth_user\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},
+                {\&quot;name\&quot;:\&quot;request_time\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},
+                {\&quot;name\&quot;:\&quot;request\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},
+                {\&quot;name\&quot;:\&quot;status\&quot;,\&quot;type\&quot;:[\&quot;int\&quot;,\&quot;null\&quot;]},
+                {\&quot;name\&quot;:\&quot;content_length\&quot;,\&quot;type\&quot;:[\&quot;int\&quot;,\&quot;null\&quot;]},
+                {\&quot;name\&quot;:\&quot;referrer\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},
+                {\&quot;name\&quot;:\&quot;user_agent\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]}]}&quot;,
+            &quot;name&quot;: &quot;logEventStream_converted&quot;,
+            &quot;basePath&quot;: &quot;logEventStream_converted&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;Projection&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Projection&quot;,
+          &quot;type&quot;: &quot;transform&quot;,
+          &quot;properties&quot;: {
+            &quot;drop&quot;: &quot;headers&quot;
+          }
+        }
+      }
+    ],
+   &quot;connections&quot;: [
+     {
+       &quot;from&quot;: &quot;Stream&quot;,
+       &quot;to&quot;: &quot;Projection&quot;
+     },
+     {
+       &quot;from&quot;: &quot;Projection&quot;,
+       &quot;to&quot;: &quot;TPFSAvro&quot;
+     }
+   ]
+ }
+}
+</pre>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">&nbsp;</th>
+<td><ul class="first last simple">
+<li>Create an application using that configuration through the CLI:</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">&nbsp;</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral18_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral18 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral18 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral18 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral18 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral18 .example-tab-" + tab).click(change_tabbedparsedliteral18_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral18" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">create app logEventStreamConverter cdap-data-pipeline 3.5.2 system examples/resources/app-config.json</span></span>
+<span class="go">Successfully created application</span>
+
+<span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">resume schedule logEventStreamConverter.dataPipelineSchedule</span></span>
+<span class="go">Successfully resumed schedule &#39;dataPipelineSchedule&#39; in app &#39;logEventStreamConverter&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">List the applications available in the CDAP instance</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Not available</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral19_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral19 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral19 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral19 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral19 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral19 .example-tab-" + tab).click(change_tabbedparsedliteral19_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral19" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">list apps</span></span>
+
+<span class="go">+====================================================================================================+</span>
+<span class="go">| id                      | description       | artifactName       | artifactVersion | artifactScope |</span>
+<span class="go">+====================================================================================================+</span>
+<span class="go">| logEventStreamConverter | Data Pipeline App | cdap-data-pipeline | 3.5.2           | SYSTEM        |</span>
+<span class="go">|                         | lication          |                    |                 |               |</span>
+<span class="go">+====================================================================================================+</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral20_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral20 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral20 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral20 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral20 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral20 .example-tab-" + tab).click(change_tabbedparsedliteral20_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral20" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">describe app logEventStreamConverter</span></span>
+
+<span class="go">+====================================================================================================+</span>
+<span class="go">| type      | id                   | description                                                     |</span>
+<span class="go">+====================================================================================================+</span>
+<span class="go">| MapReduce | phase-1              | MapReduce phase executor. Sources &#39;Stream&#39; to sinks &#39;TPFSAvro&#39;. |</span>
+<span class="go">| Workflow  | DataPipelineWorkflow | Data Pipeline Workflow                                          |</span>
+<span class="go">+====================================================================================================+</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral21_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral21 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral21 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral21 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral21 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral21 .example-tab-" + tab).click(change_tabbedparsedliteral21_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral21" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">describe stream logEventStream</span></span>
+
+<span class="go">+===============================================================================================+</span>
+<span class="go">| ttl              | format | schema                  | notification.threshold.mb | description |</span>
+<span class="go">+===============================================================================================+</span>
+<span class="go">| 9223372036854775 | clf    | {&quot;type&quot;:&quot;record&quot;,&quot;name&quot; | 1024                      |             |</span>
+<span class="go">|                  |        | :&quot;streamEvent&quot;,&quot;fields&quot; |                           |             |</span>
+<span class="go">|                  |        | :[{&quot;name&quot;:&quot;remote_host&quot; |                           |             |</span>
+<span class="go">|                  |        | ,&quot;type&quot;:[&quot;string&quot;,&quot;null |                           |             |</span>
+<span class="go">|                  |        | &quot;]},{&quot;name&quot;:&quot;remote_log |                           |             |</span>
+<span class="go">|                  |        | in&quot;,&quot;type&quot;:[&quot;string&quot;,&quot;n |                           |             |</span>
+<span class="go">|                  |        | ull&quot;]},{&quot;name&quot;:&quot;auth_us |                           |             |</span>
+<span class="go">|                  |        | er&quot;,&quot;type&quot;:[&quot;string&quot;,&quot;n |                           |             |</span>
+<span class="go">|                  |        | ull&quot;]},{&quot;name&quot;:&quot;request |                           |             |</span>
+<span class="go">|                  |        | _time&quot;,&quot;type&quot;:[&quot;string&quot; |                           |             |</span>
+<span class="go">|                  |        | ,&quot;null&quot;]},{&quot;name&quot;:&quot;requ |                           |             |</span>
+<span class="go">|                  |        | est&quot;,&quot;type&quot;:[&quot;string&quot;,&quot; |                           |             |</span>
+<span class="go">|                  |        | null&quot;]},{&quot;name&quot;:&quot;status |                           |             |</span>
+<span class="go">|                  |        | &quot;,&quot;type&quot;:[&quot;int&quot;,&quot;null&quot;] |                           |             |</span>
+<span class="go">|                  |        | },{&quot;name&quot;:&quot;content_leng |                           |             |</span>
+<span class="go">|                  |        | th&quot;,&quot;type&quot;:[&quot;int&quot;,&quot;null |                           |             |</span>
+<span class="go">|                  |        | &quot;]},{&quot;name&quot;:&quot;referrer&quot;, |                           |             |</span>
+<span class="go">|                  |        | &quot;type&quot;:[&quot;string&quot;,&quot;null&quot; |                           |             |</span>
+<span class="go">|                  |        | ]},{&quot;name&quot;:&quot;user_agent&quot; |                           |             |</span>
+<span class="go">|                  |        | ,&quot;type&quot;:[&quot;string&quot;,&quot;null |                           |             |</span>
+<span class="go">|                  |        | &quot;]}]}                   |                           |             |</span>
+<span class="go">+===============================================================================================+</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral22_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral22 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral22 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral22 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral22 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral22 .example-tab-" + tab).click(change_tabbedparsedliteral22_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral22" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">get workflow schedules logEventStreamConverter.DataPipelineWorkflow</span></span>
+
+<span class="go">+===========================================================================================================+</span>
+<span class="go">| applicatio | program    | program type | name       | type       | descriptio | properties | runtime args |</span>
+<span class="go">| n          |            |              |            |            | n          |            |              |</span>
+<span class="go">+===========================================================================================================+</span>
+<span class="go">| logEventSt | DataPipeli | WORKFLOW     | dataPipeli | co.cask.cd | Data pipel | cron entry | {}           |</span>
+<span class="go">| reamConver | neWorkflow |              | neSchedule | ap.interna | ine schedu | : */5 * *  |              |</span>
+<span class="go">| ter        |            |              |            | l.schedule | le         | * *        |              |</span>
+<span class="go">|            |            |              |            | .TimeSched |            |            |              |</span>
+<span class="go">|            |            |              |            | ule        |            |            |              |</span>
+<span class="go">+===========================================================================================================+</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Load data into the stream; it will automatically be converted</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Write a custom consumer that reads from source (example: <strong>Kafka</strong>)</li>
+<li>Write the data to <strong>HDFS</strong></li>
+<li>Create external table in <strong>Hive</strong> called <code class="docutils literal"><span class="pre">stream_ip2geo</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral23_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral23 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral23 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral23 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral23 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral23 .example-tab-" + tab).click(change_tabbedparsedliteral23_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral23" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">load stream logEventStream examples/resources/accesslog.txt</span></span>
+
+<span class="go">Successfully loaded file to stream &#39;logEventStream&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">List available datasets</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Run <strong>HDFS</strong> commands using <strong>HBase</strong> shell</li>
+<li><code class="docutils literal"><span class="pre">hbase</span> <span class="pre">shell&gt;</span> <span class="pre">list</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><p class="first">Dataset that is time partitioned</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral24_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral24 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral24 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral24 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral24 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral24 .example-tab-" + tab).click(change_tabbedparsedliteral24_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral24" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">list dataset instances</span></span>
+
+<span class="go">+=================================================================================+</span>
+<span class="go">| name                      | type                                                |</span>
+<span class="go">+=================================================================================+</span>
+<span class="go">| logEventStream_converted  | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet |</span>
+<span class="go">+=================================================================================+</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Describe the converted dataset</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Run <strong>Hive</strong> query using <strong>Hive CLI</strong></li>
+<li><code class="docutils literal"><span class="pre">'describe</span> <span class="pre">user_logEventStream_converted'</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral25_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral25 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral25 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral25 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral25 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral25 .example-tab-" + tab).click(change_tabbedparsedliteral25_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral25" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">execute &#39;describe dataset_logEventStream_converted&#39;</span></span>
+
+<span class="go">+=======================================================================+</span>
+<span class="go">| col_name: STRING        | data_type: STRING    | comment: STRING      |</span>
+<span class="go">+=======================================================================+</span>
+<span class="go">| ts                      | bigint               | from deserializer    |</span>
+<span class="go">| remote_host             | string               | from deserializer    |</span>
+<span class="go">| remote_login            | string               | from deserializer    |</span>
+<span class="go">| auth_user               | string               | from deserializer    |</span>
+<span class="go">| request_time            | string               | from deserializer    |</span>
+<span class="go">| request                 | string               | from deserializer    |</span>
+<span class="go">| status                  | int                  | from deserializer    |</span>
+<span class="go">| content_length          | int                  | from deserializer    |</span>
+<span class="go">| referrer                | string               | from deserializer    |</span>
+<span class="go">| user_agent              | string               | from deserializer    |</span>
+<span class="go">| year                    | int                  |                      |</span>
+<span class="go">| month                   | int                  |                      |</span>
+<span class="go">| day                     | int                  |                      |</span>
+<span class="go">| hour                    | int                  |                      |</span>
+<span class="go">| minute                  | int                  |                      |</span>
+<span class="go">|                         |                      |                      |</span>
+<span class="go">| # Partition Information |                      |                      |</span>
+<span class="go">| # col_name              | data_type            | comment              |</span>
+<span class="go">|                         |                      |                      |</span>
+<span class="go">| year                    | int                  |                      |</span>
+<span class="go">| month                   | int                  |                      |</span>
+<span class="go">| day                     | int                  |                      |</span>
+<span class="go">| hour                    | int                  |                      |</span>
+<span class="go">| minute                  | int                  |                      |</span>
+<span class="go">+=======================================================================+</span>
+<span class="go">Fetched 24 rows</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Retrieve the first two events from the converted data</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Run <strong>Hive</strong> query using <strong>Hive CLI</strong></li>
+<li><code class="docutils literal"><span class="pre">SELECT</span> <span class="pre">ts,</span> <span class="pre">request,</span> <span class="pre">status</span> <span class="pre">FROM</span> <span class="pre">dataset_logEventStream_converted</span> <span class="pre">LIMIT</span> <span class="pre">2</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><ul class="first last simple">
+<li>Instead of waiting for the schedule to run, you can directly start the workflow and check its status:</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">&nbsp;</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral26_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral26 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral26 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral26 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral26 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral26 .example-tab-" + tab).click(change_tabbedparsedliteral26_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral26" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">start workflow logEventStreamConverter.DataPipelineWorkflow</span></span>
+
+<span class="go">Successfully started workflow &#39;DataPipelineWorkflow&#39; of application &#39;logEventStreamConverter&#39;</span>
+<span class="go">with stored runtime arguments &#39;{}&#39;</span>
+
+<span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">get workflow status logEventStreamConverter.DataPipelineWorkflow</span></span>
+
+<span class="go">RUNNING</span>
+
+<span class="go">...</span>
+
+<span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">get workflow status logEventStreamConverter.DataPipelineWorkflow</span></span>
+
+<span class="go">STOPPED</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">&nbsp;</th>
+<td><ul class="first last simple">
+<li>Once the workflow has stopped, retrieve the first two events from the converted data:</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">&nbsp;</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral27_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral27 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral27 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral27 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral27 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral27 .example-tab-" + tab).click(change_tabbedparsedliteral27_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral27" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">execute &#39;SELECT ts, request, status FROM dataset_logEventStream_converted LIMIT 2&#39;</span></span>
+
+<span class="go">+=====================================================================+</span>
+<span class="go">| ts: BIGINT    | request: STRING                       | status: INT |</span>
+<span class="go">+=====================================================================+</span>
+<span class="go">| 1430769459594 | GET /ajax/planStatusHistoryNeighbouri | 200         |</span>
+<span class="go">|               | ngSummaries.action?planKey=COOP-DBT&amp;b |             |</span>
+<span class="go">|               | uildNumber=284&amp;_=1423341312519 HTTP/1 |             |</span>
+<span class="go">|               | .1                                    |             |</span>
+<span class="go">|---------------------------------------------------------------------|</span>
+<span class="go">| 1430769459594 | GET /rest/api/latest/server?_=1423341 | 200         |</span>
+<span class="go">|               | 312520 HTTP/1.1                       |             |</span>
+<span class="go">+=====================================================================+</span>
+<span class="go">Fetched 2 rows</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="building-real-world-applications">
+<h2><a class="headerlink" href="#building-real-world-applications" title="Perma-link to this heading">🔗</a>Building Real World Applications</h2>
+<ul class="simple">
+<li>Build Data Applications using simple-to-use CDAP APIs</li>
+<li>Compose complex applications consisting of workflow, MapReduce, real-time DAGs (Tigon) and services</li>
+<li>Build using a collection of pre-defined data pattern libraries</li>
+<li>Deploy and manage complex data applications such as Web Applications</li>
+</ul>
+<p><strong>Let's see how we would build a real-world application using CDAP:</strong></p>
+<ul class="simple">
+<li><em>Wise App</em> performs Web analytics on access logs</li>
+<li><em>WiseFlow</em> parses and computes pageview count per IP in real time</li>
+<li>A MapReduce computes bounce counts: percentage of pages that <em>don’t</em> go to another page before exiting</li>
+<li>Service to expose the data</li>
+<li>Unified platform for different processing paradigms</li>
+</ul>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Deploy a pre-built CDAP application: Wise App</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Write and execute <strong>MapReduce</strong> using <strong>Hadoop</strong></li>
+<li>Separate environment for processing in real-time setup stack</li>
+<li>Add ability to periodically copy datasets into <strong>SQL</strong> using <strong>Sqoop</strong></li>
+<li>Orchestrate the <strong>MapReduce</strong> job using <strong>Oozie</strong></li>
+<li>Write an application to serve the data</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><p class="first">Download the Wise app and unzip into the <code class="docutils literal"><span class="pre">examples</span></code> directory of your CDAP SDK:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral28() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral28 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral28", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral28" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text"><span class="nb">cd </span>cdap-sdk-3.5.2/examples</span>
+<span class="gp">$ </span><span class="copyable-text">curl -O http://repository.cask.co/downloads/co/cask/cdap/apps/0.8.0/cdap-wise-0.8.0.zip</span>
+<span class="gp">$ </span><span class="copyable-text">unzip cdap-wise-0.8.0.zip</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cd cdap-sdk-3.5.2\examples</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -O http://repository.cask.co/downloads/co/cask/cdap/apps/0.8.0/cdap-wise-0.8.0.zip</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">unzip cdap-wise-0.8.0.zip</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>From within the CDAP CLI:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral29_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral29 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral29 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral29 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral29 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral29 .example-tab-" + tab).click(change_tabbedparsedliteral29_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral29" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">deploy app examples/cdap-wise-0.8.0/target/cdap-wise-0.8.0.jar</span></span>
+
+<span class="go">Successfully deployed application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Describe application components</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Check <strong>Oozie</strong></li>
+<li>Check <strong>YARN</strong> Console</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral30_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral30 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral30 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral30 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral30 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral30 .example-tab-" + tab).click(change_tabbedparsedliteral30_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral30" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">describe app Wise</span></span>
+
+<span class="go">+=====================================================================+</span>
+<span class="go">| type      | id                    | description                     |</span>
+<span class="go">+=====================================================================+</span>
+<span class="go">| Flow      | WiseFlow              | Wise Flow                       |</span>
+<span class="go">| MapReduce | BounceCountsMapReduce | Bounce Counts MapReduce Program |</span>
+<span class="go">| Service   | WiseService           |                                 |</span>
+<span class="go">| workflow  | WiseWorkflow          | Wise Workflow                   |</span>
+<span class="go">+=====================================================================+</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Start the application's flow (for processing events)</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Set classpath in environment variable</li>
+<li><code class="docutils literal"><span class="pre">CLASSPATH=/my/classpath</span></code></li>
+<li>Run the command to start the <strong>YARN</strong> application</li>
+<li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">jar</span> <span class="pre">/path/to/myprogram.jar</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral31_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral31 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral31 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral31 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral31 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral31 .example-tab-" + tab).click(change_tabbedparsedliteral31_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral31" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">start flow Wise.WiseFlow</span></span>
+
+<span class="go">Successfully started flow &#39;WiseFlow&#39; of application &#39;Wise&#39;</span>
+<span class="go">with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Check the status of the flow</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Retrieve the application ID</li>
+<li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">application</span> <span class="pre">-list</span> <span class="pre">|</span> <span class="pre">grep</span> <span class="pre">&quot;Wise.WiseFlow&quot;</span></code></li>
+<li>Retrieve the status</li>
+<li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">application</span> <span class="pre">-status</span> <span class="pre">&lt;APP</span> <span class="pre">ID&gt;</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral32_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral32 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral32 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral32 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral32 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral32 .example-tab-" + tab).click(change_tabbedparsedliteral32_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral32" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">get flow status Wise.WiseFlow</span></span>
+
+<span class="go">RUNNING</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Ingest access log data into the Wise App stream</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Write a custom consumer for <strong>Kafka</strong> that reads from source</li>
+<li>Write the data to <strong>HDFS</strong></li>
+<li>Create external table in <strong>Hive</strong> called <code class="docutils literal"><span class="pre">cdap_stream_logeventstream</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral33_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral33 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral33 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral33 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral33 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral33 .example-tab-" + tab).click(change_tabbedparsedliteral33_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral33" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">load stream logEventStream examples/resources/accesslog.txt</span></span>
+
+<span class="go">Successfully loaded file to stream &#39;logEventStream&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Retrieve logs</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Navigate to the <strong>Resource Manager UI</strong></li>
+<li>Find the <em>Wise.WiseFlow</em> on UI</li>
+<li>Click to see application logs</li>
+<li>Find all the node managers for the application containers</li>
+<li>Navigate to all the containers in separate tabs</li>
+<li>Click on container logs</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral34_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral34 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral34 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral34 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral34 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral34 .example-tab-" + tab).click(change_tabbedparsedliteral34_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral34" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">get flow logs Wise.WiseFlow</span></span>
+
+<span class="go">2015-04-15 09:22:53,775 - INFO  [FlowletRuntimeService</span>
+<span class="go">STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@110] - Initializing flowlet:</span>
+<span class="go">flowlet=pageViewCount, instance=0, groupsize=1, namespaceId=default, applicationId=Wise,</span>
+<span class="go">program=WiseFlow, runid=aae85671-e38b-11e4-bd5e-3ee74a48f4aa</span>
+<span class="go">2015-04-15 09:22:53,779 - INFO  [FlowletRuntimeService</span>
+<span class="go">STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@117] - Flowlet initialized:</span>
+<span class="go">flowlet=pageViewCount, instance=0, groupsize=1, namespaceId=default, applicationId=Wise,</span>
+<span class="go">program=WiseFlow, runid=aae85671-e38b-11e4-bd5e-3ee74a48f4aa</span>
+<span class="go">...</span>
+<span class="go">2015-04-15 10:07:54,708 - INFO  [FlowletRuntimeService</span>
+<span class="go">STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@117] - Flowlet initialized: flowlet=parser,</span>
+<span class="go">instance=0, groupsize=1, namespaceId=default, applicationId=Wise, program=WiseFlow,</span>
+<span class="go">runid=f4e0e52a-e391-11e4-a467-3ee74a48f4aa</span>
+<span class="go">2015-04-15 10:07:54,709 - DEBUG [FlowletRuntimeService</span>
+<span class="go">STARTING:c.c.c.i.a.r.AbstractProgramController@230] - Program started: WiseFlow:parser</span>
+<span class="go">f4e0e52a-e391-11e4-a467-3ee74a48f4aa</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Program Lifecycle</p>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Start the Wise application workflow to process ingested data</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Start the job using <strong>Oozie</strong></li>
+<li><code class="docutils literal"><span class="pre">oozie</span> <span class="pre">job</span> <span class="pre">-start</span> <span class="pre">&lt;arguments&gt;</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral35_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral35 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral35 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral35 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral35 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral35 .example-tab-" + tab).click(change_tabbedparsedliteral35_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral35" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">start workflow Wise.WiseWorkflow</span></span>
+
+<span class="go">Successfully started workflow &#39;WiseWorkflow&#39; of application &#39;Wise&#39;</span>
+<span class="go">with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Check the status of the workflow</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Get the workflow status from <strong>Oozie</strong></li>
+<li><code class="docutils literal"><span class="pre">oozie</span> <span class="pre">job</span> <span class="pre">-info</span> <span class="pre">&lt;jobid&gt;</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral36_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral36 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral36 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral36 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral36 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral36 .example-tab-" + tab).click(change_tabbedparsedliteral36_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral36" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">get workflow status Wise.WiseWorkflow</span></span>
+
+<span class="go">RUNNING</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Start the WiseService that will be used to retrieve results</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Set classpath in environment variable</li>
+<li><code class="docutils literal"><span class="pre">CLASSPATH=/my/classpath</span></code></li>
+<li>Run the command to start the yarn application</li>
+<li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">jar</span> <span class="pre">/path/to/myprogram.jar</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral37_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral37 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral37 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral37 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral37 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral37 .example-tab-" + tab).click(change_tabbedparsedliteral37_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral37" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">start service Wise.WiseService</span></span>
+
+<span class="go">Successfully started service &#39;WiseService&#39; of application &#39;Wise&#39;</span>
+<span class="go">with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Check the status of the service</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Get the application ID</li>
+<li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">application</span> <span class="pre">-list</span> <span class="pre">|</span> <span class="pre">grep</span> <span class="pre">&quot;Wise.WiseService&quot;</span></code></li>
+<li>Get the status</li>
+<li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">application</span> <span class="pre">-status</span> <span class="pre">&lt;APP</span> <span class="pre">ID&gt;</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral38_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral38 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral38 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral38 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral38 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral38 .example-tab-" + tab).click(change_tabbedparsedliteral38_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral38" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">get service status Wise.WiseService</span></span>
+
+<span class="go">RUNNING</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Serve the processed data in real time</p>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Discover the WiseService's available endpoints for retrieving results</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Navigate to the <strong>Resource Manager UI</strong></li>
+<li>Find the <em>Wise.WiseService</em> on UI</li>
+<li>Click to the see application logs</li>
+<li>Find all the node managers for the application containers</li>
+<li>Navigate to all the containers in separate tabs</li>
+<li>Click on container logs</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral39_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral39 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral39 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral39 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral39 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral39 .example-tab-" + tab).click(change_tabbedparsedliteral39_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral39" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">get endpoints service Wise.WiseService</span></span>
+
+<span class="go">+=========================+</span>
+<span class="go">| method | path           |</span>
+<span class="go">+=========================+</span>
+<span class="go">| GET    | /ip/{ip}/count |</span>
+<span class="go">| POST   | /ip/{ip}/count |</span>
+<span class="go">+=========================+</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Retrieve the count of a particular IP address (<code class="docutils literal"><span class="pre">69.181.160.120</span></code>)</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Discover the host and port where the service is running on by looking at the host
+and port in the <strong>YARN</strong> logs or by writing a discovery client that is co-ordinated using <strong>ZooKeeper</strong></li>
+<li>Run <code class="docutils literal"><span class="pre">curl</span> <span class="pre">http://hostname:port/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/69.181.160.120/count</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral40_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral40 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral40 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral40 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral40 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral40 .example-tab-" + tab).click(change_tabbedparsedliteral40_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral40" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">call service Wise.WiseService GET /ip/69.181.160.120/count</span></span>
+
+<span class="go">&lt; 200 OK</span>
+<span class="go">&lt; Content-Length: 5</span>
+<span class="go">&lt; Connection: keep-alive</span>
+<span class="go">&lt; Content-Type: application/json</span>
+<span class="go">20097</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">List the dataset instances</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Run a command in <strong>HBase shell</strong></li>
+<li><code class="docutils literal"><span class="pre">hbase</span> <span class="pre">shell&gt;</span> <span class="pre">list</span> <span class="pre">&quot;cdap.user.*&quot;</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><ul class="first last simple">
+<li>The listing returned will depend on whether you have run all of the previous examples</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">&nbsp;</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral41_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral41 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral41 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral41 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral41 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral41 .example-tab-" + tab).click(change_tabbedparsedliteral41_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral41" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">list dataset instances</span></span>
+
+<span class="go">+================================================================================+</span>
+<span class="go">| name                     | type                                                |</span>
+<span class="go">+================================================================================+</span>
+<span class="go">| pageViewStore            | co.cask.cdap.apps.wise.PageViewStore                |</span>
+<span class="go">| bounceCountStore         | co.cask.cdap.apps.wise.BounceCountStore             |</span>
+<span class="go">| logEventStream.converted | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet |</span>
+<span class="go">+================================================================================+</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">View bounce count results</p>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Retrieve the first five pages with bounce counts and their statistics</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Run a command in the <strong>Hive CLI</strong></li>
+<li><code class="docutils literal"><span class="pre">&quot;SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">dataset_bouncecountstore</span> <span class="pre">LIMIT</span> <span class="pre">5&quot;</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral42_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral42 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral42 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral42 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral42 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral42 .example-tab-" + tab).click(change_tabbedparsedliteral42_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral42" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">execute &#39;SELECT * FROM dataset_bouncecountstore LIMIT 5&#39;</span></span>
+
+<span class="go">+===============================================================================================+</span>
+<span class="go">| dataset_bouncecountstore.uri: STRING   | dataset_bouncecountstore  | dataset_bouncecountstore |</span>
+<span class="go">|                                        | .totalvisits: BIGINT      | .bounces: BIGINT         |</span>
+<span class="go">+===============================================================================================+</span>
+<span class="go">| /CDAP-DUT-50/index.php                 | 2                         | 2                        |</span>
+<span class="go">|-----------------------------------------------------------------------------------------------|</span>
+<span class="go">| /ajax/planStatusHistoryNeighbouringSum | 2                         | 2                        |</span>
+<span class="go">| maries.action?planKey=CDAP-DUT&amp;buildNu |                           |                          |</span>
+<span class="go">| mber=50&amp;_=1423398146659                |                           |                          |</span>
+<span class="go">|-----------------------------------------------------------------------------------------------|</span>
+<span class="go">| /ajax/planStatusHistoryNeighbouringSum | 2                         | 0                        |</span>
+<span class="go">| maries.action?planKey=COOP-DBT&amp;buildNu |                           |                          |</span>
+<span class="go">| mber=284&amp;_=1423341312519               |                           |                          |</span>
+<span class="go">|-----------------------------------------------------------------------------------------------|</span>
+<span class="go">| /ajax/planStatusHistoryNeighbouringSum | 2                         | 0                        |</span>
+<span class="go">| maries.action?planKey=COOP-DBT&amp;buildNu |                           |                          |</span>
+<span class="go">| mber=284&amp;_=1423341312521               |                           |                          |</span>
+<span class="go">|-----------------------------------------------------------------------------------------------|</span>
+<span class="go">| /ajax/planStatusHistoryNeighbouringSum | 2                         | 0                        |</span>
+<span class="go">| maries.action?planKey=COOP-DBT&amp;buildNu |                           |                          |</span>
+<span class="go">| mber=284&amp;_=1423341312522               |                           |                          |</span>
+<span class="go">+===============================================================================================+</span>
+<span class="go">Fetched 5 rows</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Stop Application and Delete From Server</p>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Stop the WiseService</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Find the <strong>YARN</strong> application ID from the command</li>
+<li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">application</span> <span class="pre">-list</span> <span class="pre">|</span> <span class="pre">grep</span> <span class="pre">&quot;Wise.WiseService&quot;</span></code></li>
+<li>Stop the application by running the command</li>
+<li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">application</span> <span class="pre">-kill</span> <span class="pre">&lt;application</span> <span class="pre">ID&gt;</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral43_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral43 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral43 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral43 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral43 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral43 .example-tab-" + tab).click(change_tabbedparsedliteral43_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral43" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">stop service Wise.WiseService</span></span>
+
+<span class="go">Successfully stopped service &#39;WiseService&#39; of application &#39;Wise&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Stop the Wise flow</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Find the <strong>YARN</strong> application ID from the command</li>
+<li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">application</span> <span class="pre">-list</span> <span class="pre">|</span> <span class="pre">grep</span> <span class="pre">&quot;Wise.WiseFlow&quot;</span></code></li>
+<li>Stop the application by running the command</li>
+<li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">application</span> <span class="pre">-kill</span> <span class="pre">&lt;application</span> <span class="pre">ID&gt;</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral44_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral44 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral44 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral44 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral44 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral44 .example-tab-" + tab).click(change_tabbedparsedliteral44_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral44" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">stop flow Wise.WiseFlow</span></span>
+
+<span class="go">Successfully stopped flow &#39;WiseFlow&#39; of application &#39;Wise&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="80%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Delete the application from the Server</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Without CDAP</th>
+<td><ul class="first last simple">
+<li>Delete the workflow from <strong>Oozie</strong></li>
+<li>Remove the service jars and flow jars</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Using CDAP</th>
+<td><script type="text/javascript">
+
+function change_tabbedparsedliteral45_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral45 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral45 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral45 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral45 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral45 .example-tab-" + tab).click(change_tabbedparsedliteral45_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral45" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="first last highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">delete app Wise</span></span>
+
+<span class="go">Successfully deleted application &#39;Wise&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="summary">
+<h2><a class="headerlink" href="#summary" title="Perma-link to this heading">🔗</a>Summary</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Without CDAP</th>
+<th class="head">With CDAP</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><ul class="first last simple">
+<li>Bring in different open source technologies, each with different design principles</li>
+<li>Familiarize and learn how to operate the different technologies</li>
+<li>Design specific architectures to wire in different components</li>
+<li>Revisit everything whenever the technologies change</li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li>Learn a single framework that works with multiple technologies</li>
+<li>Abstraction of data in the Hadoop environment through logical representations of underlying data</li>
+<li>Portability of applications through decoupling underlying infrastructures</li>
+<li>Services and tools that enable faster application development</li>
+<li>Higher degrees of operational control in production through enterprise best practices</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><b><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></b></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">Introduction to CDAP:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#simple-access-to-powerful-technology">Simple Access to Powerful Technology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-ingestion">Data Ingestion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-exploration">Data Exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-exploration-attaching-a-schema">Data Exploration: Attaching a Schema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-data-exploration">Advanced Data Exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#transforming-your-data">Transforming Your Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#building-real-world-applications">Building Real World Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#summary">Summary</a></li>
+</ul>
+</li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

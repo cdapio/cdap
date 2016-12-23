@@ -1,0 +1,603 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Monitor HTTP RESTful API &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/http-restful-api/monitor.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Namespace HTTP RESTful API" href="namespace.html" />
+    <link rel="prev" title="Metrics HTTP RESTful API" href="metrics.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="namespace.html" title="Namespace HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="metrics.html" title="Metrics HTTP RESTful API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Reference Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="monitor-http-restful-api">
+<span id="http-restful-api-monitor"></span><h1><a class="headerlink" href="#monitor-http-restful-api" title="Perma-link to this heading">🔗</a>Monitor HTTP RESTful API</h1>
+<p>Use the CDAP Monitor HTTP RESTful API to examine the CDAP system services used internally by CDAP.
+Additional details on monitoring can be found in the <a class="reference external" href="../source/../../admin-manual/operations/logging.html#logging-monitoring" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Administration Manual: Logging
+and Monitoring</span></a>.</p>
+<p>All methods or endpoints described in this API have a base URL (typically
+<code class="docutils literal"><span class="pre">http://&lt;host&gt;:10000</span></code> or <code class="docutils literal"><span class="pre">https://&lt;host&gt;:10443</span></code>) that precedes the resource
+identifier, as described in the <a class="reference internal" href="introduction.html#http-restful-api-conventions-base-url"><span>RESTful API Conventions</span></a>.
+These methods return a status code, as listed in the <a class="reference internal" href="introduction.html#http-restful-api-status-codes"><span>RESTful API  Status Codes</span></a>.</p>
+<div class="section" id="listing-all-system-services-and-their-details">
+<h2><a class="headerlink" href="#listing-all-system-services-and-their-details" title="Perma-link to this heading">🔗</a>Listing all System Services and their Details</h2>
+<p>For the detailed information of all available CDAP system services, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/system/services</span>
+</pre></div>
+</div>
+<p>The response body will contain a JSON-formatted list of the existing system services:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">    {</span>
+<span class="go">        &quot;name&quot;: &quot;appfabric&quot;,</span>
+<span class="go">        &quot;description&quot;: &quot;Service for managing application lifecycle.&quot;,</span>
+<span class="go">        &quot;status&quot;: &quot;OK&quot;,</span>
+<span class="go">        &quot;logs&quot;: &quot;OK&quot;,</span>
+<span class="go">        &quot;min&quot;: 1,</span>
+<span class="go">        &quot;max&quot;: 1,</span>
+<span class="go">        &quot;requested&quot;: 1,</span>
+<span class="go">        &quot;provisioned&quot;: 1</span>
+<span class="go">    }</span>
+<span class="go">    ...</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="logging.html#http-restful-api-logging-downloading-system-logs"><span>downloading System Logs</span></a> for
+information and an example of using these system services.</p>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The event successfully called the method, and the body contains the results</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="checking-the-status-of-all-system-services">
+<h2><a class="headerlink" href="#checking-the-status-of-all-system-services" title="Perma-link to this heading">🔗</a>Checking the Status of all System Services</h2>
+<p>To check the status of all the CDAP system services, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/system/services/status</span>
+</pre></div>
+</div>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The event successfully called the method, and the body contains the results</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="checking-the-status-of-a-system-service">
+<h2><a class="headerlink" href="#checking-the-status-of-a-system-service" title="Perma-link to this heading">🔗</a>Checking the Status of a System Service</h2>
+<p>To check the status of a specific CDAP system service, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/system/services/&lt;service-id&gt;/status</span>
+</pre></div>
+</div>
+<p>The status of these CDAP system services can be checked:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Service</th>
+<th class="head">Service ID</th>
+<th class="head">Description of the service</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">Metrics</span></code></td>
+<td><code class="docutils literal"><span class="pre">metrics</span></code></td>
+<td>Service that handles metrics related HTTP requests</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">Transaction</span></code></td>
+<td><code class="docutils literal"><span class="pre">transaction</span></code></td>
+<td>Service that handles transactions</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">Streams</span></code></td>
+<td><code class="docutils literal"><span class="pre">streams</span></code></td>
+<td>Service that handles stream management</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">App</span> <span class="pre">Fabric</span></code></td>
+<td><code class="docutils literal"><span class="pre">appfabric</span></code></td>
+<td>Service that handles application fabric requests</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">Log</span> <span class="pre">Saver</span></code></td>
+<td><code class="docutils literal"><span class="pre">log.saver</span></code></td>
+<td>Service that aggregates all system and application logs</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">Metrics</span> <span class="pre">Processor</span></code></td>
+<td><code class="docutils literal"><span class="pre">metrics.processor</span></code></td>
+<td>Service that aggregates all system and application metrics</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">Dataset</span> <span class="pre">Executor</span></code></td>
+<td><code class="docutils literal"><span class="pre">dataset.executor</span></code></td>
+<td>Service that handles all data-related HTTP requests</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">Explore</span> <span class="pre">Service</span></code></td>
+<td><code class="docutils literal"><span class="pre">explore.service</span></code></td>
+<td>Service that handles all HTTP requests for ad-hoc data exploration</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> The service status checks are more useful when CDAP is running in a distributed cluster mode.</p>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The service is up and running</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>The service is either not running or not found</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/v3/system/services/metrics/status</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Returns the status of the metrics service</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="container-information-of-a-system-service">
+<h2><a class="headerlink" href="#container-information-of-a-system-service" title="Perma-link to this heading">🔗</a>Container Information of a System Service</h2>
+<p>If you are trying to debug a CDAP system service, you can retrieve container info for a system service with:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/system/services/&lt;service-id&gt;/live-info</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">service-id</span></code></td>
+<td>Name (ID) of the system service</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> This returns useful information only for Distributed CDAP installations.</p>
+</div>
+<div class="section" id="restarting-system-service-instances">
+<h2><a class="headerlink" href="#restarting-system-service-instances" title="Perma-link to this heading">🔗</a>Restarting System Service Instances</h2>
+<p>To restart all instances of a CDAP system service, you can issue an HTTP POST request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/system/services/&lt;service-id&gt;/restart</span>
+</pre></div>
+</div>
+<p>You can restart a particular instance of a system service in CDAP, using its instance id, by issuing
+an HTTP POST request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/system/services/&lt;service-id&gt;/instances/&lt;instance-id&gt;/restart</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">service-id</span></code></td>
+<td>Name (ID) of the system service whose instances are to be restarted</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">instance-id</span></code></td>
+<td>Specific instance of a service that needs to be restarted;
+<code class="docutils literal"><span class="pre">instance-id</span></code> runs from 0 to (the number of instances-per-service -1)</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">403</span> <span class="pre">Bad</span> <span class="pre">Request</span></code></td>
+<td>The service is unavailable because it was not enabled</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Service</span> <span class="pre">not</span> <span class="pre">found</span></code></td>
+<td>The service name is not valid</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">500</span> <span class="pre">Internal</span> <span class="pre">error</span></code></td>
+<td>Internal error encountered when processing the request</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">503</span> <span class="pre">Service</span> <span class="pre">Unavailable</span></code></td>
+<td>The service is unavailable. For example, it may not yet have been started</td>
+</tr>
+</tbody>
+</table>
+<p>To retrieve details of the last restart attempt made for a particular service, issue an HTTP GET request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/system/services/&lt;service-id&gt;/latest-restart</span>
+</pre></div>
+</div>
+<p>The response body will contain a JSON-formatted status of the last restart attempt for that service:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">    &quot;instanceIds&quot;:[0],</span>
+<span class="go">    &quot;serviceName&quot;:&quot;dataset.executor&quot;,</span>
+<span class="go">    &quot;startTimeInMs&quot;:1437070039984,</span>
+<span class="go">    &quot;endTimeInMs&quot;:1437070039992,</span>
+<span class="go">    &quot;status&quot;:&quot;SUCCESS&quot;}</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">service-id</span></code></td>
+<td>Name (ID) of the system service for which details of last restart are to be retrieved</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Service</span> <span class="pre">not</span> <span class="pre">found</span></code></td>
+<td>The service name is not valid</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">500</span> <span class="pre">Internal</span> <span class="pre">error</span></code></td>
+<td>Internal error encountered when processing the request</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="scaling-system-services">
+<span id="http-restful-api-monitor-scaling-system-services"></span><h2><a class="headerlink" href="#scaling-system-services" title="Perma-link to this heading">🔗</a>Scaling System Services</h2>
+<p>In distributed CDAP installations, the number of instances for CDAP system services
+can be queried and changed by using these commands:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/system/services/&lt;service-id&gt;/instances</span>
+<span class="go">PUT /v3/system/services/&lt;service-id&gt;/instances</span>
+</pre></div>
+</div>
+<p>with the arguments as a JSON string in the body:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{ &quot;instances&quot; : &lt;quantity&gt; }</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">service-id</span></code></td>
+<td>Name (ID) of the system service</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">quantity</span></code></td>
+<td>Number of instances to be used</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> In standalone CDAP, trying to set the instances of system services will return a Status Code <code class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></code>.</p>
+<p class="rubric">Examples</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/v3/system/services/metrics/instances</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Determine the number of instances being used for the metrics HTTP service</td>
+</tr>
+<tr class="row-odd"><th class="stub">&nbsp;</th>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><th class="stub">HTTP Method</th>
+<td><p class="first"><code class="docutils literal"><span class="pre">PUT</span> <span class="pre">/v3/system/services/metrics/instances</span></code>
+<code class="docutils literal"><span class="pre">instances</span></code></p>
+<p>with the arguments as a JSON string in the body:</p>
+<div class="last highlight-console"><div class="highlight"><pre><span class="go">{ &quot;instances&quot; : 2 }</span>
+</pre></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Sets the number of instances of the metrics HTTP service to 2</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html">Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html">Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Monitor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#listing-all-system-services-and-their-details">Listing all System Services and their Details</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#checking-the-status-of-all-system-services">Checking the Status of all System Services</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#checking-the-status-of-a-system-service">Checking the Status of a System Service</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#container-information-of-a-system-service">Container Information of a System Service</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#restarting-system-service-instances">Restarting System Service Instances</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scaling-system-services">Scaling System Services</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security.html">Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html">Transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Metrics HTTP RESTful API" href="metrics.html" />Metrics HTTP RESTful API</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Namespace HTTP RESTful API" href="namespace.html" />Namespace HTTP RESTful API</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,371 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Excel &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/hydrator-manual/plugins/sources/excel-batchsource.html">
+
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../../index.html" />
+    <link rel="up" title="Source Plugins" href="index.html" />
+    <link rel="next" title="File" href="file-batchsource.html" />
+    <link rel="prev" title="Elasticsearch" href="elasticsearch-batchsource.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="file-batchsource.html" title="File"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="elasticsearch-batchsource.html" title="Elasticsearch"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../../table-of-contents.html">Cask Hydrator</a> &raquo;</li>
+          <li><a href="../index.html" >Plugin Reference</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Source Plugins</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="excel">
+<span id="excel"></span><h1><a class="headerlink" href="#excel" title="Perma-link to this heading">🔗</a>Excel</h1>
+<div class="section" id="description">
+<span id="description"></span><h2><a class="headerlink" href="#description" title="Perma-link to this heading">🔗</a>Description</h2>
+<p>The Excel plugin provides user the ability to read data from one or more Excel file(s).</p>
+<p>The plugin supports following types of Excel file(s):
+Microsoft Excel 97(-2007) file format
+Microsoft Excel XML (2007+) file format</p>
+</div>
+<div class="section" id="use-case">
+<span id="use-case"></span><h2><a class="headerlink" href="#use-case" title="Perma-link to this heading">🔗</a>Use Case</h2>
+<p>The Excel plugin is used to read excel file(s) and converts the rows to structured records based
+on the column names, column-label mapping and column-type mapping provided by the user. Also keeps track
+of all the processed excel files in a memory table provided by the user. So, that if user has the option
+not to reprocess a particular file.</p>
+</div>
+<div class="section" id="properties">
+<span id="properties"></span><h2><a class="headerlink" href="#properties" title="Perma-link to this heading">🔗</a>Properties</h2>
+<p><strong>filePath:</strong> Path of the excel file(s) to be read. (Macro-enabled) Supports below formats:</p>
+<pre class="literal-block">
+  Microsoft Excel 97(-2007) file format
+  Microsoft Excel XML (2007+) file format
+</pre>
+<p><strong>filePattern:</strong> Regex pattern to select specific excel file(s) from the path provided
+in <strong>filePath</strong> input. (Macro-enabled)</p>
+<p><strong>memoryTableName:</strong> KeyValue table name to keep the track of processed files. This can be
+a new table or existing one. (Macro-enabled)</p>
+<p><strong>reprocess:</strong> Specify whether the files mentioned in the memory table should be reprocessed or not.</p>
+<p><strong>sheet:</strong> Specifies whether sheet has to be processed by sheet name or sheet no.</p>
+<p><strong>sheetValue:</strong> Specifies the value corresponding to 'sheet' input. Value can be either actual
+sheet name or sheet no.
+for example: 'Sheet1' or '1' in case user selects 'Sheet Name' or 'Sheet Number' as 'sheet'
+input respectively. (Macro-enabled)</p>
+<p><strong>columnList:</strong> Specify the excel column names which needs to be extracted from the excel sheet.
+Column name has to be same as excel column name; for example: A, B, etc.</p>
+<p><strong>columnMapping:</strong> List of the excel column names to be renamed. The key specifies the name of the
+excel column to be renamed, with its corresponding value specifying the new name for that column.
+Column name has to be same as excel column name; for example: A, B, etc.</p>
+<p><strong>skipFirstRow:</strong> Specify whether the first row in the excel sheet needs to be processed or not.</p>
+<p><strong>terminateIfEmptyRow:</strong> Specify whether processing needs to be terminated in case an empty row is
+encountered while processing excel files.</p>
+<p><strong>rowsLimit:</strong> Maximum row limit for each sheet to be processed. If, the limit is not provided then
+all the rows in the sheet will be processed. (Macro-enabled)</p>
+<p><strong>outputSchema:</strong> Mapping of excel column names in the output schema to data types. Consists of
+a comma-separated list. This input is mandatory if no inputs for 'columnList' has been provided.
+Column name has to be same as excel column name; for example: A, B, etc.</p>
+<p>If type has not been provided for a column mentioned in <strong>columnList</strong> input, then output data type
+of that column will be <strong>string</strong>.</p>
+<p><strong>ifErrorRecord:</strong> Specifies the action to be take in case of an error. (Macro-enabled)</p>
+<p><strong>errorDatasetName:</strong> Table name to keep the error record encountered while processing the excel file(s). (Macro-enabled)</p>
+</div>
+<div class="section" id="example">
+<span id="example"></span><h2><a class="headerlink" href="#example" title="Perma-link to this heading">🔗</a>Example</h2>
+<p>This example reads all files with pattern <strong>.</strong>* from a hdfs path &quot;hdfs://&lt;namenode-hostname&gt;:9000/cdap&quot;  and parses it
+using the column list, column-label mapping and column-type mapping. It also keeps track of the processed
+file name in specified memory table. It will drop columns other than the one mentioned in <strong>columnList</strong> and
+generate structured records according to the inputs.</p>
+<p>The plugin JSON Representation will be:</p>
+<pre class="literal-block">
+{
+  &quot;name&quot;: &quot;Excel&quot;,
+  &quot;type&quot;: &quot;batchsource&quot;,
+  &quot;properties&quot;: {
+        &quot;filePath&quot;: &quot;hdfs://&lt;namenode-hostname&gt;:9000/cdap&quot;,
+        &quot;filePattern&quot;: &quot;.*&quot;,
+        &quot;memoryTableName&quot;: &quot;inventory-memory-table&quot;,
+        &quot;reprocess&quot;: &quot;false&quot;,
+        &quot;sheet&quot;: &quot;Sheet1&quot;,
+        &quot;sheetValue&quot;: &quot;-1&quot;,
+        &quot;columnList&quot;: &quot;A,B&quot;,
+        &quot;columnMapping&quot;: &quot;B:name,C:age&quot;
+        &quot;skipFirstRow&quot;: &quot;false&quot;,
+        &quot;terminateIfEmptyRow&quot;: &quot;false&quot;,
+        &quot;rowsLimit&quot;: &quot;&quot; ,
+        &quot;outputSchema&quot;: &quot;A:string&quot;,
+        &quot;ifErrorRecord&quot; : &quot;Ignore error and continue&quot;,
+        &quot;errorDatasetName&quot;: &quot;&quot;
+   }
+}
+</pre>
+<p>Suppose, the above <strong>filePath</strong> contains only one file with these input rows from <strong>Sheet1</strong>:</p>
+<pre class="literal-block">
++======================================+
+|    A      |     B      |     C       |
++======================================+
+|    1      |  &quot;John&quot;    |    23       |
+|    2      |  &quot;Alan&quot;    |    34       |
+|    3      |  &quot;Ashley&quot;  |    45       |
++======================================+
+</pre>
+<p>After, the processing has been done by the Excel plugin, the output will have these
+structure and contents, with the 'B' and 'C' column names being replaced by the 'name' and 'age'
+columns respectively:</p>
+<pre class="literal-block">
++======================================+
+|    A       |   name    |     age     |
++======================================+
+|   &quot;1&quot;      |  &quot;John&quot;   |    &quot;23&quot;     |
+|   &quot;2&quot;      |  &quot;Alan&quot;   |    &quot;34&quot;     |
+|   &quot;3&quot;      |  &quot;Ashley&quot; |    &quot;45&quot;     |
++======================================+
+</pre>
+<p>The memory table <strong>inventory-memory-table</strong> will contain:</p>
+<pre class="literal-block">
++===========================================================================+
+|    key                                                 |   value          |
++===========================================================================+
+| &quot;hdfs://&lt;namenode-hostname&gt;:9000/tmp/inventory.xlsx&quot;   | &quot;1322018752992l&quot; |
++===========================================================================+
+</pre>
+<hr class="docutils" />
+<ul class="simple">
+<li>Hydrator Plugin Type: batchsource</li>
+<li>Hydrator Version: 1.4.1</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../../table-of-contents.html">Cask Hydrator: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts-design.html"> Concepts and Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../studio.html"> Hydrator Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../creating-pipelines.html"> Creating Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../running-pipelines.html"> Running Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-management.html"> Plugin Management</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Plugin Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../actions/index.html"> Action Plugins</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"> Source Plugins</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="azureblobstore-batchsource.html">Microsoft Azure Blob Storage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cassandra-batchsource.html">Cassandra</a></li>
+<li class="toctree-l3"><a class="reference internal" href="database-batchsource.html">Database</a></li>
+<li class="toctree-l3"><a class="reference internal" href="elasticsearch-batchsource.html">Elasticsearch</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">Excel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file-batchsource.html">File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ftp-batchsource.html">FTP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hbase-batchsource.html">HBase</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hive-batchsource.html">Hive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kvtable-batchsource.html">KeyValueTable</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mongodb-batchsource.html">MongoDB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="s3-batchsource.html">Amazon S3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snapshotavro-batchsource.html">Snapshot Avro</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snapshotparquet-batchsource.html">Snapshot Parquet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="stream-batchsource.html">Stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="table-batchsource.html">Table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tpfsavro-batchsource.html">TimePartitionedFileSet Avro</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tpfsparquet-batchsource.html">TimePartitionedFileSet Parquet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xmlreader-batchsource.html">XML Reader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kafka-streamingsource.html">Kafka Streaming</a></li>
+<li class="toctree-l3"><a class="reference internal" href="twitter-streamingsource.html">Twitter Streaming</a></li>
+<li class="toctree-l3"><a class="reference internal" href="amazonsqs-realtimesource.html">Amazon SQS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="datagenerator-realtimesource.html">Data Generator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httppoller-realtimesource.html">HTTP Poller</a></li>
+<li class="toctree-l3"><a class="reference internal" href="jms-realtimesource.html">JMS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kafka-realtimesource.html">Kafka</a></li>
+<li class="toctree-l3"><a class="reference internal" href="twitter-realtimesource.html">Twitter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../transforms/index.html"> Transform Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../analytics/index.html"> Analytic Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sinks/index.html"> Sink Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../shared-plugins/index.html"> Shared Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../post-run-plugins/index.html"> Post-run Plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../developing-pipelines.html"> Developing Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developing-plugins/index.html"> Developing Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how-hydrator-works.html"> How Hydrator Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faqs.html"> FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html"> Glossary</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Elasticsearch" href="elasticsearch-batchsource.html" />Elasticsearch</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="File" href="file-batchsource.html" />File</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Security &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/admin-manual/security/index.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+        <link rel="stylesheet" href="../_static/hide-toc.css" type="text/css" />
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="next" title="Perimeter Security" href="perimeter-security.html" />
+    <link rel="prev" title="Upgrading CDAP using Packages" href="../upgrading/packages.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="perimeter-security.html" title="Perimeter Security"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="../upgrading/packages.html" title="Upgrading CDAP using Packages"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Administration Manual</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="security">
+<span id="security-index"></span><span id="configuration-security"></span><span id="admin-security"></span><h1><a class="headerlink" href="#security" title="Perma-link to this heading">🔗</a>Security</h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="perimeter-security.html">Perimeter Security</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="perimeter-security.html#enabling-perimeter-security">Enabling Perimeter Security</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="perimeter-security.html#enabling-perimeter-security-standalone-cdap">Enabling Perimeter Security (Standalone CDAP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="perimeter-security.html#enabling-perimeter-security-distributed-cdap">Enabling Perimeter Security (Distributed CDAP)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="perimeter-security.html#configuring-kerberos-required">Configuring Kerberos (required)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="perimeter-security.html#configuring-zookeeper-required">Configuring ZooKeeper (required)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="perimeter-security.html#running-servers-with-ssl">Running Servers with SSL</a></li>
+<li class="toctree-l4"><a class="reference internal" href="perimeter-security.html#default-ports">Default Ports</a></li>
+<li class="toctree-l4"><a class="reference internal" href="perimeter-security.html#configuring-ssl-for-the-authentication-server">Configuring SSL for the Authentication Server</a></li>
+<li class="toctree-l4"><a class="reference internal" href="perimeter-security.html#configuring-ssl-for-the-router">Configuring SSL for the Router</a></li>
+<li class="toctree-l4"><a class="reference internal" href="perimeter-security.html#configuring-ssl-for-the-cdap-ui">Configuring SSL for the CDAP UI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="perimeter-security.html#enabling-access-logging">Enabling Access Logging</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="perimeter-security.html#configuring-authentication-mechanisms">Configuring Authentication Mechanisms</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="perimeter-security.html#basic-authentication">Basic Authentication</a></li>
+<li class="toctree-l3"><a class="reference internal" href="perimeter-security.html#ldap-authentication">LDAP Authentication</a></li>
+<li class="toctree-l3"><a class="reference internal" href="perimeter-security.html#jaspi-authentication">JASPI Authentication</a></li>
+<li class="toctree-l3"><a class="reference internal" href="perimeter-security.html#custom-authentication">Custom Authentication</a></li>
+<li class="toctree-l3"><a class="reference internal" href="perimeter-security.html#configuring-exemptions-from-authentication">Configuring Exemptions from Authentication</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="perimeter-security.html#testing-perimeter-security">Testing Perimeter Security</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="authorization.html">Authorization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="authorization.html#enabling-authorization">Enabling Authorization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authorization.html#cdap-instances">CDAP Instances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authorization.html#authorization-policies">Authorization Policies</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#namespaces">Namespaces</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#artifacts">Artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#applications">Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#programs">Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#datasets">Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#dataset-modules">Dataset Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#dataset-types">Dataset Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#secure-keys">Secure Keys</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#streams">Streams</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="authorization.html#bootstrapping-authorization">Bootstrapping Authorization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authorization.html#authorization-policy-pushdown">Authorization Policy Pushdown</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="impersonation.html">Impersonation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="impersonation.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="impersonation.html#limitations">Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="impersonation.html#known-issues">Known Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="secure-storage.html">Secure Storage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="secure-storage.html#secure-storage-format">Secure Storage Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-storage.html#file-backed-secure-storage">File-backed Secure Storage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-storage.html#hadoop-key-management-server-backed-secure-storage">Hadoop Key Management Server-backed Secure Storage</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>Cask Data Application Platform (CDAP) supports securing clusters using various mechanisms such as
+<a class="reference internal" href="perimeter-security.html#admin-perimeter-security"><span>Perimeter Security</span></a>,
+<a class="reference internal" href="authorization.html#admin-authorization"><span>Authorization</span></a>,
+<a class="reference internal" href="impersonation.html#admin-impersonation"><span>Impersonation</span></a>, and
+<a class="reference internal" href="secure-storage.html#admin-secure-storage"><span>Secure Storage</span></a>.
+This section covers how to setup these security mechanisms on a secure CDAP instance.</p>
+<p>Additional security information, including client APIs, the authentication process,
+developing authorization extensions, and authorization policies is covered in the
+Developers’ Manual <a class="reference external" href="../source/../../developers-manual/security/index.html#security-index" title="(in Cask Data Application Platform v3.5.2)"><span>Security</span></a> section.</p>
+<p id="admin-security-summary-start">We recommend that in order for CDAP to be secure, CDAP security should always be used in conjunction with
+<a class="reference external" href="http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SecureMode.html">secure Hadoop clusters</a>.
+In cases where secure Hadoop is not or cannot be used, it is inherently insecure and any applications
+running on the cluster are effectively &quot;trusted”. Although there is still value in having perimeter security,
+authorization enforcement and secure storage in that situation, whenever possible a secure Hadoop
+cluster should be employed with CDAP security.</p>
+<p id="admin-security-summary-end">CDAP Security is configured in the files <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> and <code class="docutils literal"><span class="pre">cdap-security.xml</span></code>:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">cdap-site.xml</span></code> has non-sensitive information, such as the type of authentication, authorization and secure storage
+mechanisms, and their configuration.</li>
+<li><code class="docutils literal"><span class="pre">cdap-security.xml</span></code> is used to store sensitive information such as keystore passwords and
+SSL certificate keys. It should be owned and readable only by the CDAP user.</li>
+</ul>
+<p>These files are shown in <a class="reference internal" href="../appendices/cdap-site.html#appendix-cdap-site-xml"><span>Appendix: cdap-site.xml, cdap-default.xml</span></a> and <a class="reference internal" href="../appendices/cdap-security.html#appendix-cdap-security-xml"><span>Appendix: cdap-security.xml</span></a>.</p>
+<p>File paths shown in this section are either absolute paths or, in the case of <a class="reference external" href="../source/../../developers-manual/getting-started/standalone/index.html#standalone-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">standalone CDAP</span></a>, can be relative to the CDAP SDK installation directory.</p>
+<ul class="simple">
+<li><a class="reference internal" href="perimeter-security.html#admin-perimeter-security"><span>Perimeter Security</span></a></li>
+</ul>
+<ul class="simple">
+<li><a class="reference internal" href="authorization.html#admin-authorization"><span>Authorization</span></a></li>
+</ul>
+<ul class="simple">
+<li><a class="reference internal" href="impersonation.html#admin-impersonation"><span>Impersonation</span></a></li>
+</ul>
+<ul class="simple">
+<li><a class="reference internal" href="secure-storage.html#admin-secure-storage"><span>Secure Storage</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdap-components.html"> CDAP Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deployment-architectures.html"> Deployment Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hadoop-compatibility.html"> Hadoop Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system-requirements.html"> System Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html"> Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../verification.html"> Verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../upgrading/index.html"> Upgrading</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Security</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="perimeter-security.html">Perimeter Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authorization.html">Authorization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="impersonation.html">Impersonation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-storage.html">Secure Storage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendices/index.html"> Appendices</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Upgrading CDAP using Packages" href="../upgrading/packages.html" />Upgrading CDAP using Packages</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Perimeter Security" href="perimeter-security.html" />Perimeter Security</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

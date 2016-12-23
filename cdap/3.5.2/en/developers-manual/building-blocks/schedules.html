@@ -1,0 +1,380 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Schedules &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/building-blocks/schedules.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Secure Keys" href="secure-keys.html" />
+    <link rel="prev" title="Plugins" href="plugins.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="secure-keys.html" title="Secure Keys"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="plugins.html" title="Plugins"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="schedules">
+<span id="id1"></span><h1><a class="headerlink" href="#schedules" title="Perma-link to this heading">🔗</a>Schedules</h1>
+<p><em>Schedules</em> are used to execute <a class="reference internal" href="workflows.html#workflows"><span>workflows</span></a> on a recurring basis. You
+can add a schedule to a workflow using the <code class="docutils literal"><span class="pre">scheduleWorkflow</span></code> method of the
+<a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(co.cask.cdap.api.schedule.Schedule,%20java.lang.String)">AbstractApplication class</a></p>
+<p>The <a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.html">Schedules</a>
+class contains a builder to create schedules based on time, or schedules based on data availability.</p>
+<p>The name of a schedule must be unique in the application that it is in; the same name can
+be used in different applications.</p>
+<p>Schedules can be controlled by the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP CLI</span></a> and the <a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Lifecycle HTTP
+RESTful API</span></a>. The <a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle-status" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">status of a schedule</span></a> can be retrieved, and individual schedules
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle-schedules-suspend-resume" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">resumed or suspended</span></a>.</p>
+<p>When a schedule is initially deployed, it is in a <em>suspended</em> state; a <em>resume</em> command needs to be
+issued to change it to <em>scheduled</em> before it will begin.</p>
+<div class="section" id="time-schedules">
+<h2><a class="headerlink" href="#time-schedules" title="Perma-link to this heading">🔗</a>Time Schedules</h2>
+<p><strong>Time schedules</strong> will execute based on a
+<a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.Builder.html#createTimeSchedule(java.lang.String)">crontab schedule</a>.
+You can add such a schedule to a workflow:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">scheduleWorkflow</span><span class="o">(</span><span class="n">Schedules</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="s">&quot;FiveHourSchedule&quot;</span><span class="o">)</span>
+                   <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Schedule running every 5 hours&quot;</span><span class="o">)</span>
+                   <span class="o">.</span><span class="na">createTimeSchedule</span><span class="o">(</span><span class="s">&quot;0 */5 * * *&quot;</span><span class="o">),</span>
+                 <span class="s">&quot;MyWorkflow&quot;</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">MyWorkflow</span></code> will then be executed every 5 hours.</p>
+<p>Optionally, you can specify the properties for the schedule:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">...</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">scheduleProperties</span> <span class="o">=</span> <span class="n">Maps</span><span class="o">.</span><span class="na">newHashMap</span><span class="o">();</span>
+<span class="n">scheduleProperties</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;myProperty&quot;</span><span class="o">,</span> <span class="s">&quot;10&quot;</span><span class="o">);</span>
+<span class="n">scheduleProperties</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;anotherProperty&quot;</span><span class="o">,</span> <span class="s">&quot;anotherValue&quot;</span><span class="o">);</span>
+
+<span class="n">scheduleWorkflow</span><span class="o">(</span><span class="n">Schedules</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="s">&quot;FiveHourSchedule&quot;</span><span class="o">)</span>
+                   <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Schedule running every 5 hours&quot;</span><span class="o">)</span>
+                   <span class="o">.</span><span class="na">createTimeSchedule</span><span class="o">(</span><span class="s">&quot;0 */5 * * *&quot;</span><span class="o">),</span>
+                 <span class="s">&quot;MyWorkflow&quot;</span><span class="o">,</span> <span class="n">scheduleProperties</span><span class="o">);</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>Every time the <code class="docutils literal"><span class="pre">FiveHourSchedule</span></code> triggers, it passes the <code class="docutils literal"><span class="pre">scheduleProperties</span></code> as runtime arguments to the <code class="docutils literal"><span class="pre">MyWorkflow</span></code>.</p>
+</div>
+<div class="section" id="stream-size-schedules">
+<span id="id2"></span><h2><a class="headerlink" href="#stream-size-schedules" title="Perma-link to this heading">🔗</a>Stream-size Schedules</h2>
+<p class="rubric">Definition and Usage</p>
+<p><strong>Stream-size schedules</strong> will execute based on data ingested in <a class="reference internal" href="streams.html#streams"><span>streams</span></a>, using the
+<a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.Builder.html#createDataSchedule(co.cask.cdap.api.schedule.Schedules.Source,%20java.lang.String,%20int)">createDataSchedule API</a>.
+Here is an example to add a stream-size schedule based on a stream named <code class="docutils literal"><span class="pre">purchaseStream</span></code> that triggers
+every time the stream has ingested 1MB of data:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">scheduleWorkflow</span><span class="o">(</span><span class="n">Schedules</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="s">&quot;1MBStreamSchedule&quot;</span><span class="o">)</span>
+                   <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Schedule triggered every 1MB of ingested data&quot;</span><span class="o">)</span>
+                   <span class="o">.</span><span class="na">createDataSchedule</span><span class="o">(</span><span class="n">Schedules</span><span class="o">.</span><span class="na">Source</span><span class="o">.</span><span class="na">STREAM</span><span class="o">,</span> <span class="s">&quot;purchaseStream&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">),</span>
+                 <span class="s">&quot;MyWorkflow&quot;</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">purchaseStream</span></code> will either have to already exist in CDAP when deploying your application, or you will have to
+<a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#addStream(co.cask.cdap.api.data.stream.Stream)">add it</a>
+when configuring your application. If you try to create a stream-size schedule on a stream which does not exist,
+your application will fail to deploy.</p>
+<p>You can optionally specify the properties for the schedule:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">...</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">scheduleProperties</span> <span class="o">=</span> <span class="n">Maps</span><span class="o">.</span><span class="na">newHashMap</span><span class="o">();</span>
+<span class="n">scheduleProperties</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;myProperty&quot;</span><span class="o">,</span> <span class="s">&quot;10&quot;</span><span class="o">);</span>
+<span class="n">scheduleProperties</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;anotherProperty&quot;</span><span class="o">,</span> <span class="s">&quot;anotherValue&quot;</span><span class="o">);</span>
+
+<span class="n">scheduleWorkflow</span><span class="o">(</span><span class="n">Schedules</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="s">&quot;1MBStreamSchedule&quot;</span><span class="o">)</span>
+                   <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Schedule triggered every 1MB of ingested data&quot;</span><span class="o">)</span>
+                   <span class="o">.</span><span class="na">createDataSchedule</span><span class="o">(</span><span class="n">Schedules</span><span class="o">.</span><span class="na">Source</span><span class="o">.</span><span class="na">STREAM</span><span class="o">,</span> <span class="s">&quot;purchaseStream&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">),</span>
+                 <span class="s">&quot;MyWorkflow&quot;</span><span class="o">,</span> <span class="n">scheduleProperties</span><span class="o">);</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>Every time the <code class="docutils literal"><span class="pre">1MBStreamSchedule</span></code> triggers, it passes the <code class="docutils literal"><span class="pre">scheduleProperties</span></code> as runtime arguments to the <code class="docutils literal"><span class="pre">MyWorkflow</span></code>.</p>
+<p>The stream-size schedule uses two sources of information to know how much data has been ingested by a Stream.
+One is <a class="reference internal" href="streams.html#streams-notifications"><span>stream size notifications</span></a>; the other is the aggregated metric that
+records the total size of events ingested by a stream.
+Notifications are only used as an indication that data is available. Stream-size schedules always confirm the
+information by querying the metric system, which is the canonical source of information.</p>
+<p class="rubric">Stream-size Schedules Lifecycle</p>
+<p>A stream-size schedule will execute a workflow every time the stream it references ingests an increment of data,
+also defined in the
+<a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.Builder.html#createDataSchedule(co.cask.cdap.api.schedule.Schedules.Source,%20java.lang.String,%20int)">schedule</a>.</p>
+<p>When a stream-size schedule is first created, during the deployment of an application, it will wait for the
+increment of data that it defined, starting from the current size of the stream as given by the Metric system.</p>
+<p>These actions can be performed on a schedule:</p>
+<ul class="simple">
+<li><em>Suspend</em>: Suspending a schedule will prevent the workflow from being executed again, in the event that the Stream
+ingests enough data. This action will not suspend any current execution of the workflow, if the schedule
+triggered it recently. Suspending an already-suspended schedule has no effect.</li>
+<li><em>Resume</em>: This action will put the schedule back into an active state, after a <em>Suspend</em> action. Resuming an
+already-active schedule has no effect. If—while the schedule was suspended, and since the last time the
+schedule was triggered—the Stream has ingested more than the increment of data defined by the schedule,
+the workflow will be immediately executed upon resume.</li>
+<li><em>Update</em>: this action is triggered when an application which contains a stream-size schedule is redeployed in CDAP.
+If the schedule name has not been modified and one of its parameters has changed—such as the <cite>dataTrigger</cite>—the
+<em>update</em> action will be called. If the <cite>dataTrigger</cite> is updated, and the Stream has ingested more data than defined
+by the <cite>dataTrigger</cite> since the last time the schedule was triggered, then the workflow will be executed upon
+update.</li>
+</ul>
+<p class="rubric">Special Runtime Arguments</p>
+<p>When a stream-size schedule executes a workflow, it passes in these runtime arguments:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">logicalStartTime</span></code>: the timestamp, in milliseconds, at which the schedule received the information that the Stream
+had ingested enough data for the workflow to be executed;</li>
+<li><code class="docutils literal"><span class="pre">runDataSize</span></code>: the size of the Stream, in bytes, seen by the schedule when it triggered the current execution of
+the workflow;</li>
+<li><code class="docutils literal"><span class="pre">lastScheduledRunLogicalStartTime</span></code>: the <code class="docutils literal"><span class="pre">logicalStartTime</span></code> of the previous execution of the workflow by this schedule.
+This argument is not present if the workflow has never been executed by the schedule;</li>
+<li><code class="docutils literal"><span class="pre">lastScheduledRunDataSize</span></code>: the <code class="docutils literal"><span class="pre">runDataSize</span></code> of the previous execution of the workflow by this schedule.
+This argument is not present if the workflow has never been executed by the schedule;</li>
+<li><code class="docutils literal"><span class="pre">runBaseCountTime</span></code>: the timestamp, in milliseconds, at which the schedule started to wait for an increment of data
+being ingested by the Stream, before executing the workflow. Most of the time, this argument and
+<code class="docutils literal"><span class="pre">lastScheduledRunLogicalStartTime</span></code> will be identical, either ing the first execution of the workflow by the
+schedule, or if the counting logic in the schedule is disrupted—for example, by the deletion of Stream metrics;</li>
+<li><code class="docutils literal"><span class="pre">runBaseCountSize</span></code>: the size of the Stream, in bytes, recorded when the schedule started to wait for an increment of data
+to be ingested by the Stream, before executing the workflow. Most of the time, this argument and
+<code class="docutils literal"><span class="pre">lastScheduledRunDataSize</span></code> will be identical, except either during the first execution of the workflow by the
+schedule, or if the counting logic in the schedule is disrupted—for example, by the deletion of Stream metrics.</li>
+</ul>
+</div>
+<div class="section" id="run-constraints">
+<span id="id3"></span><h2><a class="headerlink" href="#run-constraints" title="Perma-link to this heading">🔗</a>Run Constraints</h2>
+<p class="rubric">Maximum Concurrent Runs</p>
+<p>Normally, there is no limit on the number of concurrent runs of a workflow.
+If you want to limit the number of concurrent workflows,
+you can do so when creating the schedule:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">scheduleWorkflow</span><span class="o">(</span><span class="n">Schedules</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="s">&quot;FiveHourSchedule&quot;</span><span class="o">)</span>
+                   <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Schedule running every 5 hours&quot;</span><span class="o">)</span>
+                   <span class="o">.</span><span class="na">setMaxConcurrentRuns</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
+                   <span class="o">.</span><span class="na">createTimeSchedule</span><span class="o">(</span><span class="s">&quot;0 */5 * * *&quot;</span><span class="o">),</span>
+                 <span class="s">&quot;MyWorkflow&quot;</span><span class="o">,</span> <span class="n">scheduleProperties</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>In this example, we have set the maximum number of concurrent runs for this schedule
+to one. When the schedule is triggered, the scheduler will check how many active
+runs of the schedule exist. If there is at least one, the scheduled run will
+be skipped. An active run is any run that is not completed, failed, or killed.
+This includes suspended runs. This number also only includes runs of the program
+started by this schedule. In the example above, if <code class="docutils literal"><span class="pre">MyWorkflow</span></code> was started manually
+or by another schedule, those runs will not be counted.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html"> Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html"> Plugins</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Schedules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#time-schedules">Time Schedules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stream-size-schedules">Stream-size Schedules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-constraints">Run Constraints</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="secure-keys.html"> Secure Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifacts.html"> Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata-lineage.html"> Metadata and Lineage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="audit-logging.html"> Audit Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Plugins" href="plugins.html" />Plugins</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Secure Keys" href="secure-keys.html" />Secure Keys</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

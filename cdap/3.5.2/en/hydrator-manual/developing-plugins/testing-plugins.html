@@ -1,0 +1,322 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Testing Plugins &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/hydrator-manual/developing-plugins/testing-plugins.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Developing Plugins" href="index.html" />
+    <link rel="next" title="Packaging Plugins" href="packaging-plugins.html" />
+    <link rel="prev" title="Creating a Plugin" href="creating-a-plugin.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="packaging-plugins.html" title="Packaging Plugins"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="creating-a-plugin.html" title="Creating a Plugin"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Cask Hydrator</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Developing Plugins</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="testing-plugins">
+<span id="cask-hydrator-testing-plugins"></span><h1><a class="headerlink" href="#testing-plugins" title="Perma-link to this heading">🔗</a>Testing Plugins</h1>
+<div class="section" id="test-framework-for-plugins">
+<h2><a class="headerlink" href="#test-framework-for-plugins" title="Perma-link to this heading">🔗</a>Test Framework for Plugins</h2>
+<p>The Test Framework provides methods to create and deploy JAR files as artifacts. This lets you
+test the creation of multiple applications from the same artifact, as well as the use of plugin artifacts.</p>
+<p>To add an artifact containing an application class:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Add the artifact for a Data Pipeline app</span>
+<span class="n">addAppArtifact</span><span class="o">(</span><span class="k">new</span> <span class="n">ArtifactId</span><span class="o">(</span><span class="n">NamespaceId</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">.</span><span class="na">getNamespace</span><span class="o">(),</span> <span class="s">&quot;data-pipeline&quot;</span><span class="o">,</span> <span class="s">&quot;3.5.0&quot;</span><span class="o">),</span>
+  <span class="n">DataPipelineApp</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+  <span class="n">BatchSource</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getPackage</span><span class="o">().</span><span class="na">getName</span><span class="o">(),</span>
+  <span class="n">Action</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getPackage</span><span class="o">().</span><span class="na">getName</span><span class="o">(),</span>
+  <span class="n">PipelineConfigurable</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getPackage</span><span class="o">().</span><span class="na">getName</span><span class="o">(),</span>
+  <span class="s">&quot;org.apache.avro.mapred&quot;</span><span class="o">,</span> <span class="s">&quot;org.apache.avro&quot;</span><span class="o">,</span> <span class="s">&quot;org.apache.avro.generic&quot;</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The first argument is the <code class="docutils literal"><span class="pre">id</span></code> of the artifact; the second is the application class; and
+the remainder of the arguments are packages that should be included in the
+<code class="docutils literal"><span class="pre">Export-Packages</span></code> manifest attribute bundled in the JAR. The framework will trace the
+dependencies of the specified application class to create a JAR with those dependencies.
+This will mimic what happens when you actually build your application JAR using maven.</p>
+<p>An application can then be deployed using that artifact:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Create application create request</span>
+<span class="n">ETLBatchConfig</span> <span class="n">etlConfig</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ETLBatchConfig</span><span class="o">(</span><span class="s">&quot;* * * * *&quot;</span><span class="o">,</span> <span class="n">source</span><span class="o">,</span> <span class="n">sink</span><span class="o">,</span> <span class="n">transformList</span><span class="o">);</span>
+<span class="n">AppRequest</span><span class="o">&lt;</span><span class="n">ETLBatchConfig</span><span class="o">&gt;</span> <span class="n">appRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AppRequest</span><span class="o">&lt;&gt;(</span><span class="k">new</span> <span class="n">ArtifactSummary</span><span class="o">(</span><span class="s">&quot;etlbatch&quot;</span><span class="o">,</span> <span class="s">&quot;3.5.0&quot;</span><span class="o">),</span> <span class="n">etlConfig</span><span class="o">);</span>
+<span class="n">Id</span><span class="o">.</span><span class="na">Application</span> <span class="n">appId</span> <span class="o">=</span> <span class="n">Id</span><span class="o">.</span><span class="na">Application</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;KVToKV&quot;</span><span class="o">);</span>
+
+<span class="c1">// Deploy the application</span>
+<span class="n">ApplicationManager</span> <span class="n">appManager</span> <span class="o">=</span> <span class="n">deployApplication</span><span class="o">(</span><span class="n">appId</span><span class="o">,</span> <span class="n">appRequest</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Plugins extending the artifact can also be added:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Add some test plugins</span>
+<span class="n">addPluginArtifact</span><span class="o">(</span><span class="k">new</span> <span class="n">ArtifactId</span><span class="o">(</span><span class="n">NamespaceId</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">.</span><span class="na">getNamespace</span><span class="o">(),</span> <span class="s">&quot;spark-plugins&quot;</span><span class="o">,</span> <span class="s">&quot;1.0.0&quot;</span><span class="o">),</span>
+                  <span class="n">APP_ARTIFACT_ID</span><span class="o">,</span>
+                  <span class="n">NaiveBayesTrainer</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">NaiveBayesClassifier</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The first argument is the <code class="docutils literal"><span class="pre">id</span></code> of the plugin artifact; the second is the parent artifact
+it is extending; and the remainder of the arguments are classes that should be bundled in
+the JAR. The packages of all these classes are included in the <code class="docutils literal"><span class="pre">Export-Packages</span></code>
+manifest attribute bundled in the JAR. When adding a plugin artifact this way, it is
+important to include all classes in your plugin packages, even if they are not used in
+your test case. This is to ensure that the JAR can trace all required dependencies to
+correctly build the JAR.</p>
+<p>The examples are taken from the <code class="docutils literal"><span class="pre">DataPipelineTest</span></code> and <code class="docutils literal"><span class="pre">HydratorTestBase</span></code> classes of Cask Hydrator.</p>
+</div>
+<div class="section" id="hydrator-test-module">
+<h2><a class="headerlink" href="#hydrator-test-module" title="Perma-link to this heading">🔗</a>Hydrator Test Module</h2>
+<p>Additional information on unit testing with CDAP is in the Developers’ Manual section
+on <a class="reference external" href="../source/../../developers-manual/testing/testing.html#test-framework" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Testing a CDAP Application</span></a>.</p>
+<p>In addition, CDAP provides a <code class="docutils literal"><span class="pre">hydrator-test</span></code> module that contains several mock plugins
+for you to use in tests with your custom plugins. To use the module, add a dependency to
+your <code class="docutils literal"><span class="pre">pom.xml</span></code>:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;dependency&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>co.cask.cdap<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>hydrator-test<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>${cdap.version}<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;scope&gt;</span>test<span class="nt">&lt;/scope&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</pre></div>
+</div>
+<p>Then extend the <code class="docutils literal"><span class="pre">HydratorTestBase</span></code> class, and create a method that will setup up the
+application artifact and mock plugins, as well as the artifact containing your custom plugins:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * Unit tests for our plugins.</span>
+<span class="cm"> */</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">PipelineTest</span> <span class="kd">extends</span> <span class="n">HydratorTestBase</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">ArtifactSummary</span> <span class="n">APP_ARTIFACT</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArtifactSummary</span><span class="o">(</span><span class="s">&quot;cdap-data-pipeline&quot;</span><span class="o">,</span> <span class="s">&quot;1.0.0&quot;</span><span class="o">);</span>
+  <span class="nd">@ClassRule</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">TestConfiguration</span> <span class="n">CONFIG</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TestConfiguration</span><span class="o">(</span><span class="s">&quot;explore.enabled&quot;</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
+
+  <span class="nd">@BeforeClass</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">setupTestClass</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">ArtifactId</span> <span class="n">parentArtifact</span> <span class="o">=</span> <span class="n">NamespaceId</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">.</span><span class="na">artifact</span><span class="o">(</span><span class="n">APP_ARTIFACT</span><span class="o">.</span><span class="na">getName</span><span class="o">(),</span> <span class="n">APP_ARTIFACT</span><span class="o">.</span><span class="na">getVersion</span><span class="o">());</span>
+
+    <span class="c1">// Add the data pipeline artifact and mock plugins.</span>
+    <span class="n">setupBatchArtifacts</span><span class="o">(</span><span class="n">parentArtifact</span><span class="o">,</span> <span class="n">DataPipelineApp</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+    <span class="c1">// Add our plugins artifact with the data pipeline artifact as its parent.</span>
+    <span class="c1">// This will make our plugins available to the data pipeline.</span>
+    <span class="n">addPluginArtifact</span><span class="o">(</span><span class="n">NamespaceId</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">.</span><span class="na">artifact</span><span class="o">(</span><span class="s">&quot;example-plugins&quot;</span><span class="o">,</span> <span class="s">&quot;1.0.0&quot;</span><span class="o">),</span>
+                      <span class="n">parentArtifact</span><span class="o">,</span>
+                      <span class="n">TextFileSetSource</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                      <span class="n">TextFileSetSink</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                      <span class="n">WordCountAggregator</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                      <span class="n">WordCountCompute</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                      <span class="n">WordCountSink</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>You can then add test cases as you see fit. The <code class="docutils literal"><span class="pre">cdap-data-pipeline-plugins-archetype</span></code>
+includes an example of this unit test.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Cask Hydrator: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../concepts-design.html"> Concepts and Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio.html"> Hydrator Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating-pipelines.html"> Creating Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running-pipelines.html"> Running Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugin-management.html"> Plugin Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugins/index.html"> Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developing-pipelines.html"> Developing Pipelines</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Developing Plugins</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="plugin-basics.html">Plugin Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html">Creating a Plugin</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Testing Plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-framework-for-plugins">Test Framework for Plugins</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hydrator-test-module">Hydrator Test Module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="packaging-plugins.html">Packaging Plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-hydrator-works.html"> How Hydrator Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faqs.html"> FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html"> Glossary</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Creating a Plugin" href="creating-a-plugin.html" />Creating a Plugin</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Packaging Plugins" href="packaging-plugins.html" />Packaging Plugins</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

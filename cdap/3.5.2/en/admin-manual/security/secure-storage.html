@@ -1,0 +1,276 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Secure Storage &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/admin-manual/security/secure-storage.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Security" href="index.html" />
+    <link rel="next" title="Operations" href="../operations/index.html" />
+    <link rel="prev" title="Impersonation" href="impersonation.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../operations/index.html" title="Operations"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="impersonation.html" title="Impersonation"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Administration Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Security</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="secure-storage">
+<span id="admin-secure-storage"></span><h1><a class="headerlink" href="#secure-storage" title="Perma-link to this heading">🔗</a>Secure Storage</h1>
+<p>Applications can need controlled access to sensitive data such as passphrases, cryptographic keys, access tokens, and
+passwords. This data is usually small in size, but needs to be stored and managed in a secure manner.
+<em>Secure Storage</em> allows users to store such sensitive information in an secure and encrypted manner. Data is encrypted
+upon submission to CDAP (via RESTful or programmatic APIs) and is decrypted upon retrieval.</p>
+<p><strong>Note:</strong> In CDAP 3.5.0, encryption and decryption of the contents only happens at the
+secure store, not while the data is transitting to the secure store. In a later version of
+CDAP, all transport involving secure keys will be secured using SSL.</p>
+<div class="section" id="secure-storage-format">
+<span id="admin-secure-storage-format"></span><h2><a class="headerlink" href="#secure-storage-format" title="Perma-link to this heading">🔗</a>Secure Storage Format</h2>
+<p>An entry in secure storage consists of:</p>
+<ul class="simple">
+<li><strong>Key</strong>: An alias for the entry, also referred to as a <a class="reference external" href="../source/../../reference-manual/glossary.html#term-secure-key" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-term">Secure Key</span></a>.
+Data is stored against the provided key and can be retrieved using the same key.
+Key must be of the <a class="reference external" href="../source/../../reference-manual/characters.html#supported-characters" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Alphanumeric Character Set</span></a>, contain <em>only
+lowercase</em> characters, and should start with a letter.</li>
+<li><strong>Data</strong>: The data which is to be stored in a secure and encrypted manner. This could be a passphrase,
+cryptographic key, access token, or any other data that needs to be stored securely.</li>
+<li><strong>Description</strong>: A description for the secure store entry.</li>
+<li><strong>Properties</strong>: A string map of properties for the secure storage entry. A <code class="docutils literal"><span class="pre">creationTime</span></code> property is available
+for all secure store entries by default. Additional properties can be supplied by users at the time of creation.</li>
+</ul>
+<p>CDAP provides two different implementations of secure storage, depending on the runtime.</p>
+</div>
+<div class="section" id="file-backed-secure-storage">
+<span id="admin-secure-storage-file"></span><h2><a class="headerlink" href="#file-backed-secure-storage" title="Perma-link to this heading">🔗</a>File-backed Secure Storage</h2>
+<p>File-backed secure storage is available for use with in-memory (unit-test) and standalone (CDAP SDK) modes. It uses the
+<a class="reference external" href="http://docs.oracle.com/javase/7/docs/technotes/guides/security/crypto/CryptoSpec.html#KeyManagement">Sun JCEKS</a>
+implementation for storing secure keys. This implementation is not available in
+<a class="reference external" href="../source/../../reference-manual/glossary.html#term-distributed-cdap" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-term">Distributed CDAP</span></a> as it stores the secure data in the local file system, and thus is
+not available on all nodes of a distributed cluster.</p>
+<p>To use this mode, set these properties:</p>
+<ul class="simple">
+<li>In <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>, set <code class="docutils literal"><span class="pre">security.store.provider</span></code> to <code class="docutils literal"><span class="pre">file</span></code></li>
+<li>In <code class="docutils literal"><span class="pre">cdap-security.xml</span></code>, set <code class="docutils literal"><span class="pre">security.store.file.password</span></code> to a password (to protect the secure storage file)</li>
+</ul>
+</div>
+<div class="section" id="hadoop-key-management-server-backed-secure-storage">
+<span id="admin-secure-storage-kms"></span><h2><a class="headerlink" href="#hadoop-key-management-server-backed-secure-storage" title="Perma-link to this heading">🔗</a>Hadoop Key Management Server-backed Secure Storage</h2>
+<p><a class="reference external" href="https://hadoop.apache.org/docs/stable/hadoop-kms/index.html">Hadoop KMS (Key Management Server)-backed</a>
+secure storage is available for use with <a class="reference external" href="../source/../../reference-manual/glossary.html#term-distributed-cdap" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-term">Distributed CDAP</span></a>.</p>
+<p>To use this mode, set this property:</p>
+<ul class="simple">
+<li>In <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>, set <code class="docutils literal"><span class="pre">security.store.provider</span></code> to <code class="docutils literal"><span class="pre">kms</span></code></li>
+</ul>
+<p>For additional information on integration with Hadoop KMS, please refer to
+<a class="reference external" href="../source/../../integrations/hadoop-kms.html#apache-hadoop-kms" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Integrations: Apache Hadoop KMS</span></a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdap-components.html"> CDAP Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deployment-architectures.html"> Deployment Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hadoop-compatibility.html"> Hadoop Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system-requirements.html"> System Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html"> Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../verification.html"> Verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../upgrading/index.html"> Upgrading</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Security</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="perimeter-security.html">Perimeter Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authorization.html">Authorization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="impersonation.html">Impersonation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Secure Storage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#secure-storage-format">Secure Storage Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#file-backed-secure-storage">File-backed Secure Storage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hadoop-key-management-server-backed-secure-storage">Hadoop Key Management Server-backed Secure Storage</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendices/index.html"> Appendices</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Impersonation" href="impersonation.html" />Impersonation</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Operations" href="../operations/index.html" />Operations</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

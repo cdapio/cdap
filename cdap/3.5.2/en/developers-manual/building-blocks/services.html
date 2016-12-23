@@ -1,0 +1,451 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Services &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/building-blocks/services.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Spark Programs" href="spark-programs.html" />
+    <link rel="prev" title="Secure Keys" href="secure-keys.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="spark-programs.html" title="Spark Programs"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="secure-keys.html" title="Secure Keys"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="services">
+<span id="user-services"></span><h1><a class="headerlink" href="#services" title="Perma-link to this heading">🔗</a>Services</h1>
+<p><em>Services</em> can be run in a Cask Data Application Platform (CDAP) application to serve data to external clients.
+Similar to flows, services run in containers and the number of running service instances can be dynamically scaled.
+Developers can implement custom services to interface with a legacy system and perform additional processing beyond
+the CDAP processing paradigms. Examples could include running an IP-to-geo lookup and serving user-profiles.</p>
+<p>The lifecycle of a custom service can be controlled via the CDAP UI, by using the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#client-api" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP Java Client API</span></a>, or with the <a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP RESTful HTTP API</span></a>.</p>
+<p>You can add services to your application by calling the <code class="docutils literal"><span class="pre">addService</span></code> method in the
+application's <code class="docutils literal"><span class="pre">configure</span></code> method:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AnalyticsApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;AnalyticsApp&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Application for generating mobile analytics&quot;</span><span class="o">);</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="s">&quot;event&quot;</span><span class="o">));</span>
+    <span class="n">addFlow</span><span class="o">(</span><span class="k">new</span> <span class="n">EventProcessingFlow</span><span class="o">());</span>
+    <span class="o">...</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">IPGeoLookupService</span><span class="o">());</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">UserLookupService</span><span class="o">());</span>
+    <span class="o">...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Services are implemented by extending <code class="docutils literal"><span class="pre">AbstractService</span></code>, which consists of
+<code class="docutils literal"><span class="pre">HttpServiceHandler</span></code>s to serve requests:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">IPGeoLookupService</span> <span class="kd">extends</span> <span class="n">AbstractService</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;IpGeoLookupService&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Service to lookup locations of IP addresses.&quot;</span><span class="o">);</span>
+    <span class="n">useDataset</span><span class="o">(</span><span class="s">&quot;IPGeoTable&quot;</span><span class="o">);</span>
+    <span class="n">addHandler</span><span class="o">(</span><span class="k">new</span> <span class="n">IPGeoLookupHandler</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<div class="section" id="service-handlers">
+<h2><a class="headerlink" href="#service-handlers" title="Perma-link to this heading">🔗</a>Service Handlers</h2>
+<p><code class="docutils literal"><span class="pre">ServiceHandler</span></code>s are used to handle and serve HTTP requests.</p>
+<p>You add handlers to your service by calling the <code class="docutils literal"><span class="pre">addHandler</span></code> method in the service's
+<code class="docutils literal"><span class="pre">configure</span></code> method, as shown above. Only handler classes that are declared public,
+with public methods for endpoints, will be exposed by the service.</p>
+<p>To use a dataset within a handler, either include the <code class="docutils literal"><span class="pre">&#64;UseDataSet</span></code> annotation in
+the handler, or use the <code class="docutils literal"><span class="pre">getDataset()</span></code> method dynamically in the handler to obtain
+an instance of the dataset (see <a class="reference internal" href="datasets/overview.html#datasets-in-programs"><span>Using Datasets in Programs</span></a>).
+Each request to a method is committed as a single transaction.</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">IPGeoLookupHandler</span> <span class="kd">extends</span> <span class="n">AbstractHttpServiceHandler</span> <span class="o">{</span>
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;IPGeoTable&quot;</span><span class="o">)</span>
+  <span class="n">Table</span> <span class="n">table</span><span class="o">;</span>
+
+  <span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;lookup/{ip}&quot;</span><span class="o">)</span>
+  <span class="nd">@GET</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">lookup</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">,</span>
+                                                    <span class="nd">@PathParam</span><span class="o">(</span><span class="s">&quot;ip&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">ip</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// ...</span>
+    <span class="n">responder</span><span class="o">.</span><span class="na">sendString</span><span class="o">(</span><span class="mi">200</span><span class="o">,</span> <span class="n">location</span><span class="o">,</span> <span class="n">Charsets</span><span class="o">.</span><span class="na">UTF_8</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="path-and-query-parameters">
+<h2><a class="headerlink" href="#path-and-query-parameters" title="Perma-link to this heading">🔗</a>Path and Query Parameters</h2>
+<p>Handler endpoints can have Path and Query parameters. Path parameters are used to assist with path-mapping of requests,
+while Query parameters are used to easily parse the query string of a request.</p>
+<p>For example, the <code class="docutils literal"><span class="pre">WordCount</span></code> application has a <code class="docutils literal"><span class="pre">Service</span></code> that exposes an endpoint to retrieve the count of a word
+and its word associations. In the <code class="docutils literal"><span class="pre">&#64;Path</span></code> annotation, <code class="docutils literal"><span class="pre">{word}</span></code> is a path parameter that is mapped
+to a Java String using <code class="docutils literal"><span class="pre">&#64;PathParam(&quot;word&quot;)</span> <span class="pre">String</span> <span class="pre">word</span></code>. Similarly, the endpoint also allows
+the query parameter <code class="docutils literal"><span class="pre">limit</span></code> with a default value of 10.</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;count/{word}&quot;</span><span class="o">)</span>
+<span class="nd">@GET</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">getCount</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">,</span>
+                     <span class="nd">@PathParam</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">word</span><span class="o">,</span>
+                     <span class="nd">@QueryParam</span><span class="o">(</span><span class="s">&quot;limit&quot;</span><span class="o">)</span> <span class="nd">@DefaultValue</span><span class="o">(</span><span class="s">&quot;10&quot;</span><span class="o">)</span> <span class="n">Integer</span> <span class="n">limit</span><span class="o">)</span> <span class="o">{</span>
+
+  <span class="c1">// ...</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>An example of calling this endpoint with the HTTP RESTful API is shown in the <a class="reference external" href="../source/../../reference-manual/http-restful-api/service.html#http-restful-api-service" title="(in Cask Data Application Platform v3.5.2)"><span>Service HTTP RESTful API</span></a>.</p>
+<p><strong>Note:</strong> Any reserved or unsafe characters in the path parameters should be encoded using
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/introduction.html#http-restful-api-conventions-reserved-unsafe-characters" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">percent-encoding</span></a>.
+See the next section, <a class="reference internal" href="#services-path-parameters"><span>About Path Parameters</span></a>.</p>
+</div>
+<div class="section" id="handling-a-large-request-body">
+<span id="services-content-consumer"></span><h2><a class="headerlink" href="#handling-a-large-request-body" title="Perma-link to this heading">🔗</a>Handling a Large Request Body</h2>
+<p>Sometimes the request body for a <code class="docutils literal"><span class="pre">PUT</span></code> or <code class="docutils literal"><span class="pre">POST</span></code> request can be huge and it is not feasible to keep all
+of it in memory. You can have the handler method return an <code class="docutils literal"><span class="pre">HttpContentConsumer</span></code> instead of <code class="docutils literal"><span class="pre">void</span></code>
+to process the request body in smaller pieces.</p>
+<p>For example, the <code class="docutils literal"><span class="pre">SportResults</span></code> application has an <code class="docutils literal"><span class="pre">UploadService</span></code> that exposes an endpoint for uploading files
+to <code class="docutils literal"><span class="pre">PartitionedFileSets</span></code>. It returns an <code class="docutils literal"><span class="pre">HttpContentConsumer</span></code> so that it receives the request body in a series
+of small chunks:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@PUT</span>
+<span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;leagues/{league}/seasons/{season}&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="n">HttpContentConsumer</span> <span class="nf">write</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">,</span>
+                                 <span class="nd">@PathParam</span><span class="o">(</span><span class="s">&quot;league&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">league</span><span class="o">,</span> <span class="nd">@PathParam</span><span class="o">(</span><span class="s">&quot;season&quot;</span><span class="o">)</span> <span class="kt">int</span> <span class="n">season</span><span class="o">)</span> <span class="o">{</span>
+  <span class="c1">// ...</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>An example of how to implement <code class="docutils literal"><span class="pre">HttpContentConsumer</span></code> is shown in the <a class="reference external" href="../source/../../examples-manual/examples/sport-results.html#examples-sport-results" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Sport Results Example</span></a>.</p>
+</div>
+<div class="section" id="about-path-parameters">
+<span id="services-path-parameters"></span><h2><a class="headerlink" href="#about-path-parameters" title="Perma-link to this heading">🔗</a>About Path Parameters</h2>
+<p>The value of a path parameter cannot contain any <a class="reference external" href="http://tools.ietf.org/html/rfc3986#section-2.2">characters that have a special meaning</a> in URI syntax. If a request has a path
+parameter that contains such a character, it must be <a class="reference external" href="http://tools.ietf.org/html/rfc3986#section-2.1">URL-encoded</a> using the &quot;<code class="docutils literal"><span class="pre">%hh</span></code>&quot; notation, a
+percent-symbol followed by two hex characters.</p>
+<p>In general, any character that is not a letter, a digit, or one of <code class="docutils literal"><span class="pre">$-_.+!*'()</span></code> should be encoded.</p>
+<p>However, if the special character is a forward-slash (<code class="docutils literal"><span class="pre">/</span></code>), then it will appear to the
+path matcher as a &quot;<code class="docutils literal"><span class="pre">/</span></code>&quot;, even if it is escaped as &quot;<code class="docutils literal"><span class="pre">%2f</span></code>&quot;. This occurs because the path is
+decoded prior to matching.</p>
+<p>There are two ways to work around this:</p>
+<ul class="simple">
+<li>Double-escape any forward-slashes (<code class="docutils literal"><span class="pre">/</span></code>) as &quot;<code class="docutils literal"><span class="pre">%252f</span></code>&quot;. This will prevent the decoding before the path is matched.
+However, the path parameter's value will contain the &quot;<code class="docutils literal"><span class="pre">%2f</span></code>&quot; instead of a &quot;<code class="docutils literal"><span class="pre">/</span></code>&quot;, and the
+application code must decode the parameter itself to obtain the actual value.</li>
+<li>Use a query parameter instead. This is a better solution because the &quot;<code class="docutils literal"><span class="pre">/</span></code>&quot; is not a reserved
+character in the query of a URI.</li>
+</ul>
+</div>
+<div class="section" id="service-discovery">
+<h2><a class="headerlink" href="#service-discovery" title="Perma-link to this heading">🔗</a>Service Discovery</h2>
+<p>Services announce the host and port they are running on so that they can be discovered—and
+accessed—by other programs.</p>
+<p>Service are announced using the name passed in the <code class="docutils literal"><span class="pre">configure</span></code> method. The <em>application name</em>, <em>service id</em>, and
+<em>hostname</em> required for registering the service are automatically obtained.</p>
+<p>The service can then be discovered in a flow, MapReduce, Spark, or another service using
+the appropriate program context. You may also access a service in a different application
+by specifying the application name in the <code class="docutils literal"><span class="pre">getServiceURL</span></code> call.</p>
+<p>For example, in flows:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">GeoFlowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+
+  <span class="c1">// URL for IPGeoLookupService</span>
+  <span class="kd">private</span> <span class="n">URL</span> <span class="n">serviceURL</span><span class="o">;</span>
+
+  <span class="c1">// URL for SecurityService in SecurityApplication</span>
+  <span class="kd">private</span> <span class="n">URL</span> <span class="n">securityURL</span><span class="o">;</span>
+
+  <span class="nd">@ProcessInput</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">String</span> <span class="n">ip</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// Get URL for service in same application</span>
+    <span class="n">serviceURL</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getServiceURL</span><span class="o">(</span><span class="s">&quot;IPGeoLookupService&quot;</span><span class="o">);</span>
+
+    <span class="c1">// Get URL for service in a different application</span>
+    <span class="n">securityURL</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getServiceURL</span><span class="o">(</span><span class="s">&quot;SecurityApplication&quot;</span><span class="o">,</span> <span class="s">&quot;SecurityService&quot;</span><span class="o">);</span>
+
+    <span class="c1">// Access the IPGeoLookupService using its URL</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">serviceURL</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">URLConnection</span> <span class="n">connection</span> <span class="o">=</span> <span class="k">new</span> <span class="n">URL</span><span class="o">(</span><span class="n">serviceURL</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;lookup/%s&quot;</span><span class="o">,</span> <span class="n">ip</span><span class="o">)).</span><span class="na">openConnection</span><span class="o">();</span>
+      <span class="n">BufferedReader</span> <span class="n">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BufferedReader</span><span class="o">(</span><span class="k">new</span> <span class="n">InputStreamReader</span><span class="o">(</span><span class="n">connection</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">()));</span>
+    <span class="o">}</span>
+    <span class="o">...</span>
+    <span class="c1">// Access the SecurityService using its URL</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">securityURL</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="o">...</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="services-and-resources">
+<h2><a class="headerlink" href="#services-and-resources" title="Perma-link to this heading">🔗</a>Services and Resources</h2>
+<p>When a service is configured, the resource requirements for the server that runs all
+handlers of the service can be set, both in terms of the amount of memory (in megabytes)
+and the number of virtual cores assigned.</p>
+<p>For example, in the <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Purchase</span></a> example, in the configuration of
+the <code class="docutils literal"><span class="pre">PurchaseHistoryService</span></code>, the amount of memory is specified:</p>
+<div class="highlight-java"><div class="highlight"><pre>  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="n">SERVICE_NAME</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;A service to retrieve a customer&#39;s purchase history&quot;</span><span class="o">);</span>
+    <span class="n">addHandler</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseHistoryServiceHandler</span><span class="o">());</span>
+    <span class="n">setResources</span><span class="o">(</span><span class="k">new</span> <span class="n">Resources</span><span class="o">(</span><span class="mi">1024</span><span class="o">));</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>If both the memory and the number of cores needs to be set, this can be done using:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">setResources</span><span class="o">(</span><span class="k">new</span> <span class="n">Resources</span><span class="o">(</span><span class="mi">1024</span><span class="o">,</span> <span class="mi">2</span><span class="o">));</span>
+</pre></div>
+</div>
+<p>An example of setting <code class="docutils literal"><span class="pre">Resources</span></code> using runtime arguments is shown in <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Purchase</span></a> example's <code class="docutils literal"><span class="pre">PurchaseHistoryBuilder.java</span></code>.</p>
+</div>
+<div class="section" id="services-examples">
+<h2><a class="headerlink" href="#services-examples" title="Perma-link to this heading">🔗</a>Services Examples</h2>
+<ul class="simple">
+<li>The simplest example, <a class="reference external" href="../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Hello World</span></a>, demonstrates using a
+service to <strong>retrieve a name from a dataset.</strong></li>
+<li>The <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Purchase example</span></a> includes two services, <code class="docutils literal"><span class="pre">CatalogLookupService</span></code>
+and <code class="docutils literal"><span class="pre">PurchaseHistoryService</span></code>; the latter <strong>retrieves a specified customer's purchase
+history in a JSON format from a dataset.</strong></li>
+<li>The <a class="reference external" href="../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Spark example</span></a> includes a service that <strong>responds with
+a calculated center from a dataset based on an index parameter.</strong></li>
+<li>For another example of <strong>a service reading from a dataset,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Spark PageRank
+example</span></a>.</li>
+<li>For an example of <strong>using path and query parameters,</strong> see the
+<a class="reference external" href="../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">WordCount example</span></a>, where the class <code class="docutils literal"><span class="pre">RetrieveCountsHandler</span></code>
+retrieves a variety of statistics from datasets depending on the path supplied.</li>
+<li>Almost all of the <a class="reference external" href="../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">how-to guides</span></a> demonstrate the use of services.
+(The exception is the <a class="reference external" href="../source/../../examples-manual/how-to-guides/cdap-bi-guide.html#cdap-bi-guide" title="(in Cask Data Application Platform v3.5.2)"><span>Analyzing CDAP Data from BI Tools</span></a>.)</li>
+<li>From the <a class="reference external" href="../source/../../examples-manual/tutorials/index.html#tutorials" title="(in Cask Data Application Platform v3.5.2)"><span>Tutorials</span></a>, the <em>WISE: Web Analytics</em> and the
+<em>MovieRecommender: Recommender System</em> both demonstrate the use of services.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html"> Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html"> Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-keys.html"> Secure Keys</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Services</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#service-handlers">Service Handlers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#path-and-query-parameters">Path and Query Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#handling-a-large-request-body">Handling a Large Request Body</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#about-path-parameters">About Path Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#service-discovery">Service Discovery</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#services-and-resources">Services and Resources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#services-examples">Services Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifacts.html"> Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata-lineage.html"> Metadata and Lineage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="audit-logging.html"> Audit Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Secure Keys" href="secure-keys.html" />Secure Keys</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Spark Programs" href="spark-programs.html" />Spark Programs</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1303 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform WordCount Application" name="description" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>FileSet Example &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/examples-manual/examples/fileset-example.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="Log Analysis Example" href="log-analysis.html" />
+    <link rel="prev" title="Data Cleansing" href="data-cleansing.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="log-analysis.html" title="Log Analysis Example"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="data-cleansing.html" title="Data Cleansing"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="fileset-example">
+<span id="examples-fileset"></span><h1><a class="headerlink" href="#fileset-example" title="Perma-link to this heading">🔗</a>FileSet Example</h1>
+<p>A Cask Data Application Platform (CDAP) example demonstrating the FileSet dataset and its
+use in services and MapReduce. The application also shows how to perform dataset management
+operations in programs.</p>
+<div class="section" id="overview">
+<h2><a class="headerlink" href="#overview" title="Perma-link to this heading">🔗</a>Overview</h2>
+<p>This application demonstrates the use of the FileSet dataset:</p>
+<ul class="simple">
+<li>The <em>lines</em> FileSet is used as input for the <em>WordCount</em> MapReduce program.</li>
+<li>The <em>counts</em> FileSet is used as output for the <em>WordCount</em> MapReduce program.</li>
+<li>The <em>FileSetService</em> allows uploading and downloading files within these two file sets. It also allows creating
+and managing additional file sets that can be used as input or output.</li>
+</ul>
+<p>Let's look at some of these components, and then run the application and see the results.</p>
+<div class="section" id="the-filesetexample-application">
+<h3><a class="headerlink" href="#the-filesetexample-application" title="Perma-link to this heading">🔗</a>The FileSetExample Application</h3>
+<p>As in the other <a class="reference internal" href="index.html#examples-index"><span>examples</span></a>, the components
+of the application are tied together by the class <code class="docutils literal"><span class="pre">FileSetExample</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">FileSetExample</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;FileSetExample&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Application with a MapReduce that uses a FileSet dataset&quot;</span><span class="o">);</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;lines&quot;</span><span class="o">,</span> <span class="n">FileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">setBasePath</span><span class="o">(</span><span class="s">&quot;example/data/lines&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Store input lines&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;counts&quot;</span><span class="o">,</span> <span class="n">FileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOutputProperty</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">SEPERATOR</span><span class="o">,</span> <span class="s">&quot;:&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Store word counts&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">FileSetService</span><span class="o">());</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">WordCount</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">configure()</span></code> method creates the two FileSet datasets used in this example. For the first
+FileSet—<em>lines</em>—we specify an explicit base path; for the second FileSet—<em>counts</em>—we let CDAP generate a path. Also, we configure the output format
+to use <code class="docutils literal"><span class="pre">&quot;:&quot;</span></code> as the separator for the <em>counts</em> FileSet.</p>
+<p>We will use the <em>FileSetService</em> to upload a file into the <em>lines</em> file set, then count the words in
+that file using MapReduce, and finally download the word counts from the <em>counts</em> file set.</p>
+</div>
+<div class="section" id="filesetservice">
+<h3><a class="headerlink" href="#filesetservice" title="Perma-link to this heading">🔗</a>FileSetService</h3>
+<p>This service has one method to upload and another to download a file.
+Both of these methods have two arguments: the name of the FileSet and the relative path within that FileSet.
+For example, the <code class="docutils literal"><span class="pre">read</span></code> method returns the contents of the requested file for a GET request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@GET</span>
+<span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;{fileset}&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">read</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">,</span>
+                 <span class="nd">@PathParam</span><span class="o">(</span><span class="s">&quot;fileset&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">set</span><span class="o">,</span> <span class="nd">@QueryParam</span><span class="o">(</span><span class="s">&quot;path&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">filePath</span><span class="o">)</span> <span class="o">{</span>
+
+  <span class="n">FileSet</span> <span class="n">fileSet</span><span class="o">;</span>
+  <span class="k">try</span> <span class="o">{</span>
+    <span class="n">fileSet</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getDataset</span><span class="o">(</span><span class="n">set</span><span class="o">);</span>
+  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">DatasetInstantiationException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">&quot;Error instantiating file set {}&quot;</span><span class="o">,</span> <span class="n">set</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+    <span class="n">responder</span><span class="o">.</span><span class="na">sendError</span><span class="o">(</span><span class="mi">400</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;Invalid file set name &#39;%s&#39;&quot;</span><span class="o">,</span> <span class="n">set</span><span class="o">));</span>
+    <span class="k">return</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="n">Location</span> <span class="n">location</span> <span class="o">=</span> <span class="n">fileSet</span><span class="o">.</span><span class="na">getLocation</span><span class="o">(</span><span class="n">filePath</span><span class="o">);</span>
+  <span class="n">getContext</span><span class="o">().</span><span class="na">discardDataset</span><span class="o">(</span><span class="n">fileSet</span><span class="o">);</span>
+
+  <span class="k">try</span> <span class="o">{</span>
+    <span class="n">responder</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="mi">200</span><span class="o">,</span> <span class="n">location</span><span class="o">,</span> <span class="s">&quot;application/octet-stream&quot;</span><span class="o">);</span>
+  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">responder</span><span class="o">.</span><span class="na">sendError</span><span class="o">(</span><span class="mi">400</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;Unable to read path &#39;%s&#39; in file set &#39;%s&#39;&quot;</span><span class="o">,</span> <span class="n">filePath</span><span class="o">,</span> <span class="n">set</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>It first instantiates the dataset specified by the first path parameter through its <code class="docutils literal"><span class="pre">HttpServiceContext</span></code>.
+Note that, conceptually, this method is not limited to using only the two datasets of this application (<em>lines</em> and
+<em>counts</em>)—<code class="docutils literal"><span class="pre">getDataset()</span></code> can dynamically instantiate any existing dataset.</p>
+<p>The handler method then uses the <code class="docutils literal"><span class="pre">getLocation()</span></code> of the FileSet to obtain the location representing the requested
+file, and it opens an input stream for that location. <code class="docutils literal"><span class="pre">Location</span></code> is a file system abstraction from
+<a class="reference external" href="http://twill.incubator.apache.org">Apache™ Twill®</a>; you can read more about its interface in the
+<a class="reference external" href="http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html">Apache Twill Javadocs</a>.</p>
+<p>Note that after obtaining the location from the FileSet, the handler discards that dataset through its context—it is not needed any more and therefore can be returned to the system. This is not strictly necessary: all datasets
+are eventually reclaimed by the system. However, explicitly discarding a dataset allows the system to reclaim it
+as soon as the current transaction ends, possibly freeing valuable resources.</p>
+<p>The <code class="docutils literal"><span class="pre">write</span></code> method uses an <code class="docutils literal"><span class="pre">HttpContentConsumer</span></code> to stream the body of the request to the location specified
+by the <code class="docutils literal"><span class="pre">path</span></code> query parameter. See the section on <a class="reference external" href="../source/../../developers-manual/building-blocks/services.html#services-content-consumer" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Handling Large Requests</span></a>
+and the <a class="reference internal" href="sport-results.html#examples-sport-results"><span>Sport Results Example</span></a> for a more detailed explanation:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@PUT</span>
+<span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;{fileset}&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="n">HttpContentConsumer</span> <span class="nf">write</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">,</span>
+                                 <span class="nd">@PathParam</span><span class="o">(</span><span class="s">&quot;fileset&quot;</span><span class="o">)</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">set</span><span class="o">,</span>
+                                 <span class="nd">@QueryParam</span><span class="o">(</span><span class="s">&quot;path&quot;</span><span class="o">)</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">filePath</span><span class="o">)</span> <span class="o">{</span>
+  <span class="n">FileSet</span> <span class="n">fileSet</span><span class="o">;</span>
+  <span class="k">try</span> <span class="o">{</span>
+    <span class="n">fileSet</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getDataset</span><span class="o">(</span><span class="n">set</span><span class="o">);</span>
+  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">DatasetInstantiationException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">&quot;Error instantiating file set {}&quot;</span><span class="o">,</span> <span class="n">set</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+    <span class="n">responder</span><span class="o">.</span><span class="na">sendError</span><span class="o">(</span><span class="mi">400</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;Invalid file set name &#39;%s&#39;&quot;</span><span class="o">,</span> <span class="n">set</span><span class="o">));</span>
+    <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="kd">final</span> <span class="n">Location</span> <span class="n">location</span> <span class="o">=</span> <span class="n">fileSet</span><span class="o">.</span><span class="na">getLocation</span><span class="o">(</span><span class="n">filePath</span><span class="o">);</span>
+  <span class="n">getContext</span><span class="o">().</span><span class="na">discardDataset</span><span class="o">(</span><span class="n">fileSet</span><span class="o">);</span>
+  <span class="k">try</span> <span class="o">{</span>
+    <span class="kd">final</span> <span class="n">WritableByteChannel</span> <span class="n">channel</span> <span class="o">=</span> <span class="n">Channels</span><span class="o">.</span><span class="na">newChannel</span><span class="o">(</span><span class="n">location</span><span class="o">.</span><span class="na">getOutputStream</span><span class="o">());</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="n">HttpContentConsumer</span><span class="o">()</span> <span class="o">{</span>
+      <span class="nd">@Override</span>
+      <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onReceived</span><span class="o">(</span><span class="n">ByteBuffer</span> <span class="n">chunk</span><span class="o">,</span> <span class="n">Transactional</span> <span class="n">transactional</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+        <span class="n">channel</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">chunk</span><span class="o">);</span>
+      <span class="o">}</span>
+
+      <span class="nd">@Override</span>
+      <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinish</span><span class="o">(</span><span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+        <span class="n">channel</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+        <span class="n">responder</span><span class="o">.</span><span class="na">sendStatus</span><span class="o">(</span><span class="mi">200</span><span class="o">);</span>
+      <span class="o">}</span>
+
+      <span class="nd">@Override</span>
+      <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onError</span><span class="o">(</span><span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">,</span> <span class="n">Throwable</span> <span class="n">failureCause</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Closeables</span><span class="o">.</span><span class="na">closeQuietly</span><span class="o">(</span><span class="n">channel</span><span class="o">);</span>
+        <span class="k">try</span> <span class="o">{</span>
+          <span class="n">location</span><span class="o">.</span><span class="na">delete</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+          <span class="n">LOG</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">&quot;Failed to delete {}&quot;</span><span class="o">,</span> <span class="n">location</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="na">debug</span><span class="o">(</span><span class="s">&quot;Unable to write path &#39;{}&#39; in file set &#39;{}&#39;&quot;</span><span class="o">,</span> <span class="n">filePath</span><span class="o">,</span> <span class="n">set</span><span class="o">,</span> <span class="n">failureCause</span><span class="o">);</span>
+        <span class="n">responder</span><span class="o">.</span><span class="na">sendError</span><span class="o">(</span><span class="mi">400</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;Unable to write path &#39;%s&#39; in file set &#39;%s&#39;. Reason: &#39;%s&#39;&quot;</span><span class="o">,</span>
+                                               <span class="n">filePath</span><span class="o">,</span> <span class="n">set</span><span class="o">,</span> <span class="n">failureCause</span><span class="o">.</span><span class="na">getMessage</span><span class="o">()));</span>
+      <span class="o">}</span>
+    <span class="o">};</span>
+  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">responder</span><span class="o">.</span><span class="na">sendError</span><span class="o">(</span><span class="mi">400</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;Unable to write path &#39;%s&#39; in file set &#39;%s&#39;. Reason: &#39;%s&#39;&quot;</span><span class="o">,</span>
+                                           <span class="n">filePath</span><span class="o">,</span> <span class="n">set</span><span class="o">,</span> <span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">()));</span>
+    <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>In addition to reading and writing individual files, the <code class="docutils literal"><span class="pre">FileSetService</span></code> also allows performing dataset management
+operations, including creating, updating, truncating, and dropping file sets. These operations are available through
+the program context's <code class="docutils literal"><span class="pre">getAdmin()</span></code> interface. For example, the service has an endpoint that creates a new file set,
+either by cloning an existing file set's dataset properties, or using the properties submitted in the request body:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@POST</span>
+<span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;{fileset}/create&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">create</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">,</span>
+                   <span class="nd">@PathParam</span><span class="o">(</span><span class="s">&quot;fileset&quot;</span><span class="o">)</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">set</span><span class="o">,</span>
+                   <span class="nd">@Nullable</span> <span class="nd">@QueryParam</span><span class="o">(</span><span class="s">&quot;clone&quot;</span><span class="o">)</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">clone</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">DatasetManagementException</span> <span class="o">{</span>
+  <span class="n">DatasetProperties</span> <span class="n">properties</span> <span class="o">=</span> <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">EMPTY</span><span class="o">;</span>
+  <span class="n">ByteBuffer</span> <span class="n">content</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="na">getContent</span><span class="o">();</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">clone</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="n">properties</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getAdmin</span><span class="o">().</span><span class="na">getDatasetProperties</span><span class="o">(</span><span class="n">clone</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InstanceNotFoundException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">responder</span><span class="o">.</span><span class="na">sendError</span><span class="o">(</span><span class="mi">404</span><span class="o">,</span> <span class="s">&quot;Dataset &#39;&quot;</span> <span class="o">+</span> <span class="n">clone</span> <span class="o">+</span> <span class="s">&quot;&#39; does not exist&quot;</span><span class="o">);</span>
+      <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">content</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">content</span><span class="o">.</span><span class="na">hasRemaining</span><span class="o">())</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="n">properties</span> <span class="o">=</span> <span class="n">GSON</span><span class="o">.</span><span class="na">fromJson</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toString</span><span class="o">(</span><span class="n">content</span><span class="o">),</span> <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">responder</span><span class="o">.</span><span class="na">sendError</span><span class="o">(</span><span class="mi">400</span><span class="o">,</span> <span class="s">&quot;Invalid properties: &quot;</span> <span class="o">+</span> <span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+      <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+  <span class="k">try</span> <span class="o">{</span>
+    <span class="n">getContext</span><span class="o">().</span><span class="na">getAdmin</span><span class="o">().</span><span class="na">createDataset</span><span class="o">(</span><span class="n">set</span><span class="o">,</span> <span class="s">&quot;fileSet&quot;</span><span class="o">,</span> <span class="n">properties</span><span class="o">);</span>
+  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InstanceConflictException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">responder</span><span class="o">.</span><span class="na">sendError</span><span class="o">(</span><span class="mi">409</span><span class="o">,</span> <span class="s">&quot;Dataset &#39;&quot;</span> <span class="o">+</span> <span class="n">set</span> <span class="o">+</span> <span class="s">&quot;&#39; already exists&quot;</span><span class="o">);</span>
+    <span class="k">return</span><span class="o">;</span>
+  <span class="o">}</span>
+  <span class="n">responder</span><span class="o">.</span><span class="na">sendStatus</span><span class="o">(</span><span class="mi">200</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="mapreduce-over-files">
+<h2><a class="headerlink" href="#mapreduce-over-files" title="Perma-link to this heading">🔗</a>MapReduce over Files</h2>
+<p><code class="docutils literal"><span class="pre">WordCount</span></code> is a simple word counting implementation in MapReduce. By default, it reads its input from the
+<em>lines</em> FileSet and writes its output to the <em>counts</em> FileSet. Alternatively, the names of the input and output
+dataset can also be given as runtime arguments:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * A simple word counter. It reads inputs from the &quot;lines&quot; FileSet and writes its output to</span>
+<span class="cm"> * the &quot;counts&quot; FileSet. The input and output path can be configured as runtime arguments:</span>
+<span class="cm"> * &lt;ul&gt;</span>
+<span class="cm"> * &lt;li&gt;&quot;dataset.lines.input.paths&quot; for the input. Multiple paths can be given, separated by commas.&lt;/li&gt;</span>
+<span class="cm"> * &lt;li&gt;&quot;dataset.counts.output.path&quot; for the output.&lt;/li&gt;</span>
+<span class="cm"> * &lt;/ul&gt;</span>
+<span class="cm"> */</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCount</span> <span class="kd">extends</span> <span class="n">AbstractMapReduce</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setMapperResources</span><span class="o">(</span><span class="k">new</span> <span class="n">Resources</span><span class="o">(</span><span class="mi">1024</span><span class="o">));</span>
+    <span class="n">setReducerResources</span><span class="o">(</span><span class="k">new</span> <span class="n">Resources</span><span class="o">(</span><span class="mi">1024</span><span class="o">));</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">MapReduceContext</span> <span class="n">context</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">();</span>
+    <span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getHadoopJob</span><span class="o">();</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setMapperClass</span><span class="o">(</span><span class="n">Tokenizer</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setReducerClass</span><span class="o">(</span><span class="n">Counter</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setNumReduceTasks</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+
+    <span class="n">String</span> <span class="n">inputDataset</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getRuntimeArguments</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;input&quot;</span><span class="o">);</span>
+    <span class="n">inputDataset</span> <span class="o">=</span> <span class="n">inputDataset</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">inputDataset</span> <span class="o">:</span> <span class="s">&quot;lines&quot;</span><span class="o">;</span>
+
+    <span class="n">String</span> <span class="n">outputDataset</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getRuntimeArguments</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;output&quot;</span><span class="o">);</span>
+    <span class="n">outputDataset</span> <span class="o">=</span> <span class="n">outputDataset</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">outputDataset</span> <span class="o">:</span> <span class="s">&quot;counts&quot;</span><span class="o">;</span>
+
+    <span class="n">context</span><span class="o">.</span><span class="na">addInput</span><span class="o">(</span><span class="n">Input</span><span class="o">.</span><span class="na">ofDataset</span><span class="o">(</span><span class="n">inputDataset</span><span class="o">));</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">addOutput</span><span class="o">(</span><span class="n">Output</span><span class="o">.</span><span class="na">ofDataset</span><span class="o">(</span><span class="n">outputDataset</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>It is worth mentioning that nothing in <code class="docutils literal"><span class="pre">WordCount</span></code> is specifically programmed to use a FileSet. Instead of
+<em>lines</em> and <em>counts</em>, it could use any other dataset as long as the key and value types match.</p>
+</div>
+<div class="section" id="building-and-starting">
+<h2><a class="headerlink" href="#building-and-starting" title="Perma-link to this heading">🔗</a>Building and Starting</h2>
+<ul>
+<li><p class="first">You can either build the example (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-example" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Building an Example Application</span></a>) or use the pre-built JAR file included in the CDAP SDK
+(as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying an Application</span></a>):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral22() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral22 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral22", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral22" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">examples/FileSetExample/target/FileSetExample-3.5.2.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">examples\FileSetExample\target\FileSetExample-3.5.2.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Start CDAP (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Starting and Stopping CDAP</span></a>).</p>
+</li>
+<li><p class="first">Deploy the application, as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying an Application</span></a>.
+For example, from the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral23() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral23 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral23", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral23" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact examples/FileSetExample/target/FileSetExample-3.5.2.jar</span>
+
+<span class="go">Successfully added artifact with name &#39;FileSetExample&#39;</span>
+
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app FileSetExample FileSetExample 3.5.2 user</span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact examples\FileSetExample\target\FileSetExample-3.5.2.jar</span></span>
+
+<span class="go">Successfully added artifact with name &#39;FileSetExample&#39;</span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app FileSetExample FileSetExample 3.5.2 user</span></span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Once the application has been deployed, you can start its components, as described in
+<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-starting-application" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Starting an Application</span></a>, and detailed at the
+start of <a class="reference external" href="#running-the-example">running the example</a>.</p>
+</li>
+<li><p class="first">Once all components are started, <a class="reference external" href="#running-the-example">run the example</a>.</p>
+</li>
+<li><p class="first">When finished, you can <a class="reference external" href="#stopping-and-removing-the-application">stop and remove the application</a>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="running-the-example">
+<h2><a class="headerlink" href="#running-the-example" title="Perma-link to this heading">🔗</a>Running the Example</h2>
+<div class="section" id="starting-the-service">
+<h3><a class="headerlink" href="#starting-the-service" title="Perma-link to this heading">🔗</a>Starting the Service</h3>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>FileSetExample</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/FileSetExample/overview/programs">application overview page, programs tab</a>,
+click <em>FileSetService</em> to get to the service detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral24() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral24 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral24", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral24" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start service FileSetExample.FileSetService</span>
+
+<span class="go">Successfully started service &#39;FileSetService&#39; of application &#39;FileSetExample&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start service FileSetExample.FileSetService</span></span>
+
+<span class="go">Successfully started service &#39;FileSetService&#39; of application &#39;FileSetExample&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="uploading-and-downloading-files">
+<h3><a class="headerlink" href="#uploading-and-downloading-files" title="Perma-link to this heading">🔗</a>Uploading and Downloading Files</h3>
+<p>First, we will upload a text file (<code class="docutils literal"><span class="pre">some.txt</span></code>) that we will use as input for the WordCount.
+This is done by making a RESTful call to the <em>FileSetService</em>.
+A sample text file (<code class="docutils literal"><span class="pre">lines.txt</span></code>) is included in the <code class="docutils literal"><span class="pre">resources</span></code> directory of the example. From within the CDAP CLI:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral25_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral25 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral25 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral25 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral25 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral25 .example-tab-" + tab).click(change_tabbedparsedliteral25_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral25" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">call service FileSetExample.FileSetService PUT lines?path=some.txt body:file examples/FileSetExample/resources/lines.txt</span></span>
+
+<span class="go">&lt; 200 OK</span>
+<span class="go">&lt; Content-Length: 0</span>
+<span class="go">&lt; Connection: keep-alive</span>
+<span class="go">&lt; Content-Type: text/plain</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Now, we start the MapReduce program and configure it to use the file <code class="docutils literal"><span class="pre">some.txt</span></code> as its input, and to write its output to
+<code class="docutils literal"><span class="pre">counts.out</span></code>:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral26_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral26 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral26 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral26 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral26 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral26 .example-tab-" + tab).click(change_tabbedparsedliteral26_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral26" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">start mapreduce FileSetExample.WordCount &quot;dataset.lines.input.paths=some.txt dataset.counts.output.path=counts.out&quot;</span></span>
+
+<span class="go">Successfully started MapReduce program &#39;WordCount&#39; of application &#39;FileSetExample&#39;</span>
+<span class="go">with provided runtime arguments &#39;dataset.lines.input.paths=some.txt dataset.counts.output.path=counts.out&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Check the status of the MapReduce program until it is completed:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral27_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral27 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral27 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral27 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral27 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral27 .example-tab-" + tab).click(change_tabbedparsedliteral27_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral27" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">get mapreduce status FileSetExample.WordCount</span></span>
+
+<span class="go">STOPPED</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>and you can download the results of the computation:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral28_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral28 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral28 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral28 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral28 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral28 .example-tab-" + tab).click(change_tabbedparsedliteral28_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral28" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">call service FileSetExample.FileSetService GET counts?path=counts.out/part-r-00000</span></span>
+
+<span class="go">&lt; 200 OK</span>
+<span class="go">&lt; Content-Length: 60</span>
+<span class="go">a:1</span>
+<span class="go">five:1</span>
+<span class="go">hello:4</span>
+<span class="go">is:1</span>
+<span class="go">letter:1</span>
+<span class="go">say:1</span>
+<span class="go">the:1</span>
+<span class="go">word:2</span>
+<span class="go">world:1</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Note that we have to download a part file that is under the output path that was specified for the MapReduce program.
+This is because in MapReduce, every reducer writes a separate part file into the output directory.
+In this case, as we have fixed the number of reducers to one, there is only a single part file to download.</p>
+</div>
+<div class="section" id="dataset-management-operations">
+<h3><a class="headerlink" href="#dataset-management-operations" title="Perma-link to this heading">🔗</a>Dataset Management Operations</h3>
+<p>Instead of using the default input and output datasets that are created when the application is deployed,
+we can also create additional file sets using the <code class="docutils literal"><span class="pre">FileSetService</span></code>. For example, we can create an input
+dataset named <code class="docutils literal"><span class="pre">myin</span></code> using the <code class="docutils literal"><span class="pre">create</span></code> endpoint:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral29_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral29 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral29 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral29 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral29 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral29 .example-tab-" + tab).click(change_tabbedparsedliteral29_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral29" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">call service FileSetExample.FileSetService POST /myin/create body &quot;{ &#39;properties&#39;: { &#39;input.format&#39; : &#39;org.apache.hadoop.mapreduce.lib.input.TextInputFormat&#39; } }&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>The dataset properties for the new file set are given in the body of the request. Alternatively, we can clone an
+existing dataset's properties to create an output file set named <code class="docutils literal"><span class="pre">myout</span></code>:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral30_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral30 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral30 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral30 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral30 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral30 .example-tab-" + tab).click(change_tabbedparsedliteral30_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral30" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">call service FileSetExample.FileSetService POST /myout/create?clone=counts</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>We can now run the example with these two datasets as input and output. First, upload a file to the input dataset:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral31_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral31 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral31 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral31 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral31 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral31 .example-tab-" + tab).click(change_tabbedparsedliteral31_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral31" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">call service FileSetExample.FileSetService PUT myin?path=some.txt body:file examples/FileSetExample/resources/lines.txt</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Now start the MapReduce and provide extra runtime arguments to specify the input and output dataset:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral32_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral32 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral32 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral32 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral32 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral32 .example-tab-" + tab).click(change_tabbedparsedliteral32_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral32" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">start mapreduce FileSetExample.WordCount &quot;input=myin output=myout dataset.myin.input.paths=some.txt dataset.myout.output.path=counts.out&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Then we can retrieve the output of the MapReduce as previously:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral33_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral33 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral33 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral33 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral33 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral33 .example-tab-" + tab).click(change_tabbedparsedliteral33_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral33" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">call service FileSetExample.FileSetService GET myout?path=counts.out/part-r-00000</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Finally, we can delete the two datasets that we created:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral34_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral34 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral34 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral34 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral34 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral34 .example-tab-" + tab).click(change_tabbedparsedliteral34_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral34" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">call service FileSetExample.FileSetService POST /myin/drop</span></span>
+<span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">call service FileSetExample.FileSetService POST /myout/drop</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+<div class="section" id="stopping-and-removing-the-application">
+<h2><a class="headerlink" href="#stopping-and-removing-the-application" title="Perma-link to this heading">🔗</a>Stopping and Removing the Application</h2>
+<p>Once done, you can stop the application—if it hasn't stopped
+already—as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-stopping" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Stopping an Application</span></a>. Here is an example-specific
+description of the steps:</p>
+<p><strong>Stopping the Service</strong></p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>FileSetExample</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/FileSetExample/overview/programs">application overview page, programs tab</a>,
+click <em>FileSetService</em> to get to the service detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral35() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral35 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral35", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral35" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh stop service FileSetExample.FileSetService</span>
+
+<span class="go">Successfully stopped service &#39;FileSetService&#39; of application &#39;FileSetExample&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat stop service FileSetExample.FileSetService</span></span>
+
+<span class="go">Successfully stopped service &#39;FileSetService&#39; of application &#39;FileSetExample&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p><strong>Removing the Application</strong></p>
+<p>You can now remove the application as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-removing" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Removing an Application</span></a>, or:</p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>FileSetExample</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/FileSetExample/overview/programs">application overview page, programs tab</a>,
+click the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management
+pane for the application, then click the <em>Actions</em> menu on the right side and select
+<em>Delete</em> to delete the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral36() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral36 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral36", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral36" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh delete app FileSetExample</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat delete app FileSetExample</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clicks-and-views.html">Clicks and Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-cleansing.html">Data Cleansing</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">FileSet Example</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mapreduce-over-files">MapReduce over Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stopping-and-removing-the-application">Stopping and Removing the Application</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="log-analysis.html">Log Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spam-classifier.html">Spam Classifier</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sport-results.html">Sport Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream-conversion.html">Stream Conversion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user-profiles.html">User Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wikipedia-data-pipeline.html">Wikipedia Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Data Cleansing" href="data-cleansing.html" />Data Cleansing</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Log Analysis Example" href="log-analysis.html" />Log Analysis Example</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

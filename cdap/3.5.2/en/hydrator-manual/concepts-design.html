@@ -1,0 +1,344 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Introduction to Hydrator &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/hydrator-manual/concepts-design.html">
+
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="index.html" />
+    <link rel="next" title="Getting Started" href="getting-started.html" />
+    <link rel="prev" title="Cask Hydrator" href="index.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="getting-started.html" title="Getting Started"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Cask Hydrator"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="table-of-contents.html">Cask Hydrator</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="introduction-to-hydrator">
+<span id="cask-hydrator-concepts-design"></span><h1><a class="headerlink" href="#introduction-to-hydrator" title="Perma-link to this heading">🔗</a>Introduction to Hydrator</h1>
+<p>Cask Hydrator (called <em>Hydrator</em> for short) is a self-service, reconfigurable, extendable
+framework to develop, run, automate, and operate <strong>data pipelines</strong> on Hadoop. Completely
+open source, it is licensed under the Apache 2.0 license.</p>
+<p>Hydrator is an extension to CDAP and includes the <em>Cask Hydrator Studio</em>, a visual
+drag-and-drop interface for building data pipelines from an included library of pre-built
+plugins.</p>
+<p>Hydrator provides an operational view of the resulting pipeline that allows for lifecycle
+control and monitoring of the metrics, logs, and other runtime information. The pipeline
+can also be run directly in CDAP with tools such as the CDAP UI, the CDAP CLI, or command
+line tools.</p>
+<div class="section" id="pipelines">
+<h2><a class="headerlink" href="#pipelines" title="Perma-link to this heading">🔗</a>Pipelines</h2>
+<p>Pipelines are applications—specifically for the processing of data flows—created from artifacts.</p>
+<p>An <strong>artifact</strong> is an &quot;application template&quot;. A pipeline application is created by CDAP by
+using a <strong>configuration file</strong> that defines the desired application, along with whichever artifacts are
+specified inside the configuration. Artifacts for creating data pipelines are supplied
+with CDAP.</p>
+<div class="section" id="stages-and-plugins">
+<h3><a class="headerlink" href="#stages-and-plugins" title="Perma-link to this heading">🔗</a>Stages and Plugins</h3>
+<p>A pipeline can be viewed as consisting of a series of <em>stages</em>. Each stage is a usage
+of a <em>plugin</em>, an extension to CDAP that provides a specific functionality.</p>
+<p>A stage's configuration properties describes what that plugin is to do (read from a
+stream, write to a table, run a script), and is dependent on the particular plugin used.</p>
+<p>All stages are connected together in a directed acyclic graph (or <em>DAG</em>), which is
+shown in <em>Hydrator Studio</em> and in CDAP as a connected series of icons:</p>
+<a class="reference internal image-reference" href="_images/fork-in-pipeline.png"><img alt="_images/fork-in-pipeline.png" class="align-center" src="_images/fork-in-pipeline.png" style="width: 6in;" /></a>
+<p>The general progression in a pipeline is:</p>
+<ol class="arabic simple">
+<li><strong>Pre-run operations:</strong> any actions required before the pipeline can actually run, such
+as preparing resources</li>
+<li><strong>Data acquisition:</strong> obtaining data from a source or sources</li>
+<li><strong>Data transformation:</strong> manipulating the data acquired from the sources</li>
+<li><strong>Data publishing:</strong> saving the results of the transformation, either as additional data to a
+data <em>sink</em> or to a report</li>
+<li><strong>Post-run operations:</strong> any actions required once the pipeline run has completed, such
+as emailing notifications or cleaning up resources, regardless if the pipeline run
+succeeded or failed</li>
+</ol>
+<p>Different plugins are available to provide functionality for each stage.</p>
+</div>
+<div class="section" id="data-and-control-flow">
+<h3><a class="headerlink" href="#data-and-control-flow" title="Perma-link to this heading">🔗</a>Data and Control Flow</h3>
+<p>Processing in the pipeline is governed by two aspects: <em>data</em> and <em>control</em> flow.</p>
+<p><strong>Data flow</strong> is the movement of data, in the form of records, from one step of a pipeline
+to another. When data arrives at a stage, it triggers that stage's processing of the data
+and then the transference of results (if any) to the next stage.</p>
+<p><strong>Control flow</strong> is a parallel process that triggers a stage based on the result from
+another process, independent of the pipeline. Currently, control flow can be applied
+<em>only</em> to the <em>initial</em> stages (before any data flow stages run) and <em>final</em> stages (after
+all other data flow stages run) of a pipeline. A <em>post-run</em> stage is available after each
+pipeline run, successful or otherwise.</p>
+</div>
+<div class="section" id="logical-and-physical-pipelines">
+<h3><a class="headerlink" href="#logical-and-physical-pipelines" title="Perma-link to this heading">🔗</a>Logical and Physical Pipelines</h3>
+<p>Within CDAP, there is the concept of <em>logical</em> and <em>physical</em> pipelines.</p>
+<p>A <strong>logical pipeline</strong> is the view as seen in Hydrator Studio and the Cask Hydrator UI.
+It shows the stages, but not the underlying technology used to actually manifest and run the pipeline.</p>
+<p>A <strong>physical pipeline</strong> is the manifestation of a logical pipeline as a CDAP application,
+which is a collection of programs and services that read and write through the data
+abstraction layer in CDAP.</p>
+<p>A <em>planner</em> is responsible for converting the logical pipeline to the physical pipeline. The
+planner analyzes the logical view of the pipeline and converts it to the CDAP application.</p>
+</div>
+<div class="section" id="types-of-pipelines">
+<h3><a class="headerlink" href="#types-of-pipelines" title="Perma-link to this heading">🔗</a>Types of Pipelines</h3>
+<p>The data flows of a pipeline can be either <strong>batch</strong> or <strong>real-time,</strong> and a variety of
+processing paradigms (MapReduce or Spark) can be used.</p>
+<p><strong>Batch applications</strong> can be scheduled to run periodically using a cron expression and can
+read data from batch sources using a MapReduce job. The batch application then performs
+any of a number of optional transformations before writing to one or more batch sinks.</p>
+<p><strong>Real-time applications</strong> are designed to poll sources periodically to fetch the data,
+perform any optional transformations required, and then write to one or more real-time
+sinks.</p>
+<p>The pipelines are created from artifacts, either system artifacts (supplied as part of
+Hydrator) or user artifacts, <a class="reference external" href="source/../../developers-manual/building-blocks/artifacts.html#artifacts" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">created by a developer</span></a>.</p>
+</div>
+<div class="section" id="pipeline-lifecycle">
+<h3><a class="headerlink" href="#pipeline-lifecycle" title="Perma-link to this heading">🔗</a>Pipeline Lifecycle</h3>
+<p>Similar to other CDAP applications, pipelines have a lifecycle, and can be managed and
+controlled using the tools supplied by CDAP, such as the
+<a class="reference internal" href="running-pipelines.html#cask-hydrator-running-pipelines-within-hydrator"><span>Cask Hydrator UI</span></a>,
+the <a class="reference external" href="source/../../admin-manual/operations/cdap-ui.html#cdap-ui" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP UI</span></a>, the <a class="reference external" href="source/../../reference-manual/cli-api.html#cdap-cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP CLI</span></a>, and command line tools,
+using the <a class="reference external" href="source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle-start" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Lifecycle HTTP RESTful API</span></a>.</p>
+</div>
+</div>
+<div class="section" id="plugins">
+<span id="cask-hydrator-introduction-what-is-a-plugin"></span><h2><a class="headerlink" href="#plugins" title="Perma-link to this heading">🔗</a>Plugins</h2>
+<p>Data <em>sources</em>, transformations (called <em>transforms</em> for short), and data <em>sinks</em> are
+generically referred to as a <em>plugin</em>. Plugins provide a way to extend the functionality
+of existing artifacts. An application can be created with the existing plugins included
+with CDAP or, if a user wishes, they can write a plugin to add their own capability.</p>
+<p>See the <a class="reference internal" href="plugins/index.html#cask-hydrator-plugins"><span>reference section</span></a> for details on the capabilities
+and behavior of each plugin.</p>
+</div>
+<div class="section" id="properties">
+<h2><a class="headerlink" href="#properties" title="Perma-link to this heading">🔗</a>Properties</h2>
+<p>Each stage in a pipeline represents the configuration of a specific plugin, and that
+configuration usually requires that certain properties be specified. At a minimum, a
+unique name for the stage and the plugin being used is required, with any additional
+properties required dependent on the particular plugin used.</p>
+<p>See the <a class="reference internal" href="plugins/index.html#cask-hydrator-plugins"><span>reference section</span></a> for details on the properties
+required and supported for each plugin.</p>
+</div>
+<div class="section" id="schema">
+<h2><a class="headerlink" href="#schema" title="Perma-link to this heading">🔗</a>Schema</h2>
+<p>Each stage of a pipeline that emits data (basically, all stages except for <em>pre-run
+operations</em> and <em>data publishing</em>) emits data with a schema that is set for that stage.
+Schemas need to match appropriately from stage to stage, and controls within <em>Hydrator
+Studio</em> allow the propagation of a schema to subsequent stages.</p>
+<p>The schema allows you to control which fields and their types are used in all stages of
+pipeline. Certain plugins require specific schemas, and transform plugins are available to
+convert data to required formats and schemas.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">Cask Hydrator: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Concepts and Design</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pipelines">Pipelines</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#stages-and-plugins">Stages and Plugins</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-and-control-flow">Data and Control Flow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logical-and-physical-pipelines">Logical and Physical Pipelines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#types-of-pipelines">Types of Pipelines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pipeline-lifecycle">Pipeline Lifecycle</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#plugins">Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#properties">Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#schema">Schema</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="studio.html"> Hydrator Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-pipelines.html"> Creating Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running-pipelines.html"> Running Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugin-management.html"> Plugin Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugins/index.html"> Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developing-pipelines.html"> Developing Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developing-plugins/index.html"> Developing Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how-hydrator-works.html"> How Hydrator Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faqs.html"> FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html"> Glossary</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Cask Hydrator" href="index.html" />Cask Hydrator</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Getting Started" href="getting-started.html" />Getting Started</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

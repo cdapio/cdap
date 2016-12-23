@@ -1,0 +1,1485 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform Wikipedia Pipeline Application" name="description" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Wikipedia Pipeline &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/examples-manual/examples/wikipedia-data-pipeline.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="Word Count" href="word-count.html" />
+    <link rel="prev" title="Web Analytics Application" href="web-analytics.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="word-count.html" title="Word Count"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="web-analytics.html" title="Web Analytics Application"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="wikipedia-pipeline">
+<span id="examples-wikipedia-data-pipeline"></span><h1><a class="headerlink" href="#wikipedia-pipeline" title="Perma-link to this heading">🔗</a>Wikipedia Pipeline</h1>
+<p>A Cask Data Application Platform (CDAP) example demonstrating a typical batch data
+processing pipeline using CDAP Workflows.</p>
+<div class="section" id="overview">
+<h2><a class="headerlink" href="#overview" title="Perma-link to this heading">🔗</a>Overview</h2>
+<p>This example demonstrates a CDAP application performing analysis on Wikipedia data using MapReduce and Spark programs
+running within a CDAP Workflow: <em>WikipediaPipelineWorkflow</em>.</p>
+<p>This example can be run in both online and offline modes.</p>
+<ul class="simple">
+<li>In the <strong>online mode</strong>, the MapReduceProgram <em>WikipediaDataDownloader</em> reads the stream
+<em>pageTitleStream</em>, each event of which is an element from the output of the <a class="reference external" href="https://developers.facebook.com/docs/graph-api/reference/v2.4/object/likes">Facebook
+&quot;Likes&quot; API</a>. For
+each event, it downloads Wikipedia data for the page using the <a class="reference external" href="https://www.mediawiki.org/wiki/API:Main_page">MediaWiki
+Wikipedia API</a>. It stores the
+downloaded data in the <code class="docutils literal"><span class="pre">KeyValueTable</span></code> dataset <em>wikiData</em>.</li>
+</ul>
+<ul class="simple">
+<li>In the <strong>offline mode</strong>, it expects Wikipedia data formatted following the output of the
+MediaWiki API in the stream <em>wikiStream</em>. The MapReduce program <em>wikiDataToDataset</em>
+consumes this stream and stores it in the same <code class="docutils literal"><span class="pre">KeyValueTable</span></code> dataset <em>wikiData</em>.
+Data can be uploaded to the <em>wikiStream</em> using the CDAP CLI.</li>
+</ul>
+<p>Once raw Wikipedia data is available from using either the online or offline modes, the
+<em>WikipediaPipelineWorkflow</em> runs a MapReduce program <em>WikiContentValidatorAndNormalizer</em> that filters bad records from
+the raw data, as well as normalizes it by converting the wikitext-formatted data to plain text. It then stores the
+output in another <code class="docutils literal"><span class="pre">KeyValueTable</span></code> dataset called <em>normalized</em>.</p>
+<p>The <em>WikipediaPipelineWorkflow</em> then contains a fork, with two branches:</p>
+<ul class="simple">
+<li>One branch runs the Apache Spark program <em>SparkWikipediaClustering</em>. This program can be configured to either run
+<a class="reference external" href="http://spark.apache.org/docs/latest/mllib-clustering.html#latent-dirichlet-allocation-lda">Latent Dirichlet Allocation (LDA)</a>, or
+<a class="reference external" href="http://spark.apache.org/docs/latest/mllib-clustering.html#k-means">K-Means</a>. The algorithm can be chosen by
+setting the field <em>clusteringAlgorithm</em> in an application config. By default, the workflow is configured to use
+<em>LDA</em>, if the <em>clusteringAlgorithm</em> field is not specified. This program consumes normalized
+data and runs clustering on it using the configured algorithm. It stores its output in the CDAP Table dataset
+<em>clustering</em>, with one row for each iteration, and a column per topic containing the score for that topic.</li>
+<li>The other branch contains a MapReduce program <em>TopNMapReduce</em> that consumes the
+normalized data and produces the top &quot;N&quot; words in the dataset <em>topn</em>.</li>
+</ul>
+<p>Let's look at some of these components, and then run the application and see the results.</p>
+<div class="section" id="the-wikipediapipeline-application">
+<h3><a class="headerlink" href="#the-wikipediapipeline-application" title="Perma-link to this heading">🔗</a>The WikipediaPipeline Application</h3>
+<p>As in the other <a class="reference external" href="index.html">examples</a>, the components
+of the application are tied together by the class <code class="docutils literal"><span class="pre">WikipediaPipelineApp</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * App to demonstrate a data pipeline that processes Wikipedia data using a CDAP Workflow.</span>
+<span class="cm"> */</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">WikipediaPipelineApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span><span class="o">&lt;</span><span class="n">WikipediaPipelineApp</span><span class="o">.</span><span class="na">WikipediaAppConfig</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">PAGE_TITLES_STREAM</span> <span class="o">=</span> <span class="s">&quot;pageTitleStream&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">RAW_WIKIPEDIA_STREAM</span> <span class="o">=</span> <span class="s">&quot;wikiStream&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">PAGE_TITLES_DATASET</span> <span class="o">=</span> <span class="s">&quot;pages&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">RAW_WIKIPEDIA_DATASET</span> <span class="o">=</span> <span class="s">&quot;wikidata&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NORMALIZED_WIKIPEDIA_DATASET</span> <span class="o">=</span> <span class="s">&quot;normalized&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">SPARK_CLUSTERING_OUTPUT_DATASET</span> <span class="o">=</span> <span class="s">&quot;clustering&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">MAPREDUCE_TOPN_OUTPUT</span> <span class="o">=</span> <span class="s">&quot;topn&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">LIKES_TO_DATASET_MR_NAME</span> <span class="o">=</span> <span class="s">&quot;LikesToDataset&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">WIKIPEDIA_TO_DATASET_MR_NAME</span> <span class="o">=</span> <span class="s">&quot;WikiDataToDataset&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="n">PAGE_TITLES_STREAM</span><span class="o">));</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="n">RAW_WIKIPEDIA_STREAM</span><span class="o">));</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">StreamToDataset</span><span class="o">(</span><span class="n">LIKES_TO_DATASET_MR_NAME</span><span class="o">));</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">StreamToDataset</span><span class="o">(</span><span class="n">WIKIPEDIA_TO_DATASET_MR_NAME</span><span class="o">));</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">WikipediaDataDownloader</span><span class="o">());</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">WikiContentValidatorAndNormalizer</span><span class="o">());</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">TopNMapReduce</span><span class="o">());</span>
+    <span class="n">addSpark</span><span class="o">(</span><span class="k">new</span> <span class="n">SparkWikipediaClustering</span><span class="o">(</span><span class="n">getConfig</span><span class="o">()));</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">PAGE_TITLES_DATASET</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                  <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Page titles dataset&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">RAW_WIKIPEDIA_DATASET</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                  <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Raw Wikipedia dataset&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">NORMALIZED_WIKIPEDIA_DATASET</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                  <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Normalized Wikipedia dataset&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">SPARK_CLUSTERING_OUTPUT_DATASET</span><span class="o">,</span> <span class="n">Table</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                  <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Spark clustering output dataset&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">MAPREDUCE_TOPN_OUTPUT</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                  <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;MapReduce top-&#39;N&#39;-words output dataset&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+    <span class="n">addWorkflow</span><span class="o">(</span><span class="k">new</span> <span class="n">WikipediaPipelineWorkflow</span><span class="o">(</span><span class="n">getConfig</span><span class="o">()));</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">WikipediaService</span><span class="o">());</span>
+  <span class="o">}</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config for Wikipedia App.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">WikipediaAppConfig</span> <span class="kd">extends</span> <span class="n">Config</span> <span class="o">{</span>
+
+    <span class="nd">@Nullable</span>
+    <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">clusteringAlgorithm</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">WikipediaAppConfig</span><span class="o">()</span> <span class="o">{</span>
+      <span class="k">this</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="nf">WikipediaAppConfig</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">String</span> <span class="n">clusteringAlgorithm</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">this</span><span class="o">.</span><span class="na">clusteringAlgorithm</span> <span class="o">=</span> <span class="n">clusteringAlgorithm</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">?</span> <span class="s">&quot;lda&quot;</span> <span class="o">:</span> <span class="n">clusteringAlgorithm</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>This application demonstrates:</p>
+<ul class="simple">
+<li><strong>The use of assigning unique names,</strong> as the same MapReduce (<em>StreamToDataset</em>) is used twice in the workflow
+(<em>WikipediaPipelineWorkflow</em>) under two different names. Also, depending on the chosen <em>clusteringAlgorithm</em>, the
+name of the <em>SparkWikipediaClustering</em> will either be <em>SparkWikipediaClustering-LDA</em> or
+<em>SparkWikipediaClustering-KMEANS</em>.</li>
+<li><strong>The use of Workflow Tokens</strong> in:<ul>
+<li>Condition Predicates</li>
+<li>Setting MapReduce program configuration (setting it based on values in the token)</li>
+<li><code class="docutils literal"><span class="pre">map()</span></code> and <code class="docutils literal"><span class="pre">reduce()</span></code> functions (read-only, no updates)</li>
+<li>Spark Programs (reading from—and writing to—the workflow token; adding
+Spark Accumulators to the workflow token)</li>
+<li>Assertions in application unit tests</li>
+</ul>
+</li>
+<li><strong>The use of application configs</strong> to create—from the same artifact—different applications. Depending on the
+value chosen for the <em>clusteringAlgorithm</em>, there can be two different applications, one using LDA for clustering,
+and the other using K-Means. The application is packaged with the two possible application config JSON files at
+<em>resources/wikipedia-kmeans.json</em> and <em>resources/wikipedia-lda.json</em> in the application directory.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="building-and-starting">
+<h2><a class="headerlink" href="#building-and-starting" title="Perma-link to this heading">🔗</a>Building and Starting</h2>
+<ul>
+<li><p class="first">You can either build the example (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-example" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Building an Example Application</span></a>) or use the pre-built JAR file included in the CDAP SDK
+(as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying an Application</span></a>):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral161() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral161 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral161", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral161" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">examples/WikipediaPipeline/target/WikipediaPipeline-3.5.2.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">examples\WikipediaPipeline\target\WikipediaPipeline-3.5.2.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Start CDAP (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Starting and Stopping CDAP</span></a>).</p>
+</li>
+<li><p class="first">Deploy the application, as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying an Application</span></a>.
+For example, from the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral162() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral162 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral162", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral162" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact examples/WikipediaPipeline/target/WikipediaPipeline-3.5.2.jar</span>
+
+<span class="go">Successfully added artifact with name &#39;WikipediaPipeline&#39;</span>
+
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app WikipediaPipeline WikipediaPipeline 3.5.2 user</span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact examples\WikipediaPipeline\target\WikipediaPipeline-3.5.2.jar</span></span>
+
+<span class="go">Successfully added artifact with name &#39;WikipediaPipeline&#39;</span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app WikipediaPipeline WikipediaPipeline 3.5.2 user</span></span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Once the application (<em>WikipediaPipeline</em>) has been deployed, you can start its components, as described in general in
+<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-starting-application" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Starting an Application</span></a>, and
+detailed for this example in <a class="reference external" href="#deploying-the-example">deploying the example</a>.</p>
+</li>
+<li><p class="first">Once all components are deployed, <a class="reference external" href="#running-the-example">run the example</a>.</p>
+</li>
+<li><p class="first">When finished, you can <a class="reference external" href="#stopping-and-removing-the-application">stop and remove the application</a>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="deploying-the-example">
+<h2><a class="headerlink" href="#deploying-the-example" title="Perma-link to this heading">🔗</a>Deploying the Example</h2>
+<p>After deploying the <em>WikipediaPipeline</em> application, the Apache Spark program
+<em>SparkWikipediaClustering</em> needs to be loaded as the <em>WikipediaPipelineApp</em> and two
+versions of it be created.</p>
+<p>Since deploying the <em>WikipediaPipelineApp</em> involves loading an artifact and creating two
+applications from it, the preferred method of deploying it is to use the CDAP CLI.</p>
+<ul class="simple">
+<li>Load the Artifact:</li>
+</ul>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral163() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral163 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral163", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral163" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact examples/WikipediaPipeline/target/WikipediaPipeline-3.5.2.jar name WikipediaPipelineApp version 3.5.2</span>
+
+<span class="go">Successfully added artifact with name &#39;WikipediaPipelineApp&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact examples\WikipediaPipeline\target\WikipediaPipeline-3.5.2.jar name WikipediaPipelineApp version 3.5.2</span></span>
+
+<span class="go">Successfully added artifact with name &#39;WikipediaPipelineApp&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<ul class="simple">
+<li>Create an application using LDA as the clustering algorithm:</li>
+</ul>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral164() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral164 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral164", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral164" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app wiki-lda WikipediaPipelineApp 3.5.2 user examples/WikipediaPipeline/resources/wikipedia-lda.json</span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app wiki-lda WikipediaPipelineApp 3.5.2 user examples/WikipediaPipeline/resources/wikipedia-lda.json</span></span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<ul class="simple">
+<li>Create an application using K-Means as the clustering algorithm:</li>
+</ul>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral165() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral165 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral165", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral165" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app wiki-kmeans WikipediaPipelineApp 3.5.2 user examples/WikipediaPipeline/resources/wikipedia-kmeans.json</span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app wiki-kmeans WikipediaPipelineApp 3.5.2 user examples/WikipediaPipeline/resources/wikipedia-kmeans.json</span></span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+<div class="section" id="running-the-example">
+<h2><a class="headerlink" href="#running-the-example" title="Perma-link to this heading">🔗</a>Running the Example</h2>
+<div class="section" id="injecting-data">
+<h3><a class="headerlink" href="#injecting-data" title="Perma-link to this heading">🔗</a>Injecting data</h3>
+<p>The <em>pageTitleStream</em> consumes events in the format returned by the Facebook &quot;Likes&quot; Graph API.</p>
+<ul>
+<li><p class="first">Inject a file of Facebook &quot;Likes&quot; data to the stream <em>pageTitleStream</em> by running this command from the Standalone
+CDAP SDK directory, using the CDAP Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral166() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral166 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral166", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral166" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load stream pageTitleStream examples/WikipediaPipeline/resources/fb-likes-data.txt</span>
+
+<span class="go">Successfully loaded file to stream &#39;pageTitleStream&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load stream pageTitleStream examples/WikipediaPipeline/resources/fb-likes-data.txt</span></span>
+
+<span class="go">Successfully loaded file to stream &#39;pageTitleStream&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>The <em>wikiStream</em> consumes events in the format returned by the MediaWiki Wikipedia API.</p>
+</li>
+<li><p class="first">Inject a file of &quot;Wikipedia&quot; data to the stream <em>wikiStream</em> by running this command from the Standalone
+CDAP SDK directory, using the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral167() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral167 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral167", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral167" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load stream wikiStream examples/WikipediaPipeline/resources/wikipedia-data.txt</span>
+
+<span class="go">Successfully loaded file to stream &#39;wikiStream&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load stream wikiStream examples/WikipediaPipeline/resources/wikipedia-data.txt</span></span>
+
+<span class="go">Successfully loaded file to stream &#39;wikiStream&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-the-workflow">
+<h3><a class="headerlink" href="#starting-the-workflow" title="Perma-link to this heading">🔗</a>Starting the Workflow</h3>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>WikipediaPipeline</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/WikipediaPipeline/overview/programs">application overview page, programs tab</a>,
+click <em>WikipediaPipelineWorkflow</em> to get to the workflow detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral168() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral168 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral168", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral168" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start workflow WikipediaPipeline.WikipediaPipelineWorkflow</span>
+
+<span class="go">Successfully started workflow &#39;WikipediaPipelineWorkflow&#39; of application &#39;WikipediaPipeline&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start workflow WikipediaPipeline.WikipediaPipelineWorkflow</span></span>
+
+<span class="go">Successfully started workflow &#39;WikipediaPipelineWorkflow&#39; of application &#39;WikipediaPipeline&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Or, send a query via an HTTP request using the <code class="docutils literal"><span class="pre">curl</span></code> command:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral169() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral169 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral169", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral169" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;http://localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/workflows/WikipediaPipelineWorkflow/start&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;http://localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/workflows/WikipediaPipelineWorkflow/start&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p>These runtime arguments can be set for the <em>WikipediaPipelineWorkflow</em>:</p>
+<ul class="simple">
+<li><em>min.pages.threshold</em>: Threshold for the number of pages to exist in the <em>pageTitleStream</em> for the workflow to proceed.
+Defaults to 10.</li>
+<li><em>mode</em>: Set this to 'online' when you wish to download Wikipedia data over the Internet.
+Defaults to 'offline', in which case the workflow expects Wikipedia data to be in the <em>wikiStream</em>.</li>
+<li><em>stopwords.file</em>: The path to the file containing stopwords to filter in the <em>SparkWikipediaAnalyzer</em> program.
+If unspecified, no words are considered as stopwords.</li>
+<li><em>vocab.size</em>: The size of the vocabulary for the <em>SparkWikipediaAnalyzer</em> program. Defaults to 1000.</li>
+<li><em>topn.rank</em>: The number of top words to produce in the <em>TopNMapReduce</em> program. Defaults to 10.</li>
+<li><em>num.reduce.tasks</em>: The number of reduce tasks to set for the <em>TopNMapReduce</em> program. Defaults to 1.</li>
+</ul>
+<p>If you run with the default arguments, you will find that the pipeline starts but then
+stops after the first node, as the number of pages is less than the <em>min.pages.threshold</em>:</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/wikipedia-data-pipeline-1.png"><img alt="../_images/wikipedia-data-pipeline-1.png" class="bordered-image" src="../_images/wikipedia-data-pipeline-1.png" style="width: 800px;" /></a>
+</div>
+<p>Reduce the number of minimum number of pages (<code class="docutils literal"><span class="pre">min.pages.threshold</span></code>) to zero, and change
+the <code class="docutils literal"><span class="pre">mode</span></code> to <code class="docutils literal"><span class="pre">online</span></code>, by setting either the runtime arguments (which changes the
+<em>next</em> run) or the preferences (which changes <em>all</em> subsequent runs):</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/wikipedia-data-pipeline-2.png"><img alt="../_images/wikipedia-data-pipeline-2.png" class="bordered-image" src="../_images/wikipedia-data-pipeline-2.png" style="width: 800px;" /></a>
+</div>
+<p>You can also do this from a terminal:</p>
+<ul>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral170() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral170 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral170", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral170" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start workflow WikipediaPipeline.WikipediaPipelineWorkflow <span class="s2">&quot;\&quot;min.pages.threshold=0 mode=online\&quot;&quot;</span></span>
+
+<span class="go">Successfully started workflow &#39;WikipediaPipelineWorkflow&#39; of application &#39;WikipediaPipeline&#39;</span>
+<span class="go">with provided runtime arguments &#39;min.pages.threshold=0 mode=online&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start workflow WikipediaPipeline.WikipediaPipelineWorkflow &quot;\&quot;min.pages.threshold=0 mode=online\&quot;&quot;</span></span>
+
+<span class="go">Successfully started workflow &#39;WikipediaPipelineWorkflow&#39; of application &#39;WikipediaPipeline&#39;</span>
+<span class="go">with provided runtime arguments &#39;min.pages.threshold=0 mode=online&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Or, send a query via an HTTP request using the <code class="docutils literal"><span class="pre">curl</span></code> command:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral171() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral171 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral171", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral171" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST -d <span class="s1">&#39;{&quot;min.pages.threshold&quot;:&quot;0&quot;, &quot;mode&quot;:&quot;online&quot;}&#39;</span> <span class="se">\</span>
+<span class="go">&quot;http://localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/workflows/WikipediaPipelineWorkflow/start&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST -d &quot;{\&quot;min.pages.threshold\&quot;:\&quot;0\&quot;, \&quot;mode\&quot;:\&quot;online\&quot;}&quot; ^</span>
+<span class="go">&quot;http://localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/workflows/WikipediaPipelineWorkflow/start&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p>Once the pipeline has run through to the end (below), you can start the service and query the results.</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/wikipedia-data-pipeline-3.png"><img alt="../_images/wikipedia-data-pipeline-3.png" class="bordered-image" src="../_images/wikipedia-data-pipeline-3.png" style="width: 800px;" /></a>
+</div>
+</div>
+<div class="section" id="starting-the-service">
+<h3><a class="headerlink" href="#starting-the-service" title="Perma-link to this heading">🔗</a>Starting the Service</h3>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>WikipediaPipeline</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/WikipediaPipeline/overview/programs">application overview page, programs tab</a>,
+click <em>WikipediaService</em> to get to the service detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral172() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral172 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral172", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral172" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start service WikipediaPipeline.WikipediaService</span>
+
+<span class="go">Successfully started service &#39;WikipediaService&#39; of application &#39;WikipediaPipeline&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start service WikipediaPipeline.WikipediaService</span></span>
+
+<span class="go">Successfully started service &#39;WikipediaService&#39; of application &#39;WikipediaPipeline&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="retrieving-the-results">
+<h3><a class="headerlink" href="#retrieving-the-results" title="Perma-link to this heading">🔗</a>Retrieving the Results</h3>
+<p>The <em>WikipediaService</em> can retrieve results from the analysis performed by the <em>WikipediaPipelineWorkflow</em>.
+The service exposes these REST APIs, which can be accessed either with the CDAP CLI or <code class="docutils literal"><span class="pre">curl</span></code>.</p>
+<ul>
+<li><p class="first">Retrieve the list of topics generated by the <em>SparkWikipediaAnalyzer</em> program:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral173() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral173 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral173", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral173" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh call service WikipediaPipeline.WikipediaService GET /v1/functions/lda/topics</span>
+
+<span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X GET <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/services/WikipediaService/methods/v1/functions/lda/topics&quot;</span></span>
+
+<span class="go">[0,1,2,3,4,5,6,7,8,9]</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat call service WikipediaPipeline.WikipediaService GET /v1/functions/lda/topics</span></span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X GET &quot;localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/services/WikipediaService/methods/v1/functions/lda/topics&quot;</span></span>
+
+<span class="go">[0,1,2,3,4,5,6,7,8,9]</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Retrieve the details (terms and term weights) for a given (integer) topic:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral174() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral174 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral174", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral174" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh call service WikipediaPipeline.WikipediaService GET /v1/functions/lda/topics/0</span>
+
+<span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X GET <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/services/WikipediaService/methods/v1/functions/lda/topics/0&quot;</span></span>
+
+<span class="go">[{&quot;name&quot;:&quot;and&quot;,&quot;weight&quot;:0.038682279584092004},{&quot;name&quot;:&quot;company&quot;,&quot;weight&quot;:0.011716155714206075},</span>
+<span class="go">{&quot;name&quot;:&quot;facebook&quot;,&quot;weight&quot;:0.03279816812913312},{&quot;name&quot;:&quot;for&quot;,&quot;weight&quot;:0.0236260327332555},</span>
+<span class="go">{&quot;name&quot;:&quot;google&quot;,&quot;weight&quot;:0.03240608486488011},{&quot;name&quot;:&quot;its&quot;,&quot;weight&quot;:0.01541806996121385},</span>
+<span class="go">{&quot;name&quot;:&quot;that&quot;,&quot;weight&quot;:0.032277216101403945},{&quot;name&quot;:&quot;the&quot;,&quot;weight&quot;:0.08955250785732792},</span>
+<span class="go">{&quot;name&quot;:&quot;users&quot;,&quot;weight&quot;:0.013512787321319556},{&quot;name&quot;:&quot;was&quot;,&quot;weight&quot;:0.014201825107197289}]</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat call service WikipediaPipeline.WikipediaService GET /v1/functions/lda/topics/0</span></span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X GET &quot;localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/services/WikipediaService/methods/v1/functions/lda/topics/0&quot;</span></span>
+
+<span class="go">[{&quot;name&quot;:&quot;and&quot;,&quot;weight&quot;:0.038682279584092004},{&quot;name&quot;:&quot;company&quot;,&quot;weight&quot;:0.011716155714206075},</span>
+<span class="go">{&quot;name&quot;:&quot;facebook&quot;,&quot;weight&quot;:0.03279816812913312},{&quot;name&quot;:&quot;for&quot;,&quot;weight&quot;:0.0236260327332555},</span>
+<span class="go">{&quot;name&quot;:&quot;google&quot;,&quot;weight&quot;:0.03240608486488011},{&quot;name&quot;:&quot;its&quot;,&quot;weight&quot;:0.01541806996121385},</span>
+<span class="go">{&quot;name&quot;:&quot;that&quot;,&quot;weight&quot;:0.032277216101403945},{&quot;name&quot;:&quot;the&quot;,&quot;weight&quot;:0.08955250785732792},</span>
+<span class="go">{&quot;name&quot;:&quot;users&quot;,&quot;weight&quot;:0.013512787321319556},{&quot;name&quot;:&quot;was&quot;,&quot;weight&quot;:0.014201825107197289}]</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Retrieve the output of the <em>TopNMapReduce</em> program:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral175() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral175 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral175", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral175" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh call service WikipediaPipeline.WikipediaService GET /v1/functions/topn/words</span>
+
+<span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X GET <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/services/WikipediaService/methods/v1/functions/topn/words&quot;</span></span>
+
+<span class="go">[{&quot;The&quot;:627},{&quot;a&quot;:1466},{&quot;and&quot;:1844},{&quot;in&quot;:1415},{&quot;of&quot;:2076},{&quot;on&quot;:604},{&quot;that&quot;:644},{&quot;the&quot;:3857},{&quot;to&quot;:1620},{&quot;was&quot;:740}]</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat call service WikipediaPipeline.WikipediaService GET /v1/functions/topn/words</span></span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X GET &quot;localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/services/WikipediaService/methods/v1/functions/topn/words&quot;</span></span>
+
+<span class="go">[{&quot;The&quot;:627},{&quot;a&quot;:1466},{&quot;and&quot;:1844},{&quot;in&quot;:1415},{&quot;of&quot;:2076},{&quot;on&quot;:604},{&quot;that&quot;:644},{&quot;the&quot;:3857},{&quot;to&quot;:1620},{&quot;was&quot;:740}]</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="stopping-and-removing-the-application">
+<h2><a class="headerlink" href="#stopping-and-removing-the-application" title="Perma-link to this heading">🔗</a>Stopping and Removing the Application</h2>
+<p>Once done, you can stop the application—if it hasn't stopped
+already—as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-stopping" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Stopping an Application</span></a>. Here is an example-specific
+description of the steps:</p>
+<p><strong>Stopping the Workflow</strong></p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>WikipediaPipeline</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/WikipediaPipeline/overview/programs">application overview page, programs tab</a>,
+click <em>WikipediaPipelineWorkflow</em> to get to the workflow detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral176() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral176 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral176", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral176" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh stop workflow WikipediaPipeline.WikipediaPipelineWorkflow</span>
+
+<span class="go">Successfully stopped workflow &#39;WikipediaPipelineWorkflow&#39; of application &#39;WikipediaPipeline&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat stop workflow WikipediaPipeline.WikipediaPipelineWorkflow</span></span>
+
+<span class="go">Successfully stopped workflow &#39;WikipediaPipelineWorkflow&#39; of application &#39;WikipediaPipeline&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p><strong>Stopping the Service</strong></p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>WikipediaPipeline</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/WikipediaPipeline/overview/programs">application overview page, programs tab</a>,
+click <em>WikipediaService</em> to get to the service detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral177() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral177 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral177", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral177" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh stop service WikipediaPipeline.WikipediaService</span>
+
+<span class="go">Successfully stopped service &#39;WikipediaService&#39; of application &#39;WikipediaPipeline&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat stop service WikipediaPipeline.WikipediaService</span></span>
+
+<span class="go">Successfully stopped service &#39;WikipediaService&#39; of application &#39;WikipediaPipeline&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p><strong>Removing the Application</strong></p>
+<p>You can now remove the application as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-removing" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Removing an Application</span></a>, or:</p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>WikipediaPipeline</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/WikipediaPipeline/overview/programs">application overview page, programs tab</a>,
+click the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management
+pane for the application, then click the <em>Actions</em> menu on the right side and select
+<em>Delete</em> to delete the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral178() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral178 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral178", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral178" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh delete app WikipediaPipeline</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat delete app WikipediaPipeline</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clicks-and-views.html">Clicks and Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-cleansing.html">Data Cleansing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fileset-example.html">FileSet Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="log-analysis.html">Log Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spam-classifier.html">Spam Classifier</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sport-results.html">Sport Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream-conversion.html">Stream Conversion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user-profiles.html">User Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Wikipedia Pipeline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deploying-the-example">Deploying the Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stopping-and-removing-the-application">Stopping and Removing the Application</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Web Analytics Application" href="web-analytics.html" />Web Analytics Application</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Word Count" href="word-count.html" />Word Count</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

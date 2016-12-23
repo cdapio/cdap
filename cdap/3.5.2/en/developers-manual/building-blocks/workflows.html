@@ -1,0 +1,951 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Workflows &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/building-blocks/workflows.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Artifacts" href="artifacts.html" />
+    <link rel="prev" title="Workers" href="workers.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="artifacts.html" title="Artifacts"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="workers.html" title="Workers"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="workflows">
+<span id="id1"></span><h1><a class="headerlink" href="#workflows" title="Perma-link to this heading">🔗</a>Workflows</h1>
+<p><em>Workflows</em> are used to automate the execution of a series of <a class="reference internal" href="mapreduce-programs.html#mapreduce"><span>MapReduce</span></a>, <a class="reference internal" href="spark-programs.html#spark"><span>Spark</span></a> or <a class="reference internal" href="#workflow-custom-actions"><span>custom actions</span></a>. It
+allows for both sequential and <a class="reference internal" href="#workflow-parallel"><span>parallel execution</span></a> of programs.</p>
+<p>The workflow system allows specifying, executing, scheduling, and monitoring complex
+series of jobs and tasks in CDAP. The system can manage thousands of workflows and
+maintain millions of historic workflow logs.</p>
+<div class="section" id="overview">
+<h2><a class="headerlink" href="#overview" title="Perma-link to this heading">🔗</a>Overview</h2>
+<p>A <em>Workflow</em> is given a sequence of programs that follow each other, with an optional
+schedule to run the workflow periodically. Upon successful execution of a program, the
+control is transferred to the next program in the sequence until the last program in the
+sequence is executed. Upon failure, the execution is stopped at the failed program and no
+subsequent programs in the sequence are executed.</p>
+<p>The control flow of a workflow can be described as a directed, acyclic graph (DAG) of actions.
+To be more precise, we require that it be a series-parallel graph. This is a graph with a
+single start node and a single finish node; in between, the graph can be either a simple
+series of nodes or a more complicated <a class="reference internal" href="#workflow-parallel"><span>parallel workflow</span></a>.</p>
+<p>Workflows can be controlled by the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP CLI</span></a> and the <a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Lifecycle HTTP
+RESTful API</span></a>. The <a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle-status" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">status of a workflow</span></a> can be retrieved, workflows
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle-start" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">started</span></a> or
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle-stop" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">stopped</span></a>, and individual runs of a workflow
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle-workflow-runs-suspend-resume" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">suspended</span></a> or
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle-workflow-runs-suspend-resume" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">resumed</span></a>.</p>
+<p>A workflow can have one or more <a class="reference internal" href="schedules.html#schedules"><span>Schedules</span></a> that call upon it.
+These schedules are in a <em>suspended</em> state when the application is first deployed.
+Each schedule needs to be <em>resumed</em>, changing its status to <em>scheduled</em>, in order for the
+workflow to become executed following the schedule.</p>
+<div class="section" id="executing-mapreduce-or-spark-programs">
+<h3><a class="headerlink" href="#executing-mapreduce-or-spark-programs" title="Perma-link to this heading">🔗</a>Executing MapReduce or Spark Programs</h3>
+<p>To execute MapReduce or Spark programs in a workflow, you will need to add them in your
+application along with the workflow. You can (optionally) add a <a class="reference internal" href="schedules.html#schedules"><span>schedule</span></a> to a workflow using the <a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/app/ApplicationConfigurer.html#addSchedule(co.cask.cdap.api.schedule.Schedule,%20co.cask.cdap.api.schedule.SchedulableProgramType,%20java.lang.String,%20java.util.Map)">addSchedule</a>
+Java API.</p>
+<p>To add a schedule to an application extended from <code class="docutils literal"><span class="pre">AbstractApplication</span></code>, use the method
+<a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(co.cask.cdap.api.schedule.Schedule,%20java.lang.String)">scheduleWorkflow</a>
+instead:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">MyMapReduce</span><span class="o">());</span>
+  <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">AnotherMapReduce</span><span class="o">());</span>
+  <span class="n">addSpark</span><span class="o">(</span><span class="k">new</span> <span class="n">MySpark</span><span class="o">());</span>
+  <span class="n">addWorkflow</span><span class="o">(</span><span class="k">new</span> <span class="n">MyWorkflow</span><span class="o">());</span>
+  <span class="n">scheduleWorkflow</span><span class="o">(</span><span class="n">Schedules</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="s">&quot;FiveHourSchedule&quot;</span><span class="o">)</span>
+                     <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Schedule running every 5 hours&quot;</span><span class="o">)</span>
+                     <span class="o">.</span><span class="na">createTimeSchedule</span><span class="o">(</span><span class="s">&quot;0 */5 * * *&quot;</span><span class="o">),</span>
+                   <span class="s">&quot;MyWorkflow&quot;</span><span class="o">);</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>You'll then extend the <code class="docutils literal"><span class="pre">AbstractWorkflow</span></code> class and implement the <code class="docutils literal"><span class="pre">configure()</span></code>
+method. Inside <code class="docutils literal"><span class="pre">configure</span></code>, you can add multiple <a class="reference internal" href="mapreduce-programs.html#mapreduce"><span>MapReduce</span></a>,
+<a class="reference internal" href="spark-programs.html#spark"><span>Spark programs</span></a>, or <a class="reference internal" href="#workflow-custom-actions"><span>custom actions</span></a>
+to the workflow. The programs will be executed in the order they are specified in
+the <code class="docutils literal"><span class="pre">configure</span></code> method:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">MyWorkflow</span> <span class="kd">extends</span> <span class="n">AbstractWorkflow</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">WorkflowContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="c1">// Invoked before the Workflow run starts</span>
+    <span class="kd">super</span><span class="o">.</span><span class="na">initialize</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+      <span class="n">setName</span><span class="o">(</span><span class="s">&quot;MyWorkflow&quot;</span><span class="o">);</span>
+      <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;MyWorkflow description&quot;</span><span class="o">);</span>
+      <span class="n">addMapReduce</span><span class="o">(</span><span class="s">&quot;MyMapReduce&quot;</span><span class="o">);</span>
+      <span class="n">addSpark</span><span class="o">(</span><span class="s">&quot;MySpark&quot;</span><span class="o">);</span>
+      <span class="n">addMapReduce</span><span class="o">(</span><span class="s">&quot;AnotherMapReduce&quot;</span><span class="o">);</span>
+      <span class="n">addAction</span><span class="o">(</span><span class="k">new</span> <span class="n">MyAction</span><span class="o">());</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">destroy</span><span class="o">()</span> <span class="o">{</span>
+    <span class="c1">// Invoked after the execution of the Workflow</span>
+    <span class="c1">// Determine the status of the Workflow</span>
+    <span class="kt">boolean</span> <span class="n">isWorkflowSuccessful</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getState</span><span class="o">().</span><span class="na">getStatus</span><span class="o">()</span> <span class="o">==</span> <span class="n">ProgramStatus</span><span class="o">.</span><span class="na">COMPLETED</span><span class="o">;</span>
+
+    <span class="c1">// Get the state of all nodes that were executed as a part of this Workflow run.</span>
+    <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">WorkflowNodeState</span><span class="o">&gt;</span> <span class="n">nodeStates</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getNodeStates</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>In this example, the <code class="docutils literal"><span class="pre">MyWorkflow</span></code> will be executed every 5 hours. During each execution
+of the workflow, the <code class="docutils literal"><span class="pre">MyMapReduce</span></code>, <code class="docutils literal"><span class="pre">MySpark</span></code>, and <code class="docutils literal"><span class="pre">AnotherMapReduce</span></code> programs and
+the <code class="docutils literal"><span class="pre">MyAction</span></code> <a class="reference internal" href="#workflow-custom-actions"><span>custom action</span></a> will be executed in order.</p>
+<p>In addition to <code class="docutils literal"><span class="pre">configure()</span></code> method, extending from <code class="docutils literal"><span class="pre">AbstractWorkflow</span></code> allows you to
+implement these methods:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">initialize()</span></code></li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code></li>
+</ul>
+<p>The <code class="docutils literal"><span class="pre">initialize()</span></code> method is invoked at runtime before the start of the workflow run.
+Any error occurred in this method causes failure of the workflow.</p>
+<p>The <code class="docutils literal"><span class="pre">destroy()</span></code> method is invoked after the workflow run is completed, either successfully
+or on failure. <code class="docutils literal"><span class="pre">WorkflowContext</span></code> can be used to determine the status of the workflow. This method
+also has access to the state of all nodes that were executed as a part of the workflow run
+through the <code class="docutils literal"><span class="pre">WorkflowContext</span></code>. An error occurring in this method does not affect the status of the workflow.</p>
+</div>
+<div class="section" id="workflow-custom-action">
+<span id="workflow-custom-actions"></span><h3><a class="headerlink" href="#workflow-custom-action" title="Perma-link to this heading">🔗</a>Workflow Custom Action</h3>
+<p>In addition to MapReduce and Spark programs, a workflow can also execute <em>custom actions</em>.
+Custom actions are implemented in Java and can perform tasks such as sending an email.
+Since within a custom action you have control over transactions (they can be started only
+if there is dataset accesses), long-running tasks which do not require transactions can be
+executed in a custom action.</p>
+<p>To define a custom action, you will need to extend the <code class="docutils literal"><span class="pre">AbstractCustomAction</span></code> and
+implement its <code class="docutils literal"><span class="pre">run()</span></code> method:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">MyAction</span> <span class="kd">extends</span> <span class="n">AbstractCustomAction</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+    <span class="c1">// Your code goes here</span>
+    <span class="o">...</span>
+    <span class="c1">// Datasets can be accessed in this method using a transaction such as:</span>
+    <span class="n">getContext</span><span class="o">().</span><span class="na">execute</span><span class="o">(</span><span class="k">new</span> <span class="n">TxRunnable</span><span class="o">()</span> <span class="o">{</span>
+      <span class="nd">@Override</span>
+      <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">(</span><span class="n">DatasetContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+        <span class="n">Table</span> <span class="n">myDs</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getDataset</span><span class="o">(</span><span class="s">&quot;MyDataset&quot;</span><span class="o">);</span>
+        <span class="c1">// Perform dataset operations such as reading and writing</span>
+        <span class="n">myDs</span><span class="o">.</span><span class="na">write</span><span class="o">(...);</span>
+      <span class="o">}</span>
+    <span class="o">});</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The custom action then can be added to a workflow using the <code class="docutils literal"><span class="pre">addAction()</span></code> method, as
+shown in the previous example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">.</span> <span class="o">.</span> <span class="o">.</span>
+<span class="n">addAction</span><span class="o">(</span><span class="k">new</span> <span class="n">MyAction</span><span class="o">());</span>
+<span class="o">.</span> <span class="o">.</span> <span class="o">.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="assigning-unique-names">
+<span id="workflow-unique-names"></span><h3><a class="headerlink" href="#assigning-unique-names" title="Perma-link to this heading">🔗</a>Assigning Unique Names</h3>
+<p>It's important to assign unique names to each component of the workflow, especially when
+you use  multiple instances of the same program in the same workflow.</p>
+<p>These unique names can be set when the Workflow is first configured, passed to the
+instance of the program, and then be used when the program performs its own configuration.</p>
+<p>An example of this is the <a class="reference external" href="../source/../../examples-manual/examples/wikipedia-data-pipeline.html#examples-wikipedia-data-pipeline" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Wikipedia Pipeline</span></a> example, and
+its use of the <em>StreamToDataset</em> MapReduce program multiple times:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">StreamToDataset</span> <span class="kd">extends</span> <span class="n">AbstractMapReduce</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">name</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="nf">StreamToDataset</span><span class="o">(</span><span class="n">String</span> <span class="n">name</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="n">name</span><span class="o">);</span>
+    <span class="o">...</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>In its declaration of the application, the example specifies the unique names for each instance:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WikipediaPipelineApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">LIKES_TO_DATASET_MR_NAME</span> <span class="o">=</span> <span class="s">&quot;likesToDataset&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">WIKIPEDIA_TO_DATASET_MR_NAME</span> <span class="o">=</span> <span class="s">&quot;wikiDataToDataset&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="o">...</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">StreamToDataset</span><span class="o">(</span><span class="n">LIKES_TO_DATASET_MR_NAME</span><span class="o">));</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">StreamToDataset</span><span class="o">(</span><span class="n">WIKIPEDIA_TO_DATASET_MR_NAME</span><span class="o">));</span>
+    <span class="o">...</span>
+    <span class="n">addWorkflow</span><span class="o">(</span><span class="k">new</span> <span class="n">WikipediaPipelineWorkflow</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The workflow itself uses the same names in its configuration:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WikipediaPipelineWorkflow</span> <span class="kd">extends</span> <span class="n">AbstractWorkflow</span> <span class="o">{</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="n">WikipediaPipelineWorkflow</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getSimpleName</span><span class="o">();</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="n">NAME</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;A workflow that demonstrates a typical data pipeline to process Wikipedia data.&quot;</span><span class="o">);</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="n">WikipediaPipelineApp</span><span class="o">.</span><span class="na">LIKES_TO_DATASET_MR_NAME</span><span class="o">);</span>
+    <span class="n">condition</span><span class="o">(</span><span class="k">new</span> <span class="n">EnoughDataToProceed</span><span class="o">())</span>
+      <span class="o">.</span><span class="na">condition</span><span class="o">(</span><span class="k">new</span> <span class="n">IsWikipediaSourceOnline</span><span class="o">())</span>
+        <span class="o">.</span><span class="na">addAction</span><span class="o">(</span><span class="k">new</span> <span class="n">DownloadWikiDataAction</span><span class="o">())</span>
+      <span class="o">.</span><span class="na">otherwise</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="n">WikipediaPipelineApp</span><span class="o">.</span><span class="na">WIKIPEDIA_TO_DATASET_MR_NAME</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">end</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="n">WikiContentValidatorAndNormalizer</span><span class="o">.</span><span class="na">NAME</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">fork</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addSpark</span><span class="o">(</span><span class="n">SparkWikipediaAnalyzer</span><span class="o">.</span><span class="na">NAME</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">also</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="n">TopNMapReduce</span><span class="o">.</span><span class="na">NAME</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">join</span><span class="o">()</span>
+    <span class="o">.</span><span class="na">otherwise</span><span class="o">()</span>
+    <span class="o">.</span><span class="na">end</span><span class="o">();</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="local-datasets-in-workflow">
+<span id="workflow-concurrent"></span><h3><a class="headerlink" href="#local-datasets-in-workflow" title="Perma-link to this heading">🔗</a>Local Datasets in Workflow</h3>
+<p>Local datasets are the datasets that are created for each workflow run and deleted once the
+workflow run finishes. Consider a workflow which runs multiple actions with output of one action
+is given as an input to the next action. However, we are only interested in the output of the final
+action. In this case, datasets created by intermediate stages can be defined as local datasets when
+configuring the workflow. This allows the workflow system to manage such temporary storage for you.</p>
+<p>The local datasets can be configured in the workflow as:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WorkflowWithLocalDatasets</span> <span class="kd">extends</span> <span class="n">AbstractWorkflow</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="o">...</span>
+    <span class="n">createLocalDataset</span><span class="o">(</span><span class="s">&quot;WordCount&quot;</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">createLocalDataset</span><span class="o">(</span><span class="s">&quot;CSVData&quot;</span><span class="o">,</span> <span class="n">FileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span><span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+    <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+    <span class="o">...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">WordCount</span></code> and <code class="docutils literal"><span class="pre">CSVData</span></code> are configured as local datasets for a workflow. For every workflow run,
+these datasets will be created and they will be named as <code class="docutils literal"><span class="pre">WordCount.&lt;unique_id&gt;</span></code> and
+<code class="docutils literal"><span class="pre">CSVData.&lt;unique_id&gt;</span></code>. Once the run is complete they will be deleted by the workflow system.</p>
+<p>Local datasets can be retained after the workflow run is complete by setting the runtime
+argument <code class="docutils literal"><span class="pre">dataset.&lt;dataset_name&gt;.keep.local</span></code> to <code class="docutils literal"><span class="pre">true</span></code>. For example in order to keep a <em>WordCount</em>
+dataset even after the workflow run is complete, set the runtime argument <code class="docutils literal"><span class="pre">dataset.WordCount.keep.local</span></code>
+to <code class="docutils literal"><span class="pre">true</span></code>. To keep all local datasets, set the runtime argument <code class="docutils literal"><span class="pre">dataset.*.keep.local</span></code> to <code class="docutils literal"><span class="pre">true</span></code>.</p>
+</div>
+<div class="section" id="concurrent-workflows">
+<h3><a class="headerlink" href="#concurrent-workflows" title="Perma-link to this heading">🔗</a>Concurrent Workflows</h3>
+<p>By default, a workflow runs concurrently, allowing multiple instances of a workflow to be
+run simultaneously. However, for scheduled workflows, the number of concurrent runs can be
+controlled by <a class="reference internal" href="schedules.html#run-constraints"><span>setting a maximum number</span></a> of runs.</p>
+</div>
+</div>
+<div class="section" id="workflow-tokens">
+<span id="workflow-token"></span><h2><a class="headerlink" href="#workflow-tokens" title="Perma-link to this heading">🔗</a>Workflow Tokens</h2>
+<p>In addition to passing the control flow from one node to the next, a <strong>workflow token</strong> is
+passed, available to each of the programs in the workflow. This allows programs to:</p>
+<ul class="simple">
+<li>pass custom data (such as a counter, a status, or an error code) from one program in the
+workflow to subsequent programs;</li>
+<li>query and set the data in the token;</li>
+<li>fetch the data from the token which was set by a specific node; and</li>
+<li>alter the job configuration based on a key in the token; for example, set a different
+mapper/reducer class or a different input/output dataset for a Spark or MapReduce program.</li>
+</ul>
+<p>The API is intended to allow appropriate action to be taken in response to the token, including
+logging and modifying the conditional execution of the workflow based on the token.</p>
+<p>Once a run is completed, you can query the tokens from past workflow runs for analyses that
+determine which node was executed more frequently and when. You can retrieve the token values
+that were added by a specific node in the workflow to debug the flow of execution.</p>
+<p>When an action is started by a workflow, the action always receives a non-null instance of the WorkflowToken.
+However, when a MapReduce or Spark program is started directly (outside of a workflow), the WorkflowToken
+received from the context of the program is null. Since custom actions are always started by a workflow,
+they will always receive a non-null WorkflowToken instance.</p>
+<div class="section" id="scope">
+<h3><a class="headerlink" href="#scope" title="Perma-link to this heading">🔗</a>Scope</h3>
+<p>Two scopes—<em>System</em> and <em>User</em>—are provided for workflow keys. CDAP adds keys
+(such as MapReduce counters) under the <em>System</em> scope. Keys added by user programs are
+stored under the <em>User</em> scope.</p>
+</div>
+<div class="section" id="putting-and-getting-token-values">
+<h3><a class="headerlink" href="#putting-and-getting-token-values" title="Perma-link to this heading">🔗</a>Putting and Getting Token Values</h3>
+<p>When a value is put into a token, it is stored under a specific key. Both keys and their
+corresponding values must be non-null. The token stores additional information about the
+context in which the key is being set, such as the unique name of the workflow node.
+To put a value into a token, first obtain access to the token from the workflow context,
+and then set a value for a specific key.</p>
+<p>In the case of a MapReduce program, the program's Mapper and Reducer classes need to
+implement <code class="docutils literal"><span class="pre">ProgramLifecycle&lt;MapReduceTaskContext&gt;</span></code>. After doing so, they can access the
+workflow token in either the <code class="docutils literal"><span class="pre">initialize</span></code> or <code class="docutils literal"><span class="pre">destroy</span></code> methods. To access it in the
+<code class="docutils literal"><span class="pre">map</span></code> or <code class="docutils literal"><span class="pre">reduce</span></code> methods, you would need to cache a reference to the workflow token
+object as a class member in the <code class="docutils literal"><span class="pre">initialize()</span></code> method. This is because the context
+object passed to those methods is a Hadoop class that is unaware of CDAP and its workflow
+tokens.</p>
+<p>Here is an example, taken from the
+<a class="reference external" href="../source/../../examples-manual/examples/wikipedia-data-pipeline.html#examples-wikipedia-data-pipeline" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Wikipedia Pipeline</span></a> example's <code class="docutils literal"><span class="pre">TopNMapReduce.java</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre>  <span class="cm">/**</span>
+<span class="cm">   * Reducer that outputs top N tokens. Implements {@link ProgramLifecycle} to demonstrate accessing workflow</span>
+<span class="cm">   * token in a Mapper/Reducer class.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">TopNReducer</span> <span class="kd">extends</span> <span class="n">Reducer</span><span class="o">&lt;</span><span class="n">Text</span><span class="o">,</span> <span class="n">IntWritable</span><span class="o">,</span> <span class="kt">byte</span> <span class="o">[],</span> <span class="kt">byte</span> <span class="o">[]&gt;</span>
+    <span class="kd">implements</span> <span class="n">ProgramLifecycle</span><span class="o">&lt;</span><span class="n">MapReduceContext</span><span class="o">&gt;</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="n">Map</span><span class="o">&lt;</span><span class="n">Text</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">countMap</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HashMap</span><span class="o">&lt;&gt;();</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">10</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+      <span class="n">WorkflowToken</span> <span class="n">workflowToken</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getWorkflowToken</span><span class="o">();</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">workflowToken</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Value</span> <span class="n">value</span> <span class="o">=</span> <span class="n">workflowToken</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;topn.rank&quot;</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">value</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+          <span class="n">n</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="na">getAsInt</span><span class="o">();</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> The test of <code class="docutils literal"><span class="pre">workflowToken</span> <span class="pre">!=</span> <span class="pre">null</span></code> is only required because this Reducer could
+be used outside of a workflow. When run from within a workflow, the token is guaranteed to
+be non-null.</p>
+<p>The <a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/workflow/WorkflowToken.html">WorkflowToken Java API</a>
+includes methods for getting values for different keys, scopes, and nodes. The same
+key can be added to the workflow by different nodes, and there are methods to return a map of those
+key-value pairs. Convenience methods allow the putting and getting of non-string values
+through the use of the class <code class="docutils literal"><span class="pre">Value</span></code>.</p>
+</div>
+<div class="section" id="mapreduce-counters-and-workflow-tokens">
+<h3><a class="headerlink" href="#mapreduce-counters-and-workflow-tokens" title="Perma-link to this heading">🔗</a>MapReduce Counters and Workflow Tokens</h3>
+<p>When a workflow executes a MapReduce program, MapReduce counters generated by the program are added to the
+workflow token under the <em>system</em> scope. Counters can be defined either by the MapReduce framework or applications.</p>
+<p>The counters defined by the MapReduce framework can be retrieved from the workflow token by using
+a key composed of the counter group name, followed by a &quot;.&quot;, followed by the name of the counter.
+For example, to access the number of input records to the map method of the <code class="docutils literal"><span class="pre">PurchaseHistoryBuilder</span></code>
+MapReduce program:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">String</span> <span class="n">counterGroupName</span> <span class="o">=</span> <span class="s">&quot;org.apache.hadoop.mapreduce.TaskCounter&quot;</span><span class="o">;</span>
+<span class="n">String</span> <span class="n">counterName</span> <span class="o">=</span> <span class="s">&quot;MAP_INPUT_RECORDS&quot;</span><span class="o">;</span>
+<span class="n">String</span> <span class="n">counterKey</span> <span class="o">=</span> <span class="n">counterGroupName</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span> <span class="o">+</span> <span class="n">counterName</span><span class="o">;</span>
+<span class="kt">long</span> <span class="n">counterValue</span> <span class="o">=</span> <span class="n">workflowToken</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">counterKey</span><span class="o">,</span> <span class="s">&quot;PurchaseHistoryBuilder&quot;</span><span class="o">,</span> <span class="n">WorkflowToken</span><span class="o">.</span><span class="na">Scope</span><span class="o">.</span><span class="na">SYSTEM</span><span class="o">).</span><span class="na">getAsLong</span><span class="o">();</span>
+</pre></div>
+</div>
+<p>Applications can define the counters using an <code class="docutils literal"><span class="pre">enum</span></code> such as:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Application defined counters using enum</span>
+<span class="kd">public</span> <span class="kd">static</span> <span class="kd">enum</span> <span class="n">MY_COUNTER</span> <span class="o">{</span>
+  <span class="n">BY_TYPE</span><span class="o">,</span>
+  <span class="n">BY_NAME</span>
+<span class="o">}</span>
+
+<span class="c1">// Access the counters in the MapReduce program</span>
+<span class="n">context</span><span class="o">.</span><span class="na">getCounter</span><span class="o">(</span><span class="n">MY_COUNTER</span><span class="o">.</span><span class="na">BY_TYPE</span><span class="o">).</span><span class="na">increment</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>These counters can be retrieved from the workflow token by using a key composed of the class name of the
+<code class="docutils literal"><span class="pre">enum</span></code> as the counter group name, followed by a &quot;.&quot;, followed by the <code class="docutils literal"><span class="pre">enum</span></code> member as the name of the counter:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">String</span> <span class="n">counterGroupName</span> <span class="o">=</span> <span class="n">MY_COUNTER</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">();</span>
+<span class="n">String</span> <span class="n">counterName</span> <span class="o">=</span> <span class="s">&quot;BY_TYPE&quot;</span><span class="o">;</span>
+<span class="n">String</span> <span class="n">counterKey</span> <span class="o">=</span> <span class="n">counterGroupName</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span> <span class="o">+</span> <span class="n">counterName</span><span class="o">;</span>
+<span class="kt">long</span> <span class="n">counterValue</span> <span class="o">=</span> <span class="n">workflowToken</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">counterKey</span><span class="o">,</span> <span class="s">&quot;PurchaseHistoryBuilder&quot;</span><span class="o">,</span> <span class="n">WorkflowToken</span><span class="o">.</span><span class="na">Scope</span><span class="o">.</span><span class="na">SYSTEM</span><span class="o">).</span><span class="na">getAsLong</span><span class="o">();</span>
+</pre></div>
+</div>
+<p>Applications can also define counters by explicitly providing a counter group name and counter name:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">context</span><span class="o">.</span><span class="na">getCounter</span><span class="o">(</span><span class="s">&quot;MyCounterGroup&quot;</span><span class="o">,</span> <span class="s">&quot;MyCounter&quot;</span><span class="o">).</span><span class="na">increment</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>These counters can be retrieved from the workflow token by using a key composed of the explicitly-provided
+counter group name, followed by a &quot;.&quot;, followed by the explicitly-provided name of the counter:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">String</span> <span class="n">counterGroupName</span> <span class="o">=</span> <span class="s">&quot;MyCounterGroup&quot;</span><span class="o">;</span>
+<span class="n">String</span> <span class="n">counterName</span> <span class="o">=</span> <span class="s">&quot;MyCounter&quot;</span><span class="o">;</span>
+<span class="n">String</span> <span class="n">counterKey</span> <span class="o">=</span> <span class="n">counterGroupName</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span> <span class="o">+</span> <span class="n">counterName</span><span class="o">;</span>
+<span class="kt">long</span> <span class="n">counterValue</span> <span class="o">=</span> <span class="n">workflowToken</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">counterKey</span><span class="o">,</span> <span class="s">&quot;PurchaseHistoryBuilder&quot;</span><span class="o">,</span> <span class="n">WorkflowToken</span><span class="o">.</span><span class="na">Scope</span><span class="o">.</span><span class="na">SYSTEM</span><span class="o">).</span><span class="na">getAsLong</span><span class="o">();</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="spark-accumulators-and-workflow-tokens">
+<h3><a class="headerlink" href="#spark-accumulators-and-workflow-tokens" title="Perma-link to this heading">🔗</a>Spark Accumulators and Workflow Tokens</h3>
+<p><a class="reference external" href="https://spark.apache.org/docs/latest/programming-guide.html#accumulators-a-nameaccumlinka">Spark Accumulators</a>
+can be accessed through the SparkContext, and used with workflow tokens. This allows the
+values in the accumulators to be accessed through workflow tokens. An example of this is in
+the <a class="reference external" href="../source/../../examples-manual/examples/wikipedia-data-pipeline.html#examples-wikipedia-data-pipeline" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Wikipedia Pipeline</span></a> example's <code class="docutils literal"><span class="pre">ClusteringUtils.scala</span></code>:</p>
+<div class="highlight-scala"><div class="highlight"><pre><span class="n">sec</span><span class="o">.</span><span class="n">getWorkflowToken</span><span class="o">.</span><span class="n">foreach</span><span class="o">(</span><span class="n">token</span> <span class="k">=&gt;</span> <span class="o">{</span>
+  <span class="n">token</span><span class="o">.</span><span class="n">put</span><span class="o">(</span><span class="s">&quot;num.records&quot;</span><span class="o">,</span> <span class="nc">Value</span><span class="o">.</span><span class="n">of</span><span class="o">(</span><span class="n">numRecords</span><span class="o">.</span><span class="n">value</span><span class="o">))</span>
+  <span class="n">token</span><span class="o">.</span><span class="n">put</span><span class="o">(</span><span class="s">&quot;highest.score.term&quot;</span><span class="o">,</span> <span class="n">highestScore</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">name</span><span class="o">)</span>
+  <span class="n">token</span><span class="o">.</span><span class="n">put</span><span class="o">(</span><span class="s">&quot;highest.score.value&quot;</span><span class="o">,</span> <span class="nc">Value</span><span class="o">.</span><span class="n">of</span><span class="o">(</span><span class="n">highestScore</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">weight</span><span class="o">))</span>
+<span class="o">})</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="persisting-the-workflowtoken">
+<h3><a class="headerlink" href="#persisting-the-workflowtoken" title="Perma-link to this heading">🔗</a>Persisting the WorkflowToken</h3>
+<p>The <code class="docutils literal"><span class="pre">WorkflowToken</span></code> is persisted after each action in the workflow has completed.</p>
+</div>
+<div class="section" id="examples">
+<h3><a class="headerlink" href="#examples" title="Perma-link to this heading">🔗</a>Examples</h3>
+<p>In this code sample, we show how to update the WorkflowToken in a MapReduce program:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">beforeSubmit</span><span class="o">(</span><span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="n">WorkflowToken</span> <span class="n">workflowToken</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getWorkflowToken</span><span class="o">();</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">workflowToken</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// Put the action type in the WorkflowToken</span>
+    <span class="n">workflowToken</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;action.type&quot;</span><span class="o">,</span> <span class="s">&quot;MAPREDUCE&quot;</span><span class="o">);</span>
+    <span class="c1">// Put the start time for the action</span>
+    <span class="n">workflowToken</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;start.time&quot;</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">()));</span>
+  <span class="o">}</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+
+<span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="n">WorkflowToken</span> <span class="n">workflowToken</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getWorkflowToken</span><span class="o">();</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">workflowToken</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// Put the end time for the action</span>
+    <span class="n">workflowToken</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;end.time&quot;</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">()));</span>
+  <span class="o">}</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p><strong>A token can only be updated</strong> in:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">beforeSubmit</span></code> and <code class="docutils literal"><span class="pre">onFinish</span></code> methods of a MapReduce program;</li>
+<li>Driver of a Spark program;</li>
+<li>custom action; and</li>
+<li>predicates of condition nodes.</li>
+</ul>
+<p><strong>You will get an exception</strong> if you try to update the workflow token in:</p>
+<ul class="simple">
+<li>map or reduce methods; or</li>
+<li>Executors in Spark programs.</li>
+</ul>
+<p>You can always read the workflow token in any of the above situations. The <a class="reference external" href="../source/../../examples-manual/examples/wikipedia-data-pipeline.html#examples-wikipedia-data-pipeline" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Wikipedia
+Pipeline example</span></a> demonstrates some of these techniques.</p>
+</div>
+</div>
+<div class="section" id="parallelizing-workflow-execution">
+<span id="workflow-parallel"></span><h2><a class="headerlink" href="#parallelizing-workflow-execution" title="Perma-link to this heading">🔗</a>Parallelizing Workflow Execution</h2>
+<p>The control flow of a workflow can be described as a directed, acyclic graph (DAG) of actions.
+To be more precise, we require that it be a series-parallel graph. This is a graph with a
+single start node and a single finish node. In between, execution can fork into concurrent
+branches, but the graph may not have cycles. Every action can be a batch job or a custom
+action (implemented in Java; for example, making a RESTful call to an external system).</p>
+<p>For example, a simple control flow could be computing user and product profiles from
+purchase events. After the start, a batch job could start that joins the events with the
+product catalog. After that, execution could continue with a fork, and with two batch jobs
+running in parallel: one computing product profiles; while the other computes user
+profiles. When they are both done, execution is joined and continues with a custom action
+to upload the computed profiles to a serving system, after which the control flow
+terminates:</p>
+<a class="reference internal image-reference" href="../_images/parallelized-workflow.png"><img alt="../_images/parallelized-workflow.png" class="align-center" src="../_images/parallelized-workflow.png" style="width: 8in;" /></a>
+<div class="section" id="forks-and-joins">
+<h3><a class="headerlink" href="#forks-and-joins" title="Perma-link to this heading">🔗</a>Forks and Joins</h3>
+<p>To create such a workflow, you provide a series of <em>forks</em> and <em>joins</em> in your workflow
+specification, following these rules:</p>
+<ul class="simple">
+<li>Where your control flow initially splits, you place a <code class="docutils literal"><span class="pre">fork</span></code> method.</li>
+<li>Every time your control flow splits, you add additional <code class="docutils literal"><span class="pre">fork</span></code> methods.</li>
+<li>Every point where you have either a program or an action, you add a <code class="docutils literal"><span class="pre">addMapReduce</span></code>,
+<code class="docutils literal"><span class="pre">addSpark</span></code>, or <code class="docutils literal"><span class="pre">addAction</span></code> method.</li>
+<li>To show each fork, use a <code class="docutils literal"><span class="pre">also</span></code> method to separate the different branches of the
+control flow.</li>
+<li>Where your control flow reconnects, you add a <code class="docutils literal"><span class="pre">join</span></code> method to indicate.</li>
+<li>The control flow always concludes with a <code class="docutils literal"><span class="pre">join</span></code> method.</li>
+</ul>
+<p>The application shown above could be coded (assuming the other classes referred to exist) as:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ParallelizedWorkflow</span> <span class="kd">extends</span> <span class="n">AbstractWorkflow</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;ParallelizedWorkflow&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Demonstration of parallelizing execution of a workflow&quot;</span><span class="o">);</span>
+
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="s">&quot;JoinWithCatalogMR&quot;</span><span class="o">);</span>
+
+    <span class="n">fork</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;BuildProductProfileMR&quot;</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">also</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;BuildUserProfileMR&quot;</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">join</span><span class="o">();</span>
+
+    <span class="n">addAction</span><span class="o">(</span><span class="k">new</span> <span class="n">UploadProfilesCA</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Provided that the control flow does not have cycles or the joining of any branches that do
+not originate from the same fork, flows of different complexity can be created using these
+rules and methods.</p>
+<p>More complicated structures can be created using <code class="docutils literal"><span class="pre">fork</span></code>. To add another MapReduce
+that runs in parallel to the entire process described above, you could use code such as:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ComplexParallelizedWorkflow</span> <span class="kd">extends</span> <span class="n">AbstractWorkflow</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;ComplexParallelizedWorkflow&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Demonstration of parallelized execution using a complex fork in a workflow&quot;</span><span class="o">);</span>
+
+    <span class="n">fork</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;JoinWithCatalogMR&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">fork</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;BuildProductProfileMR&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">also</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;BuildUserProfileMR&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">join</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addAction</span><span class="o">(</span><span class="k">new</span> <span class="n">UploadProfilesCA</span><span class="o">())</span>
+    <span class="o">.</span><span class="na">also</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;LogMonitoringMR&quot;</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">join</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The diagram for this code would be:</p>
+<a class="reference internal image-reference" href="../_images/complex-parallelized-workflow.png"><img alt="../_images/complex-parallelized-workflow.png" class="align-center" src="../_images/complex-parallelized-workflow.png" style="width: 8in;" /></a>
+</div>
+<div class="section" id="conditional-node">
+<h3><a class="headerlink" href="#conditional-node" title="Perma-link to this heading">🔗</a>Conditional Node</h3>
+<p>You can provide a <em>conditional</em> node in your structure that allows for branching based on
+a boolean predicate.</p>
+<p>Taking our first example and modifying it, you could use code such as:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ConditionalWorkflow</span> <span class="kd">extends</span> <span class="n">AbstractWorkflow</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;ConditionalWorkflow&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Demonstration of conditional execution of a workflow&quot;</span><span class="o">);</span>
+
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="s">&quot;JoinWithCatalogMR&quot;</span><span class="o">);</span>
+
+    <span class="n">condition</span><span class="o">(</span><span class="k">new</span> <span class="n">MyPredicate</span><span class="o">())</span>
+      <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;BuildProductProfileMR&quot;</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">otherwise</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;BuildUserProfileMR&quot;</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">end</span><span class="o">();</span>
+
+    <span class="n">addAction</span><span class="o">(</span><span class="k">new</span> <span class="n">UploadProfilesCA</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal"><span class="pre">MyPredicate</span></code> is a public class which implements the <code class="docutils literal"><span class="pre">Predicate</span></code> interface as:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">MyPredicate</span> <span class="kd">implements</span> <span class="n">Predicate</span><span class="o">&lt;</span><span class="n">WorkflowContext</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">apply</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">WorkflowContext</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">WorkflowToken</span> <span class="n">token</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getToken</span><span class="o">();</span>
+    <span class="kt">int</span> <span class="n">productProfiles</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;Profile.Product&quot;</span><span class="o">).</span><span class="na">getAsInt</span><span class="o">();</span>
+    <span class="kt">int</span> <span class="n">userProfiles</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;Profile.User&quot;</span><span class="o">).</span><span class="na">getAsInt</span><span class="o">();</span>
+
+    <span class="k">if</span> <span class="o">(</span><span class="n">productProfiles</span> <span class="o">&gt;</span> <span class="n">userProfiles</span><span class="o">)</span> <span class="o">{</span>
+      <span class="c1">// Build product profiles</span>
+      <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// Build user profiles</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The mapper of the <code class="docutils literal"><span class="pre">JoinWithCatalogMR</span></code> MapReduce can have a code that
+governs which condition to follow. Note that as the context passed is a standard
+Hadoop context, the <code class="docutils literal"><span class="pre">WorkflowContext</span></code> is not available:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">JoinWithCatalogMR</span> <span class="kd">extends</span> <span class="n">AbstractMapReduce</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;JoinWithCatalogMR&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;MapReduce program to demonstrate a Conditional workflow&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">beforeSubmit</span><span class="o">(</span><span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getHadoopJob</span><span class="o">();</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setMapperClass</span><span class="o">(</span><span class="n">ValueParser</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="c1">// Set up the MapReduce job here</span>
+    <span class="o">...</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">ValueParser</span> <span class="kd">extends</span> <span class="n">Mapper</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">NullWritable</span><span class="o">&gt;</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">map</span><span class="o">(</span><span class="n">LongWritable</span> <span class="n">key</span><span class="o">,</span> <span class="n">Text</span> <span class="n">value</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span>
+      <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">value</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">value</span><span class="o">.</span><span class="na">toString</span><span class="o">().</span><span class="na">startsWith</span><span class="o">(</span><span class="s">&quot;ProductProfile&quot;</span><span class="o">))</span> <span class="o">{</span>
+        <span class="n">context</span><span class="o">.</span><span class="na">getCounter</span><span class="o">(</span><span class="s">&quot;Profile&quot;</span><span class="o">,</span> <span class="s">&quot;Product&quot;</span><span class="o">).</span><span class="na">increment</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+      <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+        <span class="n">context</span><span class="o">.</span><span class="na">getCounter</span><span class="o">(</span><span class="s">&quot;Profile&quot;</span><span class="o">,</span> <span class="s">&quot;User&quot;</span><span class="o">).</span><span class="na">increment</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>In this case, if the predicate finds that the number of product profile entries is greater than the
+number of user profile entries, the logic will follow the path of <em>BuildProductProfileMR</em>;
+otherwise, the other path will be taken. The diagram for this code would be:</p>
+<a class="reference internal image-reference" href="../_images/conditional-workflow.png"><img alt="../_images/conditional-workflow.png" class="align-center" src="../_images/conditional-workflow.png" style="width: 8in;" /></a>
+</div>
+<div class="section" id="workflow-token-with-forks-and-joins">
+<h3><a class="headerlink" href="#workflow-token-with-forks-and-joins" title="Perma-link to this heading">🔗</a>Workflow Token with Forks and Joins</h3>
+<p>For workflows that involve forks and joins, a single instance of the workflow token is
+shared by all branches of the fork. Updates to the singleton are made thread-safe through
+synchronized updates, guaranteeing that value you obtain from reading the token is the
+last value written at runtime. This is a time-based guarantee.</p>
+</div>
+<div class="section" id="id2">
+<h3><a class="headerlink" href="#id2" title="Perma-link to this heading">🔗</a>Examples</h3>
+<p>This code sample shows how to obtain values from the token from within a custom action,
+and from within a workflow with a predicate, fork and joins:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="n">WorkflowToken</span> <span class="n">token</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getToken</span><span class="o">();</span>
+
+  <span class="c1">// Set the type of action of the current node:</span>
+  <span class="n">token</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;action.type&quot;</span><span class="o">,</span> <span class="s">&quot;CUSTOM_ACTION&quot;</span><span class="o">);</span>
+
+  <span class="c1">// Assume that we have the following Workflow:</span>
+  <span class="c1">//                                              |--&gt; PurchaseByCustomer --&gt;|</span>
+  <span class="c1">//                                        True  |                          |</span>
+  <span class="c1">// Start --&gt; RecordVerifier --&gt; Predicate -----&gt;|                          |----&gt; StatusReporter --&gt; End</span>
+  <span class="c1">//                                  |           |                          |  |</span>
+  <span class="c1">//                                  | False     |--&gt; PurchaseByProduct ---&gt;|  |</span>
+  <span class="c1">//                                  |                                         |</span>
+  <span class="c1">//                                  |------------&gt; ProblemLogger ------------&gt;|</span>
+
+  <span class="c1">// Use case 1: Predicate can add the key &quot;branch&quot; in the WorkflowToken with value as</span>
+  <span class="c1">// &quot;true&quot; if true branch will be executed or &quot;false&quot; otherwise. In &quot;StatusReporter&quot; in</span>
+  <span class="c1">// order to get which branch in the Workflow was executed, use:</span>
+
+  <span class="kt">boolean</span> <span class="n">bTrueBranch</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;branch&quot;</span><span class="o">).</span><span class="na">getAsBoolean</span><span class="o">();</span>
+
+  <span class="c1">// Use case 2: You may want to compare the records emitted by &quot;PurchaseByCustomer&quot;</span>
+  <span class="c1">// and &quot;PurchaseByProduct&quot;, in order to find which job is generating more records:</span>
+
+  <span class="n">String</span> <span class="n">reduceOutputRecordsCounterName</span> <span class="o">=</span> <span class="s">&quot;org.apache.hadoop.mapreduce.TaskCounter.REDUCE_OUTPUT_RECORDS&quot;</span><span class="o">;</span>
+  <span class="kt">long</span> <span class="n">purchaseByCustomerCounterValue</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">reduceOutputRecordsCounterName</span><span class="o">,</span> <span class="s">&quot;PurchaseByCustomer&quot;</span><span class="o">,</span>
+                                                  <span class="n">WorkflowToken</span><span class="o">.</span><span class="na">Scope</span><span class="o">.</span><span class="na">SYSTEM</span><span class="o">).</span><span class="na">getAsLong</span><span class="o">();</span>
+  <span class="kt">long</span> <span class="n">purchaseByProductCounterValue</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">reduceOutputRecordsCounterName</span><span class="o">,</span> <span class="s">&quot;PurchaseByProduct&quot;</span><span class="o">,</span>
+                                                 <span class="n">WorkflowToken</span><span class="o">.</span><span class="na">Scope</span><span class="o">.</span><span class="na">SYSTEM</span><span class="o">).</span><span class="na">getAsLong</span><span class="o">();</span>
+
+  <span class="c1">// Use case 3: Since Workflow can have multiple complex conditions and forks in its</span>
+  <span class="c1">// structure, in the &quot;StatusReporter&quot;, you may want to know how many actions were</span>
+  <span class="c1">// executed as a part of a run. If the number of nodes executed were below a certain</span>
+  <span class="c1">// threshold, send an alert. Assuming that every node in the Workflow adds the key</span>
+  <span class="c1">// &quot;action.type&quot; with the value as action type for that node in the WorkflowToken,</span>
+  <span class="c1">// you can determine the breakdown by action type in a particular Workflow run:</span>
+
+  <span class="n">List</span><span class="o">&lt;</span><span class="n">NodeValue</span><span class="o">&gt;</span> <span class="n">nodeValues</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="na">getAll</span><span class="o">(</span><span class="s">&quot;action.type&quot;</span><span class="o">);</span>
+  <span class="kt">int</span> <span class="n">totalNodeExecuted</span> <span class="o">=</span> <span class="n">nodeValues</span><span class="o">.</span><span class="na">size</span><span class="o">();</span>
+  <span class="kt">int</span> <span class="n">mapReduceNodes</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+  <span class="kt">int</span> <span class="n">sparkNodes</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+  <span class="kt">int</span> <span class="n">customActionNodes</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+  <span class="kt">int</span> <span class="n">conditions</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+  <span class="k">for</span> <span class="o">(</span><span class="n">NodeValue</span> <span class="n">entry</span> <span class="o">:</span> <span class="n">nodeValues</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">entry</span><span class="o">.</span><span class="na">getValue</span><span class="o">().</span><span class="na">toString</span><span class="o">().</span><span class="na">equals</span><span class="o">(</span><span class="s">&quot;MAPREDUCE&quot;</span><span class="o">))</span> <span class="o">{</span>
+      <span class="n">mapReduceNodes</span><span class="o">++;</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">entry</span><span class="o">.</span><span class="na">getValue</span><span class="o">().</span><span class="na">toString</span><span class="o">().</span><span class="na">equals</span><span class="o">(</span><span class="s">&quot;SPARK&quot;</span><span class="o">))</span> <span class="o">{</span>
+      <span class="n">sparkNodes</span><span class="o">++;</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">entry</span><span class="o">.</span><span class="na">getValue</span><span class="o">().</span><span class="na">toString</span><span class="o">().</span><span class="na">equals</span><span class="o">(</span><span class="s">&quot;CUSTOM_ACTION&quot;</span><span class="o">))</span> <span class="o">{</span>
+      <span class="n">customActionNodes</span><span class="o">++;</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">entry</span><span class="o">.</span><span class="na">getValue</span><span class="o">().</span><span class="na">toString</span><span class="o">().</span><span class="na">equals</span><span class="o">(</span><span class="s">&quot;CONDITION&quot;</span><span class="o">))</span> <span class="o">{</span>
+      <span class="n">conditions</span><span class="o">++;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="c1">// Use case 4: Retrieve values from the Workflow token.</span>
+
+  <span class="c1">// To get the name of the last node which set the &quot;ERROR&quot; flag in the WorkflowToken:</span>
+
+  <span class="n">List</span><span class="o">&lt;</span><span class="n">NodeValue</span><span class="o">&gt;</span> <span class="n">errorNodeValueList</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="na">getAll</span><span class="o">(</span><span class="s">&quot;ERROR&quot;</span><span class="o">);</span>
+  <span class="n">String</span> <span class="n">nodeNameWhoSetTheErrorFlagLast</span> <span class="o">=</span> <span class="n">errorNodeValueList</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">errorNodeValueList</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">-</span> <span class="mi">1</span><span class="o">).</span><span class="na">getNodeName</span><span class="o">();</span>
+
+  <span class="c1">// To get the start time of the MapReduce program with unique name &quot;PurchaseHistoryBuilder&quot;:</span>
+
+  <span class="n">String</span> <span class="n">startTime</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;start.time&quot;</span><span class="o">,</span> <span class="s">&quot;PurchaseHistoryBuilder&quot;</span><span class="o">).</span><span class="na">toString</span><span class="o">();</span>
+
+  <span class="c1">// To get the most recent value of the counter with group name</span>
+  <span class="c1">// &#39;org.apache.hadoop.mapreduce.TaskCounter&#39; and counter name &#39;MAP_INPUT_RECORDS&#39;:</span>
+
+  <span class="n">String</span> <span class="n">counterKey</span> <span class="o">=</span> <span class="s">&quot;org.apache.hadoop.mapreduce.TaskCounter.MAP_INPUT_RECORDS&quot;</span><span class="o">;</span>
+  <span class="kt">long</span> <span class="n">records</span> <span class="o">=</span> <span class="n">workflowToken</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">counterKey</span><span class="o">,</span> <span class="n">WorkflowToken</span><span class="o">.</span><span class="na">Scope</span><span class="o">.</span><span class="na">SYSTEM</span><span class="o">).</span><span class="na">getAsLong</span><span class="o">();</span>
+
+  <span class="c1">// To get the value of the counter with group name</span>
+  <span class="c1">// &#39;org.apache.hadoop.mapreduce.TaskCounter&#39; and counter name &#39;MAP_INPUT_RECORDS&#39; as</span>
+  <span class="c1">// set by a MapReduce program with the unique name &#39;PurchaseHistoryBuilder&#39;:</span>
+
+  <span class="kt">long</span> <span class="n">recordsPHB</span> <span class="o">=</span> <span class="n">workflowToken</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">counterKey</span><span class="o">,</span> <span class="s">&quot;PurchaseHistoryBuilder&quot;</span><span class="o">,</span>
+  <span class="n">WorkflowToken</span><span class="o">.</span><span class="na">Scope</span><span class="o">.</span><span class="na">SYSTEM</span><span class="o">).</span><span class="na">getAsLong</span><span class="o">();</span>
+ <span class="o">...</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="workflow-examples">
+<h2><a class="headerlink" href="#workflow-examples" title="Perma-link to this heading">🔗</a>Workflow Examples</h2>
+<ul class="simple">
+<li>For an example of the use of <strong>a workflow,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Purchase</span></a> example.</li>
+<li>The <a class="reference external" href="../source/../../examples-manual/examples/wikipedia-data-pipeline.html#examples-wikipedia-data-pipeline" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Wikipedia Pipeline</span></a> example is another workflow example.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html"> Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html"> Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-keys.html"> Secure Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workers.html"> Workers</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Workflows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#executing-mapreduce-or-spark-programs">Executing MapReduce or Spark Programs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#workflow-custom-action">Workflow Custom Action</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#assigning-unique-names">Assigning Unique Names</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#local-datasets-in-workflow">Local Datasets in Workflow</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#concurrent-workflows">Concurrent Workflows</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#workflow-tokens">Workflow Tokens</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#scope">Scope</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#putting-and-getting-token-values">Putting and Getting Token Values</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mapreduce-counters-and-workflow-tokens">MapReduce Counters and Workflow Tokens</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#spark-accumulators-and-workflow-tokens">Spark Accumulators and Workflow Tokens</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#persisting-the-workflowtoken">Persisting the WorkflowToken</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#parallelizing-workflow-execution">Parallelizing Workflow Execution</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#forks-and-joins">Forks and Joins</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#conditional-node">Conditional Node</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#workflow-token-with-forks-and-joins">Workflow Token with Forks and Joins</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#workflow-examples">Workflow Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="artifacts.html"> Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata-lineage.html"> Metadata and Lineage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="audit-logging.html"> Audit Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Workers" href="workers.html" />Workers</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Artifacts" href="artifacts.html" />Artifacts</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

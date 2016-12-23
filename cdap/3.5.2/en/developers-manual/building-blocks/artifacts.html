@@ -1,0 +1,520 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Artifacts &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/building-blocks/artifacts.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Metadata and Lineage" href="metadata-lineage.html" />
+    <link rel="prev" title="Workflows" href="workflows.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="metadata-lineage.html" title="Metadata and Lineage"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="workflows.html" title="Workflows"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="artifacts">
+<span id="id1"></span><h1><a class="headerlink" href="#artifacts" title="Perma-link to this heading">🔗</a>Artifacts</h1>
+<p>An <em>Artifact</em> is a JAR file that contains Java classes and resources required to create and run an <em>Application</em>.
+<em>Artifacts</em> are identified by a <em>name</em>, <em>version</em>, and <em>scope</em>.</p>
+<p>The <strong>artifact name</strong> must consist only of alphanumeric, <code class="docutils literal"><span class="pre">'-'</span></code> (hyphen), and <code class="docutils literal"><span class="pre">'_'</span></code> (underscore) characters.
+For example, <code class="docutils literal"><span class="pre">'my-application'</span></code> is a valid artifact name, but <code class="docutils literal"><span class="pre">'my:application'</span></code> is not.</p>
+<p>The <strong>artifact version</strong> is of the format <code class="docutils literal"><span class="pre">'[major].[minor].[fix](-\|.)[suffix]'</span></code>. Minor, fix, and suffix
+portions of the version are optional, though it is suggested that you have them conform to
+standard versioning schemes. The major, minor, and fix portions of the version must be numeric.
+The suffix can be any of the acceptable characters. For example, <code class="docutils literal"><span class="pre">'3.2.0-SNAPSHOT'</span></code> is a valid artifact version,
+with a major version of 3, minor version of 2, fix version of 0, and suffix of <code class="docutils literal"><span class="pre">SNAPSHOT</span></code>.</p>
+<p>The <strong>artifact scope</strong> is either <code class="docutils literal"><span class="pre">'user'</span></code> or <code class="docutils literal"><span class="pre">'system'</span></code>. An artifact in the <em>'user'</em> scope is added by users
+through the CLI or RESTful API. A <em>'user'</em> artifact belongs in a namespace and cannot be accessed in
+another namespace. A <em>'system'</em> artifact is an artifact that is available across all namespaces. It
+is added by placing the artifact in a special directory on either the CDAP Master node(s) or the
+CDAP Standalone SDK.</p>
+<p>Once added to CDAP, an <em>Artifact</em> cannot be modified unless it is a <strong>snapshot artifact.</strong>
+An <em>Artifact</em> is a snapshot artifact if the version suffix begins with <code class="docutils literal"><span class="pre">SNAPSHOT</span></code>. For example,
+<code class="docutils literal"><span class="pre">'1.2.3.SNAPSHOT-test'</span></code> is a snapshot version because it has a suffix of <code class="docutils literal"><span class="pre">'SNAPSHOT-test'</span></code>, which
+begins with <code class="docutils literal"><span class="pre">SNAPSHOT</span></code>. <code class="docutils literal"><span class="pre">'1.2.3'</span></code> is not a snapshot version because there is no suffix. <code class="docutils literal"><span class="pre">'1.2.3-hadoop2'</span></code>
+is also not a snapshot version because the suffix does not begin with <code class="docutils literal"><span class="pre">SNAPSHOT</span></code>.</p>
+<p>Artifacts are managed using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Artifact HTTP RESTful APIs</span></a>.</p>
+<div class="section" id="deploying-an-artifact">
+<h2><a class="headerlink" href="#deploying-an-artifact" title="Perma-link to this heading">🔗</a>Deploying an Artifact</h2>
+<p>An artifact is deployed through the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">RESTful API</span></a>.
+If it contains an Application class, the artifact
+can then be used to create applications. Once an artifact is deployed, it cannot be changed, with
+the exception of snapshot versions of artifacts. Snapshot artifacts can be deployed multiple times,
+with each deployment overwriting the previous artifact. If a program is using a snapshot artifact,
+changes made to the artifact are picked up when the program is started. Once a program has started,
+it is unaffected by changes made to the artifact.</p>
+</div>
+<div class="section" id="plugin-artifacts">
+<h2><a class="headerlink" href="#plugin-artifacts" title="Perma-link to this heading">🔗</a>Plugin Artifacts</h2>
+<p>Sometimes an application class exposes an interface that it expects other artifacts to implement.
+For example, CDAP ships with a <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> artifact that can be used to create data pipeline applications.
+The artifact exposes a <code class="docutils literal"><span class="pre">batchsource</span></code> interface that it expects others to implement.
+The <code class="docutils literal"><span class="pre">core-plugins</span></code> artifact contains several plugins that implement that interface. There is one source
+for databases, another for HDFS files, etc. To make plugins in one artifact available to
+another artifact, the plugin artifact must specify its parent artifacts. All of those parent artifacts
+will then be able to use those plugins.</p>
+</div>
+<div class="section" id="deleting-an-artifact">
+<h2><a class="headerlink" href="#deleting-an-artifact" title="Perma-link to this heading">🔗</a>Deleting an Artifact</h2>
+<p>Though artifacts cannot be modified once deployed, they can be deleted. Artifact deletion is an advanced
+feature and is only meant to be used if there was some error deploying the artifact. When an artifact is
+deleted, any application that is configured to use the artifact will be unable to start their programs.
+If a program is already running, it will be unaffected. If that running program is stopped, it will not
+be able to start again until the artifact is replaced, or the application is updated to use another
+artifact.</p>
+</div>
+<div class="section" id="user-and-system-artifacts">
+<h2><a class="headerlink" href="#user-and-system-artifacts" title="Perma-link to this heading">🔗</a>User and System Artifacts</h2>
+<p>Normally, an artifact is added to a specific namespace. Users in one namespace cannot see or use
+artifacts in another namespace. These are referred to as <a class="reference internal" href="plugins.html#plugins-deployment-user"><span>user artifacts</span></a>.</p>
+<p>Sometimes there is a need to provide an artifact that can be used across namespaces. One
+example of this are the <a class="reference external" href="../source/../../hydrator-manual/plugins/index.html#cask-hydrator-plugins" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Hydrator artifacts</span></a> shipped with
+CDAP. In such scenarios, a <a class="reference internal" href="plugins.html#plugins-deployment-system"><span>system artifact</span></a> can be used.</p>
+<p>System artifacts cannot be added through the RESTful API, but must be added by placing the
+artifact in a special directory. For Distributed CDAP, this directory is defined by the
+<code class="docutils literal"><span class="pre">app.artifact.dir</span></code> setting in <a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">cdap-site.xml</span></a>. Multiple directories
+can be defined by separating them with a semicolon. It defaults to
+<code class="docutils literal"><span class="pre">/opt/cdap/master/artifacts</span></code>. For the CDAP Standalone SDK, the directory is set to the
+<code class="docutils literal"><span class="pre">artifacts</span></code> directory.</p>
+<p>Any artifact in the directory will be added to CDAP when it starts up. In addition, a
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-system-load" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">RESTful API</span></a>
+call can be made to scan the directory for any new artifacts that may have been added since CDAP
+started.</p>
+<p>If a system artifact contains plugins that extend another system artifact, a matching
+JSON config file must be provided to specify which artifacts it extends. In addition, if a system
+artifact is a third-party JAR, the plugins in the artifact can be explicitly listed in that same config
+file.</p>
+<p>For example, suppose you want to add <code class="docutils literal"><span class="pre">mysql-connector-java-5.1.3.jar</span></code> as a system artifact. The
+artifact is the MySQL JDBC driver, and is a third-party JAR that we want to use as a JDBC plugin for
+the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> artifact. You would place the JAR file in the artifacts directory along with a
+matching config file named <code class="docutils literal"><span class="pre">mysql-connector-java-5.1.3.json</span></code>. The config file would contain:</p>
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;cdap-data-pipeline[3.2.0,4.0.0)&quot;</span> <span class="p">],</span>
+  <span class="nt">&quot;plugins&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;mysql&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;jdbc&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;MYSQL JDBC external plugin&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;className&quot;</span><span class="p">:</span> <span class="s2">&quot;com.mysql.jdbc.Driver&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This config file specifies that the artifact can be used by versions 3.2.0 (inclusive) to 4.0.0 (exclusive)
+of the cdap-data-pipeline artifact. It also specifies that there is one plugin of type <code class="docutils literal"><span class="pre">jdbc</span></code> and name
+<code class="docutils literal"><span class="pre">mysql</span></code> with class <code class="docutils literal"><span class="pre">com.mysql.jdbc.Driver</span></code>. Once added, this system artifact would be usable by
+applications in all namespaces.</p>
+</div>
+<div class="section" id="example-use-case-configurable-applications">
+<h2><a class="headerlink" href="#example-use-case-configurable-applications" title="Perma-link to this heading">🔗</a>Example Use Case: Configurable Applications</h2>
+<p>We will now walk through an example use case in order to illustrate how artifacts are used.
+In this example, we decide to implement an application class that reads from a stream and writes
+to a table using a flow. The stream that it reads from—and the table that it writes to—will be configurable.
+Our development team writes code such as:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span><span class="o">&lt;</span><span class="n">MyApp</span><span class="o">.</span><span class="na">MyConfig</span><span class="o">&gt;</span> <span class="o">{</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">MyConfig</span> <span class="kd">extends</span> <span class="n">Config</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">stream</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">table</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="nf">MyConfig</span><span class="o">()</span> <span class="o">{</span>
+      <span class="k">this</span><span class="o">.</span><span class="na">stream</span> <span class="o">=</span> <span class="s">&quot;A&quot;</span><span class="o">;</span>
+      <span class="k">this</span><span class="o">.</span><span class="na">table</span> <span class="o">=</span> <span class="s">&quot;X&quot;</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">MyConfig</span> <span class="n">config</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getConfig</span><span class="o">();</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">stream</span><span class="o">));</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">table</span><span class="o">,</span> <span class="n">Table</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">addFlow</span><span class="o">(</span><span class="k">new</span> <span class="n">MyFlow</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">stream</span><span class="o">,</span> <span class="n">config</span><span class="o">.</span><span class="na">table</span><span class="o">,</span> <span class="n">config</span><span class="o">.</span><span class="na">flowConfig</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyFlow</span> <span class="kd">implements</span> <span class="n">Flow</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="n">String</span> <span class="n">stream</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="n">String</span> <span class="n">table</span><span class="o">;</span>
+
+  <span class="n">MyFlow</span><span class="o">(</span><span class="n">String</span> <span class="n">stream</span><span class="o">,</span> <span class="n">String</span> <span class="n">table</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">stream</span> <span class="o">=</span> <span class="n">stream</span><span class="o">;</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">table</span> <span class="o">=</span> <span class="n">table</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;MyFlow&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Reads from a stream and writes to a table&quot;</span><span class="o">);</span>
+    <span class="n">addFlowlet</span><span class="o">(</span><span class="s">&quot;reader&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">Reader</span><span class="o">(</span><span class="n">table</span><span class="o">));</span>
+    <span class="n">connectStream</span><span class="o">(</span><span class="n">stream</span><span class="o">,</span> <span class="s">&quot;reader&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Reader</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+  <span class="nd">@Property</span>
+  <span class="kd">private</span> <span class="n">String</span> <span class="n">tableName</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="n">Table</span> <span class="n">table</span><span class="o">;</span>
+
+  <span class="n">Reader</span><span class="o">(</span><span class="n">String</span> <span class="n">tableName</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">tableName</span> <span class="o">=</span> <span class="n">tableName</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">(</span><span class="n">FlowletConfigurer</span> <span class="n">configurer</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">useDatasets</span><span class="o">(</span><span class="n">tableName</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">FlowletContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getDataset</span><span class="o">(</span><span class="n">tableName</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@ProcessInput</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">StreamEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">Put</span> <span class="n">put</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Put</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getHeaders</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">rowkey</span><span class="o">)));</span>
+    <span class="n">put</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;timestamp&quot;</span><span class="o">,</span> <span class="n">event</span><span class="o">.</span><span class="na">getTimestamp</span><span class="o">());</span>
+    <span class="n">put</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;body&quot;</span><span class="o">,</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getBody</span><span class="o">()));</span>
+    <span class="n">table</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">put</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Our build system creates a JAR named <code class="docutils literal"><span class="pre">myapp-1.0.0.jar</span></code> that contains the <code class="docutils literal"><span class="pre">MyApp</span></code> class.
+The JAR is deployed via the RESTful API:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl localhost:10000/v3/namespaces/default/artifacts/myapp --data-binary @myapp-1.0.0.jar</span>
+</pre></div>
+</div>
+<p>CDAP determines the version is 1.0.0 by examining the manifest file contained in the JAR.
+Information about the artifact and the application class in the artifact are now visible
+through JAR API calls:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl localhost:10000/v3/namespaces/default/artifacts?scope=user</span>
+<span class="go">[</span>
+<span class="go">  { &quot;name&quot;: &quot;myapp&quot;, &quot;scope&quot;:&quot;USER&quot;,  &quot;version&quot;: &quot;1.0.0&quot; }</span>
+<span class="go">]</span>
+
+<span class="go">curl localhost:10000/v3/namespaces/default/artifacts/myapp/versions/1.0.0</span>
+<span class="go">{</span>
+<span class="go">  &quot;classes&quot;: {</span>
+<span class="go">    &quot;apps&quot;: [</span>
+<span class="go">      {</span>
+<span class="go">        &quot;className&quot;: &quot;com.company.example.MyApp&quot;,</span>
+<span class="go">        &quot;configSchema&quot;: {</span>
+<span class="go">          &quot;fields&quot;: [</span>
+<span class="go">            { &quot;name&quot;: &quot;stream&quot;, &quot;type&quot;: [ &quot;string&quot;, &quot;null&quot; ] },</span>
+<span class="go">            { &quot;name&quot;: &quot;table&quot;, &quot;type&quot;: [ &quot;string&quot;, &quot;null&quot; ] }</span>
+<span class="go">          ],</span>
+<span class="go">          &quot;name&quot;: &quot;com.company.example.MyApp$MyConfig&quot;,</span>
+<span class="go">          &quot;type&quot;: &quot;record&quot;</span>
+<span class="go">        },</span>
+<span class="go">        &quot;description&quot;: &quot;&quot;</span>
+<span class="go">      }</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;plugins&quot;: []</span>
+<span class="go">  },</span>
+<span class="go">  &quot;name&quot;: &quot;myapp&quot;,</span>
+<span class="go">  &quot;scope&quot;: &quot;USER&quot;,</span>
+<span class="go">  &quot;version&quot;: &quot;1.0.0&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>With this information, a separate deployment team is able to see that the artifact contains
+an application class, and it contains a config that takes in a value for <code class="docutils literal"><span class="pre">stream</span></code> and <code class="docutils literal"><span class="pre">table</span></code>.
+From this information, we decide to create an application named <code class="docutils literal"><span class="pre">purchaseDump</span></code> that reads
+from the <code class="docutils literal"><span class="pre">purchases</span></code> stream and writes to the <code class="docutils literal"><span class="pre">events</span></code> table:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl -X PUT localhost:10000/v3/namespaces/default/apps/purchaseDump -H &#39;Content-Type: application/json&#39; -d &#39;</span>
+<span class="go">{</span>
+<span class="go">  &quot;artifact&quot;: {</span>
+<span class="go">    &quot;name&quot;: &quot;myapp&quot;,</span>
+<span class="go">    &quot;version&quot;: &quot;1.0.0&quot;,</span>
+<span class="go">    &quot;scope&quot;: &quot;user&quot;</span>
+<span class="go">  },</span>
+<span class="go">  &quot;config&quot;: {</span>
+<span class="go">    &quot;stream&quot;: &quot;purchases&quot;,</span>
+<span class="go">    &quot;table&quot;: &quot;events&quot;</span>
+<span class="go">  }</span>
+<span class="go">}&#39;</span>
+</pre></div>
+</div>
+<p>We can then manage the lifecycle of the flow using the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Application Lifecycle RESTful APIs</span></a>.
+After it has been running for a while, a bug is found in the code. The development team provides
+a fix, and <code class="docutils literal"><span class="pre">myapp-1.0.1.jar</span></code> is released. The artifact is deployed:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl localhost:10000/v3/namespaces/default/artifacts/myapp --data-binary @myapp-1.0.1.jar</span>
+</pre></div>
+</div>
+<p>A call can be made to find all applications that use the old artifact:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl localhost:10000/v3/namespaces/default/apps?artifactName=myapp&amp;artifactVersion=1.0.0</span>
+<span class="go">[</span>
+<span class="go">  {</span>
+<span class="go">    &quot;name&quot;: &quot;purchaseDump&quot;,</span>
+<span class="go">    &quot;artifact&quot;: {</span>
+<span class="go">      &quot;name&quot;: &quot;myapp&quot;,</span>
+<span class="go">      &quot;version&quot;: &quot;1.0.0&quot;,</span>
+<span class="go">      &quot;scope&quot;: &quot;user&quot;</span>
+<span class="go">    },</span>
+<span class="go">    ...</span>
+<span class="go">  }</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>The flow for the <code class="docutils literal"><span class="pre">purchaseDump</span></code> application is stopped, then the application is updated:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl localhost:10000/v3/namespaces/default/apps/purchaseDump/update -d &#39;</span>
+<span class="go">{</span>
+<span class="go">  &quot;artifact&quot;: {</span>
+<span class="go">    &quot;name&quot;: &quot;myapp&quot;,</span>
+<span class="go">    &quot;version&quot;: &quot;1.0.1&quot;,</span>
+<span class="go">    &quot;scope&quot;: &quot;user&quot;</span>
+<span class="go">  },</span>
+<span class="go">  &quot;config&quot;: {</span>
+<span class="go">    &quot;stream&quot;: &quot;purchases&quot;,</span>
+<span class="go">    &quot;table&quot;: &quot;events&quot;</span>
+<span class="go">  }</span>
+<span class="go">}&#39;</span>
+</pre></div>
+</div>
+<p>The flow is started again, which picks up the new code. We quickly realize version 1.0.1 has a serious
+bug and decide to roll back to the previous version. The flow is stopped and another update call is made:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl localhost:10000/v3/namespaces/default/apps/purchaseDump/update -d &#39;</span>
+<span class="go">{</span>
+<span class="go">  &quot;artifact&quot;: {</span>
+<span class="go">    &quot;name&quot;: &quot;myapp&quot;,</span>
+<span class="go">    &quot;version&quot;: &quot;1.0.0&quot;,</span>
+<span class="go">    &quot;scope&quot;: &quot;user&quot;</span>
+<span class="go">  },</span>
+<span class="go">  &quot;config&quot;: {</span>
+<span class="go">    &quot;stream&quot;: &quot;purchases&quot;,</span>
+<span class="go">    &quot;table&quot;: &quot;events&quot;</span>
+<span class="go">  }</span>
+<span class="go">}&#39;</span>
+</pre></div>
+</div>
+<p>Once the development team has resolved that serious bug, we can try re-deploying again...</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html"> Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html"> Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-keys.html"> Secure Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows.html"> Workflows</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Artifacts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deploying-an-artifact">Deploying an Artifact</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plugin-artifacts">Plugin Artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deleting-an-artifact">Deleting an Artifact</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#user-and-system-artifacts">User and System Artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example-use-case-configurable-applications">Example Use Case: Configurable Applications</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="metadata-lineage.html"> Metadata and Lineage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="audit-logging.html"> Audit Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Workflows" href="workflows.html" />Workflows</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Metadata and Lineage" href="metadata-lineage.html" />Metadata and Lineage</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

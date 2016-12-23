@@ -1,0 +1,987 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform SpamClassifier Application" name="description" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Spam Classifier &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/examples-manual/examples/spam-classifier.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="Spark K-Means" href="spark-k-means.html" />
+    <link rel="prev" title="Purchase" href="purchase.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="spark-k-means.html" title="Spark K-Means"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="purchase.html" title="Purchase"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="spam-classifier">
+<span id="examples-spam-classifier"></span><h1><a class="headerlink" href="#spam-classifier" title="Perma-link to this heading">🔗</a>Spam Classifier</h1>
+<p>A Cask Data Application Platform (CDAP) example demonstrating Spark Streaming.</p>
+<div class="section" id="overview">
+<h2><a class="headerlink" href="#overview" title="Perma-link to this heading">🔗</a>Overview</h2>
+<p>This example demonstrates a Spark Streaming application that classifies Kafka messages as either &quot;spam&quot; or &quot;ham&quot; (not spam)
+based on a trained Spark MLlib NaiveBayes model.</p>
+<p>Training data from a sample file is sent to CDAP by a CDAP CLI command to the <em>trainingDataStream</em>. This training data
+is from the <a class="reference external" href="https://archive.ics.uci.edu/ml/datasets/SMS+Spam+Collection">SMS Spam Collection Dataset</a>,
+which consists of a label (<code class="docutils literal"><span class="pre">spam</span></code>, <code class="docutils literal"><span class="pre">ham</span></code>) followed by the message.</p>
+<p>This training data is used by the <em>SpamClassifierProgram</em> to train a Spark MLlib NaiveBayes model, which is then used
+to classify realtime messages coming through Kafka.</p>
+<p>Once the application completes, you can query the <em>messageClassificationStore</em> dataset by using the
+<code class="docutils literal"><span class="pre">classification/&lt;message-id&gt;</span></code> endpoint of the <em>MessageClassification</em>. It will respond with <code class="docutils literal"><span class="pre">Spam</span></code> or <code class="docutils literal"><span class="pre">Ham</span></code>
+depending upon on the classification of the <code class="docutils literal"><span class="pre">message</span></code>.</p>
+<p>Let's look at some of these components, and then run the application and see the results.</p>
+<div class="section" id="the-spamclassifier-application">
+<h3><a class="headerlink" href="#the-spamclassifier-application" title="Perma-link to this heading">🔗</a>The <em>SpamClassifier</em> Application</h3>
+<p>As in the other <a class="reference external" href="index.html">examples</a>, the components
+of the application are tied together by the class <code class="docutils literal"><span class="pre">SpamClassifier</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SpamClassifier</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">SERVICE_HANDLER</span> <span class="o">=</span> <span class="s">&quot;MessageClassification&quot;</span><span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">STREAM</span> <span class="o">=</span> <span class="s">&quot;trainingDataStream&quot;</span><span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">DATASET</span> <span class="o">=</span> <span class="s">&quot;messageClassificationStore&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;SpamClassifier&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;A Spark Streaming Example for Kafka Message Classification&quot;</span><span class="o">);</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="n">STREAM</span><span class="o">));</span>
+    <span class="n">addSpark</span><span class="o">(</span><span class="k">new</span> <span class="n">SpamClassifierProgram</span><span class="o">());</span>
+    <span class="n">addService</span><span class="o">(</span><span class="n">SERVICE_HANDLER</span><span class="o">,</span> <span class="k">new</span> <span class="n">SpamClassifierServiceHandler</span><span class="o">());</span>
+
+    <span class="c1">// Store for message classification status</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="n">ObjectStores</span><span class="o">.</span><span class="na">createObjectStore</span><span class="o">(</span><span class="n">getConfigurer</span><span class="o">(),</span> <span class="n">DATASET</span><span class="o">,</span> <span class="n">Double</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                                     <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Kafka Message Spam &quot;</span> <span class="o">+</span>
+                                                                                  <span class="s">&quot;Classification&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">UnsupportedTypeException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="c1">// This exception is thrown by ObjectStore if its parameter type cannot be</span>
+      <span class="c1">// (de)serialized (for example, if it is an interface and not a class, then there is</span>
+      <span class="c1">// no auto-magic way deserialize an object.) In this case that will not happen</span>
+      <span class="c1">// because Double is an actual class.</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">.</span> <span class="o">.</span> <span class="o">.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-messageclassificationstore-objectstore-data-storage">
+<h3><a class="headerlink" href="#the-messageclassificationstore-objectstore-data-storage" title="Perma-link to this heading">🔗</a>The <em>messageClassificationStore</em> ObjectStore Data Storage</h3>
+<p>The classified messages are stored in an ObjectStore dataset, <em>messageClassificationStore</em>, keyed by the <code class="docutils literal"><span class="pre">message-id</span></code>.</p>
+</div>
+<div class="section" id="the-messageclassification-service">
+<h3><a class="headerlink" href="#the-messageclassification-service" title="Perma-link to this heading">🔗</a>The <em>MessageClassification</em> Service</h3>
+<p>This service has a <code class="docutils literal"><span class="pre">classification/&lt;message-id&gt;</span></code> endpoint to obtain the classification of a given message through its
+<code class="docutils literal"><span class="pre">message-id</span></code>.</p>
+</div>
+</div>
+<div class="section" id="building-and-starting">
+<h2><a class="headerlink" href="#building-and-starting" title="Perma-link to this heading">🔗</a>Building and Starting</h2>
+<ul>
+<li><p class="first">You can either build the example (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-example" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Building an Example Application</span></a>) or use the pre-built JAR file included in the CDAP SDK
+(as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying an Application</span></a>):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral85() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral85 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral85", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral85" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">examples/SpamClassifier/target/SpamClassifier-3.5.2.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">examples\SpamClassifier\target\SpamClassifier-3.5.2.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Start CDAP (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Starting and Stopping CDAP</span></a>).</p>
+</li>
+<li><p class="first">Deploy the application, as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying an Application</span></a>.
+For example, from the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral86() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral86 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral86", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral86" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact examples/SpamClassifier/target/SpamClassifier-3.5.2.jar</span>
+
+<span class="go">Successfully added artifact with name &#39;SpamClassifier&#39;</span>
+
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app SpamClassifier SpamClassifier 3.5.2 user</span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact examples\SpamClassifier\target\SpamClassifier-3.5.2.jar</span></span>
+
+<span class="go">Successfully added artifact with name &#39;SpamClassifier&#39;</span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app SpamClassifier SpamClassifier 3.5.2 user</span></span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Once the application has been deployed, you can start its components, as described in
+<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-starting-application" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Starting an Application</span></a>, and detailed at the
+start of <a class="reference external" href="#running-the-example">running the example</a>.</p>
+</li>
+<li><p class="first">Once all components are started, <a class="reference external" href="#running-the-example">run the example</a>.</p>
+</li>
+<li><p class="first">When finished, you can <a class="reference external" href="#stopping-and-removing-the-application">stop and remove the application</a>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="running-the-example">
+<h2><a class="headerlink" href="#running-the-example" title="Perma-link to this heading">🔗</a>Running the Example</h2>
+<div class="section" id="starting-the-service">
+<h3><a class="headerlink" href="#starting-the-service" title="Perma-link to this heading">🔗</a>Starting the Service</h3>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>SpamClassifier</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/SpamClassifier/overview/programs">application overview page, programs tab</a>,
+click <em>MessageClassification</em> to get to the service detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral87() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral87 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral87", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral87" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start service SpamClassifier.MessageClassification</span>
+
+<span class="go">Successfully started service &#39;MessageClassification&#39; of application &#39;SpamClassifier&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start service SpamClassifier.MessageClassification</span></span>
+
+<span class="go">Successfully started service &#39;MessageClassification&#39; of application &#39;SpamClassifier&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="injecting-training-data">
+<h3><a class="headerlink" href="#injecting-training-data" title="Perma-link to this heading">🔗</a>Injecting Training Data</h3>
+<p>Inject a file of training data to the stream <em>trainingDataStream</em> by running this command from the
+Standalone CDAP SDK directory, using the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral88() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral88 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral88", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral88" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load stream trainingDataStream examples/SpamClassifier/src/test/resources/trainingData.txt</span>
+
+<span class="go">Successfully loaded file to stream &#39;trainingDataStream&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load stream trainingDataStream examples/SpamClassifier/src/test/resources/trainingData.txt</span></span>
+
+<span class="go">Successfully loaded file to stream &#39;trainingDataStream&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+<div class="section" id="running-the-spark-program">
+<h3><a class="headerlink" href="#running-the-spark-program" title="Perma-link to this heading">🔗</a>Running the Spark Program</h3>
+<p>There are three ways to start the Spark program:</p>
+<ol class="arabic">
+<li><p class="first">Go to the <em>SpamClassifier</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/SpamClassifier/overview/programs">application overview page, programs tab</a>,
+click <code class="docutils literal"><span class="pre">SpamClassifierProgram</span></code> to get to the Spark program detail page, and add these runtime
+arguments/preferences:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">kafka.brokers:broker1-host:port</span>
+<span class="go">kafka.topics:topic1,topic2</span>
+</pre></div>
+</div>
+<p>then click the <em>Start</em> button;</p>
+</li>
+<li><p class="first">Use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral89() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral89 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral89", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral89" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start spark SpamClassifier.SpamClassifierProgram <span class="s2">&quot;kafka.brokers=broker1-host:port kafka.topics=topic1,topic2&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start spark SpamClassifier.SpamClassifierProgram &quot;kafka.brokers=broker1-host:port kafka.topics=topic1,topic2&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Send a query via an HTTP request using a <code class="docutils literal"><span class="pre">curl</span></code> command:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral90() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral90 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral90", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral90" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST -d <span class="s1">&#39;{&quot;kafka.brokers&quot;:&quot;broker1-host:port&quot;, &quot;kafka.topics&quot;:&quot;topic1,topic2&quot;}&#39;</span> <span class="se">\</span>
+<span class="go">&quot;http://localhost:10000/v3/namespaces/default/apps/SpamClassifier/spark/SpamClassifierProgram/start&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST -d &quot;{\&quot;kafka.brokers\&quot;:\&quot;broker1-host:port\&quot;, \&quot;kafka.topics\&quot;:\&quot;topic1,topic2\&quot;}&quot; ^</span>
+<span class="go">&quot;http://localhost:10000/v3/namespaces/default/apps/SpamClassifier/spark/SpamClassifierProgram/start&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ol>
+</div>
+<div class="section" id="injecting-prediction-data">
+<h3><a class="headerlink" href="#injecting-prediction-data" title="Perma-link to this heading">🔗</a>Injecting Prediction Data</h3>
+<p>You can publish the messages which you want to be classified as &quot;spam/ham&quot; to the Kafka topic configured in the
+above Spark program. Kafka command line tools can be used to create topic and send  messages. The message must be in
+the format:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">message-id:message</span>
+</pre></div>
+</div>
+<p>For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">2:I will call you later</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="querying-the-results">
+<h3><a class="headerlink" href="#querying-the-results" title="Perma-link to this heading">🔗</a>Querying the Results</h3>
+<p>To query the <em>messageClassificationStore</em> ObjectStore using the <code class="docutils literal"><span class="pre">MessageClassification</span></code>, you can either:</p>
+<ul>
+<li><p class="first">Use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral91() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral91 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral91", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral91" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh call service SpamClassifier.MessageClassification GET status/1</span>
+
+<span class="go">Ham</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat call service SpamClassifier.MessageClassification GET status/1</span></span>
+
+<span class="go">Ham</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Send a query via an HTTP request using a <code class="docutils literal"><span class="pre">curl</span></code> command. For example:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral92() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral92 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral92", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral92" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X GET <span class="s2">&quot;http://localhost:10000/v3/namespaces/default/apps/SpamClassifier/services/MessageClassification/methods/status/1&quot;</span></span>
+
+<span class="go">Ham</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X GET &quot;http://localhost:10000/v3/namespaces/default/apps/SpamClassifier/services/MessageClassification/methods/status/1&quot;</span></span>
+
+<span class="go">Ham</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="stopping-and-removing-the-application">
+<h2><a class="headerlink" href="#stopping-and-removing-the-application" title="Perma-link to this heading">🔗</a>Stopping and Removing the Application</h2>
+<p>Once done, you can stop the application—if it hasn't stopped
+already—as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-stopping" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Stopping an Application</span></a>. Here is an example-specific
+description of the steps:</p>
+<p><strong>Stopping the Spark Program</strong></p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>SpamClassifier</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/SpamClassifier/overview/programs">application overview page, programs tab</a>,
+click <em>SpamClassifierProgram</em> to get to the Spark program detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral93() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral93 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral93", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral93" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh stop spark SpamClassifier.SpamClassifierProgram</span>
+
+<span class="go">Successfully stopped Spark &#39;SpamClassifierProgram&#39; of application &#39;SpamClassifier&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat stop spark SpamClassifier.SpamClassifierProgram</span></span>
+
+<span class="go">Successfully stopped Spark &#39;SpamClassifierProgram&#39; of application &#39;SpamClassifier&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p><strong>Stopping the Service</strong></p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>SpamClassifier</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/SpamClassifier/overview/programs">application overview page, programs tab</a>,
+click <em>MessageClassification</em> to get to the service detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral94() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral94 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral94", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral94" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh stop service SpamClassifier.MessageClassification</span>
+
+<span class="go">Successfully stopped service &#39;MessageClassification&#39; of application &#39;SpamClassifier&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat stop service SpamClassifier.MessageClassification</span></span>
+
+<span class="go">Successfully stopped service &#39;MessageClassification&#39; of application &#39;SpamClassifier&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p><strong>Removing the Application</strong></p>
+<p>You can now remove the application as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-removing" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Removing an Application</span></a>, or:</p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>SpamClassifier</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/SpamClassifier/overview/programs">application overview page, programs tab</a>,
+click the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management
+pane for the application, then click the <em>Actions</em> menu on the right side and select
+<em>Delete</em> to delete the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral95() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral95 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral95", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral95" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh delete app SpamClassifier</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat delete app SpamClassifier</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clicks-and-views.html">Clicks and Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-cleansing.html">Data Cleansing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fileset-example.html">FileSet Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="log-analysis.html">Log Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Spam Classifier</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stopping-and-removing-the-application">Stopping and Removing the Application</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sport-results.html">Sport Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream-conversion.html">Stream Conversion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user-profiles.html">User Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wikipedia-data-pipeline.html">Wikipedia Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Purchase" href="purchase.html" />Purchase</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Spark K-Means" href="spark-k-means.html" />Spark K-Means</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

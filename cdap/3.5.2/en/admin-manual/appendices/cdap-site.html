@@ -1,0 +1,1695 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Appendix: cdap-site.xml, cdap-default.xml &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/admin-manual/appendices/cdap-site.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Appendices" href="index.html" />
+    <link rel="next" title="Appendix: cdap-security.xml" href="cdap-security.html" />
+    <link rel="prev" title="Appendix: Minimal cdap-site.xml" href="minimal-cdap-site.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cdap-security.html" title="Appendix: cdap-security.xml"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="minimal-cdap-site.html" title="Appendix: Minimal cdap-site.xml"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Administration Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Appendices</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="appendix-cdap-site-xml-cdap-default-xml">
+<span id="appendix-cdap-site-xml"></span><span id="appendix-cdap-default-xml"></span><h1><a class="headerlink" href="#appendix-cdap-site-xml-cdap-default-xml" title="Perma-link to this heading">🔗</a>Appendix: cdap-site.xml, cdap-default.xml</h1>
+<p>The <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> file is the configuration file for a CDAP installation.
+Its properties and values determine the settings used by CDAP when starting and operating.</p>
+<p>Any properties not found in an installation's <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> will use a default
+parameter value defined in the file <code class="docutils literal"><span class="pre">cdap-default.xml</span></code>. It is located in the CDAP JARs,
+and should not be altered.</p>
+<p>Any of the default values (with the exception of those marked <a class="reference internal" href="#cdap-site-xml-note-final"><span>[Final]</span></a>) can be over-ridden by defining a modifying value in the
+<code class="docutils literal"><span class="pre">cdap-site.xml</span></code> file, located (by default) either in <code class="docutils literal"><span class="pre">&lt;CDAP-SDK-HOME&gt;/conf/cdap-site.xml</span></code>
+(Standalone mode) or <code class="docutils literal"><span class="pre">/etc/cdap/conf/cdap-site.xml</span></code> (Distributed mode).</p>
+<p>Below are the parameters that can be defined in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> file, their default
+values (obtained from <code class="docutils literal"><span class="pre">cdap-default.xml</span></code>), descriptions, and notes.</p>
+<p>For information on configuring the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> file and CDAP for security,
+see the <a class="reference internal" href="../security/index.html#admin-security"><span>Security</span></a> section.</p>
+<div class="section" id="general">
+<span id="appendix-cdap-default-general"></span><h2><a class="headerlink" href="#general" title="Perma-link to this heading">🔗</a>General</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">hdfs.lib.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">${hdfs.namespace}/lib</span></code></td>
+<td>Common directory in HDFS for, among others, JAR files for coprocessors</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">hdfs.namespace</span></code></td>
+<td><code class="docutils literal"><span class="pre">/${root.namespace}</span></code></td>
+<td>Root directory for HDFS files written by CDAP</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">hdfs.user</span></code></td>
+<td><code class="docutils literal"><span class="pre">yarn</span></code></td>
+<td>User name for accessing HDFS</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">instance.name</span></code></td>
+<td><code class="docutils literal"><span class="pre">${root.namespace}</span></code></td>
+<td>Determines a unique identifier for a CDAP instance. It is used for providing authorization to a particular CDAP instance. Must be alphanumeric, and should not be changed after CDAP has been started. If it is changed, there is a risk of losing data (for example, authorization policies).</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">cluster.name</span></code></td>
+<td>&nbsp;</td>
+<td>A cluster-based name for CDAP. It is used for scope resolution of preferences and runtime arguments. For example: the preference key &quot;cluster.[cluster.name].my.key&quot; would be resolved to &quot;my.key&quot; at runtime; a program can then retrieve the preference value by using just &quot;my.key&quot;. The administrator can use this property to set different preferences for each cluster.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">local.data.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">data</span></code></td>
+<td>Data directory for Standalone CDAP and the master process in Distributed CDAP</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">mapreduce.include.custom.format.classes</span></code></td>
+<td><code class="docutils literal"><span class="pre">true</span></code></td>
+<td>Indicates whether to include custom input/output format classes in the job.jar or not; if set to true, custom format classes will be added to the job.jar and available as part of the MapReduce system classpath</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">mapreduce.jobclient.connect.max.retries</span></code></td>
+<td><code class="docutils literal"><span class="pre">2</span></code></td>
+<td>Indicates the maximum number of retries the JobClient will make to establish a service connection when retrieving job status and history</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">master.startup.checks.classes</span></code></td>
+<td>&nbsp;</td>
+<td>Comma-separated list of classnames for checks that will be run before the CDAP Master starts up. If any of the checks fails, the CDAP Master will not start up. Checks will only be run if ${master.startup.checks.enabled} is set to true.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">master.startup.checks.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">true</span></code></td>
+<td>Whether checks should be run before startup to determine if the CDAP Master can be run correctly. Which checks are run is determined by the ${master.startup.checks.packages} and ${master.startup.checks.classes} settings. If any checks fail, the CDAP Master will fail to start instead of waiting for the problem to be fixed. This setting only affects Distributed CDAP. It does not apply to Standalone CDAP.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">master.startup.checks.packages</span></code></td>
+<td><code class="docutils literal"><span class="pre">co.cask.cdap.master.startup</span></code></td>
+<td>Comma-separated list of packages containing checks that will be run before the CDAP Master starts up. If any of the checks fails, the CDAP Master will not start up. Checks will only be run if master.startup.checks.enabled is set to true.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">namespaces.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">namespaces</span></code></td>
+<td>The sub-directory of ${hdfs.namespace} in which namespaces are stored</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">root.namespace</span></code></td>
+<td><code class="docutils literal"><span class="pre">cdap</span></code></td>
+<td>Root for this CDAP instance; used as the parent (or root) node for ZooKeeper, as the directory under which all CDAP data and metadata is stored in HDFS, and as the prefix for all HBase tables created by CDAP; must be composed of alphanumeric characters</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">thrift.max.read.buffer</span></code></td>
+<td><code class="docutils literal"><span class="pre">16777216</span></code></td>
+<td>Specifies the maximum read buffer size in bytes used by the Thrift service; value should be set to greater than the maximum frame sent on the RPC channel</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">twill.java.reserved.memory.mb</span></code></td>
+<td><code class="docutils literal"><span class="pre">250</span></code></td>
+<td>Reserved non-heap memory in megabytes for Apache Twill container</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">twill.jvm.gc.opts</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">-verbose:gc</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">-Xloggc:&amp;lt;LOG_DIR&amp;gt;/gc.log</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">-XX:+PrintGCDetails</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">-XX:+PrintGCTimeStamps</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">-XX:+UseGCLogFileRotation</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">-XX:NumberOfGCLogFiles=10</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">-XX:GCLogFileSize=1M</span></code></div>
+</div>
+</td>
+<td>Java garbage collection options for all Apache Twill containers; &quot;&amp;lt;LOG_DIR&amp;gt;&quot; is the location of the log directory in the container; note that the special characters are replaced with entity equivalents so they can be included in the XML</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">twill.no.container.timeout</span></code></td>
+<td><code class="docutils literal"><span class="pre">120000</span></code></td>
+<td>Duration in milliseconds to wait for at least one container for Apache Twill runnable</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">twill.zookeeper.namespace</span></code></td>
+<td><code class="docutils literal"><span class="pre">/twill</span></code></td>
+<td>ZooKeeper namespace prefix for Apache Twill</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">zookeeper.quorum</span></code></td>
+<td><code class="docutils literal"><span class="pre">127.0.0.1:2181/${root.namespace}</span></code></td>
+<td>ZooKeeper quorum string; specifies the ZooKeeper host:port; substitute the quorum (FQDN1:2181,FQDN2:2181,...) for the components shown here</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">zookeeper.session.timeout.millis</span></code></td>
+<td><code class="docutils literal"><span class="pre">40000</span></code></td>
+<td>ZooKeeper session timeout in milliseconds</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="global">
+<span id="appendix-cdap-default-global"></span><h2><a class="headerlink" href="#global" title="Perma-link to this heading">🔗</a>Global</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dataset.unchecked.upgrade</span></code></td>
+<td><code class="docutils literal"><span class="pre">false</span></code></td>
+<td>By default, any changes made to existing datasets are not deployed when an app is redeployed; setting this value to true allows the dataset changes to be deployed upon app redeployment</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">enable.unrecoverable.reset</span></code></td>
+<td><code class="docutils literal"><span class="pre">false</span></code></td>
+<td>Determines if resetting CDAP should be enabled. <strong>WARNING: Enabling this option makes it possible to delete all applications and data; NO RECOVERY IS POSSIBLE!</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="applications">
+<span id="appendix-cdap-default-applications"></span><h2><a class="headerlink" href="#applications" title="Perma-link to this heading">🔗</a>Applications</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">app.artifact.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">/opt/cdap/master/artifacts</span></code></td>
+<td>Semicolon-separated list of local directories scanned for system artifacts to add to the artifact repository</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">master.services.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
+<td>Bind address for app fabric service and dataset service</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">app.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">0</span></code></td>
+<td>App Fabric service bind port</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app.output.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">/programs</span></code></td>
+<td>Directory where all archives are stored</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">app.program.extra.classpath</span></code></td>
+<td>&nbsp;</td>
+<td>Additional Java classpath for CDAP programs. These extra classpaths must be present on all nodes in the cluster. Supports wildcard suffix &quot;*&quot; to include all JAR files under a directory.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app.program.jvm.opts</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">-XX:MaxPermSize=128M</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">${twill.jvm.gc.opts}</span></code></div>
+</div>
+</td>
+<td>Java options for all program containers</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">app.program.max.start.seconds</span></code></td>
+<td><code class="docutils literal"><span class="pre">300</span></code></td>
+<td>Maximum number of seconds to wait for a program to start before killing it</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app.program.max.stop.seconds</span></code></td>
+<td><code class="docutils literal"><span class="pre">300</span></code></td>
+<td>Maximum number of seconds to wait for a program to stop before killing it</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">app.program.runid.corrector.interval</span></code></td>
+<td><code class="docutils literal"><span class="pre">180</span></code></td>
+<td>Interval in seconds of how often the run id corrector thread will run; this value should be greater than 0</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app.program.runtime.extensions.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">/opt/cdap/master/ext/runtimes</span></code></td>
+<td>Semicolon-separated list of local directories that are scanned for program runtime extensions</td>
+</tr>
+<tr class="row-even"><td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">app.program.spark.yarn.client.rewrite.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">enabled</span></code></div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">true</span></code></td>
+<td>Specify whether to rewrite the YARN 'Client.scala' class in Spark to work around issue SPARK-13441 in CDH clusters</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">apps.scheduler.queue</span></code></td>
+<td>&nbsp;</td>
+<td>Scheduler queue for CDAP programs and CDAP Explore queries</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">app.temp.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">/tmp</span></code></td>
+<td>Temp directory</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">scheduler.max.thread.pool.size</span></code></td>
+<td><code class="docutils literal"><span class="pre">100</span></code></td>
+<td>Size of the scheduler thread pool</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">scheduler.misfire.threshold.ms</span></code></td>
+<td><code class="docutils literal"><span class="pre">60000</span></code></td>
+<td>The number of milliseconds by which a schedule execution can miss its next-fire-time and still run</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">workflow.token.max.size.mb</span></code></td>
+<td><code class="docutils literal"><span class="pre">30</span></code></td>
+<td>Maximum allowed size in megabytes of a workflow token; if the workflow token exceeds this size, no further updates are allowed</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="audit">
+<span id="appendix-cdap-default-audit"></span><h2><a class="headerlink" href="#audit" title="Perma-link to this heading">🔗</a>Audit</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">audit.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">true</span></code></td>
+<td>Determines whether to publish audit messages to Apache Kafka</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">audit.kafka.topic</span></code></td>
+<td><code class="docutils literal"><span class="pre">audit</span></code></td>
+<td>Apache Kafka topic name to which audit messages are published</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="datasets">
+<span id="appendix-cdap-default-datasets"></span><h2><a class="headerlink" href="#datasets" title="Perma-link to this heading">🔗</a>Datasets</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">data.local.storage</span></code></td>
+<td><code class="docutils literal"><span class="pre">${local.data.dir}/ldb</span></code></td>
+<td>Database directory for LevelDB, used for data fabric in Standalone CDAP</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">data.local.storage.blocksize</span></code></td>
+<td><code class="docutils literal"><span class="pre">1024</span></code></td>
+<td>Block size in bytes for data fabric when in Standalone CDAP</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">data.local.storage.cachesize</span></code></td>
+<td><code class="docutils literal"><span class="pre">104857600</span></code></td>
+<td>Cache size in bytes for data fabric when in Standalone CDAP</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">data.tx.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
+<td>Transaction service bind address</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">data.tx.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">0</span></code></td>
+<td>Transaction service bind port; binds to a random port by default</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">data.tx.client.count</span></code></td>
+<td><code class="docutils literal"><span class="pre">50</span></code></td>
+<td>The number of pooled instances of the transaction client; increase this to increase transaction concurrency</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">data.tx.client.provider</span></code></td>
+<td><code class="docutils literal"><span class="pre">pool</span></code></td>
+<td>Provider strategy for transaction clients; valid values are &quot;pool&quot; and &quot;thread-local&quot;</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">data.tx.discovery.service.name</span></code></td>
+<td><code class="docutils literal"><span class="pre">transaction</span></code></td>
+<td>Name in discovery service for the transaction service</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">data.tx.hdfs.user</span></code></td>
+<td><code class="docutils literal"><span class="pre">${hdfs.user}</span></code></td>
+<td>User name for accessing HDFS (if not running in secure HDFS)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">data.tx.janitor.enable</span></code></td>
+<td><code class="docutils literal"><span class="pre">true</span></code></td>
+<td>Determines if the TransactionDataJanitor coprocessor is enabled on tables; normally should be true</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">data.tx.max.instances</span></code></td>
+<td><code class="docutils literal"><span class="pre">${master.service.max.instances}</span></code></td>
+<td>Maximum number of transaction service instances</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">data.tx.memory.mb</span></code></td>
+<td><code class="docutils literal"><span class="pre">${master.service.memory.mb}</span></code></td>
+<td>Memory in megabytes for each transaction service instance</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">data.tx.num.cores</span></code></td>
+<td><code class="docutils literal"><span class="pre">${master.service.num.cores}</span></code></td>
+<td>Number of virtual cores for the transaction service</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">data.tx.num.instances</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>Requested number of transaction service instances</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">data.tx.server.io.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">2</span></code></td>
+<td>Number of IO threads for the transaction service</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">data.tx.server.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">25</span></code></td>
+<td>Number of threads for the transaction service</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">data.tx.snapshot.codecs</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">org.apache.tephra.snapshot.SnapshotCodecV3,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">org.apache.tephra.snapshot.SnapshotCodecV4</span></code></div>
+</div>
+</td>
+<td>Specifies the class names of all supported transaction state codecs</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">data.tx.snapshot.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">${hdfs.namespace}/tx.snapshot</span></code></td>
+<td>Directory in HDFS used to store snapshots and logs of transaction state</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">data.tx.snapshot.interval</span></code></td>
+<td><code class="docutils literal"><span class="pre">60</span></code></td>
+<td>Frequency of transaction snapshots in seconds</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">data.tx.snapshot.local.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">${local.data.dir}/tx.snapshot</span></code></td>
+<td>Storage directory on the local filesystem of snapshot and logs of transaction state when in Standalone CDAP</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">data.tx.snapshot.retain</span></code></td>
+<td><code class="docutils literal"><span class="pre">10</span></code></td>
+<td>Number of transaction snapshot files to retain as backups</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">data.tx.thrift.max.read.buffer</span></code></td>
+<td><code class="docutils literal"><span class="pre">${thrift.max.read.buffer}</span></code></td>
+<td>Maximum read buffer size (in bytes) used by the transaction service; the value should be set to something greater than the maximum frame sent on the RPC channel</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">data.tx.timeout</span></code></td>
+<td><code class="docutils literal"><span class="pre">30</span></code></td>
+<td>Timeout value in seconds for a transaction; if the transaction is not finished in that time, it is marked invalid</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dataset.data.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">data</span></code></td>
+<td>Base directory for user data on the filesystem</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dataset.executor.container.instances</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>Number of dataset executor instances</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dataset.executor.container.memory.mb</span></code></td>
+<td><code class="docutils literal"><span class="pre">512</span></code></td>
+<td>Memory in megabytes for each dataset executor instance</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dataset.executor.container.num.cores</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>Number of virtual cores for each dataset executor instance</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dataset.executor.max.instances</span></code></td>
+<td><code class="docutils literal"><span class="pre">${master.service.max.instances}</span></code></td>
+<td>Maximum number of dataset executor instances</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dataset.executor.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">0</span></code></td>
+<td>Dataset executor bind port</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dataset.extensions.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">/opt/cdap/ext/lib</span></code></td>
+<td>Directory where all dataset extensions are stored</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dataset.service.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">0</span></code></td>
+<td>Dataset service bind port</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dataset.service.output.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">/datasets</span></code></td>
+<td>Directory where all dataset modules archives are stored</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dataset.table.prefix</span></code></td>
+<td><code class="docutils literal"><span class="pre">${root.namespace}</span></code></td>
+<td>Prefix for dataset table name</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="explore-service">
+<span id="appendix-cdap-default-explore-service"></span><h2><a class="headerlink" href="#explore-service" title="Perma-link to this heading">🔗</a>Explore Service</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">explore.active.operation.timeout.secs</span></code></td>
+<td><code class="docutils literal"><span class="pre">86400</span></code></td>
+<td>Timeout value in seconds for an SQL operation whose result was not fetched completely</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">explore.cleanup.job.schedule.secs</span></code></td>
+<td><code class="docutils literal"><span class="pre">60</span></code></td>
+<td>Interval in seconds to schedule the clean-up of timed-out operations</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">explore.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">true</span></code></td>
+<td>Determines if the CDAP Explore Service (ad-hoc SQL queries) is enabled</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">explore.executor.container.memory.mb</span></code></td>
+<td><code class="docutils literal"><span class="pre">1024</span></code></td>
+<td>Size of memory in megabytes for each explore executor instance</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">explore.executor.container.num.cores</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>Number of virtual cores for each explore executor instance</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">explore.inactive.operation.timeout.secs</span></code></td>
+<td><code class="docutils literal"><span class="pre">3600</span></code></td>
+<td>Timeout value in seconds for an SQL operation which does not have any more results to be fetched</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">explore.local.data.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">${local.data.dir}/explore</span></code></td>
+<td>Data directory for CDAP Explore Service when in Standalone CDAP</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">explore.start.on.demand</span></code></td>
+<td><code class="docutils literal"><span class="pre">false</span></code></td>
+<td>Determines the start-up of the CDAP Explore Service (ad-hoc SQL queries); if false, the explore service starts up when CDAP is started; if true, the CDAP Explore Service will start upon the first query it receives</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">explore.writes.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">true</span></code></td>
+<td>Determines if writing to a table through the CDAP Explore Service (ad- hoc SQL queries) is enabled</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">explore.service.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">0</span></code></td>
+<td>Explore service bind port</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="gateway">
+<span id="appendix-cdap-default-gateway"></span><h2><a class="headerlink" href="#gateway" title="Perma-link to this heading">🔗</a>Gateway</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">app.boss.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>Number of Netty service boss threads</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app.connection.backlog</span></code></td>
+<td><code class="docutils literal"><span class="pre">20000</span></code></td>
+<td>Max connection backlog of CDAP Master</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">app.exec.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">20</span></code></td>
+<td>Number of Netty service executor threads</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app.worker.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">10</span></code></td>
+<td>Number of Netty service worker threads</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="kafka-server">
+<span id="appendix-cdap-default-kafka-server"></span><h2><a class="headerlink" href="#kafka-server" title="Perma-link to this heading">🔗</a>Kafka Server</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">kafka.seed.brokers</span></code></td>
+<td><code class="docutils literal"><span class="pre">127.0.0.1:9092</span></code></td>
+<td>Comma-separated list of CDAP Kafka service brokers; for distributed CDAP, replace with list of FQDN:port brokers</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">kafka.server.default.replication.factor</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>CDAP Kafka service replication factor; used to replicate Kafka messages across multiple machines to prevent data loss in the event of a hardware failure. The recommended setting is to run at least two CDAP Kafka servers. If you are running two CDAP Kafka servers, set this value to 2; otherwise, set it to the maximum number of tolerated machine failures plus one (assuming you have that number of machines).</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">kafka.server.host.name</span></code></td>
+<td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
+<td>CDAP Kafka service bind address</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">kafka.server.log.dirs</span></code></td>
+<td><code class="docutils literal"><span class="pre">/tmp/kafka-logs</span></code></td>
+<td>Comma-separated list of CDAP Kafka service log storage directories</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">kafka.server.log.flush.interval.messages</span></code></td>
+<td><code class="docutils literal"><span class="pre">10000</span></code></td>
+<td>The interval length (in number of messages) at which to force an fsync of data written to the log</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">kafka.server.log.retention.hours</span></code></td>
+<td><code class="docutils literal"><span class="pre">24</span></code></td>
+<td>The number of hours to keep a log file before deleting it</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">kafka.server.num.partitions</span></code></td>
+<td><code class="docutils literal"><span class="pre">10</span></code></td>
+<td>Default number of partitions for a topic</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">kafka.server.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">9092</span></code></td>
+<td>CDAP Kafka service bind port</td>
+</tr>
+<tr class="row-even"><td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">kafka.server.zookeeper.connection.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">timeout.ms</span></code></div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">1000000</span></code></td>
+<td>Maximum time in milliseconds that the client will wait to establish a connection to ZooKeeper</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">kafka.zookeeper.namespace</span></code></td>
+<td><code class="docutils literal"><span class="pre">kafka</span></code></td>
+<td>CDAP Kafka service ZooKeeper namespace</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">kafka.zookeeper.quorum</span></code></td>
+<td>&nbsp;</td>
+<td>CDAP Kafka service ZooKeeper quorum and namespace. If set, this will override the ZooKeeper quorum (set by ${zookeeper.quorum}) and the ZooKeeper namespace (set by ${kafka.zookeeper.namespace}) when setting up a connection to the Kafka service used by CDAP. If the same Kafka service ZooKeeper quorum and namespace are shared by multiple CDAP instances, each CDAP instance needs to distinguish its Kafka topics from those of other CDAP instances with unique values for ${audit.kafka.topic}, ${log.kafka.topic}, ${notification.kafka.topic}, ${metadata.updates.kafka.topic}, and ${metrics.kafka.topic.prefix}.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="logging">
+<span id="appendix-cdap-default-logging"></span><h2><a class="headerlink" href="#logging" title="Perma-link to this heading">🔗</a>Logging</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.base.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">/logs/avro</span></code></td>
+<td>Base log directory</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">log.cleanup.run.interval.mins</span></code></td>
+<td><code class="docutils literal"><span class="pre">1440</span></code></td>
+<td>Log cleanup interval in minutes</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.collection.root</span></code></td>
+<td><code class="docutils literal"><span class="pre">${local.data.dir}/logs</span></code></td>
+<td>Root location for collecting logs when in Standalone CDAP</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">log.kafka.topic</span></code></td>
+<td><code class="docutils literal"><span class="pre">logs.user-v2</span></code></td>
+<td>Kafka topic name used to publish logs</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.publish.num.partitions</span></code></td>
+<td><code class="docutils literal"><span class="pre">10</span></code></td>
+<td>Number of CDAP Kafka service partitions to publish the logs to</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">log.retention.duration.days</span></code></td>
+<td><code class="docutils literal"><span class="pre">7</span></code></td>
+<td>Duration in days of log file HDFS retention</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.saver.max.instances</span></code></td>
+<td><code class="docutils literal"><span class="pre">${master.service.max.instances}</span></code></td>
+<td>Maximum number of log saver instances to run in YARN</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">log.saver.num.instances</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>Number of log saver instances to run in YARN</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.saver.run.memory.megs</span></code></td>
+<td><code class="docutils literal"><span class="pre">1024</span></code></td>
+<td>Memory in megabytes allocated for log saver instances to run in YARN</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">log.saver.run.num.cores</span></code></td>
+<td><code class="docutils literal"><span class="pre">2</span></code></td>
+<td>Number of virtual cores for each log saver instance in YARN</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.saver.status.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
+<td>Log Saver HTTP service bind address</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="master">
+<span id="appendix-cdap-default-master"></span><h2><a class="headerlink" href="#master" title="Perma-link to this heading">🔗</a>Master</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">http.service.boss.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>Number of Netty service boss threads for master HTTP services</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">http.service.connection.backlog</span></code></td>
+<td><code class="docutils literal"><span class="pre">20000</span></code></td>
+<td>Max connection backlog of master HTTP service</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">http.service.exec.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">20</span></code></td>
+<td>Number of Netty service executor threads for master HTTP services</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">http.service.worker.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">10</span></code></td>
+<td>Number of Netty service worker threads for master HTTP services</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">master.collect.app.containers.log.level</span></code></td>
+<td><code class="docutils literal"><span class="pre">ERROR</span></code></td>
+<td>The log level of application container logs that are streamed back to the CDAP Master process log. The levels supported are [ ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF ].</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">master.collect.containers.log</span></code></td>
+<td><code class="docutils literal"><span class="pre">true</span></code></td>
+<td>Determines if master service container logs are streamed back to the CDAP Master process log</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">master.service.max.instances</span></code></td>
+<td><code class="docutils literal"><span class="pre">5</span></code></td>
+<td>Maximum number of master service instances</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">master.service.memory.mb</span></code></td>
+<td><code class="docutils literal"><span class="pre">512</span></code></td>
+<td>Memory in megabytes for each master service instance</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">master.service.num.cores</span></code></td>
+<td><code class="docutils literal"><span class="pre">2</span></code></td>
+<td>Number of virtual cores for each master service instance</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">master.startup.service.timeout.seconds</span></code></td>
+<td><code class="docutils literal"><span class="pre">600</span></code></td>
+<td>Timeout in seconds for master services to wait for their dependent services to be available. For example, the dataset executor master service requires the transaction service, and will wait for the transaction service to become available while it is starting up. If the timeout is hit, the service will fail to start and the master service will shut itself down. If set to 0 or below, master services will not wait for their dependent services to start before starting themselves.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">master.services.scheduler.queue</span></code></td>
+<td>&nbsp;</td>
+<td>Scheduler queue for CDAP Master services</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="metadata">
+<span id="appendix-cdap-default-metadata"></span><h2><a class="headerlink" href="#metadata" title="Perma-link to this heading">🔗</a>Metadata</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">metadata.max.allowed.chars</span></code></td>
+<td><code class="docutils literal"><span class="pre">50</span></code></td>
+<td>Maximum number of characters for metadata keys, values, and tags</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metadata.service.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
+<td>Metadata HTTP service bind address</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">metadata.service.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">0</span></code></td>
+<td>Metadata HTTP service bind port</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metadata.service.exec.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">${http.service.exec.threads}</span></code></td>
+<td>Number of Netty service executor threads for metadata HTTP service</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">metadata.service.worker.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">${http.service.worker.threads}</span></code></td>
+<td>Number of Netty service IO worker threads for metadata HTTP service</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="metrics">
+<span id="appendix-cdap-default-metrics"></span><h2><a class="headerlink" href="#metrics" title="Perma-link to this heading">🔗</a>Metrics</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">metrics.boss.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">${http.service.boss.threads}</span></code></td>
+<td>Number of Netty service boss threads for metrics HTTP services</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metrics.connection.backlog</span></code></td>
+<td><code class="docutils literal"><span class="pre">${http.service.connection.backlog}</span></code></td>
+<td>Max connection backlog of metrics HTTP service</td>
+</tr>
+<tr class="row-even"><td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">metrics.data.table.retention.resolution.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">1.seconds</span></code></div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">7200</span></code></td>
+<td>Retention resolution in seconds of the 1-second resolution table; default retention period is 2 hours</td>
+</tr>
+<tr class="row-odd"><td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">metrics.data.table.retention.resolution.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">3600.seconds</span></code></div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">2592000</span></code></td>
+<td>Retention resolution in seconds of the 1-hour resolution table; default retention period is 30 days</td>
+</tr>
+<tr class="row-even"><td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">metrics.data.table.retention.resolution.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">60.seconds</span></code></div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">2592000</span></code></td>
+<td>Retention resolution in seconds for the 1-minute resolution table; default retention period is 30 days</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metrics.data.table.ts.rollTime.3600</span></code></td>
+<td><code class="docutils literal"><span class="pre">24</span></code></td>
+<td>Number of columns in a 1-hour resolution timeseries table</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">metrics.data.table.ts.rollTime.60</span></code></td>
+<td><code class="docutils literal"><span class="pre">60</span></code></td>
+<td>Number of columns in a 1-minute resolution timeseries table</td>
+</tr>
+<tr class="row-odd"><td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">metrics.dataset.hbase.stats.report.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">interval</span></code></div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">60</span></code></td>
+<td>Report interval in seconds for HBase stats</td>
+</tr>
+<tr class="row-even"><td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">metrics.dataset.leveldb.stats.report.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">interval</span></code></div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">60</span></code></td>
+<td>Report interval in seconds for LevelDB stats</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metrics.exec.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">${http.service.exec.threads}</span></code></td>
+<td>Number of Netty service executor threads for metrics HTTP services</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">metrics.kafka.partition.size</span></code></td>
+<td><code class="docutils literal"><span class="pre">10</span></code></td>
+<td>Number of partitions for metrics topic</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metrics.max.instances</span></code></td>
+<td><code class="docutils literal"><span class="pre">${master.service.max.instances}</span></code></td>
+<td>Maximum number of instances for the metrics service</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">metrics.memory.mb</span></code></td>
+<td><code class="docutils literal"><span class="pre">${master.service.memory.mb}</span></code></td>
+<td>Memory in megabytes for each metrics service instance</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metrics.num.cores</span></code></td>
+<td><code class="docutils literal"><span class="pre">${master.service.num.cores}</span></code></td>
+<td>Number of virtual cores for the metrics service</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">metrics.num.instances</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>Number of instances for the metrics service</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metrics.processor.max.instances</span></code></td>
+<td><code class="docutils literal"><span class="pre">${master.service.max.instances}</span></code></td>
+<td>Maximum number of instances for metrics processor service Apache Twill runnable</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">metrics.processor.memory.mb</span></code></td>
+<td><code class="docutils literal"><span class="pre">512</span></code></td>
+<td>Memory in megabytes for each metrics processor service Apache Twill runnable instance</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metrics.processor.num.cores</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>Number of virtual cores for metrics processor service Apache Twill runnable</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">metrics.processor.num.instances</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>Number of instances for metrics processor service Apache Twill runnable</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metrics.processor.status.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
+<td>Metrics Processor HTTP service bind address</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">metrics.query.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">45005</span></code></td>
+<td>Metrics Query service bind port</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metrics.worker.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">${http.service.worker.threads}</span></code></td>
+<td>Number of Netty service worker threads for metrics HTTP services</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="monitor-handler">
+<span id="appendix-cdap-default-monitor-handler"></span><h2><a class="headerlink" href="#monitor-handler" title="Perma-link to this heading">🔗</a>Monitor Handler</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">monitor.handler.service.discovery.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">timeout.seconds</span></code></div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>Timeout in seconds for service discovery used in monitor handler service status check</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="notification-system">
+<span id="appendix-cdap-default-notification-system"></span><h2><a class="headerlink" href="#notification-system" title="Perma-link to this heading">🔗</a>Notification System</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">notification.kafka.topic</span></code></td>
+<td><code class="docutils literal"><span class="pre">notifications</span></code></td>
+<td>Kafka topic name used to publish notifications</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">notification.transport.system</span></code></td>
+<td><code class="docutils literal"><span class="pre">kafka</span></code></td>
+<td>Transport system used by the notification system; can be either 'kafka' or 'stream'</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="queue">
+<span id="appendix-cdap-default-queue"></span><h2><a class="headerlink" href="#queue" title="Perma-link to this heading">🔗</a>Queue</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">data.queue.config.update.interval</span></code></td>
+<td><code class="docutils literal"><span class="pre">5</span></code></td>
+<td>Frequency in seconds of updates to the queue consumer configuration used in evicting queue entries on flush and compaction</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">data.queue.dequeue.tx.percent</span></code></td>
+<td><code class="docutils literal"><span class="pre">30</span></code></td>
+<td>Percentage of transaction time allowed to spend in dequeue; it should be an integer between 1-100</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">data.queue.table.presplits</span></code></td>
+<td><code class="docutils literal"><span class="pre">16</span></code></td>
+<td>Number of splits in the queue table</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="remote-system-operation">
+<span id="appendix-cdap-default-remote-system-operation"></span><h2><a class="headerlink" href="#remote-system-operation" title="Perma-link to this heading">🔗</a>Remote System Operation</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">remote.system.op.exec.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">${http.service.exec.threads}</span></code></td>
+<td>Number of Netty service executor threads for the remote system operation HTTP service</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">remote.system.op.service.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
+<td>Remote system operation HTTP service bind address</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">remote.system.op.worker.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">${http.service.worker.threads}</span></code></td>
+<td>Number of Netty service IO worker threads for the remote system operation HTTP service</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="router">
+<span id="appendix-cdap-default-router"></span><h2><a class="headerlink" href="#router" title="Perma-link to this heading">🔗</a>Router</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
+<td>CDAP Router service bind address</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">router.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">10000</span></code></td>
+<td>CDAP Router service bind port</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.client.boss.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>The number of boss threads in the CDAP Router service client</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">router.client.worker.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">10</span></code></td>
+<td>The number of worker threads in the CDAP Router service client</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.connection.backlog</span></code></td>
+<td><code class="docutils literal"><span class="pre">20000</span></code></td>
+<td>The connection backlog in the CDAP Router service</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">router.connection.idle.timeout.secs</span></code></td>
+<td><code class="docutils literal"><span class="pre">15</span></code></td>
+<td>Time in seconds after an HTTP request completes that idle router connections are closed</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.server.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">127.0.0.1</span></code></td>
+<td>CDAP Router service address to which CDAP UI connects</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">router.server.boss.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>The number of boss threads in the CDAP Router service</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.server.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">${router.bind.port}</span></code></td>
+<td>CDAP Router service port to which CDAP UI connects</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">router.server.worker.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">10</span></code></td>
+<td>The number of worker threads in the CDAP Router service</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.ssl.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">10443</span></code></td>
+<td>CDAP Router service bind port for HTTPS</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="security">
+<span id="appendix-cdap-default-security"></span><h2><a class="headerlink" href="#security" title="Perma-link to this heading">🔗</a>Security</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">cdap.master.kerberos.keytab</span></code></td>
+<td>&nbsp;</td>
+<td>The full path to the Kerberos keytab file containing the CDAP Master service's credentials</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">cdap.master.kerberos.principal</span></code></td>
+<td>&nbsp;</td>
+<td>Example: &quot;CDAP_PRINCIPAL/_HOST&#64;EXAMPLE.COM&quot;. The Kerberos primary user that should be used to login to the CDAP Master service. Substitute the Kerberos primary (user) for CDAP_PRINCIPAL, and your domain for EXAMPLE.COM. The string &quot;_HOST&quot; will be substituted with the local hostname.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">cdap.ugi.cache.expiration.ms</span></code></td>
+<td><code class="docutils literal"><span class="pre">3600000</span></code></td>
+<td>UserGroupInformation cache entry expiration time in milliseconds. It is only used when impersonation is enabled.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">kerberos.auth.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">${security.enabled}</span></code></td>
+<td>Determines if Kerberos authentication is enabled</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">kerberos.auth.relogin.interval.seconds</span></code></td>
+<td><code class="docutils literal"><span class="pre">300</span></code></td>
+<td>Relogin interval for Kerberos keytab</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.auth.server.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
+<td>CDAP Authentication service bind address</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.auth.server.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">10009</span></code></td>
+<td>CDAP Authentication service bind port</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.auth.server.ssl.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">10010</span></code></td>
+<td>CDAP Authentication service bind port for HTTPS</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authentication.basic.realmfile</span></code></td>
+<td>&nbsp;</td>
+<td>Username and password file to use when basic authentication is configured</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authentication.handlerClassName</span></code></td>
+<td>&nbsp;</td>
+<td>Name of the authentication implementation to use to validate user credentials</td>
+</tr>
+<tr class="row-even"><td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">security.authentication.loginmodule.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">className</span></code></div>
+</div>
+</td>
+<td>&nbsp;</td>
+<td>JAAS LoginModule implementation to use when co.cask.security.server.JAASAuthenticationHandler is configured for ${security.authentication.handlerClassName}</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authorization.admin.users</span></code></td>
+<td>&nbsp;</td>
+<td>A comma-separated list of users for whom admin privileges are to be granted on the CDAP instance during CDAP startup, so that these users can create namespaces. These users are also granted admin privileges on the default namespace, so that they can manage privileges on the default namespace. This provides a method to bootstrap CDAP on an authorization-enabled cluster. The default is empty, in which case no users have access to creating namespaces or to managing privileges on the default namespace. In that scenario, authorization in CDAP has to be bootstrapped externally using interfaces provided by the configured authorization extension.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authorization.cache.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">true</span></code></td>
+<td>Determines if authorization policies can be cached by programs; defaults to true</td>
+</tr>
+<tr class="row-odd"><td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">security.authorization.cache.refresh.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">interval.secs</span></code></div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">50</span></code></td>
+<td>Determines the interval in seconds after which a background thread will refresh cached authorization policies. Defaults to 50 seconds. It is recommended to keep this value slightly lower than ${security.authorization.cache.ttl.secs}, so that the cached authorization policies do not expire unless they have been explicitly revoked. This setting only takes effect if ${security.authorization.cache.enabled} is set to true.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authorization.cache.ttl.secs</span></code></td>
+<td><code class="docutils literal"><span class="pre">60</span></code></td>
+<td>Determines the time to live in seconds for entries in the authorization cache used by programs. Defaults to 60 seconds. This setting only takes effect if ${security.authorization.cache.enabled} is set to true.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authorization.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">false</span></code></td>
+<td>When set to true, all operations in CDAP are authorized using the authorizer implementation found at the property ${security.authorization.extension.jar.path}</td>
+</tr>
+<tr class="row-even"><td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">security.authorization.extension.jar.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">path</span></code></div>
+</div>
+</td>
+<td>&nbsp;</td>
+<td>If an external authorization system is used for authorizing operations on CDAP entities, this property sets the path to the bundled JAR file containing the extension code. This jar is only used when authorization is enabled by setting ${security.authorization.enabled} to true.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.data.keyfile.path</span></code></td>
+<td><code class="docutils literal"><span class="pre">${local.data.dir}/security/keyfile</span></code></td>
+<td>Path to the secret key file (only used in Standalone CDAP)</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">false</span></code></td>
+<td>Determines if authentication is enabled for CDAP; if true, all requests to CDAP must provide a valid access token</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.realm</span></code></td>
+<td><code class="docutils literal"><span class="pre">cdap</span></code></td>
+<td>Authentication realm used for scoping security; this value should be unique for each installation of CDAP</td>
+</tr>
+<tr class="row-even"><td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">security.server.extended.token.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">expiration.ms</span></code></div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">604800000</span></code></td>
+<td>Admin tool access token expiration time in milliseconds; defaults to 1 week (internal)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.server.maxthreads</span></code></td>
+<td><code class="docutils literal"><span class="pre">100</span></code></td>
+<td>Maximum number of threads that the CDAP Authentication service should use for handling HTTP requests</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.server.token.expiration.ms</span></code></td>
+<td><code class="docutils literal"><span class="pre">86400000</span></code></td>
+<td>Access token expiration time in milliseconds; defaults to 24 hours</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.store.file.name</span></code></td>
+<td><code class="docutils literal"><span class="pre">securestore</span></code></td>
+<td>Name of the secure store file</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.store.file.path</span></code></td>
+<td><code class="docutils literal"><span class="pre">${local.data.dir}/store</span></code></td>
+<td>Location of the encrypted file which holds the secure store entries</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.store.provider</span></code></td>
+<td><code class="docutils literal"><span class="pre">none</span></code></td>
+<td>Backend provider for the secure store; use 'none' if no secure store</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.token.digest.algorithm</span></code></td>
+<td><code class="docutils literal"><span class="pre">HmacSHA256</span></code></td>
+<td>Algorithm used for generating MAC of access tokens</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.token.digest.key.expiration.ms</span></code></td>
+<td><code class="docutils literal"><span class="pre">3600000</span></code></td>
+<td>Time duration (in milliseconds) after which an active secret key used for signing tokens should be retired</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.token.digest.keylength</span></code></td>
+<td><code class="docutils literal"><span class="pre">128</span></code></td>
+<td>Key length used in generating the secret keys for generating MAC of access tokens</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.token.distributed.parent.znode</span></code></td>
+<td><code class="docutils literal"><span class="pre">/${root.namespace}/security/auth</span></code></td>
+<td>Parent node in ZooKeeper used for secret key distribution in distributed mode</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">ssl.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">false</span></code></td>
+<td>Determines if SSL is enabled</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="stream">
+<span id="appendix-cdap-default-stream"></span><h2><a class="headerlink" href="#stream" title="Perma-link to this heading">🔗</a>Stream</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream.async.queue.size</span></code></td>
+<td><code class="docutils literal"><span class="pre">100</span></code></td>
+<td>Queue size per async worker thread for queuing up async write requests</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stream.async.worker.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">${stream.worker.threads}</span></code></td>
+<td>Number of async worker threads for handling async write requests</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream.base.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">/streams</span></code></td>
+<td>The directory root for all stream files, relative to the HDFS namespace</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stream.batch.buffer.threshold</span></code></td>
+<td><code class="docutils literal"><span class="pre">1048576</span></code></td>
+<td>Bytes retained in-memory before writing to a new stream file</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
+<td>Stream HTTP service bind address</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stream.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">0</span></code></td>
+<td>Stream HTTP service bind port</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream.consumer.table.presplits</span></code></td>
+<td><code class="docutils literal"><span class="pre">16</span></code></td>
+<td>Number of splits for the stream consumer table</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stream.container.instance.id</span></code></td>
+<td><code class="docutils literal"><span class="pre">0</span></code></td>
+<td>Instance ID for the stream service container; the actual value will be set at runtime by the system automatically</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream.container.instances</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>Number of YARN container instances for the stream handler; in Standalone CDAP, it is always one</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stream.container.memory.mb</span></code></td>
+<td><code class="docutils literal"><span class="pre">512</span></code></td>
+<td>Amount of memory in megabytes for the YARN container that runs the stream handler</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream.container.num.cores</span></code></td>
+<td><code class="docutils literal"><span class="pre">2</span></code></td>
+<td>Number of virtual cores for the YARN container that runs the stream handler</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stream.event.ttl</span></code></td>
+<td><code class="docutils literal"><span class="pre">9223372036854775807</span></code></td>
+<td>Default time-to-live in milliseconds (Long.MAX_VALUE) for stream events</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream.file.cleanup.period</span></code></td>
+<td><code class="docutils literal"><span class="pre">300000</span></code></td>
+<td>Interval in milliseconds for running the stream file cleanup process</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stream.file.prefix</span></code></td>
+<td><code class="docutils literal"><span class="pre">file</span></code></td>
+<td>Prefix of file name for stream file</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream.index.interval</span></code></td>
+<td><code class="docutils literal"><span class="pre">10000</span></code></td>
+<td>Interval in milliseconds for emitting new index entry in stream file</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stream.instance.file.prefix</span></code> <a class="reference internal" href="#cdap-site-xml-note-final"><span>[Final]</span></a></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">${stream.file.prefix}.${stream.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">container.instance.id}</span></code></div>
+</div>
+</td>
+<td>Prefix of file name for stream file per writer instance</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream.notification.threshold</span></code></td>
+<td><code class="docutils literal"><span class="pre">1024</span></code></td>
+<td>Size of data in megabytes to be ingested by a stream before a notification is published</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stream.partition.duration</span></code></td>
+<td><code class="docutils literal"><span class="pre">3600000</span></code></td>
+<td>Duration in milliseconds of a stream partition</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream.size.schedule.polling.delay</span></code></td>
+<td><code class="docutils literal"><span class="pre">600</span></code></td>
+<td>Delay in seconds to poll a stream in a StreamSizeSchedule if no notification is received</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stream.worker.threads</span></code></td>
+<td><code class="docutils literal"><span class="pre">${http.service.worker.threads}</span></code></td>
+<td>Default number of IO worker threads for the stream HTTP service</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="ui">
+<span id="appendix-cdap-default-ui"></span><h2><a class="headerlink" href="#ui" title="Perma-link to this heading">🔗</a>UI</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dashboard.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
+<td>CDAP UI bind address</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dashboard.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">9999</span></code></td>
+<td>CDAP UI bind port</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dashboard.router.check.timeout.secs</span></code></td>
+<td><code class="docutils literal"><span class="pre">0</span></code></td>
+<td>Interval in seconds that the CDAP UI waits before exiting when unable to connect to the CDAP Router service on startup; use a timeout of 0 to wait indefinitely</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dashboard.ssl.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">9443</span></code></td>
+<td>CDAP UI bind port for HTTPS</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dashboard.ssl.disable.cert.check</span></code></td>
+<td><code class="docutils literal"><span class="pre">false</span></code></td>
+<td>True to disable SSL certificate check from the CDAP UI</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">http.client.connection.timeout.ms</span></code></td>
+<td><code class="docutils literal"><span class="pre">60000</span></code></td>
+<td>Connection timeout in milliseconds for internal HTTP requests</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">http.client.read.timeout.ms</span></code></td>
+<td><code class="docutils literal"><span class="pre">60000</span></code></td>
+<td>Read timeout in milliseconds for internal HTTP requests</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="deprecated-properties">
+<span id="appendix-cdap-default-deprecated-properties"></span><h2><a class="headerlink" href="#deprecated-properties" title="Perma-link to this heading">🔗</a>Deprecated Properties</h2>
+<p>These properties are deprecated as of CDAP 3.5.2 and should not be used. They
+will be removed in a future release. Replacement properties are listed as noted.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="35%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter Name</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">app.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
+<td>App Fabric service bind address (deprecated; use ${master.services.bind.address} instead)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dataset.service.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
+<td>Dataset service bind address (deprecated; use ${master.services.bind.address} instead)</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">explore.executor.container.instances</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>Number of explore executor instances (deprecated; instance count is always set to 1)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">explore.executor.max.instances</span></code></td>
+<td><code class="docutils literal"><span class="pre">1</span></code></td>
+<td>Maximum number of explore executor instances (deprecated; instance count is always set to 1)</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">kafka.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">${kafka.server.host.name}</span></code></td>
+<td>CDAP Kafka service bind port (deprecated; use ${kafka.server.host.name} instead)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">kafka.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">${kafka.server.port}</span></code></td>
+<td>CDAP Kafka service bind port (deprecated; use ${kafka.server.port} instead)</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">kafka.default.replication.factor</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">${kafka.server.default.replication.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">factor}</span></code></div>
+</div>
+</td>
+<td>CDAP Kafka service replication factor (deprecated; use ${kafka.server.default.replication.factor} instead)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">kafka.log.dir</span></code></td>
+<td><code class="docutils literal"><span class="pre">${kafka.server.log.dirs}</span></code></td>
+<td>CDAP Kafka service log storage directory (deprecated; use ${kafka.server.log.dirs} instead)</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">kafka.log.retention.hours</span></code></td>
+<td><code class="docutils literal"><span class="pre">${kafka.server.log.retention.hours}</span></code></td>
+<td>The number of hours to keep a log file before deleting it (deprecated; use ${kafka.server.log.retention.hours} instead)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">kafka.num.partitions</span></code></td>
+<td><code class="docutils literal"><span class="pre">${kafka.server.num.partitions}</span></code></td>
+<td>Default number of partitions for a topic (deprecated; use ${kafka.server.num.partitions} instead)</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">kafka.zookeeper.connection.timeout.ms</span></code></td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">${kafka.server.zookeeper.connection.</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">timeout.ms}</span></code></div>
+</div>
+</td>
+<td>The maximum time (in milliseconds) that the client will wait to establish a connection to Zookeeper (deprecated; use ${kafka.server.zookeeper.connection.timeout.ms} instead)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metadata.updates.kafka.broker.list</span></code></td>
+<td><code class="docutils literal"><span class="pre">127.0.0.1:${kafka.bind.port}</span></code></td>
+<td>Apache Kafka broker list to which metadata update notifications are published (deprecated)</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">metadata.updates.kafka.topic</span></code></td>
+<td><code class="docutils literal"><span class="pre">cdap-metadata-updates</span></code></td>
+<td>Apache Kafka topic name to which metadata update notifications are published (deprecated)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metadata.updates.publish.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">false</span></code></td>
+<td>Determines if metadata updates will be published to Apache Kafka. External systems can subscribe to the Kafka topic determined by ${metadata.updates.kafka.topic} to receive notifications of metadata updates (deprecated).</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.ssl.webapp.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">20443</span></code></td>
+<td>CDAP Router service bind port for webapp for HTTPS (deprecated)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">router.webapp.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">20000</span></code></td>
+<td>CDAP Router service bind port for webapp (deprecated)</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.webapp.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">false</span></code></td>
+<td>Determines if the webapp listening service should be started (deprecated)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.auth.server.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
+<td>CDAP Authentication service bind address (deprecated; use ${security.auth.server.bind.address} instead)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="notes">
+<span id="cdap-site-xml-note-final"></span><h2><a class="headerlink" href="#notes" title="Perma-link to this heading">🔗</a>Notes</h2>
+<p><strong>[Final]:</strong> Properties marked as <em>[Final]</em> indicates that their value cannot be changed, even
+with a setting in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdap-components.html"> CDAP Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deployment-architectures.html"> Deployment Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hadoop-compatibility.html"> Hadoop Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system-requirements.html"> System Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html"> Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../verification.html"> Verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../upgrading/index.html"> Upgrading</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../operations/index.html"> Operations</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Appendices</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="minimal-cdap-site.html"> Appendix: Minimal cdap-site.xml</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Appendix: cdap-site.xml</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#general">General</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#global">Global</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#applications">Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#audit">Audit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#datasets">Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#explore-service">Explore Service</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gateway">Gateway</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#kafka-server">Kafka Server</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logging">Logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#master">Master</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#metadata">Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#monitor-handler">Monitor Handler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#notification-system">Notification System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#queue">Queue</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#remote-system-operation">Remote System Operation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#router">Router</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#security">Security</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stream">Stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ui">UI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deprecated-properties">Deprecated Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#notes">Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-security.html"> Appendix: cdap-security.xml</a></li>
+</ul>
+</li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Appendix: Minimal cdap-site.xml" href="minimal-cdap-site.html" />Appendix: Minimal cdap-site.xml</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Appendix: cdap-security.xml" href="cdap-security.html" />Appendix: cdap-security.xml</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

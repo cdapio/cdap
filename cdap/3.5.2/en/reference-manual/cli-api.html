@@ -1,0 +1,1355 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Command Line Interface API &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/cli-api.html">
+
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="index.html" />
+    <link rel="next" title="CDAP HTTP RESTful API v3" href="http-restful-api/index.html" />
+    <link rel="prev" title="Supported Characters" href="characters.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="http-restful-api/index.html" title="CDAP HTTP RESTful API v3"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="characters.html" title="Supported Characters"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="table-of-contents.html">Reference Manual</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="command-line-interface-api">
+<span id="cdap-cli"></span><span id="cli"></span><h1><a class="headerlink" href="#command-line-interface-api" title="Perma-link to this heading">🔗</a>Command Line Interface API</h1>
+<div class="section" id="introduction">
+<h2><a class="headerlink" href="#introduction" title="Perma-link to this heading">🔗</a>Introduction</h2>
+<p>The Command Line Interface (CLI, or CDAP CLI) provides methods to interact with the CDAP server from within a shell,
+similar to the HBase or <code class="docutils literal"><span class="pre">bash</span></code> shells. It is located within the SDK, at <code class="docutils literal"><span class="pre">bin/cdap-cli</span></code> as either a bash
+script or a Windows <code class="docutils literal"><span class="pre">.bat</span></code> file.</p>
+<p>It can be <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-cli-package-installation" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">installed on Distributed CDAP</span></a>, in
+which case it will be installed either in <code class="docutils literal"><span class="pre">/opt/cdap/cli</span></code> or, in the case of Cloudera
+Manager, <code class="docutils literal"><span class="pre">opt/cloudera/parcels/cdap/cli/</span></code>.</p>
+<p>The CLI may be used in two ways: interactive mode and non-interactive mode.</p>
+<div class="section" id="interactive-mode">
+<h3><a class="headerlink" href="#interactive-mode" title="Perma-link to this heading">🔗</a>Interactive Mode</h3>
+<p>To run the CLI in interactive mode, run the <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code> executable with no arguments from a terminal:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral1() {
+  var tabs = ['linux', 'windows', 'linux1', 'linux2'];
+  var mapping = {'windows': 'windows', 'linux1': 'linux', 'linux2': 'linux', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral1 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral1", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral1" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+<li class="example-tab example-tab-linux1 "><a href="#">Distributed CDAP</a></li>
+<li class="example-tab example-tab-linux2 "><a href="#">Cloudera Manager Clusters</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">./bin/cdap-cli.sh</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">.\bin\cdap-cli.bat</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-linux1 ">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">/opt/cdap/cli/bin/cdap-cli.sh</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-linux2 ">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">/opt/cloudera/parcels/cdap/cli/bin/cdap-cli.sh</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>The executable should bring you into a shell, with a prompt similar to:</p>
+<div class="highlight container">
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap (http://localhost:10000/namespace:default)&gt;</span>
+</pre></div>
+</div>
+</div>
+<p>This indicates that the CLI is currently set to interact with the CDAP server at <code class="docutils literal"><span class="pre">localhost</span></code>.</p>
+<ul class="simple">
+<li>To interact with a different CDAP server by default, set the environment variable <code class="docutils literal"><span class="pre">CDAP_HOST</span></code> to a hostname.</li>
+<li>To change the current CDAP server, run the CLI command <code class="docutils literal"><span class="pre">connect</span> <span class="pre">example.com</span></code>.</li>
+<li>To connect to an SSL-enabled CDAP server, run the CLI command <code class="docutils literal"><span class="pre">connect</span> <span class="pre">https://example.com</span></code>.</li>
+</ul>
+<p>For example, with <code class="docutils literal"><span class="pre">CDAP_HOST</span></code> set to <code class="docutils literal"><span class="pre">example.com</span></code>, the CLI would be interacting with
+a CDAP instance at <code class="docutils literal"><span class="pre">example.com</span></code>, port <code class="docutils literal"><span class="pre">10000</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap (http://example.com:10000/namespace:default)&gt;</span>
+</pre></div>
+</div>
+<p>To list all of the available commands, enter the CLI command <code class="docutils literal"><span class="pre">help</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap (http://localhost:10000/namespace:default)&gt; help</span>
+</pre></div>
+</div>
+<p>In this documentation, to save space, this prompt is abbreviated to:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span>
+</pre>
+</div>
+</div>
+<div class="section" id="non-interactive-mode">
+<h3><a class="headerlink" href="#non-interactive-mode" title="Perma-link to this heading">🔗</a>Non-Interactive Mode</h3>
+<p>To run the CLI in non-interactive mode, run the CDAP CLI executable, passing the command you want executed
+as the argument. For example, to list all applications currently deployed to CDAP, execute:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral2() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral2 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral2", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral2" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh list apps</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat list apps</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+<div class="section" id="connecting-to-secure-cdap-instances">
+<h3><a class="headerlink" href="#connecting-to-secure-cdap-instances" title="Perma-link to this heading">🔗</a>Connecting to Secure CDAP Instances</h3>
+<p>When connecting to secure CDAP instances, the CLI will look for an access token located at
+<code class="docutils literal"><span class="pre">~/.cdap.accesstoken.&lt;hostname&gt;</span></code> and use it if it exists and is valid. If not, the CLI will prompt
+you for the required credentials to acquire an access token from the CDAP instance. Once acquired,
+the CLI will save it to <code class="docutils literal"><span class="pre">~/.cdap.accesstoken.&lt;hostname&gt;</span></code> for later use and use it for the rest of
+the current CLI session.</p>
+</div>
+<div class="section" id="options">
+<h3><a class="headerlink" href="#options" title="Perma-link to this heading">🔗</a>Options</h3>
+<p>The CLI can be started with command-line options:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral3() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral3 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral3", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral3" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">usage: cdap-cli.sh [--autoconnect &lt;true|false&gt;] [--debug] [--help]</span>
+<span class="go">                   [--verify-ssl &lt;true|false&gt;] [--uri &lt;uri&gt;][--script</span>
+<span class="go">                   &lt;script-file&gt;]</span>
+<span class="go"> -a,--autoconnect &lt;arg&gt;   If &quot;true&quot;, try provided connection (from uri)</span>
+<span class="go">                          upon launch or try default connection if none</span>
+<span class="go">                          provided. Defaults to &quot;true&quot;.</span>
+<span class="go"> -d,--debug               Print exception stack traces.</span>
+<span class="go"> -h,--help                Print the usage message.</span>
+<span class="go"> -s,--script &lt;arg&gt;        Execute a file containing a series of CLI</span>
+<span class="go">                          commands, line-by-line.</span>
+<span class="go"> -u,--uri &lt;arg&gt;           CDAP instance URI to interact with in the format</span>
+<span class="go">                          &quot;[http[s]://]&lt;hostname&gt;[:&lt;port&gt;[/&lt;namespace&gt;]]&quot;.</span>
+<span class="go">                          Defaults to</span>
+<span class="go">                          &quot;http://&lt;hostname&gt;.local:10000&quot;.</span>
+<span class="go"> -v,--verify-ssl &lt;arg&gt;    If &quot;true&quot;, verify SSL certificate when making</span>
+<span class="go">                          requests. Defaults to &quot;true&quot;.</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">usage: cdap-cli.bat [--autoconnect &lt;true|false&gt;] [--debug] [--help]</span>
+<span class="go">                    [--verify-ssl &lt;true|false&gt;] [--uri &lt;uri&gt;][--script</span>
+<span class="go">                    &lt;script-file&gt;]</span>
+<span class="go"> -a,--autoconnect &lt;arg&gt;   If &quot;true&quot;, try provided connection (from uri)</span>
+<span class="go">                          upon launch or try default connection if none</span>
+<span class="go">                          provided. Defaults to &quot;true&quot;.</span>
+<span class="go"> -d,--debug               Print exception stack traces.</span>
+<span class="go"> -h,--help                Print the usage message.</span>
+<span class="go"> -s,--script &lt;arg&gt;        Execute a file containing a series of CLI</span>
+<span class="go">                          commands, line-by-line.</span>
+<span class="go"> -u,--uri &lt;arg&gt;           CDAP instance URI to interact with in the format</span>
+<span class="go">                          &quot;[http[s]://]&lt;hostname&gt;[:&lt;port&gt;[/&lt;namespace&gt;]]&quot;.</span>
+<span class="go">                          Defaults to</span>
+<span class="go">                          &quot;http://&lt;hostname&gt;.local:10000&quot;.</span>
+<span class="go"> -v,--verify-ssl &lt;arg&gt;    If &quot;true&quot;, verify SSL certificate when making</span>
+<span class="go">                          requests. Defaults to &quot;true&quot;.</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+<div class="section" id="settings">
+<h3><a class="headerlink" href="#settings" title="Perma-link to this heading">🔗</a>Settings</h3>
+<p>Certain commands (<code class="docutils literal"><span class="pre">cli</span> <span class="pre">render</span> <span class="pre">as</span></code>, <code class="docutils literal"><span class="pre">connect</span></code>, and <code class="docutils literal"><span class="pre">use</span> <span class="pre">namespace</span></code>) affect how the CLI works for the duration of a session.</p>
+<ul>
+<li><p class="first">The command <code class="docutils literal"><span class="pre">cli</span> <span class="pre">render</span> <span class="pre">as</span> <span class="pre">&lt;table-renderer&gt;</span></code> (from the <a class="reference internal" href="#general">General</a> commands) sets how
+table data is rendered. Valid options are either <code class="docutils literal"><span class="pre">alt</span></code> (the default) and <code class="docutils literal"><span class="pre">csv</span></code>. As
+the <code class="docutils literal"><span class="pre">alt</span></code> option may split a cell into multiple lines, you may need to use <code class="docutils literal"><span class="pre">csv</span></code> if
+you want to copy and paste the results into another application or include in a message.</p>
+<ul>
+<li><p class="first">With <code class="docutils literal"><span class="pre">cli</span> <span class="pre">render</span> <span class="pre">as</span> <span class="pre">alt</span></code> (the default), a command such as <code class="docutils literal"><span class="pre">list</span> <span class="pre">apps</span></code> will be output as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+================================+</span>
+<span class="go">| app id      | description      |</span>
+<span class="go">+=============+==================+</span>
+<span class="go">| PurchaseApp | Some description |</span>
+<span class="go">+=============+==================+</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">With <code class="docutils literal"><span class="pre">cli</span> <span class="pre">render</span> <span class="pre">as</span> <span class="pre">csv</span></code>, the same <code class="docutils literal"><span class="pre">list</span> <span class="pre">apps</span></code> would be output as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">app id,description</span>
+<span class="go">PurchaseApp,Some description</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+<li><p class="first">The command <code class="docutils literal"><span class="pre">connect</span></code> (from the <a class="reference internal" href="#general">General</a> commands) allows you to connect to a CDAP
+instance.</p>
+</li>
+<li><p class="first">The command <code class="docutils literal"><span class="pre">use</span> <span class="pre">namespace</span></code> (from the <a class="reference internal" href="#namespace">Namespace</a> commands) allows you to set the
+namespace used with all subsequent commands. By default, all sessions start in the
+<code class="docutils literal"><span class="pre">default</span></code> namespace.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="available-commands">
+<span id="cli-available-commands"></span><h2><a class="headerlink" href="#available-commands" title="Perma-link to this heading">🔗</a>Available Commands</h2>
+<p>These are the available commands:</p>
+<div class="section" id="general">
+<h3><a class="headerlink" href="#general" title="Perma-link to this heading">🔗</a>General</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Command</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">cli</span> <span class="pre">render</span> <span class="pre">as</span> <span class="pre">&lt;table-renderer&gt;</span></code></td>
+<td>Modifies how table data is rendered. Valid options are <code class="docutils literal"><span class="pre">'alt'</span></code> (the default) and <code class="docutils literal"><span class="pre">'csv'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">cli</span> <span class="pre">version</span></code></td>
+<td>Prints the CDAP CLI version</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">connect</span> <span class="pre">&lt;cdap-instance-uri&gt;</span> <span class="pre">[&lt;verify-ssl-cert&gt;]</span></code></td>
+<td>Connects to a CDAP instance</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">exit</span></code></td>
+<td>Exits the CDAP CLI</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">quit</span></code></td>
+<td>Exits the CDAP CLI</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="application-lifecycle">
+<h3><a class="headerlink" href="#application-lifecycle" title="Perma-link to this heading">🔗</a>Application Lifecycle</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Command</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">check</span> <span class="pre">service</span> <span class="pre">availability</span> <span class="pre">&lt;app-id.service-id&gt;</span></code></td>
+<td>Check if a service is available to accept requests</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">create</span> <span class="pre">app</span> <span class="pre">&lt;app-id&gt;</span> <span class="pre">&lt;artifact-name&gt;</span> <span class="pre">&lt;artifact-version&gt;</span> <span class="pre">&lt;scope&gt;</span> <span class="pre">[&lt;app-config-file&gt;]</span></code></td>
+<td>Creates an application from an artifact, optionally using a configuration. If a configuration is needed, it must be given as a file whose contents are a JSON object containing the application config. For example, the file contents could contain: <code class="docutils literal"><span class="pre">'{</span> <span class="pre">&quot;config&quot;:</span> <span class="pre">{</span> <span class="pre">&quot;stream&quot;:</span> <span class="pre">&quot;purchases&quot;</span> <span class="pre">}</span> <span class="pre">}'</span></code>. In this case, the application would receive <code class="docutils literal"><span class="pre">'{</span> <span class="pre">&quot;stream&quot;:</span> <span class="pre">&quot;purchases&quot;</span> <span class="pre">}'</span></code> as its config object.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">app</span> <span class="pre">&lt;app-id&gt;</span></code></td>
+<td>Deletes an application</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">preferences</span> <span class="pre">app</span> <span class="pre">[&lt;app-id&gt;]</span></code></td>
+<td>Deletes the preferences of an application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">preferences</span> <span class="pre">flow</span> <span class="pre">[&lt;app-id.flow-id&gt;]</span></code></td>
+<td>Deletes the preferences of a flow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">preferences</span> <span class="pre">instance</span> <span class="pre">[&lt;instance-id&gt;]</span></code></td>
+<td>Deletes the preferences of an instance</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">preferences</span> <span class="pre">mapreduce</span> <span class="pre">[&lt;app-id.mapreduce-id&gt;]</span></code></td>
+<td>Deletes the preferences of a MapReduce program</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">preferences</span> <span class="pre">namespace</span> <span class="pre">[&lt;namespace-name&gt;]</span></code></td>
+<td>Deletes the preferences of a namespace</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">preferences</span> <span class="pre">service</span> <span class="pre">[&lt;app-id.service-id&gt;]</span></code></td>
+<td>Deletes the preferences of a service</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">preferences</span> <span class="pre">spark</span> <span class="pre">[&lt;app-id.spark-id&gt;]</span></code></td>
+<td>Deletes the preferences of a Spark program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">preferences</span> <span class="pre">worker</span> <span class="pre">[&lt;app-id.worker-id&gt;]</span></code></td>
+<td>Deletes the preferences of a worker</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">preferences</span> <span class="pre">workflow</span> <span class="pre">[&lt;app-id.workflow-id&gt;]</span></code></td>
+<td>Deletes the preferences of a workflow</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">workflow</span> <span class="pre">local</span> <span class="pre">datasets</span> <span class="pre">&lt;app-id.workflow-id&gt;</span> <span class="pre">&lt;runid&gt;</span></code></td>
+<td>Deletes the local datasets associated with the workflow for a given run ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;app-jar-file&gt;</span> <span class="pre">[&lt;app-config&gt;]</span></code></td>
+<td>Deploys an application, optionally with a serialized configuration string</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">app</span> <span class="pre">&lt;app-id&gt;</span></code></td>
+<td>Describes an application</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">app</span> <span class="pre">&lt;app-id&gt;</span> <span class="pre">programs</span> <span class="pre">status</span> <span class="pre">[of</span> <span class="pre">type</span> <span class="pre">&lt;program-types&gt;]</span></code></td>
+<td>Command to get status of one or more programs of an application. By default, gets status of all flows, services, and workers. A comma-separated list of program types can be specified, which will get status of all programs of those types. For example, specifying <code class="docutils literal"><span class="pre">'flow,workflow'</span></code> will get status of all flows and workflows in the application.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">endpoints</span> <span class="pre">service</span> <span class="pre">&lt;app-id.service-id&gt;</span></code></td>
+<td>Lists the endpoints that a service exposes</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">flow</span> <span class="pre">live</span> <span class="pre">&lt;app-id.flow-id&gt;</span></code></td>
+<td>Gets the live info of a flow</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">flow</span> <span class="pre">logs</span> <span class="pre">&lt;app-id.flow-id&gt;</span> <span class="pre">[&lt;start-time&gt;]</span> <span class="pre">[&lt;end-time&gt;]</span></code></td>
+<td>Gets the logs of a flow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">flow</span> <span class="pre">runs</span> <span class="pre">&lt;app-id.flow-id&gt;</span> <span class="pre">[&lt;status&gt;]</span> <span class="pre">[&lt;start-time&gt;]</span> <span class="pre">[&lt;end-time&gt;]</span> <span class="pre">[&lt;limit&gt;]</span></code></td>
+<td>Gets the run history of a flow.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">flow</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.flow-id&gt;</span></code></td>
+<td>Gets the runtime arguments of a flow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">flow</span> <span class="pre">status</span> <span class="pre">&lt;app-id.flow-id&gt;</span></code></td>
+<td>Gets the status of a flow</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">flowlet</span> <span class="pre">instances</span> <span class="pre">&lt;app-id.flow-id.flowlet-id&gt;</span></code></td>
+<td>Gets the number of instances of a flowlet</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">mapreduce</span> <span class="pre">logs</span> <span class="pre">&lt;app-id.mapreduce-id&gt;</span> <span class="pre">[&lt;start-time&gt;]</span> <span class="pre">[&lt;end-time&gt;]</span></code></td>
+<td>Gets the logs of a MapReduce program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">mapreduce</span> <span class="pre">runs</span> <span class="pre">&lt;app-id.mapreduce-id&gt;</span> <span class="pre">[&lt;status&gt;]</span> <span class="pre">[&lt;start-time&gt;]</span> <span class="pre">[&lt;end-time&gt;]</span> <span class="pre">[&lt;limit&gt;]</span></code></td>
+<td>Gets the run history of a MapReduce program.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">mapreduce</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.mapreduce-id&gt;</span></code></td>
+<td>Gets the runtime arguments of a MapReduce program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">mapreduce</span> <span class="pre">status</span> <span class="pre">&lt;app-id.mapreduce-id&gt;</span></code></td>
+<td>Gets the status of a MapReduce program</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">preferences</span> <span class="pre">app</span> <span class="pre">[&lt;app-id&gt;]</span></code></td>
+<td>Gets the preferences of an application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">preferences</span> <span class="pre">flow</span> <span class="pre">[&lt;app-id.flow-id&gt;]</span></code></td>
+<td>Gets the preferences of a flow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">preferences</span> <span class="pre">instance</span> <span class="pre">[&lt;instance-id&gt;]</span></code></td>
+<td>Gets the preferences of an instance</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">preferences</span> <span class="pre">mapreduce</span> <span class="pre">[&lt;app-id.mapreduce-id&gt;]</span></code></td>
+<td>Gets the preferences of a MapReduce program</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">preferences</span> <span class="pre">namespace</span> <span class="pre">[&lt;namespace-name&gt;]</span></code></td>
+<td>Gets the preferences of a namespace</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">preferences</span> <span class="pre">service</span> <span class="pre">[&lt;app-id.service-id&gt;]</span></code></td>
+<td>Gets the preferences of a service</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">preferences</span> <span class="pre">spark</span> <span class="pre">[&lt;app-id.spark-id&gt;]</span></code></td>
+<td>Gets the preferences of a Spark program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">preferences</span> <span class="pre">worker</span> <span class="pre">[&lt;app-id.worker-id&gt;]</span></code></td>
+<td>Gets the preferences of a worker</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">preferences</span> <span class="pre">workflow</span> <span class="pre">[&lt;app-id.workflow-id&gt;]</span></code></td>
+<td>Gets the preferences of a workflow</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">resolved</span> <span class="pre">preferences</span> <span class="pre">app</span> <span class="pre">[&lt;app-id&gt;]</span></code></td>
+<td>Gets the resolved preferences of an application</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">resolved</span> <span class="pre">preferences</span> <span class="pre">flow</span> <span class="pre">[&lt;app-id.flow-id&gt;]</span></code></td>
+<td>Gets the resolved preferences of a flow</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">resolved</span> <span class="pre">preferences</span> <span class="pre">instance</span> <span class="pre">[&lt;instance-id&gt;]</span></code></td>
+<td>Gets the resolved preferences of an instance</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">resolved</span> <span class="pre">preferences</span> <span class="pre">mapreduce</span> <span class="pre">[&lt;app-id.mapreduce-id&gt;]</span></code></td>
+<td>Gets the resolved preferences of a MapReduce program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">resolved</span> <span class="pre">preferences</span> <span class="pre">namespace</span> <span class="pre">[&lt;namespace-name&gt;]</span></code></td>
+<td>Gets the resolved preferences of a namespace</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">resolved</span> <span class="pre">preferences</span> <span class="pre">service</span> <span class="pre">[&lt;app-id.service-id&gt;]</span></code></td>
+<td>Gets the resolved preferences of a service</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">resolved</span> <span class="pre">preferences</span> <span class="pre">spark</span> <span class="pre">[&lt;app-id.spark-id&gt;]</span></code></td>
+<td>Gets the resolved preferences of a Spark program</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">resolved</span> <span class="pre">preferences</span> <span class="pre">worker</span> <span class="pre">[&lt;app-id.worker-id&gt;]</span></code></td>
+<td>Gets the resolved preferences of a worker</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">resolved</span> <span class="pre">preferences</span> <span class="pre">workflow</span> <span class="pre">[&lt;app-id.workflow-id&gt;]</span></code></td>
+<td>Gets the resolved preferences of a workflow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">schedule</span> <span class="pre">status</span> <span class="pre">&lt;app-id.schedule-id&gt;</span></code></td>
+<td>Gets the status of a schedule</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">service</span> <span class="pre">instances</span> <span class="pre">&lt;app-id.service-id&gt;</span></code></td>
+<td>Gets the number of instances of a service</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">service</span> <span class="pre">runs</span> <span class="pre">&lt;app-id.service-id&gt;</span> <span class="pre">[&lt;status&gt;]</span> <span class="pre">[&lt;start-time&gt;]</span> <span class="pre">[&lt;end-time&gt;]</span> <span class="pre">[&lt;limit&gt;]</span></code></td>
+<td>Gets the run history of a service.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">service</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.service-id&gt;</span></code></td>
+<td>Gets the runtime arguments of a service</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">service</span> <span class="pre">status</span> <span class="pre">&lt;app-id.service-id&gt;</span></code></td>
+<td>Gets the status of a service</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">spark</span> <span class="pre">logs</span> <span class="pre">&lt;app-id.spark-id&gt;</span> <span class="pre">[&lt;start-time&gt;]</span> <span class="pre">[&lt;end-time&gt;]</span></code></td>
+<td>Gets the logs of a Spark program</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">spark</span> <span class="pre">runs</span> <span class="pre">&lt;app-id.spark-id&gt;</span> <span class="pre">[&lt;status&gt;]</span> <span class="pre">[&lt;start-time&gt;]</span> <span class="pre">[&lt;end-time&gt;]</span> <span class="pre">[&lt;limit&gt;]</span></code></td>
+<td>Gets the run history of a Spark program.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">spark</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.spark-id&gt;</span></code></td>
+<td>Gets the runtime arguments of a Spark program</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">spark</span> <span class="pre">status</span> <span class="pre">&lt;app-id.spark-id&gt;</span></code></td>
+<td>Gets the status of a Spark program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">worker</span> <span class="pre">instances</span> <span class="pre">&lt;app-id.worker-id&gt;</span></code></td>
+<td>Gets the number of instances of a worker</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">worker</span> <span class="pre">live</span> <span class="pre">&lt;app-id.worker-id&gt;</span></code></td>
+<td>Gets the live info of a worker</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">worker</span> <span class="pre">logs</span> <span class="pre">&lt;app-id.worker-id&gt;</span> <span class="pre">[&lt;start-time&gt;]</span> <span class="pre">[&lt;end-time&gt;]</span></code></td>
+<td>Gets the logs of a worker</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">worker</span> <span class="pre">runs</span> <span class="pre">&lt;app-id.worker-id&gt;</span> <span class="pre">[&lt;status&gt;]</span> <span class="pre">[&lt;start-time&gt;]</span> <span class="pre">[&lt;end-time&gt;]</span> <span class="pre">[&lt;limit&gt;]</span></code></td>
+<td>Gets the run history of a worker.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">worker</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.worker-id&gt;</span></code></td>
+<td>Gets the runtime arguments of a worker</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">worker</span> <span class="pre">status</span> <span class="pre">&lt;app-id.worker-id&gt;</span></code></td>
+<td>Gets the status of a worker</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">workflow</span> <span class="pre">current</span> <span class="pre">&lt;app-id.workflow-id&gt;</span> <span class="pre">&lt;runid&gt;</span></code></td>
+<td>Gets the currently running nodes of a workflow for a given run ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">workflow</span> <span class="pre">local</span> <span class="pre">datasets</span> <span class="pre">&lt;app-id.workflow-id&gt;</span> <span class="pre">&lt;runid&gt;</span></code></td>
+<td>Gets the local datasets associated with the workflow for a given run ID</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">workflow</span> <span class="pre">logs</span> <span class="pre">&lt;app-id.workflow-id&gt;</span> <span class="pre">[&lt;start-time&gt;]</span> <span class="pre">[&lt;end-time&gt;]</span></code></td>
+<td>Gets the logs of a workflow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">workflow</span> <span class="pre">runs</span> <span class="pre">&lt;app-id.workflow-id&gt;</span> <span class="pre">[&lt;status&gt;]</span> <span class="pre">[&lt;start-time&gt;]</span> <span class="pre">[&lt;end-time&gt;]</span> <span class="pre">[&lt;limit&gt;]</span></code></td>
+<td>Gets the run history of a workflow.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">workflow</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.workflow-id&gt;</span></code></td>
+<td>Gets the runtime arguments of a workflow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">workflow</span> <span class="pre">schedules</span> <span class="pre">&lt;app-id.workflow-id&gt;</span></code></td>
+<td>Gets schedules of a workflow</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">workflow</span> <span class="pre">state</span> <span class="pre">&lt;app-id.workflow-id&gt;</span> <span class="pre">&lt;runid&gt;</span></code></td>
+<td>Gets the state of all nodes associated with the workflow for a given run id.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">workflow</span> <span class="pre">status</span> <span class="pre">&lt;app-id.workflow-id&gt;</span></code></td>
+<td>Gets the status of a workflow</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">workflow</span> <span class="pre">token</span> <span class="pre">&lt;app-id.workflow-id&gt;</span> <span class="pre">&lt;runid&gt;</span> <span class="pre">[at</span> <span class="pre">node</span> <span class="pre">&lt;workflow-node&gt;]</span> <span class="pre">[scope</span> <span class="pre">&lt;workflow-token-scope&gt;]</span> <span class="pre">[key</span> <span class="pre">&lt;workflow-token-key&gt;]</span></code></td>
+<td>Gets the workflow token of a workflow for a given run ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">apps</span> <span class="pre">[&lt;artifact-name&gt;]</span> <span class="pre">[&lt;artifact-version&gt;]</span></code></td>
+<td>Lists all applications, optionally filtered by artifact name and version</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">flows</span></code></td>
+<td>Lists all flows</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">mapreduce</span></code></td>
+<td>Lists all MapReduce programs</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">programs</span></code></td>
+<td>Lists all programs</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">services</span></code></td>
+<td>Lists all services</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">spark</span></code></td>
+<td>Lists all Spark programs</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">workers</span></code></td>
+<td>Lists all workers</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">workflows</span></code></td>
+<td>Lists all workflows</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">app</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">&lt;app-id&gt;</span></code></td>
+<td>Sets the preferences of an application from a local JSON config file</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">flow</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">&lt;app-id.flow-id&gt;</span></code></td>
+<td>Sets the preferences of a flow from a local JSON config file</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">instance</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span></code></td>
+<td>Sets the preferences of an instance from a local JSON config file</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">mapreduce</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">&lt;app-id.mapreduce-id&gt;</span></code></td>
+<td>Sets the preferences of a MapReduce program from a local JSON config file</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">namespace</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span></code></td>
+<td>Sets the preferences of a namespace from a local JSON config file</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">service</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">&lt;app-id.service-id&gt;</span></code></td>
+<td>Sets the preferences of a service from a local JSON config file</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">spark</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">&lt;app-id.spark-id&gt;</span></code></td>
+<td>Sets the preferences of a Spark program from a local JSON config file</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">worker</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">&lt;app-id.worker-id&gt;</span></code></td>
+<td>Sets the preferences of a worker from a local JSON config file</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">workflow</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">&lt;app-id.workflow-id&gt;</span></code></td>
+<td>Sets the preferences of a workflow from a local JSON config file</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">restart</span> <span class="pre">app</span> <span class="pre">&lt;app-id&gt;</span> <span class="pre">programs</span> <span class="pre">[of</span> <span class="pre">type</span> <span class="pre">&lt;program-types&gt;]</span></code></td>
+<td>Command to restart one or more programs of an application. By default, restarts all flows, services, and workers. A comma-separated list of program types can be specified, which will restart all programs of those types. For example, specifying <code class="docutils literal"><span class="pre">'flow,workflow'</span></code> will restart all flows and workflows in the application.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">resume</span> <span class="pre">schedule</span> <span class="pre">&lt;app-id.schedule-id&gt;</span></code></td>
+<td>Resumes a schedule</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">flow</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.flow-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
+<td>Sets the runtime arguments of a flow. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">flowlet</span> <span class="pre">instances</span> <span class="pre">&lt;app-id.flow-id.flowlet-id&gt;</span> <span class="pre">&lt;num-instances&gt;</span></code></td>
+<td>Sets the number of instances of a flowlet</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">mapreduce</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.mapreduce-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
+<td>Sets the runtime arguments of a MapReduce program. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">app</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">&lt;app-id&gt;</span></code></td>
+<td>Sets the preferences of an application. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">flow</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">&lt;app-id.flow-id&gt;</span></code></td>
+<td>Sets the preferences of a flow. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">instance</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
+<td>Sets the preferences of an instance. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">mapreduce</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">&lt;app-id.mapreduce-id&gt;</span></code></td>
+<td>Sets the preferences of a MapReduce program. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">namespace</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
+<td>Sets the preferences of a namespace. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">service</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">&lt;app-id.service-id&gt;</span></code></td>
+<td>Sets the preferences of a service. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">spark</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">&lt;app-id.spark-id&gt;</span></code></td>
+<td>Sets the preferences of a Spark program. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">worker</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">&lt;app-id.worker-id&gt;</span></code></td>
+<td>Sets the preferences of a worker. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">workflow</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">&lt;app-id.workflow-id&gt;</span></code></td>
+<td>Sets the preferences of a workflow. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">service</span> <span class="pre">instances</span> <span class="pre">&lt;app-id.service-id&gt;</span> <span class="pre">&lt;num-instances&gt;</span></code></td>
+<td>Sets the number of instances of a service</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">service</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.service-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
+<td>Sets the runtime arguments of a service. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">spark</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.spark-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
+<td>Sets the runtime arguments of a Spark program. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">worker</span> <span class="pre">instances</span> <span class="pre">&lt;app-id.worker-id&gt;</span> <span class="pre">&lt;num-instances&gt;</span></code></td>
+<td>Sets the number of instances of a worker</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">worker</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.worker-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
+<td>Sets the runtime arguments of a worker. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">workflow</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.workflow-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
+<td>Sets the runtime arguments of a workflow. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">start</span> <span class="pre">app</span> <span class="pre">&lt;app-id&gt;</span> <span class="pre">programs</span> <span class="pre">[of</span> <span class="pre">type</span> <span class="pre">&lt;program-types&gt;]</span></code></td>
+<td>Command to start one or more programs of an application. By default, starts all flows, services, and workers. A comma-separated list of program types can be specified, which will start all programs of those types. For example, specifying <code class="docutils literal"><span class="pre">'flow,workflow'</span></code> will start all flows and workflows in the application.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start</span> <span class="pre">flow</span> <span class="pre">&lt;app-id.flow-id&gt;</span> <span class="pre">[&lt;runtime-args&gt;]</span></code></td>
+<td>Starts a flow. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=a</span> <span class="pre">key2=b'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">start</span> <span class="pre">mapreduce</span> <span class="pre">&lt;app-id.mapreduce-id&gt;</span> <span class="pre">[&lt;runtime-args&gt;]</span></code></td>
+<td>Starts a MapReduce program. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=a</span> <span class="pre">key2=b'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start</span> <span class="pre">service</span> <span class="pre">&lt;app-id.service-id&gt;</span> <span class="pre">[&lt;runtime-args&gt;]</span></code></td>
+<td>Starts a service. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=a</span> <span class="pre">key2=b'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">start</span> <span class="pre">spark</span> <span class="pre">&lt;app-id.spark-id&gt;</span> <span class="pre">[&lt;runtime-args&gt;]</span></code></td>
+<td>Starts a Spark program. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=a</span> <span class="pre">key2=b'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start</span> <span class="pre">worker</span> <span class="pre">&lt;app-id.worker-id&gt;</span> <span class="pre">[&lt;runtime-args&gt;]</span></code></td>
+<td>Starts a worker. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=a</span> <span class="pre">key2=b'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">start</span> <span class="pre">workflow</span> <span class="pre">&lt;app-id.workflow-id&gt;</span> <span class="pre">[&lt;runtime-args&gt;]</span></code></td>
+<td>Starts a workflow. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=a</span> <span class="pre">key2=b'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start-debug</span> <span class="pre">flow</span> <span class="pre">&lt;app-id.flow-id&gt;</span> <span class="pre">[&lt;runtime-args&gt;]</span></code></td>
+<td>Starts a flow in debug mode. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=a</span> <span class="pre">key2=b'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">start-debug</span> <span class="pre">mapreduce</span> <span class="pre">&lt;app-id.mapreduce-id&gt;</span> <span class="pre">[&lt;runtime-args&gt;]</span></code></td>
+<td>Starts a MapReduce program in debug mode. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=a</span> <span class="pre">key2=b'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start-debug</span> <span class="pre">service</span> <span class="pre">&lt;app-id.service-id&gt;</span> <span class="pre">[&lt;runtime-args&gt;]</span></code></td>
+<td>Starts a service in debug mode. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=a</span> <span class="pre">key2=b'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">start-debug</span> <span class="pre">spark</span> <span class="pre">&lt;app-id.spark-id&gt;</span> <span class="pre">[&lt;runtime-args&gt;]</span></code></td>
+<td>Starts a Spark program in debug mode. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=a</span> <span class="pre">key2=b'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start-debug</span> <span class="pre">worker</span> <span class="pre">&lt;app-id.worker-id&gt;</span> <span class="pre">[&lt;runtime-args&gt;]</span></code></td>
+<td>Starts a worker in debug mode. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=a</span> <span class="pre">key2=b'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">start-debug</span> <span class="pre">workflow</span> <span class="pre">&lt;app-id.workflow-id&gt;</span> <span class="pre">[&lt;runtime-args&gt;]</span></code></td>
+<td>Starts a workflow in debug mode. <code class="docutils literal"><span class="pre">'&lt;runtime-args&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=a</span> <span class="pre">key2=b'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">app</span> <span class="pre">&lt;app-id&gt;</span> <span class="pre">programs</span> <span class="pre">[of</span> <span class="pre">type</span> <span class="pre">&lt;program-types&gt;]</span></code></td>
+<td>Command to stop one or more programs of an application. By default, stops all flows, services, and workers. A comma-separated list of program types can be specified, which will stop all programs of those types. For example, specifying <code class="docutils literal"><span class="pre">'flow,workflow'</span></code> will stop all flows and workflows in the application.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">&lt;app-id.flow-id&gt;</span></code></td>
+<td>Stops a flow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">mapreduce</span> <span class="pre">&lt;app-id.mapreduce-id&gt;</span></code></td>
+<td>Stops a MapReduce program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">service</span> <span class="pre">&lt;app-id.service-id&gt;</span></code></td>
+<td>Stops a service</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">spark</span> <span class="pre">&lt;app-id.spark-id&gt;</span></code></td>
+<td>Stops a Spark program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">worker</span> <span class="pre">&lt;app-id.worker-id&gt;</span></code></td>
+<td>Stops a worker</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">workflow</span> <span class="pre">&lt;app-id.workflow-id&gt;</span></code></td>
+<td>Stops a workflow</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">suspend</span> <span class="pre">schedule</span> <span class="pre">&lt;app-id.schedule-id&gt;</span></code></td>
+<td>Suspends a schedule</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">update</span> <span class="pre">app</span> <span class="pre">&lt;app-id&gt;</span> <span class="pre">&lt;artifact-name&gt;</span> <span class="pre">&lt;artifact-version&gt;</span> <span class="pre">&lt;scope&gt;</span> <span class="pre">[&lt;app-config-file&gt;]</span></code></td>
+<td>Updates an application to use another artifact version and/or configuration</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="artifact">
+<h3><a class="headerlink" href="#artifact" title="Perma-link to this heading">🔗</a>Artifact</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Command</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">artifact</span> <span class="pre">&lt;artifact-name&gt;</span> <span class="pre">&lt;artifact-version&gt;</span></code></td>
+<td>Deletes an artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">artifact</span> <span class="pre">&lt;artifact-name&gt;</span> <span class="pre">&lt;artifact-version&gt;</span> <span class="pre">[&lt;scope&gt;]</span></code></td>
+<td>Describes an artifact, including information about the application and plugin classes contained in the artifact. If no scope is provided, the artifact is looked for first in the SYSTEM and then in the USER scope.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">artifact-plugin</span> <span class="pre">&lt;artifact-name&gt;</span> <span class="pre">&lt;artifact-version&gt;</span> <span class="pre">&lt;plugin-type&gt;</span> <span class="pre">&lt;plugin-name&gt;</span> <span class="pre">[&lt;scope&gt;]</span></code></td>
+<td>Describes a plugin of a specific type and name available to a specific artifact. Can return multiple details if there are multiple versions of the plugin. If no scope is provided, plugins are looked for first in the SYSTEM and then in the USER scope.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">artifact</span> <span class="pre">properties</span> <span class="pre">&lt;artifact-name&gt;</span> <span class="pre">&lt;artifact-version&gt;</span> <span class="pre">[&lt;scope&gt;]</span></code></td>
+<td>Gets the properties of an artifact. If no scope is provided, properties are looked for first in the SYSTEM and then in the USER scope.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">artifact</span> <span class="pre">plugin-types</span> <span class="pre">&lt;artifact-name&gt;</span> <span class="pre">&lt;artifact-version&gt;</span> <span class="pre">[&lt;scope&gt;]</span></code></td>
+<td>Lists all plugin types usable by the specified artifact. If no scope is provided, artifacts are looked for first in the SYSTEM and then in the USER scope.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">artifact</span> <span class="pre">plugins</span> <span class="pre">&lt;artifact-name&gt;</span> <span class="pre">&lt;artifact-version&gt;</span> <span class="pre">&lt;plugin-type&gt;</span> <span class="pre">[&lt;scope&gt;]</span></code></td>
+<td>Lists all plugins of a specific type available to a specific artifact. Returns the type, name, classname, and description of the plugin, as well as the artifact the plugin came from. If no scope is provided, artifacts are looked for first in the SYSTEM and then in the USER scope.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">artifact</span> <span class="pre">versions</span> <span class="pre">&lt;artifact-name&gt;</span> <span class="pre">[&lt;scope&gt;]</span></code></td>
+<td>Lists all versions of a specific artifact. If no scope is provided, artifacts are looked for first in the SYSTEM and then in the USER scope.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">artifacts</span> <span class="pre">[&lt;scope&gt;]</span></code></td>
+<td>Lists all artifacts. If no scope is provided, artifacts in all scopes are returned. Otherwise, only artifacts in the specified scope are returned.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">artifact</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">[config-file</span> <span class="pre">&lt;artifact-config&gt;]</span> <span class="pre">[name</span> <span class="pre">&lt;artifact-name&gt;]</span> <span class="pre">[version</span> <span class="pre">&lt;artifact-version&gt;]</span></code></td>
+<td><dl class="first docutils">
+<dt>Loads an artifact into CDAP. If the artifact name and version are not both given, they will be derived from the filename of the artifact. File names are expected to be of the form <code class="docutils literal"><span class="pre">'&lt;name&gt;-&lt;version&gt;.jar'</span></code>. If the artifact contains plugins that extend another artifact, or if it contains third-party plugins, a config file must be provided. The config file must contain a JSON object that specifies the parent artifacts and any third-party plugins in the JAR. For example, if there is a config file with these contents:</dt>
+<dd><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">{</span></code></div>
+<div class="line-block">
+<div class="line"><code class="docutils literal"><span class="pre">&quot;parents&quot;:[</span> <span class="pre">&quot;app1[1.0.0,2.0.0)&quot;,</span> <span class="pre">&quot;app2[1.2.0,1.3.0]</span> <span class="pre">],</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&quot;plugins&quot;:[</span></code></div>
+<div class="line-block">
+<div class="line"><code class="docutils literal"><span class="pre">{</span> <span class="pre">&quot;type&quot;:</span> <span class="pre">&quot;jdbc&quot;,</span></code></div>
+<div class="line-block">
+<div class="line"><code class="docutils literal"><span class="pre">&quot;name&quot;:</span> <span class="pre">&quot;mysql&quot;,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&quot;className&quot;:</span> <span class="pre">&quot;com.mysql.jdbc.Driver&quot;</span></code></div>
+</div>
+<div class="line"><code class="docutils literal"><span class="pre">}</span></code></div>
+</div>
+<div class="line"><code class="docutils literal"><span class="pre">],</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&quot;properties&quot;:{</span></code></div>
+<div class="line-block">
+<div class="line"><code class="docutils literal"><span class="pre">&quot;prop1&quot;:</span> <span class="pre">&quot;val1&quot;</span></code></div>
+</div>
+<div class="line"><code class="docutils literal"><span class="pre">}</span></code></div>
+</div>
+<div class="line"><code class="docutils literal"><span class="pre">}</span></code></div>
+</div>
+</dd>
+</dl>
+<p class="last">This config specifies that the artifact contains one JDBC third-party plugin that should be available to the <code class="docutils literal"><span class="pre">'app1'</span></code> artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and <code class="docutils literal"><span class="pre">'app2'</span></code> artifact (versions 1.2.0 inclusive to 1.3.0 inclusive). The config may also include a <code class="docutils literal"><span class="pre">'properties'</span></code> field specifying properties for the artifact.</p>
+</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">artifact</span> <span class="pre">properties</span> <span class="pre">&lt;artifact-name&gt;</span> <span class="pre">&lt;artifact-version&gt;</span> <span class="pre">&lt;scope&gt;</span> <span class="pre">&lt;local-file-path&gt;</span></code></td>
+<td>Sets properties of an artifact. The properties file must contain a JSON object with a <code class="docutils literal"><span class="pre">'properties'</span></code> key whose value is a JSON object of the properties for the artifact.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="dataset">
+<h3><a class="headerlink" href="#dataset" title="Perma-link to this heading">🔗</a>Dataset</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Command</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">create</span> <span class="pre">dataset</span> <span class="pre">instance</span> <span class="pre">&lt;dataset-type&gt;</span> <span class="pre">&lt;new-dataset-name&gt;</span> <span class="pre">[&lt;dataset-properties&gt;]</span> <span class="pre">[&lt;dataset-description&gt;]</span></code></td>
+<td>Creates a dataset. <code class="docutils literal"><span class="pre">'&lt;dataset-properties&gt;'</span></code> is in the format <code class="docutils literal"><span class="pre">'key1=val1</span> <span class="pre">key2=val2'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">dataset</span> <span class="pre">instance</span> <span class="pre">&lt;dataset-name&gt;</span></code></td>
+<td>Deletes a dataset</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">dataset</span> <span class="pre">module</span> <span class="pre">&lt;dataset-module&gt;</span></code></td>
+<td>Deletes a dataset module</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">deploy</span> <span class="pre">dataset</span> <span class="pre">module</span> <span class="pre">&lt;new-dataset-module&gt;</span> <span class="pre">&lt;module-jar-file&gt;</span> <span class="pre">&lt;module-jar-classname&gt;</span></code></td>
+<td>Deploys a dataset module</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">dataset</span> <span class="pre">instance</span> <span class="pre">&lt;dataset-name&gt;</span></code></td>
+<td>Describes a dataset</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">dataset</span> <span class="pre">module</span> <span class="pre">&lt;dataset-module&gt;</span></code></td>
+<td>Describes a dataset module</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">dataset</span> <span class="pre">type</span> <span class="pre">&lt;dataset-type&gt;</span></code></td>
+<td>Describes a dataset type</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">dataset</span> <span class="pre">instance</span> <span class="pre">properties</span> <span class="pre">&lt;dataset-name&gt;</span></code></td>
+<td>Gets the properties used to create or update a dataset</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">dataset</span> <span class="pre">instances</span></code></td>
+<td>Lists all datasets</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">dataset</span> <span class="pre">modules</span></code></td>
+<td>Lists all dataset modules</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">dataset</span> <span class="pre">types</span></code></td>
+<td>Lists all dataset types</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">dataset</span> <span class="pre">instance</span> <span class="pre">properties</span> <span class="pre">&lt;dataset-name&gt;</span> <span class="pre">&lt;dataset-properties&gt;</span></code></td>
+<td>Sets properties for a dataset.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">truncate</span> <span class="pre">dataset</span> <span class="pre">instance</span> <span class="pre">&lt;dataset-name&gt;</span></code></td>
+<td>Truncates a dataset</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="egress">
+<h3><a class="headerlink" href="#egress" title="Perma-link to this heading">🔗</a>Egress</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Command</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">call</span> <span class="pre">service</span> <span class="pre">&lt;app-id.service-id&gt;</span> <span class="pre">&lt;http-method&gt;</span> <span class="pre">&lt;endpoint&gt;</span> <span class="pre">[headers</span> <span class="pre">&lt;headers&gt;]</span> <span class="pre">[body</span> <span class="pre">&lt;body&gt;]</span> <span class="pre">[body:file</span> <span class="pre">&lt;local-file-path&gt;]</span></code></td>
+<td>Calls a service endpoint. The <code class="docutils literal"><span class="pre">'&lt;headers&gt;'</span></code> are formatted as <code class="docutils literal"><span class="pre">'{&quot;key&quot;:&quot;value&quot;,</span> <span class="pre">...}'</span></code>. The request body may be provided as either a string or a file. To provide the body as a string, use <code class="docutils literal"><span class="pre">'body</span> <span class="pre">&lt;body&gt;'</span></code>. To provide the body as a file, use <code class="docutils literal"><span class="pre">'body:file</span> <span class="pre">&lt;local-file-path&gt;'</span></code>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="explore">
+<h3><a class="headerlink" href="#explore" title="Perma-link to this heading">🔗</a>Explore</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Command</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">execute</span> <span class="pre">&lt;query&gt;</span> <span class="pre">[&lt;timeout&gt;]</span></code></td>
+<td>Executes a query with optional &lt;timeout&gt; in minutes (default is no timeout).</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="ingest">
+<h3><a class="headerlink" href="#ingest" title="Perma-link to this heading">🔗</a>Ingest</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Command</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">create</span> <span class="pre">stream</span> <span class="pre">&lt;new-stream-id&gt;</span> <span class="pre">[&lt;local-file-path&gt;]</span></code></td>
+<td>Creates a stream</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">create</span> <span class="pre">stream-view</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;view-id&gt;</span> <span class="pre">format</span> <span class="pre">&lt;format&gt;</span> <span class="pre">[schema</span> <span class="pre">&lt;schema&gt;]</span> <span class="pre">[settings</span> <span class="pre">&lt;settings&gt;]</span></code></td>
+<td>Creates or updates a stream-view. Valid <code class="docutils literal"><span class="pre">'&lt;format&gt;'</span></code>s are <code class="docutils literal"><span class="pre">'avro'</span></code>, <code class="docutils literal"><span class="pre">'csv'</span></code>, <code class="docutils literal"><span class="pre">'tsv'</span></code>, <code class="docutils literal"><span class="pre">'text'</span></code>, <code class="docutils literal"><span class="pre">'clf'</span></code>, <code class="docutils literal"><span class="pre">'grok'</span></code>, <code class="docutils literal"><span class="pre">'syslog'</span></code>. <code class="docutils literal"><span class="pre">'&lt;schema&gt;'</span></code> is a SQL-like schema <code class="docutils literal"><span class="pre">'column_name</span> <span class="pre">data_type,</span> <span class="pre">...'</span></code> or an Avro-like JSON schema and <code class="docutils literal"><span class="pre">'&lt;settings&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span></code></td>
+<td>Deletes a stream</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">stream-view</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;view-id&gt;</span></code></td>
+<td>Deletes a stream-view</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span></code></td>
+<td>Describes a stream</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">stream-view</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;view-id&gt;</span></code></td>
+<td>Describes a stream-view</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">[&lt;start-time&gt;]</span> <span class="pre">[&lt;end-time&gt;]</span> <span class="pre">[&lt;limit&gt;]</span></code></td>
+<td>Gets events from a stream. The time format for <code class="docutils literal"><span class="pre">'&lt;start-time&gt;'</span></code> and <code class="docutils literal"><span class="pre">'&lt;end-time&gt;'</span></code> can be a timestamp in milliseconds or a relative time in the form of <code class="docutils literal"><span class="pre">'[+|-][0-9][d|h|m|s]'</span></code>. <code class="docutils literal"><span class="pre">'&lt;start-time&gt;'</span></code> is relative to current time; <code class="docutils literal"><span class="pre">'&lt;end-time&gt;'</span></code> is relative to <code class="docutils literal"><span class="pre">'&lt;start-time&gt;'</span></code>. Special constants <code class="docutils literal"><span class="pre">'min'</span></code> and <code class="docutils literal"><span class="pre">'max'</span></code> can be used to represent <code class="docutils literal"><span class="pre">'0'</span></code> and <code class="docutils literal"><span class="pre">'max</span> <span class="pre">timestamp'</span></code> respectively.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">stream-stats</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">[limit</span> <span class="pre">&lt;limit&gt;]</span> <span class="pre">[start</span> <span class="pre">&lt;start-time&gt;]</span> <span class="pre">[end</span> <span class="pre">&lt;end-time&gt;]</span></code></td>
+<td>Gets statistics for a stream. The <code class="docutils literal"><span class="pre">'&lt;limit&gt;'</span></code> limits how many stream events to analyze; default is 100. The time format for <code class="docutils literal"><span class="pre">'&lt;start-time&gt;'</span></code> and <code class="docutils literal"><span class="pre">'&lt;end-time&gt;'</span></code> can be a timestamp in milliseconds or a relative time in the form of <code class="docutils literal"><span class="pre">'[+|-][0-9][d|h|m|s]'</span></code>. <code class="docutils literal"><span class="pre">'&lt;start-time&gt;'</span></code> is relative to current time; <code class="docutils literal"><span class="pre">'&lt;end-time&gt;'</span></code> is relative to <code class="docutils literal"><span class="pre">'&lt;start-time&gt;'</span></code>. Special constants <code class="docutils literal"><span class="pre">'min'</span></code> and <code class="docutils literal"><span class="pre">'max'</span></code> can be used to represent <code class="docutils literal"><span class="pre">'0'</span></code> and <code class="docutils literal"><span class="pre">'max</span> <span class="pre">timestamp'</span></code> respectively.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">stream-views</span> <span class="pre">&lt;stream-id&gt;</span></code></td>
+<td>Lists all stream-views</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">streams</span></code></td>
+<td>Lists all streams</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">[&lt;content-type&gt;]</span></code></td>
+<td>Loads a file to a stream. The contents of the file will become multiple events in the stream, based on the content type (avro/binary, text/csv, text/plain, text/tsv). If <code class="docutils literal"><span class="pre">'&lt;content-type&gt;'</span></code> is not provided, it will be detected by the file extension. Supported file extensions: <code class="docutils literal"><span class="pre">'avro'</span></code>, <code class="docutils literal"><span class="pre">'csv'</span></code>, <code class="docutils literal"><span class="pre">'log'</span></code>, <code class="docutils literal"><span class="pre">'tsv'</span></code>, <code class="docutils literal"><span class="pre">'txt'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">send</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;stream-event&gt;</span></code></td>
+<td>Sends an event to a stream</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">stream</span> <span class="pre">description</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;stream-description&gt;</span></code></td>
+<td>Sets the description of a stream.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">stream</span> <span class="pre">format</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;format&gt;</span> <span class="pre">[&lt;schema&gt;]</span> <span class="pre">[&lt;settings&gt;]</span></code></td>
+<td>Sets the format of a stream. Valid <code class="docutils literal"><span class="pre">'&lt;format&gt;'</span></code>s are <code class="docutils literal"><span class="pre">'avro'</span></code>, <code class="docutils literal"><span class="pre">'csv'</span></code>, <code class="docutils literal"><span class="pre">'tsv'</span></code>, <code class="docutils literal"><span class="pre">'text'</span></code>, <code class="docutils literal"><span class="pre">'clf'</span></code>, <code class="docutils literal"><span class="pre">'grok'</span></code>, <code class="docutils literal"><span class="pre">'syslog'</span></code>. <code class="docutils literal"><span class="pre">'&lt;schema&gt;'</span></code> is a SQL-like schema <code class="docutils literal"><span class="pre">'column_name</span> <span class="pre">data_type,</span> <span class="pre">...'</span></code> or an Avro-like JSON schema and <code class="docutils literal"><span class="pre">'&lt;settings&gt;'</span></code> is specified in the format <code class="docutils literal"><span class="pre">'key1=v1</span> <span class="pre">key2=v2'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">stream</span> <span class="pre">notification-threshold</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;notification-threshold-mb&gt;</span></code></td>
+<td>Sets the notification threshold of a stream</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">stream</span> <span class="pre">properties</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;local-file-path&gt;</span></code></td>
+<td>Sets the properties of a stream, such as the time-to-live (TTL), format, and notification threshold</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">stream</span> <span class="pre">ttl</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;ttl-in-seconds&gt;</span></code></td>
+<td>Sets the time-to-live (TTL) of a stream</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">truncate</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span></code></td>
+<td>Truncates a stream</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="metadata-and-lineage">
+<h3><a class="headerlink" href="#metadata-and-lineage" title="Perma-link to this heading">🔗</a>Metadata and Lineage</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Command</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">add</span> <span class="pre">metadata-properties</span> <span class="pre">&lt;entity-id&gt;</span> <span class="pre">&lt;properties&gt;</span></code></td>
+<td>Adds metadata properties for an entity</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">add</span> <span class="pre">metadata-tags</span> <span class="pre">&lt;entity-id&gt;</span> <span class="pre">&lt;tags&gt;</span></code></td>
+<td>Adds metadata tags for an entity</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">lineage</span> <span class="pre">dataset</span> <span class="pre">&lt;dataset-name&gt;</span> <span class="pre">[start</span> <span class="pre">&lt;start&gt;]</span> <span class="pre">[end</span> <span class="pre">&lt;end&gt;]</span> <span class="pre">[levels</span> <span class="pre">&lt;levels&gt;]</span></code></td>
+<td>Gets the lineage of a dataset</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">lineage</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">[start</span> <span class="pre">&lt;start&gt;]</span> <span class="pre">[end</span> <span class="pre">&lt;end&gt;]</span> <span class="pre">[levels</span> <span class="pre">&lt;levels&gt;]</span></code></td>
+<td>Gets the lineage of a stream</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">metadata</span> <span class="pre">&lt;entity-id&gt;</span> <span class="pre">[scope</span> <span class="pre">&lt;scope&gt;]</span></code></td>
+<td>Gets the metadata of an entity</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">metadata-properties</span> <span class="pre">&lt;entity-id&gt;</span> <span class="pre">[scope</span> <span class="pre">&lt;scope&gt;]</span></code></td>
+<td>Gets the metadata properties of an entity</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">metadata-tags</span> <span class="pre">&lt;entity-id&gt;</span> <span class="pre">[scope</span> <span class="pre">&lt;scope&gt;]</span></code></td>
+<td>Gets the metadata tags of an entity</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">remove</span> <span class="pre">metadata</span> <span class="pre">&lt;entity-id&gt;</span></code></td>
+<td>Removes metadata for an entity</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">remove</span> <span class="pre">metadata-properties</span> <span class="pre">&lt;entity-id&gt;</span></code></td>
+<td>Removes all metadata properties for an entity</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">remove</span> <span class="pre">metadata-property</span> <span class="pre">&lt;entity-id&gt;</span> <span class="pre">&lt;property&gt;</span></code></td>
+<td>Removes a specific metadata property for an entity</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">remove</span> <span class="pre">metadata-tag</span> <span class="pre">&lt;entity-id&gt;</span> <span class="pre">&lt;tag&gt;</span></code></td>
+<td>Removes a specific metadata tag for an entity</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">remove</span> <span class="pre">metadata-tags</span> <span class="pre">&lt;entity-id&gt;</span></code></td>
+<td>Removes all metadata tags for an entity</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">search</span> <span class="pre">metadata</span> <span class="pre">&lt;search-query&gt;</span> <span class="pre">[filtered</span> <span class="pre">by</span> <span class="pre">target-type</span> <span class="pre">&lt;target-type&gt;]</span></code></td>
+<td>Searches CDAP entities based on the metadata annotated on them. The search can be restricted by adding a comma-separated list of target types: <code class="docutils literal"><span class="pre">'artifact'</span></code>, <code class="docutils literal"><span class="pre">'app'</span></code>, <code class="docutils literal"><span class="pre">'dataset'</span></code>, <code class="docutils literal"><span class="pre">'program'</span></code>, <code class="docutils literal"><span class="pre">'stream'</span></code>, or <code class="docutils literal"><span class="pre">'view'</span></code>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="metrics">
+<h3><a class="headerlink" href="#metrics" title="Perma-link to this heading">🔗</a>Metrics</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Command</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">metric</span> <span class="pre">value</span> <span class="pre">&lt;metric-name&gt;</span> <span class="pre">[&lt;tags&gt;]</span> <span class="pre">[start</span> <span class="pre">&lt;start&gt;]</span> <span class="pre">[end</span> <span class="pre">&lt;end&gt;]</span></code></td>
+<td>Gets the value of a metric. Provide <code class="docutils literal"><span class="pre">'&lt;tags&gt;'</span></code> as a map in the format <code class="docutils literal"><span class="pre">'tag1=value1</span> <span class="pre">tag2=value2'</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">search</span> <span class="pre">metric</span> <span class="pre">names</span> <span class="pre">[&lt;tags&gt;]</span></code></td>
+<td>Searches metric names. Provide <code class="docutils literal"><span class="pre">'&lt;tags&gt;'</span></code> as a map in the format <code class="docutils literal"><span class="pre">'tag1=value1</span> <span class="pre">tag2=value2'</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">search</span> <span class="pre">metric</span> <span class="pre">tags</span> <span class="pre">[&lt;tags&gt;]</span></code></td>
+<td>Searches metric tags. Provide <code class="docutils literal"><span class="pre">'&lt;tags&gt;'</span></code> as a map in the format <code class="docutils literal"><span class="pre">'tag1=value1</span> <span class="pre">tag2=value2'</span></code>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="namespace">
+<h3><a class="headerlink" href="#namespace" title="Perma-link to this heading">🔗</a>Namespace</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Command</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">create</span> <span class="pre">namespace</span> <span class="pre">&lt;namespace-name&gt;</span> <span class="pre">[description</span> <span class="pre">&lt;description&gt;]</span> <span class="pre">[principal</span> <span class="pre">&lt;principal&gt;]</span> <span class="pre">[keytab-URI</span> <span class="pre">&lt;keytab-URI&gt;]</span> <span class="pre">[hbase-namespace</span> <span class="pre">&lt;hbase-namespace&gt;]</span> <span class="pre">[hive-database</span> <span class="pre">&lt;hive-database&gt;]</span> <span class="pre">[root-directory</span> <span class="pre">&lt;root-directory&gt;]</span> <span class="pre">[scheduler-queue-name</span> <span class="pre">&lt;scheduler-queue-name&gt;]</span></code></td>
+<td>Creates a namespace in CDAP.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">namespace</span> <span class="pre">&lt;namespace-name&gt;</span></code></td>
+<td>Deletes a namespace</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">namespace</span> <span class="pre">&lt;namespace-name&gt;</span></code></td>
+<td>Describes a namespace</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">namespaces</span></code></td>
+<td>Lists all namespaces</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">use</span> <span class="pre">namespace</span> <span class="pre">&lt;namespace-name&gt;</span></code></td>
+<td>Changes the current namespace to <code class="docutils literal"><span class="pre">'&lt;namespace-name&gt;'</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="security">
+<h3><a class="headerlink" href="#security" title="Perma-link to this heading">🔗</a>Security</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Command</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">add</span> <span class="pre">role</span> <span class="pre">&lt;role-name&gt;</span> <span class="pre">to</span> <span class="pre">&lt;principal-type&gt;</span> <span class="pre">&lt;principal-name&gt;</span></code></td>
+<td>Adds a role to a principal in authorization system for role-based access control</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">create</span> <span class="pre">role</span> <span class="pre">&lt;role-name&gt;</span></code></td>
+<td>Creates a role in authorization system for role-based access control</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">drop</span> <span class="pre">role</span> <span class="pre">&lt;role-name&gt;</span></code></td>
+<td>Drops a role from authorization system for role-based access control</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">grant</span> <span class="pre">actions</span> <span class="pre">&lt;actions&gt;</span> <span class="pre">on</span> <span class="pre">entity</span> <span class="pre">&lt;entity-id&gt;</span> <span class="pre">to</span> <span class="pre">&lt;principal-type&gt;</span> <span class="pre">&lt;principal-name&gt;</span></code></td>
+<td>Grants a principal permission to perform certain actions on an entity. <code class="docutils literal"><span class="pre">'&lt;actions&gt;'</span></code> is a comma-separated list.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">privileges</span> <span class="pre">for</span> <span class="pre">&lt;principal-type&gt;</span> <span class="pre">&lt;principal-name&gt;</span></code></td>
+<td>Lists privileges for a principal</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">roles</span> <span class="pre">[for</span> <span class="pre">&lt;principal-type&gt;</span> <span class="pre">&lt;principal-name&gt;]</span></code></td>
+<td>Lists all roles, optionally for a particular principal in an authorization system for role-based access control</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">remove</span> <span class="pre">role</span> <span class="pre">&lt;role-name&gt;</span> <span class="pre">from</span> <span class="pre">&lt;principal-type&gt;</span> <span class="pre">&lt;principal-name&gt;</span></code></td>
+<td>Removes a role from a principal in authorization system for role-based access control</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">revoke</span> <span class="pre">actions</span> <span class="pre">&lt;actions&gt;</span> <span class="pre">on</span> <span class="pre">entity</span> <span class="pre">&lt;entity-id&gt;</span> <span class="pre">from</span> <span class="pre">&lt;principal-type&gt;</span> <span class="pre">&lt;principal-name&gt;</span></code></td>
+<td>Revokes a user``'s permission to perform certain actions on an entity. '<code class="docutils literal"><span class="pre">&lt;actions&gt;</span></code>' is a comma-separated list.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">revoke</span> <span class="pre">all</span> <span class="pre">on</span> <span class="pre">entity</span> <span class="pre">&lt;entity-id&gt;</span></code></td>
+<td>Revokes all privileges for all users on the entity</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="characters.html"> Supported Characters</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Command Line Interface API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#interactive-mode">Interactive Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#non-interactive-mode">Non-Interactive Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#connecting-to-secure-cdap-instances">Connecting to Secure CDAP Instances</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#options">Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#settings">Settings</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#available-commands">Available Commands</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#general">General</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#application-lifecycle">Application Lifecycle</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#artifact">Artifact</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dataset">Dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#egress">Egress</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#explore">Explore</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ingest">Ingest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#metadata-and-lineage">Metadata and Lineage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#namespace">Namespace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#security">Security</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="http-restful-api/index.html"> HTTP RESTful API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Supported Characters" href="characters.html" />Supported Characters</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="CDAP HTTP RESTful API v3" href="http-restful-api/index.html" />CDAP HTTP RESTful API v3</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

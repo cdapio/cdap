@@ -1,0 +1,371 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>System and Custom Datasets &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/building-blocks/datasets/system-custom.html">
+
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../../index.html" />
+    <link rel="up" title="Datasets" href="index.html" />
+    <link rel="next" title="Cube Dataset" href="cube.html" />
+    <link rel="prev" title="TimePartitioned FileSet" href="time-partitioned-fileset.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cube.html" title="Cube Dataset"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="time-partitioned-fileset.html" title="TimePartitioned FileSet"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="../index.html" >Building Blocks</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Datasets</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="system-and-custom-datasets">
+<h1><a class="headerlink" href="#system-and-custom-datasets" title="Perma-link to this heading">🔗</a>System and Custom Datasets</h1>
+<div class="section" id="system-datasets">
+<span id="id1"></span><h2><a class="headerlink" href="#system-datasets" title="Perma-link to this heading">🔗</a>System Datasets</h2>
+<p>The Cask Data Application Platform comes with several system-defined datasets, including but not limited to
+key/value Tables, indexed Tables and time series. Each of them is defined with the help of one or more embedded
+Tables, but defines its own interface. Examples include:</p>
+<ul class="simple">
+<li>The <code class="docutils literal"><span class="pre">KeyValueTable</span></code> implements a key/value store as a Table with a single column.</li>
+<li>The <code class="docutils literal"><span class="pre">IndexedTable</span></code> implements a Table with a secondary key using two embedded Tables,
+one for the data and one for the secondary index.</li>
+<li>The <code class="docutils literal"><span class="pre">TimeseriesTable</span></code> uses a Table to store keyed data over time
+and allows querying that data over ranges of time.</li>
+<li>The <code class="docutils literal"><span class="pre">ObjectMappedTable</span></code> uses a Table to store Java Objects by mapping object fields to
+table columns. It can be explored through the use of ad-hoc SQL-like queries as described
+in <a class="reference internal" href="../../data-exploration/object-mapped-tables.html#object-mapped-table-exploration"><span>ObjectMappedTable Exploration</span></a>.</li>
+</ul>
+<p>See the <a class="reference external" href="../../source/../../reference-manual/javadocs/index.html#javadocs" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Javadocs</span></a> for these classes and the <a class="reference external" href="../../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Examples</span></a>
+to learn more about these datasets. Any class in the CDAP libraries that implements the <code class="docutils literal"><span class="pre">Dataset</span></code> interface is a
+system dataset.</p>
+</div>
+<div class="section" id="custom-datasets">
+<span id="id2"></span><h2><a class="headerlink" href="#custom-datasets" title="Perma-link to this heading">🔗</a>Custom Datasets</h2>
+<p>You can define your own dataset classes to implement common data patterns specific to your code.</p>
+<p>Suppose you want to define a counter table that, in addition to counting words,
+counts how many unique words it has seen. The dataset can be built on top of two underlying datasets. The first a
+Table (<code class="docutils literal"><span class="pre">entryCountTable</span></code>) to count all the words and the second a Table (<code class="docutils literal"><span class="pre">uniqueCountTable</span></code>) for the unique count.</p>
+<p>When your custom dataset is built on top of one or more existing datasets, the simplest way to implement
+it is to just define the data operations (by implementing the dataset interface) and delegating all other
+work (such as  administrative operations) to the embedded dataset.</p>
+<p>To do this, you need to implement the dataset class and define the embedded datasets by annotating
+its constructor arguments.</p>
+<p>In this case, our  <code class="docutils literal"><span class="pre">UniqueCountTableDefinition</span></code> will have two underlying datasets:
+an <code class="docutils literal"><span class="pre">entryCountTable</span></code> and an <code class="docutils literal"><span class="pre">uniqueCountTable</span></code>, both of type <code class="docutils literal"><span class="pre">Table</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UniqueCountTable</span> <span class="kd">extends</span> <span class="n">AbstractDataset</span> <span class="o">{</span>
+
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Table</span> <span class="n">entryCountTable</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Table</span> <span class="n">uniqueCountTable</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="nf">UniqueCountTable</span><span class="o">(</span><span class="n">DatasetSpecification</span> <span class="n">spec</span><span class="o">,</span>
+                          <span class="nd">@EmbeddedDataset</span><span class="o">(</span><span class="s">&quot;entryCountTable&quot;</span><span class="o">)</span> <span class="n">Table</span> <span class="n">entryCountTable</span><span class="o">,</span>
+                          <span class="nd">@EmbeddedDataset</span><span class="o">(</span><span class="s">&quot;uniqueCountTable&quot;</span><span class="o">)</span> <span class="n">Table</span> <span class="n">uniqueCountTable</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kd">super</span><span class="o">(</span><span class="n">spec</span><span class="o">.</span><span class="na">getName</span><span class="o">(),</span> <span class="n">entryCountTable</span><span class="o">,</span> <span class="n">uniqueCountTable</span><span class="o">);</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">entryCountTable</span> <span class="o">=</span> <span class="n">entryCountTable</span><span class="o">;</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">uniqueCountTable</span> <span class="o">=</span> <span class="n">uniqueCountTable</span><span class="o">;</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>In this case, the class must have one constructor that takes a <code class="docutils literal"><span class="pre">DatasetSpecification</span></code> as a first
+parameter and any number of <code class="docutils literal"><span class="pre">Dataset</span></code>s annotated with the <code class="docutils literal"><span class="pre">&#64;EmbeddedDataset</span></code> annotation as the
+remaining parameters. <code class="docutils literal"><span class="pre">&#64;EmbeddedDataset</span></code> takes the embedded dataset's name as a parameter.</p>
+<p>The <code class="docutils literal"><span class="pre">UniqueCountTable</span></code> stores a counter for each word in its own row of the entry count table.
+For each word the counter is incremented. If the result of the increment is 1, then this is the first time
+we've encountered that word, hence we have a new unique word and we then increment the unique counter:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateUniqueCount</span><span class="o">(</span><span class="n">String</span> <span class="n">entry</span><span class="o">)</span> <span class="o">{</span>
+  <span class="kt">long</span> <span class="n">newCount</span> <span class="o">=</span> <span class="n">entryCountTable</span><span class="o">.</span><span class="na">incrementAndGet</span><span class="o">(</span><span class="k">new</span> <span class="n">Increment</span><span class="o">(</span><span class="n">entry</span><span class="o">,</span> <span class="s">&quot;count&quot;</span><span class="o">,</span> <span class="mi">1L</span><span class="o">)).</span><span class="na">getInt</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">);</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">newCount</span> <span class="o">==</span> <span class="mi">1L</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">uniqueCountTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="k">new</span> <span class="n">Increment</span><span class="o">(</span><span class="s">&quot;unique_count&quot;</span><span class="o">,</span> <span class="s">&quot;count&quot;</span><span class="o">,</span> <span class="mi">1L</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Finally, we write a method to retrieve the number of unique words seen:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="n">Long</span> <span class="nf">readUniqueCount</span><span class="o">()</span> <span class="o">{</span>
+  <span class="k">return</span> <span class="n">uniqueCountTable</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="s">&quot;unique_count&quot;</span><span class="o">,</span> <span class="s">&quot;count&quot;</span><span class="o">)).</span><span class="na">getLong</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>All administrative operations (such as create, drop, truncate) will be delegated to the embedded datasets
+in the order they are defined in the constructor. <code class="docutils literal"><span class="pre">DatasetProperties</span></code> that are passed during creation of
+the dataset will be passed as-is to the embedded datasets.</p>
+<p>To create a dataset of type <code class="docutils literal"><span class="pre">UniqueCountTable</span></code>, add the following into the application implementation:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">Class</span> <span class="n">MyApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;myCounters&quot;</span><span class="o">,</span> <span class="n">UniqueCountTable</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+    <span class="o">...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<div class="section" id="passing-properties">
+<span id="custom-datasets-properties"></span><h3><a class="headerlink" href="#passing-properties" title="Perma-link to this heading">🔗</a>Passing Properties</h3>
+<p>You can also pass <code class="docutils literal"><span class="pre">DatasetProperties</span></code> as a third parameter to the <code class="docutils literal"><span class="pre">createDataset</span></code> method.
+These properties will be used by embedded datasets during creation and will be available via the
+<code class="docutils literal"><span class="pre">DatasetSpecification</span></code> passed to the dataset constructor. For example, to create a dataset with
+a TTL (time-to-live, specified in seconds) property, you can use:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;frequentCustomers&quot;</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+  <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+                   <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">Table</span><span class="o">.</span><span class="na">PROPERTY_TTL</span><span class="o">,</span> <span class="s">&quot;3600&quot;</span><span class="o">)</span>
+                   <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+</pre></div>
+</div>
+<p>You can pass other properties, such as for
+<a class="reference internal" href="../transaction-system.html#transaction-system-conflict-detection"><span>conflict detection</span></a> and for
+<a class="reference internal" href="table.html#table-datasets-pre-splitting"><span>pre-splitting into multiple regions</span></a>.</p>
+</div>
+<div class="section" id="accessing-a-dataset">
+<span id="custom-datasets-accessing-datasets"></span><h3><a class="headerlink" href="#accessing-a-dataset" title="Perma-link to this heading">🔗</a>Accessing a Dataset</h3>
+<p>Application components can access a custom dataset in the same way as all other datasets:
+via either the <code class="docutils literal"><span class="pre">&#64;UseDataSet</span></code> annotation, or the <code class="docutils literal"><span class="pre">getDataset()</span></code> method of the program context.
+This is described in more detail in the section on
+<a class="reference internal" href="overview.html#datasets-in-programs"><span>Using Datasets in Programs</span></a>.</p>
+<p>A complete application demonstrating the use of a custom dataset is included in our
+<a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Purchase Example</span></a>.</p>
+<p>You can also create, drop, and truncate datasets using the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/dataset.html#http-restful-api-dataset" title="(in Cask Data Application Platform v3.5.2)"><span>Dataset HTTP RESTful API</span></a>.</p>
+</div>
+<div class="section" id="annotating-dataset-methods">
+<span id="custom-datasets-access-annotations"></span><h3><a class="headerlink" href="#annotating-dataset-methods" title="Perma-link to this heading">🔗</a>Annotating Dataset Methods</h3>
+<p>Dataset methods can be annotated with the type of access that they perform on data.
+Annotations help the CDAP runtime to enforce <a class="reference external" href="../../source/../../admin-manual/security/authorization.html#admin-authorization" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">authorization</span></a>,
+as well as track <a class="reference internal" href="../metadata-lineage.html#metadata-lineage-lineage"><span>lineage</span></a>. Dataset methods (including
+constructors) can be annotated with one of:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">&#64;ReadOnly</span></code>: Denotes that a method or constructor performs only <strong>read</strong> operations</li>
+<li><code class="docutils literal"><span class="pre">&#64;WriteOnly</span></code>: Denotes that a method or constructor performs only <strong>write</strong> operations</li>
+<li><code class="docutils literal"><span class="pre">&#64;ReadWrite</span></code>: Denotes that a method or constructor performs both <strong>read</strong> and <strong>write</strong> operations</li>
+</ul>
+<p>Methods in <a class="reference internal" href="#system-datasets"><span>System Datasets</span></a> already contain appropriate
+annotations. For <a class="reference internal" href="#custom-datasets"><span>Custom Datasets</span></a>, it is the responsibility of the
+developer to appropriately annotate methods.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../streams.html"> Streams</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"> Datasets</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="overview.html"> Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="table.html"> Table API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fileset.html"> FileSets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="partitioned-fileset.html"> Partitioned FileSets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="time-partitioned-fileset.html"> TimePartitioned FileSets</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href=""> System and Custom Datasets</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#system-datasets">System Datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#custom-datasets">Custom Datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cube.html"> Cube Dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../views.html"> Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plugins.html"> Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../secure-keys.html"> Secure Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../artifacts.html"> Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../metadata-lineage.html"> Metadata and Lineage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../audit-logging.html"> Audit Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="TimePartitioned FileSet" href="time-partitioned-fileset.html" />TimePartitioned FileSet</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Cube Dataset" href="cube.html" />Cube Dataset</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

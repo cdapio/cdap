@@ -1,0 +1,1112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform SparkPageRank Application" name="description" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Spark Page Rank Example &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/examples-manual/examples/spark-page-rank.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="Sport Results" href="sport-results.html" />
+    <link rel="prev" title="Spark K-Means" href="spark-k-means.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="sport-results.html" title="Sport Results"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="spark-k-means.html" title="Spark K-Means"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="spark-page-rank-example">
+<span id="examples-spark-page-rank"></span><h1><a class="headerlink" href="#spark-page-rank-example" title="Perma-link to this heading">🔗</a>Spark Page Rank Example</h1>
+<p>A Cask Data Application Platform (CDAP) example demonstrating Spark and MapReduce in a Workflow to compute page ranks.</p>
+<div class="section" id="overview">
+<h2><a class="headerlink" href="#overview" title="Perma-link to this heading">🔗</a>Overview</h2>
+<p>This example demonstrates Spark and MapReduce performing streaming log analysis, computing the page rank based on information about backlink URLs</p>
+<p>Data from a sample file is sent to CDAP by a CDAP CLI command
+to the <em>backlinkURLStream</em>, which stores the URL pair event in its entirety.</p>
+<p>After these events are streamed, they are taken up by the <em>SparkPageRankProgram</em>, which
+goes through the entries, calculates page rank and tabulates results in an ObjectStore dataset, <em>ranks</em>.</p>
+<p>A MapReduce job uses the output of the Spark program from the <em>ranks</em> dataset,
+computes the total number of pages for every unique page rank, and then tabulates
+the results in another ObjectStore dataset, <em>rankscount</em>.</p>
+<p>The <em>PageRankWorkflow</em> ties the Spark and MapReduce to run sequentially in this application.</p>
+<p>Once the application completes, you can query the <em>ranks</em> dataset by using the <code class="docutils literal"><span class="pre">rank</span></code> endpoint of the <em>SparkPageRankService</em>.
+It will send back a string result with page rank based on the <code class="docutils literal"><span class="pre">url</span></code> query parameter. You can also query the
+<em>rankscount</em> dataset by using <code class="docutils literal"><span class="pre">total</span></code> endpoint. It will send the total number of pages for the queried page rank as a string.</p>
+<p>Let's look at some of these components, and then run the application and see the results.</p>
+<div class="section" id="the-sparkpagerank-application">
+<h3><a class="headerlink" href="#the-sparkpagerank-application" title="Perma-link to this heading">🔗</a>The <em>SparkPageRank</em> Application</h3>
+<p>As in the other <a class="reference external" href="index.html">examples</a>, the components
+of the application are tied together by the class <code class="docutils literal"><span class="pre">SparkPageRankApp</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * An Application that calculates page rank of URLs from an input stream.</span>
+<span class="cm"> */</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">SparkPageRankApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">SERVICE_HANDLERS</span> <span class="o">=</span> <span class="s">&quot;SparkPageRankService&quot;</span><span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">BACKLINK_URL_STREAM</span> <span class="o">=</span> <span class="s">&quot;backlinkURLStream&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;SparkPageRank&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Spark page rank application.&quot;</span><span class="o">);</span>
+
+    <span class="c1">// Ingest data into the Application via a Stream</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="n">BACKLINK_URL_STREAM</span><span class="o">));</span>
+
+    <span class="c1">// Run a Spark program on the acquired data</span>
+    <span class="n">addSpark</span><span class="o">(</span><span class="k">new</span> <span class="n">PageRankSpark</span><span class="o">());</span>
+
+    <span class="c1">// Runs MapReduce program on data emitted by Spark program</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">RanksCounter</span><span class="o">());</span>
+
+    <span class="c1">// Runs Spark followed by a MapReduce in a Workflow</span>
+    <span class="n">addWorkflow</span><span class="o">(</span><span class="k">new</span> <span class="n">PageRankWorkflow</span><span class="o">());</span>
+
+    <span class="c1">// Service to retrieve process data</span>
+    <span class="n">addService</span><span class="o">(</span><span class="n">SERVICE_HANDLERS</span><span class="o">,</span> <span class="k">new</span> <span class="n">SparkPageRankServiceHandler</span><span class="o">());</span>
+
+    <span class="c1">// Store input and processed data in ObjectStore Datasets</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="n">ObjectStores</span><span class="o">.</span><span class="na">createObjectStore</span><span class="o">(</span><span class="n">getConfigurer</span><span class="o">(),</span> <span class="s">&quot;ranks&quot;</span><span class="o">,</span> <span class="n">Integer</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                                     <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Ranks Dataset&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+      <span class="n">ObjectStores</span><span class="o">.</span><span class="na">createObjectStore</span><span class="o">(</span><span class="n">getConfigurer</span><span class="o">(),</span> <span class="s">&quot;rankscount&quot;</span><span class="o">,</span> <span class="n">Integer</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                                     <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Ranks Count Dataset&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">UnsupportedTypeException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="c1">// This exception is thrown by ObjectStore if its parameter type cannot be</span>
+      <span class="c1">// (de)serialized (for example, if it is an interface and not a class, then there is</span>
+      <span class="c1">// no auto-magic way deserialize an object.) In this case that will not happen</span>
+      <span class="c1">// because String and Double are actual classes.</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-ranks-and-rankscount-objectstore-data-storage">
+<h3><a class="headerlink" href="#the-ranks-and-rankscount-objectstore-data-storage" title="Perma-link to this heading">🔗</a>The <em>ranks</em> and <em>rankscount</em> ObjectStore Data Storage</h3>
+<p>The calculated page rank data is stored in an ObjectStore dataset, <em>ranks</em>,
+with the total number of pages for a page rank stored in an additional ObjectStore dataset, <em>rankscount</em>.</p>
+</div>
+<div class="section" id="the-sparkpagerankservice-service">
+<h3><a class="headerlink" href="#the-sparkpagerankservice-service" title="Perma-link to this heading">🔗</a>The <em>SparkPageRankService</em> Service</h3>
+<p>This <code class="docutils literal"><span class="pre">SparkPageRankService</span></code> service has a <code class="docutils literal"><span class="pre">rank</span></code> endpoint to obtain the page rank of a given URL.
+It also has a <code class="docutils literal"><span class="pre">total</span></code> endpoint to obtain the total number of pages with a given page rank.</p>
+</div>
+<div class="section" id="memory-requirements">
+<h3><a class="headerlink" href="#memory-requirements" title="Perma-link to this heading">🔗</a>Memory Requirements</h3>
+<p>When a Spark program is running inside a workflow, the memory requirements configured for the Spark program may need increasing beyond the defaults:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">setDriverResources</span><span class="o">(</span><span class="k">new</span> <span class="n">Resources</span><span class="o">(</span><span class="mi">1024</span><span class="o">));</span>
+<span class="n">setExecutorResources</span><span class="o">(</span><span class="k">new</span> <span class="n">Resources</span><span class="o">(</span><span class="mi">1024</span><span class="o">));</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="building-and-starting">
+<h2><a class="headerlink" href="#building-and-starting" title="Perma-link to this heading">🔗</a>Building and Starting</h2>
+<ul>
+<li><p class="first">You can either build the example (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-example" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Building an Example Application</span></a>) or use the pre-built JAR file included in the CDAP SDK
+(as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying an Application</span></a>):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral108() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral108 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral108", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral108" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">examples/SparkPageRank/target/SparkPageRank-3.5.2.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">examples\SparkPageRank\target\SparkPageRank-3.5.2.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Start CDAP (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Starting and Stopping CDAP</span></a>).</p>
+</li>
+<li><p class="first">Deploy the application, as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying an Application</span></a>.
+For example, from the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral109() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral109 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral109", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral109" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact examples/SparkPageRank/target/SparkPageRank-3.5.2.jar</span>
+
+<span class="go">Successfully added artifact with name &#39;SparkPageRank&#39;</span>
+
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app SparkPageRank SparkPageRank 3.5.2 user</span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact examples\SparkPageRank\target\SparkPageRank-3.5.2.jar</span></span>
+
+<span class="go">Successfully added artifact with name &#39;SparkPageRank&#39;</span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app SparkPageRank SparkPageRank 3.5.2 user</span></span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Once the application has been deployed, you can start its components, as described in
+<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-starting-application" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Starting an Application</span></a>, and detailed at the
+start of <a class="reference external" href="#running-the-example">running the example</a>.</p>
+</li>
+<li><p class="first">Once all components are started, <a class="reference external" href="#running-the-example">run the example</a>.</p>
+</li>
+<li><p class="first">When finished, you can <a class="reference external" href="#stopping-and-removing-the-application">stop and remove the application</a>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="running-the-example">
+<h2><a class="headerlink" href="#running-the-example" title="Perma-link to this heading">🔗</a>Running the Example</h2>
+<div class="section" id="starting-the-service">
+<h3><a class="headerlink" href="#starting-the-service" title="Perma-link to this heading">🔗</a>Starting the Service</h3>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>SparkPageRank</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/SparkPageRank/overview/programs">application overview page, programs tab</a>,
+click <em>SparkPageRankService</em> to get to the service detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral110() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral110 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral110", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral110" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start service SparkPageRank.SparkPageRankService</span>
+
+<span class="go">Successfully started service &#39;SparkPageRankService&#39; of application &#39;SparkPageRank&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start service SparkPageRank.SparkPageRankService</span></span>
+
+<span class="go">Successfully started service &#39;SparkPageRankService&#39; of application &#39;SparkPageRank&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="injecting-url-pairs">
+<h3><a class="headerlink" href="#injecting-url-pairs" title="Perma-link to this heading">🔗</a>Injecting URL Pairs</h3>
+<p>Inject a file of URL pairs to the stream <em>backlinkURLStream</em> by running this command from the
+Standalone CDAP SDK directory, using the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral111() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral111 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral111", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral111" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load stream backlinkURLStream examples/SparkPageRank/resources/urlpairs.txt</span>
+
+<span class="go">Successfully loaded file to stream &#39;backlinkURLStream&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load stream backlinkURLStream examples/SparkPageRank/resources/urlpairs.txt</span></span>
+
+<span class="go">Successfully loaded file to stream &#39;backlinkURLStream&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+<div class="section" id="starting-the-workflow">
+<h3><a class="headerlink" href="#starting-the-workflow" title="Perma-link to this heading">🔗</a>Starting the Workflow</h3>
+<p>The workflow must be started with a runtime argument <code class="docutils literal"><span class="pre">spark.SparkPageRankProgram.args</span></code>
+that specifies the number of iterations. By default, this is 10; in this example, we'll
+use <code class="docutils literal"><span class="pre">3</span></code> as the value.</p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>SparkPageRank</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/SparkPageRank/overview/programs">application overview page, programs tab</a>,
+click <em>PageRankWorkflow</em> to get to the workflow detail page, set the runtime
+arguments using <code class="docutils literal"><span class="pre">spark.SparkPageRankProgram.args</span></code> as the key and <code class="docutils literal"><span class="pre">3</span></code> as the value, then click
+the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral112() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral112 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral112", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral112" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start workflow SparkPageRank.PageRankWorkflow <span class="s2">&quot;spark.SparkPageRankProgram.args=&#39;3&#39;&quot;</span></span>
+
+<span class="go">Successfully started workflow &#39;PageRankWorkflow&#39; of application &#39;SparkPageRank&#39;</span>
+<span class="go">with provided runtime arguments &#39;spark.SparkPageRankProgram.args=3&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start workflow SparkPageRank.PageRankWorkflow &quot;spark.SparkPageRankProgram.args=&#39;3&#39;&quot;</span></span>
+
+<span class="go">Successfully started workflow &#39;PageRankWorkflow&#39; of application &#39;SparkPageRank&#39;</span>
+<span class="go">with provided runtime arguments &#39;spark.SparkPageRankProgram.args=3&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Or, send a query via an HTTP request using the <code class="docutils literal"><span class="pre">curl</span></code> command:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral113() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral113 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral113", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral113" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST -d <span class="s1">&#39;{spark.SparkPageRankProgram.args=&quot;3&quot;}&#39;</span> <span class="se">\</span>
+<span class="go">&quot;http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/workflows/PageRankWorkflow/start&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST -d &quot;{spark.SparkPageRankProgram.args=\&quot;3\&quot;}&#39; ^</span>
+<span class="go">\&quot;http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/workflows/PageRankWorkflow/start\&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="querying-the-results">
+<h3><a class="headerlink" href="#querying-the-results" title="Perma-link to this heading">🔗</a>Querying the Results</h3>
+<p>To query the <em>ranks</em> ObjectStore through the <code class="docutils literal"><span class="pre">SparkPageRankService</span></code>,
+you can use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral114() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral114 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral114", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral114" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh call service SparkPageRank.SparkPageRankService POST <span class="s2">&quot;rank&quot;</span> body <span class="s2">&quot;{&#39;url&#39;:&#39;http://example.com/page1&#39;}&quot;</span></span>
+
+<span class="go">10</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat call service SparkPageRank.SparkPageRankService POST &quot;rank&quot; body &quot;{&#39;url&#39;:&#39;http://example.com/page1&#39;}&quot;</span></span>
+
+<span class="go">10</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>You can also send a query via an HTTP request using the <code class="docutils literal"><span class="pre">curl</span></code> command. For example:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral115() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral115 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral115", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral115" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST -d <span class="s1">&#39;{&quot;url&quot;:&quot;http://example.com/page1&quot;}&#39;</span> <span class="se">\</span>
+<span class="go">&quot;http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/SparkPageRankService/methods/rank&quot;</span></span>
+
+<span class="go">10</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST -d &quot;{\&quot;url\&quot;:\&quot;http://example.com/page1\&quot;}&#39; ^</span>
+<span class="go">\&quot;http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/SparkPageRankService/methods/rank\&quot;</span></span>
+
+<span class="go">10</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Similarly, to query the <em>rankscount</em> ObjectStore using the <code class="docutils literal"><span class="pre">SparkPageRankService</span></code> and get the total number of
+pages with a page rank of 10, you can do the following:</p>
+<p>Using the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral116() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral116 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral116", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral116" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh call service SparkPageRank.SparkPageRankService GET <span class="s1">&#39;total/10&#39;</span></span>
+
+<span class="go">48</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat call service SparkPageRank.SparkPageRankService GET &#39;total/10&#39;</span></span>
+
+<span class="go">48</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Using <code class="docutils literal"><span class="pre">curl</span></code>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral117() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral117 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral117", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral117" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X GET <span class="s2">&quot;http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/SparkPageRankService/methods/total/10&quot;</span></span>
+
+<span class="go">48</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X GET &quot;http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/SparkPageRankService/methods/total/10&quot;</span></span>
+
+<span class="go">48</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+<div class="section" id="stopping-and-removing-the-application">
+<h2><a class="headerlink" href="#stopping-and-removing-the-application" title="Perma-link to this heading">🔗</a>Stopping and Removing the Application</h2>
+<p>Once done, you can stop the application—if it hasn't stopped
+already—as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-stopping" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Stopping an Application</span></a>. Here is an example-specific
+description of the steps:</p>
+<p><strong>Stopping the Workflow</strong></p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>SparkPageRank</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/SparkPageRank/overview/programs">application overview page, programs tab</a>,
+click <em>PageRankWorkflow</em> to get to the workflow detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral118() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral118 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral118", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral118" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh stop workflow SparkPageRank.PageRankWorkflow</span>
+
+<span class="go">Successfully stopped workflow &#39;PageRankWorkflow&#39; of application &#39;SparkPageRank&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat stop workflow SparkPageRank.PageRankWorkflow</span></span>
+
+<span class="go">Successfully stopped workflow &#39;PageRankWorkflow&#39; of application &#39;SparkPageRank&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p><strong>Stopping the Service</strong></p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>SparkPageRank</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/SparkPageRank/overview/programs">application overview page, programs tab</a>,
+click <em>SparkPageRankService</em> to get to the service detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral119() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral119 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral119", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral119" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh stop service SparkPageRank.SparkPageRankService</span>
+
+<span class="go">Successfully stopped service &#39;SparkPageRankService&#39; of application &#39;SparkPageRank&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat stop service SparkPageRank.SparkPageRankService</span></span>
+
+<span class="go">Successfully stopped service &#39;SparkPageRankService&#39; of application &#39;SparkPageRank&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p><strong>Removing the Application</strong></p>
+<p>You can now remove the application as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-removing" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Removing an Application</span></a>, or:</p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>SparkPageRank</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/SparkPageRank/overview/programs">application overview page, programs tab</a>,
+click the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management
+pane for the application, then click the <em>Actions</em> menu on the right side and select
+<em>Delete</em> to delete the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral120() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral120 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral120", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral120" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh delete app SparkPageRank</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat delete app SparkPageRank</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clicks-and-views.html">Clicks and Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-cleansing.html">Data Cleansing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fileset-example.html">FileSet Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="log-analysis.html">Log Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spam-classifier.html">Spam Classifier</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Spark Page Rank</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stopping-and-removing-the-application">Stopping and Removing the Application</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sport-results.html">Sport Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream-conversion.html">Stream Conversion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user-profiles.html">User Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wikipedia-data-pipeline.html">Wikipedia Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Spark K-Means" href="spark-k-means.html" />Spark K-Means</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Sport Results" href="sport-results.html" />Sport Results</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

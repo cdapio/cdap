@@ -1,0 +1,540 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Table API &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/building-blocks/datasets/table.html">
+
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../../index.html" />
+    <link rel="up" title="Datasets" href="index.html" />
+    <link rel="next" title="FileSet Dataset" href="fileset.html" />
+    <link rel="prev" title="Datasets Overview" href="overview.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="fileset.html" title="FileSet Dataset"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="overview.html" title="Datasets Overview"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="../index.html" >Building Blocks</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Datasets</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="table-api">
+<h1><a class="headerlink" href="#table-api" title="Perma-link to this heading">🔗</a>Table API</h1>
+<p>The <code class="docutils literal"><span class="pre">Table</span></code> API provides basic methods to perform read, write and delete operations,
+plus special scan, atomic increment and compare-and-swap operations:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Read</span>
+<span class="kd">public</span> <span class="n">Row</span> <span class="nf">get</span><span class="o">(</span><span class="n">Get</span> <span class="n">get</span><span class="o">)</span>
+<span class="kd">public</span> <span class="n">Row</span> <span class="nf">get</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">byte</span><span class="o">[]</span> <span class="nf">get</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">)</span>
+<span class="kd">public</span> <span class="n">Row</span> <span class="nf">get</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">columns</span><span class="o">)</span>
+<span class="kd">public</span> <span class="n">Row</span> <span class="nf">get</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">startColumn</span><span class="o">,</span>
+               <span class="kt">byte</span><span class="o">[]</span> <span class="n">stopColumn</span><span class="o">,</span> <span class="kt">int</span> <span class="n">limit</span><span class="o">)</span>
+
+<span class="c1">// Scan</span>
+<span class="kd">public</span> <span class="n">Scanner</span> <span class="nf">scan</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">startRow</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">stopRow</span><span class="o">)</span>
+
+<span class="c1">// Write</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">put</span><span class="o">(</span><span class="n">Put</span> <span class="n">put</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">put</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">value</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">put</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">columns</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">values</span><span class="o">)</span>
+
+<span class="c1">// Compare And Swap</span>
+<span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">compareAndSwap</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">,</span>
+                              <span class="kt">byte</span><span class="o">[]</span> <span class="n">expectedValue</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">newValue</span><span class="o">)</span>
+
+<span class="c1">// Increment and return result</span>
+<span class="kd">public</span> <span class="n">Row</span> <span class="nf">incrementAndGet</span><span class="o">(</span><span class="n">Increment</span> <span class="n">increment</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">long</span> <span class="nf">incrementAndGet</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">,</span> <span class="kt">long</span> <span class="n">amount</span><span class="o">)</span>
+<span class="kd">public</span> <span class="n">Row</span> <span class="nf">incrementAndGet</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">columns</span><span class="o">,</span> <span class="kt">long</span><span class="o">[]</span> <span class="n">amounts</span><span class="o">)</span>
+
+<span class="c1">// Increment without result</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">increment</span><span class="o">(</span><span class="n">Increment</span> <span class="n">increment</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">increment</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">,</span> <span class="kt">long</span> <span class="n">amount</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">increment</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">columns</span><span class="o">,</span> <span class="kt">long</span><span class="o">[]</span> <span class="n">amounts</span><span class="o">)</span>
+
+<span class="c1">// Delete</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">delete</span><span class="o">(</span><span class="n">Delete</span> <span class="n">delete</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">delete</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">delete</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">delete</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">columns</span><span class="o">)</span>
+</pre></div>
+</div>
+<p>Each basic operation has a method that takes an operation-type object as a parameter
+plus handy methods for working directly with byte arrays.
+If your application code already deals with byte arrays, you can use the latter methods to save a conversion.</p>
+<div class="section" id="read">
+<h2><a class="headerlink" href="#read" title="Perma-link to this heading">🔗</a>Read</h2>
+<p>A <code class="docutils literal"><span class="pre">get</span></code> operation reads all columns or a selection of columns of a single row:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">Table</span> <span class="n">t</span><span class="o">;</span>
+<span class="kt">byte</span><span class="o">[]</span> <span class="n">rowKey1</span><span class="o">;</span>
+<span class="kt">byte</span><span class="o">[]</span> <span class="n">columnX</span><span class="o">;</span>
+<span class="kt">byte</span><span class="o">[]</span> <span class="n">columnY</span><span class="o">;</span>
+<span class="kt">int</span> <span class="n">n</span><span class="o">;</span>
+
+<span class="c1">// Read all columns of a row</span>
+<span class="n">Row</span> <span class="n">row</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">));</span>
+
+<span class="c1">// Read specified columns from a row</span>
+<span class="n">Row</span> <span class="n">rowSelection</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">));</span>
+
+<span class="c1">// Reads a column range from x (inclusive) to y (exclusive)</span>
+<span class="c1">// with a limit of n return values</span>
+<span class="n">rowSelection</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">rowKey1</span><span class="o">,</span> <span class="n">columnX</span><span class="o">,</span> <span class="n">columnY</span><span class="o">;</span> <span class="n">n</span><span class="o">);</span>
+
+<span class="c1">// Read only one column in one row byte[]</span>
+<span class="n">value</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">rowKey1</span><span class="o">,</span> <span class="n">columnX</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">Row</span></code> object provides access to the row data including its columns. If only a
+selection of row columns is requested, the returned <code class="docutils literal"><span class="pre">Row</span></code> object will contain only these columns.
+The <code class="docutils literal"><span class="pre">Row</span></code> object provides an extensive API for accessing returned column values:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Get column value as a byte array</span>
+<span class="kt">byte</span><span class="o">[]</span> <span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">);</span>
+
+<span class="c1">// Get column value of a specific type</span>
+<span class="n">String</span> <span class="n">valueAsString</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">);</span>
+<span class="n">Integer</span> <span class="n">valueAsInteger</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getInt</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>When requested, the value of a column is converted to a specific type automatically.
+If the column is absent in a row, the returned value is <code class="docutils literal"><span class="pre">null</span></code>. To return primitive types,
+the corresponding methods accept a default value to be returned when the column is absent:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Get column value as a primitive type or 0 if column is absent</span>
+<span class="kt">long</span> <span class="n">valueAsLong</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getLong</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Multiple rows can be requested together using a variation of the <code class="docutils literal"><span class="pre">get</span></code> operation that takes a
+list of <code class="docutils literal"><span class="pre">Get</span></code> objects to be retrieved:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">Table</span> <span class="n">t</span><span class="o">;</span>
+
+<span class="c1">// Define the rows to retrieve</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">Get</span><span class="o">&gt;</span> <span class="n">gets</span> <span class="o">=</span> <span class="n">Lists</span><span class="o">.</span><span class="na">newArrayList</span><span class="o">();</span>
+<span class="n">gets</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="s">&quot;row1&quot;</span><span class="o">));</span>
+<span class="c1">// Separate columns can be requested for each row</span>
+<span class="n">gets</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="s">&quot;row2&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">));</span>
+<span class="n">gets</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="s">&quot;row3&quot;</span><span class="o">));</span>
+
+<span class="n">List</span><span class="o">&lt;</span><span class="n">Row</span><span class="o">&gt;</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">gets</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Each <code class="docutils literal"><span class="pre">Row</span></code> object in the returned list will contain the results for one of the requested row
+keys.  When multiple rows must be retrieved together, this version of the <code class="docutils literal"><span class="pre">get</span></code> operation
+allows the storage provider to perform more efficient batching of the operations, if supported.</p>
+</div>
+<div class="section" id="scan">
+<h2><a class="headerlink" href="#scan" title="Perma-link to this heading">🔗</a>Scan</h2>
+<p>A <code class="docutils literal"><span class="pre">scan</span></code> operation fetches a subset of rows or all of the rows of a Table:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kt">byte</span><span class="o">[]</span> <span class="n">startRow</span><span class="o">;</span>
+<span class="kt">byte</span><span class="o">[]</span> <span class="n">stopRow</span><span class="o">;</span>
+<span class="n">Row</span> <span class="n">row</span><span class="o">;</span>
+
+<span class="c1">// Scan all rows from startRow (inclusive) to</span>
+<span class="c1">// stopRow (exclusive)</span>
+<span class="k">try</span> <span class="o">(</span><span class="n">Scanner</span> <span class="n">scanner</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="n">startRow</span><span class="o">,</span> <span class="n">stopRow</span><span class="o">))</span> <span class="o">{</span>
+  <span class="k">while</span> <span class="o">((</span><span class="n">row</span> <span class="o">=</span> <span class="n">scanner</span><span class="o">.</span><span class="na">next</span><span class="o">())</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;column1: &quot;</span> <span class="o">+</span> <span class="n">row</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="s">&quot;null&quot;</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>To scan a set of rows not bounded by <code class="docutils literal"><span class="pre">startRow</span></code> and/or <code class="docutils literal"><span class="pre">stopRow</span></code>
+you can pass <code class="docutils literal"><span class="pre">null</span></code> as their value:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kt">byte</span><span class="o">[]</span> <span class="n">startRow</span><span class="o">;</span>
+<span class="c1">// Scan all rows of a table</span>
+<span class="n">Scanner</span> <span class="n">allRows</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+<span class="c1">// Scan all columns up to stopRow (exclusive)</span>
+<span class="n">Scanner</span> <span class="n">headRows</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="n">stopRow</span><span class="o">);</span>
+<span class="c1">// Scan all columns starting from startRow (inclusive)</span>
+<span class="n">Scanner</span> <span class="n">tailRows</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="n">startRow</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="write">
+<h2><a class="headerlink" href="#write" title="Perma-link to this heading">🔗</a>Write</h2>
+<p>A <code class="docutils literal"><span class="pre">put</span></code> operation writes data into a row:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Write a set of columns with their values</span>
+<span class="n">t</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="k">new</span> <span class="n">Put</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="s">&quot;value1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">,</span> <span class="mi">55L</span><span class="o">));</span>
+</pre></div>
+</div>
+<p>Note that the column value cannot be empty, that is, it must have at least length one.</p>
+</div>
+<div class="section" id="compare-and-swap">
+<h2><a class="headerlink" href="#compare-and-swap" title="Perma-link to this heading">🔗</a>Compare and Swap</h2>
+<p>A swap operation compares the existing value of a column with an expected value,
+and if it matches, replaces it with a new value.
+The operation returns <code class="docutils literal"><span class="pre">true</span></code> if it succeeds and <code class="docutils literal"><span class="pre">false</span></code> otherwise:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kt">byte</span><span class="o">[]</span> <span class="n">expectedCurrentValue</span><span class="o">;</span>
+<span class="kt">byte</span><span class="o">[]</span> <span class="n">newValue</span><span class="o">;</span>
+<span class="k">if</span> <span class="o">(!</span><span class="n">t</span><span class="o">.</span><span class="na">compareAndSwap</span><span class="o">(</span><span class="n">rowKey1</span><span class="o">,</span> <span class="n">columnX</span><span class="o">,</span>
+      <span class="n">expectedCurrentValue</span><span class="o">,</span> <span class="n">newValue</span><span class="o">))</span> <span class="o">{</span>
+  <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Current value was different from expected&quot;</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Note that the column value cannot be empty, that is, it must have at least length one.</p>
+</div>
+<div class="section" id="increment">
+<h2><a class="headerlink" href="#increment" title="Perma-link to this heading">🔗</a>Increment</h2>
+<p>An increment operation increments a <code class="docutils literal"><span class="pre">long</span></code> value of one or more columns by either <code class="docutils literal"><span class="pre">1L</span></code>
+or an integer amount <em>n</em>.  If a column does not exist, it is created with an assumed value of zero
+before the increment is applied:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Write long value to a column of a row</span>
+<span class="n">t</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="k">new</span> <span class="n">Put</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="mi">55L</span><span class="o">));</span>
+<span class="c1">// Increment values of several columns in a row</span>
+<span class="n">t</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="k">new</span> <span class="n">Increment</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="mi">1L</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">,</span> <span class="mi">23L</span><span class="o">));</span>
+</pre></div>
+</div>
+<p>If the existing value of the column cannot be converted to a <code class="docutils literal"><span class="pre">long</span></code>,
+a <code class="docutils literal"><span class="pre">NumberFormatException</span></code> will be thrown.</p>
+<p>Two types of increment operations are supported:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">incrementAndGet(...)</span></code> operations will increment the currently stored value and return the
+result; and</li>
+<li><code class="docutils literal"><span class="pre">increment(...)</span></code> operations will increment the currently stored value without any return
+value.</li>
+</ul>
+<div class="section" id="read-less-increments">
+<h3><a class="headerlink" href="#read-less-increments" title="Perma-link to this heading">🔗</a>Read-less Increments</h3>
+<p>By default, an increment operation will need to first perform a read operation to find the
+currently stored column value, apply the increment to the stored value, and then write the final
+result.  For high write volume workloads, with only occassional reads, this can impose a great
+deal of unnecessary overhead for increments.</p>
+<p>In these situations, you can configure the dataset to support read-less increments.  With read-less
+increments, each operation only performs a write operation, storing the incremental value for the
+column in a new cell.  This completely eliminates the cost of the read operation when performing
+increments.  Instead, when reading the value for a column storing data for read-less increments,
+all of the stored increment values are read and summed up together with the last stored complete
+sum, in order to compute the final result.  As a result, read operations become more expensive, but
+this trade-off can be very beneficial for workloads dominated by writes.</p>
+<p>Read-less increments can only be used with the <code class="docutils literal"><span class="pre">increment(...)</span></code> operation, since it does not
+return a value.  To configure a dataset to support read-less increments:</p>
+<ol class="arabic simple">
+<li>Set the property <code class="docutils literal"><span class="pre">dataset.table.readless.increment</span></code> to <code class="docutils literal"><span class="pre">true</span></code> in the DatasetSpecification
+properties.</li>
+<li>Use the <code class="docutils literal"><span class="pre">increment(...)</span></code> methods for any operations that do not need the result value of the
+increment operation.</li>
+</ol>
+<p><em>Note:</em> the current implementation of read-less increments uses an HBase coprocessor to prefix the
+stored values for incremental updates with a special prefix.  Since this prefix could occur
+naturally in other stored data values, it is highly recommended that increments be stored in a
+separate dataset and not be mixed in with other types of values.  This will ensure that other data is
+not mis-identified as a stored increment and prevent incorrect results.</p>
+</div>
+</div>
+<div class="section" id="delete">
+<h2><a class="headerlink" href="#delete" title="Perma-link to this heading">🔗</a>Delete</h2>
+<p>A delete operation removes an entire row or a subset of its columns:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Delete the entire row</span>
+<span class="n">t</span><span class="o">.</span><span class="na">delete</span><span class="o">(</span><span class="k">new</span> <span class="n">Delete</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">));</span>
+<span class="c1">// Delete a selection of columns from the row</span>
+<span class="n">t</span><span class="o">.</span><span class="na">delete</span><span class="o">(</span><span class="k">new</span> <span class="n">Delete</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">));</span>
+</pre></div>
+</div>
+<p>Note that specifying a set of columns helps to perform delete operation faster.
+When you want to delete all the columns of a row and you know all of them,
+passing all of them will make the deletion faster. Deleting all the columns of a row will
+also delete the entire row, as the underlying implementation of a Table is a
+<a class="reference external" href="http://en.wikipedia.org/wiki/Column-oriented_DBMS">columnar store.</a></p>
+</div>
+<div class="section" id="writing-from-mapreduce">
+<h2><a class="headerlink" href="#writing-from-mapreduce" title="Perma-link to this heading">🔗</a>Writing from MapReduce</h2>
+<p>Table implements the <code class="docutils literal"><span class="pre">BatchWritable</span></code> interface, using <code class="docutils literal"><span class="pre">byte[]</span></code> as the key and
+<code class="docutils literal"><span class="pre">Put</span></code> as the value for each write. To write to a table from MapReduce, use these
+types as the output types of your Reducer (or Mapper in case of a map-only program).
+For example, the Reducer can be defined as follows:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * A reducer that sums up the counts for each key.</span>
+<span class="cm"> */</span>
+<span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Counter</span> <span class="kd">extends</span> <span class="n">Reducer</span><span class="o">&lt;</span><span class="n">Text</span><span class="o">,</span> <span class="n">IntWritable</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[],</span> <span class="n">Put</span><span class="o">&gt;</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">reduce</span><span class="o">(</span><span class="n">Text</span> <span class="n">key</span><span class="o">,</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">IntWritable</span><span class="o">&gt;</span> <span class="n">values</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span>
+    <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+    <span class="kt">long</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0L</span><span class="o">;</span>
+    <span class="k">for</span> <span class="o">(</span><span class="n">IntWritable</span> <span class="n">value</span> <span class="o">:</span> <span class="n">values</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">sum</span> <span class="o">+=</span> <span class="n">value</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+    <span class="o">}</span>
+    <span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">key</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">row</span><span class="o">,</span> <span class="k">new</span> <span class="n">Put</span><span class="o">(</span><span class="n">row</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">,</span> <span class="n">sum</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Note that here, the key is always ignored, because the <code class="docutils literal"><span class="pre">Put</span></code> that is provided as the value also
+contains the row key. It would therefore also be safe to write null for the key:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="k">new</span> <span class="n">Put</span><span class="o">(</span><span class="n">row</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">,</span> <span class="n">sum</span><span class="o">));</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pre-splitting-a-table-into-multiple-regions">
+<span id="table-datasets-pre-splitting"></span><h2><a class="headerlink" href="#pre-splitting-a-table-into-multiple-regions" title="Perma-link to this heading">🔗</a>Pre-Splitting a Table into Multiple Regions</h2>
+<p>When the underlying storage for a Table Dataset (or any Dataset that uses a Table
+underneath, such as a <code class="docutils literal"><span class="pre">KeyValueTable</span></code>) is HBase, CDAP allows you to
+<a class="reference external" href="http://hbase.apache.org/book.html#manual_region_splitting_decisions">configure pre-splitting</a>
+to gain a better distribution of data operations after the tables are created. This helps
+optimize for better performance, depending on your use case.</p>
+<p>To specify the splits for a Table-based Dataset, you use the <code class="docutils literal"><span class="pre">hbase.splits</span></code> dataset property.
+The value must contain a JSON-formatted <code class="docutils literal"><span class="pre">byte[][]</span></code> of the split keys, such as:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span> <span class="s">&quot;hbase.splits&quot;</span><span class="o">:</span> <span class="s">&quot;[[64],[128],[192]]&quot;</span> <span class="o">}</span>
+</pre></div>
+</div>
+<p>The above will create four regions; the first of which will receive all rows whose first
+byte is in the range 0…63; the second will receive the range 64…127, the third will
+receive the range 128…191 and the fourth will receive the range 192…255.</p>
+<p>You set Dataset properties when you create the Dataset, either during application
+deployment or via CDAP's HTTP RESTful APIs. The following is an example of the former; for
+an example of the latter, please refer to the
+<a class="reference external" href="../../source/../../reference-manual/http-restful-api/dataset.html#http-restful-api-dataset-creating" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Dataset section</span></a> of the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">RESTful API
+:Reference</span></a>.</p>
+<p>To configure pre-splitting for a Table created during application deployment, in your
+application class' <code class="docutils literal"><span class="pre">configure()</span></code> you specify:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">DatasetProperties</span> <span class="n">props</span> <span class="o">=</span>
+        <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;hbase.splits&quot;</span><span class="o">,</span> <span class="s">&quot;[[64],[128],[192]]&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;myTable&quot;</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">props</span><span class="o">);</span>
+
+    <span class="c1">// init other components</span>
+
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../streams.html"> Streams</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"> Datasets</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="overview.html"> Overview</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href=""> Table API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#read">Read</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scan">Scan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#write">Write</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#compare-and-swap">Compare and Swap</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#increment">Increment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#delete">Delete</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#writing-from-mapreduce">Writing from MapReduce</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pre-splitting-a-table-into-multiple-regions">Pre-Splitting a Table into Multiple Regions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fileset.html"> FileSets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="partitioned-fileset.html"> Partitioned FileSets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="time-partitioned-fileset.html"> TimePartitioned FileSets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="system-custom.html"> System and Custom Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cube.html"> Cube Dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../views.html"> Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plugins.html"> Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../secure-keys.html"> Secure Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../artifacts.html"> Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../metadata-lineage.html"> Metadata and Lineage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../audit-logging.html"> Audit Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Datasets Overview" href="overview.html" />Datasets Overview</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="FileSet Dataset" href="fileset.html" />FileSet Dataset</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

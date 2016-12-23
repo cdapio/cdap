@@ -1,0 +1,903 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Query HTTP RESTful API &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/http-restful-api/query.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Security HTTP RESTful API" href="security.html" />
+    <link rel="prev" title="Preferences HTTP RESTful API" href="preferences.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="security.html" title="Security HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="preferences.html" title="Preferences HTTP RESTful API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Reference Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="query-http-restful-api">
+<span id="http-restful-api-query"></span><h1><a class="headerlink" href="#query-http-restful-api" title="Perma-link to this heading">🔗</a>Query HTTP RESTful API</h1>
+<p>Use the CDAP Query HTTP RESTful API to submit SQL-like queries over datasets. Queries are
+processed asynchronously; to obtain query results, perform these steps:</p>
+<ul class="simple">
+<li>first, <strong>submit</strong> the query;</li>
+<li>then poll for the query's <strong>status</strong> until it is finished;</li>
+<li>once finished, retrieve the <strong>result schema</strong> and the <strong>results</strong>;</li>
+<li>finally, <strong>close the query</strong> to free the resources that it holds.</li>
+</ul>
+<p>Additional details on querying can be found in the <a class="reference external" href="../source/../../developers-manual/data-exploration/index.html#data-exploration" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Developers' Manual: Data
+Exploration</span></a>.</p>
+<p>All methods or endpoints described in this API have a base URL (typically
+<code class="docutils literal"><span class="pre">http://&lt;host&gt;:10000</span></code> or <code class="docutils literal"><span class="pre">https://&lt;host&gt;:10443</span></code>) that precedes the resource
+identifier, as described in the <a class="reference internal" href="introduction.html#http-restful-api-conventions-base-url"><span>RESTful API Conventions</span></a>.
+These methods return a status code, as listed in the <a class="reference internal" href="introduction.html#http-restful-api-status-codes"><span>RESTful API  Status Codes</span></a>.</p>
+<div class="section" id="submitting-a-query">
+<span id="http-restful-api-query-submitting"></span><h2><a class="headerlink" href="#submitting-a-query" title="Perma-link to this heading">🔗</a>Submitting a Query</h2>
+<p>To submit a SQL query, post the query string to the <code class="docutils literal"><span class="pre">queries</span></code> URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/data/explore/queries</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+</tbody>
+</table>
+<p>The body of the request must contain a JSON string of the form:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;query&quot;:&quot;&lt;SQL-query-string&gt;&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal"><span class="pre">SQL-query-string</span></code> is the actual SQL query.
+If you are running a version of Hive that uses reserved keywords, and a column in your query is a <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL#LanguageManualDDL-Keywords,Non-reservedKeywordsandReservedKeywords">Hive reserved keyword</a>, you must enclose the column name in backticks.
+For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;query&quot;:&quot;select `date` from stream_events&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The query execution was successfully initiated, and the body will contain the query-handle
+used to identify the query in subsequent requests</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></code></td>
+<td>The query is not well-formed or contains an error, such as a nonexistent table name</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Comments</p>
+<p>If the query execution was successfully initiated, the body of the
+response will contain a handle that can be used to identify the query in
+subsequent requests:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{ &quot;handle&quot;:&quot;&lt;query-handle&gt;&quot; }</span>
+</pre></div>
+</div>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Request</th>
+<td><code class="docutils literal"><span class="pre">PUT</span> <span class="pre">/v3/namespaces/default/data/explore/queries</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">HTTP Body</th>
+<td><code class="docutils literal"><span class="pre">{&quot;query&quot;:&quot;SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">dataset_mydataset</span> <span class="pre">LIMIT</span> <span class="pre">5&quot;}</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">HTTP Response</th>
+<td><code class="docutils literal"><span class="pre">{&quot;handle&quot;:&quot;57cf1b01-8dba-423a-a8b4-66cd29dd75e2&quot;}</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Submit a query in the namespace <em>default</em> to get the first 5 entries from the
+dataset, <em>mydataset</em> in the namespace <em>default</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="status-of-a-query">
+<span id="http-restful-api-query-status"></span><h2><a class="headerlink" href="#status-of-a-query" title="Perma-link to this heading">🔗</a>Status of a Query</h2>
+<p>The status of a query is obtained using a HTTP GET request to the query's URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/data/explore/queries/&lt;query-handle&gt;/status</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> this endpoint is <em>not</em> namespaced, as all query-handles are globally unique.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">query-handle</span></code></td>
+<td>Handle obtained when the query was submitted</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The query exists and the body contains its status</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>The query handle does not match any current query</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Comments</p>
+<p>If the query exists, the body will contain the status of its execution
+and whether the query has a results set:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;status&quot;:&quot;&lt;status-code&gt;&quot;,</span>
+<span class="go">  &quot;hasResults&quot;:&lt;boolean&gt;</span>
+<span class="go"> }</span>
+</pre></div>
+</div>
+<p>Status can be one of the following: <code class="docutils literal"><span class="pre">INITIALIZED</span></code>, <code class="docutils literal"><span class="pre">RUNNING</span></code>, <code class="docutils literal"><span class="pre">FINISHED</span></code>, <code class="docutils literal"><span class="pre">CANCELED</span></code>, <code class="docutils literal"><span class="pre">CLOSED</span></code>,
+<code class="docutils literal"><span class="pre">ERROR</span></code>, <code class="docutils literal"><span class="pre">UNKNOWN</span></code>, and <code class="docutils literal"><span class="pre">PENDING</span></code>.</p>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Request</th>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/v3/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/status</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">HTTP Response</th>
+<td><code class="docutils literal"><span class="pre">{&quot;status&quot;:&quot;FINISHED&quot;,&quot;hasResults&quot;:true}</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Retrieve the status of the query in the namespace <em>default</em> which has the handle
+<code class="docutils literal"><span class="pre">57cf1b01-8dba-423a-a8b4-66cd29dd75e2</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="obtaining-the-result-schema">
+<span id="http-restful-api-query-obtaining-results"></span><h2><a class="headerlink" href="#obtaining-the-result-schema" title="Perma-link to this heading">🔗</a>Obtaining the Result Schema</h2>
+<p>If the query's status is <code class="docutils literal"><span class="pre">FINISHED</span></code> and it has results, you can obtain the schema of the results:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/data/explore/queries/&lt;query-handle&gt;/schema</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> this endpoint is <em>not</em> namespaced, as all query-handles are globally unique.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">query-handle</span></code></td>
+<td>Handle obtained when the query was submitted</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The query was successfully received and the query schema was returned in the body</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></code></td>
+<td>The query is not well-formed or contains an error, or the query status is not <code class="docutils literal"><span class="pre">FINISHED</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>The query handle does not match any current query</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Comments</p>
+<p>The query's result schema is returned in a JSON body as a list of columns,
+each given by its name, type and position; if the query has no result set, this list is empty:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">  {&quot;name&quot;:&quot;&lt;name&gt;&quot;, &quot;type&quot;:&quot;&lt;type&gt;&quot;, &quot;position&quot;:&lt;int&gt;},</span>
+<span class="go">  ...</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>The type of each column is a data type as defined in the <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL">Hive language manual</a>.</p>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Request</th>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/v3/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/schema</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">HTTP Response</th>
+<td><code class="docutils literal"><span class="pre">[{&quot;name&quot;:&quot;dataset_mydataset.key&quot;,&quot;type&quot;:&quot;array&lt;tinyint&gt;&quot;,&quot;position&quot;:1},</span></code>
+<code class="docutils literal"><span class="pre">{&quot;name&quot;:&quot;dataset_mydataset.value&quot;,&quot;type&quot;:&quot;array&lt;tinyint&gt;&quot;,&quot;position&quot;:2}]</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Retrieve the schema of the result of the query in the namespace <em>default</em> which has
+the handle <code class="docutils literal"><span class="pre">57cf1b01-8dba-423a-a8b4-66cd29dd75e2</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="retrieving-query-results">
+<span id="http-restful-api-query-retrieving-results"></span><h2><a class="headerlink" href="#retrieving-query-results" title="Perma-link to this heading">🔗</a>Retrieving Query Results</h2>
+<p>Query results can be retrieved in batches after the query is finished, optionally specifying the batch
+size in the body of the request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/data/explore/queries/&lt;query-handle&gt;/next</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> this endpoint is <em>not</em> namespaced, as all query-handles are globally unique.</p>
+<p>The body of the request can contain a JSON string specifying the batch size:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;size&quot;:&lt;int&gt;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>If the batch size is not specified, the default is 20.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">query-handle</span></code></td>
+<td>Handle obtained when the query was submitted</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The event was successfully received and the result of the query was returned in the body</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>The query handle does not match any current query</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Comments</p>
+<p>The results are returned in a JSON body as a list of columns,
+each given as a structure containing a list of column values:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">  { &quot;columns&quot;: [ &lt;value-1&gt;, &lt;value-2&gt;, ..., ] },</span>
+<span class="go">  ...</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>The value at each position has the type that was returned in the result schema for that position.
+For example, if the returned type was <code class="docutils literal"><span class="pre">INT</span></code>, then the value will be an integer literal,
+whereas for <code class="docutils literal"><span class="pre">STRING</span></code> or <code class="docutils literal"><span class="pre">VARCHAR</span></code> the value will be a string literal.</p>
+<p>Repeat the query to retrieve subsequent results. If all results of the query have already
+been retrieved, then the returned list is empty.</p>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Request</th>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/next</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">HTTP Response</th>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">[{&quot;columns&quot;:</span> <span class="pre">[</span> <span class="pre">10,</span> <span class="pre">5]},</span></code></div>
+<div class="line">`` {&quot;columns&quot;: [ 20, 27]},``</div>
+<div class="line">`` {&quot;columns&quot;: [ 50, 6]},``</div>
+<div class="line">`` {&quot;columns&quot;: [ 90, 30]},``</div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;{&quot;columns&quot;:</span> <span class="pre">[</span> <span class="pre">95,</span> <span class="pre">91]}]</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Retrieve the results of the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="closing-a-query">
+<span id="http-restful-api-query-closing"></span><h2><a class="headerlink" href="#closing-a-query" title="Perma-link to this heading">🔗</a>Closing a Query</h2>
+<p>The query can be closed by issuing an HTTP DELETE against its URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/data/explore/queries/&lt;query-handle&gt;</span>
+</pre></div>
+</div>
+<p>This frees all resources that are held by this query.</p>
+<p><strong>Note:</strong> this endpoint is <em>not</em> namespaced, as all query-handles are globally unique.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">query-handle</span></code></td>
+<td>Handle obtained when the query was submitted</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The query was closed</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></code></td>
+<td>The query was not in a state that could be closed; either wait until it is finished, or cancel it</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>The query handle does not match any current query</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Request</th>
+<td><code class="docutils literal"><span class="pre">DELETE</span> <span class="pre">/v3/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Close the query in the namespace <em>default</em> which has the handle <code class="docutils literal"><span class="pre">57cf1b01-8dba-423a-a8b4-66cd29dd75e2</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="list-of-queries">
+<span id="http-restful-api-query-listing"></span><h2><a class="headerlink" href="#list-of-queries" title="Perma-link to this heading">🔗</a>List of Queries</h2>
+<p>To return a list of queries, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/data/explore/queries?limit=&lt;limit&gt;&amp;cursor=&lt;cursor&gt;&amp;offset=&lt;offset&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">limit</span></code></td>
+<td>Optional number indicating how many results to return in the response; by default, 50 results are returned</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">cursor</span></code></td>
+<td>Optional string specifying if the results returned should be in the forward or reverse direction;
+should be one of <code class="docutils literal"><span class="pre">next</span></code> or <code class="docutils literal"><span class="pre">prev</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">offset</span></code></td>
+<td>Optional offset for pagination; returns the results that are greater than offset if the cursor is <code class="docutils literal"><span class="pre">next</span></code> or
+results that are less than offset if cursor is <code class="docutils literal"><span class="pre">prev</span></code></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Comments</p>
+<p>The results are returned as a JSON array, with each element containing information about a query:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">  {</span>
+<span class="go">      &quot;timestamp&quot;:1407192465183,</span>
+<span class="go">      &quot;statement&quot;:&quot;SHOW TABLES&quot;,</span>
+<span class="go">      &quot;status&quot;:&quot;FINISHED&quot;,</span>
+<span class="go">      &quot;query_handle&quot;:&quot;319d9438-903f-49b8-9fff-ac71cf5d173d&quot;,</span>
+<span class="go">      &quot;has_results&quot;:true,</span>
+<span class="go">      &quot;is_active&quot;:false</span>
+<span class="go">  },</span>
+<span class="go">  ...</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Request</th>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/v3/namespaces/default/data/explore/queries</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">HTTP Response</th>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">[</span> <span class="pre">{</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;&quot;timestamp&quot;:</span> <span class="pre">1411266478717,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;&quot;statement&quot;:</span> <span class="pre">&quot;SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">dataset_mydataset&quot;,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;&quot;status&quot;:</span> <span class="pre">&quot;FINISHED&quot;,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;&quot;query_handle&quot;:</span> <span class="pre">&quot;57cf1b01-8dba-423a-a8b4-66cd29dd75e2&quot;,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;&quot;has_results&quot;:</span> <span class="pre">true,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;&quot;is_active&quot;:</span> <span class="pre">false</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">}</span> <span class="pre">]</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Retrieves all queries</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="count-of-active-queries">
+<span id="http-restful-api-query-counting"></span><h2><a class="headerlink" href="#count-of-active-queries" title="Perma-link to this heading">🔗</a>Count of Active Queries</h2>
+<p>To return the count of <strong>active</strong> queries, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/data/explore/queries/count</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+</tbody>
+</table>
+<p>The results are returned in the body as a JSON string:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{ &quot;count&quot;:6 }</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="download-query-results">
+<span id="http-restful-api-query-downloading"></span><h2><a class="headerlink" href="#download-query-results" title="Perma-link to this heading">🔗</a>Download Query Results</h2>
+<p>To download the results of a query, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/data/explore/queries/&lt;query-handle&gt;/download</span>
+</pre></div>
+</div>
+<p>The results of the query are returned in CSV format.</p>
+<p><strong>Note:</strong> this endpoint is <em>not</em> namespaced, as all query-handles are globally unique.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">query-handle</span></code></td>
+<td>Handle obtained when the query was submitted or via a list of queries</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Comments</p>
+<p>The query results can be downloaded only once. The RESTful API will return a Status Code <code class="docutils literal"><span class="pre">409</span> <span class="pre">Conflict</span></code>
+if results for the <code class="docutils literal"><span class="pre">query-handle</span></code> are attempted to be downloaded again.</p>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The HTTP call was successful</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>The query handle does not match any current query</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">409</span> <span class="pre">Conflict</span></code></td>
+<td>The query results were already downloaded</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="enabling-and-disabling-querying">
+<span id="http-restful-api-query-enable-disable"></span><h2><a class="headerlink" href="#enabling-and-disabling-querying" title="Perma-link to this heading">🔗</a>Enabling and Disabling Querying</h2>
+<p>Querying (or exploring) of datasets and streams can be enabled and disabled using these endpoints.</p>
+<p>Exploration of data in CDAP is governed by a combination of enabling the CDAP Explore
+Service and then creating datasets and streams that are explorable. The CDAP Explore
+Service is enabled by a <a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-default-explore-service" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">setting in the CDAP configuration file</span></a> (<code class="docutils literal"><span class="pre">explore.enabled</span></code> in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> file).</p>
+<p>Datasets and streams—that were created while the Explore Service was not enabled—can, once the service is enabled and CDAP restarted, be enabled for exploration by
+using these endpoints.</p>
+<p>You can also use these endpoints to disable exploration of a specific dataset or
+stream. The dataset or stream will still be accessible programmatically; it just won't
+respond to queries or be available for exploration using the CDAP UI.</p>
+<p>For datasets:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/data/explore/datasets/&lt;dataset-name&gt;/enable</span>
+<span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/data/explore/datasets/&lt;dataset-name&gt;/disable</span>
+</pre></div>
+</div>
+<p>For streams:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/data/explore/streams/&lt;stream-name&gt;/tables/&lt;table-name&gt;/enable</span>
+<span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/data/explore/streams/&lt;stream-name&gt;/tables/&lt;table-name&gt;/disable</span>
+</pre></div>
+</div>
+<p>Each of these endpoints returns a query handle that can be used to submit requests
+tracking the <a class="reference internal" href="#http-restful-api-query-status"><span>status of the query</span></a>.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dataset-name</span></code></td>
+<td>Name of the dataset</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream-name</span></code></td>
+<td>Name of the stream</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">table-name</span></code></td>
+<td>Name of the table</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The query execution was successfully initiated, and the body will contain the query-handle
+used to identify the query in subsequent requests</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>The query is not well-formed or contains an error such as a nonexistent table name</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Comments</p>
+<p>If the request was successful, the body will contain a query handle that can be used to
+identify the query in subsequent requests, such as a <a class="reference internal" href="#http-restful-api-query-status"><span>status request</span></a>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{ &quot;handle&quot;:&quot;&lt;query-handle&gt;&quot; }</span>
+</pre></div>
+</div>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Request</th>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/namespaces/default/data/explore/datasets/logEventStream_converted/disable</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">HTTP Response</th>
+<td><code class="docutils literal"><span class="pre">{&quot;handle&quot;:&quot;57cf1b01-8dba-423a-a8b4-66cd29dd75e2&quot;}</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Submits a request in the namespace <em>default</em> to disable the dataset
+<em>logEventStream_converted</em> from being explored. The handle can be used to check the
+status.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html">Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html">Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Query</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#submitting-a-query">Submitting a Query</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#status-of-a-query">Status of a Query</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#obtaining-the-result-schema">Obtaining the Result Schema</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#retrieving-query-results">Retrieving Query Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#closing-a-query">Closing a Query</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#list-of-queries">List of Queries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#count-of-active-queries">Count of Active Queries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#download-query-results">Download Query Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enabling-and-disabling-querying">Enabling and Disabling Querying</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="security.html">Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html">Transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Preferences HTTP RESTful API" href="preferences.html" />Preferences HTTP RESTful API</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Security HTTP RESTful API" href="security.html" />Security HTTP RESTful API</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

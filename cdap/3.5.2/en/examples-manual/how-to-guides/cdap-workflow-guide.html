@@ -1,0 +1,539 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Batch Data Processing with CDAP using Workflow &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/examples-manual/how-to-guides/cdap-workflow-guide.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="How-To Guides" href="index.html" />
+    <link rel="next" title="Tutorials" href="../tutorials/index.html" />
+    <link rel="prev" title="Consuming Twitter Data in Real Time" href="cdap-twitter-ingest-guide.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../tutorials/index.html" title="Tutorials"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="cdap-twitter-ingest-guide.html" title="Consuming Twitter Data in Real Time"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">How-To Guides</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="batch-data-processing-with-cdap-using-workflow">
+<span id="cdap-workflow-guide"></span><h1><a class="headerlink" href="#batch-data-processing-with-cdap-using-workflow" title="Perma-link to this heading">🔗</a>Batch Data Processing with CDAP using Workflow</h1>
+<blockquote class="pull-quote">
+<div><strong>Source Code Repository:</strong> Source code (and other resources) for this guide are available at the
+<a class="reference external" href="https://github.com/cdap-guides/cdap-workflow-guide/tree/release/cdap-3.5-compatible">CDAP Guides GitHub repository</a>.</div></blockquote>
+<p>The Workflow system in <a class="reference external" href="http://cdap.io">Cask Data Application Platform (CDAP)</a>
+allows specifying, executing, scheduling, and monitoring complex series of jobs
+and tasks. In this guide, you will learn how it can be used to execute the
+<a class="reference external" href="http://research.google.com/archive/mapreduce.html">MapReduce</a>
+programs in parallel based on the evaluation of conditions.</p>
+<div class="section" id="what-you-will-build">
+<h2><a class="headerlink" href="#what-you-will-build" title="Perma-link to this heading">🔗</a>What You Will Build</h2>
+<p>This guide will take you through building a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/applications.html">CDAP application</a>
+that uses ingested raw purchase events (of the form '<code class="docutils literal"><span class="pre">&lt;name&gt;</span> <span class="pre">bought</span> <span class="pre">&lt;n&gt;</span> <span class="pre">&lt;item&gt;s</span> <span class="pre">for</span> <span class="pre">$&lt;price&gt;</span></code>', which are parsed
+using a primitive parser for sentences) to compute in parallel the total purchases made by each customer along with
+the total purchases made for each product.</p>
+<p>You will:</p>
+<ul class="simple">
+<li>Build <code class="docutils literal"><span class="pre">PurchaseEventParser</span></code>, a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/mapreduce-programs.html">MapReduce program</a>
+to parse the raw purchase events and create <code class="docutils literal"><span class="pre">Purchase</span></code> objects from them;</li>
+<li>Build <code class="docutils literal"><span class="pre">PurchaseCounterByCustomer</span></code>, a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/mapreduce-programs.html">MapReduce program</a>
+to count the purchases made per customer;</li>
+<li>Build <code class="docutils literal"><span class="pre">PurchaseCounterByProduct</span></code>, a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/mapreduce-programs.html">MapReduce program</a>
+to count the purchases made per product;</li>
+<li>Build <code class="docutils literal"><span class="pre">PurchaseWorkflow</span></code>, a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/workflows.html">Workflow</a>
+which will first execute the MapReduce program <code class="docutils literal"><span class="pre">PurchaseEventParser</span></code>. If the predicate <code class="docutils literal"><span class="pre">PurchaseEventVerifier</span></code>,
+which uses the MapReduce counters emitted by the PEP to determine data quality, evaluates to true, the workflow will
+in parallel execute the MapReduce program <code class="docutils literal"><span class="pre">PurchaseCounterByCustomer</span></code> and <code class="docutils literal"><span class="pre">PurchaseCounterByProduct</span></code> otherwise,
+it will execute the action <code class="docutils literal"><span class="pre">ProblemLogger</span></code>;</li>
+<li>Use
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/datasets/index.html">Datasets</a>
+to persist results of the MapReduce programs; and</li>
+<li>Build a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/services.html">Service</a>
+to serve the results via HTTP.</li>
+</ul>
+</div>
+<div class="section" id="what-you-will-need">
+<h2><a class="headerlink" href="#what-you-will-need" title="Perma-link to this heading">🔗</a>What You Will Need</h2>
+<ul class="simple">
+<li><a class="reference external" href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">JDK 7 or 8</a></li>
+<li><a class="reference external" href="http://maven.apache.org/">Apache Maven 3.1+</a></li>
+<li><a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/getting-started/standalone/index.html">CDAP SDK</a></li>
+</ul>
+</div>
+<div class="section" id="lets-build-it">
+<h2><a class="headerlink" href="#lets-build-it" title="Perma-link to this heading">🔗</a>Let’s Build It!</h2>
+<p>The following sections will guide you through building an application from scratch. If you
+are interested in deploying and running the application right away, you can clone its
+source code from this GitHub repository. In that case, feel free to skip the next two
+sections and jump right to the
+<a class="reference external" href="#build-and-run-application">Build and Run Application</a> section.</p>
+<div class="section" id="application-design">
+<h3><a class="headerlink" href="#application-design" title="Perma-link to this heading">🔗</a>Application Design</h3>
+<p>The application will assume that the purchase events are ingested
+into a Stream. The events can be ingested into a Stream continuously
+in real time or in batches; whichever way, it doesn’t affect the ability
+of the MapReduce programs to consume them.</p>
+<p>The <code class="docutils literal"><span class="pre">PurchaseWorkflow</span></code> encapsulates the set of MapReduce programs, which extracts the required information from the
+raw purchase events and computes the total purchases made by each customer and total purchases made for
+each product in a specific time range. The results of the computation are persisted in Datasets.</p>
+<p>Finally, the application contains a Service that exposes an HTTP endpoint to access the data stored in the Datasets.</p>
+<a class="reference internal image-reference" href="../_images/app-design9.png"><img alt="../_images/app-design9.png" class="align-center" src="../_images/app-design9.png" style="width: 8in;" /></a>
+</div>
+<div class="section" id="implementation">
+<h3><a class="headerlink" href="#implementation" title="Perma-link to this heading">🔗</a>Implementation</h3>
+<p>The first step is to construct our application structure. We will use a
+standard Maven project structure for all of the source code files:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">./pom.xml</span>
+<span class="go">./src/main/java/co/cdap/guides/workflow/ProblemLogger.java</span>
+<span class="go">./src/main/java/co/cdap/guides/workflow/Purchase.java</span>
+<span class="go">./src/main/java/co/cdap/guides/workflow/PurchaseCounterByProduct.java</span>
+<span class="go">./src/main/java/co/cdap/guides/workflow/PurchaseCounterByCustomer.java</span>
+<span class="go">./src/main/java/co/cdap/guides/workflow/PurchaseEventParser.java</span>
+<span class="go">./src/main/java/co/cdap/guides/workflow/PurchaseEventVerifier.java</span>
+<span class="go">./src/main/java/co/cdap/guides/workflow/PurchaseResultService.java</span>
+<span class="go">./src/main/java/co/cdap/guides/workflow/PurchaseWorkflow.java</span>
+<span class="go">./src/main/java/co/cdap/guides/workflow/PurchaseWorkflowApp.java</span>
+</pre></div>
+</div>
+<p>The CDAP application is identified by the <code class="docutils literal"><span class="pre">PurchaseWorkflowApp</span></code> class. This
+class extends an <a class="reference external" href="http://docs.cdap.io/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html">AbstractApplication</a>,
+and overrides the <code class="docutils literal"><span class="pre">configure</span></code> method to define all of the application components:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PurchaseWorkflowApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;PurchaseWorkflowApp&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Application describing the Workflow&quot;</span><span class="o">);</span>
+
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="s">&quot;purchaseEvents&quot;</span><span class="o">));</span>
+
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseEventParser</span><span class="o">());</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseCounterByCustomer</span><span class="o">());</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseCounterByProduct</span><span class="o">());</span>
+    <span class="n">addWorkflow</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseWorkflow</span><span class="o">());</span>
+
+    <span class="n">scheduleWorkflow</span><span class="o">(</span><span class="n">Schedules</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="s">&quot;HourlySchedule&quot;</span><span class="o">)</span>
+                       <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Schedule execution every 1 hour&quot;</span><span class="o">)</span>
+                       <span class="o">.</span><span class="na">createTimeSchedule</span><span class="o">(</span><span class="s">&quot;0 * * * *&quot;</span><span class="o">),</span>
+                     <span class="s">&quot;PurchaseWorkflow&quot;</span><span class="o">);</span>
+
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseResultService</span><span class="o">());</span>
+
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;purchaseRecords&quot;</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;customerPurchases&quot;</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;productPurchases&quot;</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">PurchaseWorkflowApp</span></code> application defines a new <a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/streams.html">Stream</a>
+where purchase events are ingested. Once the data is
+ingested, the events can be processed in real time or batch. In our
+application, we will process the events in batch using the
+<code class="docutils literal"><span class="pre">PurchaseWorkflow</span></code> program and compute the total purchases made by each customer
+and the total purchases made for each product in a specific time range. We will use three MapReduce
+programs <code class="docutils literal"><span class="pre">PurchaseEventParser</span></code>, <code class="docutils literal"><span class="pre">PurchaseCounterByCustomer</span></code>, and <code class="docutils literal"><span class="pre">PurchaseCounterByProduct</span></code> to apply
+different processing on the purchase events and the Workflow <code class="docutils literal"><span class="pre">PurchaseWorkflow</span></code> to connect these MapReduce
+programs.</p>
+<p>The result of the Workflow execution is persisted into Datasets; the
+application uses the <code class="docutils literal"><span class="pre">createDataset</span></code> method to define the Dataset. We use three datasets:
+<code class="docutils literal"><span class="pre">purchaseRecords</span></code> to store the valid parsed purchase events; <code class="docutils literal"><span class="pre">customerPurchases</span></code> to store the total purchases
+made by each customer; and <code class="docutils literal"><span class="pre">productPurchases</span></code> to store the total purchases made for each product.
+The <code class="docutils literal"><span class="pre">Purchase</span></code> class defines the type used to store the parsed purchase events.</p>
+<p>The application also adds a custom Workflow action <code class="docutils literal"><span class="pre">ProblemLogger</span></code>. When a Workflow executes a custom action,
+it invokes the <code class="docutils literal"><span class="pre">run</span></code> method in the action. In <code class="docutils literal"><span class="pre">ProblemLogger</span></code>, we only add a log statement; however it could be
+customized to send emails to the concerned parties.</p>
+<p>The <code class="docutils literal"><span class="pre">PurchaseWorkflow</span></code> is scheduled to execute every hour.</p>
+<p>Finally, the application adds a service for querying the results from the Datasets.</p>
+<p>Let's take a closer look at the Workflow.</p>
+<p>The <code class="docutils literal"><span class="pre">PurchaseWorkflow</span></code> extends an <a class="reference external" href="http://docs.cdap.io/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/workflow/AbstractWorkflow.html">AbstractWorkflow</a>
+class and overrides the <code class="docutils literal"><span class="pre">configure</span></code> method:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PurchaseWorkflow</span> <span class="kd">extends</span> <span class="n">AbstractWorkflow</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;PurchaseWorkflow&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Workflow to parse the purchase events and count the revenue per customer and per product&quot;</span><span class="o">);</span>
+
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="s">&quot;PurchaseEventParser&quot;</span><span class="o">);</span>
+
+    <span class="n">condition</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseEventVerifier</span><span class="o">())</span>
+      <span class="o">.</span><span class="na">fork</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;PurchaseCounterByCustomer&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">also</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;PurchaseCounterByProduct&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">join</span><span class="o">()</span>
+    <span class="o">.</span><span class="na">otherwise</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">addAction</span><span class="o">(</span><span class="k">new</span> <span class="n">ProblemLogger</span><span class="o">())</span>
+    <span class="o">.</span><span class="na">end</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>In the <code class="docutils literal"><span class="pre">configure</span></code> method we specify the topology for connecting the programs which will run as a part of
+the Workflow execution. As the first action in the <code class="docutils literal"><span class="pre">PurchaseWorkflow</span></code>, we add the MapReduce program
+<code class="docutils literal"><span class="pre">PurchaseEventParser</span></code>. This program will parse raw purchase events (using a primitive sentence parser) and
+create <code class="docutils literal"><span class="pre">Purchase</span></code> objects from them.</p>
+<p>After that, we add a <code class="docutils literal"><span class="pre">condition</span></code> in the Workflow, which takes a predicate <code class="docutils literal"><span class="pre">PurchaseEventVerifier</span></code>.
+If the predicate evaluates to true, we <code class="docutils literal"><span class="pre">fork</span></code> the execution of the Workflow into two parallel branches.
+One branch executes the <code class="docutils literal"><span class="pre">PurchaseCounterByCustomer</span></code> MapReduce program, while the other executes the
+<code class="docutils literal"><span class="pre">PurchaseCounterByProduct</span></code> MapReduce program.</p>
+<p>If the predicate evaluates to false, then actions in the <code class="docutils literal"><span class="pre">otherwise</span></code> section will be executed.
+We have added a single custom action, <code class="docutils literal"><span class="pre">ProblemLogger</span></code> to the <code class="docutils literal"><span class="pre">otherwise</span></code> section as an example
+of what is possible.</p>
+<p>Lets take a closer look at the predicate <code class="docutils literal"><span class="pre">PurchaseEventVerifier</span></code>.</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PurchaseEventVerifier</span> <span class="kd">implements</span> <span class="n">Predicate</span><span class="o">&lt;</span><span class="n">WorkflowContext</span><span class="o">&gt;</span> <span class="o">{</span>
+
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">TASK_COUNTER_GROUP_NAME</span> <span class="o">=</span> <span class="s">&quot;org.apache.hadoop.mapreduce.TaskCounter&quot;</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">MAP_INPUT_RECORDS_COUNTER_NAME</span> <span class="o">=</span> <span class="s">&quot;MAP_INPUT_RECORDS&quot;</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">MAP_OUTPUT_RECORDS_COUNTER_NAME</span> <span class="o">=</span> <span class="s">&quot;MAP_OUTPUT_RECORDS&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">apply</span><span class="o">(</span><span class="n">WorkflowContext</span> <span class="n">workflowContext</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">workflowContext</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="n">WorkflowToken</span> <span class="n">token</span> <span class="o">=</span> <span class="n">workflowContext</span><span class="o">.</span><span class="na">getToken</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">token</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="n">Value</span> <span class="n">mapInputRecords</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">TASK_COUNTER_GROUP_NAME</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span> <span class="o">+</span> <span class="n">MAP_INPUT_RECORDS_COUNTER_NAME</span><span class="o">,</span>
+                                      <span class="n">WorkflowToken</span><span class="o">.</span><span class="na">Scope</span><span class="o">.</span><span class="na">SYSTEM</span><span class="o">);</span>
+    <span class="n">Value</span> <span class="n">mapOutputRecords</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">TASK_COUNTER_GROUP_NAME</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span> <span class="o">+</span> <span class="n">MAP_OUTPUT_RECORDS_COUNTER_NAME</span><span class="o">,</span>
+                                       <span class="n">WorkflowToken</span><span class="o">.</span><span class="na">Scope</span><span class="o">.</span><span class="na">SYSTEM</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">mapInputRecords</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">mapOutputRecords</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="c1">// Return true if at least 80% of the records were successfully parsed and emitted</span>
+      <span class="c1">// by previous map job</span>
+      <span class="k">return</span> <span class="o">(</span><span class="n">mapOutputRecords</span><span class="o">.</span><span class="na">getAsLong</span><span class="o">()</span> <span class="o">&gt;=</span> <span class="o">(</span><span class="n">mapInputRecords</span><span class="o">.</span><span class="na">getAsLong</span><span class="o">()</span> <span class="o">*</span> <span class="mi">80</span><span class="o">/</span><span class="mi">100</span><span class="o">));</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">PurchaseEventVerifier</span></code> needs to be a public class which implements the interface <code class="docutils literal"><span class="pre">Predicate&lt;WorkflowContext&gt;</span></code>.
+The <code class="docutils literal"><span class="pre">apply</span></code> method in the predicate takes <code class="docutils literal"><span class="pre">WorkflowContext</span></code> as a parameter. The Hadoop counters emitted by
+the previous MapReduce program (in our case <code class="docutils literal"><span class="pre">PurchaseEventParser</span></code>) can be retrieved in this method using
+the <code class="docutils literal"><span class="pre">workflowContext</span></code> object. We query for the number of input records to the mappers and the number of records
+emitted by the mappers. If at least 80% of the records were successfully parsed and emitted as <code class="docutils literal"><span class="pre">Purchase</span></code>
+by the mappers, the method returns true and the <code class="docutils literal"><span class="pre">fork</span></code> in the Workflow will be executed. If the method
+returns false, the <code class="docutils literal"><span class="pre">otherwise</span></code> section in the <code class="docutils literal"><span class="pre">condition</span></code> is executed, which contains the <code class="docutils literal"><span class="pre">ProblemLogger</span></code>
+custom action.</p>
+</div>
+</div>
+<div class="section" id="build-and-run-application">
+<h2><a class="headerlink" href="#build-and-run-application" title="Perma-link to this heading">🔗</a>Build and Run Application</h2>
+<p>The <code class="docutils literal"><span class="pre">PurchaseWorkflowApp</span></code> can be built and packaged using the Apache Maven command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn clean package
+</pre></div>
+</div>
+<p>Note that the remaining commands assume that the <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code> script is
+available on your PATH. If this is not the case, please add it:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:&lt;CDAP home&gt;/bin
+</pre></div>
+</div>
+<p>If you haven't already started a standalone CDAP installation, start it with the command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap.sh start
+</pre></div>
+</div>
+<p>We can then deploy the application to the standalone CDAP installation:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh load artifact target/cdap-workflow-guide-&lt;version&gt;.jar
+<span class="gp">$</span> cdap-cli.sh create app PurchaseWorkflowApp cdap-workflow-guide &lt;version&gt; user
+</pre></div>
+</div>
+<p>Next, we will send some sample purchase events into the stream
+for processing:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh send stream purchaseEvents <span class="s1">&#39;&quot;bob bought 3 apples for $30&quot;&#39;</span>
+<span class="gp">$</span> cdap-cli.sh send stream purchaseEvents <span class="s1">&#39;&quot;joe bought 1 apple for $100&quot;&#39;</span>
+<span class="gp">$</span> cdap-cli.sh send stream purchaseEvents <span class="s1">&#39;&quot;joe bought 10 pineapples for $20&quot;&#39;</span>
+<span class="gp">$</span> cdap-cli.sh send stream purchaseEvents <span class="s1">&#39;&quot;cat bought 3 bottles for $12&quot;&#39;</span>
+<span class="gp">$</span> cdap-cli.sh send stream purchaseEvents <span class="s1">&#39;&quot;cat bought 2 pops for $14&quot;&#39;</span>
+</pre></div>
+</div>
+<p>We can now start the Workflow to process the events that were
+ingested:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start workflow PurchaseWorkflowApp.PurchaseWorkflow
+</pre></div>
+</div>
+<p>The Workflow will take a couple of minutes to execute.</p>
+<p>We can then start the <code class="docutils literal"><span class="pre">PurchaseResultService</span></code> and query the processed
+results:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start service PurchaseWorkflowApp.PurchaseResultService
+</pre></div>
+</div>
+<ul>
+<li><p class="first">Retrieve the purchase records for customer <code class="docutils literal"><span class="pre">joe</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl http://localhost:10000/v3/namespaces/default/apps/PurchaseWorkflowApp/services/PurchaseResultService/methods/purchaserecords/joe
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[{&quot;customer&quot;:&quot;joe&quot;,&quot;product&quot;:&quot;pineapple&quot;,&quot;quantity&quot;:10,&quot;price&quot;:20,&quot;purchaseTime&quot;:1430962917227},{&quot;customer&quot;:&quot;joe&quot;,&quot;product&quot;:&quot;apple&quot;,&quot;quantity&quot;:1,&quot;price&quot;:100,&quot;purchaseTime&quot;:1430962917227}]</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Retrieve the total purchases made by customer <code class="docutils literal"><span class="pre">joe</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl http://localhost:10000/v3/namespaces/default/apps/PurchaseWorkflowApp/services/PurchaseResultService/methods/purchases/customers/joe
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">120</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Retrieve the total purchases made for product <code class="docutils literal"><span class="pre">apple</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl http://localhost:10000/v3/namespaces/default/apps/PurchaseWorkflowApp/services/PurchaseResultService/methods/purchases/products/apple
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">130</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>You have now seen how to write a Workflow to connect different MapReduce programs and run them in
+parallel based on a condition.</p>
+</div>
+<div class="section" id="related-topics">
+<h2><a class="headerlink" href="#related-topics" title="Perma-link to this heading">🔗</a>Related Topics</h2>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/cdap-guides/cdap-mapreduce-guide">CDAP MapReduce Guide</a> tutorial for MapReduce</li>
+<li><a class="reference external" href="http://docs.cdap.io/cdap/current/en/examples-manual/tutorials/wise.html">Wise: Web Analytics</a> tutorial, part of CDAP</li>
+</ul>
+</div>
+<div class="section" id="share-and-discuss">
+<h2><a class="headerlink" href="#share-and-discuss" title="Perma-link to this heading">🔗</a>Share and Discuss!</h2>
+<p>Have a question? Discuss at the <a class="reference external" href="https://groups.google.com/forum/#!forum/cdap-user">CDAP User Mailing List</a>.</p>
+</div>
+<div class="section" id="license">
+<h2><a class="headerlink" href="#license" title="Perma-link to this heading">🔗</a>License</h2>
+<p>Copyright © 2015 Cask Data, Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+not use this file except in compliance with the License. You may obtain
+a copy of the License at</p>
+<p><a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></p>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">How-To Guides</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cdap-bi-guide.html">Analyzing CDAP Data from BI Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-cube-guide.html">Data Analysis with OLAP Cube</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-etl-guide.html">Creating Hydrator Applications using CDAP System Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-flow-guide.html">Real-Time Data Processing with a Flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-flume-guide.html">Ingesting Data into CDAP using Apache Flume</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-kafka-ingest-guide.html">Consuming Data from Kafka</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-mapreduce-guide.html">Batch Data Processing with CDAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-spark-guide.html">Iterative Data Processing with Apache Spark</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-timeseries-guide.html">Storing Timeseries Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-twitter-ingest-guide.html">Consuming Twitter Data in Real Time</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Batch Data Processing with CDAP using Workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-you-will-build">What You Will Build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-you-will-need">What You Will Need</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lets-build-it">Let’s Build It!</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#build-and-run-application">Build and Run Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#related-topics">Related Topics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#share-and-discuss">Share and Discuss!</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#license">License</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Consuming Twitter Data in Real Time" href="cdap-twitter-ingest-guide.html" />Consuming Twitter Data in Real Time</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Tutorials" href="../tutorials/index.html" />Tutorials</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

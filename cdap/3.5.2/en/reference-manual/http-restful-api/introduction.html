@@ -1,0 +1,471 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Introduction &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/http-restful-api/introduction.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Artifact HTTP RESTful API" href="artifact.html" />
+    <link rel="prev" title="CDAP HTTP RESTful API v3" href="index.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="artifact.html" title="Artifact HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="CDAP HTTP RESTful API v3"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Reference Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="introduction">
+<span id="http-restful-api-introduction"></span><h1><a class="headerlink" href="#introduction" title="Perma-link to this heading">🔗</a>Introduction</h1>
+<div class="section" id="conventions">
+<span id="http-restful-api-conventions"></span><h2><a class="headerlink" href="#conventions" title="Perma-link to this heading">🔗</a>Conventions</h2>
+<p>In this API, <em>client</em> refers to an external application that is calling CDAP using the HTTP interface.
+<em>application</em> refers to a user application that has been deployed into CDAP.</p>
+<div class="section" id="base-url">
+<span id="http-restful-api-conventions-base-url"></span><h3><a class="headerlink" href="#base-url" title="Perma-link to this heading">🔗</a>Base URL</h3>
+<p>All URLs referenced in these APIs have this base URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://&lt;host&gt;:&lt;port&gt;</span>
+</pre></div>
+</div>
+<p>where:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">host</span></code></td>
+<td>Host name of the CDAP server</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">port</span></code></td>
+<td>Port set as the <code class="docutils literal"><span class="pre">router.bind.port</span></code> in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> (default: <strong>10000</strong>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> If SSL is enabled for CDAP, then the base URL uses <code class="docutils literal"><span class="pre">https</span></code> instead and <code class="docutils literal"><span class="pre">port</span></code> becomes the port that is set
+as the <code class="docutils literal"><span class="pre">router.ssl.bind.port</span></code> in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> (default: 10443).</p>
+<p>In this API, each endpoint is documented with the HTTP method for the request and a
+resource identifier. The base URL is assumed to precede each API's resource identifier.
+For example, the endpoint documentation for creating a stream is:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT /v3/namespaces/&lt;namespace-id&gt;/streams/&lt;new-stream-id&gt;</span>
+</pre></div>
+</div>
+<p>This means you would use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT http://&lt;host&gt;:&lt;port&gt;/v3/namespaces/&lt;namespace-id&gt;/streams/&lt;new-stream-id&gt;</span>
+</pre></div>
+</div>
+<p>If you are using the CDAP SDK, running on your local machine, you might make a <code class="docutils literal"><span class="pre">curl</span></code> call such as:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral4() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral4 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral4", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral4" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X PUT <span class="s2">&quot;http://localhost:10000/v3/namespaces/default/streams/who&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X PUT &quot;http://localhost:10000/v3/namespaces/default/streams/who&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+<div class="section" id="variable-replacement">
+<h3><a class="headerlink" href="#variable-replacement" title="Perma-link to this heading">🔗</a>Variable Replacement</h3>
+<p>Text that are variables that you are to replace is indicated by a series of angle brackets (<code class="docutils literal"><span class="pre">&lt;</span> <span class="pre">&gt;</span></code>). For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT /v3/namespaces/&lt;namespace-id&gt;/streams/&lt;new-stream-id&gt;</span>
+</pre></div>
+</div>
+<p>indicates that text such as <code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code> and <code class="docutils literal"><span class="pre">&lt;new-stream-id&gt;</span></code> are variables and that
+you are to replace them with your values, perhaps in this case the namespace <em>default</em> and
+the stream <em>mystream</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT /v3/namespaces/default/streams/mystream</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="reserved-and-unsafe-characters">
+<span id="http-restful-api-conventions-reserved-unsafe-characters"></span><h3><a class="headerlink" href="#reserved-and-unsafe-characters" title="Perma-link to this heading">🔗</a>Reserved and Unsafe Characters</h3>
+<p>In path parameters, reserved and unsafe characters must be replaced with their equivalent
+percent-encoded format, using the &quot;<code class="docutils literal"><span class="pre">%hh</span></code>&quot; syntax, as described in
+<a class="reference external" href="http://tools.ietf.org/html/rfc3986#section-2.1">RFC3986: Uniform Resource Identifier (URI): Generic Syntax</a>.</p>
+<p>In general, any character that is not a letter, a digit, or one of <code class="docutils literal"><span class="pre">$-_.+!*'()</span></code> should be encoded.</p>
+<p>See the section on <a class="reference external" href="../source/../../developers-manual/building-blocks/services.html#services-path-parameters" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Path Parameters</span></a> for suggested approaches to
+encoding parameters.</p>
+<p>Additionally, there are further restrictions on the characters used in certain parameters such as
+namespaces.</p>
+</div>
+<div class="section" id="names-and-characters-for-namespace-identifiers">
+<span id="http-restful-api-namespace-characters"></span><h3><a class="headerlink" href="#names-and-characters-for-namespace-identifiers" title="Perma-link to this heading">🔗</a>Names and Characters for Namespace Identifiers</h3>
+<p>Namespaces have a limited set of characters allowed in their identifier; they are
+restricted to letters (a-z, A-Z), digits (0-9), hyphens (-), and underscores (_). There is
+no size limit on the length of a namespace identifier nor on the number of namespaces.</p>
+<p>The three namespaces <code class="docutils literal"><span class="pre">cdap</span></code>, <code class="docutils literal"><span class="pre">default</span></code>, and <code class="docutils literal"><span class="pre">system</span></code> are reserved. The <code class="docutils literal"><span class="pre">cdap</span></code>
+and <code class="docutils literal"><span class="pre">system</span></code> namespaces cannot be used by users directly. The <code class="docutils literal"><span class="pre">default</span></code> namespace,
+however,  can be used by anyone.</p>
+<p>All reserved namespaces cannot be deleted.</p>
+</div>
+</div>
+<div class="section" id="status-codes">
+<span id="http-restful-api-status-codes"></span><h2><a class="headerlink" href="#status-codes" title="Perma-link to this heading">🔗</a>Status Codes</h2>
+<p><a class="reference external" href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html">Common status codes</a> returned for all HTTP calls:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="30%" />
+<col width="60%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Code</th>
+<th class="head">Description</th>
+<th class="head">Explanation</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span></code></td>
+<td><code class="docutils literal"><span class="pre">OK</span></code></td>
+<td>The request returned successfully</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">400</span></code></td>
+<td><code class="docutils literal"><span class="pre">Bad</span> <span class="pre">Request</span></code></td>
+<td>The request had a combination of parameters that is not recognized</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">401</span></code></td>
+<td><code class="docutils literal"><span class="pre">Unauthorized</span></code></td>
+<td>The request did not contain an authentication token; see the section below on
+<a class="reference internal" href="#http-restful-api-working-with-cdap-security"><span>Working with CDAP Security</span></a></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">403</span></code></td>
+<td><code class="docutils literal"><span class="pre">Forbidden</span></code></td>
+<td>The request was authenticated but the client does not have permission; requests can
+fail due to a lack of privilege, as described in the section below on
+<a class="reference internal" href="#http-restful-api-working-with-cdap-security"><span>Working with CDAP Security</span></a></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">404</span></code></td>
+<td><code class="docutils literal"><span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>The request did not address any of the known URIs</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">405</span></code></td>
+<td><code class="docutils literal"><span class="pre">Method</span> <span class="pre">Not</span> <span class="pre">Allowed</span></code></td>
+<td>A request was received with a method not supported for the URI</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">409</span></code></td>
+<td><code class="docutils literal"><span class="pre">Conflict</span></code></td>
+<td>A request could not be completed due to a conflict with the current resource state</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">500</span></code></td>
+<td><code class="docutils literal"><span class="pre">Internal</span> <span class="pre">Server</span> <span class="pre">Error</span></code></td>
+<td>An internal error occurred while processing the request</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">501</span></code></td>
+<td><code class="docutils literal"><span class="pre">Not</span> <span class="pre">Implemented</span></code></td>
+<td>A request contained a query that is not supported by this API</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> These returned status codes are not necessarily included in the descriptions of
+the APIs, but a request may return any of these.</p>
+</div>
+<div class="section" id="converting-from-v2-apis">
+<h2><a class="headerlink" href="#converting-from-v2-apis" title="Perma-link to this heading">🔗</a>Converting from V2 APIs</h2>
+<p>If you are converting code from the earlier HTTP RESTful API v2, the
+simplest way to convert your code is to use the <code class="docutils literal"><span class="pre">default</span></code> namespace, which is pre-existing
+in CDAP. Example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT http://&lt;host&gt;:&lt;port&gt;/v2/streams/&lt;new-stream-id&gt;</span>
+</pre></div>
+</div>
+<p>can be replaced with:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT http://&lt;host&gt;:&lt;port&gt;/v3/namespaces/default/streams/&lt;new-stream-id&gt;</span>
+</pre></div>
+</div>
+<p>However, you will need to test your code, as many APIs have changed as a result of the
+addition of namespaces.</p>
+</div>
+<div class="section" id="working-with-cdap-security">
+<span id="http-restful-api-working-with-cdap-security"></span><h2><a class="headerlink" href="#working-with-cdap-security" title="Perma-link to this heading">🔗</a>Working with CDAP Security</h2>
+<ul>
+<li><p class="first">When working with a CDAP cluster with <strong>security enabled</strong> (<code class="docutils literal"><span class="pre">security.enabled=true</span></code> in
+<code class="docutils literal"><span class="pre">cdap-site.xml</span></code>), all calls to the HTTP RESTful APIs must be authenticated. Clients must
+first obtain an access token from the authentication server (see the <a class="reference external" href="../source/../../developers-manual/security/client-authentication.html#client-authentication" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Client
+Authentication</span></a> section of the <a class="reference external" href="../source/../../developers-manual/index.html#developer-index" title="(in Cask Data Application Platform v3.5.2)"><span>CDAP Developers’ Manual</span></a>).
+In order to authenticate, all client requests must supply this access token in the
+<code class="docutils literal"><span class="pre">Authorization</span></code> header of the request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">Authorization: Bearer &lt;token&gt;</span>
+</pre></div>
+</div>
+<p>For CDAP-issued access tokens, the authentication scheme must always be <code class="docutils literal"><span class="pre">Bearer</span></code>.</p>
+</li>
+<li><p class="first">When working with a CDAP cluster with <strong>authorization enabled</strong>
+(<code class="docutils literal"><span class="pre">security.authorization.enabled=true</span></code> in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>), all calls to the HTTP
+RESTful APIs must be authorized. Clients must be privileged, following the polices
+described in <a class="reference external" href="../source/../../admin-manual/security/authorization.html#security-authorization-policies" title="(in Cask Data Application Platform v3.5.2)"><span>Authorization Policies</span></a>.</p>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="">Introduction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#conventions">Conventions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#base-url">Base URL</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#variable-replacement">Variable Replacement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#reserved-and-unsafe-characters">Reserved and Unsafe Characters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#names-and-characters-for-namespace-identifiers">Names and Characters for Namespace Identifiers</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#status-codes">Status Codes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#converting-from-v2-apis">Converting from V2 APIs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#working-with-cdap-security">Working with CDAP Security</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html">Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html">Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security.html">Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html">Transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="CDAP HTTP RESTful API v3" href="index.html" />CDAP HTTP RESTful API v3</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Artifact HTTP RESTful API" href="artifact.html" />Artifact HTTP RESTful API</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

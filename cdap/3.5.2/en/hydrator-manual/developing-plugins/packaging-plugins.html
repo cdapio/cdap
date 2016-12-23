@@ -1,0 +1,693 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Packaging Plugins &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/hydrator-manual/developing-plugins/packaging-plugins.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Developing Plugins" href="index.html" />
+    <link rel="next" title="How Hydrator Works" href="../how-hydrator-works.html" />
+    <link rel="prev" title="Testing Plugins" href="testing-plugins.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../how-hydrator-works.html" title="How Hydrator Works"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="testing-plugins.html" title="Testing Plugins"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Cask Hydrator</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Developing Plugins</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="packaging-plugins">
+<span id="cask-hydrator-packaging-plugins"></span><h1><a class="headerlink" href="#packaging-plugins" title="Perma-link to this heading">🔗</a>Packaging Plugins</h1>
+<p>To <strong>package, present,</strong> and <strong>deploy</strong> your plugin, see these instructions:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#cask-hydrator-packaging-plugins-packaging"><span>Plugin Packaging:</span></a> packaging in a JAR</li>
+<li><a class="reference internal" href="#cask-hydrator-packaging-plugins-presentation"><span>Plugin Presentation:</span></a> controlling
+how your plugin appears in the Hydrator Studio</li>
+</ul>
+<p>If you are installing a <strong>third-party JAR</strong> (such as a <strong>JDBC driver</strong>) to make it accessible to other
+plugins or applications, see <a class="reference internal" href="../plugin-management.html#cask-hydrator-plugin-management-third-party-plugins"><span>these instructions</span></a>.</p>
+<div class="section" id="plugin-packaging">
+<span id="cask-hydrator-packaging-plugins-packaging"></span><h2><a class="headerlink" href="#plugin-packaging" title="Perma-link to this heading">🔗</a>Plugin Packaging</h2>
+<p>A <em>Plugin</em> is packaged as a JAR file, which contains inside the plugin classes and their dependencies.
+CDAP uses the &quot;Export-Package&quot; attribute in the JAR file manifest to determine
+which classes are <em>visible</em>. A <em>visible</em> class is one that can be used by another class
+that is not from the plugin JAR itself. This means the Java package which the plugin class
+is in must be listed in &quot;Export-Package&quot;, otherwise the plugin class will not be visible,
+and hence no one will be able to use it. This can be done in Maven by editing your pom.xml.
+For example, if your plugins are in the <code class="docutils literal"><span class="pre">com.example.runnable</span></code> and <code class="docutils literal"><span class="pre">com.example.callable</span></code>
+packages, you would edit the bundler plugin in your pom.xml:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;plugin&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>org.apache.felix<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>maven-bundle-plugin<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>2.3.7<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;extensions&gt;</span>true<span class="nt">&lt;/extensions&gt;</span>
+  <span class="nt">&lt;configuration&gt;</span>
+    <span class="nt">&lt;instructions&gt;</span>
+      <span class="nt">&lt;Embed-Dependency&gt;</span>*;inline=false;scope=compile<span class="nt">&lt;/Embed-Dependency&gt;</span>
+      <span class="nt">&lt;Embed-Transitive&gt;</span>true<span class="nt">&lt;/Embed-Transitive&gt;</span>
+      <span class="nt">&lt;Embed-Directory&gt;</span>lib<span class="nt">&lt;/Embed-Directory&gt;</span>
+      <span class="nt">&lt;Export-Package&gt;</span>com.example.runnable;com.example.callable<span class="nt">&lt;/Export-Package&gt;</span>
+    <span class="nt">&lt;/instructions&gt;</span>
+  <span class="nt">&lt;/configuration&gt;</span>
+  ...
+<span class="nt">&lt;/plugin&gt;</span>
+</pre></div>
+</div>
+<p>By using one of the available <a class="reference internal" href="plugin-basics.html#cask-hydrator-developing-plugin-basics-maven-archetypes"><span>Maven archetypes</span></a>, your project will be set up to
+generate the required JAR manifest. If you move the plugin class to a different Java
+package after the project is created, you will need to modify the configuration of the
+<code class="docutils literal"><span class="pre">maven-bundle-plugin</span></code> in the <code class="docutils literal"><span class="pre">pom.xml</span></code> file to reflect the package name changes.</p>
+<p>If you are developing plugins for the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> artifact, be aware that for
+classes inside the plugin JAR that you have added to the Hadoop Job configuration directly
+(for example, your custom <code class="docutils literal"><span class="pre">InputFormat</span></code> class), you will need to add the Java packages
+of those classes to the &quot;Export-Package&quot; as well. This is to ensure those classes are
+visible to the Hadoop MapReduce framework during the plugin execution. Otherwise, the
+execution will typically fail with a <code class="docutils literal"><span class="pre">ClassNotFoundException</span></code>.</p>
+</div>
+<div class="section" id="plugin-presentation">
+<span id="cask-hydrator-packaging-plugins-presentation"></span><h2><a class="headerlink" href="#plugin-presentation" title="Perma-link to this heading">🔗</a>Plugin Presentation</h2>
+<p>When a plugin is displayed in the CDAP UI, its properties are represented by widgets in
+the Cask Hydrator Studio. Each property of a plugin is represented by default as a
+textbox in the user interface. By including an appropriate plugin widget JSON file, you
+can customize that presentation to use a different interface, if desired.</p>
+</div>
+<div class="section" id="plugin-widget-json">
+<span id="cask-hydrator-creating-custom-plugins-widget-json"></span><h2><a class="headerlink" href="#plugin-widget-json" title="Perma-link to this heading">🔗</a>Plugin Widget JSON</h2>
+<p>To customize the plugin display, a plugin can include a widget JSON file that specifies
+the particular widgets and sets of widget attributes used to display the plugin properties
+in the CDAP UI.</p>
+<p>The widget JSON is composed of two lists:</p>
+<ul class="simple">
+<li>a list of property configuration groups; and</li>
+<li>a list of output properties.</li>
+</ul>
+<p>For example:</p>
+<div class="highlight-json-ellipsis"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;configuration-groups&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span><span class="nt">&quot;group-1&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="nt">&quot;group-2&quot;</span><span class="p">},</span>
+    <span class="c">...</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;outputs&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span><span class="nt">&quot;ouput-property-1&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="nt">&quot;ouput-property-2&quot;</span><span class="p">},</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="configuration-groups">
+<h3><a class="headerlink" href="#configuration-groups" title="Perma-link to this heading">🔗</a>Configuration Groups</h3>
+<p>Configuration groups are a simple grouping of properties of a plugin. A configuration
+group is represented as a JSON object with a label and a list of plugin properties for that
+group.</p>
+<p>For example, in a <em>Batch Source</em> plugin, properties such as <em>Dataset Name</em>, <em>Dataset Base
+Path</em>, <em>Duration</em>, and <em>Delay</em> can be grouped as the <em>Batch Source Configuration</em>.</p>
+<p>In the case of the <em>Batch Source</em> plugin, it could look like this:</p>
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;configuration-groups&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Batch Source Configuration&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;properties&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="nt">&quot;field1&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="nt">&quot;field2&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="nt">&quot;field3&quot;</span><span class="p">}</span>
+      <span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;outputs&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span><span class="nt">&quot;output-property1&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="nt">&quot;output-property2&quot;</span><span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Once a group is established, we can configure how each of the properties inside the group is
+represented in the CDAP UI.</p>
+<p>The configuration of each property of the plugin is composed of:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#cask-hydrator-creating-custom-plugins-custom-widgets"><span>widget-type:</span></a> The type of
+widget needed to represent this property.</li>
+<li><strong>label:</strong> Label to be used in the CDAP UI for the property.</li>
+<li><strong>name:</strong> Name of the field (as supplied by the CDAP UI backend).</li>
+<li><strong>widget-attributes:</strong> A map of attributes that the widget type requires be defined in
+order to render the property in the CDAP UI. The attributes vary depending on the
+widget type.</li>
+<li><a class="reference internal" href="#cask-hydrator-creating-custom-plugins-custom-plugin-function"><span>plugin-function:</span></a>
+An optional map of plugin method and its widget attributes that can be applied to a
+particular plugin property.</li>
+</ul>
+<p>Note that with the exception of the value of the <em>label</em>, all property values are
+case-sensitive.</p>
+<p>To find the available field names, you can use the Artifact HTTP RESTful API to
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-plugin-detail" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">retrieve plugin details</span></a> for an artifact,
+which will include all the available names. (If the artifact is your own, you will already
+know the available field names from your source code.)</p>
+<p>In the case of our <em>Batch Source</em> plugin example, the <code class="docutils literal"><span class="pre">configuration-groups</span></code> can be
+represented by:</p>
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;configuration-groups&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Batch Source&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;properties&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+          <span class="nt">&quot;widget-type&quot;</span><span class="p">:</span> <span class="s2">&quot;dataset-selector&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Dataset Name&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;name&quot;</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+          <span class="nt">&quot;widget-type&quot;</span><span class="p">:</span> <span class="s2">&quot;textbox&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Dataset Base Path&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;basePath&quot;</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+          <span class="nt">&quot;widget-type&quot;</span><span class="p">:</span> <span class="s2">&quot;textbox&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Group By Fields&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;groupByFields&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;plugin-function&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;widget&quot;</span><span class="p">:</span> <span class="s2">&quot;outputSchema&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;output-property&quot;</span><span class="p">:</span> <span class="s2">&quot;schema&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;plugin-method&quot;</span><span class="p">:</span> <span class="s2">&quot;outputSchema&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;required-fields&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;groupByFields&quot;</span><span class="p">,</span> <span class="s2">&quot;aggregates&quot;</span><span class="p">],</span>
+            <span class="nt">&quot;missing-required-fields-message&quot;</span><span class="p">:</span>
+              <span class="s2">&quot;&#39;Group By Fields&#39; &amp; &#39;Aggregates&#39; properties are required to fetch schema.&quot;</span>
+          <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+          <span class="nt">&quot;widget-type&quot;</span><span class="p">:</span> <span class="s2">&quot;textbox&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Delay&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;delay&quot;</span>
+        <span class="p">}</span>
+      <span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="widgets">
+<span id="cask-hydrator-creating-custom-plugins-custom-widgets"></span><h3><a class="headerlink" href="#widgets" title="Perma-link to this heading">🔗</a>Widgets</h3>
+<p>A widget in the CDAP UI represents a component that will be rendered and used to set a
+value of a property of a plugin. These are the different widgets—their type, a
+description, their attributes (if any), and their output data type—that we support in
+Cask Hydrator as of version 3.5.2:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="26%" />
+<col width="26%" />
+<col width="26%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Widget Type</th>
+<th class="head">Description</th>
+<th class="head">Attributes</th>
+<th class="head">Output Data Type</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">textbox</span></code></td>
+<td>Default HTML textbox, used to enter any string</td>
+<td><code class="docutils literal"><span class="pre">default</span></code>: default value for the widget</td>
+<td><code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">number</span></code></td>
+<td>Default HTML number textbox that only accepts valid numbers</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">default</span></code>: default value for the widget</div>
+<div class="line"><code class="docutils literal"><span class="pre">min</span></code>: minimum value for the number box</div>
+<div class="line"><code class="docutils literal"><span class="pre">max</span></code>: maximum value for the number box</div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">passwordbox</span></code></td>
+<td>Default HTML password entry box</td>
+<td>No attributes</td>
+<td><code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">csv</span></code></td>
+<td>Comma-separated values; each value is entered in a separate box</td>
+<td>No attributes</td>
+<td>Comma-separated <code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dsv</span></code></td>
+<td>Delimiter-separated values; each value is entered in a separate box</td>
+<td><code class="docutils literal"><span class="pre">delimiter</span></code>: delimiter used to separate the values</td>
+<td>Delimiter-separated <code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">json-editor</span></code></td>
+<td>JSON editor that pretty-prints and auto-formats JSON while it is being entered</td>
+<td><code class="docutils literal"><span class="pre">default</span></code>: default serialized JSON value for the widget</td>
+<td><code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">javascript-editor</span></code>, <code class="docutils literal"><span class="pre">python-editor</span></code></td>
+<td>An editor to write JavaScript (<code class="docutils literal"><span class="pre">javascript-editor</span></code>) or Python (<code class="docutils literal"><span class="pre">python-editor</span></code>)
+code as a value for a property</td>
+<td><code class="docutils literal"><span class="pre">default</span></code>: default <code class="docutils literal"><span class="pre">string</span></code> value for the widget</td>
+<td><code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">keyvalue</span></code></td>
+<td>A key-value editor for constructing maps of key-value pairs</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">delimiter</span></code>: delimiter for the key-value pairs</div>
+<div class="line"><code class="docutils literal"><span class="pre">kv-delimiter</span></code>: delimiter between key and value</div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">keyvalue-dropdown</span></code></td>
+<td>Similar to <em>keyvalue</em> widget, but with a drop-down value list</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">delimiter</span></code>: delimiter for the key-value pairs</div>
+<div class="line"><code class="docutils literal"><span class="pre">kv-delimiter</span></code>: delimiter between key and value</div>
+<div class="line"><code class="docutils literal"><span class="pre">dropdownOptions</span></code>: list of drop-down options to display</div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">select</span></code></td>
+<td>An HTML drop-down with a list of values; allows one choice from the list</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">values</span></code>: list of values for the drop-down</div>
+<div class="line"><code class="docutils literal"><span class="pre">default</span></code>: default value from the list</div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dataset-selector</span></code>, <code class="docutils literal"><span class="pre">stream-selector</span></code></td>
+<td>A type-ahead textbox with a list of datasets (<code class="docutils literal"><span class="pre">dataset-selector</span></code>) or streams
+(<code class="docutils literal"><span class="pre">stream-selector</span></code>) from the CDAP instance</td>
+<td>No attributes</td>
+<td><code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">schema</span></code></td>
+<td>A four-column, editable table to represent a schema of a plugin</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">schema-types</span></code>: list of schema types for each field from which the user can chose when setting the schema</div>
+<div class="line"><code class="docutils literal"><span class="pre">schema-default-type</span></code>: default type for each newly-added field in the schema</div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">non-editable-schema-editor</span></code></td>
+<td>A non-editable widget for displaying a schema</td>
+<td><code class="docutils literal"><span class="pre">schema</span></code>: schema that will be used as the output schema for the plugin</td>
+<td><code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">ds-multiplevalues</span></code></td>
+<td>A delimiter-separated values widget that allows specifying lists of values separated by delimiters</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">numValues</span></code>: number of values (number of delimiter-separated values)</div>
+<div class="line"><code class="docutils literal"><span class="pre">values-delimiter</span></code>: the delimiter between each value</div>
+<div class="line"><code class="docutils literal"><span class="pre">delimiter</span></code>: the delimiter between each <em>set</em> of values</div>
+<div class="line"><code class="docutils literal"><span class="pre">placeholders</span></code>: array of placeholders for each value's textbox</div>
+</div>
+</td>
+<td><code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="plugin-functions">
+<span id="cask-hydrator-creating-custom-plugins-custom-plugin-function"></span><h3><a class="headerlink" href="#plugin-functions" title="Perma-link to this heading">🔗</a>Plugin Functions</h3>
+<p>Plugin functions are methods exposed by a particular plugin that can be used to fetch
+output schema for a plugin. These are the fields that need  to be configured to use the
+plugin functions in the CDAP UI:</p>
+<ul class="simple">
+<li><strong>method:</strong> Type of request to make when calling the plugin function from the CDAP UI
+(for instance GET or POST).</li>
+<li><strong>widget:</strong> Type of widget to use to import output schema.</li>
+<li><strong>output-property:</strong> Property to update once the CDAP UI receives the data from the plugin method.</li>
+<li><strong>plugin-method:</strong> Name of the plugin method to call (as exposed by the plugin).</li>
+<li><strong>required-fields:</strong> Fields required to call the plugin method.</li>
+<li><strong>missing-required-fields-message:</strong> A message for the user as to why the action is
+disabled in the CDAP UI, when the required fields are missing values.</li>
+</ul>
+<p>The last two properties are solely for the the CDAP UI and are not required all the time.
+However, the first four fields are required fields to use a plugin method in the CDAP UI.
+In the case of a plugin function, if the widget is not supported in the CDAP UI or the
+plugin function map is not supplied, the user will not see it in the CDAP UI.</p>
+</div>
+<div class="section" id="outputs">
+<h3><a class="headerlink" href="#outputs" title="Perma-link to this heading">🔗</a>Outputs</h3>
+<p>The <em>outputs</em> is a list of plugin properties that represent the output schema of a particular plugin.</p>
+<p>The output schema for a plugin can be represented in two different ways, either:</p>
+<ul class="simple">
+<li>via an <em>implicit</em> schema; or</li>
+<li>via an <em>explicit</em> <code class="docutils literal"><span class="pre">Schema</span></code> property.</li>
+</ul>
+<p>An <strong>implicit</strong> schema is a pre-determined output schema for a plugin that the plugin developer
+enforces. The implicit schema is not associated with any properties of the plugin, but
+just enforces the output schema of the plugin, for visual display purposes. An example of
+this is the <a class="reference external" href="https://github.com/caskdata/hydrator-plugins/blob/release/1.2/core-plugins/widgets/Twitter-realtimesource.json">Twitter real-time source plugin</a>.</p>
+<p>An <strong>explicit</strong> <code class="docutils literal"><span class="pre">Schema</span></code> property is one that can be defined as the output schema and
+can be appropriately configured to make it editable through the CDAP UI.</p>
+<p>Output properties are configured in a similar manner as individual properties in
+configuration groups. They are composed of a name and a widget type, one of either
+<code class="docutils literal"><span class="pre">schema</span></code> or <code class="docutils literal"><span class="pre">non-editable-schema-editor</span></code>.</p>
+<p>With the <code class="docutils literal"><span class="pre">schema</span></code> widget type, a list of widget attributes can be included; with
+<code class="docutils literal"><span class="pre">non-editable-schema-editor</span></code>, a schema is added instead.</p>
+<p>For example:</p>
+<p>Our &quot;Batch Source&quot; plugin could have a configurable output schema:</p>
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;outputs&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;schema&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;widget-type&quot;</span><span class="p">:</span> <span class="s2">&quot;schema&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;widget-attributes&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;schema-types&quot;</span><span class="p">:</span> <span class="p">[</span>
+          <span class="s2">&quot;boolean&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;long&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;float&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;double&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;map&lt;string, string&gt;&quot;</span>
+        <span class="p">],</span>
+        <span class="nt">&quot;schema-default-type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The output properties of the Twitter real-time source, with an explicit, non-editable schema property,
+composed of the fields <em>id</em>, <em>time</em>, <em>favCount</em>, <em>rtCount</em>, <em>geoLat</em>, <em>geoLong</em>, and <em>isRetweet</em>:</p>
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;outputs&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;widget-type&quot;</span><span class="p">:</span> <span class="s2">&quot;non-editable-schema-editor&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;schema&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;long&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;lang&quot;</span><span class="p">:</span> <span class="p">[</span>
+          <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;null&quot;</span>
+        <span class="p">],</span>
+        <span class="nt">&quot;time&quot;</span><span class="p">:</span> <span class="p">[</span>
+          <span class="s2">&quot;long&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;null&quot;</span>
+        <span class="p">],</span>
+        <span class="nt">&quot;favCount&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;rtCount&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;source&quot;</span><span class="p">:</span> <span class="p">[</span>
+          <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;null&quot;</span>
+        <span class="p">],</span>
+        <span class="nt">&quot;geoLat&quot;</span><span class="p">:</span> <span class="p">[</span>
+          <span class="s2">&quot;double&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;null&quot;</span>
+        <span class="p">],</span>
+        <span class="nt">&quot;geoLong&quot;</span><span class="p">:</span> <span class="p">[</span>
+          <span class="s2">&quot;double&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;null&quot;</span>
+        <span class="p">],</span>
+        <span class="nt">&quot;isRetweet&quot;</span><span class="p">:</span> <span class="s2">&quot;boolean&quot;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Widget types for output properties are limited to ensure that the schema that is propagated across
+different plugins in the CDAP UI is consistent.</p>
+</div>
+<div class="section" id="example-widget-json">
+<h3><a class="headerlink" href="#example-widget-json" title="Perma-link to this heading">🔗</a>Example Widget JSON</h3>
+<p>Based on the above definitions, we could write the complete widget JSON for our <em>Batch Source</em> plugin
+(with the properties of <em>name</em>, <em>basePath</em>, <em>duration</em>, <em>delay</em>, and an output <em>schema</em>) as:</p>
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;metadata&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;spec-version&quot;</span><span class="p">:</span> <span class="s2">&quot;1.0&quot;</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;configuration-groups&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Batch Source&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;properties&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+          <span class="nt">&quot;widget-type&quot;</span><span class="p">:</span> <span class="s2">&quot;dataset-selector&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Dataset Name&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;name&quot;</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+          <span class="nt">&quot;widget-type&quot;</span><span class="p">:</span> <span class="s2">&quot;textbox&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Dataset Base Path&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;basePath&quot;</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+          <span class="nt">&quot;widget-type&quot;</span><span class="p">:</span> <span class="s2">&quot;textbox&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;Label&quot;</span><span class="p">:</span> <span class="s2">&quot;Group By Fields&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;groupByFields&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;plugin-function&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;widget&quot;</span><span class="p">:</span> <span class="s2">&quot;outputSchema&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;output-property&quot;</span><span class="p">:</span> <span class="s2">&quot;schema&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;plugin-method&quot;</span><span class="p">:</span> <span class="s2">&quot;outputSchema&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;required-fields&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;groupByFields&quot;</span><span class="p">,</span> <span class="s2">&quot;aggregates&quot;</span><span class="p">],</span>
+            <span class="nt">&quot;missing-required-fields-message&quot;</span><span class="p">:</span>
+              <span class="s2">&quot;&#39;Group By Fields&#39; &amp; &#39;Aggregates&#39; properties are required to fetch schema.&quot;</span>
+          <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+          <span class="nt">&quot;widget-type&quot;</span><span class="p">:</span> <span class="s2">&quot;textbox&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Delay&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;delay&quot;</span>
+        <span class="p">}</span>
+      <span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;outputs&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;schema&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;widget-type&quot;</span><span class="p">:</span> <span class="s2">&quot;schema&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;widget-attributes&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;schema-types&quot;</span><span class="p">:</span> <span class="p">[</span>
+          <span class="s2">&quot;boolean&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;long&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;float&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;double&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;map&lt;string, string&gt;&quot;</span>
+        <span class="p">],</span>
+        <span class="nt">&quot;schema-default-type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Cask Hydrator: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../concepts-design.html"> Concepts and Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio.html"> Hydrator Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating-pipelines.html"> Creating Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running-pipelines.html"> Running Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugin-management.html"> Plugin Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugins/index.html"> Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developing-pipelines.html"> Developing Pipelines</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Developing Plugins</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="plugin-basics.html">Plugin Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html">Creating a Plugin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing-plugins.html">Testing Plugins</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Packaging Plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#plugin-packaging">Plugin Packaging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plugin-presentation">Plugin Presentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plugin-widget-json">Plugin Widget JSON</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-hydrator-works.html"> How Hydrator Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faqs.html"> FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html"> Glossary</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Testing Plugins" href="testing-plugins.html" />Testing Plugins</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="How Hydrator Works" href="../how-hydrator-works.html" />How Hydrator Works</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

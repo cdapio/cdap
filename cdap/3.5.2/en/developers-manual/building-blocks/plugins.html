@@ -1,0 +1,1747 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Plugins &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/building-blocks/plugins.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Schedules" href="schedules.html" />
+    <link rel="prev" title="MapReduce Programs" href="mapreduce-programs.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="schedules.html" title="Schedules"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="mapreduce-programs.html" title="MapReduce Programs"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="plugins">
+<span id="id1"></span><h1><a class="headerlink" href="#plugins" title="Perma-link to this heading">🔗</a>Plugins</h1>
+<p>A <em>Plugin</em> is a Java class that extends an application class by implementing an interface expected by the
+application class. <em>Plugins</em> can be packaged in a separate artifact from the application class that uses it.</p>
+<div class="section" id="plugin-usage">
+<span id="plugins-usage"></span><h2><a class="headerlink" href="#plugin-usage" title="Perma-link to this heading">🔗</a>Plugin Usage</h2>
+<p>You tell CDAP that a class is a <em>Plugin</em> by annotating the class with the type and name of the plugin.
+For example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;runnable&quot;</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;noop&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">NoOpRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
+
+  <span class="kd">public</span> <span class="kd">abstract</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+    <span class="c1">// do nothing</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>A program can register a plugin at configure time (application creation time) by specifying the plugin type,
+name, properties, and assigning an id to the plugin:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ExampleWorker</span> <span class="kd">extends</span> <span class="n">AbstractWorker</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">usePlugin</span><span class="o">(</span><span class="s">&quot;runnable&quot;</span><span class="o">,</span> <span class="s">&quot;noop&quot;</span><span class="o">,</span> <span class="s">&quot;id&quot;</span><span class="o">,</span> <span class="n">PluginProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">build</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Once registered, the plugin can be instantiated and used at runtime using the plugin id it was registered with:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ExampleWorker</span> <span class="kd">extends</span> <span class="n">AbstractWorker</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="n">Runnable</span> <span class="n">runnable</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">usePlugin</span><span class="o">(</span><span class="s">&quot;runnable&quot;</span><span class="o">,</span> <span class="s">&quot;noop&quot;</span><span class="o">,</span> <span class="s">&quot;id&quot;</span><span class="o">,</span> <span class="n">PluginProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">build</span><span class="o">());</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">WorkerContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">runnable</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">newPluginInstance</span><span class="o">(</span><span class="s">&quot;id&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">runnable</span><span class="o">.</span><span class="na">run</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="plugin-config">
+<span id="plugins-config"></span><h2><a class="headerlink" href="#plugin-config" title="Perma-link to this heading">🔗</a>Plugin Config</h2>
+<p>A <em>Plugin</em> can also make use of the <em>PluginConfig</em> class to configure itself. Suppose we want
+to modify our no-op runnable to print a configurable message. We can do this by adding a
+<em>PluginConfig</em>, passing it into the constructor, and setting it as a field:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;runnable&quot;</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;noop&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">NoOpRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Conf</span> <span class="n">conf</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Conf</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="nd">@Nullable</span>
+    <span class="nd">@Macro</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">message</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">Conf</span><span class="o">()</span> <span class="o">{</span>
+      <span class="k">this</span><span class="o">.</span><span class="na">message</span> <span class="o">=</span> <span class="s">&quot;Hello World!&quot;</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="nf">NoOpRunnable</span><span class="o">(</span><span class="n">Conf</span> <span class="n">conf</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">conf</span> <span class="o">=</span> <span class="n">conf</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="kd">abstract</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">conf</span><span class="o">.</span><span class="na">message</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Your extension to <em>PluginConfig</em> must contain only primitive, boxed primitive, or <code class="docutils literal"><span class="pre">String</span></code> types.
+The <em>PluginConfig</em> passed in to the <em>Plugin</em> has its fields populated using the <em>PluginProperties</em>
+specified when the <em>Plugin</em> was registered. In this example, if we want the message to be &quot;Hello CDAP!&quot;:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ExampleWorker</span> <span class="kd">extends</span> <span class="n">AbstractWorker</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">usePlugin</span><span class="o">(</span><span class="s">&quot;runnable&quot;</span><span class="o">,</span> <span class="s">&quot;noop&quot;</span><span class="o">,</span> <span class="s">&quot;id&quot;</span><span class="o">,</span> <span class="n">PluginProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;message&quot;</span><span class="o">,</span> <span class="s">&quot;Hello CDAP!&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>The <code class="docutils literal"><span class="pre">&#64;Nullable</span></code> annotation tells CDAP that the field is not required. Without that annotation,
+CDAP will complain if no plugin property for <code class="docutils literal"><span class="pre">delimiter</span></code> is given.</li>
+<li>Configuration fields can be annotated with an <code class="docutils literal"><span class="pre">&#64;Description</span></code> that will be returned by the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-plugin-detail" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Artifact HTTP RESTful API</span></a> <em>Plugin Detail</em>.</li>
+<li>The <code class="docutils literal"><span class="pre">&#64;Macro</span></code> annotation makes the field <code class="docutils literal"><span class="pre">message</span></code> <em>macro-enabled</em>; this allows the value of
+the field <code class="docutils literal"><span class="pre">message</span></code> to be a &quot;macro key&quot; whose value will be set at runtime.</li>
+</ul>
+</div>
+<div class="section" id="third-party-plugins">
+<h2><a class="headerlink" href="#third-party-plugins" title="Perma-link to this heading">🔗</a>Third-Party Plugins</h2>
+<p>Sometimes there is a need to use classes in a third-party JAR as plugins. For example, you may want to be able to use
+a JDBC driver as a plugin. In these situations, you have no control over the code, which means you cannot
+annotate the relevant class with the <code class="docutils literal"><span class="pre">&#64;Plugin</span></code> annotation. If this is the case, you can explicitly specify
+the plugins when deploying the artifact. For example, if you are using the HTTP RESTful API, you set the
+<code class="docutils literal"><span class="pre">Artifact-Plugins</span></code>, <code class="docutils literal"><span class="pre">Artifact-Version</span></code>, and <code class="docutils literal"><span class="pre">Artifact-Extends</span></code> headers when deploying the artifact:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral9() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral9 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral9", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral9" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java&quot;</span> <span class="se">\</span>
+<span class="go">-H &#39;Artifact-Plugins: [ { &quot;name&quot;: &quot;mysql&quot;, &quot;type&quot;: &quot;jdbc&quot;, &quot;className&quot;: &quot;com.mysql.jdbc.Driver&quot; } ]&#39; \</span>
+<span class="go">-H &quot;Artifact-Version: 5.1.35&quot; \</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.2, 3.5.2]/system:cdap-data-streams[3.5.2, 3.5.2]&quot; \</span>
+<span class="go">--data-binary @mysql-connector-java-5.1.35.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java&quot; ^</span>
+<span class="go">-H &quot;Artifact-Plugins: [ { \&quot;name\&quot;: \&quot;mysql\&quot;, \&quot;type\&quot;: \&quot;jdbc\&quot;, \&quot;className\&quot;: \&quot;com.mysql.jdbc.Driver\&quot; } ]&quot; ^</span>
+<span class="go">-H &quot;Artifact-Version: 5.1.35&quot; ^</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.2, 3.5.2]/system:cdap-data-streams[3.5.2, 3.5.2]&quot; ^</span>
+<span class="go">--data-binary @mysql-connector-java-5.1.35.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Or, using the CDAP CLI:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral10_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral10 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral10 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral10 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral10 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral10 .example-tab-" + tab).click(change_tabbedparsedliteral10_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral10" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">load artifact /path/to/mysql-connector-java-5.1.35.jar config-file /path/to/config.json</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>where <code class="docutils literal"><span class="pre">config.json</span></code> contains:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;parents&quot;: [ &quot;system:cdap-data-pipeline[3.5.2,3.5.2]&quot;, &quot;system:cdap-data-streams[3.5.2,3.5.2]&quot; ],
+  &quot;plugins&quot;: [
+    {
+      &quot;name&quot;: &quot;mysql&quot;,
+      &quot;type&quot;: &quot;jdbc&quot;,
+      &quot;className&quot;: &quot;com.mysql.jdbc.Driver&quot;
+    }
+  ]
+}
+</pre>
+</div>
+</div>
+<div class="section" id="plugin-deployment">
+<span id="plugins-deployment"></span><h2><a class="headerlink" href="#plugin-deployment" title="Perma-link to this heading">🔗</a>Plugin Deployment</h2>
+<p id="plugins-deployment-artifact">To make plugins available to another artifact (and thus available to any application
+created from one of the artifacts), the plugins must first be packaged in a JAR file.
+After that, the JAR file must be deployed either as a <a class="reference internal" href="#plugins-deployment-system"><span>system artifact</span></a> or a <a class="reference internal" href="#plugins-deployment-user"><span>user artifact</span></a>.</p>
+<p>A system artifact is available to users across any namespace. A user artifact is available
+only to users in the namespace to which it is deployed. By design, deploying as a user
+artifact just requires access to the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Artifact HTTP RESTful API</span></a>,
+while deploying as a system artifact requires access to the filesystem of the CDAP Master.
+This then requires administrator access and permission.</p>
+<div class="section" id="plugin-packaging">
+<span id="plugins-deployment-packaging"></span><h3><a class="headerlink" href="#plugin-packaging" title="Perma-link to this heading">🔗</a>Plugin Packaging</h3>
+<p>A <em>Plugin</em> is packaged as a JAR file, which contains inside the plugin classes and their dependencies.
+CDAP uses the &quot;Export-Package&quot; attribute in the JAR file manifest to determine
+which classes are <em>visible</em>. A <em>visible</em> class is one that can be used by another class
+that is not from the plugin JAR itself. This means the Java package which the plugin class
+is in must be listed in &quot;Export-Package&quot;, otherwise the plugin class will not be visible,
+and hence no one will be able to use it. This can be done in Maven by editing your pom.xml.
+For example, if your plugins are in the <code class="docutils literal"><span class="pre">com.example.runnable</span></code> and <code class="docutils literal"><span class="pre">com.example.callable</span></code>
+packages, you would edit the bundler plugin in your pom.xml:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;plugin&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>org.apache.felix<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>maven-bundle-plugin<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>2.3.7<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;extensions&gt;</span>true<span class="nt">&lt;/extensions&gt;</span>
+  <span class="nt">&lt;configuration&gt;</span>
+    <span class="nt">&lt;instructions&gt;</span>
+      <span class="nt">&lt;Embed-Dependency&gt;</span>*;inline=false;scope=compile<span class="nt">&lt;/Embed-Dependency&gt;</span>
+      <span class="nt">&lt;Embed-Transitive&gt;</span>true<span class="nt">&lt;/Embed-Transitive&gt;</span>
+      <span class="nt">&lt;Embed-Directory&gt;</span>lib<span class="nt">&lt;/Embed-Directory&gt;</span>
+      <span class="nt">&lt;Export-Package&gt;</span>com.example.runnable;com.example.callable<span class="nt">&lt;/Export-Package&gt;</span>
+    <span class="nt">&lt;/instructions&gt;</span>
+  <span class="nt">&lt;/configuration&gt;</span>
+  ...
+<span class="nt">&lt;/plugin&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="deploying-as-a-system-artifact">
+<span id="plugins-deployment-system"></span><h3><a class="headerlink" href="#deploying-as-a-system-artifact" title="Perma-link to this heading">🔗</a>Deploying as a System Artifact</h3>
+<p>To deploy the artifact as a system artifact, both the JAR file and a matching configuration file
+must be placed in the appropriate directory.</p>
+<ul class="simple">
+<li><strong>Standalone mode:</strong> <code class="docutils literal"><span class="pre">$CDAP_INSTALL_DIR/artifacts</span></code></li>
+<li><strong>Distributed mode:</strong> The plugin JARs should be placed in the local file system and the path
+can be provided to CDAP by setting the property <code class="docutils literal"><span class="pre">app.artifact.dir</span></code> in
+<a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">cdap-site.xml</span></a>. Multiple directories can be defined by separating
+them with a semicolon. The default path is <code class="docutils literal"><span class="pre">/opt/cdap/master/artifacts</span></code>.</li>
+</ul>
+<p>For each plugin JAR, there must also be a corresponding configuration file to specify which artifacts
+can use the plugins. The file name must match the name of the JAR, except it must have the <code class="docutils literal"><span class="pre">.json</span></code>
+extension instead of the <code class="docutils literal"><span class="pre">.jar</span></code> extension. For example, if your JAR file is named
+<code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code>, there must be a corresponding <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.json</span></code> file.
+If your <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code> contains transforms that can be used by both the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code>
+and <code class="docutils literal"><span class="pre">cdap-data-streams</span></code> artifacts, <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.json</span></code> would contain:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;parents&quot;: [ &quot;cdap-data-pipeline[3.5.2,3.5.2]&quot;, &quot;cdap-data-streams[3.5.2,3.5.2]&quot; ]
+}
+</pre>
+</div>
+<p>This file specifies that the plugins in <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code> can be used by version 3.5.2 of
+the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> and <code class="docutils literal"><span class="pre">cdap-data-streams</span></code> artifacts. You can also specify a wider range of versions
+that can use the plugins, with square brackets <code class="docutils literal"><span class="pre">[</span> <span class="pre">]</span></code> indicating an inclusive version and parentheses <code class="docutils literal"><span class="pre">(</span> <span class="pre">)</span></code> indicating
+an exclusive version. For example:</p>
+<div class="highlight container">
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;cdap-data-pipeline[3.5.0,4.0.0)&quot;</span><span class="p">,</span> <span class="s2">&quot;cdap-data-streams[3.5.0,4.0.0)&quot;</span> <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>specifies that these plugins can be used by versions 3.5.0 (inclusive) to 4.0.0 (exclusive) of the
+<code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> and <code class="docutils literal"><span class="pre">cdap-data-streams</span></code> artifacts.</p>
+<p>If the artifact contains third-party plugins, you can explicitly list them in the config file.
+For example, you may want to deploy a JDBC driver contained in a third-party JAR. In these cases,
+you have no control over the code to annotate the classes that should be plugins, so you need to
+list them in the configuration:</p>
+<div class="highlight container">
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;cdap-data-pipeline[3.5.0,4.0.0)&quot;</span><span class="p">,</span> <span class="s2">&quot;cdap-data-streams[3.5.0,4.0.0)&quot;</span> <span class="p">],</span>
+  <span class="nt">&quot;plugins&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;mysql&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;jdbc&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;className&quot;</span><span class="p">:</span> <span class="s2">&quot;com.mysql.jdbc.Driver&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>Once your JARs and matching configuration files are in place, a CDAP CLI command (<code class="docutils literal"><span class="pre">load</span> <span class="pre">artifact</span></code>) or
+a HTTP RESTful API call to <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-system-load" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">load system artifacts</span></a>
+can be made to load the artifacts. As described in the documentation on <a class="reference internal" href="artifacts.html#artifacts"><span>Artifacts</span></a>, only
+snapshot artifacts can be re-deployed without requiring that they first be deleted.</p>
+<p>Alternatively, the CDAP Standalone should be restarted for this change to take effect in Standalone
+mode, and <code class="docutils literal"><span class="pre">cdap-master</span></code> services should be restarted in the Distributed mode.</p>
+</div>
+<div class="section" id="deploying-as-a-user-artifact">
+<span id="plugins-deployment-user"></span><h3><a class="headerlink" href="#deploying-as-a-user-artifact" title="Perma-link to this heading">🔗</a>Deploying as a User Artifact</h3>
+<p>To deploy the artifact as a user artifact, use the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Artifact HTTP RESTful API</span></a> <em>Add Artifact</em> or the CLI.</p>
+<p>When using the HTTP RESTful API, you will need to specify the <code class="docutils literal"><span class="pre">Artifact-Extends</span></code> header.
+Unless the artifact's version is defined in the manifest file of the JAR file you upload,
+you will also need to specify the <code class="docutils literal"><span class="pre">Artifact-Version</span></code> header.</p>
+<p>When using the CLI, a configuration file exactly like the one described in the
+<a class="reference internal" href="#plugins-deployment-system"><span>Deploying as a System Artifact</span></a> must be used.</p>
+<p>For example, to deploy <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code> using the RESTful API:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral11() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral11 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral11", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral11" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms&quot;</span> <span class="se">\</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.2, 3.5.2]/system:cdap-data-streams[3.5.2, 3.5.2]&quot; \</span>
+<span class="go">--data-binary @/path/to/custom-transforms-1.0.0.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms&quot; ^</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.2, 3.5.2]/system:cdap-data-streams[3.5.2, 3.5.2]&quot; ^</span>
+<span class="go">--data-binary @/path/to/custom-transforms-1.0.0.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Using the CLI:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral12_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral12 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral12 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral12 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral12 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral12 .example-tab-" + tab).click(change_tabbedparsedliteral12_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral12" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">load artifact /path/to/custom-transforms-1.0.0.jar config-file /path/to/config.json</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>where <code class="docutils literal"><span class="pre">config.json</span></code> contains:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;parents&quot;: [ &quot;system:cdap-data-pipeline[3.5.2,3.5.2]&quot;, &quot;system:cdap-data-streams[3.5.2,3.5.2]&quot; ]
+}
+</pre>
+</div>
+<p>Note that when deploying a user artifact that extends a system artifact,
+you must prefix the parent artifact name with <code class="docutils literal"><span class="pre">'system:'</span></code>.
+This is in the event there is a user artifact with the same name as the system artifact.
+If you are extending a user artifact, no prefix is required.</p>
+<p>You can deploy third-party JARs in the same way except the plugin information needs
+<a class="reference internal" href="#plugins-third-party"><span>to be explicitly listed</span></a>. As described in the documentation on
+<a class="reference internal" href="artifacts.html#artifacts"><span>Artifacts</span></a>, only snapshot artifacts can be re-deployed without requiring that they
+first be deleted.</p>
+<p>Using the RESTful API (note that if the artifact version is not in the JAR manifest file,
+it needs to be set explicitly, as the JAR contents are uploaded without the filename):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral13() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral13 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral13", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral13" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java&quot;</span> <span class="se">\</span>
+<span class="go">-H &#39;Artifact-Plugins: [ { &quot;name&quot;: &quot;mysql&quot;, &quot;type&quot;: &quot;jdbc&quot;, &quot;className&quot;: &quot;com.mysql.jdbc.Driver&quot; } ]&#39; \</span>
+<span class="go">-H &quot;Artifact-Version: 5.1.35&quot; \</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.2, 3.5.2]/system:cdap-data-streams[3.5.2, 3.5.2]&quot; \</span>
+<span class="go">--data-binary @mysql-connector-java-5.1.35.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java&quot; ^</span>
+<span class="go">-H &quot;Artifact-Plugins: [ { \&quot;name\&quot;: \&quot;mysql\&quot;, \&quot;type\&quot;: \&quot;jdbc\&quot;, \&quot;className\&quot;: \&quot;com.mysql.jdbc.Driver\&quot; } ]&quot; ^</span>
+<span class="go">-H &quot;Artifact-Version: 5.1.35&quot; ^</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.2, 3.5.2]/system:cdap-data-streams[3.5.2, 3.5.2]&quot; ^</span>
+<span class="go">--data-binary @mysql-connector-java-5.1.35.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Using the CLI (note that the artifact version, if not explicitly set, is derived from the JAR filename):</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral14_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral14 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral14 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral14 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral14 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral14 .example-tab-" + tab).click(change_tabbedparsedliteral14_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral14" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">load artifact /path/to/mysql-connector-java-5.1.35.jar config-file /path/to/config.json</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>where <code class="docutils literal"><span class="pre">config.json</span></code> contains:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;parents&quot;: [ &quot;system:cdap-data-pipeline[3.5.2,3.5.2]&quot;, &quot;system:cdap-data-streams[3.5.2,3.5.2]&quot; ],
+  &quot;plugins&quot;: [
+    {
+      &quot;name&quot;: &quot;mysql&quot;,
+      &quot;type&quot;: &quot;jdbc&quot;,
+      &quot;className&quot;: &quot;com.mysql.jdbc.Driver&quot;
+    }
+  ]
+}
+</pre>
+</div>
+</div>
+<div class="section" id="deployment-verification">
+<span id="plugins-deployment-verification"></span><h3><a class="headerlink" href="#deployment-verification" title="Perma-link to this heading">🔗</a>Deployment Verification</h3>
+<p>You can verify that a plugin artifact was added successfully by using the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-detail" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Artifact HTTP RESTful API</span></a> to retrieve artifact details.
+For example, to retrieve detail about our <code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral15() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral15 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral15", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral15" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X GET <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms/versions/1.0.0?scope=[system | user]</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X GET &quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms/versions/1.0.0?scope=[system | user]</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Using the CLI:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral16_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral16 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral16 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral16 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral16 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral16 .example-tab-" + tab).click(change_tabbedparsedliteral16_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral16" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">describe artifact properties custom-transforms 1.0.0 [system | user]</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>If you deployed the <code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact as a system artifact, the scope is <code class="docutils literal"><span class="pre">system</span></code>.
+If you deployed the <code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact as a user artifact, the scope is <code class="docutils literal"><span class="pre">user</span></code>.</p>
+<p>You can verify that the plugins in your newly-added artifact are available to its parent by using the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-available-plugins" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Artifact HTTP RESTful API</span></a> to list plugins of a
+specific type. For example, to check if <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> can access the plugins in the
+<code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral17() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral17 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral17", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral17" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X GET <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/cdap-data-pipeline/versions/3.5.2/extensions/transform?scope=system&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X GET &quot;localhost:10000/v3/namespaces/default/artifacts/cdap-data-pipeline/versions/3.5.2/extensions/transform?scope=system&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Using the CLI:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral18_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral18 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral18 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral18 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral18 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral18 .example-tab-" + tab).click(change_tabbedparsedliteral18_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral18" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">list artifact plugins cdap-data-pipeline 3.5.2 transform system</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>You can then check the list returned to see if your transforms are in the list. Note that
+the scope here refers to the scope of the parent artifact. In this example it is the <code class="docutils literal"><span class="pre">system</span></code>
+scope because <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> is a system artifact. This is true even if you deployed
+<code class="docutils literal"><span class="pre">custom-transforms</span></code> as a user artifact because the parent is still a system artifact.</p>
+</div>
+</div>
+<div class="section" id="example-use-case">
+<span id="plugins-use-case"></span><h2><a class="headerlink" href="#example-use-case" title="Perma-link to this heading">🔗</a>Example Use Case</h2>
+<p>When writing an application class, it is often useful to create interfaces or abstract classes that define
+a logical contract in your code, but do not provide an implementation of that contract. This lets you plug in
+different implementations to fit your needs.</p>
+<p class="rubric">Classic WordCount Example</p>
+<p>For example, consider the classic word count example for MapReduce. The program reads files, tokenizes lines
+in those files into words, and then counts how many times each word appears. The code consists of several classes:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">WordCount</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">WordCount</span> <span class="kd">extends</span> <span class="n">AbstractMapReduce</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">beforeSubmit</span><span class="o">(</span><span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getHadoopJob</span><span class="o">();</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setMapperClass</span><span class="o">(</span><span class="n">WordCountMapper</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setReducerClass</span><span class="o">(</span><span class="n">WordCountReducer</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="c1">// setup input and output</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">WordCountMapper</span> <span class="kd">extends</span> <span class="n">Mapper</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">LongWritable</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">LongWritable</span> <span class="n">ONE</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LongWritable</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+  <span class="kd">private</span> <span class="n">Text</span> <span class="n">word</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Text</span><span class="o">();</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">map</span><span class="o">(</span><span class="n">LongWritable</span> <span class="n">key</span><span class="o">,</span> <span class="n">Text</span> <span class="n">value</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+    <span class="n">String</span> <span class="n">line</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="na">toString</span><span class="o">();</span>
+    <span class="n">StringTokenizer</span> <span class="n">tokenizer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">StringTokenizer</span><span class="o">(</span><span class="n">line</span><span class="o">);</span>
+    <span class="k">while</span> <span class="o">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="na">hasMoreTokens</span><span class="o">())</span> <span class="o">{</span>
+      <span class="n">word</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="na">nextToken</span><span class="o">());</span>
+      <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">word</span><span class="o">,</span> <span class="n">ONE</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">WordCountReducer</span> <span class="kd">extends</span> <span class="n">Reducer</span><span class="o">&lt;</span><span class="n">Text</span><span class="o">,</span> <span class="n">LongWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">LongWritable</span><span class="o">&gt;</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">reduce</span><span class="o">(</span><span class="n">Text</span> <span class="n">word</span><span class="o">,</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">&gt;</span> <span class="n">values</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span>
+    <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+    <span class="kt">long</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="k">for</span> <span class="o">(</span><span class="n">LongWritable</span> <span class="n">value</span> <span class="o">:</span> <span class="n">values</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">sum</span> <span class="o">+=</span> <span class="n">value</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+    <span class="o">}</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">word</span><span class="o">,</span> <span class="k">new</span> <span class="n">LongWritable</span><span class="o">(</span><span class="n">sum</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>We package our code into a JAR file named <code class="docutils literal"><span class="pre">wordcount-1.0.0.jar</span></code> and add it to CDAP:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral19() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral19 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral19", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral19" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/wordcount&quot;</span> --data-binary @wordcount-1.0.0.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/wordcount&quot; --data-binary @wordcount-1.0.0.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>We then create an application from that artifact:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral20() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral20 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral20", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral20" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X PUT <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/basicwordcount&quot;</span> -H <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+<span class="go">-d &#39;{ &quot;artifact&quot;: { &quot;name&quot;: &quot;wordcount&quot;, &quot;version&quot;: &quot;1.0.0&quot;, &quot;scope&quot;: &quot;user&quot; } }&#39;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X PUT &quot;localhost:10000/v3/namespaces/default/apps/basicwordcount&quot; -H &quot;Content-Type: application/json&quot; ^</span>
+<span class="go">-d &quot;{ \&quot;artifact\&quot;: { \&quot;name\&quot;: \&quot;wordcount\&quot;, \&quot;version\&quot;: \&quot;1.0.0\&quot;, \&quot;scope\&quot;: \&quot;user\&quot; } }&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>This program runs just fine. It counts all words in the input. However, what if we want to count phrases
+instead of words? Or what if we want to filter out common words such as <code class="docutils literal"><span class="pre">'the'</span></code> and <code class="docutils literal"><span class="pre">'a'</span></code>? We would not want
+to copy and paste our application class and then make just small tweaks.</p>
+<p class="rubric">A Configurable Application</p>
+<p>Instead, we would like to be able to create applications that
+are configured to tokenize the line in different ways. That is, if we want an application that filters
+stopwords, we want to be able to create it through a configuration:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral21() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral21 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral21", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral21" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X PUT <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/stopwordcount&quot;</span> -H <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+<span class="go">-d &#39;{ &quot;artifact&quot;: { &quot;name&quot;: &quot;wordcount&quot;, &quot;version&quot;: &quot;1.0.0&quot;, &quot;scope&quot;: &quot;user&quot; }, &quot;config&quot;: { &quot;tokenizer&quot;: &quot;stopword&quot; } }&#39;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X PUT &quot;localhost:10000/v3/namespaces/default/apps/stopwordcount&quot; -H &quot;Content-Type: application/json&quot; ^</span>
+<span class="go">-d &quot;{ \&quot;artifact\&quot;: { \&quot;name\&quot;: \&quot;wordcount\&quot;, \&quot;version\&quot;: \&quot;1.0.0\&quot;, \&quot;scope\&quot;: \&quot;user\&quot; }, \&quot;config\&quot;: { \&quot;tokenizer\&quot;: \&quot;stopword\&quot; } }&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Similarly, we want to be able to create an application that counts phrases through a configuration:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral22() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral22 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral22", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral22" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X PUT <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/phrasecount&quot;</span> -H <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+<span class="go">-d &#39;{ &quot;artifact&quot;: { &quot;name&quot;: &quot;wordcount&quot;, &quot;version&quot;: &quot;1.0.0&quot;, &quot;scope&quot;: &quot;user&quot; }, &quot;config&quot;: { &quot;tokenizer&quot;: &quot;phrase&quot; } }&#39;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X PUT &quot;localhost:10000/v3/namespaces/default/apps/phrasecount&quot; -H &quot;Content-Type: application/json&quot; ^</span>
+<span class="go">-d &quot;{ \&quot;artifact\&quot;: { \&quot;name\&quot;: \&quot;wordcount\&quot;, \&quot;version\&quot;: \&quot;1.0.0\&quot;, \&quot;scope\&quot;: \&quot;user\&quot; }, \&quot;config\&quot;: { \&quot;tokenizer\&quot;: \&quot;phrase\&quot; } }&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>This is possible by changing our code to use the <em>Plugin</em> framework. The first thing we need to do is
+introduce a <code class="docutils literal"><span class="pre">Tokenizer</span></code> interface:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Tokenizer</span> <span class="o">{</span>
+  <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="nf">tokenize</span><span class="o">(</span><span class="n">String</span> <span class="n">line</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Now we change our <code class="docutils literal"><span class="pre">WordCountMapper</span></code> to use the plugin framework to instantiate and use a <code class="docutils literal"><span class="pre">Tokenizer</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">WordCountMapper</span> <span class="kd">extends</span> <span class="n">Mapper</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">LongWritable</span><span class="o">&gt;</span>
+  <span class="kd">implements</span> <span class="n">ProgramLifecycle</span><span class="o">&lt;</span><span class="n">MapReduceTaskContext</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">LongWritable</span> <span class="n">ONE</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LongWritable</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+  <span class="kd">private</span> <span class="n">Text</span> <span class="n">word</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Text</span><span class="o">();</span>
+  <span class="kd">private</span> <span class="n">Tokenizer</span> <span class="n">tokenizer</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">map</span><span class="o">(</span><span class="n">LongWritable</span> <span class="n">key</span><span class="o">,</span> <span class="n">Text</span> <span class="n">value</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+    <span class="n">String</span> <span class="n">line</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="na">toString</span><span class="o">();</span>
+    <span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">token</span> <span class="o">:</span> <span class="n">tokenizer</span><span class="o">.</span><span class="na">tokenize</span><span class="o">(</span><span class="n">line</span><span class="o">))</span> <span class="o">{</span>
+      <span class="n">word</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="n">token</span><span class="o">);</span>
+      <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">word</span><span class="o">,</span> <span class="n">ONE</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">MapReduceTaskContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">newPluginInstance</span><span class="o">(</span><span class="s">&quot;tokenizerId&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">destroy</span><span class="o">()</span> <span class="o">{</span>
+    <span class="c1">//no-op</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The key method we added was the <code class="docutils literal"><span class="pre">initialize</span></code> method. In it, we are using CDAP's plugin framework
+to instantiate a plugin of type <code class="docutils literal"><span class="pre">Tokenizer</span></code>, identified by <code class="docutils literal"><span class="pre">tokenizerId</span></code>. This code runs when
+the MapReduce program runs. In order for CDAP to know which plugin <code class="docutils literal"><span class="pre">tokenizerId</span></code> refers to, we will need
+to register the plugin in our application's <code class="docutils literal"><span class="pre">configure</span></code> method. We change our application code to
+use a configuration object that will specify the name of the <code class="docutils literal"><span class="pre">Tokenizer</span></code> to use, and register that plugin:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span><span class="o">&lt;</span><span class="n">WordCountApp</span><span class="o">.</span><span class="na">TokenizerConfig</span><span class="o">&gt;</span> <span class="o">{</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">TokenizerConfig</span> <span class="kd">extends</span> <span class="n">Config</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">tokenizer</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">TokenizerConfig</span> <span class="n">config</span> <span class="o">=</span> <span class="n">getConfig</span><span class="o">();</span>
+    <span class="c1">// usePlugin(type, name, id, properties)</span>
+    <span class="n">usePlugin</span><span class="o">(</span><span class="s">&quot;tokenizer&quot;</span><span class="o">,</span> <span class="n">config</span><span class="o">.</span><span class="na">tokenizer</span><span class="o">,</span> <span class="s">&quot;tokenizerId&quot;</span><span class="o">,</span> <span class="n">PluginProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">build</span><span class="o">());</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">WordCount</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>CDAP will take whatever is specified in the <code class="docutils literal"><span class="pre">config</span></code> section of the application creation
+request and convert it into the <code class="docutils literal"><span class="pre">Config</span></code> object expected by the application class.
+If it receives this request:</p>
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;artifact&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;wordcount&quot;</span><span class="p">,</span> <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span> <span class="nt">&quot;scope&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span> <span class="p">},</span>
+  <span class="nt">&quot;config&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;tokenizer&quot;</span><span class="p">:</span> <span class="s2">&quot;phrase&quot;</span> <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>the <code class="docutils literal"><span class="pre">TokenizerConfig</span></code> will have its <code class="docutils literal"><span class="pre">tokenizer</span></code> field set to <code class="docutils literal"><span class="pre">phrase</span></code>.</p>
+<p>This allows us to configure which tokenizer should be used when creating an application.
+Since we want other artifacts to implement the <code class="docutils literal"><span class="pre">Tokenizer</span></code> interface, we need to make
+sure the class is exposed to other artifacts. We do this by including the <code class="docutils literal"><span class="pre">Tokenizer</span></code>'s package
+in the <code class="docutils literal"><span class="pre">Export-Package</span></code> manifest attribute of our JAR file. For example, if our <code class="docutils literal"><span class="pre">Tokenizer</span></code> full
+class name is <code class="docutils literal"><span class="pre">com.example.api.Tokenizer</span></code>, we need to expose the <code class="docutils literal"><span class="pre">com.example.api</span></code>
+package in our pom.xml:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;plugin&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>org.apache.felix<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>maven-bundle-plugin<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>2.3.7<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;extensions&gt;</span>true<span class="nt">&lt;/extensions&gt;</span>
+  <span class="nt">&lt;configuration&gt;</span>
+    <span class="nt">&lt;archive&gt;</span>
+      <span class="nt">&lt;manifest&gt;</span>
+        <span class="nt">&lt;mainClass&gt;</span>${app.main.class}<span class="nt">&lt;/mainClass&gt;</span>
+      <span class="nt">&lt;/manifest&gt;</span>
+    <span class="nt">&lt;/archive&gt;</span>
+    <span class="nt">&lt;instructions&gt;</span>
+      <span class="nt">&lt;Embed-Dependency&gt;</span>*;inline=false;scope=compile<span class="nt">&lt;/Embed-Dependency&gt;</span>
+      <span class="nt">&lt;Embed-Transitive&gt;</span>true<span class="nt">&lt;/Embed-Transitive&gt;</span>
+      <span class="nt">&lt;Embed-Directory&gt;</span>lib<span class="nt">&lt;/Embed-Directory&gt;</span>
+      <span class="nt">&lt;Export-Package&gt;</span>com.example.api<span class="nt">&lt;/Export-Package&gt;</span>
+    <span class="nt">&lt;/instructions&gt;</span>
+  <span class="nt">&lt;/configuration&gt;</span>
+  ...
+<span class="nt">&lt;/plugin&gt;</span>
+</pre></div>
+</div>
+<p>We then package the code in a new version of the artifact <code class="docutils literal"><span class="pre">wordcount-1.1.0.jar</span></code> and deploy it:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral23() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral23 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral23", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral23" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/wordcount&quot;</span> --data-binary @wordcount-1.1.0.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/wordcount&quot; --data-binary @wordcount-1.1.0.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p class="rubric">Implementing Tokenizer Plugins</p>
+<p>Finally, we need to implement some tokenizer plugins. <em>Plugins</em> are just Java classes that have
+been annotated with a plugin type and name:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;tokenizer&quot;</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;default&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">DefaultTokenizer</span> <span class="kd">implements</span> <span class="n">Tokenizer</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="nf">tokenize</span><span class="o">(</span><span class="n">String</span> <span class="n">line</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">Splitter</span><span class="o">.</span><span class="na">on</span><span class="o">(</span><span class="sc">&#39; &#39;</span><span class="o">).</span><span class="na">split</span><span class="o">(</span><span class="n">line</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;tokenizer&quot;</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;stopword&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">StopWordTokenizer</span> <span class="kd">implements</span> <span class="n">Tokenizer</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Set</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">STOPWORDS</span> <span class="o">=</span> <span class="n">StopWords</span><span class="o">.</span><span class="na">load</span><span class="o">();</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="nf">tokenize</span><span class="o">(</span><span class="n">String</span> <span class="n">line</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">tokens</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;&gt;();</span>
+    <span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">word</span> <span class="o">:</span> <span class="n">Splitter</span><span class="o">.</span><span class="na">on</span><span class="o">(</span><span class="sc">&#39; &#39;</span><span class="o">).</span><span class="na">split</span><span class="o">(</span><span class="n">line</span><span class="o">))</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(!</span><span class="n">STOPWORDS</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="n">word</span><span class="o">))</span> <span class="o">{</span>
+        <span class="n">tokens</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">word</span><span class="o">);</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">tokens</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;tokenizer&quot;</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;phrase&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">PhraseTokenizer</span> <span class="kd">implements</span> <span class="n">Tokenizer</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="nf">tokenize</span><span class="o">(</span><span class="n">String</span> <span class="n">line</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">tokens</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;&gt;();</span>
+    <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">wordIter</span> <span class="o">=</span> <span class="n">Splitter</span><span class="o">.</span><span class="na">on</span><span class="o">(</span><span class="sc">&#39; &#39;</span><span class="o">).</span><span class="na">split</span><span class="o">(</span><span class="n">line</span><span class="o">).</span><span class="na">iterator</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">wordIter</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+      <span class="k">return</span> <span class="n">tokens</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="n">String</span> <span class="n">prevWord</span> <span class="o">=</span> <span class="n">wordIter</span><span class="o">.</span><span class="na">next</span><span class="o">();</span>
+    <span class="k">while</span> <span class="o">(</span><span class="n">wordIter</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+      <span class="n">String</span> <span class="n">currWord</span> <span class="o">=</span> <span class="n">wordIter</span><span class="o">.</span><span class="na">next</span><span class="o">();</span>
+      <span class="n">tokens</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">prevWord</span> <span class="o">+</span> <span class="s">&quot; &quot;</span> <span class="o">+</span> <span class="n">currWord</span><span class="o">);</span>
+      <span class="n">prevWord</span> <span class="o">=</span> <span class="n">currWord</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">tokens</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>We package these tokenizers in a separate artifact named <code class="docutils literal"><span class="pre">tokenizers-1.0.0.jar</span></code>. In order to make these
+plugins visibile to programs using them, we need to include their packages in the <code class="docutils literal"><span class="pre">Export-Packages</span></code>
+manifest attribute. For example, if our classes are all in the <code class="docutils literal"><span class="pre">com.example.tokenizer</span></code> package,
+we need to expose the <code class="docutils literal"><span class="pre">com.example.tokenizer</span></code> package in our pom.xml:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;plugin&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>org.apache.felix<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>maven-bundle-plugin<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>2.3.7<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;extensions&gt;</span>true<span class="nt">&lt;/extensions&gt;</span>
+  <span class="nt">&lt;configuration&gt;</span>
+    <span class="nt">&lt;archive&gt;</span>
+      <span class="nt">&lt;manifest&gt;</span>
+        <span class="nt">&lt;mainClass&gt;</span>${app.main.class}<span class="nt">&lt;/mainClass&gt;</span>
+      <span class="nt">&lt;/manifest&gt;</span>
+    <span class="nt">&lt;/archive&gt;</span>
+    <span class="nt">&lt;instructions&gt;</span>
+      <span class="nt">&lt;Embed-Dependency&gt;</span>*;inline=false;scope=compile<span class="nt">&lt;/Embed-Dependency&gt;</span>
+      <span class="nt">&lt;Embed-Transitive&gt;</span>true<span class="nt">&lt;/Embed-Transitive&gt;</span>
+      <span class="nt">&lt;Embed-Directory&gt;</span>lib<span class="nt">&lt;/Embed-Directory&gt;</span>
+      <span class="nt">&lt;Export-Package&gt;</span>com.example.tokenizer<span class="nt">&lt;/Export-Package&gt;</span>
+    <span class="nt">&lt;/instructions&gt;</span>
+  <span class="nt">&lt;/configuration&gt;</span>
+  ...
+<span class="nt">&lt;/plugin&gt;</span>
+</pre></div>
+</div>
+<p>When deploying this artifact, we tell CDAP that the artifact extends the <code class="docutils literal"><span class="pre">wordcount</span></code> artifact, versions
+<code class="docutils literal"><span class="pre">1.1.0</span></code> inclusive to <code class="docutils literal"><span class="pre">2.0.0</span></code> exclusive:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral24() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral24 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral24", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral24" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/tokenizers&quot;</span> --data-binary @tokenizers-1.0.0.jar <span class="se">\</span>
+<span class="go">-H &quot;Artifact-Extends:wordcount[1.1.0,2.0.0)&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl &quot;localhost:10000/v3/namespaces/default/artifacts/tokenizers&quot; --data-binary @tokenizers-1.0.0.jar ^</span>
+<span class="go">-H &quot;Artifact-Extends:wordcount[1.1.0,2.0.0)&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>This will make the plugins available to those versions of the <code class="docutils literal"><span class="pre">wordcount</span></code> artifact. We can now create
+applications that use the tokenizer we want:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral25() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral25 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral25", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral25" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X PUT localhost:10000/v3/namespaces/default/apps/phrasecount -H <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+<span class="go">-d &#39;{ &quot;artifact&quot;: { &quot;name&quot;: &quot;wordcount&quot;, &quot;version&quot;: &quot;1.1.0&quot;, &quot;scope&quot;: &quot;user&quot; }, &quot;config&quot;: { &quot;tokenizer&quot;: &quot;phrase&quot; } }&#39;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X PUT localhost:10000/v3/namespaces/default/apps/phrasecount -H &quot;Content-Type: application/json&quot; ^</span>
+<span class="go">-d &quot;{ \&quot;artifact\&quot;: { \&quot;name\&quot;: \&quot;wordcount\&quot;, \&quot;version\&quot;: \&quot;1.1.0\&quot;, \&quot;scope\&quot;: \&quot;user\&quot; }, \&quot;config\&quot;: { \&quot;tokenizer\&quot;: \&quot;phrase\&quot; } }&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p class="rubric">Adding a Plugin Configuration to the Application</p>
+<p>After a while, we find that we need to support reading files where words are delimited by a character
+other than a space. We decide to modify our <code class="docutils literal"><span class="pre">DefaultTokenizer</span></code> to use a <code class="docutils literal"><span class="pre">PluginConfig</span></code> that contains
+a property for the delimiter:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;tokenizer&quot;</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;default&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">DefaultTokenizer</span> <span class="kd">implements</span> <span class="n">Tokenizer</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">TokenizerConfig</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">TokenizerConfig</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="nd">@Nullable</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">delimiter</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">TokenizerConfig</span><span class="o">()</span> <span class="o">{</span>
+      <span class="k">this</span><span class="o">.</span><span class="na">delimiter</span> <span class="o">=</span> <span class="s">&quot; &quot;</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="nf">DefaultTokenizer</span><span class="o">(</span><span class="n">TokenizerConfig</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="nf">tokenize</span><span class="o">(</span><span class="n">String</span> <span class="n">line</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">Splitter</span><span class="o">.</span><span class="na">on</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">delimiter</span><span class="o">).</span><span class="na">split</span><span class="o">(</span><span class="n">line</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>When we register the plugin, we need to pass in the properties that will be used to populate the
+<code class="docutils literal"><span class="pre">PluginConfig</span></code> passed to the <code class="docutils literal"><span class="pre">DefaultTokenizer</span></code>. In this example, that means the <code class="docutils literal"><span class="pre">delimiter</span></code>
+property must be given when registering the plugin:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span><span class="o">&lt;</span><span class="n">WordCountApp</span><span class="o">.</span><span class="na">TokenizerConfig</span><span class="o">&gt;</span> <span class="o">{</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">TokenizerConfig</span> <span class="kd">extends</span> <span class="n">Config</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">tokenizer</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">tokenizerProperties</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">TokenizerConfig</span> <span class="n">config</span> <span class="o">=</span> <span class="n">getConfig</span><span class="o">();</span>
+    <span class="c1">// usePlugin(type, name, id, properties)</span>
+    <span class="n">usePlugin</span><span class="o">(</span><span class="s">&quot;tokenizer&quot;</span><span class="o">,</span> <span class="n">config</span><span class="o">.</span><span class="na">tokenizer</span><span class="o">,</span> <span class="s">&quot;tokenizerId&quot;</span><span class="o">,</span> <span class="n">PluginProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">addAll</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">tokenizerProperties</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">WordCount</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Now we can create an application that uses a comma instead of a space to split text (re-formatted for display):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral26() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral26 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral26", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral26" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X PUT <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/wordcount2&quot;</span> -H <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+<span class="go">  -d &#39;{</span></span>
+<span class="go">    &quot;artifact&quot;: { &quot;name&quot;: &quot;wordcount&quot;, &quot;version&quot;: &quot;1.2.0&quot;, &quot;scope&quot;: &quot;user&quot; },</span>
+<span class="go">    &quot;config&quot;: { &quot;tokenizer&quot;: &quot;default&quot;, &quot;tokenizerProperties&quot;: { &quot;delimiter&quot;: &quot;,&quot; }</span>
+<span class="go">    }</span>
+<span class="go">  }&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X PUT &quot;localhost:10000/v3/namespaces/default/apps/wordcount2&quot; -H &quot;Content-Type: application/json&quot; ^</span>
+<span class="go">  -d &quot;{</span></span>
+<span class="go">    \&quot;artifact\&quot;: { \&quot;name\&quot;: \&quot;wordcount\&quot;, \&quot;version\&quot;: \&quot;1.2.0\&quot;, \&quot;scope\&quot;: \&quot;user\&quot; },</span>
+<span class="go">    \&quot;config\&quot;: { \&quot;tokenizer\&quot;: \&quot;default\&quot;, \&quot;tokenizerProperties\&quot;: { \&quot;delimiter\&quot;: \&quot;,\&quot; }</span>
+<span class="go">    }</span>
+<span class="go">  }&quot;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html"> Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#plugin-usage">Plugin Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plugin-config">Plugin Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#third-party-plugins">Third-Party Plugins</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plugin-deployment">Plugin Deployment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#plugin-packaging">Plugin Packaging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deploying-as-a-system-artifact">Deploying as a System Artifact</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deploying-as-a-user-artifact">Deploying as a User Artifact</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deployment-verification">Deployment Verification</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#example-use-case">Example Use Case</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-keys.html"> Secure Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifacts.html"> Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata-lineage.html"> Metadata and Lineage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="audit-logging.html"> Audit Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="MapReduce Programs" href="mapreduce-programs.html" />MapReduce Programs</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Schedules" href="schedules.html" />Schedules</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

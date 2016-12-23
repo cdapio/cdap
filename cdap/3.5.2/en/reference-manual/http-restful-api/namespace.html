@@ -1,0 +1,543 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Namespace HTTP RESTful API &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/http-restful-api/namespace.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Preferences HTTP RESTful API" href="preferences.html" />
+    <link rel="prev" title="Monitor HTTP RESTful API" href="monitor.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="preferences.html" title="Preferences HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="monitor.html" title="Monitor HTTP RESTful API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Reference Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="namespace-http-restful-api">
+<span id="http-restful-api-v3-namespace"></span><span id="http-restful-api-namespace"></span><h1><a class="headerlink" href="#namespace-http-restful-api" title="Perma-link to this heading">🔗</a>Namespace HTTP RESTful API</h1>
+<p>Use the CDAP Namespace HTTP RESTful API to create, list, and delete namespaces in the CDAP instance.</p>
+<p>Namespaces, their use and examples, are described in the <a class="reference external" href="../source/../../developers-manual/building-blocks/namespaces.html#namespaces" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Developers' Manual: Namespaces</span></a>.</p>
+<p>The definition of namespace names supported by this API is described under
+<a class="reference internal" href="introduction.html#http-restful-api-namespace-characters"><span>Names and Characters for Namespace Identifiers</span></a>.</p>
+<p>All methods or endpoints described in this API have a base URL (typically
+<code class="docutils literal"><span class="pre">http://&lt;host&gt;:10000</span></code> or <code class="docutils literal"><span class="pre">https://&lt;host&gt;:10443</span></code>) that precedes the resource
+identifier, as described in the <a class="reference internal" href="introduction.html#http-restful-api-conventions-base-url"><span>RESTful API Conventions</span></a>.
+These methods return a status code, as listed in the <a class="reference internal" href="introduction.html#http-restful-api-status-codes"><span>RESTful API  Status Codes</span></a>.</p>
+<div class="section" id="create-a-namespace">
+<h2><a class="headerlink" href="#create-a-namespace" title="Perma-link to this heading">🔗</a>Create a Namespace</h2>
+<p>To create a namespace, submit an HTTP PUT request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT /v3/namespaces/&lt;namespace-id&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace</td>
+</tr>
+</tbody>
+</table>
+<p>The <code class="docutils literal"><span class="pre">namespace-id</span></code> must be of the limited character set for namespaces, as
+described in the <a class="reference internal" href="introduction.html#http-restful-api-namespace-characters"><span>Introduction</span></a>.
+Properties for the namespace are passed in the JSON request body:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="40%" />
+<col width="40%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+<th class="head">Default Value (if not defined)</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">description</span></code></td>
+<td>Display description of the namespace</td>
+<td>An empty string (<code class="docutils literal"><span class="pre">&quot;&quot;</span></code>)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">config</span></code></td>
+<td>Configuration preferences for the namespace</td>
+<td>A JSON string of configuration key-value pairs</td>
+</tr>
+</tbody>
+</table>
+<p>If a namespace with the same name already exists, the method will still return <code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code>,
+but with a message that the <code class="docutils literal"><span class="pre">Namespace</span> <span class="pre">'&lt;namespace-id&gt;'</span> <span class="pre">already</span> <span class="pre">exists</span></code>.</p>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The event successfully called the method, and the namespace was created</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="list-existing-namespaces">
+<h2><a class="headerlink" href="#list-existing-namespaces" title="Perma-link to this heading">🔗</a>List Existing Namespaces</h2>
+<p>To list all of the existing namespaces, issue an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces</span>
+</pre></div>
+</div>
+<p>This will return a JSON String map that lists each namespace with its name and description
+(reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[{&quot;name&quot;:&quot;default&quot;,&quot;description&quot;:&quot;Default Namespace&quot;,&quot;config&quot;:{&quot;scheduler.queue.name&quot;:&quot;&quot;},</span>
+<span class="go"> {&quot;name&quot;:&quot;demo_namespace&quot;,&quot;description&quot;:&quot;My Demo Namespace&quot;,&quot;config&quot;:{&quot;scheduler.queue.name&quot;:&quot;demo&quot;}]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="details-of-a-namespace">
+<h2><a class="headerlink" href="#details-of-a-namespace" title="Perma-link to this heading">🔗</a>Details of a Namespace</h2>
+<p>For detailed information on a specific namespace, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;</span>
+</pre></div>
+</div>
+<p>The information (<em>namespace</em>, <em>description</em>, <em>config</em>) will be returned in the body of the
+response, such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;name&quot;:&quot;default&quot;,&quot;description&quot;:&quot;Default Namespace&quot;,&quot;config&quot;:{&quot;scheduler.queue.name&quot;:&quot;&quot;}}</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The event successfully called the method, and the body contains the results</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="editing-a-namespace">
+<span id="http-restful-api-namespace-editing"></span><h2><a class="headerlink" href="#editing-a-namespace" title="Perma-link to this heading">🔗</a>Editing a Namespace</h2>
+<p>To edit an existing namespace, submit an HTTP PUT request to:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT /v3/namespaces/&lt;namespace-id&gt;/properties</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace</td>
+</tr>
+</tbody>
+</table>
+<p>The <code class="docutils literal"><span class="pre">namespace-id</span></code> must be the name of an existing namespace.
+Properties for the namespace are passed in the JSON request body, as described
+for when you <a class="reference internal" href="#create-a-namespace">Create a Namespace</a>.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">description</span></code></td>
+<td>Display description of the namespace</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">config</span></code></td>
+<td>Configuration properties, with a JSON map of key-value pairs.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Namespace properties were changed successfully</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></code></td>
+<td>The request was not created correctly</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>The Namespace does not exist</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><p class="first"><code class="docutils literal"><span class="pre">PUT</span> <span class="pre">/v3/namespaces/dev/properties</span></code>:</p>
+<div class="last highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;description&quot; : &quot;Namespace for development of applications&quot;,</span>
+<span class="go">  &quot;config&quot;: {</span>
+<span class="go">    &quot;scheduler.queue.name&quot;: &quot;A&quot;,</span>
+<span class="go">  },</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Set the <em>description</em> property of the Namespace named <em>dev</em>,
+and set the <em>scheduler.queue.name</em> to <em>A</em>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="deleting-a-namespace">
+<span id="http-restful-api-namespace-deleting"></span><h2><a class="headerlink" href="#deleting-a-namespace" title="Perma-link to this heading">🔗</a>Deleting a Namespace</h2>
+<p>To delete an existing namespace (including all applications, streams, flows, datasets, metrics,
+and other components), submit an HTTP DELETE request to:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/unrecoverable/namespaces/&lt;namespace-id&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace</td>
+</tr>
+</tbody>
+</table>
+<p>To prevent accidental use of this method, it will only work if the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> parameter
+<code class="docutils literal"><span class="pre">enable.unrecoverable.reset</span></code> has been enabled.
+This method must be exercised with extreme caution, as there is no recovery from it.</p>
+<p>Both the CDAP CLI and the CDAP UI expose this function; they also require the parameter to be
+enabled in order for their functions to work.</p>
+<p>In the case of the <code class="docutils literal"><span class="pre">default</span></code> namespace, after everything has been deleted, the <code class="docutils literal"><span class="pre">default</span></code>
+namespace is retained, as it is always available in CDAP.</p>
+<p>To delete only the datasets of a namespace, there is a
+<a class="reference internal" href="dataset.html#http-restful-api-dataset-deleting-all"><span>specific dataset endpoint</span></a> for that.</p>
+</div>
+<div class="section" id="namespace-configurations">
+<span id="http-restful-api-namespace-configs"></span><h2><a class="headerlink" href="#namespace-configurations" title="Perma-link to this heading">🔗</a>Namespace Configurations</h2>
+<p>When creating or editing a namespace, namespace configurations can be supplied as part of the
+request body. These are in the form of a JSON string of configuration key-value pairs. Note
+that the values for these keys cannot be modified once the namespace has been created, with
+the exception of the property <code class="docutils literal"><span class="pre">scheduler.queue.name</span></code>.</p>
+<p class="rubric">Namespace Configurations</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Configuration Name</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">hbase.namespace</span></code></td>
+<td>The pre-existing HBase namespace to be used for the namespace (CDAP Distributed mode only)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">hive.database</span></code></td>
+<td>The pre-existing Hive database to be used for the namespace</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">keytabURI</span></code></td>
+<td>The URI of the Kerberos keytab file for the namespace</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">principal</span></code></td>
+<td>The Kerberos principal for the namespace</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">root.directory</span></code></td>
+<td>The pre-existing file-system directory to be used for the namespace</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">scheduler.queue.name</span></code></td>
+<td>Scheduler queue for CDAP programs and CDAP explore queries run in the namespace. See
+<a class="reference external" href="../source/../../admin-manual/operations/resource-guarantees.html#resource-guarantees" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Scheduler queue</span></a> for details.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html">Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html">Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Namespace</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#create-a-namespace">Create a Namespace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#list-existing-namespaces">List Existing Namespaces</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#details-of-a-namespace">Details of a Namespace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#editing-a-namespace">Editing a Namespace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deleting-a-namespace">Deleting a Namespace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#namespace-configurations">Namespace Configurations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security.html">Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html">Transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Monitor HTTP RESTful API" href="monitor.html" />Monitor HTTP RESTful API</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Preferences HTTP RESTful API" href="preferences.html" />Preferences HTTP RESTful API</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

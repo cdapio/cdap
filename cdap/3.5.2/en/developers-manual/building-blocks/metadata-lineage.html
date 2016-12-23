@@ -1,0 +1,488 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Metadata and Lineage &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/building-blocks/metadata-lineage.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Audit Logging" href="audit-logging.html" />
+    <link rel="prev" title="Artifacts" href="artifacts.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="audit-logging.html" title="Audit Logging"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="artifacts.html" title="Artifacts"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="metadata-and-lineage">
+<span id="metadata-lineage"></span><h1><a class="headerlink" href="#metadata-and-lineage" title="Perma-link to this heading">🔗</a>Metadata and Lineage</h1>
+<div class="section" id="overview">
+<h2><a class="headerlink" href="#overview" title="Perma-link to this heading">🔗</a>Overview</h2>
+<p>Metadata and Lineage are a new and important feature of CDAP. CDAP Metadata helps show how
+datasets and programs are related to each other and helps in understanding the impact of a
+change before the change is made.</p>
+<p>This feature provides full visibility into the impact of changes while providing an audit
+trail of access to datasets by programs and applications. It gives a clear view when
+identifying trusted data sources and enables the ability to track the trail of sensitive
+data.</p>
+<p>CDAP captures metadata from many different sources—as well as those specified by a
+user—on different entities and objects. The container model of CDAP provides for the
+seamless aggregation of a wide variety of machine-generated metadata that is automatically
+associated with datasets. This gives developers and data scientists flexibility when
+innovating and building solutions on Hadoop, without the worry of maintaining compliance
+and governance for every application.</p>
+</div>
+<div class="section" id="metadata">
+<span id="metadata-lineage-metadata"></span><h2><a class="headerlink" href="#metadata" title="Perma-link to this heading">🔗</a>Metadata</h2>
+<p>Metadata—consisting of <strong>properties</strong> (a list of key-value pairs) or <strong>tags</strong> (a
+list of keys)—can be used to annotate artifacts, applications, programs, datasets,
+streams, and views.</p>
+<p>Using the CDAP <a class="reference external" href="../source/../../reference-manual/http-restful-api/metadata.html#http-restful-api-metadata" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Metadata HTTP RESTful API</span></a>, you can set,
+retrieve, and delete these metadata annotations.</p>
+<p>Metadata keys, values, and tags must conform to the CDAP <a class="reference external" href="../source/../../reference-manual/characters.html#supported-characters" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">supported characters</span></a>, and are limited to 50 characters in length. The entire metadata
+object associated with a single entity is limited to 10K bytes in size.</p>
+</div>
+<div class="section" id="discovery">
+<h2><a class="headerlink" href="#discovery" title="Perma-link to this heading">🔗</a>Discovery</h2>
+<p>Metadata can be used to tag different CDAP components so that they are easily identifiable
+and managed. This helps in discovering CDAP components.</p>
+<p>For example, you can tag a dataset as <em>experimental</em> or an application as <em>production</em>. These
+entities can then be discovered by using the annotated metadata in <strong>search queries</strong>. Using search,
+users can discover entities:</p>
+<ul class="simple">
+<li>that have a particular <strong>value</strong> for <em>any key</em> in their properties;</li>
+<li>that have a particular <strong>key</strong> with a particular <em>value</em> in their properties; or</li>
+<li>that have a particular <strong>tag</strong>.</li>
+</ul>
+</div>
+<div class="section" id="system-metadata">
+<span id="metadata-lineage-system-metadata"></span><h2><a class="headerlink" href="#system-metadata" title="Perma-link to this heading">🔗</a>System Metadata</h2>
+<p>While CDAP allows users to tag entities with metadata properties and tags, it also
+tags entities with system properties and tags by default. These default properties and tags can be retrieved
+using the CDAP <a class="reference external" href="../source/../../reference-manual/http-restful-api/metadata.html#http-restful-api-metadata" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Metadata HTTP RESTful API</span></a> by setting the
+<code class="docutils literal"><span class="pre">scope</span></code> query parameter to <em>system</em>. These default annotations can be used to discover CDAP entities using the
+Metadata Search API.</p>
+<p>This table lists the <strong>system</strong> metadata annotations of CDAP entities:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="40%" />
+<col width="40%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Entity</th>
+<th class="head">System Properties</th>
+<th class="head">System Tags</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Artifacts</td>
+<td><ul class="first last simple">
+<li>Plugins (name and version)</li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li>Artifact name</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td>Applications</td>
+<td><ul class="first last simple">
+<li>Programs (name and type) contained in the application</li>
+<li>Plugins</li>
+<li>Schedules (name and description)</li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li>Application name</li>
+<li>Artifact name</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td>Programs</td>
+<td><ul class="first last simple">
+<li>n/a</li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li>Program name and type</li>
+<li>Program mode (<em>batch</em> or <em>realtime</em>)</li>
+<li>Workflow node names (for workflows only)</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td>Datasets</td>
+<td><ul class="first last simple">
+<li>Schema (field names and types)</li>
+<li>Dataset type (<em>FileSet, Table, KeyValueTable,</em> etc.)</li>
+<li>TTL (Time To Live)</li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li>Dataset name</li>
+<li><em>batch</em> for Datasets accessible through Map Reduce or Spark programs</li>
+<li><em>explore</em> for Datasets that can be queried through Explore interface</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td>Streams</td>
+<td><ul class="first last simple">
+<li>Schema (field names and types)</li>
+<li>TTL</li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li>Stream name</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td>Stream Views</td>
+<td><ul class="first last simple">
+<li>Schema (field names and types)</li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li>View name</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="metadata-update-notifications">
+<span id="id1"></span><h2><a class="headerlink" href="#metadata-update-notifications" title="Perma-link to this heading">🔗</a>Metadata Update Notifications</h2>
+<div class="topic">
+<p class="topic-title first"><strong>Note: Metadata Update Notifications Deprecated</strong></p>
+<p>As of <em>CDAP v3.4.0</em>, <em>Metadata Update Notifications</em> have been deprecated, pending removal in a later
+version. The <a class="reference internal" href="audit-logging.html#audit-logging"><span>CDAP Audit Notifications</span></a> contain notifications for metadata changes. Please change
+all uses of <em>Metadata Update Notifications</em> to consume only those messages from the audit feed that have the
+<code class="docutils literal"><span class="pre">type</span></code> field set to <code class="docutils literal"><span class="pre">METADATA_CHANGE</span></code>.</p>
+</div>
+<p>CDAP has the capability of publishing notifications to an external Apache Kafka instance
+upon metadata updates.</p>
+<p>This capability is controlled by these properties set in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>, as described in the
+<a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Administration Manual</span></a>:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">metadata.updates.publish.enabled</span></code>: Determines if publishing of updates is enabled; defaults to <code class="docutils literal"><span class="pre">false</span></code>;</li>
+<li><code class="docutils literal"><span class="pre">metadata.updates.kafka.broker.list</span></code>: The Kafka broker list to publish to; and</li>
+<li><code class="docutils literal"><span class="pre">metadata.updates.kafka.topic</span></code>: The Kafka topic to publish to; defaults to <code class="docutils literal"><span class="pre">cdap-metadata-updates</span></code>.</li>
+</ul>
+<p>If <code class="docutils literal"><span class="pre">metadata.updates.publish.enabled</span></code> is <em>true</em>, then <code class="docutils literal"><span class="pre">metadata.updates.kafka.broker.list</span></code> <strong>must</strong> be defined.</p>
+<p>When enabled, upon every property or tag update, CDAP will publish a notification message
+to the configured Kafka instance. The contents of the message are a JSON representation of
+the <a class="reference external" href="https://github.com/caskdata/cdap/blob/develop/cdap-proto/src/main/java/co/cask/cdap/proto/metadata/MetadataChangeRecord.java">MetadataChangeRecord</a>
+class.</p>
+<p>Here is an example JSON message, pretty-printed:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
+   <span class="s">&quot;previous&quot;</span><span class="o">:{</span>
+      <span class="s">&quot;entityId&quot;</span><span class="o">:{</span>
+         <span class="s">&quot;type&quot;</span><span class="o">:</span><span class="s">&quot;application&quot;</span><span class="o">,</span>
+         <span class="s">&quot;id&quot;</span><span class="o">:{</span>
+            <span class="s">&quot;namespace&quot;</span><span class="o">:{</span>
+               <span class="s">&quot;id&quot;</span><span class="o">:</span><span class="s">&quot;default&quot;</span>
+            <span class="o">},</span>
+            <span class="s">&quot;applicationId&quot;</span><span class="o">:</span><span class="s">&quot;PurchaseHistory&quot;</span>
+         <span class="o">}</span>
+      <span class="o">},</span>
+      <span class="s">&quot;scope&quot;</span><span class="o">:</span><span class="s">&quot;USER&quot;</span><span class="o">,</span>
+      <span class="s">&quot;properties&quot;</span><span class="o">:{</span>
+         <span class="s">&quot;key2&quot;</span><span class="o">:</span><span class="s">&quot;value2&quot;</span><span class="o">,</span>
+         <span class="s">&quot;key1&quot;</span><span class="o">:</span><span class="s">&quot;value1&quot;</span>
+      <span class="o">},</span>
+      <span class="s">&quot;tags&quot;</span><span class="o">:[</span>
+         <span class="s">&quot;tag1&quot;</span><span class="o">,</span>
+         <span class="s">&quot;tag2&quot;</span>
+      <span class="o">]</span>
+   <span class="o">},</span>
+   <span class="s">&quot;changes&quot;</span><span class="o">:{</span>
+      <span class="s">&quot;additions&quot;</span><span class="o">:{</span>
+         <span class="s">&quot;entityId&quot;</span><span class="o">:{</span>
+            <span class="s">&quot;type&quot;</span><span class="o">:</span><span class="s">&quot;application&quot;</span><span class="o">,</span>
+            <span class="s">&quot;id&quot;</span><span class="o">:{</span>
+               <span class="s">&quot;namespace&quot;</span><span class="o">:{</span>
+                  <span class="s">&quot;id&quot;</span><span class="o">:</span><span class="s">&quot;default&quot;</span>
+               <span class="o">},</span>
+               <span class="s">&quot;applicationId&quot;</span><span class="o">:</span><span class="s">&quot;PurchaseHistory&quot;</span>
+            <span class="o">}</span>
+         <span class="o">},</span>
+         <span class="s">&quot;scope&quot;</span><span class="o">:</span><span class="s">&quot;USER&quot;</span><span class="o">,</span>
+         <span class="s">&quot;properties&quot;</span><span class="o">:{</span>
+
+         <span class="o">},</span>
+         <span class="s">&quot;tags&quot;</span><span class="o">:[</span>
+            <span class="s">&quot;tag3&quot;</span>
+         <span class="o">]</span>
+      <span class="o">},</span>
+      <span class="s">&quot;deletions&quot;</span><span class="o">:{</span>
+         <span class="s">&quot;entityId&quot;</span><span class="o">:{</span>
+            <span class="s">&quot;type&quot;</span><span class="o">:</span><span class="s">&quot;application&quot;</span><span class="o">,</span>
+            <span class="s">&quot;id&quot;</span><span class="o">:{</span>
+               <span class="s">&quot;namespace&quot;</span><span class="o">:{</span>
+                  <span class="s">&quot;id&quot;</span><span class="o">:</span><span class="s">&quot;default&quot;</span>
+               <span class="o">},</span>
+               <span class="s">&quot;applicationId&quot;</span><span class="o">:</span><span class="s">&quot;PurchaseHistory&quot;</span>
+            <span class="o">}</span>
+         <span class="o">},</span>
+         <span class="s">&quot;scope&quot;</span><span class="o">:</span><span class="s">&quot;USER&quot;</span><span class="o">,</span>
+         <span class="s">&quot;properties&quot;</span><span class="o">:{</span>
+
+         <span class="o">},</span>
+         <span class="s">&quot;tags&quot;</span><span class="o">:[</span>
+
+         <span class="o">]</span>
+      <span class="o">}</span>
+   <span class="o">},</span>
+   <span class="s">&quot;updateTime&quot;</span><span class="o">:</span><span class="mi">1442883836781</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="cloudera-navigator-integration">
+<span id="metadata-navigator-integration"></span><h2><a class="headerlink" href="#cloudera-navigator-integration" title="Perma-link to this heading">🔗</a>Cloudera Navigator Integration</h2>
+<p>CDAP Metadata can be pushed to Cloudera Navigator for metadata discovery and search.
+Refer to <a class="reference external" href="../source/../../integrations/partners/cloudera/navigator-integration.html#navigator-integration" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Cloudera Navigator Integration</span></a> for more information.</p>
+</div>
+<div class="section" id="lineage">
+<span id="metadata-lineage-lineage"></span><h2><a class="headerlink" href="#lineage" title="Perma-link to this heading">🔗</a>Lineage</h2>
+<p><strong>Lineage</strong> can be retrieved for dataset and stream entities. A lineage shows—for a specified time range—all data access of the entity, and details of where
+that access originated from.</p>
+<p>For example: with a stream, writing to a stream can take place from a worker, which may
+have obtained the data from a combination of a dataset and a (different) stream. The data
+in those entities can come from (possibly) other entities. The number of levels of the
+lineage that are calculated is set when a request is made to view the lineage of a
+particular entity.</p>
+<p>In the case of streams, the lineage includes whether the access was reading or writing to
+the stream.</p>
+<p>In the case of datasets, lineage can indicate if a dataset access was for reading,
+writing, or both, if the methods in the dataset have appropriate <a class="reference internal" href="datasets/system-custom.html#custom-datasets-access-annotations"><span>annotations</span></a>. If annotations are absent, lineage can only
+indicate that a dataset access took place, and does not provide indication if that access
+was for reading or writing.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html"> Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html"> Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-keys.html"> Secure Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifacts.html"> Artifacts</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Metadata and Lineage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#metadata">Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#discovery">Discovery</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#system-metadata">System Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#metadata-update-notifications">Metadata Update Notifications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cloudera-navigator-integration">Cloudera Navigator Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lineage">Lineage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="audit-logging.html"> Audit Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Artifacts" href="artifacts.html" />Artifacts</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Audit Logging" href="audit-logging.html" />Audit Logging</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

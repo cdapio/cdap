@@ -1,0 +1,335 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<meta content="See LICENSE file in this repository" name="license" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>CDAP Flume &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/ingesting-tools/cdap-flume.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Ingesting Data into CDAP" href="index.html" />
+    <link rel="next" title="Data Exploration" href="../data-exploration/index.html" />
+    <link rel="prev" title="CDAP Stream Client for Ruby" href="cdap-stream-clients-ruby.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../data-exploration/index.html" title="Data Exploration"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="cdap-stream-clients-ruby.html" title="CDAP Stream Client for Ruby"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Ingesting Data into CDAP</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cdap-flume">
+<h1><a class="headerlink" href="#cdap-flume" title="Perma-link to this heading">🔗</a>CDAP Flume</h1>
+<p>The CDAP Sink is a Flume Sink implementation using the CDAP RESTful Stream interface to write events
+received from a source.</p>
+<div class="section" id="usage">
+<h2><a class="headerlink" href="#usage" title="Perma-link to this heading">🔗</a>Usage</h2>
+<p>To use, put the CDAP Sink jar file in the Flume classpath (for example, in the Flume <code class="docutils literal"><span class="pre">lib</span></code>
+directory). The JAR can be obtained from <a class="reference external" href="http://search.maven.org/#search|ga|1|cdap-flume">Maven Central</a>.</p>
+<p>Specify the fully-qualified name of your CDAP Sink class in the Flume configuration properties:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">a1.sinks.sink1.type = co.cask.cdap.flume.StreamSink</span>
+</pre></div>
+</div>
+<p>Enter the <code class="docutils literal"><span class="pre">host</span></code> name or host-ip that is used by the Stream Client:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">a1.sinks.sink1.host = &lt;hostname | host-ip&gt;</span>
+</pre></div>
+</div>
+<p>Set the target Stream name:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">a1.sinks.sink1.streamName = &lt;stream-name&gt;</span>
+</pre></div>
+</div>
+<p>Optional parameters that can be specified are listed below, with their default values.</p>
+<ul>
+<li><p class="first">Enter the host port that is used by the Stream Client:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">a1.sinks.sink1.port = 10000</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Secure Socket Layer mode [true | false]</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">a1.sinks.sink1.sslEnabled = false</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Verify SSL Certificate [true | false]:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">a1.sinks.sink1.verifySSLCert = true</span>
+<span class="gp">#</span> Set it to <span class="nb">false </span>to <span class="nb">suspend </span>certificate checks<span class="p">;</span>
+<span class="gp">#</span> this allows self-signed certificates when SSL is <span class="nb">true</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Number of threads to which Stream Client can send events:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">a1.sinks.sink1.writerPoolSize = 10</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">CDAP Router server version:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">a1.sinks.sink1.version = v3</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">CDAP Namespace:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">a1.sinks.sink1.namespace = default</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="authentication-client">
+<h2><a class="headerlink" href="#authentication-client" title="Perma-link to this heading">🔗</a>Authentication Client</h2>
+<p>To use authentication, add these authentication client configuration parameters to the
+sink configuration file:</p>
+<p>Fully qualified class name of the client class:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">a1.sinks.sink1.authClientClass = co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient</span>
+</pre></div>
+</div>
+<p>Path to the authentication client properties file:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">a1.sinks.sink1.authClientProperties = /usr/local/apache-flume/conf/auth_client.conf</span>
+</pre></div>
+</div>
+<div class="section" id="authentication-client-example-configuration">
+<h3><a class="headerlink" href="#authentication-client-example-configuration" title="Perma-link to this heading">🔗</a>Authentication Client Example Configuration</h3>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> User name
+<span class="go">security.auth.client.username=admin</span>
+<span class="gp">#</span> User password
+<span class="go">security.auth.client.password=secret</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="example">
+<h2><a class="headerlink" href="#example" title="Perma-link to this heading">🔗</a>Example</h2>
+<p>Configuration of a Flume agent that reads data from a log file and puts it to CDAP using CDAP Sink:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">a1.sources = r1</span>
+<span class="go">a1.channels = c1</span>
+<span class="go">a1.sources.r1.type = exec</span>
+<span class="go">a1.sources.r1.command = tail -F /tmp/log</span>
+<span class="go">a1.sources.r1.channels = c1</span>
+<span class="go">a1.sinks = k1</span>
+<span class="go">a1.sinks.k1.type = co.cask.cdap.flume.StreamSink</span>
+<span class="go">a1.sinks.k1.channel = c1</span>
+<span class="go">a1.sinks.k1.host  = 127.0.0.1</span>
+<span class="go">a1.sinks.k1.port = 10000</span>
+<span class="go">a1.sinks.k1.streamName = logEventStream</span>
+<span class="go">a1.channels.c1.type = memory</span>
+<span class="go">a1.channels.c1.capacity = 1000</span>
+<span class="go">a1.channels.c1.transactionCapacity = 100</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="source-code-repository">
+<h2><a class="headerlink" href="#source-code-repository" title="Perma-link to this heading">🔗</a>Source Code Repository</h2>
+<p>Source code (and other resources) for this page are available at the
+<a class="reference external" href="https://github.com/caskdata/cdap-ingest">CDAP Ingest Project GitHub repository</a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Ingesting Data</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cdap-stream-clients-java.html">CDAP Stream Client for Java</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-stream-clients-python.html">CDAP Stream Client for Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-stream-clients-ruby.html">CDAP Stream Client for Ruby</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">CDAP Flume</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#authentication-client">Authentication Client</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#authentication-client-example-configuration">Authentication Client Example Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#source-code-repository">Source Code Repository</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="CDAP Stream Client for Ruby" href="cdap-stream-clients-ruby.html" />CDAP Stream Client for Ruby</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Data Exploration" href="../data-exploration/index.html" />Data Exploration</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

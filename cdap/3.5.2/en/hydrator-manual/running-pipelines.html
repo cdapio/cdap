@@ -1,0 +1,556 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Running Pipelines &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/hydrator-manual/running-pipelines.html">
+
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="index.html" />
+    <link rel="next" title="Plugin Management" href="plugin-management.html" />
+    <link rel="prev" title="Creating Pipelines" href="creating-pipelines.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="plugin-management.html" title="Plugin Management"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="creating-pipelines.html" title="Creating Pipelines"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="table-of-contents.html">Cask Hydrator</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="running-pipelines">
+<span id="cask-hydrator-running-pipelines"></span><h1><a class="headerlink" href="#running-pipelines" title="Perma-link to this heading">🔗</a>Running Pipelines</h1>
+<p>Pipeline can be started, stopped, and controlled using:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#cask-hydrator-running-pipelines-within-hydrator"><span>Cask Hydrator UI</span></a></li>
+<li><a class="reference external" href="source/../../admin-manual/operations/cdap-ui.html#cdap-ui" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP UI</span></a></li>
+<li><a class="reference external" href="source/../../reference-manual/cli-api.html#cdap-cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP CLI</span></a></li>
+<li>Command line tools, using the <a class="reference external" href="source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle-start" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Lifecycle HTTP RESTful API</span></a></li>
+</ul>
+<div class="section" id="running-a-pipeline-within-hydrator">
+<span id="cask-hydrator-running-pipelines-within-hydrator"></span><h2><a class="headerlink" href="#running-a-pipeline-within-hydrator" title="Perma-link to this heading">🔗</a>Running a Pipeline within Hydrator</h2>
+<p>From within Hydrator, you can start and stop pipelines.</p>
+<p>For a <strong>batch pipeline,</strong> you can start or stop (&quot;suspend&quot;) its schedule. It will then begin
+at the next scheduled time. (To change the schedule requires creating a new pipeline with
+a new schedule.)</p>
+<p>For a <strong>real-time pipeline,</strong> you simply start or stop the pipeline.</p>
+<p>You can set the arguments used to start the pipeline (both as preferences and runtime
+arguments) and view details of a pipeline, such as its configuration, settings, stages,
+schemas, and logs.</p>
+</div>
+<div class="section" id="runtime-arguments">
+<h2><a class="headerlink" href="#runtime-arguments" title="Perma-link to this heading">🔗</a>Runtime Arguments</h2>
+<p>You may want to create a pipeline that has several configuration settings that are not
+known at pipeline creation time, but that are set at the start of the each pipeline run.</p>
+<p>For instance, you might want a pipeline that reads from a database (a source) and writes
+to a table (a sink). The name of the database source and name of the table sink might
+change from run to run and you need to specify those values as input before starting a
+run.</p>
+<p>You might want to create a pipeline with a particular action at the start of the run.
+The action could, based on some logic, provide the name of the database to use as a source
+and the name of the table to write as a sink. The next stage in the pipeline might use
+this information to read and write from appropriate sources and sinks.</p>
+<p>To do this, Hydrator supports the use of macros that will, at runtime, will be evaluated
+and substituted for. The macros support recursive (nested) expansion and use a simple
+syntax. These macros are <a class="reference internal" href="creating-pipelines.html#cask-hydrator-runtime-arguments-macros"><span>defined in the pipeline configuration</span></a> and in the runtime arguments.</p>
+<p>Runtime arguments are resolved by sourcing them from the application preferences, the
+runtime arguments, and the workflow token. Precedence is with the workflow token having
+the highest precedence.</p>
+<p>These arguments and preferences can be set with the CDAP UI, the CDAP CLI or the
+<a class="reference external" href="source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-program-lifecycle" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Program Lifecycle</span></a> and <a class="reference external" href="source/../../reference-manual/http-restful-api/preferences.html#http-restful-api-preferences" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Preferences</span></a> HTTP RESTful APIs.</p>
+<p>Details of usage and examples are explained in the section on <a class="reference internal" href="creating-pipelines.html#cask-hydrator-runtime-arguments-macros"><span>runtime arguments and
+macros</span></a>.</p>
+</div>
+<div class="section" id="re-running-a-pipeline">
+<h2><a class="headerlink" href="#re-running-a-pipeline" title="Perma-link to this heading">🔗</a>Re-running a Pipeline</h2>
+<p>When a pipeline is re-run, any previously-set runtime arguments will have been discarded
+and will need to be set again, if required. Any previously-set application preferences will
+be retained and re-used.</p>
+</div>
+<div class="section" id="notifications">
+<h2><a class="headerlink" href="#notifications" title="Perma-link to this heading">🔗</a>Notifications</h2>
+<p>When a pipeline is completed, notifications can be sent by using one or more <em>post-run
+actions</em>. These are <a class="reference internal" href="creating-pipelines.html#cask-hydrator-creating-pipelines-post-run-actions"><span>set in the pipeline configuration</span></a>.</p>
+<p>These <a class="reference internal" href="plugins/post-run-plugins/index.html#cask-hydrator-plugins-post-run-plugins"><span>post-run plugins</span></a> allow for emails,
+database queries, and a general HTTP callback action.</p>
+</div>
+<div class="section" id="logs">
+<h2><a class="headerlink" href="#logs" title="Perma-link to this heading">🔗</a>Logs</h2>
+<p>As pipelines run, they create entries in the CDAP logs.</p>
+<p>Logs for a pipeline can be obtained using the same tools as any other CDAP application and
+program, and are described in the <a class="reference external" href="source/../../admin-manual/operations/logging.html#logging-monitoring" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Administration manual, Logging and Monitoring</span></a> and the <a class="reference external" href="source/../../reference-manual/http-restful-api/logging.html#http-restful-api-logging" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Logging HTTP RESTful API</span></a>.</p>
+<p>Script transform steps can write to logs, as described in the section in developing
+plugins on <a class="reference internal" href="developing-plugins/creating-a-plugin.html#cask-hydrator-creating-a-plugin-script-transformations"><span>script transformations</span></a>.</p>
+</div>
+<div class="section" id="metrics">
+<h2><a class="headerlink" href="#metrics" title="Perma-link to this heading">🔗</a>Metrics</h2>
+<p>As pipelines run, they create both system and user metrics.</p>
+<p>System metrics for a pipeline can be obtained using the same tools as any other CDAP
+application and program, and are described in the <a class="reference external" href="source/../../admin-manual/operations/metrics.html#operations-metrics" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Administration manual, metrics</span></a> and the <a class="reference external" href="source/../../reference-manual/http-restful-api/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Metrics HTTP RESTful API</span></a>.</p>
+<p>Script transform steps can create metrics, as described in the section in developing
+plugins on <a class="reference internal" href="developing-plugins/creating-a-plugin.html#cask-hydrator-creating-a-plugin-script-transformations"><span>script transformations</span></a>.</p>
+<p>For instance, if you have a real-time pipeline named &quot;demoPipeline&quot; with three stages
+(<em>DataGenerator</em>, <em>JavaScript</em>, and <em>Table</em>), then you can discover the available metrics
+using a <cite>curl</cite> command, such as (reformatted for display):</p>
+<blockquote>
+<div><script type="text/javascript">
+
+$(function tabbedparsedliteral11() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral11 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral11", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral11" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;http://localhost:10000/v3/metrics/search?target=metric&amp;tag=namespace:default&amp;tag=app:demoPipeline&quot;</span></span>
+
+<span class="go">[&quot;system.app.log.debug&quot;,&quot;system.app.log.info&quot;,&quot;system.app.log.warn&quot;,&quot;system.dataset.</span>
+<span class="go">store.bytes&quot;,&quot;system.dataset.store.ops&quot;,&quot;system.dataset.store.reads&quot;,&quot;system.dataset.</span>
+<span class="go">store.writes&quot;,&quot;system.metrics.emitted.count&quot;,&quot;user.DataGenerator.records.out&quot;,&quot;user.</span>
+<span class="go">JavaScript.record.count&quot;,&quot;user.JavaScript.records.in&quot;,&quot;user.JavaScript.records.out&quot;,&quot;</span>
+<span class="go">user.Table.records.in&quot;,&quot;user.Table.records.out&quot;,&quot;user.metrics.emitted.count&quot;]</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;http://localhost:10000/v3/metrics/search?target=metric&amp;tag=namespace:default&amp;tag=app:demoPipeline&quot;</span></span>
+
+<span class="go">[&quot;system.app.log.debug&quot;,&quot;system.app.log.info&quot;,&quot;system.app.log.warn&quot;,&quot;system.dataset.</span>
+<span class="go">store.bytes&quot;,&quot;system.dataset.store.ops&quot;,&quot;system.dataset.store.reads&quot;,&quot;system.dataset.</span>
+<span class="go">store.writes&quot;,&quot;system.metrics.emitted.count&quot;,&quot;user.DataGenerator.records.out&quot;,&quot;user.</span>
+<span class="go">JavaScript.record.count&quot;,&quot;user.JavaScript.records.in&quot;,&quot;user.JavaScript.records.out&quot;,&quot;</span>
+<span class="go">user.Table.records.in&quot;,&quot;user.Table.records.out&quot;,&quot;user.metrics.emitted.count&quot;]</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div></blockquote>
+<p>In this case, the user metric <em>&quot;user.JavaScript.record.count&quot;</em> was incremented in the JavaScript stage using:</p>
+<div class="highlight-none"><div class="highlight"><pre>context.getMetrics().count(&#39;record.count&#39;, 1);
+</pre></div>
+</div>
+<p>The value of the metric can be retrieved with:</p>
+<blockquote>
+<div><script type="text/javascript">
+
+$(function tabbedparsedliteral12() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral12 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral12", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral12" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/metrics/query?tag=namespace:default&amp;tag=app:etlRealtime6&amp;metric=user.JavaScript.record.count&amp;aggregate=true&quot;</span></span>
+
+<span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1468884338,&quot;series&quot;:[{&quot;metricName&quot;:&quot;user.JavaScript.record.</span>
+<span class="go">count&quot;,&quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:170}]}],&quot;resolution&quot;:&quot;2147483647s&quot;}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/metrics/query?tag=namespace:default&amp;tag=app:etlRealtime6&amp;metric=user.JavaScript.record.count&amp;aggregate=true&quot;</span></span>
+
+<span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1468884338,&quot;series&quot;:[{&quot;metricName&quot;:&quot;user.JavaScript.record.</span>
+<span class="go">count&quot;,&quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:170}]}],&quot;resolution&quot;:&quot;2147483647s&quot;}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div></blockquote>
+<p>Using the CDAP CLI, you can retrieve the value with:</p>
+<blockquote>
+<div><script type="text/javascript">
+
+function change_tabbedparsedliteral13_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral13 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral13 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral13 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral13 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral13 .example-tab-" + tab).click(change_tabbedparsedliteral13_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral13" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">get metric value user.JavaScript.record.count &#39;app=demoPipeline&#39;</span></span>
+
+<span class="go">Start time: 0</span>
+<span class="go">End time: 1468884640</span>
+
+<span class="go">Series: user.JavaScript.record.count</span>
+<span class="go">+===================+</span>
+<span class="go">| timestamp | value |</span>
+<span class="go">+===================+</span>
+<span class="go">| 0         | 170   |</span>
+<span class="go">+===================+</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="error-record-handling">
+<span id="cask-hydrator-running-pipelines-error-record-handling"></span><h2><a class="headerlink" href="#error-record-handling" title="Perma-link to this heading">🔗</a>Error Record Handling</h2>
+<p>To handle the problem of validating records and handling any subsequent errors, certain
+transform stages are available that can check that a record matches specified criteria.
+Records that fail the criteria can be discarded, and appropriate messages written to a
+configurable error dataset.</p>
+<p>These transform plugins support error record handling:</p>
+<ul class="simple">
+<li><a class="reference external" href="plugins/transforms/javascript-transform.html">JavaScript</a></li>
+<li><a class="reference external" href="plugins/transforms/pythonevaluator-transform.html">Python Evaluator</a></li>
+<li><a class="reference external" href="plugins/transforms/validator-transform.html">Validator</a></li>
+<li><a class="reference external" href="plugins/transforms/xmlparser-transform.html">XML Parser</a></li>
+</ul>
+<p>See the <a class="reference internal" href="plugins/shared-plugins/core.html#cask-hydrator-plugins-shared-core-validator"><span>Core Validator</span></a> for examples
+and additional information.</p>
+</div>
+<div class="section" id="configuring-resources">
+<h2><a class="headerlink" href="#configuring-resources" title="Perma-link to this heading">🔗</a>Configuring Resources</h2>
+<p>Resources for pipelines can be configured as any other CDAP workflow application.</p>
+<p>See the Administration Manual sections on <a class="reference external" href="source/../../admin-manual/operations/scaling-instances.html#scaling-instances" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Scaling Instances</span></a> and
+<a class="reference external" href="source/../../admin-manual/operations/resource-guarantees.html#resource-guarantees" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Resource Guarantees for CDAP Programs in YARN</span></a>.</p>
+</div>
+<div class="section" id="upgrading-a-pipeline">
+<span id="cask-hydrator-operating-upgrading-pipeline"></span><h2><a class="headerlink" href="#upgrading-a-pipeline" title="Perma-link to this heading">🔗</a>Upgrading a Pipeline</h2>
+<p>If you wish to upgrade pipelines created using the 3.4.x versions
+of <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> or <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code>, you can use the ETL upgrade tool packaged
+with the distributed version of CDAP. You would want to run this tool to upgrade
+applications that were created with earlier versions of the artifacts, that you would
+like to open in the 3.5.2 version of Cask Hydrator Studio.</p>
+<p>The tool will connect to an instance of CDAP, look for any applications that use 3.4.x
+versions of the <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> or <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> artifacts, and then update the
+application to use the 3.5.2 version of those artifacts. CDAP must be running when you
+run the command:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> java -cp /opt/cdap/master/libexec/cdap-etl-tools-3.5.2.jar co.cask.cdap.etl.tool.UpgradeTool -u http://&lt;host&gt;:&lt;port&gt; -e /tmp/failedUpgrades upgrade
+</pre>
+</div>
+<p>The first argument is the host and port for the <a class="reference external" href="source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-default-router" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP router</span></a>. The second argument is a directory to write the
+configurations of any pipelines that could not be upgraded. A pipeline may fail to upgrade
+if the new version of a plugin used in the pipeline is not backwards compatible. For
+example, this may happen if the plugin added a new required property.</p>
+<p>You can also upgrade just the ETL applications within a specific namespace:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> java -cp /opt/cdap/master/libexec/cdap-etl-tools-3.5.2.jar co.cask.cdap.etl.tool.UpgradeTool -u http://&lt;host&gt;:&lt;port&gt; -n &lt;namespace-id&gt; upgrade
+</pre>
+</div>
+<p>You can also upgrade just one ETL application:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> java -cp /opt/cdap/master/libexec/cdap-etl-tools-3.5.2.jar co.cask.cdap.etl.tool.UpgradeTool -u http://&lt;host&gt;:&lt;port&gt; -n &lt;namespace-id&gt; -p &lt;app-name&gt; upgrade
+</pre>
+</div>
+<p>If you have authentication turned on, you also need to store an access token in a file and pass the file to the tool:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> java -cp /opt/cdap/master/libexec/cdap-etl-tools-3.5.2.jar co.cask.cdap.etl.tool.UpgradeTool -u http://&lt;host&gt;:&lt;port&gt; -a &lt;tokenfile&gt; upgrade
+</pre>
+</div>
+<p>For instance, if you have obtained an access token (as shown in the example in the
+<cite>security documentation &lt;testing-security&gt;</cite>) such as:</p>
+<div class="highlight-none"><div class="highlight"><pre>{&quot;access_token&quot;:&quot;AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS&quot;,
+  &quot;token_type&quot;:&quot;Bearer&quot;,&quot;expires_in&quot;:86400}
+</pre></div>
+</div>
+<p>The access token itself (<code class="docutils literal"><span class="pre">AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS</span></code>)
+would be placed in a file and then the file's path would be used in the above command.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">Cask Hydrator: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts-design.html"> Concepts and Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="studio.html"> Hydrator Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-pipelines.html"> Creating Pipelines</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Running Pipelines</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#running-a-pipeline-within-hydrator">Running a Pipeline within Hydrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#runtime-arguments">Runtime Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#re-running-a-pipeline">Re-running a Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#notifications">Notifications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#logs">Logs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#metrics">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#error-record-handling">Error Record Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuring-resources">Configuring Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#upgrading-a-pipeline">Upgrading a Pipeline</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plugin-management.html"> Plugin Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugins/index.html"> Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developing-pipelines.html"> Developing Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developing-plugins/index.html"> Developing Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how-hydrator-works.html"> How Hydrator Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faqs.html"> FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html"> Glossary</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Creating Pipelines" href="creating-pipelines.html" />Creating Pipelines</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Plugin Management" href="plugin-management.html" />Plugin Management</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

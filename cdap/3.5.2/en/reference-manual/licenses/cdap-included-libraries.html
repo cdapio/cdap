@@ -1,0 +1,1054 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform Included or Linked Libraries" name="description" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Included or Linked Libraries &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/licenses/cdap-included-libraries.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Trademarks, Licenses, and Dependencies" href="index.html" />
+    <link rel="prev" title="Cask Data Application Platform 3.5.2" href="cdap-ui-dependencies.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cdap-ui-dependencies.html" title="Cask Data Application Platform 3.5.2"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Reference Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Trademarks, Licenses, and Dependencies</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="included-or-linked-libraries">
+<span id="cdap-included-libraries"></span><h1><a class="headerlink" href="#included-or-linked-libraries" title="Perma-link to this heading">🔗</a>Included or Linked Libraries</h1>
+<p>These libraries are either linked or included in CDAP, and their license agreement requires
+that copyright, a list of conditions, or other information be included in this documentation.</p>
+<ul class="simple">
+<li><a class="reference internal" href="#antlr-runtime">antlr-runtime</a></li>
+<li><a class="reference internal" href="#antlr-stringtemplate">antlr.stringtemplate</a></li>
+<li><a class="reference internal" href="#antlr">antlr</a></li>
+<li><a class="reference internal" href="#asm-all">asm-all</a></li>
+<li><a class="reference internal" href="#c3p0">c3p0</a></li>
+<li><a class="reference internal" href="#d3">d3</a></li>
+<li><a class="reference internal" href="#esprima">esprima</a></li>
+<li><a class="reference internal" href="#f2j">f2j</a></li>
+<li><a class="reference internal" href="#janino">janino</a></li>
+<li><a class="reference internal" href="#javax-activation">javax.activation</a></li>
+<li><a class="reference internal" href="#javax-annotation-jsr250-api">javax.annotation.jsr250-api</a></li>
+<li><a class="reference internal" href="#javax-servlet-api">javax.servlet-api</a></li>
+<li><a class="reference internal" href="#javax-servlet-jsp-jsp-api">javax.servlet.jsp.jsp-api</a></li>
+<li><a class="reference internal" href="#javax-transaction-jta">javax.transaction.jta</a></li>
+<li><a class="reference internal" href="#javax-ws-rs-api">javax.ws.rs-api</a></li>
+<li><a class="reference internal" href="#javax-xml-bind-jaxb-api">javax.xml.bind.jaxb-api</a></li>
+<li><a class="reference internal" href="#javax-xml-stream-stax-api">javax.xml.stream.stax-api</a></li>
+<li><a class="reference internal" href="#jaxb-impl">jaxb-impl</a></li>
+<li><a class="reference internal" href="#jblas">jblas</a></li>
+<li><a class="reference internal" href="#jcip-annotations">jcip-annotations</a></li>
+<li><a class="reference internal" href="#jersey">jersey</a></li>
+<li><a class="reference internal" href="#jline2">jline2</a></li>
+<li><a class="reference internal" href="#jodd">jodd</a></li>
+<li><a class="reference internal" href="#js-beautify">js-beautify</a></li>
+<li><a class="reference internal" href="#jsch">jsch</a></li>
+<li><a class="reference internal" href="#json">json</a></li>
+<li><a class="reference internal" href="#leveldbjni">leveldbjni</a></li>
+<li><a class="reference internal" href="#logback">logback</a></li>
+<li><a class="reference internal" href="#netlib-java">netlib-java</a></li>
+<li><a class="reference internal" href="#oro">oro</a></li>
+<li><a class="reference internal" href="#paranamer">paranamer</a></li>
+<li><a class="reference internal" href="#protobuf-java">protobuf-java</a></li>
+<li><a class="reference internal" href="#scala-libraries">Scala Libraries</a></li>
+<li><a class="reference internal" href="#xmlenc">xmlenc</a></li>
+</ul>
+<div class="section" id="antlr-runtime">
+<h2><a class="headerlink" href="#antlr-runtime" title="Perma-link to this heading">🔗</a>antlr-runtime</h2>
+<p>The library <a class="reference external" href="http://www.antlr3.org/">antlr-runtime</a> is included in CDAP in binary format,
+with <a class="reference external" href="http://www.antlr3.org/license.html">this license:</a></p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Copyright (c) 2010 Terence Parr All rights reserved.</div>
+</div>
+<p>Redistribution and use in source and binary forms, with or without modification, are
+permitted provided that the following conditions are met:</p>
+<p>Redistributions of source code must retain the above copyright notice, this list of
+conditions and the following disclaimer.</p>
+<p>Redistributions in binary form must reproduce the above copyright notice, this list of
+conditions and the following disclaimer in the documentation and/or other materials
+provided with the distribution.</p>
+<p>Neither the name of the author nor the names of its contributors may be used to endorse or
+promote products derived from this software without specific prior written permission.</p>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="antlr-stringtemplate">
+<h2><a class="headerlink" href="#antlr-stringtemplate" title="Perma-link to this heading">🔗</a>antlr.stringtemplate</h2>
+<p>The libraries <a class="reference external" href="http://www.stringtemplate.org/index.html">antlr.stringtemplate</a> v3 and
+<a class="reference external" href="http://www.stringtemplate.org/index.html">antlr.ST4</a> v4 are included in CDAP in binary
+format, with this <a class="reference external" href="http://www.stringtemplate.org/license.html">license:</a></p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Copyright (c) 2012 Terence Parr</div>
+<div class="line">All rights reserved.</div>
+</div>
+<p>Redistribution and use in source and binary forms, with or without modification, are
+permitted provided that the following conditions are met:</p>
+<p>Redistributions of source code must retain the above copyright notice, this list of
+conditions and the following disclaimer.</p>
+<p>Redistributions in binary form must reproduce the above copyright notice, this list of
+conditions and the following disclaimer in the documentation and/or other materials
+provided with the distribution.</p>
+<p>Neither the name of the author nor the names of its contributors may be used to endorse or
+promote products derived from this software without specific prior written permission.</p>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="antlr">
+<h2><a class="headerlink" href="#antlr" title="Perma-link to this heading">🔗</a>antlr</h2>
+<p>The library <a class="reference external" href="http://www.antlr2.org/">antlr</a> is included in CDAP in binary format,
+with <a class="reference external" href="http://www.antlr2.org/license.html">this license:</a></p>
+<blockquote>
+<div><p>ANTLR 2 License</p>
+<p>We reserve no legal rights to the ANTLR--it is fully in the public domain. An individual
+or company may do whatever they wish with source code distributed with ANTLR or the code
+generated by ANTLR, including the incorporation of ANTLR, or its output, into commerical
+software.</p>
+<p>We encourage users to develop software with ANTLR. However, we do ask that credit is given
+to us for developing ANTLR. By &quot;credit&quot;, we mean that if you use ANTLR or incorporate any
+source code into one of your programs (commercial product, research project, or otherwise)
+that you acknowledge this fact somewhere in the documentation, research report, etc... If
+you like ANTLR and have developed a nice tool with the output, please mention that you
+developed it using ANTLR. In addition, we ask that the headers remain intact in our source
+code. As long as these guidelines are kept, we expect to continue enhancing this system
+and expect to make other tools available as they are completed.</p>
+<p>In countries where the Public Domain status of the work may not be valid, the author
+grants a copyright licence to the general public to deal in the work without restriction
+and permission to sublicence derivates under the terms of any (OSI approved) Open Source
+licence.</p>
+<p>The Python parser generator code under antlr/actions/python/ is covered by the 3-clause
+BSD licence (this part is included in the binary JAR files); the run-time part under
+lib/python/ is covered by the GNU GPL, version 3 or later (this part is not included in
+the binary JAR files). See <a class="reference external" href="https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=750643#80">https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=750643#80</a>&quot;
+for the full details.</p>
+</div></blockquote>
+</div>
+<div class="section" id="asm-all">
+<h2><a class="headerlink" href="#asm-all" title="Perma-link to this heading">🔗</a>asm-all</h2>
+<p>The library <a class="reference external" href="http://asm.ow2.org/index.html">asm-all</a> is included in CDAP in binary
+format, with this <a class="reference external" href="http://asm.ow2.org/license.html">license:</a></p>
+<blockquote>
+<div><p>Copyright (c) 2000-2011 INRIA, France Telecom
+All rights reserved.</p>
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:</p>
+<ol class="arabic simple">
+<li>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.</li>
+<li>Neither the name of the copyright holders nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.</li>
+</ol>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="c3p0">
+<h2><a class="headerlink" href="#c3p0" title="Perma-link to this heading">🔗</a>c3p0</h2>
+<p>The library <a class="reference external" href="https://github.com/swaldman/c3p0">c3p0</a> is included in CDAP in binary format,
+with <a class="reference external" href="https://raw.githubusercontent.com/swaldman/c3p0/master/src/dist-static/LICENSE-EPL">this license</a>
+(Eclipse Public License - v 1.0):</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>On behalf of all Contributors, Cask Data, Inc. disclaims all warranties and
+conditions, express and implied, including warranties or conditions of
+title and non-infringement, and implied warranties or conditions of
+merchantability and fitness for a particular purpose;</li>
+<li>Cask Data, Inc. excludes on behalf of all Contributors all liability for
+damages, including direct, indirect, special, incidental and
+consequential damages, such as lost profits;</li>
+<li>Any provisions which differ from this Agreement are
+offered by Cask Data, Inc. alone and not by any other party; and</li>
+<li>Source code for <em>c3p0</em> may be obtained at <a class="reference external" href="https://github.com/swaldman/c3p0">https://github.com/swaldman/c3p0</a>.</li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="d3">
+<h2><a class="headerlink" href="#d3" title="Perma-link to this heading">🔗</a>d3</h2>
+<p>The library <a class="reference external" href="https://github.com/mbostock/d3">d3</a> is included in CDAP in binary format,
+with <a class="reference external" href="https://github.com/mbostock/d3/blob/master/LICENSE">this license:</a></p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Copyright (c) 2010-2016, Michael Bostock</div>
+<div class="line">All rights reserved.</div>
+</div>
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:</p>
+<ul class="simple">
+<li>Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.</li>
+<li>The name Michael Bostock may not be used to endorse or promote products
+derived from this software without specific prior written permission.</li>
+</ul>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL MICHAEL BOSTOCK BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="esprima">
+<h2><a class="headerlink" href="#esprima" title="Perma-link to this heading">🔗</a>esprima</h2>
+<p>The library <a class="reference external" href="https://github.com/ariya/esprima">esprima</a> is included in CDAP in binary format,
+with <a class="reference external" href="https://github.com/ariya/esprima/blob/master/LICENSE.BSD">this license:</a></p>
+<blockquote>
+<div><p>Copyright (c) jQuery Foundation, Inc. and Contributors, All Rights Reserved.</p>
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:</p>
+<ul class="simple">
+<li>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.</li>
+</ul>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL &lt;COPYRIGHT HOLDER&gt; BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="f2j">
+<h2><a class="headerlink" href="#f2j" title="Perma-link to this heading">🔗</a>f2j</h2>
+<p>The library <a class="reference external" href="http://icl.cs.utk.edu/f2j/index.html">f2j</a> is included in CDAP in binary format,
+with <a class="reference external" href="http://icl.cs.utk.edu/f2j/software/index.html">this license:</a></p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Copyright © 2015 The University of Tennessee. All rights reserved.</div>
+</div>
+<p>Redistribution and use in source and binary forms, with or without modification, are
+permitted provided that the following conditions are met:</p>
+<ul class="simple">
+<li>Redistributions of source code must retain the above copyright notice, this list of
+conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above copyright notice, this list of
+conditions and the following disclaimer listed in this license in the documentation
+and/or other materials provided with the distribution.</li>
+<li>Neither the name of the copyright holders nor the names of its contributors may be
+used to endorse or promote products derived from this software without specific prior
+written permission.</li>
+</ul>
+<p>This software is provided by the copyright holders and contributors &quot;as is&quot; and any
+express or implied warranties, including, but not limited to, the implied warranties of
+merchantability and fitness for a particular purpose are disclaimed. in no event shall
+the copyright owner or contributors be liable for any direct, indirect, incidental,
+special, exemplary, or consequential damages (including, but not limited to, procurement
+of substitute goods or services; loss of use, data, or profits; or business
+interruption) however caused and on any theory of liability, whether in contract, strict
+liability, or tort (including negligence or otherwise) arising in any way out of the use
+of this software, even if advised of the possibility of such damage.</p>
+</div></blockquote>
+</div>
+<div class="section" id="janino">
+<h2><a class="headerlink" href="#janino" title="Perma-link to this heading">🔗</a>janino</h2>
+<p>The library <a class="reference external" href="https://github.com/janino-compiler/janino">janino</a> is included in CDAP in
+binary format, with this <a class="reference external" href="https://raw.githubusercontent.com/janino-compiler/janino/master/LICENSE">license:</a></p>
+<blockquote>
+<div><p>Janino - An embedded Java[TM] compiler</p>
+<div class="line-block">
+<div class="line">Copyright (c) 2001-2016, Arno Unkrig</div>
+<div class="line">Copyright (c) 2015-2016  TIBCO Software Inc.</div>
+<div class="line">All rights reserved.</div>
+</div>
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:</p>
+<ol class="arabic simple">
+<li>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials
+provided with the distribution.</li>
+<li>Neither the name of JANINO nor the names of its contributors
+may be used to endorse or promote products derived from this
+software without specific prior written permission.</li>
+</ol>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="javax-activation">
+<h2><a class="headerlink" href="#javax-activation" title="Perma-link to this heading">🔗</a>javax.activation</h2>
+<p>The library <a class="reference external" href="http://mvnrepository.com/artifact/javax.activation/activation/1.1.1">javax.activation</a> is included in
+CDAP in binary format, with the <a class="reference external" href="https://glassfish.dev.java.net/public/CDDLv1.0.html">CDDL 1.0 license</a>.</p>
+</div>
+<div class="section" id="javax-annotation-jsr250-api">
+<h2><a class="headerlink" href="#javax-annotation-jsr250-api" title="Perma-link to this heading">🔗</a>javax.annotation.jsr250-api</h2>
+<p>The library <a class="reference external" href="http://mvnrepository.com/artifact/javax.annotation/jsr250-api/1.0">javax.annotation.jsr250-api</a> is included in
+CDAP in binary format, with the <a class="reference external" href="https://glassfish.dev.java.net/public/CDDLv1.0.html">CDDL 1.0 license</a>.</p>
+</div>
+<div class="section" id="javax-servlet-api">
+<h2><a class="headerlink" href="#javax-servlet-api" title="Perma-link to this heading">🔗</a>javax.servlet-api</h2>
+<p>The library <a class="reference external" href="http://mvnrepository.com/artifact/javax.servlet/javax.servlet-api/3.0.1">javax.servlet-api</a> is included in
+CDAP in binary format, with the <a class="reference external" href="https://glassfish.dev.java.net/nonav/public/CDDL+GPL.html">CDDL license</a>.</p>
+<p>Source code for <code class="docutils literal"><span class="pre">javax.servlet-api</span></code> may be obtained at
+<a class="reference external" href="https://java.net/projects/servlet-spec/">https://java.net/projects/servlet-spec/</a>.</p>
+</div>
+<div class="section" id="javax-servlet-jsp-jsp-api">
+<h2><a class="headerlink" href="#javax-servlet-jsp-jsp-api" title="Perma-link to this heading">🔗</a>javax.servlet.jsp.jsp-api</h2>
+<p>The library <a class="reference external" href="http://mvnrepository.com/artifact/javax.annotation/jsr250-api/1.0">javax.servlet.jsp.jsp-api</a> is included in
+CDAP in binary format, with the <a class="reference external" href="https://glassfish.dev.java.net/public/CDDLv1.0.html">CDDL 1.0 license</a>.</p>
+<p>Source code for <code class="docutils literal"><span class="pre">javax.servlet.jsp.jsp-api</span></code> may be obtained at
+<a class="reference external" href="https://java.net/projects/servlet-spec/">https://java.net/projects/servlet-spec/</a>.</p>
+</div>
+<div class="section" id="javax-transaction-jta">
+<h2><a class="headerlink" href="#javax-transaction-jta" title="Perma-link to this heading">🔗</a>javax.transaction.jta</h2>
+<p>The library <a class="reference external" href="http://mvnrepository.com/artifact/javax.activation/activation/1.1">javax.transaction.jta</a> is included in
+CDAP in binary format, with the <a class="reference external" href="https://glassfish.dev.java.net/public/CDDLv1.0.html">CDDL 1.0 license</a>.</p>
+</div>
+<div class="section" id="javax-ws-rs-api">
+<h2><a class="headerlink" href="#javax-ws-rs-api" title="Perma-link to this heading">🔗</a>javax.ws.rs-api</h2>
+<p>The library <a class="reference external" href="http://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api/2.0-m02">javax.ws.rs-api</a> is included in
+CDAP in binary format, with the <a class="reference external" href="http://glassfish.java.net/public/CDDL+GPL_1_1.html">CDDL 1.1 license</a>.</p>
+<p>Source code for <code class="docutils literal"><span class="pre">javax.ws.rs-api</span></code> may be obtained at
+<a class="reference external" href="https://jax-rs-spec.java.net">https://jax-rs-spec.java.net</a>.</p>
+</div>
+<div class="section" id="javax-xml-bind-jaxb-api">
+<h2><a class="headerlink" href="#javax-xml-bind-jaxb-api" title="Perma-link to this heading">🔗</a>javax.xml.bind.jaxb-api</h2>
+<p>The library <a class="reference external" href="http://mvnrepository.com/artifact/javax.annotation/jsr250-api/1.0">javax.xml.bind.jaxb-api</a> is included in
+CDAP in binary format, with the <a class="reference external" href="http://glassfish.java.net/public/CDDL+GPL_1_1.html">CDDL 1.1 license</a>.</p>
+<p>Source code for <code class="docutils literal"><span class="pre">javax.xml.bind.jaxb-api</span></code> may be obtained at <a class="reference external" href="https://jaxb.java.net">https://jaxb.java.net</a>.</p>
+</div>
+<div class="section" id="javax-xml-stream-stax-api">
+<h2><a class="headerlink" href="#javax-xml-stream-stax-api" title="Perma-link to this heading">🔗</a>javax.xml.stream.stax-api</h2>
+<p>The library <a class="reference external" href="https://mvnrepository.com/artifact/javax.xml.stream/stax-api/1.0-2">javax.xml.stream.stax-api</a> is included in
+CDAP in binary format, with the <a class="reference external" href="https://glassfish.dev.java.net/public/CDDLv1.0.html">CDDL 1.0 license</a>.</p>
+</div>
+<div class="section" id="jaxb-impl">
+<h2><a class="headerlink" href="#jaxb-impl" title="Perma-link to this heading">🔗</a>jaxb-impl</h2>
+<p>The library <a class="reference external" href="https://jaxb.java.net/2.2.3u1/">com.sun.xml.bind.jaxb-impl</a> is included in CDAP in binary format,
+with <a class="reference external" href="https://glassfish.java.net/public/CDDL+GPL_1_1.html">this license:</a></p>
+<p>Source code for <code class="docutils literal"><span class="pre">com.sun.xml.bind.jaxb-impl</span></code> may be obtained at
+<a class="reference external" href="https://jaxb.java.net/2.2.3u1/jaxb-ri-2_2_3u1.src.zip">https://jaxb.java.net/2.2.3u1/jaxb-ri-2_2_3u1.src.zip</a>.</p>
+</div>
+<div class="section" id="jblas">
+<h2><a class="headerlink" href="#jblas" title="Perma-link to this heading">🔗</a>jblas</h2>
+<p>The library <a class="reference external" href="https://github.com/mikiobraun/jblas">jblas</a> is included in CDAP in binary format,
+with <a class="reference external" href="https://github.com/mikiobraun/jblas/blob/master/COPYING">this license:</a></p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Copyright (c) 2009, Mikio L. Braun and contributors</div>
+<div class="line">All rights reserved.</div>
+</div>
+<p>Redistribution and use in source and binary forms, with or without modification, are
+permitted provided that the following conditions are met:</p>
+<ul class="simple">
+<li>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.</li>
+<li>Neither the name of the Technische Universität Berlin nor the
+names of its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.</li>
+</ul>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="jcip-annotations">
+<h2><a class="headerlink" href="#jcip-annotations" title="Perma-link to this heading">🔗</a>jcip-annotations</h2>
+<p>The library <a class="reference external" href="http://jcip.net">net.jcip.jcip-annotations</a> is included in CDAP in binary format,
+with <a class="reference external" href="http://jcip.net/annotations/doc/index.html">this license:</a></p>
+<blockquote>
+<div>This software is copyright (c) 2005 Brian Goetz and Tim Peierls and is released under the
+Creative Commons Attribution License (<a class="reference external" href="http://creativecommons.org/licenses/by/2.5">http://creativecommons.org/licenses/by/2.5</a>). The
+official home for this software is <a class="reference external" href="http://www.jcip.net">http://www.jcip.net</a>. Any republication or derived work
+distributed in source code form must include the copyright and license notice.</div></blockquote>
+</div>
+<div class="section" id="jersey">
+<h2><a class="headerlink" href="#jersey" title="Perma-link to this heading">🔗</a>jersey</h2>
+<p>The libraries of <a class="reference external" href="https://github.com/jersey/jersey-1.x-old/tree/tags/jersey-1.9/jersey">com.sun.jersey:</a></p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">com.sun.jersey.contribs.jersey-guice</span></code></li>
+<li><code class="docutils literal"><span class="pre">com.sun.jersey.jersey-client</span></code></li>
+<li><code class="docutils literal"><span class="pre">com.sun.jersey.jersey-core</span></code></li>
+<li><code class="docutils literal"><span class="pre">com.sun.jersey.jersey-json</span></code></li>
+<li><code class="docutils literal"><span class="pre">com.sun.jersey.jersey-server</span></code></li>
+</ul>
+<p>are included in CDAP in binary format, with the <a class="reference external" href="https://raw.githubusercontent.com/jersey/jersey-1.x-old/tags/jersey-1.9/jersey/license.html">CDDL 1.1 license</a>.</p>
+<p>Source code for <code class="docutils literal"><span class="pre">com.sun.jersey</span></code> may be obtained at
+<a class="reference external" href="https://github.com/jersey/jersey-1.x-old/tree/tags/jersey-1.9/jersey">https://github.com/jersey/jersey-1.x-old/tree/tags/jersey-1.9/jersey</a>.</p>
+</div>
+<div class="section" id="jline2">
+<h2><a class="headerlink" href="#jline2" title="Perma-link to this heading">🔗</a>jline2</h2>
+<p>The library <a class="reference external" href="https://github.com/jline/jline2/tree/jline-2.12">jline2</a> is included in
+CDAP in binary format, with this <a class="reference external" href="https://raw.githubusercontent.com/jline/jline2/jline-2.12/LICENSE.txt">license:</a></p>
+<blockquote>
+<div><p>Copyright (c) 2002-2012, the original author or authors.
+All rights reserved.</p>
+<p><a class="reference external" href="http://www.opensource.org/licenses/bsd-license.php">http://www.opensource.org/licenses/bsd-license.php</a></p>
+<p>Redistribution and use in source and binary forms, with or
+without modification, are permitted provided that the following
+conditions are met:</p>
+<p>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.</p>
+<p>Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with
+the distribution.</p>
+<p>Neither the name of JLine nor the names of its contributors
+may be used to endorse or promote products derived from this
+software without specific prior written permission.</p>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+&quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="jodd">
+<h2><a class="headerlink" href="#jodd" title="Perma-link to this heading">🔗</a>jodd</h2>
+<p>The library <a class="reference external" href="http://jodd.org/">jodd</a> is included in CDAP in binary format,
+with <a class="reference external" href="http://jodd.org/license.html">this license:</a></p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Copyright (c) 2003-2016, Jodd Team</div>
+<div class="line">All rights reserved.</div>
+</div>
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:</p>
+<ol class="arabic simple">
+<li>Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.</li>
+</ol>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="js-beautify">
+<h2><a class="headerlink" href="#js-beautify" title="Perma-link to this heading">🔗</a>js-beautify</h2>
+<p>The library <a class="reference external" href="https://github.com/beautify-web/js-beautify">js-beautify</a> is included in
+CDAP in binary format, with <a class="reference external" href="https://raw.githubusercontent.com/beautify-web/js-beautify/master/LICENSE">this license:</a></p>
+<blockquote>
+<div><p>The MIT License (MIT)</p>
+<p>Copyright (c) 2007-2013 Einar Lielmanis and contributors.</p>
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software
+without restriction, including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+to whom the Software is furnished to do so, subject to the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.</p>
+<p>THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="jsch">
+<h2><a class="headerlink" href="#jsch" title="Perma-link to this heading">🔗</a>jsch</h2>
+<p>The library <a class="reference external" href="http://www.jcraft.com/jsch">jsch</a> is included in CDAP in binary format,
+with <a class="reference external" href="http://www.jcraft.com/jsch/LICENSE.txt">this license:</a></p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Copyright (c) 2002-2015 Atsuhiko Yamanaka, JCraft,Inc.</div>
+<div class="line">All rights reserved.</div>
+</div>
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:</p>
+<ol class="arabic simple">
+<li>Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in
+the documentation and/or other materials provided with the distribution.</li>
+<li>The names of the authors may not be used to endorse or promote products
+derived from this software without specific prior written permission.</li>
+</ol>
+<p>THIS SOFTWARE IS PROVIDED &quot;AS IS&quot; AND ANY EXPRESSED OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL JCRAFT,
+INC. OR ANY CONTRIBUTORS TO THIS SOFTWARE BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="json">
+<h2><a class="headerlink" href="#json" title="Perma-link to this heading">🔗</a>json</h2>
+<p>The library <a class="reference external" href="http://mvnrepository.com/artifact/org.json/json/20090211">json-20090211</a> is included in
+CDAP in binary format, with this <a class="reference external" href="http://www.json.org/license.html">license:</a></p>
+<blockquote>
+<div><p>Copyright (c) 2002 JSON.org</p>
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software
+without restriction, including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+to whom the Software is furnished to do so, subject to the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.</p>
+<p>The Software shall be used for Good, not Evil.</p>
+<p>THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="leveldbjni">
+<h2><a class="headerlink" href="#leveldbjni" title="Perma-link to this heading">🔗</a>leveldbjni</h2>
+<p>The library <a class="reference external" href="https://github.com/fusesource/leveldbjni">leveldbjni</a> is included in CDAP in binary format,
+with <a class="reference external" href="https://raw.githubusercontent.com/fusesource/leveldbjni/leveldbjni-1.8/license.txt">this license:</a></p>
+<blockquote>
+<div><p>Copyright (C) 2011, FuseSource Corp.  All rights reserved.</p>
+<blockquote>
+<div><a class="reference external" href="http://fusesource.com">http://fusesource.com</a></div></blockquote>
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:</p>
+<ul class="simple">
+<li>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.</li>
+<li>Neither the name of FuseSource Corp. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.</li>
+</ul>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+&quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="logback">
+<h2><a class="headerlink" href="#logback" title="Perma-link to this heading">🔗</a>logback</h2>
+<p>The libraries <code class="docutils literal"><span class="pre">logback-classic</span></code> and <code class="docutils literal"><span class="pre">logback-core</span></code> are included in CDAP in binary
+format, with <a class="reference external" href="https://raw.githubusercontent.com/qos-ch/logback/v_1.0.9/LICENSE.txt">this license:</a></p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Logback: the reliable, generic, fast and flexible logging framework.</div>
+<div class="line">Copyright (C) 1999-2012, QOS.ch. All rights reserved.</div>
+</div>
+<p>This program and the accompanying materials are dual-licensed under
+the terms of the <a class="reference external" href="https://www.eclipse.org/legal/epl-v10.html">Eclipse Public License v1.0</a>
+as published by the Eclipse Foundation.</p>
+</div></blockquote>
+<p>Source code for <code class="docutils literal"><span class="pre">logback</span></code> may be obtained at <a class="reference external" href="https://github.com/qos-ch/logback">https://github.com/qos-ch/logback</a>.</p>
+</div>
+<div class="section" id="netlib-java">
+<h2><a class="headerlink" href="#netlib-java" title="Perma-link to this heading">🔗</a>netlib-java</h2>
+<p>The library <a class="reference external" href="https://github.com/fommil/netlib-java">netlib-java</a> is included in CDAP in binary format,
+with <a class="reference external" href="https://github.com/fommil/netlib-java/blob/master/LICENSE.txt">this license:</a></p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Copyright (c) 2013 Samuel Halliday</div>
+<div class="line">Copyright (c) 1992-2011 The University of Tennessee and The University</div>
+<div class="line-block">
+<div class="line">of Tennessee Research Foundation.  All rights reserved.</div>
+</div>
+<div class="line">Copyright (c) 2000-2011 The University of California Berkeley. All rights reserved.</div>
+<div class="line">Copyright (c) 2006-2011 The University of Colorado Denver.  All rights reserved.</div>
+</div>
+<p>Redistribution and use in source and binary forms, with or without modification, are
+permitted provided that the following conditions are met:</p>
+<ul class="simple">
+<li>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer listed in this license in
+the documentation and/or other materials provided with the distribution.</li>
+<li>Neither the name of the copyright holders nor the names of its
+contributors may be used to endorse or promote products derived from this software
+without specific prior written permission.</li>
+</ul>
+<p>The copyright holders provide no reassurances that the source code provided does not
+infringe any patent, copyright, or any other intellectual property rights of third
+parties.  The copyright holders disclaim any liability to any recipient for claims
+brought against recipient by any third party for infringement of that parties
+intellectual property rights.</p>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="oro">
+<h2><a class="headerlink" href="#oro" title="Perma-link to this heading">🔗</a>oro</h2>
+<p>The library <a class="reference external" href="http://archive.apache.org/dist/jakarta/oro/jakarta-oro-2.0.8.zip">oro</a> is
+included in CDAP in binary format, with the Apache License, Version 1.1:</p>
+<blockquote>
+<div><p>Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+reserved.</p>
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:</p>
+<ol class="arabic">
+<li><p class="first">Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.</p>
+</li>
+<li><p class="first">Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in
+the documentation and/or other materials provided with the
+distribution.</p>
+</li>
+<li><p class="first">The end-user documentation included with the redistribution,
+if any, must include the following acknowledgment:</p>
+<blockquote>
+<div><p>&quot;This product includes software developed by the
+Apache Software Foundation (<a class="reference external" href="http://www.apache.org/">http://www.apache.org/</a>).&quot;</p>
+</div></blockquote>
+<p>Alternately, this acknowledgment may appear in the software itself,
+if and wherever such third-party acknowledgments normally appear.</p>
+</li>
+<li><p class="first">The names &quot;Apache&quot; and &quot;Apache Software Foundation&quot;, &quot;Jakarta-Oro&quot;
+must not be used to endorse or promote products derived from this
+software without prior written permission. For written
+permission, please contact <a class="reference external" href="mailto:apache&#37;&#52;&#48;apache&#46;org">apache<span>&#64;</span>apache<span>&#46;</span>org</a>.</p>
+</li>
+<li><p class="first">Products derived from this software may not be called &quot;Apache&quot;
+or &quot;Jakarta-Oro&quot;, nor may &quot;Apache&quot; or &quot;Jakarta-Oro&quot; appear in their
+name, without prior written permission of the Apache Software Foundation.</p>
+</li>
+</ol>
+<p>THIS SOFTWARE IS PROVIDED &quot;AS IS&quot; AND ANY EXPRESSED OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="paranamer">
+<h2><a class="headerlink" href="#paranamer" title="Perma-link to this heading">🔗</a>paranamer</h2>
+<p>The library <a class="reference external" href="https://github.com/paul-hammant/paranamer/">paranamer</a> is included in CDAP
+in binary format, with <a class="reference external" href="https://raw.githubusercontent.com/paul-hammant/paranamer/paranamer-2.3/LICENSE.txt">this license:</a></p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Copyright (c) 2006 Paul Hammant &amp; ThoughtWorks Inc</div>
+<div class="line">All rights reserved.</div>
+</div>
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:</p>
+<ol class="arabic simple">
+<li>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.</li>
+<li>Neither the name of the copyright holders nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.</li>
+</ol>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="protobuf-java">
+<h2><a class="headerlink" href="#protobuf-java" title="Perma-link to this heading">🔗</a>protobuf-java</h2>
+<p>The library <a class="reference external" href="https://github.com/google/protobuf">protobuf-java</a> is included in CDAP in
+binary format, with <a class="reference external" href="https://raw.githubusercontent.com/google/protobuf/master/LICENSE">this license:</a></p>
+<blockquote>
+<div><p>This license applies to all parts of Protocol Buffers except the following:</p>
+<ul class="simple">
+<li>Atomicops support for generic gcc, located in
+src/google/protobuf/stubs/atomicops_internals_generic_gcc.h.
+This file is copyrighted by Red Hat Inc.</li>
+<li>Atomicops support for AIX/POWER, located in
+src/google/protobuf/stubs/atomicops_internals_power.h.
+This file is copyrighted by Bloomberg Finance LP.</li>
+</ul>
+<p>Copyright 2014, Google Inc.  All rights reserved.</p>
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:</p>
+<ul class="simple">
+<li>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.</li>
+<li>Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.</li>
+</ul>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+&quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+<p>Code generated by the Protocol Buffer compiler is owned by the owner
+of the input file used when generating it.  This code is not
+standalone and requires a support library to be linked with it.  This
+support library is itself covered by the above license.</p>
+</div></blockquote>
+</div>
+<div class="section" id="scala-libraries">
+<h2><a class="headerlink" href="#scala-libraries" title="Perma-link to this heading">🔗</a>Scala Libraries</h2>
+<p>The <a class="reference external" href="http://www.scala-lang.org/index.html">Scala libraries</a> are included in CDAP in binary format,
+with <a class="reference external" href="http://www.scala-lang.org/license.html">this license:</a></p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Copyright (c) 2002-2016, EPFL</div>
+<div class="line">Copyright (c) 2011-2016, Typesafe, Inc.</div>
+</div>
+<p>All rights reserved.</p>
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:</p>
+<ul class="simple">
+<li>Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.</li>
+<li>Neither the name of the EPFL nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.</li>
+</ul>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+<div class="section" id="xmlenc">
+<h2><a class="headerlink" href="#xmlenc" title="Perma-link to this heading">🔗</a>xmlenc</h2>
+<p>The library <a class="reference external" href="http://pilotfiber.dl.sourceforge.net/project/xmlenc/xmlenc/0.52/xmlenc-0.52.tgz">xmlenc</a> is
+included in CDAP in binary format, with this license:</p>
+<blockquote>
+<div><p>Copyright 2003-2005, Ernst de Haan &lt;<a class="reference external" href="mailto:wfe&#46;dehaan&#37;&#52;&#48;gmail&#46;com">wfe<span>&#46;</span>dehaan<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;
+All rights reserved.</p>
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:</p>
+<ol class="arabic simple">
+<li>Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.</li>
+<li>Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software
+without specific prior written permission.</li>
+</ol>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS &quot;AS IS&quot;
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../http-restful-api/index.html"> HTTP RESTful API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Cask Data Application Platform 3.5.2" href="cdap-ui-dependencies.html" />Cask Data Application Platform 3.5.2</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">
+    &nbsp;&nbsp;
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

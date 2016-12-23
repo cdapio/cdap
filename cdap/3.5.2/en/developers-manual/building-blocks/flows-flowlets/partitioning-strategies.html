@@ -1,0 +1,339 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Partitioning Strategies &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/building-blocks/flows-flowlets/partitioning-strategies.html">
+
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../../index.html" />
+    <link rel="up" title="Flows and Flowlets" href="index.html" />
+    <link rel="next" title="MapReduce Programs" href="../mapreduce-programs.html" />
+    <link rel="prev" title="Flowlet Instances and Resources" href="flowlets-instances.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../mapreduce-programs.html" title="MapReduce Programs"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="flowlets-instances.html" title="Flowlet Instances and Resources"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="../index.html" >Building Blocks</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Flows and Flowlets</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="partitioning-strategies">
+<h1><a class="headerlink" href="#partitioning-strategies" title="Perma-link to this heading">🔗</a>Partitioning Strategies</h1>
+<p>As mentioned above, if you have multiple instances of a flowlet the input queue is
+partitioned among the flowlets. The partitioning can occur in different ways, and each
+flowlet can specify one of these three partitioning strategies:</p>
+<ul class="simple">
+<li><strong>First-in first-out (FIFO):</strong> Default mode. In this mode, every flowlet instance
+receives the next available data object in the queue. However, since multiple consumers
+may compete for the same data object, access to the queue must be synchronized. This may
+not always be the most efficient strategy.</li>
+<li><strong>Round-robin:</strong> With this strategy, the number of items is distributed evenly among the
+instances. In general, round-robin is the most efficient partitioning. Though more
+efficient than FIFO, it is not ideal when the application needs to group objects into
+buckets according to business logic. In those cases, hash-based partitioning is
+preferable.</li>
+<li><strong>Hash-based:</strong> If the emitting flowlet annotates each data object with a hash key, this
+partitioning ensures that all objects of a given key are received by the same consumer
+instance. This can be useful for aggregating by key, and can help reduce write conflicts.</li>
+</ul>
+<p class="rubric">First-in first-out (FIFO) Partitioning</p>
+<p>Suppose we have a flowlet that counts words:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Counter</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;wordCounts&quot;</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">wordCountsTable</span><span class="o">;</span>
+
+  <span class="nd">@ProcessInput</span><span class="o">(</span><span class="s">&quot;wordOut&quot;</span><span class="o">)</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">String</span> <span class="n">word</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">wordCountsTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">word</span><span class="o">),</span> <span class="mi">1L</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>This flowlet uses the default strategy of FIFO.</p>
+<p class="rubric">Round-robin Partitioning</p>
+<p>To increase the throughput when this flowlet has many instances, we can specify
+round-robin partitioning:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@RoundRobin</span>
+<span class="nd">@ProcessInput</span><span class="o">(</span><span class="s">&quot;wordOut&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">String</span> <span class="n">word</span><span class="o">)</span> <span class="o">{</span>
+  <span class="k">this</span><span class="o">.</span><span class="na">wordCountsTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">word</span><span class="o">),</span> <span class="mi">1L</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Now, if we have three instances of this flowlet, every instance will receive every third
+word. For example, for the sequence of words in the sentence, “I scream, you scream, we
+all scream for ice cream”:</p>
+<ul class="simple">
+<li>The first instance receives the words: <em>I scream scream cream</em></li>
+<li>The second instance receives the words: <em>scream we for</em></li>
+<li>The third instance receives the words: <em>you all ice</em></li>
+</ul>
+<p>The potential problem with this is that the first two instances might
+both attempt to increment the counter for the word <em>scream</em> at the same time,
+leading to a write conflict.</p>
+<p class="rubric">Hash-based Partitioning</p>
+<p>To avoid conflicts, we can use hash-based partitioning:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@HashPartition</span><span class="o">(</span><span class="s">&quot;wordHash&quot;</span><span class="o">)</span>
+<span class="nd">@ProcessInput</span><span class="o">(</span><span class="s">&quot;wordOut&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">String</span> <span class="n">word</span><span class="o">)</span> <span class="o">{</span>
+  <span class="k">this</span><span class="o">.</span><span class="na">wordCountsTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">word</span><span class="o">),</span> <span class="mi">1L</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Now only one of the flowlet instances will receive the word <em>scream</em>, and there can be no
+more write conflicts. Note that in order to use hash-based partitioning, the emitting
+flowlet must annotate each data object with the partitioning key:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Output</span><span class="o">(</span><span class="s">&quot;wordOut&quot;</span><span class="o">)</span>
+<span class="kd">private</span> <span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">wordOutput</span><span class="o">;</span>
+<span class="o">...</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">StreamEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="c1">// emit the word with the partitioning key name &quot;wordHash&quot;</span>
+  <span class="n">wordOutput</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">word</span><span class="o">,</span> <span class="s">&quot;wordHash&quot;</span><span class="o">,</span> <span class="n">word</span><span class="o">.</span><span class="na">hashCode</span><span class="o">());</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Note that the emitter must use the same name (&quot;wordHash&quot;) for the key that the consuming
+flowlet specifies as the partitioning key. If the output is connected to more than one
+flowlet, you can also annotate a data object with multiple hash keys—each consuming
+flowlet can then use different partitioning. This is useful if you want to aggregate by
+multiple keys, such as counting purchases by product ID as well as by customer ID.</p>
+<p class="rubric">Partitioning and Batch Execution</p>
+<p>Partitioning can be combined with batch execution:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Batch</span><span class="o">(</span><span class="mi">100</span><span class="o">)</span>
+<span class="nd">@HashPartition</span><span class="o">(</span><span class="s">&quot;wordHash&quot;</span><span class="o">)</span>
+<span class="nd">@ProcessInput</span><span class="o">(</span><span class="s">&quot;wordOut&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">words</span><span class="o">)</span> <span class="o">{</span>
+   <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../views.html"> Views</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"> Flows and Flowlets</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="flowlets.html"> Flowlets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="input-context.html"> Input Context</a></li>
+<li class="toctree-l3"><a class="reference internal" href="type-projection.html"> Type Projection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="stream-event.html"> Stream Event</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tick-methods.html"> Tick Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="connecting-flowlets.html"> Connecting Flowlets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="batch-execution.html"> Batch Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="flowlets-instances.html"> Flowlets and Instances</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href=""> Partitioning Strategies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#flow-and-flowlet-examples">Flow and Flowlet Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../plugins.html"> Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../secure-keys.html"> Secure Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../artifacts.html"> Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../metadata-lineage.html"> Metadata and Lineage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../audit-logging.html"> Audit Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Flowlet Instances and Resources" href="flowlets-instances.html" />Flowlet Instances and Resources</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="MapReduce Programs" href="../mapreduce-programs.html" />MapReduce Programs</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
