@@ -1,0 +1,811 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Dataset HTTP RESTful API &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/http-restful-api/dataset.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Lifecycle HTTP RESTful API" href="lifecycle.html" />
+    <link rel="prev" title="Configuration HTTP RESTful API" href="configuration.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="lifecycle.html" title="Lifecycle HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="configuration.html" title="Configuration HTTP RESTful API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Reference Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="dataset-http-restful-api">
+<span id="http-restful-api-dataset"></span><h1><a class="headerlink" href="#dataset-http-restful-api" title="Perma-link to this heading">🔗</a>Dataset HTTP RESTful API</h1>
+<p>The CDAP Dataset HTTP RESTful API allows you to interact with datasets through HTTP. You
+can list, create, delete, and truncate datasets. For details on datasets, see the
+<a class="reference external" href="../source/../../developers-manual/building-blocks/datasets/index.html#datasets-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP Components, datasets section</span></a></p>
+<p>All methods or endpoints described in this API have a base URL (typically
+<code class="docutils literal"><span class="pre">http://&lt;host&gt;:10000</span></code> or <code class="docutils literal"><span class="pre">https://&lt;host&gt;:10443</span></code>) that precedes the resource
+identifier, as described in the <a class="reference internal" href="introduction.html#http-restful-api-conventions-base-url"><span>RESTful API Conventions</span></a>.
+These methods return a status code, as listed in the <a class="reference internal" href="introduction.html#http-restful-api-status-codes"><span>RESTful API  Status Codes</span></a>.</p>
+<div class="section" id="listing-all-datasets">
+<h2><a class="headerlink" href="#listing-all-datasets" title="Perma-link to this heading">🔗</a>Listing all Datasets</h2>
+<p>You can list all datasets in CDAP by issuing an HTTP GET request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/data/datasets</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+</tbody>
+</table>
+<p>The response body will contain a JSON-formatted list of the existing datasets:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">   &quot;name&quot;:&quot;cdap.user.purchases&quot;,</span>
+<span class="go">   &quot;type&quot;:&quot;co.cask.cdap.api.dataset.lib.ObjectStore&quot;,</span>
+<span class="go">   &quot;description&quot; : &quot;Purchases Dataset&quot;,</span>
+<span class="go">   &quot;properties&quot;:{</span>
+<span class="go">      &quot;schema&quot;:&quot;...&quot;,</span>
+<span class="go">      &quot;type&quot;:&quot;...&quot;</span>
+<span class="go">   },</span>
+<span class="go">   &quot;datasetSpecs&quot;:{</span>
+<span class="go">      ...</span>
+<span class="go">   }</span>
+<span class="go"> }</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-a-dataset">
+<span id="http-restful-api-dataset-creating"></span><h2><a class="headerlink" href="#creating-a-dataset" title="Perma-link to this heading">🔗</a>Creating a Dataset</h2>
+<p>You can create a dataset by issuing an HTTP PUT request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT /v3/namespaces/&lt;namespace-id&gt;/data/datasets/&lt;dataset-name&gt;</span>
+</pre></div>
+</div>
+<p>with JSON-formatted name of the dataset type, properties, and description in a body:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">   &quot;typeName&quot;:&quot;&lt;type-name&gt;&quot;,</span>
+<span class="go">   &quot;properties&quot;:{&lt;properties&gt;},</span>
+<span class="go">   &quot;description&quot;:&quot;Dataset Description&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dataset-name</span></code></td>
+<td>Name of the new dataset</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">type-name</span></code></td>
+<td>Type of the new dataset</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">properties</span></code></td>
+<td>Dataset properties, map of String to String.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">description</span></code></td>
+<td>Dataset description</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Requested dataset was successfully created</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>Requested dataset type was not found</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">409</span> <span class="pre">Conflict</span></code></td>
+<td>Dataset with the same name already exists</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Request</th>
+<td><code class="docutils literal"><span class="pre">PUT</span> <span class="pre">/v3/namespaces/default/data/datasets/mydataset</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Body</th>
+<td><code class="docutils literal"><span class="pre">{&quot;typeName&quot;:&quot;co.cask.cdap.api.dataset.table.Table&quot;,</span></code> <code class="docutils literal"><span class="pre">&quot;properties&quot;:{&quot;dataset.table.ttl&quot;:&quot;3600&quot;},</span></code>
+<code class="docutils literal"><span class="pre">&quot;description&quot;:&quot;My</span> <span class="pre">Dataset</span> <span class="pre">Description&quot;}</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Creates a dataset named <em>mydataset</em> of the type <code class="docutils literal"><span class="pre">Table</span></code> in the namespace <em>default</em>
+with the time-to-live property set to 1 hour and a description of <code class="docutils literal"><span class="pre">My</span> <span class="pre">Dataset</span> <span class="pre">Description</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="properties-of-an-existing-dataset">
+<span id="http-restful-api-dataset-properties"></span><h2><a class="headerlink" href="#properties-of-an-existing-dataset" title="Perma-link to this heading">🔗</a>Properties of an Existing Dataset</h2>
+<p>You can retrieve the properties with which a dataset was created or last updated by issuing an HTTP GET request to
+the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/data/datasets/&lt;dataset-name&gt;/properties</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dataset-name</span></code></td>
+<td>Name of the existing dataset</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Requested dataset was successfully updated</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>Requested dataset instance was not found</td>
+</tr>
+</tbody>
+</table>
+<p>The response—if successful—will contain the JSON-formatted properties:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">   &quot;key1&quot;:&quot;value1&quot;,</span>
+<span class="go">   &quot;key2&quot;:&quot;value2&quot;,</span>
+<span class="go">   ...</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>Note that this will return the original properties that were submitted when the dataset was created or updated.
+You can use these properties to create a clone of the dataset, or as a basis for updating some properties of this
+dataset without modifying the remaining properties.</p>
+</div>
+<div class="section" id="updating-an-existing-dataset">
+<span id="http-restful-api-dataset-updating"></span><h2><a class="headerlink" href="#updating-an-existing-dataset" title="Perma-link to this heading">🔗</a>Updating an Existing Dataset</h2>
+<p>You can update an existing dataset's table and properties by issuing an HTTP PUT request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT /v3/namespaces/&lt;namespace-id&gt;/data/datasets/&lt;dataset-name&gt;/properties</span>
+</pre></div>
+</div>
+<p>with JSON-formatted properties in the body:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">   &quot;key1&quot;:&quot;value1&quot;,</span>
+<span class="go">   &quot;key2&quot;:&quot;value2&quot;,</span>
+<span class="go">   ...</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p><strong>Notes:</strong></p>
+<ul class="simple">
+<li>The dataset must already exist.</li>
+<li>The properties given in this request replace all existing properties; that is, if you
+have set other properties for this table, such as time-to-live (<code class="docutils literal"><span class="pre">dataset.table.ttl</span></code>),
+you must also include those properties in the update request.</li>
+<li>You can retrieve the existing properties using the <a class="reference internal" href="#http-restful-api-dataset-properties"><span>Properties of an Existing Dataset</span></a>
+and use that as the basis for constructing your request.</li>
+</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dataset-name</span></code></td>
+<td>Name of the existing dataset</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Requested dataset was successfully updated</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>Requested dataset instance was not found</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Request</th>
+<td><code class="docutils literal"><span class="pre">PUT</span> <span class="pre">/v3/namespaces/default/data/datasets/mydataset/properties</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Body</th>
+<td><code class="docutils literal"><span class="pre">{&quot;dataset.table.ttl&quot;:&quot;7200&quot;}</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>For the <em>mydataset</em> of type <code class="docutils literal"><span class="pre">Table</span></code> of the namespace <em>default</em>, update the dataset
+and its time-to-live property to 2 hours</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="deleting-a-dataset">
+<h2><a class="headerlink" href="#deleting-a-dataset" title="Perma-link to this heading">🔗</a>Deleting a Dataset</h2>
+<p>You can delete a dataset by issuing an HTTP DELETE request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/data/datasets/&lt;dataset-name&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dataset-name</span></code></td>
+<td>Dataset name</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Dataset was successfully deleted</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
+<td>Dataset named <em>dataset-name</em> could not be found</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Request</th>
+<td><code class="docutils literal"><span class="pre">DELETE</span> <span class="pre">/v3/namespaces/default/data/datasets/mydataset</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Deletes the dataset <em>mydataset</em> in the namespace <em>default</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="deleting-all-datasets">
+<span id="http-restful-api-dataset-deleting-all"></span><h2><a class="headerlink" href="#deleting-all-datasets" title="Perma-link to this heading">🔗</a>Deleting all Datasets</h2>
+<p>If the property <code class="docutils literal"><span class="pre">enable.unrecoverable.reset</span></code> in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> is set to <code class="docutils literal"><span class="pre">true</span></code>,
+you can delete all Datasets (in a namespace) by issuing an HTTP DELETE request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/unrecoverable/namespaces/&lt;namespace-id&gt;/datasets</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>All Datasets were successfully deleted</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">403</span> <span class="pre">Forbidden</span></code></td>
+<td>Property to enable unrecoverable methods is not enabled</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">409</span> <span class="pre">Conflict</span></code></td>
+<td>Programs are currently running in the namespace</td>
+</tr>
+</tbody>
+</table>
+<p>This command will only work if all programs in the namespace are not running.</p>
+<p>If the property <code class="docutils literal"><span class="pre">enable.unrecoverable.reset</span></code> in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> is not set to
+<code class="docutils literal"><span class="pre">true</span></code>, this operation will return a Status Code <code class="docutils literal"><span class="pre">403</span> <span class="pre">Forbidden</span></code>. Note that this
+operation can only be performed if all programs are stopped. If there's at least one
+program that is running, this operation will return a Status Code <code class="docutils literal"><span class="pre">409</span> <span class="pre">Conflict</span></code>.</p>
+<p>This method must be exercised with extreme caution, as there is no recovery from it.</p>
+</div>
+<div class="section" id="truncating-a-dataset">
+<h2><a class="headerlink" href="#truncating-a-dataset" title="Perma-link to this heading">🔗</a>Truncating a Dataset</h2>
+<p>You can truncate a dataset by issuing an HTTP POST request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/data/datasets/&lt;dataset-name&gt;/admin/truncate</span>
+</pre></div>
+</div>
+<p>This will clear the existing data from the dataset. This cannot be undone.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dataset-name</span></code></td>
+<td>Dataset name</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Dataset was successfully truncated</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="datasets-used-by-an-application">
+<h2><a class="headerlink" href="#datasets-used-by-an-application" title="Perma-link to this heading">🔗</a>Datasets used by an Application</h2>
+<p>You can retrieve a list of datasets used by an application by issuing a HTTP GET request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/datasets</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Application ID</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Request was successful</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="datasets-used-by-a-program">
+<h2><a class="headerlink" href="#datasets-used-by-a-program" title="Perma-link to this heading">🔗</a>Datasets used by a Program</h2>
+<p>You can retrieve a list of datasets used by a program by issuing a HTTP GET request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/datasets</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Application ID</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>Program type, one of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, or <code class="docutils literal"><span class="pre">workflows</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Program ID</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Request was successful</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="programs-using-a-dataset">
+<h2><a class="headerlink" href="#programs-using-a-dataset" title="Perma-link to this heading">🔗</a>Programs using a Dataset</h2>
+<p>You can retrieve a list of programs that are using a dataset by issuing a HTTP GET request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/data/datasets/&lt;dataset-id&gt;/programs</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dataset-id</span></code></td>
+<td>Dataset ID</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Request was successful</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html">Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Dataset</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#listing-all-datasets">Listing all Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-dataset">Creating a Dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#properties-of-an-existing-dataset">Properties of an Existing Dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#updating-an-existing-dataset">Updating an Existing Dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deleting-a-dataset">Deleting a Dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deleting-all-datasets">Deleting all Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#truncating-a-dataset">Truncating a Dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#datasets-used-by-an-application">Datasets used by an Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#datasets-used-by-a-program">Datasets used by a Program</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#programs-using-a-dataset">Programs using a Dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html">Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security.html">Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html">Transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Configuration HTTP RESTful API" href="configuration.html" />Configuration HTTP RESTful API</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Lifecycle HTTP RESTful API" href="lifecycle.html" />Lifecycle HTTP RESTful API</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

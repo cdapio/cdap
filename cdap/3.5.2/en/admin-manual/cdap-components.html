@@ -1,0 +1,256 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>CDAP Components &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/admin-manual/cdap-components.html">
+
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="index.html" />
+    <link rel="next" title="Deployment Architectures" href="deployment-architectures.html" />
+    <link rel="prev" title="CDAP Administration Manual" href="index.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="deployment-architectures.html" title="Deployment Architectures"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="CDAP Administration Manual"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="table-of-contents.html">Administration Manual</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cdap-components">
+<span id="admin-manual-cdap-components"></span><h1><a class="headerlink" href="#cdap-components" title="Perma-link to this heading">🔗</a>CDAP Components</h1>
+<p>These are the CDAP components:</p>
+<ul class="simple">
+<li><strong>CDAP Master:</strong> Service for managing runtime, lifecycle and resources of CDAP applications (package <em>cdap-master</em>);</li>
+<li><strong>CDAP Router:</strong> Service supporting HTTP RESTful endpoints for CDAP (package <em>cdap-gateway</em>);</li>
+<li><strong>CDAP Kafka:</strong> Metrics and logging transport service, using an embedded version of <em>Kafka</em> (package <em>cdap-kafka</em>);</li>
+<li><strong>CDAP UI:</strong> User interface for managing CDAP applications (package <em>cdap-ui</em>); and</li>
+<li><strong>CDAP Authentication Server:</strong> Performs client authentication for CDAP when security is enabled (package <em>cdap-security</em>).</li>
+</ul>
+<p>An <em>optional</em> component is available:</p>
+<ul class="simple">
+<li><strong>CDAP CLI:</strong> User interface for interacting with CDAP from within a shell, similar to the HBase or bash shells (package <em>cdap-ui</em>).</li>
+</ul>
+<p>Some CDAP components run on YARN, while others orchestrate “containers” in the Hadoop cluster.
+The CDAP Router service starts a router instance on each of the local boxes and instantiates
+one or more gateway instances on YARN as determined by the gateway service configuration.</p>
+<p>In addition to these components, CDAP uses configuration XML files. The basic
+configuration is set in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> file (documented in <a class="reference internal" href="appendices/cdap-site.html#appendix-cdap-site-xml"><span>an appendix</span></a>). This file is automatically created when you follow the
+installation procedure steps detailed in later sections. You edit a version of this file
+to configure CDAP to your specific requirements prior to starting CDAP services.</p>
+<p>CDAP generates log files, following the settings in the configuration file <code class="docutils literal"><span class="pre">logback.xml</span></code>, using
+<a class="reference external" href="http://logback.qos.ch/">Logback</a>. Logs (for Distributed CDAP) are located in <code class="docutils literal"><span class="pre">/var/log/cdap</span></code>.
+For Standalone CDAP, they are located in <code class="docutils literal"><span class="pre">&lt;CDAP-SDK-HOME&gt;/logs</span></code>.</p>
+<p>If you have <a class="reference internal" href="security/index.html#admin-security"><span>CDAP Security</span></a> enabled, then you will have an
+additional file, <code class="docutils literal"><span class="pre">cdap-security.xml</span></code> (documented in <a class="reference internal" href="appendices/cdap-security.html#appendix-cdap-security-xml"><span>an appendix</span></a>), with additional settings.</p>
+<div class="section" id="installation-summary">
+<h2><a class="headerlink" href="#installation-summary" title="Perma-link to this heading">🔗</a>Installation Summary</h2>
+<p>In summary, these are the steps that you follow to install CDAP:</p>
+<ol class="arabic simple">
+<li>Determine your system architecture</li>
+<li>Review and meet the system requirements: hardware, network, and software</li>
+<li>Prepare your Hadoop cluster</li>
+<li>Install the CDAP components</li>
+<li>Configure the CDAP installation</li>
+<li>Start CDAP services</li>
+<li>Verify the CDAP installation</li>
+</ol>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> CDAP Components</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation-summary">Installation Summary</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="deployment-architectures.html"> Deployment Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hadoop-compatibility.html"> Hadoop Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="system-requirements.html"> System Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation/index.html"> Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html"> Verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="upgrading/index.html"> Upgrading</a></li>
+<li class="toctree-l1"><a class="reference internal" href="security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendices/index.html"> Appendices</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="CDAP Administration Manual" href="index.html" />CDAP Administration Manual</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Deployment Architectures" href="deployment-architectures.html" />Deployment Architectures</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

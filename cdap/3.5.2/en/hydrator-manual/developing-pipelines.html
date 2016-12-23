@@ -1,0 +1,1199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Developing Pipelines &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/hydrator-manual/developing-pipelines.html">
+
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="index.html" />
+    <link rel="next" title="Developing Plugins" href="developing-plugins/index.html" />
+    <link rel="prev" title="Http Callback" href="plugins/post-run-plugins/httpcallback-postaction.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="developing-plugins/index.html" title="Developing Plugins"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="plugins/post-run-plugins/httpcallback-postaction.html" title="Http Callback"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="table-of-contents.html">Cask Hydrator</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="developing-pipelines">
+<span id="cask-hydrator-developing-pipelines"></span><h1><a class="headerlink" href="#developing-pipelines" title="Perma-link to this heading">🔗</a>Developing Pipelines</h1>
+<p>This section is intended for developers creating pipelines using command line tools. Users of
+pipelines should refer to the documentation on <a class="reference internal" href="creating-pipelines.html#cask-hydrator-creating-pipelines"><span>creating pipelines</span></a>.</p>
+<p>As mentioned in <a class="reference internal" href="creating-pipelines.html#cask-hydrator-creating-pipelines"><span>creating pipelines</span></a>, there are two
+different methods for creating pipeline applications:</p>
+<ol class="arabic simple">
+<li>Using Hydrator Studio</li>
+<li>Using command line tools (such as <code class="docutils literal"><span class="pre">curl</span></code>, the CDAP CLI, or the CDAP UI)</li>
+</ol>
+<p>Using comamnd line tools, pipelines can be created using the <a class="reference external" href="source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle-create-app" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Lifecycle RESTful API</span></a>, the <a class="reference external" href="source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP CLI</span></a>, or the <a class="reference external" href="source/../../admin-manual/operations/cdap-ui.html#cdap-ui" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP UI</span></a>.</p>
+<p>In order to create a pipeline application, a pipeline configuration (either as a file or
+in-memory) is required that specifies the configuration of plugins to be used along with
+their properties. (In Hydrator Studio, the user interface prompts you for the required
+information.)</p>
+<p>This section describes how to create such a configuration, and various aspects to be
+considered in the design of pipelines.</p>
+<div class="section" id="pipeline-configuration-file-format">
+<span id="hydrator-developing-pipelines-configuration-file-format"></span><h2><a class="headerlink" href="#pipeline-configuration-file-format" title="Perma-link to this heading">🔗</a>Pipeline Configuration File Format</h2>
+<p>The configuration file format is JSON, containing these objects at the top level:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="10%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Object</th>
+<th class="head">Type</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">name</span></code></td>
+<td><code class="docutils literal"><span class="pre">String</span></code></td>
+<td>Name of the pipeline</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact</span></code></td>
+<td><code class="docutils literal"><span class="pre">Object</span></code></td>
+<td>Specifies the artifact used to create the pipeline</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">config</span></code></td>
+<td><code class="docutils literal"><span class="pre">Object</span></code></td>
+<td>Configuration of the pipeline</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">__ui__</span></code></td>
+<td><code class="docutils literal"><span class="pre">Object</span></code></td>
+<td>Specifies the UI display of the pipeline</td>
+</tr>
+</tbody>
+</table>
+<p>The first three are required, while the <code class="docutils literal"><span class="pre">__ui__</span></code> is optional. It is added by Hydrator
+Studio to store the display of the pipeline in the UI. The format of the <code class="docutils literal"><span class="pre">__ui__</span></code> object
+is not described here, as it is internal to the Hydrator UI and subject to change.</p>
+<p>Example (in JSON format):</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;name&quot;: &quot;MyPipeline&quot;,
+  &quot;artifact&quot;: {
+    &quot;name&quot;: &quot;cdap-data-pipeline&quot;,
+    &quot;version&quot;: &quot;3.5.2&quot;,
+    &quot;scope&quot;: &quot;system&quot;
+  },
+  &quot;config&quot;: {
+    . . .
+    &quot;connections&quot;: [ . . . ],
+    &quot;engine&quot;: &quot;mapreduce&quot;,
+    &quot;postActions&quot;: [ . . . ],
+    &quot;stages&quot;: [ . . . ],
+    &quot;schedule&quot;: &quot;0 * * * *&quot;,
+  },
+  &quot;__ui__&quot;: {
+    . . .
+  }
+}
+</pre>
+</div>
+<div class="section" id="artifact-format">
+<h3><a class="headerlink" href="#artifact-format" title="Perma-link to this heading">🔗</a>Artifact Format</h3>
+<p>The format of an <code class="docutils literal"><span class="pre">artifact</span></code> object:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Key</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">name</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">version</span></code></td>
+<td>Allowable version(s) of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">scope</span></code></td>
+<td>Scope of the artifact, one of either <code class="docutils literal"><span class="pre">user</span></code> or <code class="docutils literal"><span class="pre">system</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="configuration-format">
+<h3><a class="headerlink" href="#configuration-format" title="Perma-link to this heading">🔗</a>Configuration Format</h3>
+<p>The format of the <code class="docutils literal"><span class="pre">config</span></code> object:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Key</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">connections</span></code></td>
+<td>List of <code class="docutils literal"><span class="pre">connection</span></code> objects</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">engine</span></code></td>
+<td>One of &quot;mapreduce&quot; or &quot;spark&quot;, used only in batch pipelines</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">postActions</span></code></td>
+<td>List of <code class="docutils literal"><span class="pre">postaction</span></code> (post-run action) objects; optional, can be an empty list</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">instances</span></code></td>
+<td>Positive integer of the number of worker instances, defaults to 1 if not specified,
+used only in real-time pipelines</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">resources</span></code></td>
+<td>A map defining the resources to be used for worker instance of pipeline, such as
+<code class="docutils literal"><span class="pre">{</span> <span class="pre">&quot;memoryMB&quot;:</span> <span class="pre">2048,</span> <span class="pre">&quot;virtualCores&quot;:</span> <span class="pre">1</span> <span class="pre">}</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">driverResources</span></code></td>
+<td>A map defining the resources to be used for a database driver, such as username or password</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">schedule</span></code></td>
+<td>String in <code class="docutils literal"><span class="pre">cron</span></code> file format, used only in batch pipelines</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stages</span></code></td>
+<td>List of <code class="docutils literal"><span class="pre">stage</span></code> objects</td>
+</tr>
+</tbody>
+</table>
+<p>The format of the <code class="docutils literal"><span class="pre">post-action</span></code> object is identical to that of a <code class="docutils literal"><span class="pre">stage</span></code> object, as
+they are both a JSON representation of a plugin. However, only plugins of type
+<code class="docutils literal"><span class="pre">postaction</span></code> can be included in the list for <code class="docutils literal"><span class="pre">postActions</span></code>. Each <code class="docutils literal"><span class="pre">postaction</span></code> object
+must have a unique name.</p>
+<p>The format of a <code class="docutils literal"><span class="pre">connection</span></code> object:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Key</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">from</span></code></td>
+<td>String name of <code class="docutils literal"><span class="pre">stage</span></code> connected from</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">to</span></code></td>
+<td>String name of <code class="docutils literal"><span class="pre">stage</span></code> connected to</td>
+</tr>
+</tbody>
+</table>
+<p>The format of <code class="docutils literal"><span class="pre">stage</span></code> and <code class="docutils literal"><span class="pre">postaction</span></code> objects:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Key</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">name</span></code></td>
+<td>String name; these must be unique to distinguish stages in the <code class="docutils literal"><span class="pre">connections</span></code> object and
+post-actions in the <code class="docutils literal"><span class="pre">postActions</span></code> list</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">plugin</span></code></td>
+<td>Plugin object</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">errorDatasetName</span></code></td>
+<td>Name of a dataset that any error messages will be written to; used by
+<a class="reference internal" href="running-pipelines.html#cask-hydrator-running-pipelines-error-record-handling"><span>validating transform</span></a>
+stages</td>
+</tr>
+</tbody>
+</table>
+<p>The format of a <code class="docutils literal"><span class="pre">plugin</span></code> object:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Key</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">name</span></code></td>
+<td>String name identifying the plugin</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">type</span></code></td>
+<td>String type of plugin</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact</span></code></td>
+<td>Optional artifact object; if not included or defined, the highest version available is used</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">properties</span></code></td>
+<td>Map of properties, contents of which are determined by the particular plugin used</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="creating-a-batch-pipeline">
+<span id="hydrator-developing-pipelines-creating-batch"></span><h2><a class="headerlink" href="#creating-a-batch-pipeline" title="Perma-link to this heading">🔗</a>Creating a Batch Pipeline</h2>
+<p>With a Hydrator batch pipeline, a <code class="docutils literal"><span class="pre">schedule</span></code> property is required with a <code class="docutils literal"><span class="pre">cron</span></code> entry
+specifying the frequency of the batch job run, such as every day or every hour.</p>
+<p>For example, this JSON (when in a file such as <code class="docutils literal"><span class="pre">config.json</span></code>) provides a
+configuration for a batch pipeline that runs every minute, reading data from a stream
+<em>myStream</em> and writing to a dataset (<code class="docutils literal"><span class="pre">Table</span></code>) called <em>myTable</em>, without any transformations;
+when the run completes, a post-run action send an email indicating that the run has completed:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;name&quot;: &quot;streamETLApp&quot;,
+  &quot;artifact&quot;: {
+    &quot;name&quot;: &quot;cdap-data-pipeline&quot;,
+    &quot;version&quot;: &quot;3.5.2&quot;,
+    &quot;scope&quot;: &quot;system&quot;
+  },
+  &quot;config&quot;: {
+    &quot;schedule&quot;: &quot;* * * * *&quot;,
+    &quot;engine&quot;: &quot;mapreduce&quot;,
+    &quot;postActions&quot;: [
+      {
+        &quot;name&quot;: &quot;Email&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Email&quot;,
+          &quot;type&quot;: &quot;postaction&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;SYSTEM&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;runCondition&quot;: &quot;completion&quot;,
+            &quot;includeWorkflowToken&quot;: &quot;false&quot;,
+            &quot;recipients&quot;: &quot;<a class="reference external" href="mailto:users&#37;&#52;&#48;example&#46;com">users<span>&#64;</span>example<span>&#46;</span>com</a>&quot;,
+            &quot;sender&quot;: &quot;<a class="reference external" href="mailto:admin&#37;&#52;&#48;example&#46;com">admin<span>&#64;</span>example<span>&#46;</span>com</a>&quot;,
+            &quot;subject&quot;: &quot;Post-action Status&quot;,
+            &quot;message&quot;: &quot;Completed run.&quot;
+          }
+        }
+      }
+    ],
+    &quot;stages&quot;: [
+      {
+        &quot;name&quot;: &quot;streamSource&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Stream&quot;,
+          &quot;type&quot;: &quot;batchsource&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;system&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;name&quot;: &quot;myStream&quot;,
+            &quot;duration&quot;: &quot;1m&quot;,
+            &quot;format&quot;: &quot;text&quot;,
+            &quot;schema&quot;: &quot;{\&quot;type\&quot;:\&quot;record\&quot;,\&quot;name\&quot;:\&quot;etlSchemaBody\&quot;,\&quot;fields\&quot;:[{\&quot;name\&quot;:\&quot;body\&quot;,\&quot;type\&quot;:\&quot;string\&quot;}]}&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;tableSink&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Table&quot;,
+          &quot;type&quot;: &quot;batchsink&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;system&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;name&quot;: &quot;myTable&quot;,
+            &quot;schema&quot;: &quot;{\&quot;type\&quot;:\&quot;record\&quot;,\&quot;name\&quot;:\&quot;etlSchemaBody\&quot;,\&quot;fields\&quot;:[{\&quot;name\&quot;:\&quot;ts\&quot;,\&quot;type\&quot;:\&quot;long\&quot;},{\&quot;name\&quot;:\&quot;body\&quot;,\&quot;type\&quot;:\&quot;string\&quot;}]}&quot;,
+            &quot;schema.row.field&quot;: &quot;ts&quot;
+          }
+        }
+      }
+    ],
+    &quot;connections&quot;: [
+      {
+        &quot;from&quot;: &quot;streamSource&quot;,
+        &quot;to&quot;: &quot;tableSink&quot;
+      }
+    ]
+  }
+}
+</pre>
+</div>
+<p>This pipeline launches a MapReduce program that runs every minute, reads data from the
+<code class="docutils literal"><span class="pre">Stream</span></code> <em>myStream</em> and writes to a <code class="docutils literal"><span class="pre">Table</span></code> <em>myTable</em>. A <em>Table Sink</em> needs a row key field to
+be specified and can use the timestamp of a stream event for that.</p>
+<p>A pipeline configuration (the <code class="docutils literal"><span class="pre">config</span></code> object) consists of stages, connections and other
+properties. The stages consist of a single source, zero (or more) transforms, and one (or
+more) sink(s). Each of these stages is identified by a unique name and the plugin to be used.</p>
+<p>A <code class="docutils literal"><span class="pre">plugin</span></code> object is specified by a plugin-name, type, a properties map and can
+(optionally) specify the artifact. If the artifact is not specified, the pipeline will
+choose the artifact with the highest version.</p>
+<p>The connections field in the configuration defines the connections between the stages,
+using the unique names of the stages. The pipeline defined by these connections must be a
+directed acyclic graph (or DAG).</p>
+<p>To create this pipeline, called <em>streamETLApp</em>, you can use either an HTTP RESTful API or
+the CDAP CLI.</p>
+<ul>
+<li><p class="first">Using the <a class="reference external" href="source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle-create-app" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Lifecycle RESTful API</span></a>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral1() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral1 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral1", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral1" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X PUT localhost:10000/v3/namespaces/default/apps/streamETLApp <span class="se">\</span>
+<span class="go">    -H &quot;Content-Type: application/json&quot; -d @config.json</span></span>
+
+<span class="go">Deploy Complete</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X PUT localhost:10000/v3/namespaces/default/apps/streamETLApp ^</span>
+<span class="go">    -H &quot;Content-Type: application/json&quot; -d @config.json</span></span>
+
+<span class="go">Deploy Complete</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Using the <a class="reference external" href="source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP CLI</span></a>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral2() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral2 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral2", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral2" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app streamETLApp cdap-etl-batch 3.5.2 system &lt;path-to-config.json&gt;</span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app streamETLApp cdap-etl-batch 3.5.2 system &lt;path-to-config.json&gt;</span></span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p>where, in both cases, <code class="docutils literal"><span class="pre">config.json</span></code> is the file that contains the pipeline configuration shown above.</p>
+</div>
+<div class="section" id="creating-a-real-time-pipeline">
+<span id="hydrator-developing-pipelines-creating-real-time"></span><h2><a class="headerlink" href="#creating-a-real-time-pipeline" title="Perma-link to this heading">🔗</a>Creating a Real-Time Pipeline</h2>
+<p>With a Hydrator real-time pipeline, a <code class="docutils literal"><span class="pre">batchInterval</span></code> property is required
+specifying the frequency at which the sources will create new micro batches of data.
+The <code class="docutils literal"><span class="pre">batchInterval</span></code> must be a number followed by a time unit, with 's' for seconds,
+'m' for minutes, and 'h' for hours. For example, a value of '10s' will be interpreted
+as ten seconds. This means that every ten seconds, a new micro batch of data will be generated.</p>
+<p>To create a real-time pipeline that reads from a source such as Twitter and writes to a
+CDAP Table after performing a projection transformation, you can use a configuration such as:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;name&quot;: &quot;twitterToStream&quot;,
+  &quot;artifact&quot;: {
+    &quot;name&quot;: &quot;cdap-data-streams&quot;,
+    &quot;version&quot;: &quot;3.5.2&quot;,
+    &quot;scope&quot;: &quot;system&quot;
+  },
+  &quot;config&quot;: {
+    &quot;batchInterval&quot;: &quot;10s&quot;,
+    &quot;stages&quot;: [
+      {
+        &quot;name&quot;: &quot;twitterSource&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Twitter&quot;,
+          &quot;type&quot;: &quot;streamingsource&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;spark-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;system&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;referenceName&quot;: &quot;xxx&quot;,
+            &quot;AccessToken&quot;: &quot;xxx&quot;,
+            &quot;AccessTokenSecret&quot;: &quot;xxx&quot;,
+            &quot;ConsumerKey&quot;: &quot;xxx&quot;,
+            &quot;ConsumerSecret&quot;: &quot;xxx&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;dropProjector&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Projection&quot;,
+          &quot;type&quot;: &quot;transform&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;system&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;drop&quot;: &quot;lang,time,favCount,source,geoLat,geoLong,isRetweet&quot;,
+            &quot;rename&quot;: &quot;message:tweet,rtCount:retCount&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;tableSink&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Table&quot;,
+          &quot;type&quot;: &quot;batchsink&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;system&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;name&quot;: &quot;myTable&quot;,
+            &quot;schema&quot;: &quot;{\&quot;type\&quot;:\&quot;record\&quot;,\&quot;name\&quot;:\&quot;etlSchemaBody\&quot;,\&quot;fields\&quot;:[{\&quot;name\&quot;:\&quot;id\&quot;,\&quot;type\&quot;:\&quot;long\&quot;},{\&quot;name\&quot;:\&quot;tweet\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},{\&quot;name\&quot;:\&quot;retCount\&quot;,\&quot;type\&quot;:\&quot;int\&quot;}]}&quot;,
+            &quot;schema.row.field&quot;: &quot;id&quot;
+          }
+        }
+      }
+    ],
+    &quot;connections&quot;: [
+      {
+        &quot;from&quot;: &quot;twitterSource&quot;,
+        &quot;to&quot;: &quot;dropProjector&quot;
+      },
+      {
+        &quot;from&quot;: &quot;dropProjector&quot;,
+        &quot;to&quot;: &quot;tableSink&quot;
+      }
+    ]
+  }
+}
+</pre>
+</div>
+<p>In the example code above, we will use a <em>ProjectionTransform</em> (a type of transform) to
+drop and rename selected columns in the incoming data. A <em>TableSink</em> in the final step
+requires a schema property that it will use to set the columns and row field for
+writing the data to a CDAP Table.</p>
+</div>
+<div class="section" id="non-linear-executions-in-pipelines">
+<h2><a class="headerlink" href="#non-linear-executions-in-pipelines" title="Perma-link to this heading">🔗</a>Non-linear Executions in Pipelines</h2>
+<p>Hydrator supports directed acyclic graphs in pipelines, which allows for the non-linear
+execution of pipeline stages.</p>
+<div class="section" id="fork-in-pipeline">
+<h3><a class="headerlink" href="#fork-in-pipeline" title="Perma-link to this heading">🔗</a>Fork in Pipeline</h3>
+<p>In this example, a pipeline reads from the stream <code class="docutils literal"><span class="pre">purchaseStats</span></code>. It writes the stream
+events to the table <code class="docutils literal"><span class="pre">replicaTable</span></code>, while at the same time it writes just the
+<code class="docutils literal"><span class="pre">userIds</span></code> to the <code class="docutils literal"><span class="pre">usersTable</span></code> when a user's purchase price is greater than 1000. This
+filtering logic is applied by using an included script in the step
+<code class="docutils literal"><span class="pre">spendingUsersScript</span></code>:</p>
+<a class="reference internal image-reference" href="_images/fork-in-pipeline.png"><img alt="_images/fork-in-pipeline.png" class="align-center" src="_images/fork-in-pipeline.png" style="width: 6in;" /></a>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;name&quot;: &quot;forkedPipeline&quot;,
+  &quot;artifact&quot;: {
+    &quot;name&quot;: &quot;cdap-data-pipeline&quot;,
+    &quot;version&quot;: &quot;3.5.2&quot;,
+    &quot;scope&quot;: &quot;SYSTEM&quot;
+  },
+  &quot;config&quot;: {
+    &quot;schedule&quot;: &quot;* * * * *&quot;,
+    &quot;engine&quot;: &quot;mapreduce&quot;,
+    &quot;postActions&quot;: [],
+    &quot;stages&quot;: [
+      {
+        &quot;name&quot;: &quot;purchaseStats&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Stream&quot;,
+          &quot;type&quot;: &quot;batchsource&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;SYSTEM&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;name&quot;: &quot;testStream&quot;,
+            &quot;duration&quot;: &quot;1d&quot;,
+            &quot;format&quot;: &quot;csv&quot;,
+            &quot;schema&quot;: &quot;{\&quot;type\&quot;:\&quot;record\&quot;,\&quot;name\&quot;:\&quot;etlSchemaBody\&quot;,\&quot;fields\&quot;:[{\&quot;name\&quot;:\&quot;userId\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},{\&quot;name\&quot;:\&quot;purchaseItem\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},{\&quot;name\&quot;:\&quot;purchasePrice\&quot;,\&quot;type\&quot;:\&quot;long\&quot;}]}&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;replicaTable&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Table&quot;,
+          &quot;type&quot;: &quot;batchsink&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;SYSTEM&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;name&quot;: &quot;replicaTable&quot;,
+            &quot;schema&quot;: &quot;{\&quot;type\&quot;:\&quot;record\&quot;,\&quot;name\&quot;:\&quot;etlSchemaBody\&quot;,\&quot;fields\&quot;:[{\&quot;name\&quot;:\&quot;userId\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},{\&quot;name\&quot;:\&quot;purchaseItem\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},{\&quot;name\&quot;:\&quot;purchasePrice\&quot;,\&quot;type\&quot;:\&quot;long\&quot;}]}&quot;,
+            &quot;schema.row.field&quot;: &quot;userId&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;usersTable&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Table&quot;,
+          &quot;type&quot;: &quot;batchsink&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;SYSTEM&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;name&quot;: &quot;targetCustomers&quot;,
+            &quot;schema&quot;: &quot;{\&quot;type\&quot;:\&quot;record\&quot;,\&quot;name\&quot;:\&quot;etlSchemaBody\&quot;,\&quot;fields\&quot;:[{\&quot;name\&quot;:\&quot;userId\&quot;,\&quot;type\&quot;:\&quot;string\&quot;}]}&quot;,
+            &quot;schema.row.field&quot;: &quot;userId&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;spendingUsersScript&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;ScriptFilter&quot;,
+          &quot;type&quot;: &quot;transform&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;SYSTEM&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;script&quot;: &quot;function shouldFilter(input, context) {\n  return (input.purchasePrice &lt;= 1000);\n}&quot;
+          }
+        }
+      }
+    ],
+   &quot;connections&quot;: [
+      {
+        &quot;from&quot;: &quot;purchaseStats&quot;,
+        &quot;to&quot;: &quot;replicaTable&quot;
+      },
+      {
+        &quot;from&quot;: &quot;purchaseStats&quot;,
+        &quot;to&quot;: &quot;spendingUsersScript&quot;
+      },
+      {
+        &quot;from&quot;: &quot;spendingUsersScript&quot;,
+        &quot;to&quot;: &quot;usersTable&quot;
+      }
+    ]
+  }
+}
+</pre>
+</div>
+<p>Pipeline connections can be configured to fork from a stage, with the output of the stage
+sent to two or more configured stages; in the above example, the output record from
+<code class="docutils literal"><span class="pre">purchaseStats</span></code> will be sent to both <code class="docutils literal"><span class="pre">replicaTable</span></code> and <code class="docutils literal"><span class="pre">spendingUsersScript</span></code> stages.</p>
+</div>
+<div class="section" id="merging-stages-in-pipeline">
+<h3><a class="headerlink" href="#merging-stages-in-pipeline" title="Perma-link to this heading">🔗</a>Merging Stages in Pipeline</h3>
+<p>Forked transform stages can merge together at a transform or a sink stage.</p>
+<p>A merge does not join, or modify records in any way. It simply means that multiple stages
+can write to the same stage. The only requirement is that all stages must output records
+of the same schema to the merging stage. Note that the order of records sent from the
+forked stages to the merging stage will not be defined.</p>
+<p>In this next example, <code class="docutils literal"><span class="pre">purchaseStream</span></code> has purchase data with fields <code class="docutils literal"><span class="pre">userid</span></code>,
+<code class="docutils literal"><span class="pre">item</span></code>, <code class="docutils literal"><span class="pre">count</span></code>, and <code class="docutils literal"><span class="pre">price</span></code>. The stream events source stage <code class="docutils literal"><span class="pre">purchaseStream</span></code>
+forks, and records are sent to both of the transforms <code class="docutils literal"><span class="pre">userRewards</span></code> and <code class="docutils literal"><span class="pre">itemRewards</span></code>.</p>
+<p>The <code class="docutils literal"><span class="pre">userRewards</span></code> transform script looks up valued customers in the table
+<code class="docutils literal"><span class="pre">hvCustomers</span></code>, to check if <code class="docutils literal"><span class="pre">userid</span></code> is a valued customer and assigns higher rewards if
+they are. After calculating the rewards, this transform sends an output record in the
+format <code class="docutils literal"><span class="pre">userid(string),</span> <span class="pre">rewards(double)</span></code>.</p>
+<p>The <code class="docutils literal"><span class="pre">itemRewards</span></code> transform script awards higher rewards for bulk purchases and sends
+output records in the same format, <code class="docutils literal"><span class="pre">userid(string),</span> <span class="pre">rewards(double)</span></code>.</p>
+<p>The rewards records are merged at the sink <code class="docutils literal"><span class="pre">rewardsSink</span></code>; note that the incoming schema
+from the transforms <code class="docutils literal"><span class="pre">userRewards</span></code> and <code class="docutils literal"><span class="pre">itemRewards</span></code> are the same, and that the order
+of received records will vary.</p>
+<a class="reference internal image-reference" href="_images/merge-in-pipeline.png"><img alt="_images/merge-in-pipeline.png" class="align-center" src="_images/merge-in-pipeline.png" style="width: 8in;" /></a>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;name&quot;: &quot;mergedPipeline&quot;,
+  &quot;artifact&quot;: {
+      &quot;name&quot;: &quot;cdap-data-pipeline&quot;,
+      &quot;version&quot;: &quot;3.5.2&quot;,
+      &quot;scope&quot;: &quot;SYSTEM&quot;
+  },
+  &quot;config&quot;: {
+    &quot;schedule&quot;: &quot;* * * * *&quot;,
+    &quot;engine&quot;: &quot;mapreduce&quot;,
+    &quot;postActions&quot;: [],
+    &quot;stages&quot;: [
+      {
+        &quot;name&quot;: &quot;purchaseStream&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Stream&quot;,
+          &quot;type&quot;: &quot;batchstream&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;SYSTEM&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;format&quot;: &quot;csv&quot;,
+            &quot;schema&quot;: &quot;{
+              &quot;type&quot;:&quot;record&quot;,
+              &quot;name&quot;:&quot;etlSchemaBody&quot;,
+              &quot;fields&quot;:[
+                {&quot;name&quot;:&quot;userid&quot;,&quot;type&quot;:&quot;string&quot;},
+                {&quot;name&quot;:&quot;item&quot;,&quot;type&quot;:&quot;string&quot;},
+                {&quot;name&quot;:&quot;count&quot;,&quot;type&quot;:&quot;int&quot;},
+                {&quot;name&quot;:&quot;price&quot;,&quot;type&quot;:&quot;long&quot;}
+              ]
+            }&quot;,
+            &quot;name&quot;: &quot;purchases&quot;,
+            &quot;duration&quot;: &quot;1d&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;userRewards&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Script&quot;,
+          &quot;type&quot;: &quot;transform&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;SYSTEM&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;script&quot;: &quot;function transform(input, context) {
+              var rewards = 5;
+              if (context.getLookup('hvCustomers').lookup(input.userid) !== null) {
+                context.getLogger().info(&quot;user &quot; + input.userid + &quot; is a valued customer&quot;);
+                rewards = 100;
+              } else {
+                context.getLogger().info(&quot;user &quot; + input.userid + &quot; is not a valued customer&quot;);
+              }
+              return {'userid': input.userid, 'rewards': rewards};
+            }&quot;,
+            &quot;schema&quot;: &quot;{
+              &quot;type&quot;:&quot;record&quot;,
+              &quot;name&quot;:&quot;etlSchemaBody&quot;,
+              &quot;fields&quot;:[
+                {&quot;name&quot;:&quot;userid&quot;,&quot;type&quot;:&quot;string&quot;},
+                {&quot;name&quot;:&quot;rewards&quot;,&quot;type&quot;:&quot;double&quot;}
+              ]
+            }&quot;,
+            &quot;lookup&quot;: &quot;{&quot;tables&quot;:{&quot;hvCustomers&quot;:{&quot;type&quot;:&quot;DATASET&quot;,&quot;datasetProperties&quot;:{}}}}&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;itemRewards&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Script&quot;,
+          &quot;type&quot;: &quot;transform&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;SYSTEM&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;script&quot;: &quot;function transform(input, context) {
+              var rewards = 5;
+              if (input.count &gt; 20) {
+                rewards = 50;
+              }
+              return {'userid':input.userid, 'rewards':rewards};
+            }&quot;,
+            &quot;schema&quot;: &quot;{
+              &quot;type&quot;:&quot;record&quot;,
+              &quot;name&quot;:&quot;etlSchemaBody&quot;,
+              &quot;fields&quot;:[
+                {&quot;name&quot;:&quot;userid&quot;,&quot;type&quot;:&quot;string&quot;},
+                {&quot;name&quot;:&quot;rewards&quot;,&quot;type&quot;:&quot;double&quot;}
+              ]
+            }&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;rewardsSink&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;TPFSAvro&quot;,
+          &quot;type&quot;: &quot;batchsink&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;SYSTEM&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;schema&quot;: &quot;{
+              &quot;type&quot;:&quot;record&quot;,
+              &quot;name&quot;:&quot;etlSchemaBody&quot;,
+              &quot;fields&quot;:[
+                {&quot;name&quot;:&quot;userid&quot;,&quot;type&quot;:&quot;string&quot;},
+                {&quot;name&quot;:&quot;rewards&quot;,&quot;type&quot;:&quot;double&quot;}
+              ]
+            }&quot;
+          }
+        }
+      }
+    ],
+    &quot;connections&quot;: [
+      {
+        &quot;from&quot;: &quot;purchaseStream&quot;,
+        &quot;to&quot;: &quot;userRewards&quot;
+      },
+      {
+        &quot;from&quot;: &quot;userRewards&quot;,
+        &quot;to&quot;: &quot;rewardsSink&quot;
+      },
+      {
+        &quot;from&quot;: &quot;purchaseStream&quot;,
+        &quot;to&quot;: &quot;itemRewards&quot;
+      },
+      {
+        &quot;from&quot;: &quot;itemRewards&quot;,
+        &quot;to&quot;: &quot;rewardsSink&quot;
+      }
+    ],
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+<div class="section" id="sample-pipeline-configurations">
+<h2><a class="headerlink" href="#sample-pipeline-configurations" title="Perma-link to this heading">🔗</a>Sample Pipeline Configurations</h2>
+<div class="section" id="database-source-and-sink">
+<h3><a class="headerlink" href="#database-source-and-sink" title="Perma-link to this heading">🔗</a>Database Source and Sink</h3>
+<p>Sample configuration for using a <em>Database Source</em> and a <em>Database Sink</em>:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;artifact&quot;: {
+    &quot;name&quot;: &quot;cdap-data-pipeline&quot;,
+    &quot;version&quot;: &quot;3.5.2&quot;,
+    &quot;scope&quot;: &quot;system&quot;
+  },
+  &quot;config&quot;: {
+    &quot;schedule&quot;: &quot;* * * * *&quot;,
+    &quot;stages&quot;: [
+      {
+        &quot;name&quot;: &quot;databaseSource&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Database&quot;,
+          &quot;type&quot;: &quot;batchsource&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;SYSTEM&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;importQuery&quot;: &quot;select id,name,age from my_table&quot;,
+            &quot;countQuery&quot;: &quot;select count(id) from my_table&quot;,
+            &quot;connectionString&quot;: &quot;jdbc:mysql://localhost:3306/test&quot;,
+            &quot;tableName&quot;: &quot;src_table&quot;,
+            &quot;user&quot;: &quot;my_user&quot;,
+            &quot;password&quot;: &quot;my_password&quot;,
+            &quot;jdbcPluginName&quot;: &quot;jdbc_plugin_name_defined_in_jdbc_plugin_json_config&quot;,
+            &quot;jdbcPluginType&quot;: &quot;jdbc_plugin_type_defined_in_jdbc_plugin_json_config&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;databaseSink&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Database&quot;,
+          &quot;type&quot;: &quot;batchsink&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;SYSTEM&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;columns&quot;: &quot;id,name,age&quot;,
+            &quot;connectionString&quot;: &quot;jdbc:mysql://localhost:3306/test&quot;,
+            &quot;tableName&quot;: &quot;dest_table&quot;,
+            &quot;user&quot;: &quot;my_user&quot;,
+            &quot;password&quot;: &quot;my_password&quot;,
+            &quot;jdbcPluginName&quot;: &quot;jdbc_plugin_name_defined_in_jdbc_plugin_json_config&quot;,
+            &quot;jdbcPluginType&quot;: &quot;jdbc_plugin_type_defined_in_jdbc_plugin_json_config&quot;
+          }
+        }
+      }
+    ],
+    &quot;connections&quot;: [
+      {
+        &quot;from&quot;: &quot;databaseSource&quot;,
+        &quot;to&quot;: &quot;databaseSink&quot;
+      }
+    ]
+  }
+}
+</pre>
+</div>
+</div>
+<div class="section" id="kafka-source">
+<h3><a class="headerlink" href="#kafka-source" title="Perma-link to this heading">🔗</a>Kafka Source</h3>
+<p>A Kafka cluster needs to be available, and certain minimum properties specified when
+creating the source:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;name&quot;: &quot;KafkaPipeline&quot;,
+  &quot;artifact&quot;: {
+    &quot;name&quot;: &quot;cdap-data-streams&quot;,
+    &quot;version&quot;: &quot;3.5.2&quot;,
+    &quot;scope&quot;: &quot;system&quot;
+  },
+  &quot;config&quot;: {
+    &quot;batchInterval&quot;: &quot;1s&quot;,
+    &quot;connections&quot;: [
+      {
+        &quot;from&quot;: &quot;kafkaSource&quot;,
+        &quot;to&quot;: &quot;tableSink&quot;
+      }
+    ],
+    &quot;stages&quot;: [
+      {
+        &quot;name&quot;: &quot;kafkaSource&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Kafka&quot;,
+          &quot;type&quot;: &quot;streamingsource&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;spark-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;SYSTEM&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;referenceName&quot;: &quot;purchasesTopic&quot;,
+            &quot;brokers&quot;: &quot;localhost:9092&quot;,
+            &quot;topics&quot;: &quot;purchases&quot;,
+            &quot;format&quot;: &quot;csv&quot;,
+            &quot;schema&quot;: &quot;{\&quot;type\&quot;:\&quot;record\&quot;,\&quot;name\&quot;:\&quot;etlSchemaBody\&quot;,\&quot;fields\&quot;:[{\&quot;name\&quot;:\&quot;id\&quot;,\&quot;type\&quot;:\&quot;long\&quot;},{\&quot;name\&quot;:\&quot;customer\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},{\&quot;name\&quot;:\&quot;item\&quot;,\&quot;type\&quot;:\&quot;string\&quot;}]}&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;tableSink&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Table&quot;,
+          &quot;type&quot;: &quot;batchsink&quot;,
+          &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;system&quot;
+          },
+          &quot;properties&quot;: {
+            &quot;name&quot;: &quot;myTable&quot;,
+            &quot;schema&quot;: &quot;{\&quot;type\&quot;:\&quot;record\&quot;,\&quot;name\&quot;:\&quot;etlSchemaBody\&quot;,\&quot;fields\&quot;:[{\&quot;name\&quot;:\&quot;id\&quot;,\&quot;type\&quot;:\&quot;long\&quot;},{\&quot;name\&quot;:\&quot;customer\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},{\&quot;name\&quot;:\&quot;item\&quot;,\&quot;type\&quot;:\&quot;string\&quot;}]}&quot;
+            &quot;schema.row.field&quot;: &quot;id&quot;
+          }
+        }
+      }
+    ]
+  }
+}
+</pre>
+</div>
+</div>
+<div class="section" id="prebuilt-jars">
+<h3><a class="headerlink" href="#prebuilt-jars" title="Perma-link to this heading">🔗</a>Prebuilt JARs</h3>
+<p>In a case where you'd like to use prebuilt third-party JARs (such as a JDBC driver) as a
+plugin, please refer to the section on <a class="reference internal" href="plugin-management.html#cask-hydrator-plugin-management-third-party-plugins"><span>Deploying Third-Party Jars</span></a>.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">Cask Hydrator: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts-design.html"> Concepts and Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="studio.html"> Hydrator Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-pipelines.html"> Creating Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running-pipelines.html"> Running Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugin-management.html"> Plugin Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugins/index.html"> Plugin Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Developing Pipelines</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pipeline-configuration-file-format">Pipeline Configuration File Format</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#artifact-format">Artifact Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuration-format">Configuration Format</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-a-batch-pipeline">Creating a Batch Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-a-real-time-pipeline">Creating a Real-Time Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#non-linear-executions-in-pipelines">Non-linear Executions in Pipelines</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fork-in-pipeline">Fork in Pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#merging-stages-in-pipeline">Merging Stages in Pipeline</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#sample-pipeline-configurations">Sample Pipeline Configurations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#database-source-and-sink">Database Source and Sink</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#kafka-source">Kafka Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prebuilt-jars">Prebuilt JARs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="developing-plugins/index.html"> Developing Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how-hydrator-works.html"> How Hydrator Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faqs.html"> FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html"> Glossary</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Http Callback" href="plugins/post-run-plugins/httpcallback-postaction.html" />Http Callback</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Developing Plugins" href="developing-plugins/index.html" />Developing Plugins</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

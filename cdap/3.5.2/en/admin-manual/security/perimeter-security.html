@@ -1,0 +1,1064 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Perimeter Security &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/admin-manual/security/perimeter-security.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Security" href="index.html" />
+    <link rel="next" title="Authorization" href="authorization.html" />
+    <link rel="prev" title="Security" href="index.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="authorization.html" title="Authorization"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Security"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Administration Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Security</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="perimeter-security">
+<span id="admin-perimeter-security"></span><h1><a class="headerlink" href="#perimeter-security" title="Perma-link to this heading">🔗</a>Perimeter Security</h1>
+<div class="section" id="enabling-perimeter-security">
+<span id="id1"></span><h2><a class="headerlink" href="#enabling-perimeter-security" title="Perma-link to this heading">🔗</a>Enabling Perimeter Security</h2>
+<div class="section" id="enabling-perimeter-security-standalone-cdap">
+<h3><a class="headerlink" href="#enabling-perimeter-security-standalone-cdap" title="Perma-link to this heading">🔗</a>Enabling Perimeter Security (Standalone CDAP)</h3>
+<p>To enable security in <a class="reference external" href="../source/../../reference-manual/glossary.html#term-standalone-cdap" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-term">Standalone CDAP</span></a>, add these properties to <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="17%" />
+<col width="43%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">false</span></code></td>
+<td>Enables authentication for CDAP. When set to <code class="docutils literal"><span class="pre">true</span></code>
+all requests to CDAP must provide a valid access
+token.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.auth.server.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;hostname&gt;</span></code></td>
+<td>IP address that the CDAP Authentication Server should
+bind to</td>
+</tr>
+</tbody>
+</table>
+<p>Client Authentication then needs to be configured, as described below under
+<a class="reference internal" href="#installation-configuring-authentication-mechanisms"><span>Configuring Authentication Mechanisms</span></a>.
+With Standalone CDAP, the simplest is <a class="reference internal" href="#installation-basic-authentication"><span>Basic Authentication</span></a>.</p>
+</div>
+<div class="section" id="enabling-perimeter-security-distributed-cdap">
+<h3><a class="headerlink" href="#enabling-perimeter-security-distributed-cdap" title="Perma-link to this heading">🔗</a>Enabling Perimeter Security (Distributed CDAP)</h3>
+<p>To enable security in <a class="reference external" href="../source/../../reference-manual/glossary.html#term-distributed-cdap" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-term">Distributed CDAP</span></a>, add these properties to <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="17%" />
+<col width="43%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">false</span></code></td>
+<td>Enables authentication for CDAP. When set to <code class="docutils literal"><span class="pre">true</span></code>
+all requests to CDAP must provide a valid access
+token.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.auth.server.address</span></code></td>
+<td><em>Deprecated</em></td>
+<td>Use <code class="docutils literal"><span class="pre">security.auth.server.bind.address</span></code> instead</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.auth.server.bind.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;hostname&gt;</span></code></td>
+<td>IP address that the CDAP Authentication Server should
+bind to</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="configuring-kerberos-required">
+<h4><a class="headerlink" href="#configuring-kerberos-required" title="Perma-link to this heading">🔗</a>Configuring Kerberos (required)</h4>
+<p>To configure Kerberos authentication for various CDAP services, add these properties to <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="16%" />
+<col width="44%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">kerberos.auth.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">security.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">true</span></code> to enable Kerberos authentication</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">cdap.master.kerberos.keytab</span></code></td>
+<td><em>None</em></td>
+<td>Kerberos keytab file path, either absolute or relative</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">cdap.master.kerberos.principal</span></code></td>
+<td><em>None</em></td>
+<td>Kerberos principal associated with the keytab</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="configuring-zookeeper-required">
+<h4><a class="headerlink" href="#configuring-zookeeper-required" title="Perma-link to this heading">🔗</a>Configuring ZooKeeper (required)</h4>
+<p>To configure ZooKeeper to enable SASL authentication, add the following to your <code class="docutils literal"><span class="pre">zoo.cfg</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">authProvider</span><span class="o">.</span><span class="mi">1</span><span class="o">=</span><span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">zookeeper</span><span class="o">.</span><span class="na">server</span><span class="o">.</span><span class="na">auth</span><span class="o">.</span><span class="na">SASLAuthenticationProvider</span>
+<span class="n">jaasLoginRenew</span><span class="o">=</span><span class="mi">3600000</span>
+<span class="n">kerberos</span><span class="o">.</span><span class="na">removeHostFromPrincipal</span><span class="o">=</span><span class="kc">true</span>
+<span class="n">kerberos</span><span class="o">.</span><span class="na">removeRealmFromPrincipal</span><span class="o">=</span><span class="kc">true</span>
+</pre></div>
+</div>
+<p>This will let ZooKeeper use the <code class="docutils literal"><span class="pre">SASLAuthenticationProvider</span></code> as an auth provider, and the <code class="docutils literal"><span class="pre">jaasLoginRenew</span></code> line
+will cause the ZooKeeper server to renew its Kerberos ticket once an hour.</p>
+<p>Then, create a <code class="docutils literal"><span class="pre">jaas.conf</span></code> file for your ZooKeeper server:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">Server</span> <span class="o">{</span>
+     <span class="n">com</span><span class="o">.</span><span class="na">sun</span><span class="o">.</span><span class="na">security</span><span class="o">.</span><span class="na">auth</span><span class="o">.</span><span class="na">module</span><span class="o">.</span><span class="na">Krb5LoginModule</span> <span class="n">required</span>
+     <span class="n">useKeyTab</span><span class="o">=</span><span class="kc">true</span>
+     <span class="n">keyTab</span><span class="o">=</span><span class="s">&quot;/path/to/zookeeper.keytab&quot;</span>
+     <span class="n">storeKey</span><span class="o">=</span><span class="kc">true</span>
+     <span class="n">useTicketCache</span><span class="o">=</span><span class="kc">false</span>
+     <span class="n">principal</span><span class="o">=</span><span class="s">&quot;&lt;your-zookeeper-principal&gt;&quot;</span><span class="o">;</span>
+<span class="o">};</span>
+</pre></div>
+</div>
+<p>The keytab file must be readable by the ZooKeeper server, and <code class="docutils literal"><span class="pre">&lt;your-zookeeper-principal&gt;</span></code> must correspond
+to the keytab file.</p>
+<p>Finally, start ZooKeeper server with the following JVM option:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">-</span><span class="n">Djava</span><span class="o">.</span><span class="na">security</span><span class="o">.</span><span class="na">auth</span><span class="o">.</span><span class="na">login</span><span class="o">.</span><span class="na">config</span><span class="o">=/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">jaas</span><span class="o">.</span><span class="na">conf</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="running-servers-with-ssl">
+<span id="id2"></span><h4><a class="headerlink" href="#running-servers-with-ssl" title="Perma-link to this heading">🔗</a>Running Servers with SSL</h4>
+<p>To enable running servers with SSL in CDAP, add this property to <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="16%" />
+<col width="44%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">ssl.enabled</span></code></td>
+<td><code class="docutils literal"><span class="pre">true</span></code></td>
+<td><code class="docutils literal"><span class="pre">true</span></code> to enable servers running with SSL in CDAP</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="default-ports">
+<h4><a class="headerlink" href="#default-ports" title="Perma-link to this heading">🔗</a>Default Ports</h4>
+<p>Without SSL:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="16%" />
+<col width="44%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">10000</span></code></td>
+<td>Port number that the CDAP Router should bind to for
+HTTP Connections</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.auth.server.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">10009</span></code></td>
+<td>Port number that the CDAP Authentication Server should
+bind to for HTTP Connections</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dashboard.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">9999</span></code></td>
+<td>Port number that the CDAP UI should
+bind to for HTTP Connections</td>
+</tr>
+</tbody>
+</table>
+<p>With SSL:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="16%" />
+<col width="44%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.ssl.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">10443</span></code></td>
+<td>Port number that the CDAP router should bind to for
+HTTPS Connections</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.auth.server.ssl.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">10010</span></code></td>
+<td>Port number that the CDAP Authentication Server should
+bind to for HTTPS Connections</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dashboard.ssl.bind.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">9443</span></code></td>
+<td>Port number that the CDAP UI should bind to for
+HTTPS Connections</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="configuring-ssl-for-the-authentication-server">
+<h4><a class="headerlink" href="#configuring-ssl-for-the-authentication-server" title="Perma-link to this heading">🔗</a>Configuring SSL for the Authentication Server</h4>
+<p>To configure the granting of <code class="docutils literal"><span class="pre">AccessToken</span></code>s via SSL, add these properties to <code class="docutils literal"><span class="pre">cdap-security.xml</span></code>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="16%" />
+<col width="44%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.auth.server.ssl.keystore.path</span></code></td>
+<td><em>None</em></td>
+<td>Keystore file location, either absolute
+or relative; the file should be owned and
+readable only by the CDAP user</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.auth.server.ssl.keystore.password</span></code></td>
+<td><em>None</em></td>
+<td>Keystore password</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.auth.server.ssl.keystore.keypassword</span></code></td>
+<td><em>None</em></td>
+<td>Keystore key password</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.auth.server.ssl.keystore.type</span></code></td>
+<td><code class="docutils literal"><span class="pre">JKS</span></code></td>
+<td>Keystore file type</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="configuring-ssl-for-the-router">
+<h4><a class="headerlink" href="#configuring-ssl-for-the-router" title="Perma-link to this heading">🔗</a>Configuring SSL for the Router</h4>
+<p>To configure SSL for the Router, add these properties to <code class="docutils literal"><span class="pre">cdap-security.xml</span></code>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="16%" />
+<col width="44%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.ssl.keystore.path</span></code></td>
+<td><em>None</em></td>
+<td>Keystore file location, either absolute
+or relative; the file should be owned and
+readable only by the CDAP user</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">router.ssl.keystore.password</span></code></td>
+<td><em>None</em></td>
+<td>Keystore password</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.ssl.keystore.keypassword</span></code></td>
+<td><em>None</em></td>
+<td>Keystore key password</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">router.ssl.keystore.type</span></code></td>
+<td><code class="docutils literal"><span class="pre">JKS</span></code></td>
+<td>Keystore file type</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="configuring-ssl-for-the-cdap-ui">
+<h4><a class="headerlink" href="#configuring-ssl-for-the-cdap-ui" title="Perma-link to this heading">🔗</a>Configuring SSL for the CDAP UI</h4>
+<p>To enable SSL for the CDAP UI, add these properties to <code class="docutils literal"><span class="pre">cdap-security.xml</span></code>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="16%" />
+<col width="44%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dashboard.ssl.cert</span></code></td>
+<td><em>None</em></td>
+<td>SSL cert file location, either absolute
+or relative; the file should be owned and
+readable only by the CDAP user</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">dashboard.ssl.key</span></code></td>
+<td><em>None</em></td>
+<td>SSL key file location, either absolute
+or relative; the file should be owned and
+readable only by the CDAP user</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> To allow self-signed certificates, set the <code class="docutils literal"><span class="pre">dashboard.ssl.disable.cert.check</span></code>
+property to <code class="docutils literal"><span class="pre">true</span></code> in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>.</p>
+</div>
+<div class="section" id="enabling-access-logging">
+<span id="enable-access-logging"></span><h4><a class="headerlink" href="#enabling-access-logging" title="Perma-link to this heading">🔗</a>Enabling Access Logging</h4>
+<p>To enable access logging, add the following to <code class="docutils literal"><span class="pre">logback.xml</span></code> (typically under <code class="docutils literal"><span class="pre">/etc/cdap/conf/</span></code>)</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&lt;appender name=&quot;AUDIT&quot; class=&quot;ch.qos.logback.core.rolling.RollingFileAppender&quot;&gt;</span>
+<span class="go">  &lt;file&gt;access.log&lt;/file&gt;</span>
+<span class="go">  &lt;rollingPolicy class=&quot;ch.qos.logback.core.rolling.TimeBasedRollingPolicy&quot;&gt;</span>
+<span class="go">    &lt;fileNamePattern&gt;access.log.%d{yyyy-MM-dd}&lt;/fileNamePattern&gt;</span>
+<span class="go">    &lt;maxHistory&gt;30&lt;/maxHistory&gt;</span>
+<span class="go">  &lt;/rollingPolicy&gt;</span>
+<span class="go">  &lt;encoder&gt;</span>
+<span class="go">    &lt;pattern&gt;%msg%n&lt;/pattern&gt;</span>
+<span class="go">  &lt;/encoder&gt;</span>
+<span class="go">&lt;/appender&gt;</span>
+<span class="go">&lt;logger name=&quot;http-access&quot; level=&quot;TRACE&quot; additivity=&quot;false&quot;&gt;</span>
+<span class="go">  &lt;appender-ref ref=&quot;AUDIT&quot; /&gt;</span>
+<span class="go">&lt;/logger&gt;</span>
+
+<span class="go">&lt;appender name=&quot;EXTERNAL_AUTH_AUDIT&quot; class=&quot;ch.qos.logback.core.rolling.RollingFileAppender&quot;&gt;</span>
+<span class="go">  &lt;file&gt;external_auth_access.log&lt;/file&gt;</span>
+<span class="go">  &lt;rollingPolicy class=&quot;ch.qos.logback.core.rolling.TimeBasedRollingPolicy&quot;&gt;</span>
+<span class="go">    &lt;fileNamePattern&gt;external_auth_access.log.%d{yyyy-MM-dd}&lt;/fileNamePattern&gt;</span>
+<span class="go">    &lt;maxHistory&gt;30&lt;/maxHistory&gt;</span>
+<span class="go">  &lt;/rollingPolicy&gt;</span>
+<span class="go">  &lt;encoder&gt;</span>
+<span class="go">    &lt;pattern&gt;%msg%n&lt;/pattern&gt;</span>
+<span class="go">  &lt;/encoder&gt;</span>
+<span class="go">&lt;/appender&gt;</span>
+<span class="go">&lt;logger name=&quot;external-auth-access&quot; level=&quot;TRACE&quot; additivity=&quot;false&quot;&gt;</span>
+<span class="go">  &lt;appender-ref ref=&quot;EXTERNAL_AUTH_AUDIT&quot; /&gt;</span>
+<span class="go">&lt;/logger&gt;</span>
+</pre></div>
+</div>
+<p>You may also configure the file being logged to by changing the path under <code class="docutils literal"><span class="pre">&lt;file&gt;...&lt;/file&gt;</span></code>.</p>
+</div>
+</div>
+</div>
+<div class="section" id="configuring-authentication-mechanisms">
+<span id="installation-configuring-authentication-mechanisms"></span><h2><a class="headerlink" href="#configuring-authentication-mechanisms" title="Perma-link to this heading">🔗</a>Configuring Authentication Mechanisms</h2>
+<p>CDAP provides several ways to authenticate a client’s identity:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#installation-basic-authentication"><span>Basic Authentication</span></a></li>
+<li><a class="reference internal" href="#installation-ldap-authentication"><span>LDAP Authentication</span></a></li>
+<li><a class="reference internal" href="#installation-jaspi-authentication"><span>JASPI Authentication</span></a></li>
+<li><a class="reference internal" href="#installation-custom-authentication"><span>Custom Authentication</span></a></li>
+</ul>
+<div class="section" id="basic-authentication">
+<span id="installation-basic-authentication"></span><h3><a class="headerlink" href="#basic-authentication" title="Perma-link to this heading">🔗</a>Basic Authentication</h3>
+<p>The simplest way to identity a client is to authenticate against a realm file.
+To configure basic authentication add the following properties to <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="47%" />
+<col width="22%" />
+<col width="31%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authentication.handlerClassName</span></code></td>
+<td><code class="docutils literal"><span class="pre">co.cask.cdap.security.</span></code><code class="docutils literal"><span class="pre">server.</span></code>
+<code class="docutils literal"><span class="pre">BasicAuthentication</span></code><code class="docutils literal"><span class="pre">Handler</span></code></td>
+<td>Name of the class handling
+authentication</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authentication.basic.realmfile</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;path&gt;</span></code></td>
+<td>An absolute or relative path to the
+realm file</td>
+</tr>
+</tbody>
+</table>
+<p>The realm file is of the following format:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">username: password[,rolename ...]</span>
+</pre></div>
+</div>
+<p>In Standalone CDAP, the realm file can be specified as <code class="docutils literal"><span class="pre">conf/realmfile</span></code> and placed with
+the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> file. Note that it is not advisable to use this method of
+authentication. In production, we recommend using any of the other methods described below.</p>
+</div>
+<div class="section" id="ldap-authentication">
+<span id="installation-ldap-authentication"></span><h3><a class="headerlink" href="#ldap-authentication" title="Perma-link to this heading">🔗</a>LDAP Authentication</h3>
+<p>You can configure CDAP to authenticate against an LDAP instance by adding these
+properties to <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="47%" />
+<col width="22%" />
+<col width="31%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authentication.handlerClassName</span></code></td>
+<td><code class="docutils literal"><span class="pre">co.cask.cdap.security.</span></code><code class="docutils literal"><span class="pre">server.</span></code>
+<code class="docutils literal"><span class="pre">LDAPAuthentication</span></code><code class="docutils literal"><span class="pre">Handler</span></code></td>
+<td>Name of the class handling
+authentication</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authentication.loginmodule.className</span></code></td>
+<td><code class="docutils literal"><span class="pre">co.cask.cdap.security.</span></code><code class="docutils literal"><span class="pre">server.</span></code>
+<code class="docutils literal"><span class="pre">LDAPLoginModule</span></code></td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authentication.handler.debug</span></code></td>
+<td><code class="docutils literal"><span class="pre">false</span></code></td>
+<td>Set to <code class="docutils literal"><span class="pre">true</span></code> to enable debugging</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authentication.handler.hostname</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;hostname&gt;</span></code></td>
+<td>LDAP server host</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authentication.handler.port</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;port&gt;</span></code></td>
+<td>LDAP server port</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authentication.handler.userBaseDn</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;userBaseDn&gt;</span></code></td>
+<td>Distinguished Name of the root for
+user account entries in the LDAP
+directory</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authentication.handler.userRdnAttribute</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;userRdnAttribute&gt;</span></code></td>
+<td>LDAP Object attribute for username
+when search by role DN</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authentication.handler.userObjectClass</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;userObjectClass&gt;</span></code></td>
+<td>LDAP Object class used to store user
+entries</td>
+</tr>
+</tbody>
+</table>
+<p>In addition, you may configure these optional properties in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="47%" />
+<col width="22%" />
+<col width="31%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authentication.handler.bindDn</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;bindDn&gt;</span></code></td>
+<td>The Distinguished Name used to bind to
+the LDAP server and search the
+directory</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authentication.handler.bindPassword</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;bindPassword&gt;</span></code></td>
+<td>The password used to bind to the LDAP
+server</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authentication.handler.userIdAttribute</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;userIdAttribute&gt;</span></code></td>
+<td>LDAP Object attribute containing the
+username</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authentication.handler.userPasswordAttribute</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;userPasswordAttribute&gt;</span></code></td>
+<td>LDAP Object attribute containing the
+user password</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authentication.handler.roleBaseDn</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;roleBaseDn&gt;</span></code></td>
+<td>Distinguished Name of the root of the
+LDAP tree to search for group
+memberships</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authentication.handler.roleNameAttribute</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;roleNameAttribute&gt;</span></code></td>
+<td>LDAP Object attribute specifying the
+group name</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authentication.handler.roleMemberAttribute</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;roleMemberAttribute&gt;</span></code></td>
+<td>LDAP Object attribute specifying the
+group members</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authentication.handler.roleObjectClass</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;roleObjectClass&gt;</span></code></td>
+<td>LDAP Object class used to store group
+entries</td>
+</tr>
+</tbody>
+</table>
+<p>To enable SSL between the authentication server and the LDAP instance, configure
+these properties in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="48%" />
+<col width="14%" />
+<col width="7%" />
+<col width="31%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Default Value</th>
+<th class="head">Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authentication.handler.useLdaps</span></code></td>
+<td><code class="docutils literal"><span class="pre">false</span></code></td>
+<td><code class="docutils literal"><span class="pre">true</span></code></td>
+<td>Set to <code class="docutils literal"><span class="pre">true</span></code> to enable use of LDAPS</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authentication.handler.ldapsVerifyCertificate</span></code></td>
+<td><code class="docutils literal"><span class="pre">true</span></code></td>
+<td><code class="docutils literal"><span class="pre">true</span></code></td>
+<td>Set to <code class="docutils literal"><span class="pre">true</span></code> to enable verification
+of the SSL certificate used by the
+LDAP server</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="jaspi-authentication">
+<span id="installation-jaspi-authentication"></span><h3><a class="headerlink" href="#jaspi-authentication" title="Perma-link to this heading">🔗</a>JASPI Authentication</h3>
+<p>To authenticate a user using JASPI (Java Authentication Service Provider Interface) add
+the following properties to <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="47%" />
+<col width="22%" />
+<col width="31%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authentication.handlerClassName</span></code></td>
+<td><code class="docutils literal"><span class="pre">co.cask.cdap.security.</span></code><code class="docutils literal"><span class="pre">server.</span></code>
+<code class="docutils literal"><span class="pre">JASPIAuthentication</span></code><code class="docutils literal"><span class="pre">Handler</span></code></td>
+<td>Name of the class handling
+authentication</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authentication.loginmodule.className</span></code></td>
+<td><code class="docutils literal"><span class="pre">&lt;custom-login-module&gt;</span></code></td>
+<td>Name of the class of the login module
+handling authentication</td>
+</tr>
+</tbody>
+</table>
+<p>In addition, any properties with the prefix <code class="docutils literal"><span class="pre">security.authentication.handler.</span></code>,
+such as <code class="docutils literal"><span class="pre">security.authentication.handler.hostname</span></code>, will be provided to the handler.
+These properties, stripped of the prefix, will be used to instantiate the
+<code class="docutils literal"><span class="pre">javax.security.auth.login.Configuration</span></code> used by the <code class="docutils literal"><span class="pre">LoginModule</span></code>.</p>
+</div>
+<div class="section" id="custom-authentication">
+<span id="installation-custom-authentication"></span><h3><a class="headerlink" href="#custom-authentication" title="Perma-link to this heading">🔗</a>Custom Authentication</h3>
+<p>To use a Custom Authentication mechanism, set the
+<code class="docutils literal"><span class="pre">security.authentication.handlerClassName</span></code> in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> with the custom
+handler's classname. Any properties set in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> are available through a
+<code class="docutils literal"><span class="pre">CConfiguration</span></code> object and can be used to configure the handler.</p>
+<p>To make your custom handler class available to the authentication service, copy your
+packaged jar file (and any additional dependency jars) to the <code class="docutils literal"><span class="pre">security/lib/</span></code> directory
+within your CDAP installation (typically under <code class="docutils literal"><span class="pre">/opt/cdap</span></code>).</p>
+<p>The Developers’ Manual <a class="reference external" href="../source/../../developers-manual/security/custom-authentication.html#developers-custom-authentication" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Custom Authentication</span></a> section shows
+how to create a Custom Authentication Mechanism.</p>
+</div>
+<div class="section" id="configuring-exemptions-from-authentication">
+<span id="configuring-auth-exemptions"></span><h3><a class="headerlink" href="#configuring-exemptions-from-authentication" title="Perma-link to this heading">🔗</a>Configuring Exemptions from Authentication</h3>
+<p>Sometimes you need to exempt certain URLs from authentication. For example, you may want to secure
+your entire application, except that you want to allow sending data to a stream by unauthenticated clients.
+For this, you can configure the CDAP Router to bypass the authentication for URLs that match a given
+regular expression, by adding the following property in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="16%" />
+<col width="44%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Default Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.bypass.auth.regex</span></code></td>
+<td><em>None</em></td>
+<td>Regular expression to match URLs that are
+exempt from authentication.</td>
+</tr>
+</tbody>
+</table>
+<p>For example, the following configuration in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> will allow unauthenticated
+posting to all streams in the default namespace:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&lt;property&gt;</span>
+<span class="go">  &lt;name&gt;router.bypass.auth.regex&lt;/name&gt;</span>
+<span class="go">  &lt;value&gt;/v3/namespaces/default/streams/[^/]+&lt;/value&gt;</span>
+<span class="go">&lt;/property&gt;</span>
+</pre></div>
+</div>
+<p>This must be configured on every node that runs the CDAP Router.</p>
+</div>
+</div>
+<div class="section" id="testing-perimeter-security">
+<span id="testing-security"></span><span id="id3"></span><h2><a class="headerlink" href="#testing-perimeter-security" title="Perma-link to this heading">🔗</a>Testing Perimeter Security</h2>
+<p>To ensure that you've configured security correctly, run these simple tests to verify that
+the security components are working as expected. See the <a class="reference external" href="../source/../../reference-manual/http-restful-api/introduction.html#http-restful-api-conventions" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP Reference Manual: HTTP
+RESTful API</span></a> for information on the conventions used for
+these examples. Note that if <a class="reference internal" href="#running-servers-with-ssl"><span>SSL is enabled for CDAP Servers</span></a>,
+then the <a class="reference external" href="../source/../../reference-manual/http-restful-api/introduction.html#http-restful-api-conventions-base-url" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">base URL</span></a> used in these examples
+will use <code class="docutils literal"><span class="pre">https</span></code> instead of <code class="docutils literal"><span class="pre">http</span></code>.</p>
+<ul>
+<li><p class="first">After configuring CDAP as described above, start (or restart) CDAP and attempt to make a request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/apps</span>
+</pre></div>
+</div>
+<p>such as:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral6() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral6 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral6", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral6" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -v -w<span class="s2">&quot;\n&quot;</span> -X GET <span class="s2">&quot;http://localhost:10000/v3/namespaces/default/apps&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -v -X GET &quot;http://localhost:10000/v3/namespaces/default/apps&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>This should return a <code class="docutils literal"><span class="pre">401</span> <span class="pre">Unauthorized</span></code> response with a list of authentication URIs in
+the response body. For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;auth_uri&quot;:[&quot;http://localhost:10009/token&quot;]}</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Submit a username and password to one of the authentication URIs (<code class="docutils literal"><span class="pre">&lt;auth-uri&gt;</span></code>) to
+obtain an <code class="docutils literal"><span class="pre">AccessToken</span></code> by submitting a <a class="reference external" href="https://en.wikipedia.org/wiki/Basic_access_authentication#Client_side">Basic Authorization header</a> with the
+username and password:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;auth-uri&gt; &quot;Authorization: Basic &lt;encoded_username_password_string&gt;&quot;</span>
+</pre></div>
+</div>
+<p>Using <code class="docutils literal"><span class="pre">curl</span></code>, assuming a CDAP authentication server at the URI <code class="docutils literal"><span class="pre">localhost:10009</span></code> and
+that you have defined a <em>username:password</em> pair such as <code class="docutils literal"><span class="pre">cdap:bigdata</span></code> in the
+realm file, you can use <code class="docutils literal"><span class="pre">curl</span></code>'s <code class="docutils literal"><span class="pre">-u</span></code> option to create the header:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral7() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral7 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral7", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral7" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -v -w<span class="s2">&quot;\n&quot;</span> -X GET <span class="s2">&quot;http://localhost:10009/token&quot;</span> -u cdap:bigdata</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -v -X GET &quot;http://localhost:10009/token&quot; -u cdap:bigdata</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>This should return a <code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code> response with the <code class="docutils literal"><span class="pre">AccessToken</span></code> string in the response
+body (formatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;access_token&quot;:&quot;AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS&quot;,</span>
+<span class="go">  &quot;token_type&quot;:&quot;Bearer&quot;,&quot;expires_in&quot;:86400}</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Reattempt the first command, but this time include the <code class="docutils literal"><span class="pre">access_token</span></code> as a header in the request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/apps &quot;Authorization: Bearer &lt;access_token&gt;&quot;</span>
+</pre></div>
+</div>
+<p>such as (formatted to fit):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral8() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral8 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral8", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral8" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -v -w<span class="s2">&quot;\n&quot;</span> -X GET <span class="s2">&quot;http://localhost:10000/v3/namespaces/default/apps&quot;</span> <span class="se">\</span>
+<span class="go">-H &quot;Authorization: Bearer AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -v -X GET &quot;http://localhost:10000/v3/namespaces/default/apps&quot; ^</span>
+<span class="go">-H &quot;Authorization: Bearer AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>This should return a <code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code> response.</p>
+</li>
+<li><p class="first">Visiting the CDAP UI should redirect you to a login page that prompts for credentials.
+Entering the credentials that you have configured should let you work with the CDAP UI as normal.</p>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdap-components.html"> CDAP Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deployment-architectures.html"> Deployment Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hadoop-compatibility.html"> Hadoop Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system-requirements.html"> System Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html"> Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../verification.html"> Verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../upgrading/index.html"> Upgrading</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Security</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="">Perimeter Security</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enabling-perimeter-security">Enabling Perimeter Security</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuring-authentication-mechanisms">Configuring Authentication Mechanisms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testing-perimeter-security">Testing Perimeter Security</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="authorization.html">Authorization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="impersonation.html">Impersonation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-storage.html">Secure Storage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendices/index.html"> Appendices</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Security" href="index.html" />Security</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Authorization" href="authorization.html" />Authorization</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

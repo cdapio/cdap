@@ -1,0 +1,496 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>System Requirements &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/admin-manual/system-requirements.html">
+
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="index.html" />
+    <link rel="next" title="Installation" href="installation/index.html" />
+    <link rel="prev" title="Hadoop Compatibility" href="hadoop-compatibility.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="installation/index.html" title="Installation"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="hadoop-compatibility.html" title="Hadoop Compatibility"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="table-of-contents.html">Administration Manual</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="system-requirements">
+<span id="admin-manual-system-requirements"></span><h1><a class="headerlink" href="#system-requirements" title="Perma-link to this heading">🔗</a>System Requirements</h1>
+<p>In this section, we list the specific
+<a class="reference internal" href="#admin-manual-hardware-requirements"><span>hardware</span></a>,
+<a class="reference internal" href="#admin-manual-memory-core-requirements"><span>memory, core</span></a>, and
+<a class="reference internal" href="#admin-manual-network-requirements"><span>network requirements</span></a>, and the
+<a class="reference internal" href="#admin-manual-software-requirements"><span>software prerequisites</span></a>
+that need to be met and completed before installation of the CDAP components.</p>
+<p>Complete the requirements and instructions below prior to installing the CDAP components.</p>
+<div class="section" id="hardware-requirements">
+<span id="admin-manual-hardware-requirements"></span><h2><a class="headerlink" href="#hardware-requirements" title="Perma-link to this heading">🔗</a>Hardware Requirements</h2>
+<p>Systems hosting the <a class="reference internal" href="cdap-components.html#admin-manual-cdap-components"><span>CDAP components</span></a>
+must meet these hardware specifications, in addition to having
+<strong>CPUs with a minimum speed of 2 GHz</strong>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="26%" />
+<col width="18%" />
+<col width="19%" />
+<col width="38%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">CDAP Component</th>
+<th class="head">Package</th>
+<th class="head">Hardware Component</th>
+<th class="head">Specifications</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>CDAP Master</td>
+<td><code class="docutils literal"><span class="pre">cdap-master</span></code></td>
+<td>RAM</td>
+<td>2 GB minimum, 4 GB recommended</td>
+</tr>
+<tr class="row-odd"><td>CDAP Router</td>
+<td><code class="docutils literal"><span class="pre">cdap-gateway</span></code></td>
+<td>RAM</td>
+<td>2 GB minimum, 4 GB recommended</td>
+</tr>
+<tr class="row-even"><td>CDAP UI</td>
+<td><code class="docutils literal"><span class="pre">cdap-ui</span></code></td>
+<td>RAM</td>
+<td>1 GB minimum, 2 GB recommended</td>
+</tr>
+<tr class="row-odd"><td rowspan="2">CDAP Kafka</td>
+<td><code class="docutils literal"><span class="pre">cdap-kafka</span></code></td>
+<td>RAM</td>
+<td>1 GB minimum, 2 GB recommended</td>
+</tr>
+<tr class="row-even"><td>&nbsp;</td>
+<td>Disk Space</td>
+<td><em>CDAP Kafka</em> maintains a data cache in
+a configurable data directory.
+Required space depends on the number of
+CDAP applications deployed and running
+in CDAP and the quantity of logs and
+metrics that they generate.</td>
+</tr>
+<tr class="row-odd"><td>CDAP Authentication Server</td>
+<td><code class="docutils literal"><span class="pre">cdap-security</span></code></td>
+<td>RAM</td>
+<td>1 GB minimum, 2 GB recommended</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="memory-and-core-requirements">
+<span id="admin-manual-memory-core-requirements"></span><h2><a class="headerlink" href="#memory-and-core-requirements" title="Perma-link to this heading">🔗</a>Memory and Core Requirements</h2>
+<p>Memory and core requirements are governed by two sources: <em>CDAP</em> and <em>YARN</em>.</p>
+<p>The <strong>default settings for CDAP</strong> are found in the <a class="reference internal" href="appendices/cdap-site.html#appendix-cdap-default-xml"><span>cdap-defaults.xml</span></a>, and are overridden in particular instances by the
+<a class="reference internal" href="appendices/cdap-site.html#appendix-cdap-site-xml"><span>cdap-site.xml</span></a> file. These vary with each service and range
+from 512 to 1024 MB and from one to two cores.</p>
+<p>The <strong>YARN settings will override these</strong>; for instance, the minimum YARN container size is
+determined by <code class="docutils literal"><span class="pre">yarn.scheduler.minimum-allocation-mb</span></code>. The YARN default in Hadoop is 1024
+MB, so containers will be allocated with 1024 MB, even if the CDAP settings are for 512 MB.</p>
+<p>With these default YARN and CDAP memory settings, just starting CDAP can require having 14
+to 16 CPU cores (and a total of 14 to 16 GB of memory) available to YARN.</p>
+</div>
+<div class="section" id="network-requirements">
+<span id="admin-manual-network-requirements"></span><h2><a class="headerlink" href="#network-requirements" title="Perma-link to this heading">🔗</a>Network Requirements</h2>
+<p>CDAP components communicate over your network with <em>HBase</em>, <em>HDFS</em>, and <em>YARN</em>.
+For the best performance, CDAP components should be located on the same LAN,
+ideally running at 1 Gbps or faster. A good rule of thumb is to treat CDAP
+components as you would <em>Hadoop datanodes</em>.</p>
+<p>See the section below (<a class="reference internal" href="#admin-manual-cdap-and-firewalls"><span>CDAP and Firewalls</span></a>) for information on
+configuring CDAP with a firewall and the listening ports that are used.</p>
+</div>
+<div class="section" id="software-prerequisites">
+<span id="admin-manual-software-requirements"></span><h2><a class="headerlink" href="#software-prerequisites" title="Perma-link to this heading">🔗</a>Software Prerequisites</h2>
+<p>You'll need this software installed:</p>
+<ul class="simple">
+<li>A <a class="reference internal" href="#admin-manual-install-java-runtime"><span>Java runtime</span></a> on each CDAP node and Hadoop datanode.</li>
+<li>A Hadoop, HBase, Hive (and optionally Spark) environment to run against.</li>
+<li>To use the <strong>ad-hoc querying capabilities of CDAP,</strong> ensure the cluster has a compatible version of
+Hive installed. See the section on <a class="reference internal" href="hadoop-compatibility.html#admin-manual-hadoop-compatibility-matrix"><span>Hadoop Compatibility</span></a>.</li>
+<li>If Hive is <strong>not</strong> going to be installed, you will need to disable the CDAP Explore
+Service, as by default it is enabled. The installation instructions describe how to configure this.</li>
+<li>CDAP nodes require Hadoop and HBase client installation and configuration.
+<em>Note:</em> No Hadoop services need actually be running.</li>
+<li>We recommend installing an <a class="reference internal" href="#admin-manual-install-ntp"><span>NTP (Network Time Protocol)</span></a>
+daemon on all nodes of the cluster, including those with CDAP components.</li>
+</ul>
+<div class="section" id="java-runtime">
+<span id="admin-manual-install-java-runtime"></span><h3><a class="headerlink" href="#java-runtime" title="Perma-link to this heading">🔗</a>Java Runtime</h3>
+<p>The latest <a class="reference external" href="http://www.java.com/en/download/manual.jsp">JDK or JRE version 1.7.xx or 1.8.xx</a>
+for Linux, Windows, or Mac OS X must be installed in your environment; we recommend the Oracle JDK.</p>
+<p>To check the Java version installed, run the command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> java -version
+</pre></div>
+</div>
+<p>CDAP is tested with the Oracle JDKs; it may work with other JDKs such as
+<a class="reference external" href="http://openjdk.java.net">Open JDK</a>, but it has not been tested with them.</p>
+<p>Once you have installed the JDK, you'll need to set the JAVA_HOME environment variable.</p>
+</div>
+<div class="section" id="ntp-network-time-protocol">
+<span id="admin-manual-install-ntp"></span><h3><a class="headerlink" href="#ntp-network-time-protocol" title="Perma-link to this heading">🔗</a>NTP (Network Time Protocol)</h3>
+<ul class="simple">
+<li>We recommend installing an NTP (<a class="reference external" href="http://www.ntp.org">Network Time Protocol</a>) daemon
+on all nodes of the cluster, including those with CDAP components.</li>
+<li>NTP requires that port 123 be open.</li>
+<li>If your cluster does not have access to the internet, you can run a local version of NTP
+by <a class="reference external" href="http://www.borngeek.com/2008/04/03/using-ntp-on-a-private-network/">setting up a master node as an NTP server</a>.</li>
+</ul>
+<p><strong>Installing NTP on RPM using Yum</strong></p>
+<ol class="arabic">
+<li><p class="first">Install the NTP service and dependencies:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo yum install ntp ntpdate ntp-doc
+</pre></div>
+</div>
+</li>
+<li><p class="first">Set the service to start at reboot:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo chkconfig ntpd on
+</pre></div>
+</div>
+</li>
+<li><p class="first">Start the NTP server. This will continuously adjust the system time from an upstream NTP server:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo /etc/init.d/ntpd start
+</pre></div>
+</div>
+</li>
+<li><p class="first">Synchronize the system clock with the <code class="docutils literal"><span class="pre">0.pool.ntp.org</span></code> server. You should use this command only once:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo ntpdate -u pool.ntp.org
+</pre></div>
+</div>
+</li>
+<li><p class="first">Synchronize the hardware clock (to prevent synchronization problems), unless on a virtual server:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo hwclock --systohc
+</pre></div>
+</div>
+</li>
+</ol>
+<p><strong>Installing NTP on Debian using APT</strong></p>
+<ol class="arabic">
+<li><p class="first">Install the NTP service and dependencies:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo apt-get install ntp
+</pre></div>
+</div>
+</li>
+<li><p class="first">Start the NTP server. This will continuously adjust the system time from an upstream NTP server:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo service ntp start
+</pre></div>
+</div>
+</li>
+<li><p class="first">Synchronize the system clock with the <code class="docutils literal"><span class="pre">0.pool.ntp.org</span></code> server. You should use this command only once:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo ntpdate -u pool.ntp.org
+</pre></div>
+</div>
+</li>
+<li><p class="first">Synchronize the hardware clock (to prevent synchronization problems), unless on a virtual server:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo hwclock --systohc
+</pre></div>
+</div>
+</li>
+</ol>
+<p><strong>NTP Troubleshooting and Configuration</strong></p>
+<ul>
+<li><p class="first">To check the synchronization:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> ntpq -p
+
+<span class="go">     remote           refid      st t when poll reach   delay   offset  jitter</span>
+<span class="go">==============================================================================</span>
+<span class="go">+173.44.32.10    18.26.4.105      2 u    5   64    1   78.786   -0.157   1.966</span>
+<span class="go">*66.241.101.63   132.163.4.103    2 u    7   64    1   43.085    2.872   0.409</span>
+<span class="go">+services.quadra 198.60.22.240    2 u    6   64    1   21.805    3.040   1.033</span>
+<span class="go">-hydrogen.consta 200.98.196.212   2 u    7   64    1  114.250   16.011   0.873</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">If you need to adjust the configuration (add or delete servers, use servers closer to you, etc.):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> vi /etc/ntp.conf
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="cdap-and-firewalls">
+<span id="admin-manual-cdap-and-firewalls"></span><h2><a class="headerlink" href="#cdap-and-firewalls" title="Perma-link to this heading">🔗</a>CDAP and Firewalls</h2>
+<p>In general, your <a class="reference internal" href="deployment-architectures.html#admin-manual-install-deployment-architectures"><span>cluster configuration</span></a>
+cannot have a firewall between the cluster and CDAP. Instead, if a firewall is used, the
+cluster and certain CDAP components need to be together behind the firewall. These are the
+ports which can be opened to provide external access:</p>
+<p><strong>Listen Ports for External Access</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Description</th>
+<th class="head">Governing Configuration</th>
+<th class="head">Default Value in Packages/MapR</th>
+<th class="head">Default Value in Ambari/Cloudera Manager</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>CDAP Router listen port (HTTP RESTful)</td>
+<td><code class="docutils literal"><span class="pre">router.bind.port</span></code></td>
+<td>10000</td>
+<td>11015</td>
+</tr>
+<tr class="row-odd"><td>CDAP Router listen port (HTTP RESTful) (SSL)</td>
+<td><code class="docutils literal"><span class="pre">router.ssl.bind.port</span></code></td>
+<td>10443</td>
+<td>10443</td>
+</tr>
+<tr class="row-even"><td>CDAP UI listen port</td>
+<td><code class="docutils literal"><span class="pre">dashboard.bind.port</span></code></td>
+<td>9999</td>
+<td>9999</td>
+</tr>
+<tr class="row-odd"><td>CDAP UI listen port (SSL)</td>
+<td><code class="docutils literal"><span class="pre">dashboard.ssl.bind.port</span></code></td>
+<td>9443</td>
+<td>9443</td>
+</tr>
+<tr class="row-even"><td>CDAP Auth Server listen port</td>
+<td><code class="docutils literal"><span class="pre">security.auth.server.bind.port</span></code></td>
+<td>10009</td>
+<td>10009</td>
+</tr>
+<tr class="row-odd"><td>CDAP Auth Server listen port (SSL)</td>
+<td><code class="docutils literal"><span class="pre">security.auth.server.ssl.bind.port</span></code></td>
+<td>10010</td>
+<td>10010</td>
+</tr>
+</tbody>
+</table>
+<p>The exact configuration and ports required will vary depending on your use of firewalls
+and your specific configuration. This diagram shows a likely scenario that you could use:</p>
+<a class="reference internal image-reference" href="_images/arch_components_view.png"><img alt="_images/arch_components_view.png" class="align-center" src="_images/arch_components_view.png" style="width: 6in;" /></a>
+<p>In this diagram, we show the CDAP Router &quot;traversing&quot; the firewall. Note that the CDAP UI
+can be completely outside of the firewall, as it needs to talk to clients, the CDAP
+Router, and the CDAP Auth Server. These two services (Router and Auth Server) need to be
+accessible from the outside to users, but also must be able to connect to nodes within the
+cluster. They need unrestricted client access to the cluster with the ability to establish
+connections to cluster nodes, on any port that a container may choose to open.</p>
+<p>Taking this same picture, if the firewall were moved to the left of the CDAP Router/Auth
+Server, then two ports (10000 and 10009) would need to be opened to allow access by
+clients to the hosts running the CDAP Router/Auth Server. There could be another firewall
+between the CDAP Router/Auth Server and the cluster, as long as it provids client access
+from the CDAP Auth Server to the ZooKeeper nodes. The same is true for the CDAP Router
+(access to the Zookeeper nodes), except it also needs unrestricted client access, so it
+usually doesn't make sense to firewall the CDAP Router when essentially you're allowing
+all traffic through.</p>
+<p>As your configuration can vary from these descriptions, this information is intended to
+guide you in understanding what the different components require in order to successfully
+run CDAP rather than provide strict requirements.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cdap-components.html"> CDAP Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deployment-architectures.html"> Deployment Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hadoop-compatibility.html"> Hadoop Compatibility</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> System Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#hardware-requirements">Hardware Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#memory-and-core-requirements">Memory and Core Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#network-requirements">Network Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#software-prerequisites">Software Prerequisites</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#java-runtime">Java Runtime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ntp-network-time-protocol">NTP (Network Time Protocol)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#cdap-and-firewalls">CDAP and Firewalls</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation/index.html"> Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html"> Verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="upgrading/index.html"> Upgrading</a></li>
+<li class="toctree-l1"><a class="reference internal" href="security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendices/index.html"> Appendices</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Hadoop Compatibility" href="hadoop-compatibility.html" />Hadoop Compatibility</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Installation" href="installation/index.html" />Installation</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

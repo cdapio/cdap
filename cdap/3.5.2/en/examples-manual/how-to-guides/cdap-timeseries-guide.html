@@ -1,0 +1,696 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Storing Timeseries Data &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/examples-manual/how-to-guides/cdap-timeseries-guide.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="How-To Guides" href="index.html" />
+    <link rel="next" title="Consuming Twitter Data in Real Time" href="cdap-twitter-ingest-guide.html" />
+    <link rel="prev" title="Iterative Data Processing with Apache Spark" href="cdap-spark-guide.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cdap-twitter-ingest-guide.html" title="Consuming Twitter Data in Real Time"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="cdap-spark-guide.html" title="Iterative Data Processing with Apache Spark"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">How-To Guides</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="storing-timeseries-data">
+<span id="cdap-timeseries-guide"></span><h1><a class="headerlink" href="#storing-timeseries-data" title="Perma-link to this heading">🔗</a>Storing Timeseries Data</h1>
+<blockquote class="pull-quote">
+<div><strong>Source Code Repository:</strong> Source code (and other resources) for this guide are available at the
+<a class="reference external" href="https://github.com/cdap-guides/cdap-timeseries-guide/tree/release/cdap-3.5-compatible">CDAP Guides GitHub repository</a>.</div></blockquote>
+<p>The <a class="reference external" href="http://cdap.io">Cask Data Application Platform (CDAP)</a> provides a
+number of pre-packaged Datasets, which make it easy to store and
+retrieve data using best-practices-based implementations of common data
+access patterns. In this guide, you will learn how to process and store
+timeseries data, using the example of real-time sensor data from a
+traffic monitor network.</p>
+<div class="section" id="what-you-will-build">
+<h2><a class="headerlink" href="#what-you-will-build" title="Perma-link to this heading">🔗</a>What You Will Build</h2>
+<p>This guide will take you through building a simple
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/applications.html">CDAP application</a>
+to ingest data from a sensor network of traffic monitors, aggregate the
+event counts into a traffic volume per road segment, and query the
+traffic volume over a time period to produce a traffic condition report.
+You will:</p>
+<ul class="simple">
+<li>Use a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/streams.html">Stream</a>
+to ingest real-time events data;</li>
+<li>Build a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/flows-flowlets/flows.html">Flow</a>
+to process events as they are received, and count by road segment and
+event type;</li>
+<li>Use a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/datasets/index.html">Dataset</a>
+to store the event data; and</li>
+<li>Build a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/services.html">Service</a>
+to retrieve the event counts by time range.</li>
+</ul>
+</div>
+<div class="section" id="what-you-will-need">
+<h2><a class="headerlink" href="#what-you-will-need" title="Perma-link to this heading">🔗</a>What You Will Need</h2>
+<ul class="simple">
+<li><a class="reference external" href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">JDK 7 or 8</a></li>
+<li><a class="reference external" href="http://maven.apache.org/">Apache Maven 3.1+</a></li>
+<li><a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/getting-started/standalone/index.html">CDAP SDK</a></li>
+</ul>
+</div>
+<div class="section" id="lets-build-it">
+<h2><a class="headerlink" href="#lets-build-it" title="Perma-link to this heading">🔗</a>Let’s Build It!</h2>
+<p>The following sections will guide you through building an application from scratch. If you
+are interested in deploying and running the application right away, you can clone its
+source code and binaries from this GitHub repository. In that case, feel free to skip the
+next two sections and jump right to the
+<a class="reference external" href="#build-and-run-application">Build and Run Application</a> section.</p>
+<div class="section" id="application-design">
+<h3><a class="headerlink" href="#application-design" title="Perma-link to this heading">🔗</a>Application Design</h3>
+<p>For this guide, we will assume that we are processing events from a
+sensor network of traffic monitors. Each traffic monitor covers a given
+road segment and provides periodic reports of the number of passing
+vehicles, and a count of any traffic accidents that have occurred.</p>
+<p>Sensors report in from the network by sending event records containing
+the following fields:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">road_segment_id</span></code>: <code class="docutils literal"><span class="pre">LONG</span></code> (unique identifier for the road segment)</li>
+<li><code class="docutils literal"><span class="pre">timestamp</span></code>: <code class="docutils literal"><span class="pre">YYYY-MM-DD</span> <span class="pre">hh:mm:ss</span></code> formatted</li>
+<li><code class="docutils literal"><span class="pre">event_type</span></code>:<ul>
+<li><code class="docutils literal"><span class="pre">VEHICLE</span></code>: indicates a count of vehicles passing the sensor since the last report</li>
+<li><code class="docutils literal"><span class="pre">ACCIDENT</span></code>: indicates a count of traffic accidents since the last report</li>
+</ul>
+</li>
+<li><code class="docutils literal"><span class="pre">count</span></code>: <code class="docutils literal"><span class="pre">INT</span></code></li>
+</ul>
+<p>The application consists of the following components:</p>
+<a class="reference internal image-reference" href="../_images/app-design7.png"><img alt="../_images/app-design7.png" class="align-center" src="../_images/app-design7.png" style="width: 8in;" /></a>
+<p>Incoming events feed into the application through a Stream. CDAP
+provides a RESTful API for ingesting events into a Stream.</p>
+<p>Once fed into the Stream, events are processed by the <code class="docutils literal"><span class="pre">TrafficEventParser</span></code>
+Flowlet, which normalizes and validates the event data, transforming the
+stream entry into a <code class="docutils literal"><span class="pre">TrafficEvent</span></code> object. Parsed <code class="docutils literal"><span class="pre">TrafficEvent</span></code>s are
+then passed along to the <code class="docutils literal"><span class="pre">TrafficEventSink</span></code> Flowlet, which stores the
+event counts in a Timeseries Dataset. The Timeseries Dataset aggregates
+the event counts by road segment ID and time window.</p>
+<p>In addition to storing the sensor data as a timeseries, we also want to
+query the recent traffic data in order to provide traffic condition
+alerts to drivers. The <code class="docutils literal"><span class="pre">TrafficConditionService</span></code> exposes an HTTP RESTful API to
+support this.</p>
+</div>
+<div class="section" id="implementation">
+<h3><a class="headerlink" href="#implementation" title="Perma-link to this heading">🔗</a>Implementation</h3>
+<p>The first step is to get our application structure set up. We will use a
+standard Maven project structure for all of the source code files:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">./pom.xml</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/traffic/TrafficApp.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/traffic/TrafficConditionService.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/traffic/TrafficEvent.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/traffic/TrafficEventParser.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/traffic/TrafficEventSink.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/traffic/TrafficFlow.java</span>
+</pre></div>
+</div>
+<p>The application is identified by the <code class="docutils literal"><span class="pre">TrafficApp</span></code> class. This class extends
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html">AbstractApplication</a>,
+and overrides the <code class="docutils literal"><span class="pre">configure()</span></code> method to define all of the application components:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TrafficApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">APP_NAME</span> <span class="o">=</span> <span class="s">&quot;TrafficApp&quot;</span><span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">STREAM_NAME</span> <span class="o">=</span> <span class="s">&quot;trafficEvents&quot;</span><span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">TIMESERIES_TABLE_NAME</span> <span class="o">=</span> <span class="s">&quot;trafficEventTable&quot;</span><span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">TIMESERIES_INTERVAL</span> <span class="o">=</span> <span class="mi">15</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">1000</span><span class="o">;</span> <span class="c1">// 15 minutes</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="n">APP_NAME</span><span class="o">);</span>
+
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="n">STREAM_NAME</span><span class="o">));</span>
+    <span class="c1">// configure the timeseries table</span>
+    <span class="n">DatasetProperties</span> <span class="n">props</span> <span class="o">=</span>
+      <span class="n">TimeseriesTables</span><span class="o">.</span><span class="na">timeseriesTableProperties</span><span class="o">(</span><span class="n">TIMESERIES_INTERVAL</span><span class="o">,</span>
+                                                 <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">EMPTY</span><span class="o">);</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">TIMESERIES_TABLE_NAME</span><span class="o">,</span> <span class="n">CounterTimeseriesTable</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">props</span><span class="o">);</span>
+    <span class="n">addFlow</span><span class="o">(</span><span class="k">new</span> <span class="n">TrafficFlow</span><span class="o">());</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">TrafficConditionService</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>When it comes to handling time-based events, we need a place to receive
+and process the events themselves. CDAP provides a <a class="reference external" href="http://docs.cdap.io/cdap/current/en/dev-guide.html#flows">real-time stream
+processing system</a> that
+is a great match for handling event streams. After first setting
+the application name, our <code class="docutils literal"><span class="pre">TrafficApp</span></code> adds a new
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/dev-guide.html#streams">Stream</a>.</p>
+<p>We also need a place to store the traffic event records that we receive;
+<code class="docutils literal"><span class="pre">TrafficApp</span></code> next creates a Dataset to store the processed data.
+<code class="docutils literal"><span class="pre">TrafficApp</span></code> uses a <a class="reference external" href="http://docs.cdap.io/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/dataset/lib/CounterTimeseriesTable.html">CounterTimeseriesTable</a>,
+which orders data by a key plus a timestamp. This makes it possible to
+efficiently query the reported values for a given time range.</p>
+<p>Finally, <code class="docutils literal"><span class="pre">TrafficApp</span></code> adds a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/dev-guide.html#flows">Flow</a> to
+process data from the Stream, and a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/dev-guide.html#services">Service</a>
+to query the traffic events that have been processed and stored.</p>
+<p>The incoming traffic events are processed in two phases, defined in the
+<code class="docutils literal"><span class="pre">TrafficFlow</span></code> class by building a <code class="docutils literal"><span class="pre">FlowSpecification</span></code> in the <code class="docutils literal"><span class="pre">configure()</span></code>
+method:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TrafficFlow</span> <span class="kd">extends</span> <span class="n">AbstractFlow</span> <span class="o">{</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">FLOW_NAME</span> <span class="o">=</span> <span class="s">&quot;TrafficFlow&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="n">FLOW_NAME</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Reads traffic events from a stream and persists to a timeseries dataset&quot;</span><span class="o">);</span>
+    <span class="n">addFlowlet</span><span class="o">(</span><span class="s">&quot;parser&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">TrafficEventParser</span><span class="o">());</span>
+    <span class="n">addFlowlet</span><span class="o">(</span><span class="s">&quot;sink&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">TrafficEventSink</span><span class="o">());</span>
+    <span class="n">connectStream</span><span class="o">(</span><span class="n">TrafficApp</span><span class="o">.</span><span class="na">STREAM_NAME</span><span class="o">,</span> <span class="s">&quot;parser&quot;</span><span class="o">);</span>
+    <span class="n">connect</span><span class="o">(</span><span class="s">&quot;parser&quot;</span><span class="o">,</span> <span class="s">&quot;sink&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">TrafficFlow</span></code> first registers the two <a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/flows-flowlets/flowlets.html">Flowlets</a>
+to be used in the specification, then connects the registered Flowlets
+into a processing pipeline. The first Flowlet, <code class="docutils literal"><span class="pre">TrafficEventParser</span></code>, reads
+raw events from the Stream, parses and validates the individual fields,
+and then emits the structured event objects. The second flowlet, <code class="docutils literal"><span class="pre">TrafficEventSink</span></code>,
+receives the structured events from <code class="docutils literal"><span class="pre">TrafficEventParser</span></code>, and stores them
+to the <code class="docutils literal"><span class="pre">CounterTimeseriesTable</span></code> Dataset.</p>
+<p>The <code class="docutils literal"><span class="pre">TrafficEvent</span></code> passed between the Flowlets is a simple POJO (getters
+and setters have been omitted in this code fragment):</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TrafficEvent</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">enum</span> <span class="n">Type</span> <span class="o">{</span> <span class="n">VEHICLE</span><span class="o">,</span> <span class="n">ACCIDENT</span> <span class="o">};</span>
+
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">roadSegmentId</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="kt">long</span> <span class="n">timestamp</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Type</span> <span class="n">type</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">count</span><span class="o">;</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>First, let’s look at <code class="docutils literal"><span class="pre">TrafficEventParser</span></code> in more detail:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TrafficEventParser</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">DATE_FORMAT</span> <span class="o">=</span> <span class="s">&quot;yyyy-MM-dd HH:mm:ss&quot;</span><span class="o">;</span>
+
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">DateFormat</span> <span class="n">df</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleDateFormat</span><span class="o">(</span><span class="n">DATE_FORMAT</span><span class="o">);</span>
+
+  <span class="kd">private</span> <span class="n">Metrics</span> <span class="n">metrics</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">TrafficEvent</span><span class="o">&gt;</span> <span class="n">out</span><span class="o">;</span>
+
+  <span class="nd">@ProcessInput</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">StreamEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">String</span> <span class="n">body</span> <span class="o">=</span> <span class="n">Charsets</span><span class="o">.</span><span class="na">UTF_8</span><span class="o">.</span><span class="na">decode</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getBody</span><span class="o">()).</span><span class="na">toString</span><span class="o">();</span>
+    <span class="n">String</span><span class="o">[]</span> <span class="n">parts</span> <span class="o">=</span> <span class="n">body</span><span class="o">.</span><span class="na">split</span><span class="o">(</span><span class="s">&quot;\\s*,\\s*&quot;</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">parts</span><span class="o">.</span><span class="na">length</span> <span class="o">!=</span> <span class="mi">4</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">metrics</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="s">&quot;event.bad&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+      <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kt">long</span> <span class="n">timestamp</span><span class="o">;</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(</span><span class="s">&quot;now&quot;</span><span class="o">.</span><span class="na">equalsIgnoreCase</span><span class="o">(</span><span class="n">parts</span><span class="o">[</span><span class="mi">1</span><span class="o">]))</span> <span class="o">{</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+      <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="na">parse</span><span class="o">(</span><span class="n">parts</span><span class="o">[</span><span class="mi">1</span><span class="o">]).</span><span class="na">getTime</span><span class="o">();</span>
+      <span class="o">}</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">ParseException</span> <span class="n">pe</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">metrics</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="s">&quot;event.bad&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+      <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="n">TrafficEvent</span><span class="o">.</span><span class="na">Type</span> <span class="n">type</span><span class="o">;</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="n">type</span> <span class="o">=</span> <span class="n">TrafficEvent</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">parts</span><span class="o">[</span><span class="mi">2</span><span class="o">]);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IllegalArgumentException</span> <span class="n">iae</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">metrics</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="s">&quot;event.bad&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+      <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="kt">int</span> <span class="n">count</span><span class="o">;</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="n">count</span> <span class="o">=</span> <span class="n">Integer</span><span class="o">.</span><span class="na">parseInt</span><span class="o">(</span><span class="n">parts</span><span class="o">[</span><span class="mi">3</span><span class="o">]);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NumberFormatException</span> <span class="n">nfe</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">metrics</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="s">&quot;event.bad&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+      <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="n">out</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="k">new</span> <span class="n">TrafficEvent</span><span class="o">(</span><span class="n">parts</span><span class="o">[</span><span class="mi">0</span><span class="o">],</span> <span class="n">timestamp</span><span class="o">,</span> <span class="n">type</span><span class="o">,</span> <span class="n">count</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">process()</span></code> method is annotated with <code class="docutils literal"><span class="pre">&#64;ProcessInput</span></code>, telling CDAP that
+this method should be invoked for incoming events. Since
+<code class="docutils literal"><span class="pre">TrafficEventParser</span></code> is connected to the Stream, it receives events of
+type <code class="docutils literal"><span class="pre">StreamEvent</span></code>. Each <code class="docutils literal"><span class="pre">StreamEvent</span></code> contains a request body with the raw
+input data, which we expect in the format:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&lt;road segment ID&gt;, &lt;timestamp&gt;, &lt;type&gt;, &lt;count&gt;</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">process()</span></code> method validates each field for the correct type,
+constructs a new <code class="docutils literal"><span class="pre">TrafficEvent</span></code> object, and emits the object to any
+downstream Flowlets using the defined <a class="reference external" href="http://docs.cdap.io/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/flow/flowlet/OutputEmitter.html">OutputEmitter</a>
+instance.</p>
+<p>The next step in the pipeline is the <code class="docutils literal"><span class="pre">TrafficEventSink</span></code> Flowlet:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TrafficEventSink</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="n">TrafficApp</span><span class="o">.</span><span class="na">TIMESERIES_TABLE_NAME</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">CounterTimeseriesTable</span> <span class="n">table</span><span class="o">;</span>
+
+  <span class="nd">@ProcessInput</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">TrafficEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">table</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getRoadSegmentId</span><span class="o">()),</span>
+                    <span class="n">event</span><span class="o">.</span><span class="na">getCount</span><span class="o">(),</span>
+                    <span class="n">event</span><span class="o">.</span><span class="na">getTimestamp</span><span class="o">(),</span>
+                    <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getType</span><span class="o">().</span><span class="na">name</span><span class="o">()));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>In order to access the <code class="docutils literal"><span class="pre">CounterTimeseriesTable</span></code> used by the application,
+<code class="docutils literal"><span class="pre">TrafficEventSink</span></code> declares a variable with the <a class="reference external" href="http://docs.cdap.io/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/annotation/UseDataSet.html">&#64;UseDataSet</a>
+annotation and the name used to create the Dataset in <code class="docutils literal"><span class="pre">TrafficApp</span></code>. This
+variable will be injected with a reference to the <code class="docutils literal"><span class="pre">CounterTimeseriesTable</span></code>
+instance when the Flowlet runs.</p>
+<p><code class="docutils literal"><span class="pre">TrafficEventSink</span></code> also defines a <code class="docutils literal"><span class="pre">process()</span></code> method, annotated with <a class="reference external" href="http://docs.cdap.io/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/annotation/ProcessInput.html">&#64;ProcessInput</a>,
+for handling incoming events from <code class="docutils literal"><span class="pre">TrafficEventParser</span></code>. Since
+<code class="docutils literal"><span class="pre">TrafficEventParser</span></code> emits <code class="docutils literal"><span class="pre">TrafficEvent</span></code> objects, the process method
+takes an input parameter of the same type. Here, we simply increment a
+counter for the incoming event, using the road segment ID as the key,
+and adding the event type (VEHICLE or ACCIDENT) as a tag. When querying
+records out of the <code class="docutils literal"><span class="pre">CounterTimeseriesTable</span></code>, we can specify the required
+tags as an additional filter on the records to return. Only those
+entries having all of the given tags will be returned in the results.</p>
+<p>Now that we have the full pipeline setup for ingesting data from our
+traffic sensors, we are ready to create a Service to query the traffic
+sensor reports in response to real-time requests. This Service will take
+a given road segment ID as input, query the road segment's recent data,
+and respond with a simple classification of how congested that segment
+currently is, according to these rules:</p>
+<ul class="simple">
+<li>If any traffic accidents were reported, return RED;</li>
+<li>If two or more vehicle count reports are greater than the threshold, return RED;</li>
+<li>If one vehicle count report is greater than the threshold, return YELLOW;</li>
+<li>Otherwise, return GREEN.</li>
+</ul>
+<p><code class="docutils literal"><span class="pre">TrafficConditionService</span></code> defines a simple HTTP RESTful endpoint to perform
+this query and return a response:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TrafficConditionService</span> <span class="kd">extends</span> <span class="n">AbstractService</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">enum</span> <span class="n">Condition</span> <span class="o">{</span><span class="n">GREEN</span><span class="o">,</span> <span class="n">YELLOW</span><span class="o">,</span> <span class="n">RED</span><span class="o">};</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">SERVICE_NAME</span> <span class="o">=</span> <span class="s">&quot;TrafficConditions&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="n">SERVICE_NAME</span><span class="o">);</span>
+    <span class="n">useDataset</span><span class="o">(</span><span class="n">TrafficApp</span><span class="o">.</span><span class="na">TIMESERIES_TABLE_NAME</span><span class="o">);</span>
+    <span class="n">addHandler</span><span class="o">(</span><span class="k">new</span> <span class="n">TrafficConditionHandler</span><span class="o">());</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;/v1&quot;</span><span class="o">)</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">TrafficConditionHandler</span> <span class="kd">extends</span>
+      <span class="n">AbstractHttpServiceHandler</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">CONGESTED_THRESHOLD</span> <span class="o">=</span> <span class="mi">100</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">long</span> <span class="n">LOOKBACK_PERIOD</span> <span class="o">=</span>
+        <span class="n">TrafficApp</span><span class="o">.</span><span class="na">TIMESERIES_INTERVAL</span> <span class="o">*</span> <span class="mi">3</span><span class="o">;</span>
+
+    <span class="nd">@UseDataSet</span><span class="o">(</span><span class="n">TrafficApp</span><span class="o">.</span><span class="na">TIMESERIES_TABLE_NAME</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">CounterTimeseriesTable</span> <span class="n">table</span><span class="o">;</span>
+
+    <span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;road/{segment}/recent&quot;</span><span class="o">)</span>
+    <span class="nd">@GET</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">recentConditions</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span>
+                                 <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">,</span>
+                                 <span class="nd">@PathParam</span><span class="o">(</span><span class="s">&quot;segment&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">segmentId</span><span class="o">)</span> <span class="o">{</span>
+      <span class="kt">long</span> <span class="n">endTime</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+      <span class="kt">long</span> <span class="n">startTime</span> <span class="o">=</span> <span class="n">endTime</span> <span class="o">-</span> <span class="n">LOOKBACK_PERIOD</span><span class="o">;</span>
+
+      <span class="n">Condition</span> <span class="n">currentCondition</span> <span class="o">=</span> <span class="n">Condition</span><span class="o">.</span><span class="na">GREEN</span><span class="o">;</span>
+      <span class="kt">int</span> <span class="n">accidentEntries</span> <span class="o">=</span>
+        <span class="n">getCountsExceeding</span><span class="o">(</span><span class="n">segmentId</span><span class="o">,</span> <span class="n">startTime</span><span class="o">,</span> <span class="n">endTime</span><span class="o">,</span>
+                           <span class="n">TrafficEvent</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">ACCIDENT</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">accidentEntries</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">currentCondition</span> <span class="o">=</span> <span class="n">Condition</span><span class="o">.</span><span class="na">RED</span><span class="o">;</span>
+      <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">congestedEntries</span> <span class="o">=</span>
+          <span class="n">getCountsExceeding</span><span class="o">(</span><span class="n">segmentId</span><span class="o">,</span> <span class="n">startTime</span><span class="o">,</span> <span class="n">endTime</span><span class="o">,</span>
+                             <span class="n">TrafficEvent</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">VEHICLE</span><span class="o">,</span> <span class="n">CONGESTED_THRESHOLD</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">congestedEntries</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+          <span class="n">currentCondition</span> <span class="o">=</span> <span class="n">Condition</span><span class="o">.</span><span class="na">RED</span><span class="o">;</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">congestedEntries</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+          <span class="n">currentCondition</span> <span class="o">=</span> <span class="n">Condition</span><span class="o">.</span><span class="na">YELLOW</span><span class="o">;</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+      <span class="n">responder</span><span class="o">.</span><span class="na">sendString</span><span class="o">(</span><span class="n">currentCondition</span><span class="o">.</span><span class="na">name</span><span class="o">());</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="kt">int</span> <span class="nf">getCountsExceeding</span><span class="o">(</span><span class="n">String</span> <span class="n">roadSegmentId</span><span class="o">,</span>
+                                   <span class="kt">long</span> <span class="n">startTime</span><span class="o">,</span> <span class="kt">long</span> <span class="n">endTime</span><span class="o">,</span>
+                                   <span class="n">TrafficEvent</span><span class="o">.</span><span class="na">Type</span> <span class="n">type</span><span class="o">,</span> <span class="kt">long</span> <span class="n">threshold</span><span class="o">)</span> <span class="o">{</span>
+      <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+      <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">CounterTimeseriesTable</span><span class="o">.</span><span class="na">Counter</span><span class="o">&gt;</span> <span class="n">events</span> <span class="o">=</span>
+        <span class="n">table</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">roadSegmentId</span><span class="o">),</span> <span class="n">startTime</span><span class="o">,</span> <span class="n">endTime</span><span class="o">,</span>
+                   <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">type</span><span class="o">.</span><span class="na">name</span><span class="o">()));</span>
+      <span class="k">while</span> <span class="o">(</span><span class="n">events</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">events</span><span class="o">.</span><span class="na">next</span><span class="o">().</span><span class="na">getValue</span><span class="o">()</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="o">)</span> <span class="o">{</span>
+          <span class="n">count</span><span class="o">++;</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+      <span class="k">return</span> <span class="n">count</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>In the <code class="docutils literal"><span class="pre">configure()</span></code> method, <code class="docutils literal"><span class="pre">TrafficConditionService</span></code> defines a handler
+class, <code class="docutils literal"><span class="pre">TrafficConditionHandler</span></code>, and a Dataset to use in serving requests.
+<code class="docutils literal"><span class="pre">TrafficConditionHandler</span></code> once again makes use of the <code class="docutils literal"><span class="pre">&#64;UseDataSet</span></code>
+annotation on an instance variable to obtain a reference to the
+<code class="docutils literal"><span class="pre">CounterTimeseriesTable</span></code> Dataset where traffic events are persisted.</p>
+<p>The core of the service is the <code class="docutils literal"><span class="pre">recentConditions()</span></code> method.
+<code class="docutils literal"><span class="pre">TrafficConditionHandler</span></code> exposes this method as a RESTful endpoint through the
+use of JAX-RS annotations. The <code class="docutils literal"><span class="pre">&#64;Path</span></code> annotation defines the URL to which
+the endpoint will be mapped, while the <code class="docutils literal"><span class="pre">&#64;GET</span></code> annotation defines the HTTP
+request method supported. The <code class="docutils literal"><span class="pre">recentConditions()</span></code> method declares
+<code class="docutils literal"><span class="pre">HttpServiceRequest</span></code> and <code class="docutils literal"><span class="pre">HttpServiceResponder</span></code> parameters to,
+respectively, provide access to request elements and to control the
+response output. The <code class="docutils literal"><span class="pre">&#64;PathParam</span></code> (&quot;segment&quot;) annotation on the third
+method parameter provides access to the <code class="docutils literal"><span class="pre">{segment}</span></code> path element as an
+input parameter.</p>
+<p>The <code class="docutils literal"><span class="pre">recentConditions()</span></code> method first queries the timeseries Dataset for
+any accident reports for the given road segment in the past 45 minutes.
+If any are found, a &quot;RED&quot; condition report will be returned. If no
+accident reports are present, it continues to query the timeseries
+data for the number of vehicle report entries that exceed a set
+threshold (100). Based on the number of entries found, the method
+returns the appropriate congestion level according to the rules
+previously described.</p>
+</div>
+</div>
+<div class="section" id="build-and-run-application">
+<h2><a class="headerlink" href="#build-and-run-application" title="Perma-link to this heading">🔗</a>Build and Run Application</h2>
+<p>The <code class="docutils literal"><span class="pre">TrafficApp</span></code> application can be built and packaged using the Apache Maven command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn clean package
+</pre></div>
+</div>
+<p>Note that the remaining commands assume that the <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code> script is
+available on your PATH. If this is not the case, please add it:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:&lt;CDAP home&gt;/bin
+</pre></div>
+</div>
+<p>If you haven't already started a standalone CDAP installation, start it with the command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap.sh start
+</pre></div>
+</div>
+<p>We can then deploy the application to a standalone CDAP installation:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh load artifact target/cdap-timeseries-guide-&lt;version&gt;.jar
+<span class="gp">$</span> cdap-cli.sh create app TrafficApp cdap-timeseries-guide &lt;version&gt; user
+<span class="gp">$</span> cdap-cli.sh start flow TrafficApp.TrafficFlow
+</pre></div>
+</div>
+<p>Next, we will send some sample records into the stream for processing:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh send stream trafficEvents <span class="se">\&quot;</span>1N1, now, VEHICLE, 10<span class="se">\&quot;</span>
+<span class="gp">$</span> cdap-cli.sh send stream trafficEvents <span class="se">\&quot;</span>1N2, now, VEHICLE, 101<span class="se">\&quot;</span>
+<span class="gp">$</span> cdap-cli.sh send stream trafficEvents <span class="se">\&quot;</span>1N3, now, ACCIDENT, 1<span class="se">\&quot;</span>
+</pre></div>
+</div>
+<p>We can now start the TrafficConditions service and check the service
+calls:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start service TrafficApp.TrafficConditions
+</pre></div>
+</div>
+<p>Since the service methods are exposed as a RESTful API, we can check the
+results using the curl command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">export </span><span class="nv">SERVICE_URL</span><span class="o">=</span>http://localhost:10000/v3/namespaces/default/apps/TrafficApp/services/TrafficConditions/methods
+<span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> <span class="nv">$SERVICE_URL</span>/v1/road/1N1/recent
+<span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> <span class="nv">$SERVICE_URL</span>/v1/road/1N2/recent
+<span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> <span class="nv">$SERVICE_URL</span>/v1/road/1N3/recent
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GREEN</span>
+<span class="go">YELLOW</span>
+<span class="go">RED</span>
+</pre></div>
+</div>
+<p>or, using the CDAP CLI:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh call service TrafficApp.TrafficConditions GET <span class="s1">&#39;v1/road/1N1/recent&#39;</span>
+<span class="gp">$</span> cdap-cli.sh call service TrafficApp.TrafficConditions GET <span class="s1">&#39;v1/road/1N2/recent&#39;</span>
+<span class="gp">$</span> cdap-cli.sh call service TrafficApp.TrafficConditions GET <span class="s1">&#39;v1/road/1N3/recent&#39;</span>
+
+<span class="go">+======================================================================================+</span>
+<span class="go">| status        | headers                            | body size      | body           |</span>
+<span class="go">+======================================================================================+</span>
+<span class="go">| 200           | Content-Length : 5                 | 5              | GREEN          |</span>
+<span class="go">|               | Connection : keep-alive            |                |                |</span>
+<span class="go">|               | Content-Type : text/plain; charset |                |                |</span>
+<span class="go">|               | =UTF-8                             |                |                |</span>
+<span class="go">+======================================================================================+</span>
+</pre></div>
+</div>
+<p>Congratulations! You have now learned how to incorporate timeseries data
+into your CDAP applications. Please continue to experiment and extend
+this sample application. The ability to store and query time-based data
+can be a powerful tool in many scenarios.</p>
+</div>
+<div class="section" id="extend-this-example">
+<h2><a class="headerlink" href="#extend-this-example" title="Perma-link to this heading">🔗</a>Extend This Example</h2>
+<ul class="simple">
+<li>Write a MapReduce job to look at traffic volume over the last 30 days
+and store the average traffic volume for each 15 minute time slot in the
+day into another data set.</li>
+<li>Modify the <code class="docutils literal"><span class="pre">TrafficService</span></code> to look at the average traffic volumes and use these to
+identify when traffic is congested.</li>
+</ul>
+</div>
+<div class="section" id="share-and-discuss">
+<h2><a class="headerlink" href="#share-and-discuss" title="Perma-link to this heading">🔗</a>Share and Discuss!</h2>
+<p>Have a question? Discuss at the <a class="reference external" href="https://groups.google.com/forum/#!forum/cdap-user">CDAP User Mailing List</a>.</p>
+</div>
+<div class="section" id="license">
+<h2><a class="headerlink" href="#license" title="Perma-link to this heading">🔗</a>License</h2>
+<p>Copyright © 2014-2015 Cask Data, Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+not use this file except in compliance with the License. You may obtain
+a copy of the License at</p>
+<p><a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></p>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">How-To Guides</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cdap-bi-guide.html">Analyzing CDAP Data from BI Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-cube-guide.html">Data Analysis with OLAP Cube</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-etl-guide.html">Creating Hydrator Applications using CDAP System Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-flow-guide.html">Real-Time Data Processing with a Flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-flume-guide.html">Ingesting Data into CDAP using Apache Flume</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-kafka-ingest-guide.html">Consuming Data from Kafka</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-mapreduce-guide.html">Batch Data Processing with CDAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-spark-guide.html">Iterative Data Processing with Apache Spark</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Storing Timeseries Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-you-will-build">What You Will Build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-you-will-need">What You Will Need</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lets-build-it">Let’s Build It!</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#build-and-run-application">Build and Run Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#extend-this-example">Extend This Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#share-and-discuss">Share and Discuss!</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#license">License</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-twitter-ingest-guide.html">Consuming Twitter Data in Real Time</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-workflow-guide.html">Batch Data Processing with CDAP using Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Iterative Data Processing with Apache Spark" href="cdap-spark-guide.html" />Iterative Data Processing with Apache Spark</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Consuming Twitter Data in Real Time" href="cdap-twitter-ingest-guide.html" />Consuming Twitter Data in Real Time</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

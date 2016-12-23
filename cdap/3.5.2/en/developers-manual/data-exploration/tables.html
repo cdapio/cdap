@@ -1,0 +1,384 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Table Exploration &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/data-exploration/tables.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Data Exploration" href="index.html" />
+    <link rel="next" title="ObjectMappedTable Exploration" href="object-mapped-tables.html" />
+    <link rel="prev" title="FileSet Exploration" href="filesets.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="object-mapped-tables.html" title="ObjectMappedTable Exploration"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="filesets.html" title="FileSet Exploration"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Data Exploration</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="table-exploration">
+<span id="id1"></span><h1><a class="headerlink" href="#table-exploration" title="Perma-link to this heading">🔗</a>Table Exploration</h1>
+<p>A <code class="docutils literal"><span class="pre">Table</span></code> is a core dataset. Unlike relational database tables where every
+row has the same schema, every row of a Table can have a different set of columns.
+Though Tables do not require a schema, in practice they are often written with an
+implicit schema. Column names are often strings, with a single data type used
+for all values in the same column. If you are using a Table in this way,
+you can set a schema as a Table property to enable exploration. The schema will be
+applied at read time, allowing you to run ad-hoc queries against the Table.</p>
+<div class="section" id="requirements">
+<h2><a class="headerlink" href="#requirements" title="Perma-link to this heading">🔗</a>Requirements</h2>
+<p>In order to explore a Table, your Table must meet a few requirements.</p>
+<ul class="simple">
+<li>Columns names must be strings.</li>
+<li>All column values for a specific column must be of the same type. For example, a value cannot be a string
+in one row and an integer in another.</li>
+<li>Column values must be of a primitive type.
+A primitive type is one of boolean, int, long, float, double, bytes, or string.</li>
+<li>Column names must be valid Hive column names. This means they cannot be reserved keywords such as <em>drop</em>.
+Please refer to the <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL">Hive language manual</a>
+for more information about Hive.</li>
+</ul>
+</div>
+<div class="section" id="creating-an-explorable-table">
+<h2><a class="headerlink" href="#creating-an-explorable-table" title="Perma-link to this heading">🔗</a>Creating an Explorable Table</h2>
+<p>When creating a <code class="docutils literal"><span class="pre">Table</span></code> in your application, if you set the table's schema property, your Table
+will be enabled for exploration after it is created:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+  <span class="n">Schema</span> <span class="n">profileSchema</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span>
+    <span class="s">&quot;profile&quot;</span><span class="o">,</span>
+    <span class="c1">// id, name, and email are never null and are set when a user profile is created</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;id&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;name&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;email&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+    <span class="c1">// login and active are never set when a profile is created but are set later, so they are nullable.</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;login&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">nullableOf</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">LONG</span><span class="o">))),</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;active&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">nullableOf</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">LONG</span><span class="o">)))</span>
+  <span class="o">);</span>
+  <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;profiles&quot;</span><span class="o">,</span> <span class="n">Table</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">(),</span> <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+    <span class="c1">// set the schema property so that it can be explored via Hive</span>
+    <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">Table</span><span class="o">.</span><span class="na">PROPERTY_SCHEMA</span><span class="o">,</span> <span class="n">profileSchema</span><span class="o">.</span><span class="na">toString</span><span class="o">())</span>
+    <span class="c1">// to indicate that the id field should come from the row key and not a row column</span>
+    <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">Table</span><span class="o">.</span><span class="na">PROPERTY_SCHEMA_ROW_FIELD</span><span class="o">,</span> <span class="s">&quot;id&quot;</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Note that the schema row field property is set along with the schema property. The schema row field property
+must be set if you want to explore your Table row along with Table columns. In the example above, this property
+will let CDAP know to read the <code class="docutils literal"><span class="pre">id</span></code> field from the Table row instead of from the Table columns.</p>
+</div>
+<div class="section" id="setting-a-schema-on-an-existing-table">
+<h2><a class="headerlink" href="#setting-a-schema-on-an-existing-table" title="Perma-link to this heading">🔗</a>Setting a Schema on an Existing Table</h2>
+<p>Since schema is applied at read time, it is possible to set a schema on a Table after it has been created.
+It is also possible to change the schema of a Table. Dataset properties can be set using the RESTful API.
+For example, the same schema set through the example code above can also be set through the RESTful API
+(reformatted to fit):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral33() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral33 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral33", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral33" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X PUT <span class="s2">&quot;http://example.com:10000/v3/namespaces/&lt;namespace-id&gt;/data/datasets/profiles/properties&quot;</span> <span class="se">\</span>
+<span class="go">  -d &#39;{ &quot;schema&quot;: &quot;{ \</span>
+<span class="go">          \&quot;type\&quot;:\&quot;record\&quot;, \</span>
+<span class="go">          \&quot;name\&quot;:\&quot;purchase\&quot;, \</span>
+<span class="go">          \&quot;fields\&quot;:[ \</span>
+<span class="go">            {\&quot;name\&quot;:\&quot;id\&quot;,\&quot;type\&quot;:\&quot;string\&quot;}, \</span>
+<span class="go">            {\&quot;name\&quot;:\&quot;name\&quot;,\&quot;type\&quot;:\&quot;string\&quot;}, \</span>
+<span class="go">            {\&quot;name\&quot;:\&quot;email\&quot;,\&quot;type\&quot;:\&quot;string\&quot;}, \</span>
+<span class="go">            {\&quot;name\&quot;:\&quot;login\&quot;,\&quot;type\&quot;:[\&quot;long\&quot;, \&quot;null\&quot;]}, \</span>
+<span class="go">            {\&quot;name\&quot;:\&quot;active\&quot;,\&quot;type\&quot;:[\&quot;long\&quot;, \&quot;null\&quot;]} \</span>
+<span class="go">          ] \</span>
+<span class="go">        }&quot;, \</span>
+<span class="go">        &quot;schema.row.field&quot;: &quot;id&quot; \</span>
+<span class="go">      }&#39;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X PUT &quot;http://example.com:10000/v3/namespaces/&lt;namespace-id&gt;/data/datasets/profiles/properties&quot; ^</span>
+<span class="go">  -d &quot;{ \&quot;schema\&quot;: \&quot;{ ^</span>
+<span class="go">          \\&quot;type\\&quot;:\\&quot;record\\&quot;, ^</span>
+<span class="go">          \\&quot;name\\&quot;:\\&quot;purchase\\&quot;, ^</span>
+<span class="go">          \\&quot;fields\\&quot;:[ ^</span>
+<span class="go">            {\\&quot;name\\&quot;:\\&quot;id\\&quot;,\\&quot;type\\&quot;:\\&quot;string\\&quot;}, ^</span>
+<span class="go">            {\\&quot;name\\&quot;:\\&quot;name\\&quot;,\\&quot;type\\&quot;:\\&quot;string\\&quot;}, ^</span>
+<span class="go">            {\\&quot;name\\&quot;:\\&quot;email\\&quot;,\\&quot;type\\&quot;:\\&quot;string\\&quot;}, ^</span>
+<span class="go">            {\\&quot;name\\&quot;:\\&quot;login\\&quot;,\\&quot;type\\&quot;:[\\&quot;long\\&quot;, \\&quot;null\\&quot;]}, ^</span>
+<span class="go">            {\\&quot;name\\&quot;:\\&quot;active\\&quot;,\\&quot;type\\&quot;:[\\&quot;long\\&quot;, \\&quot;null\\&quot;]} ^</span>
+<span class="go">          ] ^</span>
+<span class="go">        }\&quot;, ^</span>
+<span class="go">        \&quot;schema.row.field\&quot;: \&quot;id\&quot; ^</span>
+<span class="go">      }&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>CDAP schemas are adopted from the <a class="reference external" href="http://avro.apache.org/docs/1.7.3/spec.html#schemas">Avro Schema Declaration</a>.
+Note that since dataset properties must be strings, the schema JSON has to be escaped
+properly. Note also that the properties given in this request replace all existing
+properties; that is, if you had set other properties for this table, such as time-to-live
+(<code class="docutils literal"><span class="pre">dataset.table.ttl</span></code>), you must also include those properties in the update request.</p>
+</div>
+<div class="section" id="formulating-queries">
+<h2><a class="headerlink" href="#formulating-queries" title="Perma-link to this heading">🔗</a>Formulating Queries</h2>
+<p>When creating your queries, keep these limitations in mind:</p>
+<ul class="simple">
+<li>The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.</li>
+<li>The SQL commands <code class="docutils literal"><span class="pre">UPDATE</span></code> and <code class="docutils literal"><span class="pre">DELETE</span></code> are not allowed on CDAP datasets.</li>
+<li>When addressing your datasets in queries, you need to prefix the Table name with <code class="docutils literal"><span class="pre">dataset_</span></code>.
+For example, if your Table is named <code class="docutils literal"><span class="pre">Purchases</span></code>, then the corresponding Hive table
+name is <code class="docutils literal"><span class="pre">dataset_purchases</span></code>. Note that the table name is lower-case.</li>
+<li>If your Table name contains a '.' or a '-', those characters will be converted to '_' for the Hive
+table name. For example, if your Table is named <code class="docutils literal"><span class="pre">my-table.name</span></code>, the corresponding Hive table
+name will be <code class="docutils literal"><span class="pre">dataset_my_table_name</span></code>. Beware of name collisions. For example,
+<code class="docutils literal"><span class="pre">my.table</span></code> will use the same Hive table name as <code class="docutils literal"><span class="pre">my_table</span></code>. Beware of name collisions.
+For example, <code class="docutils literal"><span class="pre">my.table</span></code> will use the same Hive table name as <code class="docutils literal"><span class="pre">my_table</span></code>.</li>
+</ul>
+<p>For more examples of queries, please refer to the <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML">Hive language manual</a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Data Exploration</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Stream Exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesets.html"> Fileset Exploration</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Table Exploration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-an-explorable-table">Creating an Explorable Table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setting-a-schema-on-an-existing-table">Setting a Schema on an Existing Table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#formulating-queries">Formulating Queries</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="object-mapped-tables.html"> ObjectMappedTable Exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom-datasets.html"> Custom Dataset Exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hive-execution-engines.html"> Hive Execution Engines</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="FileSet Exploration" href="filesets.html" />FileSet Exploration</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="ObjectMappedTable Exploration" href="object-mapped-tables.html" />ObjectMappedTable Exploration</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

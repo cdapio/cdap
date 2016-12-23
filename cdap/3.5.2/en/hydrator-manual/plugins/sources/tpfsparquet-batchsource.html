@@ -1,0 +1,333 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>TimePartitionedFileSet Parquet &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/hydrator-manual/plugins/sources/tpfsparquet-batchsource.html">
+
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../../index.html" />
+    <link rel="up" title="Source Plugins" href="index.html" />
+    <link rel="next" title="XML Reader" href="xmlreader-batchsource.html" />
+    <link rel="prev" title="TimePartitionedFileSet Avro" href="tpfsavro-batchsource.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="xmlreader-batchsource.html" title="XML Reader"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="tpfsavro-batchsource.html" title="TimePartitionedFileSet Avro"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../../table-of-contents.html">Cask Hydrator</a> &raquo;</li>
+          <li><a href="../index.html" >Plugin Reference</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Source Plugins</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="timepartitionedfileset-parquet">
+<span id="timepartitionedfileset-parquet"></span><h1><a class="headerlink" href="#timepartitionedfileset-parquet" title="Perma-link to this heading">🔗</a>TimePartitionedFileSet Parquet</h1>
+<div class="section" id="description">
+<span id="description"></span><h2><a class="headerlink" href="#description" title="Perma-link to this heading">🔗</a>Description</h2>
+<p>Reads from a TimePartitionedFileSet whose data is in Parquet format.</p>
+</div>
+<div class="section" id="use-case">
+<span id="use-case"></span><h2><a class="headerlink" href="#use-case" title="Perma-link to this heading">🔗</a>Use Case</h2>
+<p>The source is used when you need to read partitions of a TimePartitionedFileSet.
+For example, suppose there is an application that ingests data by writing to a TimePartitionedFileSet,
+where arrival time of the data is used as the partition key. You may want to create a pipeline that
+reads the newly-arrived files, performs data validation and cleansing, and then writes to a Table.</p>
+</div>
+<div class="section" id="properties">
+<span id="properties"></span><h2><a class="headerlink" href="#properties" title="Perma-link to this heading">🔗</a>Properties</h2>
+<p><strong>name:</strong> Name of the TimePartitionedFileSet from which the records are to be read from. (Macro-enabled)</p>
+<p><strong>schema:</strong> The Parquet schema of the record being read from the source as a JSON Object.</p>
+<p><strong>basePath:</strong> Base path for the TimePartitionedFileSet. Defaults to the name of the
+dataset. (Macro-enabled)</p>
+<p><strong>duration:</strong> Size of the time window to read with each run of the pipeline. The format is
+expected to be a number followed by an 's', 'm', 'h', or 'd' (specifying the time unit), with
+'s' for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. For example, a value of
+'5m' means each run of the pipeline will read 5 minutes of events from the TPFS source. (Macro-enabled)</p>
+<p><strong>delay:</strong> Optional delay for reading from TPFS source. The value must be of the same
+format as the duration value. For example, a duration of '5m' and a delay of '10m' means
+each run of the pipeline will read events for 5 minutes of data from 15 minutes before its logical
+start time to 10 minutes before its logical start time. The default value is 0. (Macro-enabled)</p>
+</div>
+<div class="section" id="example">
+<span id="example"></span><h2><a class="headerlink" href="#example" title="Perma-link to this heading">🔗</a>Example</h2>
+<p>This example reads from a TimePartitionedFileSet named 'webactivity', assuming the underlying
+files are in Parquet format:</p>
+<pre class="literal-block">
+{
+    &quot;name&quot;: &quot;TPFSParquet&quot;,
+    &quot;type&quot;: &quot;batchsource&quot;,
+    &quot;properties&quot;: {
+        &quot;name&quot;: &quot;webactivity&quot;,
+        &quot;duration&quot;: &quot;5m&quot;,
+        &quot;delay&quot;: &quot;1m&quot;,
+        &quot;schema&quot;: &quot;{
+            \&quot;type\&quot;:\&quot;record\&quot;,
+            \&quot;name\&quot;:\&quot;webactivity\&quot;,
+            \&quot;fields\&quot;:[
+                {\&quot;name\&quot;:\&quot;date\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},
+                {\&quot;name\&quot;:\&quot;userid\&quot;,\&quot;type\&quot;:\&quot;long\&quot;},
+                {\&quot;name\&quot;:\&quot;action\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},
+                {\&quot;name\&quot;:\&quot;item\&quot;,\&quot;type\&quot;:\&quot;string\&quot;}
+            ]
+        }&quot;
+    }
+}
+</pre>
+<p>TimePartitionedFileSets are partitioned by year, month, day, hour, and minute. Suppose the
+current run was scheduled to start at 10:00am on January 1, 2015. Since the 'delay'
+property is set to one minute, only data before 9:59am January 1, 2015 will be read. This
+excludes the partition for year 2015, month 1, day 1, hour 9, and minute 59. Since the
+'duration' property is set to five minutes, a total of five partitions will be read. This
+means partitions for year 2015, month 1, day 1, hour 9, and minutes 54, 55, 56, 57, and 58
+will be read.</p>
+<p>The source will read the actual data using the given schema and will output records with
+this schema:</p>
+<pre class="literal-block">
++=======================+
+| field name  | type    |
++=======================+
+| date        | string  |
+| userid      | long    |
+| action      | string  |
+| item        | string  |
++=======================+
+</pre>
+<hr class="docutils" />
+<ul class="simple">
+<li>Hydrator Plugin Type: batchsource</li>
+<li>Hydrator Version: 1.4.1</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../../table-of-contents.html">Cask Hydrator: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts-design.html"> Concepts and Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../studio.html"> Hydrator Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../creating-pipelines.html"> Creating Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../running-pipelines.html"> Running Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-management.html"> Plugin Management</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Plugin Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../actions/index.html"> Action Plugins</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"> Source Plugins</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="azureblobstore-batchsource.html">Microsoft Azure Blob Storage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cassandra-batchsource.html">Cassandra</a></li>
+<li class="toctree-l3"><a class="reference internal" href="database-batchsource.html">Database</a></li>
+<li class="toctree-l3"><a class="reference internal" href="elasticsearch-batchsource.html">Elasticsearch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="excel-batchsource.html">Excel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file-batchsource.html">File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ftp-batchsource.html">FTP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hbase-batchsource.html">HBase</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hive-batchsource.html">Hive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kvtable-batchsource.html">KeyValueTable</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mongodb-batchsource.html">MongoDB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="s3-batchsource.html">Amazon S3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snapshotavro-batchsource.html">Snapshot Avro</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snapshotparquet-batchsource.html">Snapshot Parquet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="stream-batchsource.html">Stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="table-batchsource.html">Table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tpfsavro-batchsource.html">TimePartitionedFileSet Avro</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">TimePartitionedFileSet Parquet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xmlreader-batchsource.html">XML Reader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kafka-streamingsource.html">Kafka Streaming</a></li>
+<li class="toctree-l3"><a class="reference internal" href="twitter-streamingsource.html">Twitter Streaming</a></li>
+<li class="toctree-l3"><a class="reference internal" href="amazonsqs-realtimesource.html">Amazon SQS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="datagenerator-realtimesource.html">Data Generator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httppoller-realtimesource.html">HTTP Poller</a></li>
+<li class="toctree-l3"><a class="reference internal" href="jms-realtimesource.html">JMS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kafka-realtimesource.html">Kafka</a></li>
+<li class="toctree-l3"><a class="reference internal" href="twitter-realtimesource.html">Twitter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../transforms/index.html"> Transform Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../analytics/index.html"> Analytic Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sinks/index.html"> Sink Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../shared-plugins/index.html"> Shared Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../post-run-plugins/index.html"> Post-run Plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../developing-pipelines.html"> Developing Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developing-plugins/index.html"> Developing Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how-hydrator-works.html"> How Hydrator Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faqs.html"> FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html"> Glossary</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="TimePartitionedFileSet Avro" href="tpfsavro-batchsource.html" />TimePartitionedFileSet Avro</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="XML Reader" href="xmlreader-batchsource.html" />XML Reader</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

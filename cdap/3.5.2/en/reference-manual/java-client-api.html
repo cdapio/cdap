@@ -1,0 +1,568 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Java Client API &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/java-client-api.html">
+
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="index.html" />
+    <link rel="next" title="Javadocs" href="javadocs/index.html" />
+    <link rel="prev" title="Workflow HTTP RESTful API" href="http-restful-api/workflow.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="javadocs/index.html" title="Javadocs"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="http-restful-api/workflow.html" title="Workflow HTTP RESTful API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="table-of-contents.html">Reference Manual</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="java-client-api">
+<span id="client-api"></span><span id="id1"></span><h1><a class="headerlink" href="#java-client-api" title="Perma-link to this heading">🔗</a>Java Client API</h1>
+<p>The Cask Data Application Platform (CDAP) Java Client API provides methods for interacting
+with CDAP from Java applications.</p>
+<div class="section" id="maven-dependency">
+<h2><a class="headerlink" href="#maven-dependency" title="Perma-link to this heading">🔗</a>Maven Dependency</h2>
+<p>To use the Java Client API in your project, add this Maven dependency:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&lt;dependency&gt;</span>
+<span class="go">  &lt;groupId&gt;co.cask.cdap&lt;/groupId&gt;</span>
+<span class="go">  &lt;artifactId&gt;cdap-client&lt;/artifactId&gt;</span>
+<span class="go">  &lt;version&gt;${cdap.version}&lt;/version&gt;</span>
+<span class="go">&lt;/dependency&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="components">
+<h2><a class="headerlink" href="#components" title="Perma-link to this heading">🔗</a>Components</h2>
+<p>The Java Client API allows you to interact with these CDAP components:</p>
+<ul class="simple">
+<li><a class="reference external" href="#application-client">ApplicationClient:</a> interacting with applications</li>
+<li><a class="reference external" href="#dataset-client">DatasetClient:</a> interacting with datasets</li>
+<li><a class="reference external" href="#dataset-module-client">DatasetModuleClient:</a> interacting with dataset Modules</li>
+<li><a class="reference external" href="#dataset-type-client">DatasetTypeClient:</a> interacting with dataset Types</li>
+<li><a class="reference external" href="#metrics-client">MetricsClient:</a> interacting with metrics</li>
+<li><a class="reference external" href="#monitor-client">MonitorClient:</a> monitoring system services</li>
+<li><a class="reference external" href="#preferences-client">PreferencesClient:</a> interacting with preferences</li>
+<li><a class="reference external" href="#program-client">ProgramClient:</a> interacting with flows, MapReduce Programs, user services, workflows, and workers</li>
+<li><a class="reference external" href="#query-client">QueryClient:</a> querying datasets</li>
+<li><a class="reference external" href="#service-client">ServiceClient:</a> interacting with user services</li>
+<li><a class="reference external" href="#stream-client">StreamClient:</a> interacting with streams</li>
+</ul>
+<p>The above list links to the examples below for each portion of the API.</p>
+</div>
+<div class="section" id="configuring-your-client">
+<span id="client-api-configuring-client"></span><h2><a class="headerlink" href="#configuring-your-client" title="Perma-link to this heading">🔗</a>Configuring your *Client</h2>
+<p>Every <em>*Client</em> constructor requires a <cite>ClientConfig</cite> instance which configures the hostname and port of the CDAP
+instance that you wish to interact with.</p>
+<p>In a non-secure (default) CDAP instance, instantiate as follows:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Interact with the CDAP instance located at example.com, port 10000</span>
+<span class="n">ClientConfig</span> <span class="n">clientConfig</span> <span class="o">=</span> <span class="n">ClientConfig</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+  <span class="o">.</span><span class="na">setConnectionConfig</span><span class="o">(</span><span class="k">new</span> <span class="n">ConnectionConfig</span><span class="o">(</span><span class="s">&quot;example.com&quot;</span><span class="o">,</span> <span class="mi">10000</span><span class="o">,</span> <span class="kc">false</span><span class="o">))</span>
+  <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</pre></div>
+</div>
+<p>In a secure CDAP instance, first pull in the <code class="docutils literal"><span class="pre">cdap-authentication-client</span></code> Maven dependency:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">&lt;</span><span class="n">dependency</span><span class="o">&gt;</span>
+  <span class="o">&lt;</span><span class="n">groupId</span><span class="o">&gt;</span><span class="n">co</span><span class="o">.</span><span class="na">cask</span><span class="o">.</span><span class="na">cdap</span><span class="o">&lt;/</span><span class="n">groupId</span><span class="o">&gt;</span>
+  <span class="o">&lt;</span><span class="n">artifactId</span><span class="o">&gt;</span><span class="n">cdap</span><span class="o">-</span><span class="n">authentication</span><span class="o">-</span><span class="n">client</span><span class="o">&lt;/</span><span class="n">artifactId</span><span class="o">&gt;</span>
+  <span class="o">&lt;</span><span class="n">version</span><span class="o">&gt;</span><span class="n">$</span><span class="o">{</span><span class="n">cdap</span><span class="o">.</span><span class="na">client</span><span class="o">.</span><span class="na">version</span><span class="o">}&lt;/</span><span class="n">version</span><span class="o">&gt;</span>
+<span class="o">&lt;/</span><span class="n">dependency</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Then, instantiate as follows:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Obtain AccessToken</span>
+<span class="n">AuthenticationClient</span> <span class="n">authenticationClient</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BasicAuthenticationClient</span><span class="o">();</span>
+<span class="n">authenticationClient</span><span class="o">.</span><span class="na">setConnectionInfo</span><span class="o">(</span><span class="s">&quot;example.com&quot;</span><span class="o">,</span> <span class="mi">10000</span><span class="o">,</span> <span class="n">sslEnabled</span><span class="o">);</span>
+<span class="c1">// Configure the AuthenticationClient as documented in</span>
+<span class="c1">// https://github.com/caskdata/cdap-clients/blob/develop/cdap-authentication-clients/java</span>
+<span class="n">AccessToken</span> <span class="n">accessToken</span> <span class="o">=</span> <span class="n">authenticationClient</span><span class="o">.</span><span class="na">getAccessToken</span><span class="o">();</span>
+
+<span class="c1">// Interact with the secure CDAP instance located at example.com, port 10000, with the provided accessToken</span>
+<span class="n">ClientConfig</span> <span class="n">clientConfig</span> <span class="o">=</span> <span class="n">ClientConfig</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+  <span class="o">.</span><span class="na">setConnectionConfig</span><span class="o">(</span><span class="k">new</span> <span class="n">ConnectionConfig</span><span class="o">(</span><span class="s">&quot;example.com&quot;</span><span class="o">,</span> <span class="mi">10000</span><span class="o">,</span> <span class="n">sslEnabled</span><span class="o">))</span>
+  <span class="o">.</span><span class="na">setAccessToken</span><span class="o">(</span><span class="n">accessToken</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="application-client">
+<span id="id2"></span><h2><a class="headerlink" href="#application-client" title="Perma-link to this heading">🔗</a>ApplicationClient</h2>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ClientConfig</span> <span class="n">clientConfig</span><span class="o">;</span>
+
+<span class="c1">// Construct the client used to interact with CDAP</span>
+<span class="n">ApplicationClient</span> <span class="n">appClient</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ApplicationClient</span><span class="o">(</span><span class="n">clientConfig</span><span class="o">);</span>
+
+<span class="c1">// Fetch the list of applications</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">ApplicationRecord</span><span class="o">&gt;</span> <span class="n">apps</span> <span class="o">=</span> <span class="n">appClient</span><span class="o">.</span><span class="na">list</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">);</span>
+
+<span class="c1">// Deploy an application</span>
+<span class="n">File</span> <span class="n">appJarFile</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">&quot;your-app.jar&quot;</span><span class="o">);</span>
+<span class="n">appClient</span><span class="o">.</span><span class="na">deploy</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="n">appJarFile</span><span class="o">);</span>
+
+<span class="c1">// Delete an application</span>
+<span class="n">appClient</span><span class="o">.</span><span class="na">delete</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Application</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;Purchase&quot;</span><span class="o">));</span>
+
+<span class="c1">// List programs belonging to an application</span>
+<span class="n">appClient</span><span class="o">.</span><span class="na">listPrograms</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Application</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;Purchase&quot;</span><span class="o">));</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="dataset-client">
+<span id="id3"></span><h2><a class="headerlink" href="#dataset-client" title="Perma-link to this heading">🔗</a>DatasetClient</h2>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ClientConfig</span> <span class="n">clientConfig</span><span class="o">;</span>
+
+<span class="c1">// Construct the client used to interact with CDAP</span>
+<span class="n">DatasetClient</span> <span class="n">datasetClient</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DatasetClient</span><span class="o">(</span><span class="n">clientConfig</span><span class="o">);</span>
+
+<span class="c1">// Fetch the list of datasets</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">DatasetSpecificationSummary</span><span class="o">&gt;</span> <span class="n">datasets</span> <span class="o">=</span> <span class="n">datasetClient</span><span class="o">.</span><span class="na">list</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">);</span>
+
+<span class="c1">// Create a dataset</span>
+<span class="n">Id</span><span class="o">.</span><span class="na">DatasetInstance</span> <span class="n">datasetId</span> <span class="o">=</span> <span class="n">Id</span><span class="o">.</span><span class="na">DatasetInstance</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;someDataset&quot;</span><span class="o">);</span>
+<span class="n">datasetClient</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="n">datasetId</span><span class="o">,</span> <span class="s">&quot;someDatasetType&quot;</span><span class="o">);</span>
+
+<span class="c1">// Truncate a dataset</span>
+<span class="n">datasetClient</span><span class="o">.</span><span class="na">truncate</span><span class="o">(</span><span class="n">datasetId</span><span class="o">);</span>
+
+<span class="c1">// Delete a dataset</span>
+<span class="n">datasetClient</span><span class="o">.</span><span class="na">delete</span><span class="o">(</span><span class="n">datasetId</span><span class="o">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="dataset-module-client">
+<span id="id4"></span><h2><a class="headerlink" href="#dataset-module-client" title="Perma-link to this heading">🔗</a>DatasetModuleClient</h2>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ClientConfig</span> <span class="n">clientConfig</span><span class="o">;</span>
+
+<span class="c1">// Construct the client used to interact with CDAP</span>
+<span class="n">DatasetModuleClient</span> <span class="n">datasetModuleClient</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DatasetModuleClient</span><span class="o">(</span><span class="n">clientConfig</span><span class="o">);</span>
+
+<span class="c1">// Add a dataset module</span>
+<span class="n">File</span> <span class="n">moduleJarFile</span> <span class="o">=</span> <span class="n">createAppJarFile</span><span class="o">(</span><span class="n">SomeDatasetModule</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<span class="n">Id</span><span class="o">.</span><span class="na">DatasetModule</span> <span class="n">datasetModuleId</span> <span class="o">=</span> <span class="n">Id</span><span class="o">.</span><span class="na">DatasetModule</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;someDatasetModule&quot;</span><span class="o">);</span>
+<span class="n">datasetModuleClient</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">datasetModuleId</span><span class="o">,</span> <span class="n">SomeDatasetModule</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">(),</span> <span class="n">moduleJarFile</span><span class="o">);</span>
+
+<span class="c1">// Fetch the dataset module information</span>
+<span class="n">DatasetModuleMeta</span> <span class="n">datasetModuleMeta</span> <span class="o">=</span> <span class="n">datasetModuleClient</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">datasetModuleId</span><span class="o">);</span>
+
+<span class="c1">// Delete all dataset modules</span>
+<span class="n">datasetModuleClient</span><span class="o">.</span><span class="na">deleteAll</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="dataset-type-client">
+<span id="id5"></span><h2><a class="headerlink" href="#dataset-type-client" title="Perma-link to this heading">🔗</a>DatasetTypeClient</h2>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ClientConfig</span> <span class="n">clientConfig</span><span class="o">;</span>
+
+<span class="c1">// Construct the client used to interact with CDAP</span>
+<span class="n">DatasetTypeClient</span> <span class="n">datasetTypeClient</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DatasetTypeClient</span><span class="o">(</span><span class="n">clientConfig</span><span class="o">);</span>
+
+<span class="c1">// Fetch the dataset type information using the type name</span>
+<span class="n">DatasetTypeMeta</span> <span class="n">datasetTypeMeta</span> <span class="o">=</span> <span class="n">datasetTypeClient</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">DatasetType</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;someDatasetType&quot;</span><span class="o">));</span>
+
+<span class="c1">// Fetch the dataset type information using the classname</span>
+<span class="n">datasetTypeMeta</span> <span class="o">=</span> <span class="n">datasetTypeClient</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">DatasetType</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="n">SomeDataset</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">()));</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="metrics-client">
+<span id="id6"></span><h2><a class="headerlink" href="#metrics-client" title="Perma-link to this heading">🔗</a>MetricsClient</h2>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ClientConfig</span> <span class="n">clientConfig</span><span class="o">;</span>
+
+<span class="c1">// Construct the client used to interact with CDAP</span>
+<span class="n">MetricsClient</span> <span class="n">metricsClient</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MetricsClient</span><span class="o">(</span><span class="n">clientConfig</span><span class="o">);</span>
+
+<span class="c1">// Fetch the total number of events that have been processed by a flowlet</span>
+<span class="n">RuntimeMetrics</span> <span class="n">metric</span> <span class="o">=</span> <span class="n">metricsClient</span><span class="o">.</span><span class="na">getFlowletMetrics</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Flow</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="s">&quot;user&quot;</span><span class="o">,</span> <span class="s">&quot;HelloWorld&quot;</span><span class="o">,</span> <span class="s">&quot;someFlow&quot;</span><span class="o">),</span> <span class="s">&quot;process.events.processed&quot;</span><span class="o">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="monitor-client">
+<span id="id7"></span><h2><a class="headerlink" href="#monitor-client" title="Perma-link to this heading">🔗</a>MonitorClient</h2>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ClientConfig</span> <span class="n">clientConfig</span><span class="o">;</span>
+
+<span class="c1">// Construct the client used to interact with CDAP</span>
+<span class="n">MonitorClient</span> <span class="n">monitorClient</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MonitorClient</span><span class="o">(</span><span class="n">clientConfig</span><span class="o">);</span>
+
+<span class="c1">// Fetch the list of system services</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">SystemServiceMeta</span><span class="o">&gt;</span> <span class="n">services</span> <span class="o">=</span> <span class="n">monitorClient</span><span class="o">.</span><span class="na">listSystemServices</span><span class="o">();</span>
+
+<span class="c1">// Fetch status of system transaction service</span>
+<span class="n">String</span> <span class="n">serviceStatus</span> <span class="o">=</span> <span class="n">monitorClient</span><span class="o">.</span><span class="na">getSystemServiceStatus</span><span class="o">(</span><span class="s">&quot;transaction&quot;</span><span class="o">);</span>
+
+<span class="c1">// Fetch the number of instances of the system transaction service</span>
+<span class="kt">int</span> <span class="n">systemServiceInstances</span> <span class="o">=</span> <span class="n">monitorClient</span><span class="o">.</span><span class="na">getSystemServiceInstances</span><span class="o">(</span><span class="s">&quot;transaction&quot;</span><span class="o">);</span>
+
+<span class="c1">// Set the number of instances of the system transaction service</span>
+<span class="n">monitorClient</span><span class="o">.</span><span class="na">setSystemServiceInstances</span><span class="o">(</span><span class="s">&quot;transaction&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="preferences-client">
+<span id="id8"></span><h2><a class="headerlink" href="#preferences-client" title="Perma-link to this heading">🔗</a>PreferencesClient</h2>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ClientConfig</span> <span class="n">clientConfig</span><span class="o">;</span>
+
+<span class="c1">// Construct the client used to interact with CDAP</span>
+<span class="n">PreferencesClient</span> <span class="n">preferencesClient</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PreferencesClient</span><span class="o">(</span><span class="n">clientConfig</span><span class="o">);</span>
+
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">propMap</span> <span class="o">=</span> <span class="n">Maps</span><span class="o">.</span><span class="na">newHashMap</span><span class="o">();</span>
+<span class="n">propMap</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;k1&quot;</span><span class="o">,</span> <span class="s">&quot;v1&quot;</span><span class="o">);</span>
+
+<span class="c1">// Set preferences at the Instance level</span>
+<span class="n">preferencesClient</span><span class="o">.</span><span class="na">setInstancePreferences</span><span class="o">(</span><span class="n">propMap</span><span class="o">);</span>
+
+<span class="c1">// Get preferences at the Instance level</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">currentPropMap</span> <span class="o">=</span> <span class="n">preferencesClient</span><span class="o">.</span><span class="na">getInstancePreferences</span><span class="o">();</span>
+
+<span class="c1">// Delete preferences at the Instance level</span>
+<span class="n">preferencesClient</span><span class="o">.</span><span class="na">deleteInstancePreferences</span><span class="o">();</span>
+
+<span class="c1">// Set preferences of MyApp application which is deployed in the Dev namespace</span>
+<span class="n">preferencesClient</span><span class="o">.</span><span class="na">setApplicationPreferences</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Application</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="s">&quot;Dev&quot;</span><span class="o">,</span> <span class="s">&quot;MyApp&quot;</span><span class="o">),</span> <span class="n">propMap</span><span class="o">);</span>
+
+<span class="c1">// Get only the preferences of MyApp application which is deployed in the Dev namespace</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">appPrefs</span> <span class="o">=</span> <span class="n">preferencesClient</span><span class="o">.</span><span class="na">getApplicationPreferences</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Application</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="s">&quot;Dev&quot;</span><span class="o">,</span> <span class="s">&quot;MyApp&quot;</span><span class="o">),</span> <span class="kc">false</span><span class="o">);</span>
+
+<span class="c1">// Get the resolved preferences (collapsed with higher level(s) of preferences)</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">resolvedAppPrefs</span> <span class="o">=</span> <span class="n">preferencesClient</span><span class="o">.</span><span class="na">getApplicationPreferences</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Application</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="s">&quot;Dev&quot;</span><span class="o">,</span> <span class="s">&quot;MyApp&quot;</span><span class="o">),</span> <span class="kc">true</span><span class="o">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="program-client">
+<span id="id9"></span><h2><a class="headerlink" href="#program-client" title="Perma-link to this heading">🔗</a>ProgramClient</h2>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ClientConfig</span> <span class="n">clientConfig</span><span class="o">;</span>
+
+<span class="c1">// Construct the client used to interact with CDAP</span>
+<span class="n">ProgramClient</span> <span class="n">programClient</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ProgramClient</span><span class="o">(</span><span class="n">clientConfig</span><span class="o">);</span>
+
+<span class="c1">// Start a service in the WordCount example</span>
+<span class="n">programClient</span><span class="o">.</span><span class="na">start</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Program</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;WordCount&quot;</span><span class="o">,</span> <span class="n">ProgramType</span><span class="o">.</span><span class="na">SERVICE</span><span class="o">,</span> <span class="s">&quot;RetrieveCounts&quot;</span><span class="o">));</span>
+
+<span class="c1">// formatted in JSON</span>
+<span class="n">programClient</span><span class="o">.</span><span class="na">getLiveInfo</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Program</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;HelloWorld&quot;</span><span class="o">,</span> <span class="n">ProgramType</span><span class="o">.</span><span class="na">SERVICE</span><span class="o">,</span> <span class="s">&quot;greet&quot;</span><span class="o">));</span>
+
+<span class="c1">// Fetch program logs in the WordCount example</span>
+<span class="n">programClient</span><span class="o">.</span><span class="na">getProgramLogs</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Program</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;WordCount&quot;</span><span class="o">,</span> <span class="n">ProgramType</span><span class="o">.</span><span class="na">SERVICE</span><span class="o">,</span> <span class="s">&quot;RetrieveCounts&quot;</span><span class="o">),</span> <span class="mi">0</span><span class="o">,</span> <span class="n">Long</span><span class="o">.</span><span class="na">MAX_VALUE</span><span class="o">);</span>
+
+<span class="c1">// Scale a service in the HelloWorld example</span>
+<span class="n">programClient</span><span class="o">.</span><span class="na">setServiceInstances</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Service</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;HelloWorld&quot;</span><span class="o">,</span> <span class="s">&quot;greet&quot;</span><span class="o">),</span> <span class="mi">3</span><span class="o">);</span>
+
+<span class="c1">// Stop a service in the HelloWorld example</span>
+<span class="n">programClient</span><span class="o">.</span><span class="na">stop</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Program</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;HelloWorld&quot;</span><span class="o">,</span> <span class="n">ProgramType</span><span class="o">.</span><span class="na">SERVICE</span><span class="o">,</span> <span class="s">&quot;greet&quot;</span><span class="o">));</span>
+
+<span class="c1">// Start, scale, and stop a flow in the WordCount example</span>
+<span class="n">programClient</span><span class="o">.</span><span class="na">start</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Program</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;WordCount&quot;</span><span class="o">,</span> <span class="n">ProgramType</span><span class="o">.</span><span class="na">FLOW</span><span class="o">,</span> <span class="s">&quot;WordCountFlow&quot;</span><span class="o">));</span>
+
+<span class="c1">// Fetch the last 10 flow runs in the WordCount example</span>
+<span class="n">programClient</span><span class="o">.</span><span class="na">getAllProgramRuns</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Program</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;WordCount&quot;</span><span class="o">,</span> <span class="n">ProgramType</span><span class="o">.</span><span class="na">FLOW</span><span class="o">,</span> <span class="s">&quot;WordCountFlow&quot;</span><span class="o">),</span> <span class="mi">0</span><span class="o">,</span> <span class="n">Long</span><span class="o">.</span><span class="na">MAX_VALUE</span><span class="o">,</span> <span class="mi">10</span><span class="o">);</span>
+
+<span class="c1">// Scale a flowlet in the WordCount example</span>
+<span class="n">programClient</span><span class="o">.</span><span class="na">setFlowletInstances</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Flow</span><span class="o">.</span><span class="na">Flowlet</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Application</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;WordCount&quot;</span><span class="o">),</span> <span class="s">&quot;WordCountFlow&quot;</span><span class="o">,</span> <span class="s">&quot;Tokenizer&quot;</span><span class="o">),</span> <span class="mi">3</span><span class="o">);</span>
+
+<span class="c1">// Stop a flow in the WordCount example</span>
+<span class="n">programClient</span><span class="o">.</span><span class="na">stop</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Program</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;WordCount&quot;</span><span class="o">,</span> <span class="n">ProgramType</span><span class="o">.</span><span class="na">FLOW</span><span class="o">,</span> <span class="s">&quot;WordCountFlow&quot;</span><span class="o">));</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="query-client">
+<span id="id10"></span><h2><a class="headerlink" href="#query-client" title="Perma-link to this heading">🔗</a>QueryClient</h2>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ClientConfig</span> <span class="n">clientConfig</span><span class="o">;</span>
+
+<span class="c1">// Construct the client used to interact with CDAP</span>
+<span class="n">QueryClient</span> <span class="n">queryClient</span> <span class="o">=</span> <span class="k">new</span> <span class="n">QueryClient</span><span class="o">(</span><span class="n">clientConfig</span><span class="o">);</span>
+
+<span class="c1">// Perform an ad-hoc query using the Purchase example</span>
+<span class="n">ListenableFuture</span><span class="o">&lt;</span><span class="n">ExploreExecutionResult</span><span class="o">&gt;</span> <span class="n">resultFuture</span> <span class="o">=</span> <span class="n">queryClient</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;SELECT * FROM dataset_history WHERE customer IN (&#39;Alice&#39;,&#39;Bob&#39;)&quot;</span><span class="o">);</span>
+<span class="n">ExploreExecutionResult</span> <span class="n">results</span> <span class="o">=</span> <span class="n">resultFuture</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+
+<span class="c1">// Fetch schema</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">ColumnDesc</span><span class="o">&gt;</span> <span class="n">schema</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="na">getResultSchema</span><span class="o">();</span>
+<span class="n">String</span><span class="o">[]</span> <span class="n">header</span> <span class="o">=</span> <span class="k">new</span> <span class="n">String</span><span class="o">[</span><span class="n">schema</span><span class="o">.</span><span class="na">size</span><span class="o">()];</span>
+<span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">header</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+  <span class="n">ColumnDesc</span> <span class="n">column</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+  <span class="c1">// Hive columns start at 1</span>
+  <span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="n">column</span><span class="o">.</span><span class="na">getPosition</span><span class="o">()</span> <span class="o">-</span> <span class="mi">1</span><span class="o">;</span>
+  <span class="n">header</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="n">column</span><span class="o">.</span><span class="na">getName</span><span class="o">()</span> <span class="o">+</span> <span class="s">&quot;: &quot;</span> <span class="o">+</span> <span class="n">column</span><span class="o">.</span><span class="na">getType</span><span class="o">();</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="service-client">
+<span id="id11"></span><h2><a class="headerlink" href="#service-client" title="Perma-link to this heading">🔗</a>ServiceClient</h2>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ClientConfig</span> <span class="n">clientConfig</span><span class="o">;</span>
+
+<span class="c1">// Construct the client used to interact with CDAP</span>
+<span class="n">ServiceClient</span> <span class="n">serviceClient</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ServiceClient</span><span class="o">(</span><span class="n">clientConfig</span><span class="o">);</span>
+
+<span class="c1">// Fetch service information using the service in the PurchaseApp example</span>
+<span class="n">ServiceSpecification</span> <span class="n">serviceSpec</span> <span class="o">=</span> <span class="n">serviceClient</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Service</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;PurchaseApp&quot;</span><span class="o">,</span> <span class="s">&quot;CatalogLookup&quot;</span><span class="o">));</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="stream-client">
+<span id="id12"></span><h2><a class="headerlink" href="#stream-client" title="Perma-link to this heading">🔗</a>StreamClient</h2>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ClientConfig</span> <span class="n">clientConfig</span><span class="o">;</span>
+
+<span class="c1">// Construct the client used to interact with CDAP</span>
+<span class="n">StreamClient</span> <span class="n">streamClient</span> <span class="o">=</span> <span class="k">new</span> <span class="n">StreamClient</span><span class="o">(</span><span class="n">clientConfig</span><span class="o">);</span>
+
+<span class="c1">// Fetch the stream list</span>
+<span class="n">List</span> <span class="n">streams</span> <span class="o">=</span> <span class="n">streamClient</span><span class="o">.</span><span class="na">list</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">);</span>
+
+<span class="c1">// Create a stream, using the Purchase example</span>
+<span class="n">Id</span><span class="o">.</span><span class="na">Stream</span> <span class="n">streamId</span> <span class="o">=</span> <span class="n">Id</span><span class="o">.</span><span class="na">Stream</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;purchases&quot;</span><span class="o">);</span>
+<span class="n">streamClient</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="n">streamId</span><span class="o">);</span>
+
+<span class="c1">// Fetch a stream&#39;s properties</span>
+<span class="n">StreamProperties</span> <span class="n">config</span> <span class="o">=</span> <span class="n">streamClient</span><span class="o">.</span><span class="na">getConfig</span><span class="o">(</span><span class="n">streamId</span><span class="o">);</span>
+
+<span class="c1">// Send events to a stream</span>
+<span class="n">streamClient</span><span class="o">.</span><span class="na">sendEvent</span><span class="o">(</span><span class="n">streamId</span><span class="o">,</span> <span class="s">&quot;Tom bought 5 apples for $10&quot;</span><span class="o">);</span>
+
+<span class="c1">// Read all events from a stream (results in events)</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">StreamEvent</span><span class="o">&gt;</span> <span class="n">events</span> <span class="o">=</span> <span class="n">Lists</span><span class="o">.</span><span class="na">newArrayList</span><span class="o">();</span>
+<span class="n">streamClient</span><span class="o">.</span><span class="na">getEvents</span><span class="o">(</span><span class="n">streamId</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">Long</span><span class="o">.</span><span class="na">MAX_VALUE</span><span class="o">,</span> <span class="n">Integer</span><span class="o">.</span><span class="na">MAX_VALUE</span><span class="o">,</span> <span class="n">events</span><span class="o">);</span>
+
+<span class="c1">// Read first 5 events from a stream (results in events)</span>
+<span class="n">events</span> <span class="o">=</span> <span class="n">Lists</span><span class="o">.</span><span class="na">newArrayList</span><span class="o">();</span>
+<span class="n">streamClient</span><span class="o">.</span><span class="na">getEvents</span><span class="o">(</span><span class="n">streamId</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">Long</span><span class="o">.</span><span class="na">MAX_VALUE</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="n">events</span><span class="o">);</span>
+
+<span class="c1">// Read 2nd and 3rd events from a stream, after first calling getEvents</span>
+<span class="kt">long</span> <span class="n">startTime</span> <span class="o">=</span> <span class="n">events</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="mi">1</span><span class="o">).</span><span class="na">getTimestamp</span><span class="o">();</span>
+<span class="kt">long</span> <span class="n">endTime</span> <span class="o">=</span> <span class="n">events</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="mi">2</span><span class="o">).</span><span class="na">getTimestamp</span><span class="o">()</span> <span class="o">+</span> <span class="mi">1</span><span class="o">;</span>
+<span class="n">events</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+<span class="n">streamClient</span><span class="o">.</span><span class="na">getEvents</span><span class="o">(</span><span class="n">streamId</span><span class="o">,</span> <span class="n">startTime</span><span class="o">,</span> <span class="n">endTime</span><span class="o">,</span> <span class="n">Integer</span><span class="o">.</span><span class="na">MAX_VALUE</span><span class="o">,</span> <span class="n">events</span><span class="o">);</span>
+
+<span class="c1">// Write asynchronously to a stream</span>
+<span class="n">streamId</span> <span class="o">=</span> <span class="n">Id</span><span class="o">.</span><span class="na">Stream</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">Id</span><span class="o">.</span><span class="na">Namespace</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">,</span> <span class="s">&quot;testAsync&quot;</span><span class="o">);</span>
+<span class="n">events</span> <span class="o">=</span> <span class="n">Lists</span><span class="o">.</span><span class="na">newArrayList</span><span class="o">();</span>
+
+<span class="n">streamClient</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="n">streamId</span><span class="o">);</span>
+
+<span class="c1">// Send 10 async writes</span>
+<span class="kt">int</span> <span class="n">msgCount</span> <span class="o">=</span> <span class="mi">10</span><span class="o">;</span>
+<span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">msgCount</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+  <span class="n">streamClient</span><span class="o">.</span><span class="na">asyncSendEvent</span><span class="o">(</span><span class="n">streamId</span><span class="o">,</span> <span class="s">&quot;Testing &quot;</span> <span class="o">+</span> <span class="n">i</span><span class="o">);</span>
+<span class="o">}</span>
+
+<span class="c1">// Read them back; need to read it multiple times as the writes happen asynchronously</span>
+<span class="k">while</span> <span class="o">(</span><span class="n">events</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">!=</span> <span class="n">msgCount</span><span class="o">)</span> <span class="o">{</span>
+  <span class="n">events</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+  <span class="n">streamClient</span><span class="o">.</span><span class="na">getEvents</span><span class="o">(</span><span class="n">streamId</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">Long</span><span class="o">.</span><span class="na">MAX_VALUE</span><span class="o">,</span> <span class="n">msgCount</span><span class="o">,</span> <span class="n">events</span><span class="o">);</span>
+<span class="o">}</span>
+
+<span class="c1">// Check that there are no more events</span>
+<span class="n">events</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+<span class="k">while</span> <span class="o">(</span><span class="n">events</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">())</span> <span class="o">{</span>
+  <span class="n">events</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+  <span class="n">streamClient</span><span class="o">.</span><span class="na">getEvents</span><span class="o">(</span><span class="n">streamId</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">Long</span><span class="o">.</span><span class="na">MAX_VALUE</span><span class="o">,</span> <span class="n">msgCount</span><span class="o">,</span> <span class="n">events</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="http-restful-api/index.html"> HTTP RESTful API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Java Client API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#maven-dependency">Maven Dependency</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#components">Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuring-your-client">Configuring your *Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#application-client">ApplicationClient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dataset-client">DatasetClient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dataset-module-client">DatasetModuleClient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dataset-type-client">DatasetTypeClient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#metrics-client">MetricsClient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#monitor-client">MonitorClient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#preferences-client">PreferencesClient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#program-client">ProgramClient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#query-client">QueryClient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#service-client">ServiceClient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stream-client">StreamClient</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Workflow HTTP RESTful API" href="http-restful-api/workflow.html" />Workflow HTTP RESTful API</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Javadocs" href="javadocs/index.html" />Javadocs</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

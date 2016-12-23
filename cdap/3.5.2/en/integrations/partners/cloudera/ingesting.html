@@ -1,0 +1,415 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Ingestion and Exploration &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/integrations/partners/cloudera/ingesting.html">
+
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../../index.html" />
+    <link rel="up" title="Cloudera" href="index.html" />
+    <link rel="next" title="Navigator Integration Application" href="navigator-integration.html" />
+    <link rel="prev" title="Cloudera" href="index.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="navigator-integration.html" title="Navigator Integration Application"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Cloudera"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../../table-of-contents.html">Integrations</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Cloudera</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ingestion-and-exploration">
+<span id="cloudera-ingesting"></span><h1><a class="headerlink" href="#ingestion-and-exploration" title="Perma-link to this heading">🔗</a>Ingestion and Exploration</h1>
+<div class="section" id="integrating-cdap-with-impala">
+<span id="integrations-impala"></span><h2><a class="headerlink" href="#integrating-cdap-with-impala" title="Perma-link to this heading">🔗</a>Integrating CDAP with Impala</h2>
+<p>When using CDAP with Impala:</p>
+<ul class="simple">
+<li><a class="reference external" href="../../../hydrator-manual/index.html"><strong>Data Pipelines:</strong></a> Using <strong>Hydrator</strong> and <strong>plugins</strong> to create either real-time or batch data pipelines</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="../../../developers-manual/data-exploration/streams.html"><strong>Stream Exploration:</strong></a> It is often useful to be able to <strong>examine data in a stream</strong> in an ad-hoc manner through SQL-like queries</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="../../../developers-manual/data-exploration/filesets.html"><strong>Fileset Exploration:</strong></a> The <strong>CDAP FileSet Datasets</strong> can be explored through ad-hoc SQL-like queries.</li>
+</ul>
+</div>
+<div class="section" id="ingesting-and-exploring-data-with-impala">
+<h2><a class="headerlink" href="#ingesting-and-exploring-data-with-impala" title="Perma-link to this heading">🔗</a>Ingesting and Exploring Data with Impala</h2>
+<p>Streams are the primary means of bringing data from external systems into the CDAP in
+real time. They are ordered, time-partitioned sequences of data, usable for real-time
+collection and consumption of data.</p>
+<p>They can easily be created by using the CDAP Command Line Interface (CLI).
+First, connect to your CDAP instance using the CLI:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap &gt; connect &lt;hostname&gt;:10000</span>
+</pre></div>
+</div>
+<p>Next, create a stream:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap &gt; create stream trades</span>
+</pre></div>
+</div>
+<p>You can then add events to a stream, one-by-one:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap &gt; send stream trades &#39;NFLX,441.07,50&#39;</span>
+<span class="go">cdap &gt; send stream trades &#39;AAPL,118.63,100&#39;</span>
+<span class="go">cdap &gt; send stream trades &#39;GOOG,528.48,10&#39;</span>
+</pre></div>
+</div>
+<p>Or, you can add the entire contents of a file:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap &gt; load stream trades &lt;my_path&gt;/trades.csv</span>
+</pre></div>
+</div>
+<p>Or, you can use the other tools and APIs available to ingest data in real time or batch.
+For more information on what are other ways of ingesting data into CDAP, see the links at
+the top of this page.</p>
+<p>You can now examine the contents of your stream by executing a SQL query:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap &gt; execute &#39;select * from stream_trades limit 5&#39;</span>
+<span class="go">+===================================================================================================+</span>
+<span class="go">| stream_trades.ts: BIGINT | stream_trades.headers: map&lt;string,string&gt; | stream_trades.body: STRING |</span>
+<span class="go">+===================================================================================================+</span>
+<span class="go">| 1422493022983            | {}                                        | NFLX,441.07,50             |</span>
+<span class="go">| 1422493027358            | {}                                        | AAPL,118.63,100            |</span>
+<span class="go">| 1422493031802            | {}                                        | GOOG,528.48,10             |</span>
+<span class="go">| 1422493036080            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | GOOG,538.53,18230          |</span>
+<span class="go">| 1422493036080            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | GOOG,538.17,100            |</span>
+<span class="go">+===================================================================================================+</span>
+</pre></div>
+</div>
+<p>You can also attach a schema to your stream to enable more powerful queries:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap &gt; set stream format trades csv &#39;ticker string, price double, trades int&#39;</span>
+<span class="go">cdap &gt; execute &#39;select ticker, sum(price * trades) / 1000000 as millions from stream_trades group by ticker order by millions desc&#39;</span>
+<span class="go">+=====================================+</span>
+<span class="go">| ticker: STRING | millions: DOUBLE   |</span>
+<span class="go">+=====================================+</span>
+<span class="go">| AAPL           | 3121.8966341143905 |</span>
+<span class="go">| NFLX           | 866.0789117408007  |</span>
+<span class="go">| GOOG           | 469.01340359839986 |</span>
+<span class="go">+=====================================+</span>
+</pre></div>
+</div>
+<p>On one of our test clusters, the above query took just about two minutes to complete.
+Data in CDAP is integrated with Apache Hive, and the above query above translates to a Hive query.
+As such, it will launch two MapReduce jobs in order to calculate the query results, which
+is why it takes minutes instead of seconds.</p>
+<p>To reduce query time, you can use Impala to query the data instead of Hive. Since streams
+are written in a custom format, they cannot be directly queried through Impala. Instead,
+you can create an ETL batch application that regularly reads
+stream events and writes those events into files on HDFS that can then be queried by Impala.</p>
+<p>To do this, write the following JSON to a config file:</p>
+<pre class="copyable copyable-text literal-block">
+{
+  &quot;description&quot;: &quot;Periodically reads stream data and writes it to a TimePartitionedFileSet&quot;,
+  &quot;artifact&quot;: {
+    &quot;name&quot;: &quot;cdap-data-pipeline&quot;,
+    &quot;scope&quot;: &quot;system&quot;,
+    &quot;version&quot;: &quot;3.5.2&quot;
+  },
+  &quot;config&quot;: {
+    &quot;schedule&quot;: &quot;*/10 * * * *&quot;,
+    &quot;engine&quot;: &quot;mapreduce&quot;,
+    &quot;stages&quot;: [
+      {
+        &quot;name&quot;: &quot;tradeStream&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Stream&quot;,
+          &quot;type&quot;: &quot;batchsource&quot;,
+          &quot;properties&quot;: {
+            &quot;name&quot;: &quot;trades&quot;,
+            &quot;duration&quot;: &quot;10m&quot;,
+            &quot;format&quot;: &quot;csv&quot;,
+            &quot;schema&quot;: &quot;{
+              \&quot;type\&quot;:\&quot;record\&quot;,
+              \&quot;name\&quot;:\&quot;purchase\&quot;,
+              \&quot;fields\&quot;:[
+                {\&quot;name\&quot;:\&quot;ticker\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},
+                {\&quot;name\&quot;:\&quot;price\&quot;,\&quot;type\&quot;:\&quot;double\&quot;},
+                {\&quot;name\&quot;:\&quot;trades\&quot;,\&quot;type\&quot;:\&quot;int\&quot;}
+              ]
+            }&quot;,
+            &quot;format.setting.delimiter&quot;:&quot;,&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;dropHeadersTransform&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;Projection&quot;,
+          &quot;type&quot;: &quot;transform&quot;,
+          &quot;properties&quot;: {
+            &quot;drop&quot;: &quot;headers&quot;
+          }
+        }
+      },
+      {
+        &quot;name&quot;: &quot;tpfsAvroSink&quot;,
+        &quot;plugin&quot;: {
+          &quot;name&quot;: &quot;TPFSAvro&quot;,
+          &quot;type&quot;: &quot;batchsink&quot;,
+          &quot;properties&quot;: {
+            &quot;name&quot;: &quot;trades_converted&quot;,
+            &quot;schema&quot;: &quot;{
+              \&quot;type\&quot;:\&quot;record\&quot;,
+              \&quot;name\&quot;:\&quot;purchase\&quot;,
+              \&quot;fields\&quot;:[
+                {\&quot;name\&quot;:\&quot;ts\&quot;,\&quot;type\&quot;:\&quot;long\&quot;},
+                {\&quot;name\&quot;:\&quot;ticker\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},
+                {\&quot;name\&quot;:\&quot;price\&quot;,\&quot;type\&quot;:\&quot;double\&quot;},
+                {\&quot;name\&quot;:\&quot;trades\&quot;,\&quot;type\&quot;:\&quot;int\&quot;}
+              ]
+            }&quot;,
+            &quot;basePath&quot;: &quot;trades_converted&quot;
+          }
+        }
+      }
+    ],
+    &quot;connections&quot;: [
+      {
+        &quot;from&quot;: &quot;tradeStream&quot;,
+        &quot;to&quot;: &quot;dropHeadersTransform&quot;
+      },
+      {
+        &quot;from&quot;: &quot;dropHeadersTransform&quot;,
+        &quot;to&quot;: &quot;tpfsAvroSink&quot;
+      }
+    ]
+  }
+}
+</pre>
+<p><strong>Note:</strong> The above JSON has been re-formatted to fit and requires editing (remove the line endings added to
+the <code class="docutils literal"><span class="pre">schema</span></code> values) to be a conforming JSON file.</p>
+<p>Then use your config file with the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> artifact to create an application through the CLI.
+For example, if you wrote the above JSON to a file named <code class="docutils literal"><span class="pre">conversion.json</span></code>:</p>
+<div class="highlight container">
+<pre class="literal-block">
+cdap &gt; create app trades_conversion cdap-data-pipeline 3.5.2 system &lt;path-to-conversion.json&gt;
+</pre>
+</div>
+<p>This will create and configure an application. The application's schedule (named, by default, to <code class="docutils literal"><span class="pre">dataPipelineSchedule</span></code>)
+will not run until you resume it:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap &gt; resume schedule trades_conversion.dataPipelineSchedule</span>
+</pre></div>
+</div>
+<p>This will start a schedule that will run the workflow every ten minutes.
+The next time the workflow runs, it will spawn a MapReduce job that reads all events added
+in the past ten minutes, writes each event to Avro encoded files, and registers a new
+partition in the Hive Metastore. We can then query the contents using Impala. On a
+cluster, use the Impala shell to connect to Impala:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> impala-shell -i &lt;impala-host&gt;
+<span class="gp">&gt;</span> invalidate metadata
+<span class="gp">&gt;</span> <span class="k">select</span> ticker, sum<span class="o">(</span>price * trades<span class="o">)</span> / <span class="m">1000000</span> as millions from dataset_trades_converted group by ticker order by millions desc
+<span class="go">+--------+-------------------+</span>
+<span class="go">| ticker | millions          |</span>
+<span class="go">+--------+-------------------+</span>
+<span class="go">| AAPL   | 3121.88477111439  |</span>
+<span class="go">| NFLX   | 866.0568582408006 |</span>
+<span class="go">| GOOG   | 469.0081187983999 |</span>
+<span class="go">+--------+-------------------+</span>
+<span class="go">Fetched 3 row(s) in 1.03s</span>
+</pre></div>
+</div>
+<p>Since we are using Impala, no MapReduce jobs are launched, and the query comes back in
+about one second.</p>
+<p>Now that you have data in CDAP and are able to explore your data, you can use CDAP's many
+useful and powerful services, such as the ability to dynamically scale processing units,
+distributed transactions, and service discovery, to write applications that meet your
+business needs.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../../table-of-contents.html">Integrations: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Cloudera</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Ingestion and Exploration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#integrating-cdap-with-impala">Integrating CDAP with Impala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ingesting-and-exploring-data-with-impala">Ingesting and Exploring Data with Impala</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="navigator-integration.html"> Navigator Integration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../apache-sentry.html"> Apache Sentry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hadoop-kms.html"> Apache Hadoop KMS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../jdbc.html"> CDAP JDBC Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../odbc.html"> CDAP ODBC Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pentaho.html"> Pentaho Data Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../squirrel.html"> SquirrelSQL</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Cloudera" href="index.html" />Cloudera</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Navigator Integration Application" href="navigator-integration.html" />Navigator Integration Application</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

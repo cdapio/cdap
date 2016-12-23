@@ -1,0 +1,470 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Views &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/building-blocks/views.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Flows and Flowlets" href="flows-flowlets/index.html" />
+    <link rel="prev" title="Cube Dataset" href="datasets/cube.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="flows-flowlets/index.html" title="Flows and Flowlets"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="datasets/cube.html" title="Cube Dataset"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="views">
+<span id="id1"></span><h1><a class="headerlink" href="#views" title="Perma-link to this heading">🔗</a>Views</h1>
+<p><em>Views</em> are a read-only source from where data can be read. They are similar to a
+<a class="reference internal" href="streams.html#streams"><span>stream</span></a> or <a class="reference internal" href="datasets/index.html#datasets-index"><span>dataset</span></a>. They provide a way to
+read from the same source using different schemas.</p>
+<p>Without views, you would need to begin your data application by deciding how you wanted to
+use your data, create appropriate schemas, and then fit the data to those schemas.</p>
+<p>Now, with views, you start with your data and add schema to fit your needs. If you decide
+to add a column to your schema, CDAP simply reconfigures the code that reads your data
+instead of rewriting all of it. Changing the way you use your data no longer changes the
+way you write it. This flexible approach is much better when you have lots of data that
+you can use in many different ways, or when you are still trying to understand the data
+you have.</p>
+<p>For example:</p>
+<ul class="simple">
+<li>An admin wants to expose different parts of the same data to different stakeholders;</li>
+<li>A user wants to only consume a small part of a data stream for performance reasons, to
+avoid parsing entire rows of data; or</li>
+<li>A user has loaded in data without yet knowing or understanding how it will or can be
+used, and now wants to look at it in different ways.</li>
+</ul>
+<p>Currently, views are only supported for streams. Support for datasets will be added in a
+later version of CDAP.</p>
+<div class="section" id="views-and-cdap-explore">
+<h2><a class="headerlink" href="#views-and-cdap-explore" title="Perma-link to this heading">🔗</a>Views and CDAP Explore</h2>
+<p><a class="reference internal" href="../data-exploration/index.html#data-exploration"><span>CDAP Explore</span></a> needs to be <a class="reference external" href="../source/../../admin-manual/installation/packages.html#packages-configuration-explore-service" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">enabled</span></a>
+before any streams and stream views are created so that a Hive table can be created for
+each view. (See the <a class="reference external" href="../source/../../admin-manual/installation/index.html#installation-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP installation instructions</span></a> for your
+particular Hadoop distribution for details.)</p>
+</div>
+<div class="section" id="stream-view">
+<span id="stream-views"></span><h2><a class="headerlink" href="#stream-view" title="Perma-link to this heading">🔗</a>Stream View</h2>
+<p>A stream view is a read-only, schema-based, view of a stream. This feature is intended to
+replace the single schema associated with a stream, effectively allowing for multiple
+schemas to be associated with a single stream. When a stream view is created, CDAP creates
+a Hive table that reads from the associated stream and uses the schema belonging to the
+stream view.</p>
+<div class="section" id="read-formats">
+<h3><a class="headerlink" href="#read-formats" title="Perma-link to this heading">🔗</a>Read Formats</h3>
+<p>A view has a specific read format. Read formats consist of a <a class="reference internal" href="../data-exploration/streams.html#stream-exploration-stream-format"><span>format</span></a>
+(such as CSV, TSV, or Avro, among others) and a <a class="reference internal" href="../data-exploration/streams.html#stream-exploration-stream-schema"><span>schema</span></a>.</p>
+<p>The <em>format</em> describes how the data should be parsed into higher-level objects, while the
+<em>schema</em> describes how the parsed data should be interpreted (what are strings, what are
+numbers, etc.) and, depending on the format, how it should be mapped between the
+higher-level objects and schema columns.</p>
+<p>Certain formats, such as CSV and TSV, use the additional <em>settings</em> attribute to describe
+the mapping between the named fields and the list of higher-level objects created from the
+parsing. The list is zero-based, as can be seen in this fragment of a CDAP CLI command:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">settings</span> <span class="s">&quot;mapping=0:ticker,1:num_traded,2:price&quot;</span>
+</pre></div>
+</div>
+<p>In this example, <code class="docutils literal"><span class="pre">0:ticker</span></code> means map the 0th column of the CSV row to the name <em>ticker</em>,
+the 1st column to the name <em>num_traded</em>, and so on.</p>
+</div>
+</div>
+<div class="section" id="stream-view-lifecycle">
+<h2><a class="headerlink" href="#stream-view-lifecycle" title="Perma-link to this heading">🔗</a>Stream View Lifecycle</h2>
+<p>Views can be created, deleted, listed, and their details retrieved using either:</p>
+<ul class="simple">
+<li>the <a class="reference external" href="../source/../../reference-manual/http-restful-api/views.html#http-restful-api-views" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Views HTTP RESTful API</span></a>; or</li>
+<li>the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP CLI</span></a>; in particular, the CLI's <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli-available-commands" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Ingest Commands</span></a>.</li>
+</ul>
+<div class="section" id="creating-and-modifying-a-stream-view">
+<h3><a class="headerlink" href="#creating-and-modifying-a-stream-view" title="Perma-link to this heading">🔗</a>Creating and Modifying a Stream View</h3>
+<p>A view can be added to an existing stream with either an <a class="reference external" href="../source/../../reference-manual/http-restful-api/views.html#http-restful-api-view-creating-stream-view" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">HTTP POST request command</span></a> or a matching CDAP CLI command. In the
+request body is placed a JSON object specifying the read format (<a class="reference internal" href="../data-exploration/streams.html#stream-exploration-stream-format"><span>format</span></a> and <a class="reference internal" href="../data-exploration/streams.html#stream-exploration-stream-schema"><span>schema</span></a>)
+to be used.</p>
+<p>If a stream view for that stream already exists, it will be modified instead of created.
+Only the response code will differ.</p>
+<p>For example, using the CDAP CLI, this command (reformatted to fit) will create—for
+an existing stream <em>trades</em>—a stream view, <em>view1</em>, with a format of <em>CSV</em> and an
+appropriate schema:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> create stream-view trades view1 format csv schema &quot;ticker string, num_traded int, price double&quot; settings &quot;mapping=0:ticker,1:num_traded,2:price&quot;
+</pre>
+</div>
+</div>
+<div class="section" id="listing-views-and-view-details">
+<h3><a class="headerlink" href="#listing-views-and-view-details" title="Perma-link to this heading">🔗</a>Listing Views and View Details</h3>
+<p>You can list all of the existing stream views of a stream, and see the details of each view.
+For example:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> describe stream-view trades view1
+</pre>
+</div>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">+==============================================================================================================+</span>
+<span class="o">|</span> <span class="n">id</span>    <span class="o">|</span> <span class="n">format</span> <span class="o">|</span> <span class="n">table</span>             <span class="o">|</span> <span class="n">schema</span>            <span class="o">|</span> <span class="n">settings</span>                                            <span class="o">|</span>
+<span class="o">+==============================================================================================================+</span>
+<span class="o">|</span> <span class="n">view1</span> <span class="o">|</span> <span class="n">csv</span>    <span class="o">|</span> <span class="n">stream_stock_trad</span> <span class="o">|</span> <span class="o">{</span><span class="s">&quot;type&quot;</span><span class="o">:</span><span class="s">&quot;record&quot;</span><span class="o">,</span> <span class="o">|</span> <span class="o">{</span><span class="s">&quot;mapping&quot;</span><span class="o">:</span><span class="s">&quot;0:ticker,1:num_traded,2:price&quot;</span><span class="o">}</span>         <span class="o">|</span>
+<span class="o">|</span>       <span class="o">|</span>        <span class="o">|</span> <span class="n">es_view1</span>          <span class="o">|</span> <span class="s">&quot;name&quot;</span><span class="o">:</span><span class="s">&quot;rec&quot;</span><span class="o">,</span><span class="s">&quot;fie |                                                     |</span>
+<span class="s">|       |        |                   | lds&quot;</span><span class="o">:[{</span><span class="s">&quot;name&quot;</span><span class="o">:</span><span class="s">&quot;ti |                                                     |</span>
+<span class="s">|       |        |                   | cker&quot;</span><span class="o">,</span><span class="s">&quot;type&quot;</span><span class="o">:[</span><span class="s">&quot;st |                                                     |</span>
+<span class="s">|       |        |                   | ring&quot;</span><span class="o">,</span><span class="s">&quot;null&quot;</span><span class="o">]},{</span><span class="s">&quot; |                                                     |</span>
+<span class="s">|       |        |                   | name&quot;</span><span class="o">:</span><span class="s">&quot;num_traded |                                                     |</span>
+<span class="s">|       |        |                   | &quot;</span><span class="o">,</span><span class="s">&quot;type&quot;</span><span class="o">:[</span><span class="s">&quot;int&quot;</span><span class="o">,</span><span class="s">&quot; |                                                     |</span>
+<span class="s">|       |        |                   | null&quot;</span><span class="o">]},{</span><span class="s">&quot;name&quot;</span><span class="o">:</span><span class="s">&quot; |                                                     |</span>
+<span class="s">|       |        |                   | price&quot;</span><span class="o">,</span><span class="s">&quot;type&quot;</span><span class="o">:[</span><span class="s">&quot;d |                                                     |</span>
+<span class="s">|       |        |                   | ouble&quot;</span><span class="o">,</span><span class="s">&quot;null&quot;</span><span class="o">]}]}</span> <span class="o">|</span>                                                     <span class="o">|</span>
+<span class="o">+==============================================================================================================+</span>
+</pre></div>
+</div>
+<p>Further information can be found in the <a class="reference external" href="../source/../../reference-manual/http-restful-api/views.html#http-restful-api-views" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Views HTTP RESTful API</span></a>.</p>
+</div>
+<div class="section" id="deleting-a-stream-view">
+<h3><a class="headerlink" href="#deleting-a-stream-view" title="Perma-link to this heading">🔗</a>Deleting a Stream View</h3>
+<p>Deleting a stream view deletes only the Hive table that was created for the view, and not
+the underlying data that you are viewing.</p>
+<p>This example uses the CDAP CLI to delete the stream view, <em>view1</em>, created with the previous command:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> delete stream-view stock_trades view1
+Successfully deleted stream-view 'view1'
+</pre>
+</div>
+</div>
+</div>
+<div class="section" id="stream-view-examples">
+<h2><a class="headerlink" href="#stream-view-examples" title="Perma-link to this heading">🔗</a>Stream View Examples</h2>
+<p>Let's create some simple stream views, using the CDAP CLI, and see how the same data can
+be viewed differently.</p>
+<p>First, from within the CDAP CLI, create a stream of stock <em>trades</em>, and add a few records:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span>  create stream trades
+Successfully created stream with ID 'trades'
+
+<span class="gp">cdap &gt;</span> send stream trades &quot;AAPL,50,112.98&quot;
+<span class="gp">cdap &gt;</span> send stream trades &quot;AAPL,100,112.87&quot;
+<span class="gp">cdap &gt;</span> send stream trades &quot;AAPL,8,113.02&quot;
+<span class="gp">cdap &gt;</span> send stream trades &quot;NFLX,10,437.45&quot;
+Successfully sent stream event to stream 'trades'
+</pre>
+</div>
+<p>Now, create a stream view, <em>view1</em>, with a format of <em>CSV</em> and an appropriate schema and mapping (reformatted to fit):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> create stream-view trades view1 format csv schema &quot;ticker string, num_traded int, price double&quot; settings &quot;mapping=0:ticker,1:num_traded,2:price&quot;
+Successfully created stream-view 'view1'
+</pre>
+</div>
+<p>Read from the stream directly, and you will receive the raw data that was sent to the stream:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> execute &quot;select * from stream_trades&quot;
+</pre>
+</div>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">+=======================================================================+</span>
+<span class="o">|</span> <span class="n">stream_trades</span><span class="o">.</span><span class="na">ts</span><span class="o">:</span> <span class="n">BIGINT</span> <span class="o">|</span> <span class="n">stream_trades</span> <span class="o">|</span> <span class="n">stream_trades</span><span class="o">.</span><span class="na">body</span><span class="o">:</span> <span class="n">STRING</span> <span class="o">|</span>
+<span class="o">|</span>                          <span class="o">|</span> <span class="o">.</span><span class="na">headers</span><span class="o">:</span> <span class="n">map</span> <span class="o">|</span>                            <span class="o">|</span>
+<span class="o">|</span>                          <span class="o">|</span> <span class="o">&lt;</span><span class="n">string</span><span class="o">,</span><span class="n">strin</span> <span class="o">|</span>                            <span class="o">|</span>
+<span class="o">|</span>                          <span class="o">|</span> <span class="n">g</span><span class="o">&gt;</span>            <span class="o">|</span>                            <span class="o">|</span>
+<span class="o">+=======================================================================+</span>
+<span class="o">|</span> <span class="mi">1449272167321</span>            <span class="o">|</span> <span class="o">{}</span>            <span class="o">|</span> <span class="n">AAPL</span><span class="o">,</span><span class="mi">50</span><span class="o">,</span><span class="mf">112.98</span>             <span class="o">|</span>
+<span class="o">|</span> <span class="mi">1449272174028</span>            <span class="o">|</span> <span class="o">{}</span>            <span class="o">|</span> <span class="n">AAPL</span><span class="o">,</span><span class="mi">100</span><span class="o">,</span><span class="mf">112.87</span>            <span class="o">|</span>
+<span class="o">|</span> <span class="mi">1449272180252</span>            <span class="o">|</span> <span class="o">{}</span>            <span class="o">|</span> <span class="n">AAPL</span><span class="o">,</span><span class="mi">8</span><span class="o">,</span><span class="mf">113.02</span>              <span class="o">|</span>
+<span class="o">|</span> <span class="mi">1449272186660</span>            <span class="o">|</span> <span class="o">{}</span>            <span class="o">|</span> <span class="n">NFLX</span><span class="o">,</span><span class="mi">10</span><span class="o">,</span><span class="mf">437.45</span>             <span class="o">|</span>
+<span class="o">+=======================================================================+</span>
+<span class="n">Fetched</span> <span class="mi">4</span> <span class="n">rows</span>
+</pre></div>
+</div>
+<p>Now, read from the stream view <em>view1</em>:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> execute &quot;select * from stream_trades_view1&quot;
+</pre>
+</div>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">+==============================================================================================================+</span>
+<span class="o">|</span> <span class="n">stream_trades_view1</span> <span class="o">|</span> <span class="n">stream_trades_view1</span> <span class="o">|</span> <span class="n">stream_trades_view1</span> <span class="o">|</span> <span class="n">stream_trades_view1</span> <span class="o">|</span> <span class="n">stream_trades_view1</span><span class="o">.</span> <span class="o">|</span>
+<span class="o">|</span> <span class="o">.</span><span class="na">ts</span><span class="o">:</span> <span class="n">BIGINT</span>         <span class="o">|</span> <span class="o">.</span><span class="na">headers</span><span class="o">:</span> <span class="n">map</span><span class="o">&lt;</span><span class="n">strin</span> <span class="o">|</span> <span class="o">.</span><span class="na">ticker</span><span class="o">:</span> <span class="n">STRING</span>     <span class="o">|</span> <span class="o">.</span><span class="na">num_traded</span><span class="o">:</span> <span class="n">INT</span>    <span class="o">|</span> <span class="n">price</span><span class="o">:</span> <span class="n">DOUBLE</span>        <span class="o">|</span>
+<span class="o">|</span>                     <span class="o">|</span> <span class="n">g</span><span class="o">,</span><span class="n">string</span><span class="o">&gt;</span>           <span class="o">|</span>                     <span class="o">|</span>                     <span class="o">|</span>                      <span class="o">|</span>
+<span class="o">+==============================================================================================================+</span>
+<span class="o">|</span> <span class="mi">1449272167321</span>       <span class="o">|</span> <span class="o">{}</span>                  <span class="o">|</span> <span class="n">AAPL</span>                <span class="o">|</span> <span class="mi">50</span>                  <span class="o">|</span> <span class="mf">112.98</span>               <span class="o">|</span>
+<span class="o">|</span> <span class="mi">1449272174028</span>       <span class="o">|</span> <span class="o">{}</span>                  <span class="o">|</span> <span class="n">AAPL</span>                <span class="o">|</span> <span class="mi">100</span>                 <span class="o">|</span> <span class="mf">112.87</span>               <span class="o">|</span>
+<span class="o">|</span> <span class="mi">1449272180252</span>       <span class="o">|</span> <span class="o">{}</span>                  <span class="o">|</span> <span class="n">AAPL</span>                <span class="o">|</span> <span class="mi">8</span>                   <span class="o">|</span> <span class="mf">113.02</span>               <span class="o">|</span>
+<span class="o">|</span> <span class="mi">1449272186660</span>       <span class="o">|</span> <span class="o">{}</span>                  <span class="o">|</span> <span class="n">NFLX</span>                <span class="o">|</span> <span class="mi">10</span>                  <span class="o">|</span> <span class="mf">437.45</span>               <span class="o">|</span>
+<span class="o">+==============================================================================================================+</span>
+<span class="n">Fetched</span> <span class="mi">4</span> <span class="n">rows</span>
+</pre></div>
+</div>
+<p>You can treat the stream view just as you would any other explorable stream, and run SQL
+queries. This query totals all the values for each stock:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> execute &quot;select ticker, count(*) as transactions, sum(num_traded) as volume from stream_trades_view1 group by ticker order by volume desc&quot;
+</pre>
+</div>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">+========================================================+</span>
+<span class="o">|</span> <span class="n">ticker</span><span class="o">:</span> <span class="n">STRING</span> <span class="o">|</span> <span class="n">transactions</span><span class="o">:</span> <span class="n">BIGINT</span> <span class="o">|</span> <span class="n">volume</span><span class="o">:</span> <span class="n">BIGINT</span> <span class="o">|</span>
+<span class="o">+========================================================+</span>
+<span class="o">|</span> <span class="n">AAPL</span>           <span class="o">|</span> <span class="mi">3</span>                    <span class="o">|</span> <span class="mi">158</span>            <span class="o">|</span>
+<span class="o">|</span> <span class="n">NFLX</span>           <span class="o">|</span> <span class="mi">1</span>                    <span class="o">|</span> <span class="mi">10</span>             <span class="o">|</span>
+<span class="o">+========================================================+</span>
+<span class="n">Fetched</span> <span class="mi">2</span> <span class="n">rows</span>
+</pre></div>
+</div>
+<p>You can create and view an additional stream view, <em>view2</em>, with just a single column:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> create stream-view trades view2 format csv schema &quot;num_traded int&quot; settings &quot;mapping=1:num_traded&quot;
+<span class="gp">cdap &gt;</span> execute &quot;select * from stream_trades_view2&quot;
+</pre>
+</div>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">+========================================================================================================+</span>
+<span class="o">|</span> <span class="n">stream_trades_view2</span><span class="o">.</span><span class="na">ts</span><span class="o">:</span> <span class="n">BIGINT</span> <span class="o">|</span> <span class="n">stream_trades_view2</span><span class="o">.</span><span class="na">he</span> <span class="o">|</span> <span class="n">stream_trades_view2</span><span class="o">.</span><span class="na">num_traded</span><span class="o">:</span> <span class="n">INT</span>          <span class="o">|</span>
+<span class="o">|</span>                                <span class="o">|</span> <span class="n">aders</span><span class="o">:</span> <span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="o">,</span><span class="n">stri</span> <span class="o">|</span>                                              <span class="o">|</span>
+<span class="o">|</span>                                <span class="o">|</span> <span class="n">ng</span><span class="o">&gt;</span>                    <span class="o">|</span>                                              <span class="o">|</span>
+<span class="o">+========================================================================================================+</span>
+<span class="o">|</span> <span class="mi">1449272167321</span>                  <span class="o">|</span> <span class="o">{}</span>                     <span class="o">|</span> <span class="mi">50</span>                                           <span class="o">|</span>
+<span class="o">|</span> <span class="mi">1449272174028</span>                  <span class="o">|</span> <span class="o">{}</span>                     <span class="o">|</span> <span class="mi">100</span>                                          <span class="o">|</span>
+<span class="o">|</span> <span class="mi">1449272180252</span>                  <span class="o">|</span> <span class="o">{}</span>                     <span class="o">|</span> <span class="mi">8</span>                                            <span class="o">|</span>
+<span class="o">|</span> <span class="mi">1449272186660</span>                  <span class="o">|</span> <span class="o">{}</span>                     <span class="o">|</span> <span class="mi">10</span>                                           <span class="o">|</span>
+<span class="o">+========================================================================================================+</span>
+<span class="n">Fetched</span> <span class="mi">4</span> <span class="n">rows</span>
+</pre></div>
+</div>
+<p>Note that the second view only sees the columns that were defined for that view; this
+allows you to separate out the data to just the entries that are desired or permissable to
+be viewed.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Views</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#views-and-cdap-explore">Views and CDAP Explore</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stream-view">Stream View</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#read-formats">Read Formats</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#stream-view-lifecycle">Stream View Lifecycle</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#creating-and-modifying-a-stream-view">Creating and Modifying a Stream View</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#listing-views-and-view-details">Listing Views and View Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deleting-a-stream-view">Deleting a Stream View</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#stream-view-examples">Stream View Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html"> Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-keys.html"> Secure Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifacts.html"> Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata-lineage.html"> Metadata and Lineage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="audit-logging.html"> Audit Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Cube Dataset" href="datasets/cube.html" />Cube Dataset</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Flows and Flowlets" href="flows-flowlets/index.html" />Flows and Flowlets</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

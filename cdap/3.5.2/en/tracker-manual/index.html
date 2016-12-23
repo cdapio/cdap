@@ -1,0 +1,547 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Tracker" name="description" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Cask Tracker &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/tracker-manual/index.html">
+
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="#" />
+    <link rel="next" title="Cask Tracker HTTP RESTful API" href="http-restful-api.html" />
+    <link rel="prev" title="Cask Tracker: Table of Contents" href="table-of-contents.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="http-restful-api.html" title="Cask Tracker HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="table-of-contents.html" title="Cask Tracker: Table of Contents"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="table-of-contents.html">Cask Tracker</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cask-tracker">
+<span id="cask-tracker-index"></span><h1><a class="headerlink" href="#cask-tracker" title="Perma-link to this heading">🔗</a>Cask Tracker</h1>
+<div class="section" id="introduction">
+<h2><a class="headerlink" href="#introduction" title="Perma-link to this heading">🔗</a>Introduction</h2>
+<p>Cask Tracker (&quot;Tracker&quot;) is a self-service CDAP extension that automatically captures
+<a class="reference external" href="source/../../developers-manual/building-blocks/metadata-lineage.html#metadata-lineage" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">metadata</span></a> and lets you see how data is flowing into and out
+of datasets, streams, and stream views.</p>
+<p>It allows you to perform impact and root-cause analysis, delivers an audit-trail for
+auditability and compliance, and allows you to preview data. Tracker furnishes access to
+structured information that describes, explains, and locates data, making it easier to
+retrieve, use, and manage datasets.</p>
+<p>Tracker also allows users to update metadata for datasets and streams. Users can add,
+remove, and update tags and user properties directly in the UI. It allows users to set
+a preferred dictionary of terms so that teams can use the same lexicon when updating metadata.</p>
+<p>Tracker's UI shows a graphical visualization of the <a class="reference external" href="source/../../developers-manual/building-blocks/metadata-lineage.html#metadata-lineage-lineage" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">lineage</span></a> of an entity. A lineage shows—for a specified time range—all data access of the entity, and details of where that access originated from.</p>
+<p>Tracker also captures activity metrics for datasets. You can see the datasets that are
+being used the most and view usage metrics for each dataset. This allows teams to easily
+determine the appropriate dataset to use for an analysis. The Tracker Meter rates each
+dataset on a scale that shows how active a dataset is in the system. Users can see the
+datasets that are being used the most and view usage metrics for each dataset. This
+allows teams to easily find the right dataset to use for analysis. The Tracker Meter
+also rates each dataset on a scale to quickly show you how active a dataset is in the
+system.</p>
+<p><strong>Harvest, Index, Track, and Analyze Datasets</strong></p>
+<ul class="simple">
+<li>Immediate, timely, and seamless capture of technical, business, and operational metadata,
+enabling faster and better traceability of all datasets.</li>
+<li>Through its use of lineage, it lets you understand the impact of changing a dataset on
+other datasets, processes or queries.</li>
+<li>Tracks the flow of data across enterprise systems and data lakes.</li>
+<li>Provides viewing and updating complete metadata on datasets, enabling traceability to resolve
+data issues and to improve data quality.</li>
+<li>Collects usage metrics about datasets so that you know which datasets are being used most often.</li>
+<li>Provides the ability to designate certain tags as &quot;preferred&quot; so that teams can easily find and tag datasets.</li>
+<li>Allows users to preview data directly in the UI.</li>
+</ul>
+<p><strong>Supports Standardization, Governance, and Compliance Needs</strong></p>
+<ul class="simple">
+<li>Provide IT with the traceability needed in governing datasets and in applying compliance
+rules through seamless integration with other extensions.</li>
+<li>Tracker has consistent definitions of metadata-containing information about the data to
+reconcile differences in terminologies.</li>
+<li>It helps you in the understanding of the lineage of your business-critical data.</li>
+</ul>
+<p><strong>Blends Metadata Analytics and Integrations</strong></p>
+<ul class="simple">
+<li>See how your datasets are being created, accessed, and processed.</li>
+<li>Extensible integrations are available with enterprise-grade MDM (master data management)
+systems such as <a class="reference external" href="https://www.cloudera.com/products/cloudera-navigator.html">Cloudera Navigator</a>
+for centralizing metadata repository and the delivery of complete, accurate, and correct
+data.</li>
+</ul>
+<div class="section" id="example-use-case">
+<h3><a class="headerlink" href="#example-use-case" title="Perma-link to this heading">🔗</a>Example Use Case</h3>
+<p>An example use case describes how Tracker was employed in the <a class="reference external" href="http://customers.cask.co/rs/882-OYR-915/images/tracker-casestudy1.pdf">data cleansing and validating of
+three billion records</a>.</p>
+</div>
+</div>
+<div class="section" id="tracker-application">
+<h2><a class="headerlink" href="#tracker-application" title="Perma-link to this heading">🔗</a>Tracker Application</h2>
+<p>Cask Tracker consists of an application in CDAP with two programs and four datasets:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">_Tracker</span></code> application: names begins with an underscore</li>
+<li><code class="docutils literal"><span class="pre">TrackerService</span></code>: Service exposing the Tracker API endpoints</li>
+<li><code class="docutils literal"><span class="pre">AuditLogFlow</span></code>: Flow that subscribes to Kafka audit messages and stores them in the
+<code class="docutils literal"><span class="pre">_auditLog</span></code> dataset</li>
+<li><code class="docutils literal"><span class="pre">_auditLog</span></code>: Custom dataset for storing audit messages</li>
+<li><code class="docutils literal"><span class="pre">_kafkaOffset</span></code>: Key-value table for storing Kafka offsets</li>
+<li><code class="docutils literal"><span class="pre">_auditMetrics</span></code>: Custom cube dataset for collecting dataset metrics</li>
+<li><code class="docutils literal"><span class="pre">_auditTagsTable</span></code>: Custom dataset for storing preferred tags</li>
+<li><code class="docutils literal"><span class="pre">_timeSinceTable</span></code>: Custom dataset for storing the last time a specific audit
+message was received</li>
+</ul>
+<p>The Tracker UI is shipped with CDAP, started automatically in standalone CDAP as part of the
+CDAP UI. It is available at:</p>
+<blockquote>
+<div><a class="reference external" href="http://localhost:9999/ns/default/tracker/home">http://localhost:9999/ns/default/tracker/home</a></div></blockquote>
+<p>or (Distributed CDAP):</p>
+<blockquote>
+<div><a class="reference external" href="http://host:dashboard-bind-port/ns/default/tracker/home">http://host:dashboard-bind-port/ns/default/tracker/home</a></div></blockquote>
+<p>Tracker is built from a system artifact included with CDAP, <code class="docutils literal"><span class="pre">tracker-0.2.0.jar</span></code>.</p>
+</div>
+<div class="section" id="installation">
+<h2><a class="headerlink" href="#installation" title="Perma-link to this heading">🔗</a>Installation</h2>
+<p>Cask Tracker is deployed from its system artifact included with CDAP. A CDAP administrator
+does not need to build anything to add Cask Tracker to CDAP; they merely need to enable
+the application after starting CDAP.</p>
+<p>These two properties are used by Tracker for its audit log functionality:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="c">&lt;!-- Audit Configuration --&gt;</span>
+
+<span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>audit.enabled<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>true<span class="nt">&lt;/value&gt;</span>
+  <span class="nt">&lt;description&gt;</span>
+    Determines whether to publish audit messages to Apache Kafka
+  <span class="nt">&lt;/description&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+
+<span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>audit.kafka.topic<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>audit<span class="nt">&lt;/value&gt;</span>
+  <span class="nt">&lt;description&gt;</span>
+    Apache Kafka topic name to which audit messages are published
+  <span class="nt">&lt;/description&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</div>
+<p>As these are the default settings for these properties, they do not need to be included in the
+<code class="docutils literal"><span class="pre">cdap-site.xml</span></code> file.</p>
+<div class="section" id="enabling-tracker">
+<h3><a class="headerlink" href="#enabling-tracker" title="Perma-link to this heading">🔗</a>Enabling Tracker</h3>
+<p>Tracker is enabled automatically in Standalone CDAP and the UI is available at
+<a class="reference external" href="http://localhost:9999/ns/default/tracker/home">http://localhost:9999/ns/default/tracker/home</a>. In the Distributed version of CDAP,
+you must manually enable Tracker by visiting
+<a class="reference external" href="http://host:dashboard-bind-port/ns/default/tracker/home">http://host:dashboard-bind-port/ns/default/tracker/home</a> and pressing the
+<code class="docutils literal"><span class="pre">&quot;Enable</span> <span class="pre">Tracker&quot;</span></code> button.</p>
+<p>Once pressed, the application will be deployed, the datasets created (if necessary), the
+flow and service started, and search and audit logging will become available.</p>
+<p>If you are enabling Tracker from outside the UI, you will, in addition to enabling auditing
+in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> as described above, need to follow these steps:</p>
+<ul>
+<li><p class="first">Using the CDAP CLI, load the artifact (<code class="docutils literal"><span class="pre">tracker-0.2.0.jar</span></code>):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> load artifact target/tracker-0.2.0.jar
+</pre>
+</div>
+</li>
+</ul>
+<ul>
+<li><p class="first">Create an application configuration file (<code class="docutils literal"><span class="pre">appconfig.txt</span></code>) that contains the Kafka
+Audit Log reader configuration (the property <code class="docutils literal"><span class="pre">auditLogKafkaConfig</span></code>). It is the Kafka
+Consumer Flowlet configuration information. For example:</p>
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;config&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;auditLogKafkaConfig&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&quot;zookeeperString&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;host&gt;:&lt;port&gt;/cdap/kafka&quot;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>substituting for <code class="docutils literal"><span class="pre">&lt;host&gt;</span></code> and <code class="docutils literal"><span class="pre">&lt;port&gt;</span></code> with appropriate values.</p>
+</li>
+<li><p class="first">Create a CDAP application using the configuration file:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> create app TrackerApp tracker 0.2.0 USER appconfig.txt
+</pre>
+</div>
+</li>
+</ul>
+<p><strong>Audit Log Kafka Config:</strong></p>
+<p>This key contains a property map with:</p>
+<ul>
+<li><p class="first">Required Properties:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">zookeeperString</span></code>: Kafka Zookeeper string that can be used to subscribe to the CDAP
+audit log updates</li>
+<li><code class="docutils literal"><span class="pre">brokerString</span></code>: Kafka Broker string to which CDAP audit log data is published</li>
+</ul>
+<p><em>Note:</em> Specify either the <code class="docutils literal"><span class="pre">zookeeperString</span></code> or the <code class="docutils literal"><span class="pre">brokerString</span></code>.</p>
+</li>
+<li><p class="first">Optional Properties:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">topic</span></code>: Kafka Topic to which CDAP audit updates are published; default is <code class="docutils literal"><span class="pre">audit</span></code>
+which corresponds to the default topic used in CDAP for audit log updates</li>
+<li><code class="docutils literal"><span class="pre">numPartitions</span></code>: Number of Kafka partitions; default is set to <code class="docutils literal"><span class="pre">10</span></code></li>
+<li><code class="docutils literal"><span class="pre">offsetDataset</span></code>: Name of the dataset where Kafka offsets are stored; default is
+<code class="docutils literal"><span class="pre">_kafkaOffset</span></code></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="restarting-cdap">
+<h3><a class="headerlink" href="#restarting-cdap" title="Perma-link to this heading">🔗</a>Restarting CDAP</h3>
+<p>As Tracker is an application running inside CDAP, it does not start up automatically when
+CDAP is restarted. Each time that you start CDAP, you will need to re-enable Tracker.
+Re-enabling Tracker does not recreate the datasets; instead, the same datasets as were
+used in previous runs are used.</p>
+<p>If you are using the audit log feature of Tracker, it is best that Tracker be enabled
+<strong>before</strong> you begin any other applications.</p>
+<p>If the installation of CDAP is an upgrade from a previous version, all activity and
+datasets prior to the enabling of Tracker will not be available or seen in the Tracker UI.</p>
+</div>
+<div class="section" id="disabling-and-removing-tracker">
+<h3><a class="headerlink" href="#disabling-and-removing-tracker" title="Perma-link to this heading">🔗</a>Disabling and Removing Tracker</h3>
+<p>If for some reason you need to disable or remove Tracker, you would need to:</p>
+<ul class="simple">
+<li>stop all <code class="docutils literal"><span class="pre">_Tracker</span></code> programs</li>
+<li>delete the Tracker application</li>
+<li>delete the Tracker datasets</li>
+</ul>
+</div>
+</div>
+<div class="section" id="tracker-and-its-ui">
+<h2><a class="headerlink" href="#tracker-and-its-ui" title="Perma-link to this heading">🔗</a>Tracker and its UI</h2>
+<div class="section" id="search">
+<h3><a class="headerlink" href="#search" title="Perma-link to this heading">🔗</a>Search</h3>
+<p>Searching in Tracker is provided by an interface similar to that of a popular search engine:</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/tracker-home-search.png"><img alt="_images/tracker-home-search.png" class="bordered-image" src="_images/tracker-home-search.png" style="width: 800px;" /></a>
+</div>
+<p>In the text box, you enter your search terms:</p>
+<ul class="simple">
+<li>Multiple search terms can be searched by separating them with a space character.</li>
+<li>Search terms are case-insensitive.</li>
+<li>Search the metadata of entities by using either a complete or partial name followed by
+an asterisk <code class="docutils literal"><span class="pre">*</span></code>, as described in the <a class="reference external" href="source/../../reference-manual/http-restful-api/metadata.html#http-restful-api-metadata-query-terms" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Metadata HTTP RESTful API</span></a>.</li>
+<li>Tracker searches tags, properties, and schema of CDAP datasets, streams, and stream views.</li>
+</ul>
+<p>For example, if you have just started CDAP and enabled Tracker, you could enter a search
+term such as <code class="docutils literal"><span class="pre">a*</span> <span class="pre">k*</span></code>, which will find all entities that begin with the letter <code class="docutils literal"><span class="pre">a</span></code> or
+<code class="docutils literal"><span class="pre">k</span></code>.</p>
+<p>The results would appear similar to this:</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/tracker-first-search.png"><img alt="_images/tracker-first-search.png" class="bordered-image" src="_images/tracker-first-search.png" style="width: 800px;" /></a>
+</div>
+<p>In this example, Tracker has found two datasets that satisfied the condition. The search
+used is shown in the upper-left, and the results show the datasets found with
+information and links for each.</p>
+<p><strong>On the left side</strong> is the <strong>Filter</strong> pane, which provides information on what was found (the
+entities and metadata types) with statistics of the number found for each category. A blue
+checkbox allows you to filter based on these attributes. If you mouse over a category, an
+<code class="docutils literal"><span class="pre">only</span></code> link will appear, which allows you to select <em>only</em> that category as a filter.</p>
+<p>Note that the <em>entities</em> and <em>metadata</em> filters have an <code class="docutils literal"><span class="pre">and</span></code> relationship; at least one
+selection must be made in each of <em>entities</em> and <em>metadata</em> for there to be any results
+that appear.</p>
+<p><strong>On the right side</strong> is a sortable list of results. It is sortable by one of <em>Create Date</em>, the entity
+ID (name), or the Tracker Score.</p>
+<p>Each entry in the list provides a summery of information about the entity, and its name is
+a hyperlink to further details: metadata, lineage, and audit log.</p>
+<p>The <strong>Jump</strong> button provides three actions: go to the selected entity in CDAP, or add it
+to a new Cask Hydrator pipeline as a source or as a sink. Datasets can be added as sources or
+sinks to batch pipelines, while streams can be sources in batch pipelines or sinks in
+real-time pipelines.</p>
+</div>
+<div class="section" id="entity-details">
+<h3><a class="headerlink" href="#entity-details" title="Perma-link to this heading">🔗</a>Entity Details</h3>
+<p>Clicking on a name in the search results list will take you to details for a particular
+entity. Details are provided on the tabs <em>Metadata</em>, <em>Lineage</em>, <em>Audit Log</em>, <em>Preview</em>
+(included if the dataset is explorable), and <em>Usage</em>.</p>
+<p><strong>Metadata</strong></p>
+<p>The <em>Metadata</em> tab provides lists of the <em>System Tags</em>, <em>User Tags</em>, <em>Schema</em>, <em>User
+Properties</em>, and <em>System Properties</em> that were found for the entity. The values shown will
+vary depending on the type of entity and each individual entity. For instance, a stream
+may have a schema attached, and if so, it will be displayed.</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/tracker-metadata.png"><img alt="_images/tracker-metadata.png" class="bordered-image" src="_images/tracker-metadata.png" style="width: 800px;" /></a>
+</div>
+<p>You can add user tags to any entity by clicking the plus button in the UI. You can also
+remove tags by hovering over the tag and clicking the x. You can also add and remove User
+Properties for the dataset or stream. This is useful for storing additional details about
+the dataset for others to see.</p>
+<p><strong>Lineage</strong></p>
+<p>The <em>Lineage</em> tab shows the relationship between an entity and the programs that are
+interacting with it. As different lineage diagrams can be created for the same entity,
+depending on the particular set of programs selected to construct the diagram, a green
+button in the shape of an arrow is used to cycle through the different lineage digrams
+that a particular entity participates in.</p>
+<p>A date menu in the left side of the diagram lets you control the time range that the
+diagram displays. By default, the last seven days are used, though a custom range can be
+specified, in addition to common time ranges (two weeks to one year).</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/tracker-lineage.png"><img alt="_images/tracker-lineage.png" class="bordered-image" src="_images/tracker-lineage.png" style="width: 800px;" /></a>
+</div>
+<p><strong>Audit Log</strong></p>
+<p>The <em>Audit Log</em> tab shows each record in the <em>_auditLog</em> dataset that has been created for
+that particular entity, displayed in reverse chronological order. Because of how datasets
+work in CDAP, reading and writing from a flow or service to a dataset shows an access of
+&quot;UNKNOWN&quot; rather than indicating if it was read or write access. This will be addressed in
+a future release.</p>
+<p>A date menu in the left side of the diagram lets you control the time range that the
+diagram displays. By default, the last seven days are used, though a custom range can be
+specified, in addition to common time ranges (two weeks to one year).</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/tracker-audit-log.png"><img alt="_images/tracker-audit-log.png" class="bordered-image" src="_images/tracker-audit-log.png" style="width: 800px;" /></a>
+</div>
+<p><strong>Preview</strong></p>
+<p>The <em>Preview</em> tab (if available) shows a preview for the dataset. It is available for all datasets that are
+explorable. You can scroll for up to 500 records. For additional analysis, use the <em>Jump</em>
+menu to go into CDAP and explore the dataset using a custom query.</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/tracker-preview.png"><img alt="_images/tracker-preview.png" class="bordered-image" src="_images/tracker-preview.png" style="width: 800px;" /></a>
+</div>
+<p><strong>Usage</strong></p>
+<p>The <em>Usage</em> tab shows a set of graphs displaying usage metrics for the dataset. At the top is a
+histogram of all audit messages for a particular dataset. Along the bottom of the screen is a set of
+charts displaying the Applications and Programs that are accessing the dataset, and a table showing
+the last time a specific message was received about the dataset. Clicking the Application name or
+the Program name will take you to that entity in the main CDAP UI.</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/tracker-usage.png"><img alt="_images/tracker-usage.png" class="bordered-image" src="_images/tracker-usage.png" style="width: 800px;" /></a>
+</div>
+<p><strong>Preferred Tags</strong></p>
+<p>The <em>Tags</em> tab at the top of the page allows you to enter a common set of preferred terms to use when
+adding tags to datasets. Preferred tags show up first when adding tags, and will guide your team to
+use the same terminology. Any preferred tag that has not been attached to any entities can be deleted
+by clicking the red trashcan icon. If a preferred tag has been added to an entity, you cannot delete it,
+but you can demote it back to just being a user tag.</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/tracker-tags.png"><img alt="_images/tracker-tags.png" class="bordered-image" src="_images/tracker-tags.png" style="width: 800px;" /></a>
+</div>
+<p>To add preferred tags, click the <strong>Add Preferred Tags</strong> button and use the UI to add or import a
+list of tags that you would like to be &quot;preferred&quot;. If the tag already exists in CDAP,
+it will be promoted from being a user tag to being a preferred tag. If it is a new tag
+in CDAP, it will be added in the <em>Preferred Tags</em> list.</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/tracker-tags-upload.png"><img alt="_images/tracker-tags-upload.png" class="bordered-image" src="_images/tracker-tags-upload.png" style="width: 800px;" /></a>
+</div>
+</div>
+<div class="section" id="integrations">
+<h3><a class="headerlink" href="#integrations" title="Perma-link to this heading">🔗</a>Integrations</h3>
+<p>Tracker allows for an easy integration with <a class="reference external" href="https://www.cloudera.com/products/cloudera-navigator.html">Cloudera Navigator</a>  by providing a UI to
+connecting to a Navigator instance:</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/tracker-integration-configuration.png"><img alt="_images/tracker-integration-configuration.png" class="bordered-image" src="_images/tracker-integration-configuration.png" style="width: 800px;" /></a>
+</div>
+<p>Details on completing this form are described in CDAP's documentation on
+<a class="reference external" href="source/../../integrations/partners/cloudera/navigator-integration.html#navigator-integration" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Navigator Integration Application</span></a>.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><b><a href="table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></b></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">Cask Tracker: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Cask Tracker</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example-use-case">Example Use Case</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#tracker-application">Tracker Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enabling-tracker">Enabling Tracker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#restarting-cdap">Restarting CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#disabling-and-removing-tracker">Disabling and Removing Tracker</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#tracker-and-its-ui">Tracker and its UI</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#search">Search</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#entity-details">Entity Details</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#integrations">Integrations</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="http-restful-api.html"> HTTP RESTful API</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Cask Tracker: Table of Contents" href="table-of-contents.html" />Cask Tracker: Table of Contents</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Cask Tracker HTTP RESTful API" href="http-restful-api.html" />Cask Tracker HTTP RESTful API</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

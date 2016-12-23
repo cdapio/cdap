@@ -1,0 +1,379 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Cube &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/hydrator-manual/plugins/sinks/cube-batchsink.html">
+
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../../index.html" />
+    <link rel="up" title="Sink Plugins" href="index.html" />
+    <link rel="next" title="Database" href="database-batchsink.html" />
+    <link rel="prev" title="Cassandra" href="cassandra-batchsink.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="database-batchsink.html" title="Database"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="cassandra-batchsink.html" title="Cassandra"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../../table-of-contents.html">Cask Hydrator</a> &raquo;</li>
+          <li><a href="../index.html" >Plugin Reference</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Sink Plugins</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cube">
+<span id="cube"></span><h1><a class="headerlink" href="#cube" title="Perma-link to this heading">🔗</a>Cube</h1>
+<div class="section" id="description">
+<span id="description"></span><h2><a class="headerlink" href="#description" title="Perma-link to this heading">🔗</a>Description</h2>
+<p>Batch sink that writes data to a Cube dataset.</p>
+<p>BatchCubeSink takes a StructuredRecord in, maps it to a CubeFact, and writes it to
+the Cube dataset identified by the name property.</p>
+<p>If the Cube dataset does not exist, it will be created using properties provided with this
+sink.</p>
+</div>
+<div class="section" id="use-case">
+<span id="use-case"></span><h2><a class="headerlink" href="#use-case" title="Perma-link to this heading">🔗</a>Use Case</h2>
+<p>A BatchCubeSink is used to write data into a Cube from batch-enabled data sources to allow
+further data analysis. For example, you can periodically upload data from a
+PartitionedFileSet into a Cube to perform complex data queries across multiple dimensions
+and aggregated measurements.</p>
+</div>
+<div class="section" id="properties">
+<span id="properties"></span><h2><a class="headerlink" href="#properties" title="Perma-link to this heading">🔗</a>Properties</h2>
+<p><strong>name:</strong> Name of the Cube dataset. If the Cube does not already exist, one will be created.</p>
+<p><strong>dataset.cube.resolutions:</strong> Aggregation resolutions to be used if a
+new Cube dataset needs to be created. See [Cube dataset configuration details] for more information.</p>
+<p><strong>dataset.cube.aggregations:</strong> Provides cube aggregation dataset properties to be used
+if a new Cube dataset needs to be created; provided as a collection of aggregation-groups.
+Each aggregation group is identified by a unique name and value is a collection of fields.
+example, if aggregations are desired on fields <code class="docutils literal"><span class="pre">abc</span></code> and <code class="docutils literal"><span class="pre">xyz</span></code>, the
+property can have the key <code class="docutils literal"><span class="pre">agg1</span></code> and value <code class="docutils literal"><span class="pre">abc,xyz</span></code>:
+See [Cube dataset configuration details] for more information.
+[Cube dataset configuration details]: http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/datasets/cube.html</p>
+<p><strong>dataset.cube.properties:</strong> Provides additional cube dataset properties if needed.</p>
+<p><strong>cubeFact.timestamp.field:</strong> Name of the StructuredRecord field that contains the
+timestamp to be used in the CubeFact. If not provided, the current time of the record
+processing will be used as the CubeFact timestamp.</p>
+<p>Name of the StructuredRecord's field that contains the timestamp to be used in CubeFact.
+If not provided, the current time of the record processing will be used as a CubeFact timestamp.</p>
+<p><strong>cubeFact.timestamp.format:</strong> Format of the value of timestamp field; example: &quot;HH:mm:ss&quot; (used if
+<code class="docutils literal"><span class="pre">cubeFact.timestamp.field</span></code> is provided).</p>
+<p><strong>cubeFact.measurements:</strong> Measurements to be extracted from StructuredRecord to be used
+in CubeFact. Supports collection of measurements and requires at least one measurement to be provided.
+Each measurement has measurement-name and measurement-type. Currently supported measurement types are COUNTER, GAUGE.
+For example, to use the 'price' field as a
+measurement of type gauge, and the 'quantity' field as a measurement of type counter, you would add two measurements
+one measurement with name <code class="docutils literal"><span class="pre">price</span></code> and type <code class="docutils literal"><span class="pre">GAUGE,</span> <span class="pre">second</span> <span class="pre">measurement</span> <span class="pre">with</span> <span class="pre">name</span></code>quantity<code class="docutils literal"><span class="pre">and</span> <span class="pre">type</span></code>COUNTER`.</p>
+</div>
+<div class="section" id="example">
+<span id="example"></span><h2><a class="headerlink" href="#example" title="Perma-link to this heading">🔗</a>Example</h2>
+<p>This configuration specifies writing data into a Cube dataset named &quot;myCube&quot;; it provides
+dataset properties (<code class="docutils literal"><span class="pre">dataset.*</span></code>) for creating a new dataset, if one with the given name
+doesn't exist; it then configures measurements to aggregate and specifies the timestamp
+format for facts being written into the Cube:</p>
+<pre class="literal-block">
+{
+    &quot;name&quot;: &quot;Cube&quot;,
+    &quot;type&quot;: &quot;batchsink&quot;,
+    &quot;properties&quot;: {
+        &quot;name&quot;: &quot;myCube&quot;,
+        &quot;dataset.cube.resolutions&quot;: &quot;1,60,3600&quot;,
+        &quot;dataset.cube.properties&quot;: &quot;{
+            \&quot;dataset.cube.aggregation.byName.dimensions\&quot;: \&quot;name\&quot;,
+            \&quot;dataset.cube.aggregation.byNameByZip.dimensions\&quot;: \&quot;name,zip\&quot;
+        }&quot;,
+        &quot;cubeFact.timestamp.field&quot;: &quot;ts&quot;,
+        &quot;cubeFact.timestamp.format&quot;: &quot;MM/dd/yyyy HH:mm:ss&quot;,
+        &quot;cubeFact.measurements&quot;: &quot;{
+            \&quot;cubeFact.measurement.price\&quot;: \&quot;GAUGE\&quot;,
+            \&quot;cubeFact.measurement.quantity\&quot;: \&quot;COUNTER\&quot;
+        }&quot;
+    }
+}
+</pre>
+<p>Once the data is there, you could run queries using an <code class="docutils literal"><span class="pre">AbstractCubeHttpHandler</span></code>. (You'd
+need to deploy an application containing a service using it.) A sample query:</p>
+<pre class="literal-block">
+{
+    &quot;aggregation&quot;: &quot;byName&quot;,
+    &quot;startTs&quot;: 1323370200,
+    &quot;endTs&quot;:   1523398198,
+    &quot;measurements&quot;: {&quot;price&quot;: &quot;MAX&quot;},
+    &quot;resolution&quot;: 1,
+    &quot;dimensionValues&quot;: {},
+    &quot;groupByDimensions&quot;: [&quot;name&quot;],
+    &quot;limit&quot;: 1000
+}
+</pre>
+<p>Example result:</p>
+<pre class="literal-block">
+[
+    {
+        &quot;measureName&quot;: &quot;price&quot;,
+        &quot;dimensionValues&quot;: {
+            &quot;name&quot;: &quot;user1&quot;
+        },
+        &quot;timeValues&quot;: [
+            {
+                &quot;timestamp&quot;: 1323370201,
+                &quot;value&quot;: 100
+            },
+            {
+                &quot;timestamp&quot;: 1323370210,
+                &quot;value&quot;: 360
+            }
+        ]
+    },
+    {
+        &quot;measureName&quot;: &quot;price&quot;,
+        &quot;dimensionValues&quot;: {
+            &quot;name&quot;: &quot;user2&quot;
+        },
+        &quot;timeValues&quot;: [
+            {
+                &quot;timestamp&quot;: 1323370201,
+                &quot;value&quot;: 200
+            },
+            {
+                &quot;timestamp&quot;: 1323370210,
+                &quot;value&quot;: 160
+            }
+        ]
+    }
+]
+</pre>
+<hr class="docutils" />
+<ul class="simple">
+<li>Hydrator Plugin Type: batchsink</li>
+<li>Hydrator Version: 1.4.1</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../../table-of-contents.html">Cask Hydrator: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts-design.html"> Concepts and Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../studio.html"> Hydrator Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../creating-pipelines.html"> Creating Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../running-pipelines.html"> Running Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-management.html"> Plugin Management</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Plugin Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../actions/index.html"> Action Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sources/index.html"> Source Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../transforms/index.html"> Transform Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../analytics/index.html"> Analytic Plugins</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"> Sink Plugins</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="cassandra-batchsink.html">Cassandra</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">Cube</a></li>
+<li class="toctree-l3"><a class="reference internal" href="database-batchsink.html">Database</a></li>
+<li class="toctree-l3"><a class="reference internal" href="elasticsearch-batchsink.html">Elasticsearch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hbase-batchsink.html">HBase</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hdfs-batchsink.html">HDFS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hive-batchsink.html">Hive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kvtable-batchsink.html">KeyValueTable</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mongodb-batchsink.html">MongoDB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="s3avro-batchsink.html">Amazon S3 Avro</a></li>
+<li class="toctree-l3"><a class="reference internal" href="s3parquet-batchsink.html">Amazon S3 Parquet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snapshotavro-batchsink.html">Snapshot Avro</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snapshotparquet-batchsink.html">Snapshot Parquet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="table-batchsink.html">Table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tpfsavro-batchsink.html">TimePartitionedFileSet Avro</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tpfsorc-batchsink.html">TimePartitionedFileSet ORC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tpfsparquet-batchsink.html">TimePartitionedFileSet Parquet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cassandra-realtimesink.html">Cassandra</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cube-realtimesink.html">Cube</a></li>
+<li class="toctree-l3"><a class="reference internal" href="elasticsearch-realtimesink.html">Elasticsearch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kafkaproducer-realtimesink.html">Kafka Producer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mongodb-realtimesink.html">MongoDB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="stream-realtimesink.html">Stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="table-realtimesink.html">Table</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../shared-plugins/index.html"> Shared Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../post-run-plugins/index.html"> Post-run Plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../developing-pipelines.html"> Developing Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developing-plugins/index.html"> Developing Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how-hydrator-works.html"> How Hydrator Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faqs.html"> FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html"> Glossary</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Cassandra" href="cassandra-batchsink.html" />Cassandra</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Database" href="database-batchsink.html" />Database</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

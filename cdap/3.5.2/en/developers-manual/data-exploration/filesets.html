@@ -1,0 +1,360 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>FileSet Exploration &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/data-exploration/filesets.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Data Exploration" href="index.html" />
+    <link rel="next" title="Table Exploration" href="tables.html" />
+    <link rel="prev" title="Stream Exploration" href="streams.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="tables.html" title="Table Exploration"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="streams.html" title="Stream Exploration"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Data Exploration</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="fileset-exploration">
+<span id="id1"></span><h1><a class="headerlink" href="#fileset-exploration" title="Perma-link to this heading">🔗</a>FileSet Exploration</h1>
+<p>The <code class="docutils literal"><span class="pre">FileSet</span></code>, <code class="docutils literal"><span class="pre">PartitionedFileSet</span></code>, and <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code> datasets can be
+explored through ad-hoc SQL-like queries. To enable exploration, you must set several
+properties when creating the dataset, and the files in your dataset must meet certain
+requirements. These properties and requirements are described below.</p>
+<div class="section" id="explore-properties">
+<h2><a class="headerlink" href="#explore-properties" title="Perma-link to this heading">🔗</a>Explore Properties</h2>
+<p>A <code class="docutils literal"><span class="pre">FileSet</span></code>, <code class="docutils literal"><span class="pre">PartitionedFileSet</span></code>, or <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code> is made explorable by setting several properties when
+creating the dataset. The <code class="docutils literal"><span class="pre">FileSetProperties</span></code> class (<code class="docutils literal"><span class="pre">PartitionedFileSetProperties</span></code> or <code class="docutils literal"><span class="pre">TimePartitionedFileSetsProperties</span></code>
+classes for the other two types) should be used to set the following required properties:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">EnableExploreOnCreate</span></code> must be set to true to create a Hive table when the dataset is created</li>
+<li><code class="docutils literal"><span class="pre">SerDe</span></code> class that Hive should use for serialization and deserialization</li>
+<li><code class="docutils literal"><span class="pre">InputFormat</span></code> that Hive should use for reading files</li>
+<li><code class="docutils literal"><span class="pre">OutputFormat</span></code> that Hive should use for writing files</li>
+</ul>
+<p>Any other table properties that the SerDe may need must also be set.
+For example, in the configure method of your application:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">Schema</span> <span class="n">schema</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span>
+  <span class="s">&quot;purchase&quot;</span><span class="o">,</span>
+  <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;user&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+  <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;item_id&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">INT</span><span class="o">)),</span>
+  <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;price&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">DOUBLE</span><span class="o">))</span>
+<span class="o">);</span>
+<span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;myfiles&quot;</span><span class="o">,</span> <span class="s">&quot;fileSet&quot;</span><span class="o">,</span> <span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+  <span class="o">.</span><span class="na">setBasePath</span><span class="o">(</span><span class="s">&quot;mylocation&quot;</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">AvroKeyInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">AvroKeyOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+  <span class="c1">// everything past here is a CDAP Explore property</span>
+  <span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">setSerDe</span><span class="o">(</span><span class="s">&quot;org.apache.hadoop.hive.serde2.avro.AvroSerDe&quot;</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">setExploreInputFormat</span><span class="o">(</span><span class="s">&quot;org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat&quot;</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">setExploreOutputFormat</span><span class="o">(</span><span class="s">&quot;org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat&quot;</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">setTableProperty</span><span class="o">(</span><span class="s">&quot;avro.schema.literal&quot;</span><span class="o">,</span> <span class="n">schema</span><span class="o">.</span><span class="na">toString</span><span class="o">())</span>
+  <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+</pre></div>
+</div>
+<p>For a <code class="docutils literal"><span class="pre">FileSet</span></code> using the <code class="docutils literal"><span class="pre">AvroParquet</span></code> format:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+<span class="o">.</span><span class="na">setBasePath</span><span class="o">(</span><span class="n">basePath</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">AvroParquetInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">AvroParquetOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;parquet&quot;</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setExploreSchema</span><span class="o">(</span><span class="s">&quot;id long, name string&quot;</span><span class="o">)</span>
+</pre></div>
+</div>
+<p>A <code class="docutils literal"><span class="pre">PartitionedFileSet</span></code> using the <code class="docutils literal"><span class="pre">text</span></code> format, with <code class="docutils literal"><span class="pre">\n</span></code> as the record delimiter:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">PartitionedFileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+<span class="c1">// Properties for partitioning</span>
+<span class="o">.</span><span class="na">setPartitioning</span><span class="o">(</span><span class="n">Partitioning</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addLongField</span><span class="o">(</span><span class="s">&quot;time&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">())</span>
+<span class="c1">// Properties for file set</span>
+<span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setOutputProperty</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">SEPERATOR</span><span class="o">,</span> <span class="s">&quot;,&quot;</span><span class="o">)</span>
+<span class="c1">// enable CDAP Explore</span>
+<span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setExploreFormatProperty</span><span class="o">(</span><span class="s">&quot;delimiter&quot;</span><span class="o">,</span> <span class="s">&quot;\n&quot;</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setExploreSchema</span><span class="o">(</span><span class="s">&quot;record STRING&quot;</span><span class="o">)</span>
+<span class="o">.</span><span class="na">build</span><span class="o">()</span>
+</pre></div>
+</div>
+<p>If you are running a version of Hive that reserves keywords and any of your column names is a <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL#LanguageManualDDL-Keywords,Non-reservedKeywordsandReservedKeywords">Hive reserved keyword</a>, you will need to enclose the column name in backticks.
+For example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">PartitionedFileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+<span class="c1">// Properties for partitioning</span>
+<span class="o">.</span><span class="na">setPartitioning</span><span class="o">(</span><span class="n">Partitioning</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addLongField</span><span class="o">(</span><span class="s">&quot;time&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">())</span>
+<span class="c1">// Properties for file set</span>
+<span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setOutputProperty</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">SEPERATOR</span><span class="o">,</span> <span class="s">&quot;,&quot;</span><span class="o">)</span>
+<span class="c1">// enable CDAP Explore</span>
+<span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setExploreFormatProperty</span><span class="o">(</span><span class="s">&quot;delimiter&quot;</span><span class="o">,</span> <span class="s">&quot;\n&quot;</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setExploreSchema</span><span class="o">(</span><span class="s">&quot;`date` STRING&quot;</span><span class="o">)</span>
+<span class="o">.</span><span class="na">build</span><span class="o">()</span>
+</pre></div>
+</div>
+<p>These dataset properties map directly to table properties in Hive. In the case of the
+<code class="docutils literal"><span class="pre">setBasePath</span></code> method, the partial-path given will be a sub-directory of
+<code class="docutils literal"><span class="pre">&lt;CDAP-home&gt;/namespaces/&lt;namespace-id&gt;/data/</span></code>.</p>
+<p>For example, if <code class="docutils literal"><span class="pre">&lt;CDAP-home&gt;</span></code> is <em>/cdap</em>, and <code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code> is <em>default</em>,
+the first Dataset example above would result in this &quot;create table&quot; statement being generated:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">CREATE</span> <span class="n">EXTERNAL</span> <span class="n">TABLE</span> <span class="nf">dataset_myfiles</span><span class="o">(</span>
+  <span class="n">user</span> <span class="n">string</span><span class="o">,</span>
+  <span class="n">item_id</span> <span class="kt">int</span><span class="o">,</span>
+  <span class="n">price</span> <span class="kt">double</span><span class="o">)</span>
+<span class="n">ROW</span> <span class="n">FORMAT</span> <span class="n">SERDE</span> <span class="s">&quot;org.apache.hadoop.hive.serde2.avro.AvroSerDe&quot;</span>
+<span class="n">STORED</span> <span class="n">AS</span> <span class="n">INPUTFORMAT</span> <span class="s">&quot;org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat&quot;</span>
+<span class="n">OUTPUTFORMAT</span> <span class="s">&quot;org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat&quot;</span>
+<span class="n">LOCATION</span> <span class="s">&quot;/cdap/namespaces/default/data/mylocation&quot;</span>
+<span class="n">TBLPROPERTIES</span> <span class="o">(</span>
+  <span class="s">&quot;avro.schema.literal&quot;</span><span class="o">=</span><span class="s">&quot;{\&quot;type\&quot;: \&quot;record\&quot;, \&quot;name\&quot;: \&quot;stringBody\&quot;, \&quot;fields\&quot;: [{ \&quot;name\&quot;:\&quot;ts\&quot;, \&quot;type\&quot;:\&quot;long\&quot; }, { \&quot;name\&quot;:\&quot;body\&quot;, \&quot;type\&quot;:\&quot;string\&quot; } ] }&quot;</span>
+<span class="o">);</span>
+</pre></div>
+</div>
+<p>Please see the <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL#LanguageManualDDL-Create/Drop/TruncateTable">Hive Language Manual</a>
+for more information about input formats, output format, SerDes, and table properties.</p>
+</div>
+<div class="section" id="limitations">
+<h2><a class="headerlink" href="#limitations" title="Perma-link to this heading">🔗</a>Limitations</h2>
+<p>There are several limitations for fileset exploration:</p>
+<ul class="simple">
+<li>All explorable files must be in a format supported by your version of Hive.</li>
+<li>Your version of Hive must include <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/SerDe#SerDe-Built-inSerDes">the appropriate SerDe</a>.</li>
+<li>Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
+If you are seeing permissions errors, try setting <code class="docutils literal"><span class="pre">hive.exec.stagingdir</span></code> in your Hive configuration to <code class="docutils literal"><span class="pre">/tmp/hive-staging</span></code>.</li>
+</ul>
+<p>A <code class="docutils literal"><span class="pre">FileSet</span></code> has some additional limitations that the <code class="docutils literal"><span class="pre">PartitionedFileSet</span></code> or <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code> do not have:</p>
+<ul class="simple">
+<li>Hive tables created by a <code class="docutils literal"><span class="pre">FileSet</span></code> are not partitioned; this means all queries perform a full table scan.</li>
+<li>Only files at the base location of the <code class="docutils literal"><span class="pre">FileSet</span></code> are visible to queries. Directories are not read.
+Since MapReduce writes output files to a directory, you must move all output files to the base location for
+MapReduce output to be explorable.</li>
+</ul>
+<p>If you wish to use Impala to explore a <code class="docutils literal"><span class="pre">FileSet</span></code>, <code class="docutils literal"><span class="pre">PartitionedFileSet</span></code>, or <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code>, there are several
+additional restrictions you must keep in mind:</p>
+<ul class="simple">
+<li>Impala only supports scalar types. See <a class="reference external" href="http://www.cloudera.com/content/cloudera/en/documentation/cloudera-impala/latest/topics/impala_avro.html#avro_data_types_unique_1">Data Type Considerations for Avro Tables</a>
+for details.</li>
+<li>If your underlying data contains non-scalars, you cannot tell Impala to use a different read schema of just scalars.
+For example, if you have Avro files that contain a map field, you cannot simply leave out the field when specifying the table schema.</li>
+<li>Impala caches table metadata, which clients must invalidate when there are changes.
+You have to issue an <code class="docutils literal"><span class="pre">INVALIDATE</span> <span class="pre">METADATA</span> <span class="pre">[tablename]</span></code> command whenever table metadata changes.
+You'll need to invalidate metadata if a new table or table partition is added. Otherwise, Impala will use the
+cached table metadata, preventing you from seeing the changes. If data is added to a table without changing the
+metadata (such as when adding a partition), then you need to issue a <code class="docutils literal"><span class="pre">REFRESH</span> <span class="pre">[tablename]</span></code> command to force
+Impala to see the changes. Though Impala also caches info on table files and blocks, any calls to the
+<code class="docutils literal"><span class="pre">REFRESH</span></code> command will cause it to re-read the information.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Data Exploration</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Stream Exploration</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Fileset Exploration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#explore-properties">Explore Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#limitations">Limitations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tables.html"> Table Exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="object-mapped-tables.html"> ObjectMappedTable Exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom-datasets.html"> Custom Dataset Exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hive-execution-engines.html"> Hive Execution Engines</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Stream Exploration" href="streams.html" />Stream Exploration</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Table Exploration" href="tables.html" />Table Exploration</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

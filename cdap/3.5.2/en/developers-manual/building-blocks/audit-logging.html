@@ -1,0 +1,441 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Audit Logging &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/building-blocks/audit-logging.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Namespaces" href="namespaces.html" />
+    <link rel="prev" title="Metadata and Lineage" href="metadata-lineage.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="namespaces.html" title="Namespaces"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="metadata-lineage.html" title="Metadata and Lineage"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="audit-logging">
+<span id="id1"></span><h1><a class="headerlink" href="#audit-logging" title="Perma-link to this heading">🔗</a>Audit Logging</h1>
+<div class="section" id="overview">
+<h2><a class="headerlink" href="#overview" title="Perma-link to this heading">🔗</a>Overview</h2>
+<p>Audit logging provides a chronological ledger containing evidence of operations or changes
+on CDAP entities. This information can be used to capture a trail of the activities that
+determined the state of an entity at a given point in time. These activities include the
+creation, modification, and deletion of an entity. It also includes modification of the
+entity's <a class="reference internal" href="metadata-lineage.html#metadata-lineage-metadata"><span>metadata</span></a>. For data entities (datasets and
+streams), it includes access information used to generate the entity's <a class="reference internal" href="metadata-lineage.html#metadata-lineage-lineage"><span>lineage</span></a>. Audit logging is an especially important feature because it
+enables users to integrate CDAP with external data governance systems such as
+<a class="reference internal" href="#audit-logging-navigator-integration"><span>Cloudera Navigator</span></a>.</p>
+<p>Please note that audit logs are not published during a CDAP upgrade, as CDAP services are
+not available. Hence, any application which uses CDAP audit logs to sync metadata will go
+out of sync with respect to changes made during the upgrade. Please see
+<a class="reference external" href="https://issues.cask.co/browse/CDAP-5954">CDAP-5954</a> for details.</p>
+</div>
+<div class="section" id="supported-audit-events">
+<span id="audit-logging-supported-audit-events"></span><h2><a class="headerlink" href="#supported-audit-events" title="Perma-link to this heading">🔗</a>Supported Audit Events</h2>
+<p>These audit events are supported in CDAP:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="57%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Audit Event Type</th>
+<th class="head">Supported Entities</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>CREATE</td>
+<td><ul class="first last simple">
+<li>Datasets</li>
+<li>Streams</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td>UPDATE</td>
+<td><ul class="first last simple">
+<li>Datasets</li>
+<li>Streams</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td>DELETE</td>
+<td><ul class="first last simple">
+<li>Datasets</li>
+<li>Streams</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td>TRUNCATE</td>
+<td><ul class="first last simple">
+<li>Datasets</li>
+<li>Streams</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td>ACCESS</td>
+<td><ul class="first last simple">
+<li>Datasets</li>
+<li>Streams</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td>METADATA_CHANGE</td>
+<td><ul class="first last simple">
+<li>Applications</li>
+<li>Artifacts</li>
+<li>Datasets</li>
+<li>Programs</li>
+<li>Streams</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="configuring-audit-publishing">
+<span id="audit-logging-configuring-audit-publishing"></span><h2><a class="headerlink" href="#configuring-audit-publishing" title="Perma-link to this heading">🔗</a>Configuring Audit Publishing</h2>
+<p>Audit publishing is controlled by these properties set in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>, as described in the
+<a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Administration Manual</span></a>:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">audit.enabled</span></code>: Determines if publishing of audit logs is enabled; defaults to <code class="docutils literal"><span class="pre">true</span></code></li>
+<li><code class="docutils literal"><span class="pre">audit.kafka.topic</span></code>: Determines the Kafka topic to publish to; defaults to <code class="docutils literal"><span class="pre">audit</span></code></li>
+</ul>
+</div>
+<div class="section" id="consuming-audit-events">
+<span id="audit-logging-consuming-audit-events"></span><h2><a class="headerlink" href="#consuming-audit-events" title="Perma-link to this heading">🔗</a>Consuming Audit Events</h2>
+<p>When audit publishing is <a class="reference internal" href="#audit-logging-configuring-audit-publishing"><span>enabled</span></a>, for
+<a class="reference internal" href="#audit-logging-supported-audit-events"><span>every audit event</span></a>, a message is published to
+<a class="reference external" href="../source/../../admin-manual/cdap-components.html#admin-manual-cdap-components" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP Kafka</span></a> to the
+<a class="reference internal" href="#audit-logging-configuring-audit-publishing"><span>configured kafka topic</span></a>.</p>
+<p>The contents of the message are a JSON representation of
+the <a class="reference external" href="https://github.com/caskdata/cdap/blob/develop/cdap-proto/src/main/java/co/cask/cdap/proto/audit/AuditMessage.java">AuditMessage</a>
+class.</p>
+<p>Here are some example JSON messages, pretty-printed:</p>
+<p><strong>Dataset Creation</strong></p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
+        <span class="s">&quot;version&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="o">,</span>
+        <span class="s">&quot;time&quot;</span><span class="o">:</span> <span class="mi">1000</span><span class="o">,</span>
+        <span class="s">&quot;entityId&quot;</span><span class="o">:</span> <span class="o">{</span>
+                <span class="s">&quot;namespace&quot;</span><span class="o">:</span> <span class="s">&quot;ns1&quot;</span><span class="o">,</span>
+                <span class="s">&quot;dataset&quot;</span><span class="o">:</span> <span class="s">&quot;ds1&quot;</span><span class="o">,</span>
+                <span class="s">&quot;entity&quot;</span><span class="o">:</span> <span class="s">&quot;DATASET&quot;</span>
+        <span class="o">},</span>
+        <span class="s">&quot;user&quot;</span><span class="o">:</span> <span class="s">&quot;user1&quot;</span><span class="o">,</span>
+        <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="s">&quot;CREATE&quot;</span><span class="o">,</span>
+        <span class="s">&quot;payload&quot;</span><span class="o">:</span> <span class="o">{}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p><strong>Stream Access</strong></p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
+        <span class="s">&quot;version&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="o">,</span>
+        <span class="s">&quot;time&quot;</span><span class="o">:</span> <span class="mi">2000</span><span class="o">,</span>
+        <span class="s">&quot;entityId&quot;</span><span class="o">:</span> <span class="o">{</span>
+                <span class="s">&quot;namespace&quot;</span><span class="o">:</span> <span class="s">&quot;ns1&quot;</span><span class="o">,</span>
+                <span class="s">&quot;stream&quot;</span><span class="o">:</span> <span class="s">&quot;stream1&quot;</span><span class="o">,</span>
+                <span class="s">&quot;entity&quot;</span><span class="o">:</span> <span class="s">&quot;STREAM&quot;</span>
+        <span class="o">},</span>
+        <span class="s">&quot;user&quot;</span><span class="o">:</span> <span class="s">&quot;user1&quot;</span><span class="o">,</span>
+        <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="s">&quot;ACCESS&quot;</span><span class="o">,</span>
+        <span class="s">&quot;payload&quot;</span><span class="o">:</span> <span class="o">{</span>
+                <span class="s">&quot;accessType&quot;</span><span class="o">:</span> <span class="s">&quot;WRITE&quot;</span><span class="o">,</span>
+                <span class="s">&quot;accessor&quot;</span><span class="o">:</span> <span class="o">{</span>
+                        <span class="s">&quot;namespace&quot;</span><span class="o">:</span> <span class="s">&quot;ns1&quot;</span><span class="o">,</span>
+                        <span class="s">&quot;application&quot;</span><span class="o">:</span> <span class="s">&quot;app1&quot;</span><span class="o">,</span>
+                        <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="s">&quot;Flow&quot;</span><span class="o">,</span>
+                        <span class="s">&quot;program&quot;</span><span class="o">:</span> <span class="s">&quot;flow1&quot;</span><span class="o">,</span>
+                        <span class="s">&quot;run&quot;</span><span class="o">:</span> <span class="s">&quot;run1&quot;</span><span class="o">,</span>
+                        <span class="s">&quot;entity&quot;</span><span class="o">:</span> <span class="s">&quot;PROGRAM_RUN&quot;</span>
+                <span class="o">}</span>
+        <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p><strong>Application Metadata Change</strong></p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
+        <span class="s">&quot;version&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="o">,</span>
+        <span class="s">&quot;time&quot;</span><span class="o">:</span> <span class="mi">3000</span><span class="o">,</span>
+        <span class="s">&quot;entityId&quot;</span><span class="o">:</span> <span class="o">{</span>
+              <span class="s">&quot;namespace&quot;</span><span class="o">:</span> <span class="s">&quot;ns1&quot;</span><span class="o">,</span>
+              <span class="s">&quot;application&quot;</span><span class="o">:</span> <span class="s">&quot;app1&quot;</span><span class="o">,</span>
+                <span class="s">&quot;entity&quot;</span><span class="o">:</span> <span class="s">&quot;APPLICATION&quot;</span>
+        <span class="o">},</span>
+        <span class="s">&quot;user&quot;</span><span class="o">:</span> <span class="s">&quot;user1&quot;</span><span class="o">,</span>
+        <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="s">&quot;METADATA_CHANGE&quot;</span><span class="o">,</span>
+        <span class="s">&quot;payload&quot;</span><span class="o">:</span> <span class="o">{</span>
+                <span class="s">&quot;previous&quot;</span><span class="o">:</span> <span class="o">{</span>
+                      <span class="s">&quot;USER&quot;</span><span class="o">:</span> <span class="o">{</span>
+                              <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
+                                      <span class="s">&quot;uk&quot;</span><span class="o">:</span> <span class="s">&quot;uv&quot;</span><span class="o">,</span>
+                                      <span class="s">&quot;uk1&quot;</span><span class="o">:</span> <span class="s">&quot;uv2&quot;</span>
+                                <span class="o">},</span>
+                                <span class="s">&quot;tags&quot;</span><span class="o">:</span> <span class="o">[</span><span class="s">&quot;ut1&quot;</span><span class="o">,</span> <span class="s">&quot;ut2&quot;</span><span class="o">]</span>
+                        <span class="o">},</span>
+                        <span class="s">&quot;SYSTEM&quot;</span><span class="o">:</span> <span class="o">{</span>
+                                <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
+                                        <span class="s">&quot;sk&quot;</span><span class="o">:</span> <span class="s">&quot;sv&quot;</span>
+                                <span class="o">},</span>
+                                <span class="s">&quot;tags&quot;</span><span class="o">:</span> <span class="o">[]</span>
+                        <span class="o">}</span>
+                <span class="o">},</span>
+                <span class="s">&quot;additions&quot;</span><span class="o">:</span> <span class="o">{</span>
+                        <span class="s">&quot;SYSTEM&quot;</span><span class="o">:</span> <span class="o">{</span>
+                                <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
+                                        <span class="s">&quot;sk&quot;</span><span class="o">:</span> <span class="s">&quot;sv&quot;</span>
+                                <span class="o">},</span>
+                                <span class="s">&quot;tags&quot;</span><span class="o">:</span> <span class="o">[</span><span class="s">&quot;t1&quot;</span><span class="o">,</span> <span class="s">&quot;t2&quot;</span><span class="o">]</span>
+                        <span class="o">}</span>
+                <span class="o">},</span>
+                <span class="s">&quot;deletions&quot;</span><span class="o">:</span> <span class="o">{</span>
+                        <span class="s">&quot;USER&quot;</span><span class="o">:</span> <span class="o">{</span>
+                                <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
+                                        <span class="s">&quot;uk&quot;</span><span class="o">:</span> <span class="s">&quot;uv&quot;</span>
+                                <span class="o">},</span>
+                                <span class="s">&quot;tags&quot;</span><span class="o">:</span> <span class="o">[</span><span class="s">&quot;ut1&quot;</span><span class="o">]</span>
+                        <span class="o">}</span>
+                <span class="o">}</span>
+        <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>CDAP also provides an <a class="reference external" href="https://github.com/caskdata/cdap/blob/develop/cdap-proto/src/main/java/co/cask/cdap/proto/codec/AuditMessageTypeAdapter.java">adapter class</a>
+to enable deserializing of the audit messages using the <a class="reference external" href="https://github.com/google/gson">GSON</a> library.</p>
+</div>
+<div class="section" id="integrations">
+<span id="audit-logging-integrations"></span><h2><a class="headerlink" href="#integrations" title="Perma-link to this heading">🔗</a>Integrations</h2>
+<div class="section" id="cloudera-navigator-integration">
+<span id="audit-logging-navigator-integration"></span><h3><a class="headerlink" href="#cloudera-navigator-integration" title="Perma-link to this heading">🔗</a>Cloudera Navigator Integration</h3>
+<p>CDAP Metadata can be pushed to Cloudera Navigator for metadata discovery and search.
+Refer to <a class="reference external" href="../source/../../integrations/partners/cloudera/navigator-integration.html#navigator-integration" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Cloudera Navigator Integration</span></a> for more information.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html"> Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html"> Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-keys.html"> Secure Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifacts.html"> Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata-lineage.html"> Metadata and Lineage</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Audit Logging</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#supported-audit-events">Supported Audit Events</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuring-audit-publishing">Configuring Audit Publishing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#consuming-audit-events">Consuming Audit Events</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#integrations">Integrations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cloudera-navigator-integration">Cloudera Navigator Integration</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Metadata and Lineage" href="metadata-lineage.html" />Metadata and Lineage</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Namespaces" href="namespaces.html" />Namespaces</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

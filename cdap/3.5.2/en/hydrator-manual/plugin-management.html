@@ -1,0 +1,838 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Plugin Management &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/hydrator-manual/plugin-management.html">
+
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="index.html" />
+    <link rel="next" title="Plugin Reference" href="plugins/index.html" />
+    <link rel="prev" title="Running Pipelines" href="running-pipelines.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="plugins/index.html" title="Plugin Reference"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="running-pipelines.html" title="Running Pipelines"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="table-of-contents.html">Cask Hydrator</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="plugin-management">
+<span id="cask-hydrator-plugin-management"></span><h1><a class="headerlink" href="#plugin-management" title="Perma-link to this heading">🔗</a>Plugin Management</h1>
+<p>This section covers how to mange the deployment of plugins on your system:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#cask-hydrator-plugin-management-deployment"><span>Plugin Deployment:</span></a> deploying as
+either a system or user <em>artifact</em></li>
+<li><a class="reference internal" href="#plugins-deployment-verification"><span>Deployment Verification:</span></a> verifying that an
+artifact was deployed successfully</li>
+<li><a class="reference internal" href="#cask-hydrator-plugin-management-third-party-plugins"><span>Deploying Third-party JARs:</span></a>
+making JDBC drivers and other artifacts available to applications</li>
+<li><a class="reference internal" href="#cask-hydrator-plugin-management-multiple-versions"><span>Managing Multiple Version:</span></a>
+different versions can co-exist and be available at the same time</li>
+<li><a class="reference internal" href="#cask-hydrator-plugin-management-deleting-plugins"><span>Deleting Plugins:</span></a> removing
+deployed artifacts from CDAP</li>
+</ul>
+<p>If you are creating your own plugins, see the section on <a class="reference internal" href="developing-plugins/index.html#cask-hydrator-developing-plugins"><span>developing plugins</span></a> for information on writing plugins, including
+<a class="reference internal" href="developing-plugins/packaging-plugins.html#cask-hydrator-packaging-plugins-packaging"><span>packaging plugins in a JAR</span></a> and
+their <a class="reference internal" href="developing-plugins/packaging-plugins.html#cask-hydrator-packaging-plugins-presentation"><span>presentation in a UI</span></a>
+such as Hydrator Studio.</p>
+<p>If you are installing a <strong>third-party JAR</strong> (such as a <strong>JDBC driver</strong>) to make it
+accessible to other plugins or applications, see <a class="reference internal" href="#cask-hydrator-plugin-management-third-party-plugins"><span>these instructions</span></a>.</p>
+<div class="section" id="available-plugins">
+<h2><a class="headerlink" href="#available-plugins" title="Perma-link to this heading">🔗</a>Available Plugins</h2>
+<p>Plugins available with CDAP are listed beginning on a <a class="reference internal" href="plugins/index.html#cask-hydrator-plugins"><span>separate reference page</span></a>.
+User-installed plugins are not listed there, but if they are installed correctly, the reference
+documentation for the plugin will be available through the <a class="reference internal" href="studio.html#cask-hydrator-studio"><span>Hydrator Studio</span></a>.</p>
+</div>
+<div class="section" id="deploying-plugins">
+<span id="cask-hydrator-plugin-management-deployment"></span><h2><a class="headerlink" href="#deploying-plugins" title="Perma-link to this heading">🔗</a>Deploying Plugins</h2>
+<p>To make plugins available to another artifact (and thus available to any application
+created from one of the artifacts), the plugins must first be packaged in a JAR file.
+After that, the JAR file must be deployed either as a <a class="reference external" href="source/../../developers-manual/building-blocks/plugins.html#plugins-deployment-system" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">system artifact</span></a> or a <a class="reference internal" href="#plugins-deployment-user"><span>user artifact</span></a>.</p>
+<p>A system artifact is available to users across any namespace. A user artifact is available
+only to users in the namespace to which it is deployed. By design, deploying as a user
+artifact just requires access to the <a class="reference external" href="source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Artifact HTTP RESTful API</span></a>,
+while deploying as a system artifact requires access to the filesystem of the CDAP Master.
+This then requires administrator access and permission.</p>
+<div class="section" id="deploying-as-a-system-artifact">
+<h3><a class="headerlink" href="#deploying-as-a-system-artifact" title="Perma-link to this heading">🔗</a>Deploying as a System Artifact</h3>
+<p>To deploy the artifact as a system artifact, both the JAR file and a matching configuration file
+must be placed in the appropriate directory.</p>
+<ul class="simple">
+<li><strong>Standalone mode:</strong> <code class="docutils literal"><span class="pre">$CDAP_INSTALL_DIR/artifacts</span></code></li>
+<li><strong>Distributed mode:</strong> The plugin JARs should be placed in the local file system and the path
+can be provided to CDAP by setting the property <code class="docutils literal"><span class="pre">app.artifact.dir</span></code> in
+<a class="reference external" href="source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">cdap-site.xml</span></a>. Multiple directories can be defined by separating
+them with a semicolon. The default path is <code class="docutils literal"><span class="pre">/opt/cdap/master/artifacts</span></code>.</li>
+</ul>
+<p>For each plugin JAR, there must also be a corresponding configuration file to specify which artifacts
+can use the plugins. The file name must match the name of the JAR, except it must have the <code class="docutils literal"><span class="pre">.json</span></code>
+extension instead of the <code class="docutils literal"><span class="pre">.jar</span></code> extension. For example, if your JAR file is named
+<code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code>, there must be a corresponding <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.json</span></code> file.
+If your <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code> contains transforms that can be used by both the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code>
+and <code class="docutils literal"><span class="pre">cdap-data-streams</span></code> artifacts, <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.json</span></code> would contain:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;parents&quot;: [ &quot;cdap-data-pipeline[3.5.2,3.5.2]&quot;, &quot;cdap-data-streams[3.5.2,3.5.2]&quot; ]
+}
+</pre>
+</div>
+<p>This file specifies that the plugins in <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code> can be used by version 3.5.2 of
+the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> and <code class="docutils literal"><span class="pre">cdap-data-streams</span></code> artifacts. You can also specify a wider range of versions
+that can use the plugins, with square brackets <code class="docutils literal"><span class="pre">[</span> <span class="pre">]</span></code> indicating an inclusive version and parentheses <code class="docutils literal"><span class="pre">(</span> <span class="pre">)</span></code> indicating
+an exclusive version. For example:</p>
+<div class="highlight container">
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;cdap-data-pipeline[3.5.0,4.0.0)&quot;</span><span class="p">,</span> <span class="s2">&quot;cdap-data-streams[3.5.0,4.0.0)&quot;</span> <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>specifies that these plugins can be used by versions 3.5.0 (inclusive) to 4.0.0 (exclusive) of the
+<code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> and <code class="docutils literal"><span class="pre">cdap-data-streams</span></code> artifacts.</p>
+<p>If the artifact contains third-party plugins, you can explicitly list them in the config file.
+For example, you may want to deploy a JDBC driver contained in a third-party JAR. In these cases,
+you have no control over the code to annotate the classes that should be plugins, so you need to
+list them in the configuration:</p>
+<div class="highlight container">
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;cdap-data-pipeline[3.5.0,4.0.0)&quot;</span><span class="p">,</span> <span class="s2">&quot;cdap-data-streams[3.5.0,4.0.0)&quot;</span> <span class="p">],</span>
+  <span class="nt">&quot;plugins&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;mysql&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;jdbc&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;className&quot;</span><span class="p">:</span> <span class="s2">&quot;com.mysql.jdbc.Driver&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>Once your JARs and matching configuration files are in place, a CDAP CLI command (<code class="docutils literal"><span class="pre">load</span> <span class="pre">artifact</span></code>) or
+a HTTP RESTful API call to <a class="reference external" href="source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-system-load" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">load system artifacts</span></a>
+can be made to load the artifacts. As described in the documentation on <a class="reference external" href="source/../../developers-manual/building-blocks/artifacts.html#artifacts" title="(in Cask Data Application Platform v3.5.2)"><span>Artifacts</span></a>, only
+snapshot artifacts can be re-deployed without requiring that they first be deleted.</p>
+<p>Alternatively, the CDAP Standalone should be restarted for this change to take effect in Standalone
+mode, and <code class="docutils literal"><span class="pre">cdap-master</span></code> services should be restarted in the Distributed mode.</p>
+</div>
+<div class="section" id="deploying-as-a-user-artifact">
+<span id="plugins-deployment-user"></span><h3><a class="headerlink" href="#deploying-as-a-user-artifact" title="Perma-link to this heading">🔗</a>Deploying as a User Artifact</h3>
+<p>To deploy the artifact as a user artifact, use the <a class="reference external" href="source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Artifact HTTP RESTful API</span></a> <em>Add Artifact</em> or the CLI.</p>
+<p>When using the HTTP RESTful API, you will need to specify the <code class="docutils literal"><span class="pre">Artifact-Extends</span></code> header.
+Unless the artifact's version is defined in the manifest file of the JAR file you upload,
+you will also need to specify the <code class="docutils literal"><span class="pre">Artifact-Version</span></code> header.</p>
+<p>When using the CLI, a configuration file exactly like the one described in the
+<a class="reference external" href="source/../../developers-manual/building-blocks/plugins.html#plugins-deployment-system" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying as a System Artifact</span></a> must be used.</p>
+<p>For example, to deploy <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code> using the RESTful API:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral3() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral3 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral3", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral3" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms&quot;</span> <span class="se">\</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.2, 3.5.2]/system:cdap-data-streams[3.5.2, 3.5.2]&quot; \</span>
+<span class="go">--data-binary @/path/to/custom-transforms-1.0.0.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms&quot; ^</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.2, 3.5.2]/system:cdap-data-streams[3.5.2, 3.5.2]&quot; ^</span>
+<span class="go">--data-binary @/path/to/custom-transforms-1.0.0.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Using the CLI:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral4_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral4 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral4 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral4 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral4 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral4 .example-tab-" + tab).click(change_tabbedparsedliteral4_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral4" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">load artifact /path/to/custom-transforms-1.0.0.jar config-file /path/to/config.json</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>where <code class="docutils literal"><span class="pre">config.json</span></code> contains:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;parents&quot;: [ &quot;system:cdap-data-pipeline[3.5.2,3.5.2]&quot;, &quot;system:cdap-data-streams[3.5.2,3.5.2]&quot; ]
+}
+</pre>
+</div>
+<p>Note that when deploying a user artifact that extends a system artifact,
+you must prefix the parent artifact name with <code class="docutils literal"><span class="pre">'system:'</span></code>.
+This is in the event there is a user artifact with the same name as the system artifact.
+If you are extending a user artifact, no prefix is required.</p>
+<p>You can deploy third-party JARs in the same way except the plugin information needs
+<a class="reference external" href="source/../../developers-manual/building-blocks/plugins.html#plugins-third-party" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">to be explicitly listed</span></a>. As described in the documentation on
+<a class="reference external" href="source/../../developers-manual/building-blocks/artifacts.html#artifacts" title="(in Cask Data Application Platform v3.5.2)"><span>Artifacts</span></a>, only snapshot artifacts can be re-deployed without requiring that they
+first be deleted.</p>
+<p>Using the RESTful API (note that if the artifact version is not in the JAR manifest file,
+it needs to be set explicitly, as the JAR contents are uploaded without the filename):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral5() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral5 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral5", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral5" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java&quot;</span> <span class="se">\</span>
+<span class="go">-H &#39;Artifact-Plugins: [ { &quot;name&quot;: &quot;mysql&quot;, &quot;type&quot;: &quot;jdbc&quot;, &quot;className&quot;: &quot;com.mysql.jdbc.Driver&quot; } ]&#39; \</span>
+<span class="go">-H &quot;Artifact-Version: 5.1.35&quot; \</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.2, 3.5.2]/system:cdap-data-streams[3.5.2, 3.5.2]&quot; \</span>
+<span class="go">--data-binary @mysql-connector-java-5.1.35.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java&quot; ^</span>
+<span class="go">-H &quot;Artifact-Plugins: [ { \&quot;name\&quot;: \&quot;mysql\&quot;, \&quot;type\&quot;: \&quot;jdbc\&quot;, \&quot;className\&quot;: \&quot;com.mysql.jdbc.Driver\&quot; } ]&quot; ^</span>
+<span class="go">-H &quot;Artifact-Version: 5.1.35&quot; ^</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.2, 3.5.2]/system:cdap-data-streams[3.5.2, 3.5.2]&quot; ^</span>
+<span class="go">--data-binary @mysql-connector-java-5.1.35.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Using the CLI (note that the artifact version, if not explicitly set, is derived from the JAR filename):</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral6_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral6 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral6 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral6 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral6 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral6 .example-tab-" + tab).click(change_tabbedparsedliteral6_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral6" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">load artifact /path/to/mysql-connector-java-5.1.35.jar config-file /path/to/config.json</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>where <code class="docutils literal"><span class="pre">config.json</span></code> contains:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;parents&quot;: [ &quot;system:cdap-data-pipeline[3.5.2,3.5.2]&quot;, &quot;system:cdap-data-streams[3.5.2,3.5.2]&quot; ],
+  &quot;plugins&quot;: [
+    {
+      &quot;name&quot;: &quot;mysql&quot;,
+      &quot;type&quot;: &quot;jdbc&quot;,
+      &quot;className&quot;: &quot;com.mysql.jdbc.Driver&quot;
+    }
+  ]
+}
+</pre>
+</div>
+</div>
+<div class="section" id="deployment-verification">
+<span id="plugins-deployment-verification"></span><h3><a class="headerlink" href="#deployment-verification" title="Perma-link to this heading">🔗</a>Deployment Verification</h3>
+<p>You can verify that a plugin artifact was added successfully by using the
+<a class="reference external" href="source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-detail" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Artifact HTTP RESTful API</span></a> to retrieve artifact details.
+For example, to retrieve detail about our <code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral7() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral7 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral7", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral7" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X GET <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms/versions/1.0.0?scope=[system | user]</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X GET &quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms/versions/1.0.0?scope=[system | user]</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Using the CLI:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral8_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral8 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral8 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral8 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral8 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral8 .example-tab-" + tab).click(change_tabbedparsedliteral8_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral8" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">describe artifact properties custom-transforms 1.0.0 [system | user]</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>If you deployed the <code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact as a system artifact, the scope is <code class="docutils literal"><span class="pre">system</span></code>.
+If you deployed the <code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact as a user artifact, the scope is <code class="docutils literal"><span class="pre">user</span></code>.</p>
+<p>You can verify that the plugins in your newly-added artifact are available to its parent by using the
+<a class="reference external" href="source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-available-plugins" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Artifact HTTP RESTful API</span></a> to list plugins of a
+specific type. For example, to check if <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> can access the plugins in the
+<code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral9() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral9 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral9", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral9" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X GET <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/cdap-data-pipeline/versions/3.5.2/extensions/transform?scope=system&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X GET &quot;localhost:10000/v3/namespaces/default/artifacts/cdap-data-pipeline/versions/3.5.2/extensions/transform?scope=system&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Using the CLI:</p>
+<script type="text/javascript">
+
+function change_tabbedparsedliteral10_ExampleTab(tab) {
+  return function(e) {
+    e.preventDefault();
+    var scrollOffset = $(this).offset().top - $(document).scrollTop();
+    $("#tabbedparsedliteral10 .tab-pane").removeClass("active");
+    $("#tabbedparsedliteral10 .tab-pane-" + tab).addClass("active");
+    $("#tabbedparsedliteral10 .example-tab").removeClass("active");
+    $("#tabbedparsedliteral10 .example-tab-" + tab).addClass("active");
+    $(document).scrollTop($(this).offset().top - scrollOffset);
+  }
+}
+
+$(function() {
+  var tabs = ['cdap-cli'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral10 .example-tab-" + tab).click(change_tabbedparsedliteral10_ExampleTab(tab));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral10" class="independent">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-cdap-cli active"><a href="#">CDAP CLI</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-cdap-cli active">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">list artifact plugins cdap-data-pipeline 3.5.2 transform system</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>You can then check the list returned to see if your transforms are in the list. Note that
+the scope here refers to the scope of the parent artifact. In this example it is the <code class="docutils literal"><span class="pre">system</span></code>
+scope because <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> is a system artifact. This is true even if you deployed
+<code class="docutils literal"><span class="pre">custom-transforms</span></code> as a user artifact because the parent is still a system artifact.</p>
+</div>
+</div>
+<div class="section" id="deploying-third-party-jars">
+<span id="cask-hydrator-plugin-management-third-party-plugins"></span><h2><a class="headerlink" href="#deploying-third-party-jars" title="Perma-link to this heading">🔗</a>Deploying Third-Party JARs</h2>
+<p><strong>Prebuilt JARs:</strong> In a case where you'd like to use pre-built third-party JARs (such as a
+JDBC driver) as a plugin, you will need to create a JSON file to describe the JAR.</p>
+<p>For information on the format of the JSON, please refer to the sections on
+<a class="reference external" href="source/../../developers-manual/building-blocks/plugins.html#plugins-third-party" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Third-Party Plugins</span></a> and <a class="reference external" href="source/../../developers-manual/building-blocks/plugins.html#plugins-deployment" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Plugin Deployment</span></a>.</p>
+<p>A sample JDBC Driver Plugin configuration:</p>
+<div class="highlight container">
+<pre class="literal-block">
+{
+  &quot;parents&quot;: [ &quot;cdap-etl-batch[3.5.2,3.5.2]&quot; ],
+  &quot;plugins&quot;: [
+    {
+      &quot;name&quot; : &quot;mysql&quot;,
+      &quot;type&quot; : &quot;jdbc&quot;,
+      &quot;className&quot; : &quot;com.mysql.jdbc.Driver&quot;,
+      &quot;description&quot; : &quot;Plugin for MySQL JDBC driver&quot;
+    },
+    {
+      &quot;name&quot; : &quot;postgresql&quot;,
+      &quot;type&quot; : &quot;jdbc&quot;,
+      &quot;className&quot; : &quot;org.postgresql.Driver&quot;,
+      &quot;description&quot; : &quot;Plugin for PostgreSQL JDBC driver&quot;
+    }
+  ]
+}
+</pre>
+</div>
+</div>
+<div class="section" id="managing-multiple-versions">
+<span id="cask-hydrator-plugin-management-multiple-versions"></span><h2><a class="headerlink" href="#managing-multiple-versions" title="Perma-link to this heading">🔗</a>Managing Multiple Versions</h2>
+<p>Different versions of the same plugin (or artifact) can be loaded and available at the
+same time. These will appear in the <a class="reference internal" href="studio.html#cask-hydrator-studio"><span>Hydrator Studio</span></a> as
+possible choices when selecting a plugin or creating a <a class="reference internal" href="studio.html#cask-hydrator-studio-plugin-templates"><span>plugin template</span></a>. If no version is specified for a plugin the
+<a class="reference internal" href="developing-pipelines.html#hydrator-developing-pipelines-configuration-file-format"><span>configuration file</span></a> used
+to create an application, the highest version currently available in the system will be
+used.</p>
+</div>
+<div class="section" id="deleting-plugins">
+<span id="cask-hydrator-plugin-management-deleting-plugins"></span><h2><a class="headerlink" href="#deleting-plugins" title="Perma-link to this heading">🔗</a>Deleting Plugins</h2>
+<p>Plugins can be deleted using either the <a class="reference external" href="source/../../reference-manual/http-restful-api/index.html#http-restful-api" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Artifact HTTP RESTful API</span></a> or
+the <a class="reference external" href="source/../../reference-manual/cli-api.html#cdap-cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP CLI</span></a>.</p>
+<p>In the case of the CDAP CLI, only plugins that have been deployed in the <code class="docutils literal"><span class="pre">user</span></code> scope
+can be deleted by the CDAP CLI. Both <code class="docutils literal"><span class="pre">system</span></code> and <code class="docutils literal"><span class="pre">user</span></code> scope plugins can be deleted
+using the HTTP RESTful API by using the appropriate calls.</p>
+<p>Note that in all cases, the actual files (JARs and JSON files) associated with the plugins
+are not deleted. Instead, the references to them are deleted in the CDAP system. If the
+files are not removed after these references are deleted, then—in the case of the
+<code class="docutils literal"><span class="pre">system</span></code> scope plugins—, the artifacts will be reloaded the next time CDAP is
+restarted, as they are automatically loaded at startup from the <a class="reference external" href="plugin-management#deploying-as-a-system-artifact">appropriate directory</a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">Cask Hydrator: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts-design.html"> Concepts and Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="studio.html"> Hydrator Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-pipelines.html"> Creating Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running-pipelines.html"> Running Pipelines</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Plugin Management</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#available-plugins">Available Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deploying-plugins">Deploying Plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deploying-as-a-system-artifact">Deploying as a System Artifact</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deploying-as-a-user-artifact">Deploying as a User Artifact</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deployment-verification">Deployment Verification</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#deploying-third-party-jars">Deploying Third-Party JARs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#managing-multiple-versions">Managing Multiple Versions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deleting-plugins">Deleting Plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plugins/index.html"> Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developing-pipelines.html"> Developing Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developing-plugins/index.html"> Developing Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how-hydrator-works.html"> How Hydrator Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faqs.html"> FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html"> Glossary</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Running Pipelines" href="running-pipelines.html" />Running Pipelines</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Plugin Reference" href="plugins/index.html" />Plugin Reference</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Verification &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/admin-manual/verification.html">
+
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="index.html" />
+    <link rel="next" title="Upgrading" href="upgrading/index.html" />
+    <link rel="prev" title="Manual Installation using Packages" href="installation/packages.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="upgrading/index.html" title="Upgrading"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="installation/packages.html" title="Manual Installation using Packages"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="table-of-contents.html">Administration Manual</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="verification">
+<span id="admin-manual-verification"></span><h1><a class="headerlink" href="#verification" title="Perma-link to this heading">🔗</a>Verification</h1>
+<p>To verify that the CDAP software is successfully installed and you are able to use your
+Hadoop cluster, run an example application. We provide in our SDK pre-built JAR files for
+convenience.</p>
+<ol class="arabic simple">
+<li>Download and install the latest <a class="reference external" href="http://cask.co/downloads/#cdap">CDAP Software Development Kit (SDK)</a>.</li>
+<li>Extract to a folder (<code class="docutils literal"><span class="pre">CDAP_HOME</span></code>).</li>
+<li>Open a command prompt and navigate to <code class="docutils literal"><span class="pre">CDAP_HOME/examples</span></code>.</li>
+<li>Each example folder has a <code class="docutils literal"><span class="pre">.jar</span></code> file in its <code class="docutils literal"><span class="pre">target</span></code> directory.
+For verification, we will use the <a class="reference external" href="source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">WordCount example</span></a>.</li>
+<li>Open a web browser to the CDAP UI.
+It is located on port <code class="docutils literal"><span class="pre">9999</span></code> of the box where you installed the CDAP UI service.</li>
+<li>On the UI, click the button <em>Add App</em>.</li>
+<li>Find the pre-built <code class="docutils literal"><span class="pre">WordCount-3.5.2.jar</span></code> using the dialog box to navigate to
+<code class="docutils literal"><span class="pre">CDAP_HOME/examples/WordCount/target/</span></code>.</li>
+<li>Once the application is deployed, instructions on running the example can be found at the
+<a class="reference external" href="source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">WordCount example</span></a>.</li>
+<li>You should be able to start the application, inject sentences, and retrieve results.</li>
+<li>When finished, you can stop and remove the application as described in the section on
+<a class="reference external" href="source/../../developers-manual/getting-started/building-apps.html#cdap-building-running" title="(in Cask Data Application Platform v3.5.2)"><span>Building and Running CDAP Applications</span></a>.</li>
+</ol>
+<p class="rubric" id="admin-manual-health-check">Getting a Health Check</p>
+<p>Administrators can check the health of various services in the system.
+(In these examples, substitute for <code class="docutils literal"><span class="pre">&lt;host&gt;</span></code> the host name or IP address of the CDAP server.)</p>
+<ul>
+<li><p class="first">To retrieve the <strong>health check of the CDAP UI</strong>, make a GET request to the URI:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://&lt;host&gt;:9999/status</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">To retrieve the <strong>health check of the CDAP Router</strong>, make a GET request to the URI:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://&lt;host&gt;:10000/status</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">To retrieve the <strong>health check of the CDAP Authentication Server</strong>, make a GET request to
+the URI:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://&lt;host&gt;:10009/status</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>On success, the calls return a valid HTTP response with a 200 code.</p>
+<ul>
+<li><p class="first">To retrieve the <strong>health check of all the services running in YARN</strong>, make a GET request
+to the URI:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://&lt;host&gt;:10000/v3/system/services</span>
+</pre></div>
+</div>
+<p>On success, the call returns a JSON string with component names and their corresponding
+statuses (reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[{&quot;name&quot;:&quot;appfabric&quot;,&quot;description&quot;:&quot;Service for managing application</span>
+<span class="go">  lifecycle.&quot;,&quot;status&quot;:&quot;OK&quot;,&quot;logs&quot;:&quot;OK&quot;,&quot;min&quot;:1,&quot;max&quot;:1,&quot;requested&quot;:1,&quot;provisioned&quot;:1},</span>
+<span class="go"> {&quot;name&quot;:&quot;dataset.executor&quot;,&quot;description&quot;:&quot;Service to perform dataset</span>
+<span class="go">  operations.&quot;,&quot;status&quot;:&quot;OK&quot;,&quot;logs&quot;:&quot;OK&quot;,&quot;min&quot;:1,&quot;max&quot;:1,&quot;requested&quot;:1,&quot;provisioned&quot;:1},</span>
+<span class="go"> {&quot;name&quot;:&quot;explore.service&quot;,&quot;description&quot;:&quot;Service to run ad-hoc</span>
+<span class="go">  queries.&quot;,&quot;status&quot;:&quot;OK&quot;,&quot;logs&quot;:&quot;OK&quot;,&quot;min&quot;:1,&quot;max&quot;:1,&quot;requested&quot;:1,&quot;provisioned&quot;:1},</span>
+<span class="go"> {&quot;name&quot;:&quot;log.saver&quot;,&quot;description&quot;:&quot;Service to collect and store</span>
+<span class="go">  logs.&quot;,&quot;status&quot;:&quot;OK&quot;,&quot;logs&quot;:&quot;NOTOK&quot;,&quot;min&quot;:1,&quot;max&quot;:1,&quot;requested&quot;:1,&quot;provisioned&quot;:1},</span>
+<span class="go"> {&quot;name&quot;:&quot;metrics&quot;,&quot;description&quot;:&quot;Service to handle metrics</span>
+<span class="go">  requests.&quot;,&quot;status&quot;:&quot;OK&quot;,&quot;logs&quot;:&quot;OK&quot;,&quot;min&quot;:1,&quot;max&quot;:1,&quot;requested&quot;:1,&quot;provisioned&quot;:1},</span>
+<span class="go"> {&quot;name&quot;:&quot;metrics.processor&quot;,&quot;description&quot;:&quot;Service to process application and system</span>
+<span class="go">  metrics.&quot;,&quot;status&quot;:&quot;OK&quot;,&quot;logs&quot;:&quot;NOTOK&quot;,&quot;min&quot;:1,&quot;max&quot;:1,&quot;requested&quot;:1,&quot;provisioned&quot;:1},</span>
+<span class="go"> {&quot;name&quot;:&quot;streams&quot;,&quot;description&quot;:&quot;Service that handles stream data</span>
+<span class="go">  ingestion.&quot;,&quot;status&quot;:&quot;OK&quot;,&quot;logs&quot;:&quot;OK&quot;,&quot;min&quot;:1,&quot;max&quot;:1,&quot;requested&quot;:1,&quot;provisioned&quot;:1},</span>
+<span class="go"> {&quot;name&quot;:&quot;transaction&quot;,&quot;description&quot;:&quot;Service that maintains transaction</span>
+<span class="go">  states.&quot;,&quot;status&quot;:&quot;OK&quot;,&quot;logs&quot;:&quot;NOTOK&quot;,&quot;min&quot;:1,&quot;max&quot;:1,&quot;requested&quot;:1,&quot;provisioned&quot;:1}]</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cdap-components.html"> CDAP Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deployment-architectures.html"> Deployment Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hadoop-compatibility.html"> Hadoop Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="system-requirements.html"> System Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation/index.html"> Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="upgrading/index.html"> Upgrading</a></li>
+<li class="toctree-l1"><a class="reference internal" href="security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendices/index.html"> Appendices</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Manual Installation using Packages" href="installation/packages.html" />Manual Installation using Packages</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Upgrading" href="upgrading/index.html" />Upgrading</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

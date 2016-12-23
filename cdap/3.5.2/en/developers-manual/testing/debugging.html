@@ -1,0 +1,761 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Debugging a CDAP Application &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/testing/debugging.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Testing and Debugging" href="index.html" />
+    <link rel="next" title="Troubleshooting a CDAP Application" href="troubleshooting.html" />
+    <link rel="prev" title="Testing a CDAP Application" href="testing.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="troubleshooting.html" title="Troubleshooting a CDAP Application"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="testing.html" title="Testing a CDAP Application"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Testing and Debugging</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="debugging-a-cdap-application">
+<span id="debugging-cdap"></span><h1><a class="headerlink" href="#debugging-a-cdap-application" title="Perma-link to this heading">🔗</a>Debugging a CDAP Application</h1>
+<div class="section" id="debugging-an-application-in-standalone-cdap">
+<h2><a class="headerlink" href="#debugging-an-application-in-standalone-cdap" title="Perma-link to this heading">🔗</a>Debugging an Application in Standalone CDAP</h2>
+<p>Any CDAP application can be debugged in the Standalone CDAP
+by attaching a remote debugger to the CDAP JVM. To enable remote
+debugging:</p>
+<ol class="arabic">
+<li><p class="first">Start the Standalone CDAP with <code class="docutils literal"><span class="pre">--enable-debug</span></code>, optionally specifying a port (default is <code class="docutils literal"><span class="pre">5005</span></code>).</p>
+<p>The CDAP should confirm that the debugger port is open with a message such as
+<code class="docutils literal"><span class="pre">Remote</span> <span class="pre">debugger</span> <span class="pre">agent</span> <span class="pre">started</span> <span class="pre">on</span> <span class="pre">port</span> <span class="pre">5005</span></code>.</p>
+</li>
+<li><p class="first">Deploy (for example) the <em>HelloWorld</em> application to the CDAP by dragging and dropping the
+<code class="docutils literal"><span class="pre">HelloWorld.jar</span></code> file from the <code class="docutils literal"><span class="pre">/examples/HelloWorld</span></code> directory onto the CDAP UI.</p>
+</li>
+<li><p class="first">Open the <em>HelloWorld</em> application in an IDE and connect to the remote debugger.</p>
+</li>
+</ol>
+<p>For more information, see <a class="reference internal" href="#attaching-a-debugger">Attaching a Debugger</a>.</p>
+<p><strong>Note:</strong> Currently, debugging is not supported under Windows.</p>
+</div>
+<div class="section" id="debugging-an-application-in-distributed-cdap">
+<span id="debugging-distributed"></span><h2><a class="headerlink" href="#debugging-an-application-in-distributed-cdap" title="Perma-link to this heading">🔗</a>Debugging an Application in Distributed CDAP</h2>
+<p>In distributed mode, an application does not run in a single JVM. Instead, its programs
+are dispersed over multiple—if not many—containers in the Hadoop cluster. There is no
+single place to debug the entire application.</p>
+<p>You can, however, debug every individual container by attaching a remote debugger to it.
+This is supported for each flowlet of a flow and each instance of a service. In order
+to debug a container, you need to start the component with debugging enabled by making
+an HTTP request to the component’s URL. For example, the following will start a flow for debugging:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/default/apps/WordCount/flows/WordCounter/debug</span>
+</pre></div>
+</div>
+<p>Using <code class="docutils literal"><span class="pre">curl</span></code>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral90() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral90 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral90", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral90" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;http://&lt;hostname&gt;:10000/v3/namespaces/default/apps/WordCount/flows/WordCounter/debug&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;http://&lt;hostname&gt;:10000/v3/namespaces/default/apps/WordCount/flows/WordCounter/debug&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Note that this URL differs from the URL for starting the flow only by the last path
+component (<code class="docutils literal"><span class="pre">debug</span></code> instead of <code class="docutils literal"><span class="pre">start</span></code>; see the <a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v3.5.2)"><span>Lifecycle HTTP RESTful API</span></a>).
+You can pass in runtime arguments in the exact same way as you normally would start a flow.</p>
+<p>Once the flow is running, each flowlet will detect an available port in its container
+and open that port for attaching a debugger.
+To find out the address of a container’s host and the container’s debug port, you can query
+the CDAP for a flow or service’s live info via HTTP:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/WordCount/flows/WordCounter/live-info</span>
+</pre></div>
+</div>
+<p>or, using the CDAP CLI:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral91() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral91 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral91", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral91" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh get flow live WordCount.WordCounter</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat get flow live WordCount.WordCounter</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>The response is formatted in JSON and—pretty-printed— would look similar to this:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;app&quot;: &quot;WordCount&quot;,</span>
+<span class="go">  &quot;containers&quot;: [</span>
+<span class="go">    {</span>
+<span class="go">      &quot;container&quot;: &quot;container_1397069870124_0010_01_000002&quot;,</span>
+<span class="go">      &quot;debugPort&quot;: 42071,</span>
+<span class="go">      &quot;host&quot;: &quot;node-1004.my.cluster.net&quot;,</span>
+<span class="go">      &quot;instance&quot;: 0,</span>
+<span class="go">      &quot;memory&quot;: 512,</span>
+<span class="go">      &quot;name&quot;: &quot;unique&quot;,</span>
+<span class="go">      &quot;type&quot;: &quot;flowlet&quot;,</span>
+<span class="go">      &quot;virtualCores&quot;: 1</span>
+<span class="go">    },</span>
+<span class="go">    ...</span>
+<span class="go">    {</span>
+<span class="go">      &quot;container&quot;: &quot;container_1397069870124_0010_01_000005&quot;,</span>
+<span class="go">      &quot;debugPort&quot;: 37205,</span>
+<span class="go">      &quot;host&quot;: &quot;node-1003.my.cluster.net&quot;,</span>
+<span class="go">      &quot;instance&quot;: 0,</span>
+<span class="go">      &quot;memory&quot;: 512,</span>
+<span class="go">      &quot;name&quot;: &quot;splitter&quot;,</span>
+<span class="go">      &quot;type&quot;: &quot;flowlet&quot;,</span>
+<span class="go">      &quot;virtualCores&quot;: 1</span>
+<span class="go">    }</span>
+<span class="go">  ],</span>
+<span class="go">  &quot;id&quot;: &quot;WordCounter&quot;,</span>
+<span class="go">  &quot;runtime&quot;: &quot;distributed&quot;,</span>
+<span class="go">  &quot;type&quot;: &quot;Flow&quot;,</span>
+<span class="go">  &quot;yarnAppId&quot;: &quot;application_1397069870124_0010&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>You see the YARN application id and the YARN container IDs of each flowlet. More importantly, you
+can see the host name and debugging port for each flowlet. For example, the only instance of the
+<em>splitter</em> flowlet is running on <code class="docutils literal"><span class="pre">node-1003.my.cluster.net</span></code> and the debugging port is 37205. You can now
+attach your debugger to the container’s JVM (see <a class="reference internal" href="#attaching-a-debugger">Attaching a Debugger</a>).</p>
+<p>The corresponding HTTP requests for the <code class="docutils literal"><span class="pre">RetrieveCounts</span></code> service of this application would be:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/debug</span>
+<span class="go">GET /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/live-info</span>
+</pre></div>
+</div>
+<p>Analysis of the response would give you the host names and debugging ports for all instances of the service.</p>
+</div>
+<div class="section" id="attaching-a-debugger">
+<h2><a class="headerlink" href="#attaching-a-debugger" title="Perma-link to this heading">🔗</a>Attaching a Debugger</h2>
+<div class="section" id="debugging-with-intellij">
+<h3><a class="headerlink" href="#debugging-with-intellij" title="Perma-link to this heading">🔗</a>Debugging with IntelliJ</h3>
+<p><em>Note:</em> These instructions were developed with <em>IntelliJ v13.1.2.</em>
+You may need to adjust them for your installation or version.</p>
+<ol class="arabic">
+<li><p class="first">From the <em>IntelliJ</em> toolbar, select <code class="docutils literal"><span class="pre">Run</span> <span class="pre">-&gt;</span> <span class="pre">Edit</span> <span class="pre">Configurations</span></code>.</p>
+</li>
+<li><p class="first">Click <code class="docutils literal"><span class="pre">+</span></code> and choose <code class="docutils literal"><span class="pre">Remote</span></code>:</p>
+<img alt="../_images/intellij_1.png" src="../_images/intellij_1.png" />
+</li>
+<li><p class="first">Create a debug configuration by entering a name, for example, <code class="docutils literal"><span class="pre">CDAP</span></code>.</p>
+</li>
+<li><p class="first">Enter the host name, for example, <code class="docutils literal"><span class="pre">localhost</span></code> or <code class="docutils literal"><span class="pre">node-1003.my.cluster.net</span></code>
+in the Host field.</p>
+</li>
+<li><p class="first">Enter the debugging port, for example, <code class="docutils literal"><span class="pre">5005</span></code> in the Port field:</p>
+<img alt="../_images/intellij_2.png" src="../_images/intellij_2.png" />
+</li>
+<li><p class="first">To start the debugger, select <code class="docutils literal"><span class="pre">Run</span> <span class="pre">-&gt;</span> <span class="pre">Debug</span> <span class="pre">-&gt;</span> <span class="pre">CDAP</span></code>.</p>
+</li>
+<li><p class="first">Set a breakpoint in any code block, for example, a flowlet method:</p>
+<img alt="../_images/intellij_3.png" src="../_images/intellij_3.png" />
+</li>
+<li><p class="first">Start the flow in the CDAP UI.</p>
+</li>
+<li><p class="first">Send an event to the stream. The control will stop at the breakpoint
+and you can proceed with debugging.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="debugging-with-eclipse">
+<h3><a class="headerlink" href="#debugging-with-eclipse" title="Perma-link to this heading">🔗</a>Debugging with Eclipse</h3>
+<p><em>Note:</em> These instructions were developed with <em>Eclipse IDE for Java Developers v4.4.0.</em>
+You may need to adjust them for your installation or version.</p>
+<ol class="arabic">
+<li><p class="first">In Eclipse, select <code class="docutils literal"><span class="pre">Run-&gt;</span> <span class="pre">Debug</span></code> configurations.</p>
+</li>
+<li><p class="first">In the list on the left of the window, double-click <code class="docutils literal"><span class="pre">Remote</span> <span class="pre">Java</span> <span class="pre">Application</span></code> to create
+a new launch configuration.</p>
+<img alt="../_images/eclipse_1.png" src="../_images/eclipse_1.png" />
+</li>
+<li><p class="first">Enter a name and project, for example, <code class="docutils literal"><span class="pre">CDAP</span></code>.</p>
+<img alt="../_images/eclipse_2.png" src="../_images/eclipse_2.png" />
+</li>
+<li><p class="first">Enter the host name, for example, <code class="docutils literal"><span class="pre">localhost</span></code> or <code class="docutils literal"><span class="pre">node-1003.my.cluster.net</span></code>
+in the Host field.</p>
+</li>
+<li><p class="first">Enter the debugging port, for example, <code class="docutils literal"><span class="pre">5005</span></code> in the Port field.</p>
+</li>
+<li><p class="first">In your project, click <code class="docutils literal"><span class="pre">Debug</span></code> to start the debugger.</p>
+</li>
+<li><p class="first">Set a breakpoint in any code block, for example, a flowlet method:</p>
+<img alt="../_images/eclipse_3.png" src="../_images/eclipse_3.png" />
+</li>
+<li><p class="first">Start the flow in the CDAP UI.</p>
+</li>
+<li><p class="first">Send an event to the stream.</p>
+</li>
+<li><p class="first">The control stops at the breakpoint and you can proceed with debugging.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="debugging-the-transaction-manager-advanced-use">
+<span id="tx-debugger"></span><h2><a class="headerlink" href="#debugging-the-transaction-manager-advanced-use" title="Perma-link to this heading">🔗</a>Debugging the Transaction Manager (Advanced Use)</h2>
+<p>In this advanced use section, we will explain in depth how transactions work internally.
+Transactions are introduced in the <a class="reference internal" href="../building-blocks/transaction-system.html#transaction-system"><span>Transaction System</span></a>.</p>
+<p>A transaction is defined by an identifier, which contains the time stamp, in milliseconds,
+of its creation. This identifier—also called the <cite>write pointer</cite>—represents the version
+that this transaction will use for all of its writes. It is also used to determine
+the order between transactions. A transaction with a smaller write pointer than
+another transaction must have been started earlier.</p>
+<p>The <cite>Transaction Manager</cite> (or TM) uses the write pointers to implement <cite>Optimistic Concurrency Control</cite>
+by maintaining state for all transactions that could be facing concurrency issues.</p>
+<div class="section" id="transaction-manager-states">
+<h3><a class="headerlink" href="#transaction-manager-states" title="Perma-link to this heading">🔗</a>Transaction Manager States</h3>
+<p>The <cite>state</cite> of the TM is defined by these structures and rules:</p>
+<ul class="simple">
+<li>The <cite>in-progress set</cite>, which contains all the write pointers of transactions
+which have neither committed nor aborted.</li>
+<li>The <cite>invalid set</cite>, which contains the write pointers of the transactions
+considered invalid, and which will never be committed. A transaction
+becomes invalid only if either it times out or, for a long-running transaction,
+it is being aborted.</li>
+<li>A transaction's write pointer cannot be in the <cite>in-progress set</cite>
+and in the <cite>invalid set</cite> at the same time.</li>
+<li>The <cite>invalid set</cite> and the <cite>in-progress set</cite> together form the <cite>excluded set</cite>.
+When a transaction starts, a copy of this set is given to the transaction so that
+it excludes from its reads any writes performed by transactions in that set.</li>
+<li>The <cite>committing change sets</cite>, which maps write pointers of the transactions
+which have requested to commit their writes and which have passed a first round of
+conflict check to a list of keys in which they have performed those writes.</li>
+<li>The <cite>committed change sets</cite>, which has the same structure as the <cite>committing change sets</cite>,
+but where the write pointers refer to transactions which are already committed and
+which have passed a second round of conflict check.</li>
+</ul>
+</div>
+<div class="section" id="transaction-lifecycle-states">
+<h3><a class="headerlink" href="#transaction-lifecycle-states" title="Perma-link to this heading">🔗</a>Transaction Lifecycle States</h3>
+<p>Here are the states a transaction goes through in its lifecycle:</p>
+<ul class="simple">
+<li>When a transaction starts, the TM creates a new write pointer
+and saves it in the <cite>in-progress set</cite>.
+A copy of the current excluded set is given to the transaction,
+as well as a <cite>read pointer</cite>. The pointer
+is an upper bound for the version of writes the transaction is allowed to read.
+It prevents the transaction from reading committed writes performed after the transaction
+started.</li>
+<li>The transaction then performs writes to one or more rows, with the version of those writes
+being the write pointer of the transaction.</li>
+<li>When the transaction wants to commit its writes, it passes to the TM all the keys where
+those writes took place. If the transaction is not in the <cite>excluded set</cite>, the
+TM will use the <cite>committed change sets</cite> structure to detect
+a conflict. A conflict happens in cases where the transaction tries to modify a
+row which, after the start of the transaction, has been modified by one
+of the transactions present in the structure.</li>
+<li>If there are no conflicts, all the writes of the transaction along with its write pointer
+are stored in the <cite>committing change sets</cite> structure.</li>
+<li>The client—namely, a dataset—can then ask the TM to commit the writes. These are retrieved from the
+<cite>committing change sets</cite> structure. Since the <cite>committed change sets</cite> structure might
+have evolved since the last conflict check, another one is performed. If the
+transaction is in the <cite>excluded set</cite>, the commit will fail regardless
+of conflicts.</li>
+<li>If the second conflict check finds no overlapping transactions, the transaction's
+write pointer is removed from the <cite>in-progress set</cite>, and it is placed in
+the <cite>committed change sets</cite> structure, along with the keys it has
+written to. The writes of this transaction will now be seen by all new transactions.</li>
+<li>If something went wrong in one or other of the committing steps, we distinguish
+between normal and long-running transactions:<ul>
+<li>For a normal transaction, the cause could be that the transaction
+was found in the excluded set or that a conflict was detected.
+The client ensures rolling back the writes the transaction has made,
+and it then asks the TM to abort the transaction.
+This will remove the transaction's write pointer from either the
+<cite>in-progress set</cite> or the <cite>excluded set</cite>, and optionally from the
+<cite>committing change sets</cite> structure.</li>
+<li>For a long-running transaction, the only possible cause is that a conflict
+was detected. Since it is assumed that the writes will not be rolled back
+by the client, the TM aborts the transaction by storing its
+write pointer into the <cite>excluded set</cite>. It is the only way to
+make other transactions exclude the writes performed by this transaction.</li>
+</ul>
+</li>
+</ul>
+<p>The <cite>committed change sets</cite> structure determines how fast conflict detections
+are performed. Fortunately, not all the committed writes need to be
+remembered; only those which may create a conflict with in-progress
+transactions. This is why only the writes committed after the start of the oldest,
+in-progress, not-long-running transaction are stored in this structure,
+and why transactions which participate in conflict detection must remain
+short in duration. The older they are, the bigger the <cite>committed change sets</cite>
+structure will be and the longer conflict detection will take.</p>
+<p>When conflict detection takes longer, so does committing a transaction
+and the transaction stays longer in the <cite>in-progress set</cite>. The whole transaction
+system can become slow if such a situation occurs.</p>
+</div>
+<div class="section" id="dumping-the-transaction-manager">
+<h3><a class="headerlink" href="#dumping-the-transaction-manager" title="Perma-link to this heading">🔗</a>Dumping the Transaction Manager</h3>
+<p>CDAP comes bundled with a script that allows you to dump the state of the internal
+transaction manager into a local file to allow further investigation. If your CDAP Instance
+tends to become slow, you can use this tool to detect the incriminating transactions.
+This script is called <code class="docutils literal"><span class="pre">tx-debugger.sh</span></code> (on Windows, it is <code class="docutils literal"><span class="pre">tx-debugger.bat</span></code>).</p>
+<p>To download a snapshot of the state of the TM of the CDAP, use the command:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral92() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral92 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral92", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral92" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">tx-debugger.sh view --host &lt;name&gt; <span class="o">[</span>--save &lt;filename&gt;<span class="o">]</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">tx-debugger.bat view --host &lt;name&gt; [--save &lt;filename&gt;]</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>where <cite>name</cite> is the host name of your CDAP instance, and the optional <cite>filename</cite>
+specifies where the snapshot should be saved. This command will
+print statistics about all the structures that define the state of the TM.</p>
+<p>You can also load a snapshot that has already been saved locally
+with the command:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral93() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral93 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral93", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral93" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">tx-debugger.sh view --filename &lt;filename&gt;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">tx-debugger.bat view --filename &lt;filename&gt;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>where <cite>filename</cite> specifies the location where the snapshot has been saved.</p>
+<p>Here are options that you can use with the <code class="docutils literal"><span class="pre">tx-debugger</span> <span class="pre">view</span></code> commands:</p>
+<ul class="simple">
+<li>Use the <code class="docutils literal"><span class="pre">--ids</span></code> option to print all the transaction write pointers
+that are stored in the different structures.</li>
+<li>Use the <code class="docutils literal"><span class="pre">--transaction</span> <span class="pre">&lt;writePtr&gt;</span></code> option to specify the write pointer
+of a transaction you would like information on. If the transaction is found
+in the committing change sets or the committed change sets
+structures, this will print the keys where the transaction has
+performed writes.</li>
+</ul>
+<p>While transactions don't inform you about the tasks that launched them—whether
+it was a flowlet, a MapReduce program, etc.—you can match the time
+they were started with the activity of your CDAP to track potential
+issues.</p>
+<p>If you really know what you are doing and you spot a transaction in the
+in-progress set that should be in the excluded set, you can
+use this command to invalidate it:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral94() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral94 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral94", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral94" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">tx-debugger.sh invalidate --host &lt;name&gt; --transaction &lt;writePtr&gt;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">tx-debugger.bat invalidate --host &lt;name&gt; --transaction &lt;writePtr&gt;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Invalidating a transaction when we know for sure that its writes should
+be invalidated is useful, because those writes will then be removed
+from the concerned Tables.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Testing and Debugging</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="testing.html"> Testing a CDAP Application</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Debugging</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#debugging-an-application-in-standalone-cdap">Debugging an Application in Standalone CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debugging-an-application-in-distributed-cdap">Debugging an Application in Distributed CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#attaching-a-debugger">Attaching a Debugger</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#debugging-with-intellij">Debugging with IntelliJ</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#debugging-with-eclipse">Debugging with Eclipse</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#debugging-the-transaction-manager-advanced-use">Debugging the Transaction Manager (Advanced Use)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#transaction-manager-states">Transaction Manager States</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#transaction-lifecycle-states">Transaction Lifecycle States</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dumping-the-transaction-manager">Dumping the Transaction Manager</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html"> Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Testing a CDAP Application" href="testing.html" />Testing a CDAP Application</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Troubleshooting a CDAP Application" href="troubleshooting.html" />Troubleshooting a CDAP Application</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

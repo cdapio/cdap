@@ -1,0 +1,520 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Consuming Data from Kafka &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/examples-manual/how-to-guides/cdap-kafka-ingest-guide.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="How-To Guides" href="index.html" />
+    <link rel="next" title="Batch Data Processing with CDAP" href="cdap-mapreduce-guide.html" />
+    <link rel="prev" title="Ingesting Data into CDAP using Apache Flume" href="cdap-flume-guide.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cdap-mapreduce-guide.html" title="Batch Data Processing with CDAP"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="cdap-flume-guide.html" title="Ingesting Data into CDAP using Apache Flume"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">How-To Guides</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="consuming-data-from-kafka">
+<span id="cdap-kafka-ingest-guide"></span><h1><a class="headerlink" href="#consuming-data-from-kafka" title="Perma-link to this heading">🔗</a>Consuming Data from Kafka</h1>
+<blockquote class="pull-quote">
+<div><strong>Source Code Repository:</strong> Source code (and other resources) for this guide are available at the
+<a class="reference external" href="https://github.com/cdap-guides/cdap-kafka-ingest-guide/tree/release/cdap-3.5-compatible">CDAP Guides GitHub repository</a>.</div></blockquote>
+<p>Consuming data from a <a class="reference external" href="http://kafka.apache.org/">Kafka</a> topic and processing the messages received in real time is
+a common part of many big data applications. In this guide, you will learn how to accomplish it with the
+Cask Data Application Platform (<a class="reference external" href="http://cdap.io">CDAP</a>).</p>
+<div class="section" id="what-you-will-build">
+<h2><a class="headerlink" href="#what-you-will-build" title="Perma-link to this heading">🔗</a>What You Will Build</h2>
+<p>You will build a CDAP application that consumes data from a Kafka cluster v0.8.x on a specific topic and computes the
+average size of the messages received. You will:</p>
+<ul class="simple">
+<li>Build a real-time
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/flows-flowlets/index.html">Flow</a>
+that subscribes to a Kafka topic;</li>
+<li>Use the <a class="reference external" href="https://github.com/caskdata/cdap-packs">cdap-kafka-pack library</a> to build a Flowlet to consume from Kafka;</li>
+<li>Use a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/datasets/index.html">Dataset</a>
+to persist the results of the analysis;</li>
+<li>Build a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/services.html">Service</a>
+to retrieve the analysis results via an HTTP RESTful endpoint; and</li>
+<li>Start a Kafka Server v0.8.x and publish messages to the topic which the CDAP Application is subscribed.</li>
+</ul>
+</div>
+<div class="section" id="what-you-will-need">
+<h2><a class="headerlink" href="#what-you-will-need" title="Perma-link to this heading">🔗</a>What You Will Need</h2>
+<ul class="simple">
+<li><a class="reference external" href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">JDK 7 or 8</a></li>
+<li><a class="reference external" href="http://maven.apache.org/">Apache Maven 3.1+</a></li>
+<li><a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/getting-started/standalone/index.html">CDAP SDK</a></li>
+<li><a class="reference external" href="http://kafka.apache.org">Kafka v0.8.x</a></li>
+</ul>
+</div>
+<div class="section" id="lets-build-it">
+<h2><a class="headerlink" href="#lets-build-it" title="Perma-link to this heading">🔗</a>Let’s Build It!</h2>
+<p>Following sections will guide you through building an application from
+scratch. If you are interested in deploying and running the application
+right away, you can clone its source code from this GitHub repository.
+In that case, feel free to skip the next two sections and jump right to
+the <a class="reference external" href="#build-and-run-application">Build and Run Application</a> section.</p>
+<div class="section" id="application-implementation">
+<h3><a class="headerlink" href="#application-implementation" title="Perma-link to this heading">🔗</a>Application Implementation</h3>
+<p>Real-time processing capability within CDAP is supported by Flows. The
+application we are building in this guide uses a Flow for processing the
+messages received on a Kafka topic. The count and total size of these messages
+are persisted in a Dataset and made available via an HTTP RESTful endpoint
+using a Service.</p>
+<a class="reference internal image-reference" href="../_images/app-design4.png"><img alt="../_images/app-design4.png" class="align-center" src="../_images/app-design4.png" style="width: 8in;" /></a>
+<p>The Flow consists of two processing nodes called Flowlets:</p>
+<ul class="simple">
+<li>A subscriber Flowlet that subscribes to a specific topic on a Kafka cluster
+and emits the messages received to the next Flowlet.</li>
+<li>A counter Flowlet that consumes the message emitted by the Kafka subscriber
+Flowlet to update the basic statistics of Kafka messages: total message size and
+count.</li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h3><a class="headerlink" href="#id1" title="Perma-link to this heading">🔗</a>Application Implementation</h3>
+<p>The recommended way to build a CDAP application from scratch is to use a
+Maven project. Use the following directory structure (you’ll find
+contents of these files described below):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">./pom.xml</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/kafka/KafkaConsumerFlowlet.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/kafka/KafkaIngestionApp.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/kafka/KafkaIngestionFlow.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/kafka/KafkaMessageCounterFlowlet.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/kafka/KafkaStatsHandler.java</span>
+</pre></div>
+</div>
+<p>The application will use the <code class="docutils literal"><span class="pre">cdap-kafka-pack</span></code> library which includes an implementation of the
+<code class="docutils literal"><span class="pre">Kafka08ConsumerFlowlet</span></code>, which is designed to work with a 0.8.x Kakfa Cluster. If you want to
+use the application with a 0.7.x Kakfa Cluster, please refer to the documentation of <cite>c`dap-kafka-pack`</cite>.</p>
+<p>You'll need to add the correct <code class="docutils literal"><span class="pre">cdap-kafka-pack</span></code> library, based on your Kafka cluster version
+(<code class="docutils literal"><span class="pre">cdap-flow-compat-0.8</span></code> for this guide) as a dependency to your project's pom.xml:</p>
+<div class="highlight-xml"><div class="highlight"><pre>...
+<span class="nt">&lt;dependencies&gt;</span>
+  ...
+  <span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>co.cask.cdap<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>cdap-kafka-flow-compat-0.8<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>0.1.0<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;/dependency&gt;</span>
+<span class="nt">&lt;/dependencies&gt;</span>
+</pre></div>
+</div>
+<p>Create the <code class="docutils literal"><span class="pre">KafkaIngestionApp</span></code> class which declares that the application has a Flow, a Service,
+and creates two Datasets:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">KafkaIngestionApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">APP_NAME</span><span class="o">);</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">OFFSET_TABLE_NAME</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">STATS_TABLE_NAME</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">addFlow</span><span class="o">(</span><span class="k">new</span> <span class="n">KafkaIngestionFlow</span><span class="o">());</span>
+    <span class="n">addService</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">SERVICE_NAME</span><span class="o">,</span> <span class="k">new</span> <span class="n">KafkaStatsHandler</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">KafkaIngestionFlow</span></code> connects the <code class="docutils literal"><span class="pre">KafkaConsumerFlowlet</span></code> to the <code class="docutils literal"><span class="pre">KafkaMessageCounterFlowlet</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">KafkaIngestionFlow</span> <span class="kd">extends</span> <span class="n">AbstractFlow</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">FLOW_NAME</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Subscribes to Kafka messages&quot;</span><span class="o">);</span>
+    <span class="n">addFlowlet</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">KAFKA_FLOWLET</span><span class="o">,</span> <span class="k">new</span> <span class="n">KafkaConsumerFlowlet</span><span class="o">());</span>
+    <span class="n">addFlowlet</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">COUNTER_FLOWLET</span><span class="o">,</span> <span class="k">new</span> <span class="n">KafkaMessageCounterFlowlet</span><span class="o">());</span>
+    <span class="n">connect</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">KAFKA_FLOWLET</span><span class="o">,</span> <span class="n">Constants</span><span class="o">.</span><span class="na">COUNTER_FLOWLET</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">KafkaConsumerFlowlet</span></code> subclasses from the <code class="docutils literal"><span class="pre">Kafka08ConsumerFlowlet</span></code> available in the <code class="docutils literal"><span class="pre">cdap-kafka-pack</span></code> library:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">KafkaConsumerFlowlet</span> <span class="kd">extends</span> <span class="n">Kafka08ConsumerFlowlet</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">String</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Logger</span> <span class="n">LOG</span> <span class="o">=</span> <span class="n">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">KafkaConsumerFlowlet</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">OFFSET_TABLE_NAME</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">offsetStore</span><span class="o">;</span>
+
+  <span class="kd">private</span> <span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">emitter</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">configureKafka</span><span class="o">(</span><span class="n">KafkaConfigurer</span> <span class="n">kafkaConfigurer</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">runtimeArgs</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getRuntimeArguments</span><span class="o">();</span>
+    <span class="n">kafkaConfigurer</span><span class="o">.</span><span class="na">setZooKeeper</span><span class="o">(</span><span class="n">runtimeArgs</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;kafka.zookeeper&quot;</span><span class="o">));</span>
+    <span class="n">kafkaConfigurer</span><span class="o">.</span><span class="na">addTopicPartition</span><span class="o">(</span><span class="n">runtimeArgs</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;kafka.topic&quot;</span><span class="o">),</span> <span class="mi">0</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="n">KeyValueTable</span> <span class="nf">getOffsetStore</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">offsetStore</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">processMessage</span><span class="o">(</span><span class="n">String</span> <span class="n">value</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Message: {}&quot;</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+    <span class="n">emitter</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">value</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Messages received by the <code class="docutils literal"><span class="pre">KafkaConsumerFlowlet</span></code> are consumed by the <code class="docutils literal"><span class="pre">KafkaMessageCounterFlowlet</span></code>
+that updates the total number of messages and their total size in the <code class="docutils literal"><span class="pre">kafkaCounter</span></code> Dataset:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">KafkaMessageCounterFlowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Logger</span> <span class="n">LOG</span> <span class="o">=</span> <span class="n">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">KafkaMessageCounterFlowlet</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">STATS_TABLE_NAME</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">counter</span><span class="o">;</span>
+
+  <span class="nd">@ProcessInput</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">String</span> <span class="n">string</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Received: {}&quot;</span><span class="o">,</span> <span class="n">string</span><span class="o">);</span>
+    <span class="n">counter</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">COUNT_KEY</span><span class="o">),</span> <span class="mi">1L</span><span class="o">);</span>
+    <span class="n">counter</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">SIZE_KEY</span><span class="o">),</span> <span class="n">string</span><span class="o">.</span><span class="na">length</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>In a real-world scenario, the Flowlet could perform more sophisticated
+processing on the messages received from Kafka.</p>
+<p>Finally, the <code class="docutils literal"><span class="pre">KafkaStatsHandler</span></code> uses the <code class="docutils literal"><span class="pre">kafkaCounter</span></code> Dataset to compute the
+average message size and serve it over HTTP:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;/v1&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">KafkaStatsHandler</span> <span class="kd">extends</span> <span class="n">AbstractHttpServiceHandler</span> <span class="o">{</span>
+
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">STATS_TABLE_NAME</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">statsTable</span><span class="o">;</span>
+
+  <span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;avgSize&quot;</span><span class="o">)</span>
+  <span class="nd">@GET</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">getStats</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="kt">long</span> <span class="n">totalCount</span> <span class="o">=</span> <span class="n">statsTable</span><span class="o">.</span><span class="na">incrementAndGet</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">COUNT_KEY</span><span class="o">),</span> <span class="mi">0L</span><span class="o">);</span>
+    <span class="kt">long</span> <span class="n">totalSize</span> <span class="o">=</span> <span class="n">statsTable</span><span class="o">.</span><span class="na">incrementAndGet</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">SIZE_KEY</span><span class="o">),</span> <span class="mi">0L</span><span class="o">);</span>
+    <span class="n">responder</span><span class="o">.</span><span class="na">sendJson</span><span class="o">(</span><span class="n">totalCount</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">?</span> <span class="n">totalSize</span> <span class="o">/</span> <span class="n">totalCount</span> <span class="o">:</span> <span class="mi">0</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="configuring-the-kafkaconsumerflowlet">
+<h3><a class="headerlink" href="#configuring-the-kafkaconsumerflowlet" title="Perma-link to this heading">🔗</a>Configuring the <em>KafkaConsumerFlowlet</em></h3>
+<p>In order to utilize the <code class="docutils literal"><span class="pre">KafkaConsumerFlowlet</span></code>, a Kafka ZooKeeper connection string along with
+a Kafka topic must be provided as runtime arguments. You can provide these to the <code class="docutils literal"><span class="pre">KafkaConsumerFlowlet</span></code> as
+runtime arguments of the <code class="docutils literal"><span class="pre">KafkaIngestionFlow</span></code>. (See the <a class="reference external" href="#build-and-run-application">Build and Run Application</a>
+section for information on how to pass the arguments to the program at the start.)
+The keys of these runtime arguments are:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">kafka.zookeeper</span>
+<span class="go">kafka.topic</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="build-and-run-application">
+<h2><a class="headerlink" href="#build-and-run-application" title="Perma-link to this heading">🔗</a>Build and Run Application</h2>
+<p>The <code class="docutils literal"><span class="pre">KafkaIngestionApp</span></code> application can be built and packaged using the Apache Maven command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn clean package
+</pre></div>
+</div>
+<p>Note that the remaining commands assume that the <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code> script is
+available on your PATH. If this is not the case, please add it:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:&lt;CDAP home&gt;/bin
+</pre></div>
+</div>
+<p>If you haven't already started a standalone CDAP installation, start it with the command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap.sh start
+</pre></div>
+</div>
+<p>We can then deploy the application to a standalone CDAP installation:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh load artifact target/cdap-kafka-ingest-guide-&lt;version&gt;.jar
+<span class="gp">$</span> cdap-cli.sh create app KafkaIngestionApp cdap-kafka-ingest-guide &lt;version&gt; user
+</pre></div>
+</div>
+<p>We can then start its components (note the runtime arguments, as described above in <a class="reference external" href="#configuring-the-kafkaconsumerflowlet">Configuring the KafkaConsumerFlowlet</a>):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> http://localhost:10000/v3/namespaces/default/apps/KafkaIngestionApp/flows/KafkaIngestionFlow/start -d <span class="s1">&#39;{&quot;kafka.zookeeper&quot;:&quot;localhost:2181&quot;, &quot;kafka.topic&quot;:&quot;MyTopic&quot;}&#39;</span>
+<span class="gp">$</span> curl -X POST http://localhost:10000/v3/namespaces/default/apps/KafkaIngestionApp/services/KafkaStatsService/start
+</pre></div>
+</div>
+<p>You can also use the CDAP CLI to start the Flow and Service:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start flow KafkaIngestionApp.KafkaIngestionFlow <span class="se">\&#39;</span><span class="s2">&quot;kafka.zookeeper&quot;</span><span class="o">=</span><span class="s2">&quot;localhost:2181&quot;</span>, <span class="s2">&quot;kafka.topic&quot;</span><span class="o">=</span><span class="s2">&quot;MyTopic&quot;</span><span class="se">\&#39;</span>
+<span class="gp">$</span> cdap-cli.sh start service KafkaIngestionApp.KafkaStatsService
+</pre></div>
+</div>
+<p>Once the Flow is started, Kafka messages are processed as they are published. Now, let's send data to the Kafka topic.</p>
+<div class="section" id="publish-messages-to-a-kakfa-topic">
+<h3><a class="headerlink" href="#publish-messages-to-a-kakfa-topic" title="Perma-link to this heading">🔗</a>Publish Messages to a Kakfa topic</h3>
+<p>If you don't have Kafka v0.8.x, you can download the binary at <a class="reference external" href="http://kafka.apache.org/downloads.html">Kafka 0.8.x Download</a>.
+Be sure you download v0.8.x (we recommend <a class="reference external" href="https://archive.apache.org/dist/kafka/0.8.0/kafka_2.8.0-0.8.0.tar.gz">Kafka v0.8.0</a>),
+as this guide is designed to work specifically with that version.</p>
+<p>Follow the instructions on <a class="reference external" href="https://kafka.apache.org/08/quickstart.html">Kafka v0.8.x Quickstart</a> to publish messages to <code class="docutils literal"><span class="pre">MyTopic</span></code>.
+The instructions are repeated below for your convenience and assume you have downloaded the binary distribution:</p>
+<div class="highlight-console"><div class="highlight"><pre>$ tar xzf kafka-&lt;VERSION&gt;.tgz
+$ cd kafka-&lt;VERSION&gt;
+
+# Start ZooKeeper Server
+$ bin/zookeeper-server-start.sh config/zookeeper.properties
+
+# Start Kafka Server: Ignore any java.net.BindException exceptions thrown (since there could be port conflict with standalone CDAP&#39;s ZooKeeper Server)
+$ bin/kafka-server-start.sh config/server.properties
+
+# Create a new Kafka topic: MyTopic (use the correct arguments based on the script available in the bin directory)
+$ bin/kafka-create-topic.sh --zookeeper localhost:2181 --replica 1 --partition 1 --topic MyTopic
+
+# (OR)
+$ bin/kafka-topics.sh --create --zookeeper localhost:2181 --topic MyTopic --partitions 1 --replication-factor 1
+
+# Send messages on the topic: MyTopic
+$ bin/kafka-console-producer.sh --broker-list localhost:9092 --topic MyTopic
+</pre></div>
+</div>
+<p>Once the <code class="docutils literal"><span class="pre">kafka-console-producer.sh</span></code> script is invoked, you can type messages on the console and every line is published as a message
+to <code class="docutils literal"><span class="pre">MyTopic</span></code>. Go ahead and publish a few messages, such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">CDAP and Kafka, working together!</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="query-results">
+<h3><a class="headerlink" href="#query-results" title="Perma-link to this heading">🔗</a>Query Results</h3>
+<p>You can query for the average size of the Kafka messages:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> http://localhost:10000/v3/namespaces/default/apps/KafkaIngestionApp/services/KafkaStatsService/methods/v1/avgSize
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">6</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="share-and-discuss">
+<h2><a class="headerlink" href="#share-and-discuss" title="Perma-link to this heading">🔗</a>Share and Discuss!</h2>
+<p>Have a question? Discuss at the <a class="reference external" href="https://groups.google.com/forum/#!forum/cdap-user">CDAP User Mailing List.</a></p>
+</div>
+<div class="section" id="license">
+<h2><a class="headerlink" href="#license" title="Perma-link to this heading">🔗</a>License</h2>
+<p>Copyright © 2014-2015 Cask Data, Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+not use this file except in compliance with the License. You may obtain
+a copy of the License at</p>
+<p><a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></p>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">How-To Guides</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cdap-bi-guide.html">Analyzing CDAP Data from BI Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-cube-guide.html">Data Analysis with OLAP Cube</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-etl-guide.html">Creating Hydrator Applications using CDAP System Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-flow-guide.html">Real-Time Data Processing with a Flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-flume-guide.html">Ingesting Data into CDAP using Apache Flume</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Consuming Data from Kafka</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-you-will-build">What You Will Build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-you-will-need">What You Will Need</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lets-build-it">Let’s Build It!</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#build-and-run-application">Build and Run Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#share-and-discuss">Share and Discuss!</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#license">License</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-mapreduce-guide.html">Batch Data Processing with CDAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-spark-guide.html">Iterative Data Processing with Apache Spark</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-timeseries-guide.html">Storing Timeseries Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-twitter-ingest-guide.html">Consuming Twitter Data in Real Time</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-workflow-guide.html">Batch Data Processing with CDAP using Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Ingesting Data into CDAP using Apache Flume" href="cdap-flume-guide.html" />Ingesting Data into CDAP using Apache Flume</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Batch Data Processing with CDAP" href="cdap-mapreduce-guide.html" />Batch Data Processing with CDAP</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

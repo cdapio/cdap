@@ -1,0 +1,753 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Security HTTP RESTful API &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/http-restful-api/security.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Service HTTP RESTful API" href="service.html" />
+    <link rel="prev" title="Query HTTP RESTful API" href="query.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="service.html" title="Service HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="query.html" title="Query HTTP RESTful API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Reference Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="security-http-restful-api">
+<span id="http-restful-api-security"></span><h1><a class="headerlink" href="#security-http-restful-api" title="Perma-link to this heading">🔗</a>Security HTTP RESTful API</h1>
+<p>Use the Security HTTP RESTful API to manage privileges (authorization) of users on CDAP
+entities as well as manage secure storage.</p>
+<p>The HTTP RESTful API is divided into:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#http-restful-api-authorization"><span>Authorization</span></a></li>
+<li><a class="reference internal" href="#http-restful-api-secure-storage"><span>Secure Storage</span></a></li>
+</ul>
+<p>All methods or endpoints described in this API have a base URL (typically
+<code class="docutils literal"><span class="pre">http://&lt;host&gt;:10000</span></code> or <code class="docutils literal"><span class="pre">https://&lt;host&gt;:10443</span></code>) that precedes the resource
+identifier, as described in the <a class="reference internal" href="introduction.html#http-restful-api-conventions-base-url"><span>RESTful API Conventions</span></a>.
+These methods return a status code, as listed in the <a class="reference internal" href="introduction.html#http-restful-api-status-codes"><span>RESTful API  Status Codes</span></a>.</p>
+<div class="section" id="authorization">
+<span id="http-restful-api-authorization"></span><h2><a class="headerlink" href="#authorization" title="Perma-link to this heading">🔗</a>Authorization</h2>
+<p>Use the CDAP Authorization HTTP RESTful API to grant, revoke, and list privileges on CDAP
+entities. Details about authorization in CDAP can be found at <a class="reference external" href="../source/../../admin-manual/security/authorization.html#admin-authorization" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Admin' Manual:
+Authorization</span></a>.</p>
+<p>In this API, a JSON-formatted body is used that contains the principal, the CDAP entity, and the privileges to
+be granted:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;entity&quot;: {</span>
+<span class="go">    &quot;namespace&quot;: &quot;default&quot;,</span>
+<span class="go">    &quot;dataset&quot;: &quot;dataset&quot;,</span>
+<span class="go">    &quot;entity&quot;: &quot;DATASET&quot;</span>
+<span class="go">  },</span>
+<span class="go">  &quot;principal&quot;: {</span>
+<span class="go">    &quot;name&quot;: &quot;alice&quot;,</span>
+<span class="go">    &quot;type&quot;: &quot;USER&quot;,</span>
+<span class="go">  },</span>
+<span class="go">  &quot;actions&quot;: [&quot;READ&quot;, &quot;WRITE&quot;, &quot;ADMIN&quot;]</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>In the above JSON body, the <code class="docutils literal"><span class="pre">entity</span></code> object is the JSON-serialized form of the CDAP
+entity classes—for example, for datasets, it is the JSON representation of the
+<a class="reference external" href="https://github.com/caskdata/cdap/blob/release/3.5/cdap-proto/src/main/java/co/cask/cdap/proto/id/DatasetId.java">DatasetId</a>
+class; for programs, it is the JSON representation of the
+<a class="reference external" href="https://github.com/caskdata/cdap/blob/release/3.5/cdap-proto/src/main/java/co/cask/cdap/proto/id/ProgramId.java">ProgramId</a>
+class.</p>
+<p>The <code class="docutils literal"><span class="pre">principal</span></code> object refers to the principal that you want to grant the privileges to.
+Principals have a <code class="docutils literal"><span class="pre">name</span></code> and a <code class="docutils literal"><span class="pre">type</span></code>. The supported types are <code class="docutils literal"><span class="pre">USER</span></code>, <code class="docutils literal"><span class="pre">GROUP</span></code>, and
+<code class="docutils literal"><span class="pre">ROLE</span></code>.</p>
+<p><strong>Please note that</strong> <code class="docutils literal"><span class="pre">ROLE</span></code> <strong>is experimental and has only been created for
+supporting integration with</strong> <a class="reference external" href="../source/../../integrations/apache-sentry.html#apache-sentry" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Apache Sentry</span></a>.
+<strong>It may be removed in a future release.</strong></p>
+<p>The <code class="docutils literal"><span class="pre">actions</span></code> list contains the actions you want to grant the <code class="docutils literal"><span class="pre">principal</span></code> on the
+<code class="docutils literal"><span class="pre">entity</span></code>. The supported actions are <code class="docutils literal"><span class="pre">READ</span></code>, <code class="docutils literal"><span class="pre">WRITE</span></code>, <code class="docutils literal"><span class="pre">ADMIN</span></code>, and <code class="docutils literal"><span class="pre">EXECUTE</span></code>.</p>
+<div class="section" id="grant-privileges">
+<span id="http-restful-api-security-auth-grant"></span><h3><a class="headerlink" href="#grant-privileges" title="Perma-link to this heading">🔗</a>Grant Privileges</h3>
+<p>You can grant privileges to a principal on a CDAP Entity by making an HTTP POST request to
+the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/security/authorization/privileges/grant</span>
+</pre></div>
+</div>
+<p>with JSON-formatted body that contains the principal, the CDAP entity, and the actions to
+be granted, such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;entity&quot;: {</span>
+<span class="go">    &quot;namespace&quot;: &quot;default&quot;,</span>
+<span class="go">    &quot;dataset&quot;: &quot;dataset&quot;,</span>
+<span class="go">    &quot;entity&quot;: &quot;DATASET&quot;</span>
+<span class="go">  },</span>
+<span class="go">  &quot;principal&quot;: {</span>
+<span class="go">    &quot;name&quot;: &quot;alice&quot;,</span>
+<span class="go">    &quot;type&quot;: &quot;USER&quot;,</span>
+<span class="go">  },</span>
+<span class="go">  &quot;actions&quot;: [&quot;READ&quot;, &quot;WRITE&quot;, &quot;ADMIN&quot;]</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Privileges were successfully listed for the specified principal</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="revoke-privileges">
+<span id="http-restful-api-security-auth-revoke"></span><h3><a class="headerlink" href="#revoke-privileges" title="Perma-link to this heading">🔗</a>Revoke Privileges</h3>
+<p>You can revoke privileges for a principal on a CDAP Entity by making an HTTP POST request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/security/authorization/privileges/revoke</span>
+</pre></div>
+</div>
+<p>with JSON-formatted body that contains the principal, the CDAP entity and the actions to be revoked:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;entity&quot;: {</span>
+<span class="go">    &quot;namespace&quot;: &quot;default&quot;,</span>
+<span class="go">    &quot;dataset&quot;: &quot;dataset&quot;,</span>
+<span class="go">    &quot;entity&quot;: &quot;DATASET&quot;</span>
+<span class="go">  },</span>
+<span class="go">  &quot;principal&quot;: {</span>
+<span class="go">    &quot;name&quot;: &quot;alice&quot;,</span>
+<span class="go">    &quot;type&quot;: &quot;USER&quot;,</span>
+<span class="go">  },</span>
+<span class="go">  &quot;actions&quot;: [&quot;READ&quot;, &quot;WRITE&quot;, &quot;ADMIN&quot;]</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">entity</span></code> object is mandatory in a revoke request.</p>
+<ul class="simple">
+<li>If both <code class="docutils literal"><span class="pre">principal</span></code> and <code class="docutils literal"><span class="pre">actions</span></code> are not provided, then the API revokes all
+privileges on the specified entity for all principals.</li>
+<li>If <code class="docutils literal"><span class="pre">entity</span></code> and <code class="docutils literal"><span class="pre">principal</span></code> are provided, but <code class="docutils literal"><span class="pre">actions</span></code> is not, the API revokes
+all actions (<code class="docutils literal"><span class="pre">READ</span></code>, <code class="docutils literal"><span class="pre">WRITE</span></code>, <code class="docutils literal"><span class="pre">ADMIN</span></code>, and <code class="docutils literal"><span class="pre">EXECUTE</span></code>) on the specified entity for
+the specified principal.</li>
+</ul>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Privileges were successfully revoked</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="list-privileges">
+<span id="http-restful-api-security-auth-list"></span><h3><a class="headerlink" href="#list-privileges" title="Perma-link to this heading">🔗</a>List Privileges</h3>
+<p>You can list all privileges for a principal on all CDAP entities by making an HTTP GET request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/security/authorization/&lt;principal-type&gt;/&lt;principal-name&gt;/privileges</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">principal-type</span></code></td>
+<td>The principal type, one of <code class="docutils literal"><span class="pre">USER</span></code>, <code class="docutils literal"><span class="pre">GROUP</span></code>, or <code class="docutils literal"><span class="pre">ROLE</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">principal-name</span></code></td>
+<td>Name of the principal</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Privileges were successfully listed for the specified principal</td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON array that lists each privilege for the principal with its <code class="docutils literal"><span class="pre">entity</span></code> and <code class="docutils literal"><span class="pre">action</span></code>.
+Example output (pretty-printed):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">  {</span>
+<span class="go">    &quot;entity&quot;: {</span>
+<span class="go">      &quot;namespace&quot;: &quot;default&quot;,</span>
+<span class="go">      &quot;dataset&quot;: &quot;dataset&quot;,</span>
+<span class="go">      &quot;entity&quot;: &quot;DATASET&quot;</span>
+<span class="go">    },</span>
+<span class="go">    &quot;action&quot;: &quot;WRITE&quot;</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;entity&quot;: {</span>
+<span class="go">      &quot;namespace&quot;: &quot;default&quot;,</span>
+<span class="go">      &quot;entity&quot;: &quot;NAMESPACE&quot;</span>
+<span class="go">    },</span>
+<span class="go">    &quot;action&quot;: &quot;READ&quot;</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;entity&quot;: {</span>
+<span class="go">      &quot;namespace&quot;: &quot;default&quot;,</span>
+<span class="go">      &quot;application&quot;: &quot;app&quot;,</span>
+<span class="go">      &quot;type&quot;: &quot;Flow&quot;,</span>
+<span class="go">      &quot;program&quot;: &quot;testflow&quot;,</span>
+<span class="go">      &quot;entity&quot;: &quot;PROGRAM&quot;</span>
+<span class="go">    },</span>
+<span class="go">    &quot;action&quot;: &quot;EXECUTE&quot;</span>
+<span class="go">  }</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="secure-storage">
+<span id="http-restful-api-secure-storage"></span><h2><a class="headerlink" href="#secure-storage" title="Perma-link to this heading">🔗</a>Secure Storage</h2>
+<p>Use the Secure Storage HTTP RESTful API to create, retrieve, and delete secure keys.
+Details about secure storage and secure keys in CDAP can be found in <a class="reference external" href="../source/../../admin-manual/security/secure-storage.html#admin-secure-storage" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Administration
+Manual: Secure Storage</span></a>.</p>
+<p><strong>Note:</strong> In CDAP 3.5.0, encryption and decryption of the contents only happens at the
+secure store, not while the data is transitting to the secure store. In a later version of
+CDAP, all transport involving secure keys will be secured using SSL.</p>
+<div class="section" id="add-a-secure-key">
+<span id="http-restful-api-security-secure-storage-add"></span><h3><a class="headerlink" href="#add-a-secure-key" title="Perma-link to this heading">🔗</a>Add a Secure Key</h3>
+<p>You can add a secure key to secure storage by making an HTTP PUT request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT /v3/namespaces/&lt;namespace-id&gt;/securekeys/&lt;secure-key-id&gt;</span>
+</pre></div>
+</div>
+<p>with a JSON-formatted body that contains the description of the key, the data to be stored
+under the key, and a map of properties associated with the key:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;description&quot;: &quot;Example Secure Key&quot;,</span>
+<span class="go">  &quot;data&quot;: &lt;secure-contents&gt;,</span>
+<span class="go">  &quot;properties&quot;: {</span>
+<span class="go">    &quot;&lt;property-key&gt;&quot;: &quot;&lt;property-value&gt;&quot;</span>
+<span class="go">  }</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">secure-key-id</span></code></td>
+<td>Name of the key to add to secure storage</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">secure-contents</span></code></td>
+<td>String data to be added under the key</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">property-key</span></code></td>
+<td>Name of a property key to associate with the secure key</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">property-value</span></code></td>
+<td>Value associated with the property key</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The secure key was successfully added to secure storage</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">400</span> <span class="pre">BAD</span> <span class="pre">REQUEST</span></code></td>
+<td>An incorrectly-formatted body was sent with the request or the <code class="docutils literal"><span class="pre">data</span></code> field in
+the request was empty or not present</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
+<td>The namespace specified in the request does not exist</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="retrieve-a-secure-key">
+<span id="http-restful-api-security-secure-storage-retrieve"></span><h3><a class="headerlink" href="#retrieve-a-secure-key" title="Perma-link to this heading">🔗</a>Retrieve a Secure Key</h3>
+<p>You can retrieve a secure key from secure storage by making an HTTP GET request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/securekeys/&lt;secure-key-id&gt;</span>
+</pre></div>
+</div>
+<p>with the data of the secure key returned as text, passed in the response body.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">secure-key-id</span></code></td>
+<td>Name of the key to retrieve from secure storage</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The secure key was successfully retrieved</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
+<td>The namespace specified in the request does not exist or the secure key with that
+name does not exist in that namespace</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="retrieve-the-metadata-for-a-secure-key">
+<span id="http-restful-api-security-secure-storage-retrieve-metadata"></span><h3><a class="headerlink" href="#retrieve-the-metadata-for-a-secure-key" title="Perma-link to this heading">🔗</a>Retrieve the Metadata for a Secure Key</h3>
+<p>You can retrieve just the metadata for a secure key from secure storage by making an HTTP GET request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/securekeys/&lt;secure-key-id&gt;/metadata</span>
+</pre></div>
+</div>
+<p>with the metadata of the secure key returned as a JSON object—name (the
+<code class="docutils literal"><span class="pre">secure-key-id</span></code>), description, created timestamp, and the map of properties—passed in the response body, shown here pretty-printed:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;name&quot;: &quot;&lt;secure-key-id&gt;&quot;,</span>
+<span class="go">  &quot;description&quot;: &quot;Example Secure Key&quot;,</span>
+<span class="go">  &quot;createdEpochMs&quot;: 1471718010326,</span>
+<span class="go">  &quot;properties&quot;: {</span>
+<span class="go">    &quot;property-key&quot;: &quot;property-value&quot;</span>
+<span class="go">  }</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">secure-key-id</span></code></td>
+<td>Name of the key to retrieve from secure storage</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Metadata for the secure key was successfully retrieved</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
+<td>The namespace specified in the request does not exist or a secure key by the
+specified name does not exist in the specified namespace</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="list-all-secure-keys">
+<span id="http-restful-api-security-secure-storage-list"></span><h3><a class="headerlink" href="#list-all-secure-keys" title="Perma-link to this heading">🔗</a>List all Secure Keys</h3>
+<p>You can retrieve all the keys in a namespace from secure storage by making an HTTP GET request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/securekeys</span>
+</pre></div>
+</div>
+<p>with the secure keys in the namespace returned as a JSON string map of string-string pairs, passed
+in the response body (shown here pretty-printed):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  secure-key-id-1: data-1,</span>
+<span class="go">  secure-key-id-2: data-2,</span>
+<span class="go">  ...</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>such as (depending on what was stored):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;securekey&quot;: &quot;securedata&quot;,</span>
+<span class="go">  &quot;password&quot;: &quot;passw0rd&quot;,</span>
+<span class="go">  ...</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The keys were successfully retrieved</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
+<td>The namespace specified in the request does not exist</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="remove-a-secure-key">
+<span id="http-restful-api-security-secure-storage-remove"></span><h3><a class="headerlink" href="#remove-a-secure-key" title="Perma-link to this heading">🔗</a>Remove a Secure Key</h3>
+<p>You can remove a secure key from secure storage by making an HTTP DELETE request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/securekeys/&lt;secure-key-id&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">secure-key-id</span></code></td>
+<td>Name of the key to remove from secure storage</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The key was successfully removed</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
+<td>The namespace specified in the request does not exist or a secure key by the
+specified name does not exist in the specified namespace</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html">Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html">Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Security</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#authorization">Authorization</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grant-privileges">Grant Privileges</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#revoke-privileges">Revoke Privileges</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#list-privileges">List Privileges</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#secure-storage">Secure Storage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#add-a-secure-key">Add a Secure Key</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#retrieve-a-secure-key">Retrieve a Secure Key</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#retrieve-the-metadata-for-a-secure-key">Retrieve the Metadata for a Secure Key</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#list-all-secure-keys">List all Secure Keys</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#remove-a-secure-key">Remove a Secure Key</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html">Transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Query HTTP RESTful API" href="query.html" />Query HTTP RESTful API</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Service HTTP RESTful API" href="service.html" />Service HTTP RESTful API</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

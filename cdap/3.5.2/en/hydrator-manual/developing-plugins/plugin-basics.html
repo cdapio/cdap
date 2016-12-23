@@ -1,0 +1,334 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Plugin Basics &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/hydrator-manual/developing-plugins/plugin-basics.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Developing Plugins" href="index.html" />
+    <link rel="next" title="Creating a Plugin" href="creating-a-plugin.html" />
+    <link rel="prev" title="Developing Plugins" href="index.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="creating-a-plugin.html" title="Creating a Plugin"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Developing Plugins"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Cask Hydrator</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Developing Plugins</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="plugin-basics">
+<span id="cask-hydrator-developing-plugin-basics"></span><h1><a class="headerlink" href="#plugin-basics" title="Perma-link to this heading">🔗</a>Plugin Basics</h1>
+<div class="section" id="plugin-types">
+<h2><a class="headerlink" href="#plugin-types" title="Perma-link to this heading">🔗</a>Plugin Types</h2>
+<p>In Cask Hydrator, these plugin types are presently used:</p>
+<ul class="simple">
+<li>Action (<em>action</em>, restricted to batch pipelines)</li>
+<li>Batch Source (<em>batchsource</em>, restricted to batch pipelines)</li>
+<li>Batch Sink (<em>batchsink</em>)</li>
+<li>Streaming Source (<em>streamingsource</em>, restricted to real-time pipelines)</li>
+<li>Transformation (<em>transform</em>)</li>
+<li>Batch Aggregator (<em>batchaggregator</em>)</li>
+<li>Batch Joiner (<em>batchjoiner</em>)</li>
+<li>Spark Compute (<em>sparkcompute</em>)</li>
+<li>Spark Sink (<em>sparksink</em>, restricted to batch pipelines)</li>
+<li>Windower (<em>windower</em>, restricted to real-time pipelines)</li>
+<li>Post-run Action (<em>postaction</em>, restricted to batch pipelines)</li>
+<li>Real-time Source (<em>realtimesource</em>, deprecated)</li>
+<li>Real-time Sink (<em>realtimesink</em>, deprecated)</li>
+</ul>
+<p>In the Cask Hydrator UI, all Batch Aggregator, Batch Joiner, Spark Compute, and Spark Sink
+plugins are grouped under the Analytics section. All Transformation and Windower plugins
+are grouped under the Transforms section.</p>
+</div>
+<div class="section" id="maven-archetypes">
+<span id="cask-hydrator-developing-plugin-basics-maven-archetypes"></span><h2><a class="headerlink" href="#maven-archetypes" title="Perma-link to this heading">🔗</a>Maven Archetypes</h2>
+<p>To get started on creating a custom plugin, you can use one of these Maven archetypes to create your project:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">cdap-data-pipeline-plugins-archetype</span></code> (contains batch, Spark plugin, and other types)</li>
+<li><code class="docutils literal"><span class="pre">cdap-etl-realtime-source-archetype</span></code> (contains a realtime source, deprecated)</li>
+<li><code class="docutils literal"><span class="pre">cdap-etl-realtime-sink-archetype</span></code> (contains a realtime sink, deprecated)</li>
+<li><code class="docutils literal"><span class="pre">cdap-etl-transform-archetype</span></code> (contains a transform)</li>
+</ul>
+<p>This command will create a project from an archetype:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> mvn archetype:generate \
+      -DarchetypeGroupId=co.cask.cdap \
+      -DarchetypeArtifactId=&lt;archetype&gt; \
+      -DarchetypeVersion=3.5.2 \
+      -DgroupId=org.example.plugin
+</pre>
+</div>
+<p>where <code class="docutils literal"><span class="pre">&lt;archetype&gt;</span></code> is one of the archetypes listed above.</p>
+<p>You can replace the <em>archetypeGroupId</em> parameter with your own organization, but it must not be <code class="docutils literal"><span class="pre">co.cask.cdap</span></code>.</p>
+</div>
+<div class="section" id="class-annotations">
+<h2><a class="headerlink" href="#class-annotations" title="Perma-link to this heading">🔗</a>Class Annotations</h2>
+<p>These annotations are used for plugin classes:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">&#64;Plugin</span></code>: The class to be exposed as a plugin needs to be annotated with the <code class="docutils literal"><span class="pre">&#64;Plugin</span></code>
+annotation and the type of the plugin must be specified.</li>
+<li><code class="docutils literal"><span class="pre">&#64;Name</span></code>: Annotation used to name the plugin.</li>
+<li><code class="docutils literal"><span class="pre">&#64;Description</span></code>: Annotation used to add a description of the plugin.</li>
+</ul>
+</div>
+<div class="section" id="plugin-configuration">
+<h2><a class="headerlink" href="#plugin-configuration" title="Perma-link to this heading">🔗</a>Plugin Configuration</h2>
+<p>Each plugin can define a plugin config that specifies what properties the plugin requires.
+When a user creates a pipeline, they will need to provide these properties in order to
+use the plugin. This is done by extending the <code class="docutils literal"><span class="pre">PluginConfig</span></code> class, and populating that
+class with the fields your plugin requires. Each field can be annotated to provide more
+information to users:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">&#64;Name</span></code>: The name of the field. Defaults to the Java field name. You may want to use this
+if you want the user-facing name to use syntax that is not legal Java syntax.</li>
+<li><code class="docutils literal"><span class="pre">&#64;Description</span></code>: A description for the field.</li>
+<li><code class="docutils literal"><span class="pre">&#64;Nullable</span></code>: Indicates that the specific configuration property is
+optional. Such a plugin class can be used without that property being specified.</li>
+</ul>
+<p>At this time, fields in a <code class="docutils literal"><span class="pre">PluginConfig</span></code> must be primitive Java types (boxed or unboxed).</p>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">BatchSource</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;MyBatchSource&quot;</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;This is my Batch Source.&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyBatchSource</span> <span class="kd">extends</span> <span class="n">BatchSource</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Conf</span> <span class="n">conf</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="nf">MyBatchSource</span><span class="o">(</span><span class="n">Conf</span> <span class="n">conf</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">conf</span> <span class="o">=</span> <span class="n">conf</span><span class="o">;</span>
+  <span class="o">)</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Conf</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;input-path&quot;</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Input path for the source.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">inputPath</span><span class="o">;</span>
+
+    <span class="nd">@Nullable</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Whether to clean up the previous run&#39;s output. Defaults to false.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">Boolean</span> <span class="n">cleanOutput</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">Conf</span><span class="o">()</span> <span class="o">{</span>
+      <span class="n">cleanOutput</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>In this example, we have a plugin of type <code class="docutils literal"><span class="pre">batchsource</span></code>, named <code class="docutils literal"><span class="pre">MyBatchSource</span></code>.
+This plugin takes two configuration properties. The first is named <code class="docutils literal"><span class="pre">input-path</span></code> and is required.
+The second is named <code class="docutils literal"><span class="pre">cleanOutput</span></code> and is optional. Note that optional configuration fields should
+have their default values set in the no-argument constructor.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Cask Hydrator: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../concepts-design.html"> Concepts and Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio.html"> Hydrator Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating-pipelines.html"> Creating Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running-pipelines.html"> Running Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugin-management.html"> Plugin Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugins/index.html"> Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developing-pipelines.html"> Developing Pipelines</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Developing Plugins</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="">Plugin Basics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#plugin-types">Plugin Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#maven-archetypes">Maven Archetypes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#class-annotations">Class Annotations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plugin-configuration">Plugin Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html">Creating a Plugin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing-plugins.html">Testing Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packaging-plugins.html">Packaging Plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-hydrator-works.html"> How Hydrator Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faqs.html"> FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html"> Glossary</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Developing Plugins" href="index.html" />Developing Plugins</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Creating a Plugin" href="creating-a-plugin.html" />Creating a Plugin</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

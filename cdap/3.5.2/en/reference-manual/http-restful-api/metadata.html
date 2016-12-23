@@ -1,0 +1,1526 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Metadata HTTP RESTful API &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/http-restful-api/metadata.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Metrics HTTP RESTful API" href="metrics.html" />
+    <link rel="prev" title="Logging HTTP RESTful API" href="logging.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="metrics.html" title="Metrics HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="logging.html" title="Logging HTTP RESTful API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Reference Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="metadata-http-restful-api">
+<span id="http-restful-api-v3-metadata"></span><span id="http-restful-api-metadata"></span><h1><a class="headerlink" href="#metadata-http-restful-api" title="Perma-link to this heading">🔗</a>Metadata HTTP RESTful API</h1>
+<p>Use the CDAP Metadata HTTP RESTful API to set, retrieve, and delete the metadata annotations
+of applications, datasets, streams, and other entities in CDAP.</p>
+<p>Metadata consists of <strong>properties</strong> (a list of key-value pairs) or <strong>tags</strong> (a list of keys).
+Metadata and their use are described in the <a class="reference external" href="../source/../../developers-manual/building-blocks/metadata-lineage.html#metadata-lineage" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Developers' Manual: Metadata and Lineage</span></a>.</p>
+<p>The HTTP RESTful API is divided into these sections:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#http-restful-api-metadata-properties"><span>metadata properties</span></a></li>
+<li><a class="reference internal" href="#http-restful-api-metadata-tags"><span>metadata tags</span></a></li>
+<li><a class="reference internal" href="#http-restful-api-metadata-searching"><span>searching metadata</span></a></li>
+<li><a class="reference internal" href="#http-restful-api-metadata-lineage"><span>viewing lineage</span></a></li>
+<li><a class="reference internal" href="#http-restful-api-metadata-run"><span>metadata for a run of a program</span></a></li>
+</ul>
+<p>Metadata keys, values, and tags must conform to the CDAP <a class="reference internal" href="../characters.html#supported-characters"><span>alphanumeric extra extended
+character set</span></a>, and are limited to 50 characters in length. The entire
+metadata object associated with a single entity is limited to 10K bytes in size.</p>
+<p>There is one reserved word for property keys and values: <em>tags</em>, either as <code class="docutils literal"><span class="pre">tags</span></code> or
+<code class="docutils literal"><span class="pre">TAGS</span></code>. Tags themselves have no reserved words.</p>
+<p>All methods or endpoints described in this API have a base URL (typically
+<code class="docutils literal"><span class="pre">http://&lt;host&gt;:10000</span></code> or <code class="docutils literal"><span class="pre">https://&lt;host&gt;:10443</span></code>) that precedes the resource
+identifier, as described in the <a class="reference internal" href="introduction.html#http-restful-api-conventions-base-url"><span>RESTful API Conventions</span></a>.
+These methods return a status code, as listed in the <a class="reference internal" href="introduction.html#http-restful-api-status-codes"><span>RESTful API  Status Codes</span></a>.</p>
+<div class="section" id="metadata-properties">
+<span id="http-restful-api-metadata-properties"></span><h2><a class="headerlink" href="#metadata-properties" title="Perma-link to this heading">🔗</a>Metadata Properties</h2>
+<div class="section" id="annotating-properties">
+<h3><a class="headerlink" href="#annotating-properties" title="Perma-link to this heading">🔗</a>Annotating Properties</h3>
+<p>To annotate user metadata properties for an application, dataset, or stream, submit an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/&lt;entity-type&gt;/&lt;entity-id&gt;/metadata/properties</span>
+</pre></div>
+</div>
+<p>or, for a particular program of a specific application:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/metadata/properties</span>
+</pre></div>
+</div>
+<p>or, for a particular version of an artifact:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-id&gt;/versions/&lt;artifact-version&gt;/metadata/properties</span>
+</pre></div>
+</div>
+<p>or, for a particular view of a stream:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/streams/&lt;stream-id&gt;/views/&lt;view-id&gt;/metadata/properties</span>
+</pre></div>
+</div>
+<p>with the metadata properties as a JSON string map of string-string pairs, passed in the
+request body:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;key1&quot; : &quot;value1&quot;,</span>
+<span class="go">  &quot;key2&quot; : &quot;value2&quot;,</span>
+<span class="go">  // ...</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>If the entity requested is found, new keys will be added and existing keys will be
+updated. Existing keys not in the properties map will not be deleted.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">entity-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">apps</span></code>, <code class="docutils literal"><span class="pre">datasets</span></code>, or <code class="docutils literal"><span class="pre">streams</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">entity-id</span></code></td>
+<td>Name of the entity</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workflows</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, or <code class="docutils literal"><span class="pre">workers</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-id</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream-id</span></code></td>
+<td>Name of the stream</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">view-id</span></code></td>
+<td>Name of the stream view</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The properties were set</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
+<td>The entity or program for which properties are being set was not found</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note</strong>: When using this API, properties can be added to the metadata of the specified entity
+only in the <em>user</em> scope.</p>
+</div>
+<div class="section" id="retrieving-properties">
+<h3><a class="headerlink" href="#retrieving-properties" title="Perma-link to this heading">🔗</a>Retrieving Properties</h3>
+<p>To retrieve user metadata properties for an application, dataset, or stream, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/&lt;entity-type&gt;/&lt;entity-id&gt;/metadata/properties[?scope=&lt;scope&gt;]</span>
+</pre></div>
+</div>
+<p>or, for a particular program of a specific application:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/metadata/properties[?scope=&lt;scope&gt;]</span>
+</pre></div>
+</div>
+<p>or, for a particular version of an artifact:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-id&gt;/versions/&lt;artifact-version&gt;/metadata/properties[?scope=&lt;scope&gt;]</span>
+</pre></div>
+</div>
+<p>or, for a particular view of a stream:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/streams/&lt;stream-id&gt;/views/&lt;view-id&gt;/metadata/properties[?scope=&lt;scope&gt;]</span>
+</pre></div>
+</div>
+<p>with the metadata properties returned as a JSON string map of string-string pairs, passed
+in the response body (pretty-printed):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;key1&quot; : &quot;value1&quot;,</span>
+<span class="go">  &quot;key2&quot; : &quot;value2&quot;,</span>
+<span class="go">  // ...</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">entity-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">apps</span></code>, <code class="docutils literal"><span class="pre">datasets</span></code>, or <code class="docutils literal"><span class="pre">streams</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">entity-id</span></code></td>
+<td>Name of the entity</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workflows</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, or <code class="docutils literal"><span class="pre">workers</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-id</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream-id</span></code></td>
+<td>Name of the stream</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">view-id</span></code></td>
+<td>Name of the stream view</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">scope</span></code></td>
+<td>Optional scope filter. If not specified, properties in the <code class="docutils literal"><span class="pre">user</span></code> and
+<code class="docutils literal"><span class="pre">system</span></code> scopes are returned. Otherwise, only properties in the specified scope are returned.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The properties requested were returned as a JSON string in the body of the response</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
+<td>The entity or program for which properties are being retrieved was not found</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="deleting-properties">
+<h3><a class="headerlink" href="#deleting-properties" title="Perma-link to this heading">🔗</a>Deleting Properties</h3>
+<p>To delete <strong>all</strong> user metadata properties for an application, dataset, or stream, submit an
+HTTP DELETE request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/&lt;entity-type&gt;/&lt;entity-id&gt;/metadata/properties</span>
+</pre></div>
+</div>
+<p>or, for all user metadata properties of a particular program of a specific application:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/metadata/properties</span>
+</pre></div>
+</div>
+<p>or, for a particular version of an artifact:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-id&gt;/versions/&lt;artifact-version&gt;/metadata/properties</span>
+</pre></div>
+</div>
+<p>or, for a particular view of a stream:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/streams/&lt;stream-id&gt;/views/&lt;view-id&gt;/metadata/properties</span>
+</pre></div>
+</div>
+<p>To delete <strong>a specific property</strong> for an application, dataset, or stream, submit
+an HTTP DELETE request with the property key:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/&lt;entity-type&gt;/&lt;entity-id&gt;/metadata/properties/&lt;key&gt;</span>
+</pre></div>
+</div>
+<p>or, for a particular property of a program of a specific application:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/metadata/properties/&lt;key&gt;</span>
+</pre></div>
+</div>
+<p>or, for a particular version of an artifact:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-id&gt;/versions/&lt;artifact-version&gt;/metadata/properties/&lt;key&gt;</span>
+</pre></div>
+</div>
+<p>or, for a particular view of a stream:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/streams/&lt;stream-id&gt;/views/&lt;view-id&gt;/metadata/properties/&lt;key&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">entity-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">apps</span></code>, <code class="docutils literal"><span class="pre">datasets</span></code>, or <code class="docutils literal"><span class="pre">streams</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">entity-id</span></code></td>
+<td>Name of the entity</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workflows</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, or <code class="docutils literal"><span class="pre">workers</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-id</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream-id</span></code></td>
+<td>Name of the stream</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">view-id</span></code></td>
+<td>Name of the stream view</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">key</span></code></td>
+<td>Metadata property key</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The method was successfully called, and the properties were deleted, or in the case of a
+specific key, were either deleted or the key was not present</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
+<td>The entity or program for which properties are being deleted was not found</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note</strong>: When using this API, only properties in the <em>user</em> scope can be deleted.</p>
+</div>
+</div>
+<div class="section" id="metadata-tags">
+<span id="http-restful-api-metadata-tags"></span><h2><a class="headerlink" href="#metadata-tags" title="Perma-link to this heading">🔗</a>Metadata Tags</h2>
+<div class="section" id="adding-tags">
+<h3><a class="headerlink" href="#adding-tags" title="Perma-link to this heading">🔗</a>Adding Tags</h3>
+<p>To add user metadata tags for an application, dataset, or stream, submit an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/&lt;entity-type&gt;/&lt;entity-id&gt;/metadata/tags</span>
+</pre></div>
+</div>
+<p>or, for a particular program of a specific application:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/metadata/tags</span>
+</pre></div>
+</div>
+<p>or, for a particular version of an artifact:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-id&gt;/versions/&lt;artifact-version&gt;/metadata/tags</span>
+</pre></div>
+</div>
+<p>or, for a particular view of a stream:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/streams/&lt;stream-id&gt;/views/&lt;view-id&gt;/metadata/tags</span>
+</pre></div>
+</div>
+<p>with the metadata tags, as a list of strings, passed in the JSON request body:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[&quot;tag1&quot;, &quot;tag2&quot;]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">entity-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">apps</span></code>, <code class="docutils literal"><span class="pre">datasets</span></code>, or <code class="docutils literal"><span class="pre">streams</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">entity-id</span></code></td>
+<td>Name of the entity</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workflows</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, or <code class="docutils literal"><span class="pre">workers</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-id</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream-id</span></code></td>
+<td>Name of the stream</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">view-id</span></code></td>
+<td>Name of the stream view</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The tags were set</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
+<td>The entity or program for which tags are being set was not found</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note</strong>: When using this API, tags can be added to the metadata of the specified entity only in the user scope.</p>
+</div>
+<div class="section" id="retrieving-tags">
+<h3><a class="headerlink" href="#retrieving-tags" title="Perma-link to this heading">🔗</a>Retrieving Tags</h3>
+<p>To retrieve user metadata tags for an application, dataset, or stream, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/&lt;entity-type&gt;/&lt;entity-id&gt;/metadata/tags[?scope=&lt;scope&gt;</span>
+</pre></div>
+</div>
+<p>or, for a particular program of a specific application:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/metadata/tags[?scope=&lt;scope&gt;</span>
+</pre></div>
+</div>
+<p>or, for a particular version of an artifact:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-id&gt;/versions/&lt;artifact-version&gt;/metadata/tags[?scope=&lt;scope&gt;</span>
+</pre></div>
+</div>
+<p>or, for a particular view of a stream:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/streams/&lt;stream-id&gt;/views/&lt;view-id&gt;/metadata/tags[?scope=&lt;scope&gt;</span>
+</pre></div>
+</div>
+<p>with the metadata tags returned as a JSON string in the return body:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[&quot;tag1&quot;, &quot;tag2&quot;]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">entity-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">apps</span></code>, <code class="docutils literal"><span class="pre">datasets</span></code>, or <code class="docutils literal"><span class="pre">streams</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">entity-id</span></code></td>
+<td>Name of the entity</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workflows</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, or <code class="docutils literal"><span class="pre">workers</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-id</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream-id</span></code></td>
+<td>Name of the stream</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">view-id</span></code></td>
+<td>Name of the stream view</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">scope</span></code></td>
+<td>Optional scope filter. If not specified, properties in the <code class="docutils literal"><span class="pre">user</span></code> and
+<code class="docutils literal"><span class="pre">system</span></code> scopes are returned. Otherwise, only properties in the specified scope are returned.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The properties requested were returned as a JSON string in the body of the response</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
+<td>The entity or program for which properties are being retrieved was not found</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="removing-tags">
+<h3><a class="headerlink" href="#removing-tags" title="Perma-link to this heading">🔗</a>Removing Tags</h3>
+<p>To delete all user metadata tags for an application, dataset, or stream, submit an
+HTTP DELETE request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/&lt;entity-type&gt;/&lt;entity-id&gt;/metadata/tags</span>
+</pre></div>
+</div>
+<p>or, for all user metadata tags of a particular program of a specific application:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/metadata/tags</span>
+</pre></div>
+</div>
+<p>or, for a particular version of an artifact:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-id&gt;/versions/&lt;artifact-version&gt;/metadata/tags</span>
+</pre></div>
+</div>
+<p>or, for a particular view of a stream:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/streams/&lt;stream-id&gt;/views/&lt;view-id&gt;/metadata/tags</span>
+</pre></div>
+</div>
+<p>To delete a specific user metadata tag for an application, dataset, or stream, submit
+an HTTP DELETE request with the tag:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/&lt;entity-type&gt;/&lt;entity-id&gt;/metadata/tags/&lt;tag&gt;</span>
+</pre></div>
+</div>
+<p>or, for a particular user metadata tag of a program of a specific application:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/metadata/tags/&lt;tag&gt;</span>
+</pre></div>
+</div>
+<p>or, for a particular version of an artifact:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-id&gt;/versions/&lt;artifact-version&gt;/metadata/tags/&lt;tag&gt;</span>
+</pre></div>
+</div>
+<p>or, for a particular view of a stream:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/streams/&lt;stream-id&gt;/views/&lt;view-id&gt;/metadata/tags/&lt;tag&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">entity-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">apps</span></code>, <code class="docutils literal"><span class="pre">datasets</span></code>, or <code class="docutils literal"><span class="pre">streams</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">entity-id</span></code></td>
+<td>Name of the entity</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workflows</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, or <code class="docutils literal"><span class="pre">workers</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-id</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stream-id</span></code></td>
+<td>Name of the stream</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">view-id</span></code></td>
+<td>Name of the stream view</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">tag</span></code></td>
+<td>Metadata tag</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The method was successfully called, and the tags were deleted, or in the case of a
+specific tag, was either deleted or the tag was not present</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
+<td>The entity or program for which tags are being deleted was not found</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note</strong>: When using this API, only tags in the user scope can be deleted.</p>
+</div>
+</div>
+<div class="section" id="searching-for-metadata">
+<span id="http-restful-api-metadata-searching"></span><h2><a class="headerlink" href="#searching-for-metadata" title="Perma-link to this heading">🔗</a>Searching for Metadata</h2>
+<p>CDAP supports searching metadata of entities. To find which applications, datasets, streams, etc. have a particular
+metadata property or metadata tag, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/metadata/search?query=&lt;term&gt;[&amp;target=&lt;entity-type&gt;&amp;target=&lt;entity-type2&gt;...]</span>
+</pre></div>
+</div>
+<p>Entities that match the specified query and entity type are returned in the body of the response in JSON format:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">   {</span>
+<span class="go">      &quot;entityId&quot;:{</span>
+<span class="go">         &quot;id&quot;:{</span>
+<span class="go">            &quot;applicationId&quot;:&quot;PurchaseHistory&quot;,</span>
+<span class="go">            &quot;namespace&quot;:{</span>
+<span class="go">               &quot;id&quot;:&quot;default&quot;</span>
+<span class="go">            }</span>
+<span class="go">         },</span>
+<span class="go">         &quot;type&quot;:&quot;application&quot;</span>
+<span class="go">      },</span>
+<span class="go">      &quot;metadata&quot;:{</span>
+<span class="go">         &quot;SYSTEM&quot;:{</span>
+<span class="go">            &quot;properties&quot;:{</span>
+<span class="go">               &quot;Flow:PurchaseFlow&quot;:&quot;PurchaseFlow&quot;,</span>
+<span class="go">               &quot;MapReduce:PurchaseHistoryBuilder&quot;:&quot;PurchaseHistoryBuilder&quot;</span>
+<span class="go">            },</span>
+<span class="go">            &quot;tags&quot;:[</span>
+<span class="go">               &quot;Purchase&quot;,</span>
+<span class="go">               &quot;PurchaseHistory&quot;</span>
+<span class="go">            ]</span>
+<span class="go">         }</span>
+<span class="go">      }</span>
+<span class="go">   },</span>
+<span class="go">   {</span>
+<span class="go">      &quot;entityId&quot;:{</span>
+<span class="go">         &quot;id&quot;:{</span>
+<span class="go">            &quot;instanceId&quot;:&quot;history&quot;,</span>
+<span class="go">            &quot;namespace&quot;:{</span>
+<span class="go">               &quot;id&quot;:&quot;default&quot;</span>
+<span class="go">            }</span>
+<span class="go">         },</span>
+<span class="go">         &quot;type&quot;:&quot;datasetinstance&quot;</span>
+<span class="go">      },</span>
+<span class="go">      &quot;metadata&quot;:{</span>
+<span class="go">         &quot;SYSTEM&quot;:{</span>
+<span class="go">            &quot;properties&quot;:{</span>
+<span class="go">               &quot;type&quot;:&quot;co.cask.cdap.examples.purchase.PurchaseHistoryStore&quot;</span>
+<span class="go">            },</span>
+<span class="go">            &quot;tags&quot;:[</span>
+<span class="go">               &quot;history&quot;,</span>
+<span class="go">               &quot;explore&quot;,</span>
+<span class="go">               &quot;batch&quot;</span>
+<span class="go">            ]</span>
+<span class="go">         }</span>
+<span class="go">      }</span>
+<span class="go">   }</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">entity-type</span></code></td>
+<td>Restricts the search to either all or specified entity types: <code class="docutils literal"><span class="pre">all</span></code>, <code class="docutils literal"><span class="pre">artifact</span></code>, <code class="docutils literal"><span class="pre">app</span></code>, <code class="docutils literal"><span class="pre">dataset</span></code>,
+<code class="docutils literal"><span class="pre">program</span></code>, <code class="docutils literal"><span class="pre">stream</span></code>, or <code class="docutils literal"><span class="pre">view</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">term</span></code></td>
+<td><a class="reference internal" href="#http-restful-api-metadata-query-terms"><span>Query term</span></a>, as described below. Query terms are case-insensitive</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Entity ID and metadata of entities that match the query and entity type(s) are returned in the body of the response</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric" id="http-restful-api-metadata-query-terms">Query Terms</p>
+<p>CDAP supports prefix-based search of metadata properties and tags across both <em>user</em> and <em>system</em> scopes.
+Search metadata of entities by using either a complete or partial name followed by an asterisk <code class="docutils literal"><span class="pre">*</span></code>.</p>
+<p>Search for properties and tags by specifying one of:</p>
+<ul class="simple">
+<li>a complete property key-value pair, separated by a colon, such as <code class="docutils literal"><span class="pre">type:production</span></code></li>
+<li>a complete property key with a partial value, such as <code class="docutils literal"><span class="pre">type:prod*</span></code></li>
+<li>a complete <code class="docutils literal"><span class="pre">tags</span></code> key with a complete or partial value, such as <code class="docutils literal"><span class="pre">tags:production</span></code> or <code class="docutils literal"><span class="pre">tags:prod*</span></code>
+to search for tags only</li>
+<li>a complete or partial value, such as <code class="docutils literal"><span class="pre">prod*</span></code>; this will return both properties and tags</li>
+<li>multiple search terms separated by space, such as <code class="docutils literal"><span class="pre">type:prod*</span> <span class="pre">author:joe</span></code>; this will return entities having
+either of the terms in their metadata.</li>
+</ul>
+<p>Since CDAP also annotates <em>system</em> metadata to entities by default as mentioned at
+<a class="reference external" href="../source/../../developers-manual/building-blocks/metadata-lineage.html#metadata-lineage-system-metadata" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">System Metadata</span></a>, the following <em>special</em> search queries are also supported:</p>
+<ul class="simple">
+<li>artifacts or applications containing a specific plugin: <code class="docutils literal"><span class="pre">plugin:&lt;plugin-name&gt;</span></code></li>
+<li>programs with a specific mode: <code class="docutils literal"><span class="pre">batch</span></code> or <code class="docutils literal"><span class="pre">realtime</span></code></li>
+<li>applications with a specific program type: <code class="docutils literal"><span class="pre">flow:&lt;flow-name&gt;</span></code>, <code class="docutils literal"><span class="pre">service:&lt;service-name&gt;</span></code>,
+<code class="docutils literal"><span class="pre">mapreduce:&lt;mapreduce-name&gt;</span></code>, <code class="docutils literal"><span class="pre">spark:&lt;spark-name&gt;</span></code>, <code class="docutils literal"><span class="pre">worker:&lt;worker-name&gt;</span></code>,
+<code class="docutils literal"><span class="pre">workflow:&lt;workflow-name&gt;</span></code></li>
+<li>datasets, streams or views with schema field:<ul>
+<li>field name only: <code class="docutils literal"><span class="pre">field-name</span></code></li>
+<li>field name with a type: <code class="docutils literal"><span class="pre">&lt;field-name&gt;:&lt;field-type&gt;</span></code>, where <code class="docutils literal"><span class="pre">field-type</span></code> can be:<ul>
+<li>simple types: <code class="docutils literal"><span class="pre">int</span></code>, <code class="docutils literal"><span class="pre">long</span></code>, <code class="docutils literal"><span class="pre">boolean</span></code>, <code class="docutils literal"><span class="pre">float</span></code>, <code class="docutils literal"><span class="pre">double</span></code>, <code class="docutils literal"><span class="pre">bytes</span></code>, <code class="docutils literal"><span class="pre">string</span></code>, <code class="docutils literal"><span class="pre">enum</span></code></li>
+<li>complex types: <code class="docutils literal"><span class="pre">array</span></code>, <code class="docutils literal"><span class="pre">map</span></code>, <code class="docutils literal"><span class="pre">record</span></code>, <code class="docutils literal"><span class="pre">union</span></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">   &quot;type&quot;:&quot;record&quot;,</span>
+<span class="go">   &quot;name&quot;:&quot;employee&quot;,</span>
+<span class="go">   &quot;fields&quot;:[</span>
+<span class="go">      {</span>
+<span class="go">         &quot;name&quot;:&quot;employeeName&quot;,</span>
+<span class="go">         &quot;type&quot;:&quot;string&quot;</span>
+<span class="go">      },</span>
+<span class="go">      {</span>
+<span class="go">         &quot;name&quot;:&quot;departments&quot;,</span>
+<span class="go">         &quot;type&quot;:{</span>
+<span class="go">            &quot;type&quot;:&quot;array&quot;,</span>
+<span class="go">            &quot;items&quot;:&quot;long&quot;</span>
+<span class="go">         }</span>
+<span class="go">      }</span>
+<span class="go">   ]</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>With a schema as shown above, queries such as <code class="docutils literal"><span class="pre">employee:record</span></code>, <code class="docutils literal"><span class="pre">employeeName:string</span></code>, <code class="docutils literal"><span class="pre">departments</span></code>,
+<code class="docutils literal"><span class="pre">departments:array</span></code> can be issued.</p>
+</div>
+<div class="section" id="viewing-lineages">
+<span id="http-restful-api-metadata-lineage"></span><h2><a class="headerlink" href="#viewing-lineages" title="Perma-link to this heading">🔗</a>Viewing Lineages</h2>
+<p>To view the lineage of a dataset or stream, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/&lt;entity-type&gt;/&lt;entity-id&gt;/lineage?start=&lt;start-ts&gt;&amp;end=&lt;end-ts&gt;[&amp;levels=&lt;levels&gt;][&amp;collapse=&lt;collapse&gt;&amp;collapse=&lt;collapse&gt;...]</span>
+</pre></div>
+</div>
+<p>where:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">entity-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">datasets</span></code> or <code class="docutils literal"><span class="pre">streams</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">entity-id</span></code></td>
+<td>Name of the <code class="docutils literal"><span class="pre">dataset</span></code> or <code class="docutils literal"><span class="pre">stream</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start-ts</span></code></td>
+<td>Starting time-stamp of lineage (inclusive), in seconds. Supports <code class="docutils literal"><span class="pre">now</span></code>, <code class="docutils literal"><span class="pre">now-1h</span></code>, etc. syntax.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">end-ts</span></code></td>
+<td>Ending time-stamp of lineage (exclusive), in seconds. Supports <code class="docutils literal"><span class="pre">now</span></code>, <code class="docutils literal"><span class="pre">now-1h</span></code>, etc. syntax.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">levels</span></code></td>
+<td>Number of levels of lineage output to return. Defaults to 10. Determines how far back the provenance
+of the data in the lineage chain is calculated.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">collapse</span></code></td>
+<td>An optional set of <code class="docutils literal"><span class="pre">collapse</span></code> types (any of <code class="docutils literal"><span class="pre">access</span></code>, <code class="docutils literal"><span class="pre">run</span></code> or <code class="docutils literal"><span class="pre">component</span></code>) by which to
+<a class="reference internal" href="#http-restful-api-metadata-lineage-collapse"><span>collapse the lineage output</span></a>.
+By default, lineage output is not collapsed. Multiple collapse parameters is supported.</td>
+</tr>
+</tbody>
+</table>
+<p>See in the Metrics HTTP RESTful API <a class="reference internal" href="metrics.html#http-restful-api-metrics-time-range"><span>Querying by a Time Range</span></a>
+for examples of the &quot;now&quot; time syntax.</p>
+<p>For more information about collapsing lineage output, please refer to the section below on
+<a class="reference internal" href="#http-restful-api-metadata-lineage-collapse"><span>Collapsing Lineage Output</span></a>.</p>
+<p>The lineage will be returned as a JSON string in the body of the response. The JSON describes lineage as a graph
+of connections between programs and datasets (or streams) in the specified time range. The number of
+levels of the request (<code class="docutils literal"><span class="pre">levels</span></code>) determines the depth of the graph. This impacts how far back the provenance of the
+data in the lineage chain is calculated, as described in the <a class="reference external" href="../source/../../developers-manual/building-blocks/metadata-lineage.html#metadata-lineage-lineage" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Metadata and Lineage</span></a>.</p>
+<p>Lineage JSON consists of three main sections:</p>
+<ul class="simple">
+<li><strong>Relations:</strong> contains information on data accessed by programs.
+Access type can be <em>read</em>, <em>write</em>, <em>both</em>, or <em>unknown</em>.
+It also contains the <em>runid</em> of the program that accessed the data,
+and the specifics of any <em>component</em> of a program
+that also accessed the data. For example, a flowlet is a <em>component</em> of a flow.</li>
+<li><strong>Data:</strong> contains Datasets or Streams that were accessed by programs.</li>
+<li><strong>Programs:</strong> contains information on programs (flows, MapReduce, Spark, workers, etc.)
+that accessed the data.</li>
+</ul>
+<p>Here is an example, pretty-printed:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">    &quot;start&quot;: 1442863938,</span>
+<span class="go">    &quot;end&quot;: 1442881938,</span>
+<span class="go">    &quot;relations&quot;: [</span>
+<span class="go">        {</span>
+<span class="go">            &quot;data&quot;: &quot;stream.default.purchaseStream&quot;,</span>
+<span class="go">            &quot;program&quot;: &quot;flows.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">            &quot;access&quot;: &quot;read&quot;,</span>
+<span class="go">            &quot;runs&quot;: [</span>
+<span class="go">                &quot;4b5d7891-60a7-11e5-a9b0-42010af01c4d&quot;</span>
+<span class="go">            ],</span>
+<span class="go">            &quot;components&quot;: [</span>
+<span class="go">                &quot;reader&quot;</span>
+<span class="go">            ]</span>
+<span class="go">        },</span>
+<span class="go">        {</span>
+<span class="go">            &quot;data&quot;: &quot;dataset.default.purchases&quot;,</span>
+<span class="go">            &quot;program&quot;: &quot;flows.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">            &quot;access&quot;: &quot;unknown&quot;,</span>
+<span class="go">            &quot;runs&quot;: [</span>
+<span class="go">                &quot;4b5d7891-60a7-11e5-a9b0-42010af01c4d&quot;</span>
+<span class="go">            ],</span>
+<span class="go">            &quot;components&quot;: [</span>
+<span class="go">                &quot;collector&quot;</span>
+<span class="go">            ]</span>
+<span class="go">        }</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: {</span>
+<span class="go">        &quot;dataset.default.purchases&quot;: {</span>
+<span class="go">            &quot;entityId&quot;: {</span>
+<span class="go">                &quot;id&quot;: {</span>
+<span class="go">                    &quot;instanceId&quot;: &quot;purchases&quot;,</span>
+<span class="go">                    &quot;namespace&quot;: {</span>
+<span class="go">                        &quot;id&quot;: &quot;default&quot;</span>
+<span class="go">                    }</span>
+<span class="go">                },</span>
+<span class="go">                &quot;type&quot;: &quot;datasetinstance&quot;</span>
+<span class="go">            }</span>
+<span class="go">        },</span>
+<span class="go">        &quot;stream.default.purchaseStream&quot;: {</span>
+<span class="go">            &quot;entityId&quot;: {</span>
+<span class="go">                &quot;id&quot;: {</span>
+<span class="go">                    &quot;namespace&quot;: {</span>
+<span class="go">                        &quot;id&quot;: &quot;default&quot;</span>
+<span class="go">                    },</span>
+<span class="go">                    &quot;streamName&quot;: &quot;purchaseStream&quot;</span>
+<span class="go">                },</span>
+<span class="go">                &quot;type&quot;: &quot;stream&quot;</span>
+<span class="go">            }</span>
+<span class="go">        }</span>
+<span class="go">    },</span>
+<span class="go">    &quot;programs&quot;: {</span>
+<span class="go">        &quot;flows.default.PurchaseHistory.PurchaseFlow&quot;: {</span>
+<span class="go">            &quot;entityId&quot;: {</span>
+<span class="go">                &quot;id&quot;: {</span>
+<span class="go">                    &quot;application&quot;: {</span>
+<span class="go">                        &quot;applicationId&quot;: &quot;PurchaseHistory&quot;,</span>
+<span class="go">                        &quot;namespace&quot;: {</span>
+<span class="go">                            &quot;id&quot;: &quot;default&quot;</span>
+<span class="go">                        }</span>
+<span class="go">                    },</span>
+<span class="go">                    &quot;id&quot;: &quot;PurchaseFlow&quot;,</span>
+<span class="go">                    &quot;type&quot;: &quot;Flow&quot;</span>
+<span class="go">                },</span>
+<span class="go">                &quot;type&quot;: &quot;program&quot;</span>
+<span class="go">            }</span>
+<span class="go">        }</span>
+<span class="go">    }</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>Entities IDs of entities with the metadata properties specified were returned as a
+list of strings in the body of the response</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
+<td>No entities matching the specified query were found</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="collapsing-lineage-output">
+<span id="http-restful-api-metadata-lineage-collapse"></span><h3><a class="headerlink" href="#collapsing-lineage-output" title="Perma-link to this heading">🔗</a>Collapsing Lineage Output</h3>
+<p>Lineage output can be collapsed by <cite>access</cite>, <cite>run</cite> or <cite>component</cite>. Collapsing allows you to group all the lineage
+relations for the specified collapse type together in the lineage output. Collapsing is useful when you do not want
+to differentiate between multiple lineage relations that only differ by the collapse-type.</p>
+<p>For example, consider a program that wrote to a dataset in multiple runs over a specified time interval.
+If you do not want to differentiate between lineage relations involving different runs of this program
+(so you only want to know that a program accessed a data entity in a given time interval), you could provide
+the query parameter <code class="docutils literal"><span class="pre">collapse=run</span></code> to the lineage API. This would collapse the lineage relations in the
+output to group the multiple runs of the program together.</p>
+<p>You can also collapse lineage relations by <cite>access</cite>—which will group together those relations that
+differ only in access types; or by <cite>component</cite>—which will group together those that differ only in
+components together. The lineage HTTP RESTful API also allows you to use multiple <cite>collapse</cite> parameters in the same query.</p>
+<p>Consider these relations from the output of a lineage API request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&quot;relations&quot;: [</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;read&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;collector&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchases&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;a442db61-0c2f-11e6-bc75-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;read&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;reader&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchases&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;a442db61-0c2f-11e6-bc75-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;read&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;collector&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchases&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;ae188ea2-0c2f-11e6-b499-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;write&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;collector&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchases&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;a442db61-0c2f-11e6-bc75-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;write&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;collector&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchase&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;ae188ea2-0c2f-11e6-b499-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  }</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>Collapsing the above by <cite>run</cite> would group the runs together as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&quot;relations&quot;: [</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;read&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;collector&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchases&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;a442db61-0c2f-11e6-bc75-561602fdb525&quot;,</span>
+<span class="go">      &quot;ae188ea2-0c2f-11e6-b499-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;read&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;reader&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchases&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;a442db61-0c2f-11e6-bc75-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;write&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;collector&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchases&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;a442db61-0c2f-11e6-bc75-561602fdb525&quot;,</span>
+<span class="go">      &quot;ae188ea2-0c2f-11e6-b499-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  }</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>Collapsing by <cite>access</cite> would produce:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&quot;relations&quot;: [</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;read&quot;,</span>
+<span class="go">      &quot;write&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;collector&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchases&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;a442db61-0c2f-11e6-bc75-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;read&quot;,</span>
+<span class="go">      &quot;write&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;collector&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchases&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;ae188ea2-0c2f-11e6-b499-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;read&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;reader&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchases&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;a442db61-0c2f-11e6-bc75-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  }</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>Similarly, collapsing by <cite>component</cite> will generate:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&quot;relations&quot;: [</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;read&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;collector&quot;,</span>
+<span class="go">      &quot;reader&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchases&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;a442db61-0c2f-11e6-bc75-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;read&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;collector&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchases&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;ae188ea2-0c2f-11e6-b499-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;write&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;collector&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchases&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;a442db61-0c2f-11e6-bc75-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;accesses&quot;: [</span>
+<span class="go">      &quot;write&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;components&quot;: [</span>
+<span class="go">      &quot;collector&quot;</span>
+<span class="go">    ],</span>
+<span class="go">    &quot;data&quot;: &quot;dataset.default.purchase&quot;,</span>
+<span class="go">    &quot;program&quot;: &quot;mapreduce.default.PurchaseHistory.PurchaseFlow&quot;,</span>
+<span class="go">    &quot;runs&quot;: [</span>
+<span class="go">      &quot;ae188ea2-0c2f-11e6-b499-561602fdb525&quot;</span>
+<span class="go">    ]</span>
+<span class="go">  }</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="retrieving-metadata-for-a-program-run">
+<span id="http-restful-api-metadata-run"></span><h2><a class="headerlink" href="#retrieving-metadata-for-a-program-run" title="Perma-link to this heading">🔗</a>Retrieving Metadata for a Program Run</h2>
+<p>At every run of a program, the metadata associated with the program, the application it is part of, and any datasets
+and streams used by the program run are recorded. To retrieve the metadata for a program run, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/runs/&lt;run-id&gt;/metadata</span>
+</pre></div>
+</div>
+<p>with the metadata returned as a JSON string in the return body:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">    {</span>
+<span class="go">        &quot;entityId&quot;: {</span>
+<span class="go">            &quot;id&quot;: {</span>
+<span class="go">                &quot;namespace&quot;: {</span>
+<span class="go">                    &quot;id&quot;: &quot;default&quot;</span>
+<span class="go">                },</span>
+<span class="go">                &quot;streamName&quot;: &quot;purchaseStream&quot;</span>
+<span class="go">            },</span>
+<span class="go">            &quot;type&quot;: &quot;stream&quot;</span>
+<span class="go">        },</span>
+<span class="go">        &quot;properties&quot;: {},</span>
+<span class="go">        &quot;scope&quot;: &quot;USER&quot;,</span>
+<span class="go">        &quot;tags&quot;: []</span>
+<span class="go">    },</span>
+<span class="go">    {</span>
+<span class="go">        &quot;entityId&quot;: {</span>
+<span class="go">            &quot;id&quot;: {</span>
+<span class="go">                &quot;application&quot;: {</span>
+<span class="go">                    &quot;applicationId&quot;: &quot;PurchaseHistory&quot;,</span>
+<span class="go">                    &quot;namespace&quot;: {</span>
+<span class="go">                        &quot;id&quot;: &quot;default&quot;</span>
+<span class="go">                    }</span>
+<span class="go">                },</span>
+<span class="go">                &quot;id&quot;: &quot;PurchaseFlow&quot;,</span>
+<span class="go">                &quot;type&quot;: &quot;Flow&quot;</span>
+<span class="go">            },</span>
+<span class="go">            &quot;type&quot;: &quot;program&quot;</span>
+<span class="go">        },</span>
+<span class="go">        &quot;properties&quot;: {},</span>
+<span class="go">        &quot;scope&quot;: &quot;USER&quot;,</span>
+<span class="go">        &quot;tags&quot;: [</span>
+<span class="go">            &quot;flow-tag1&quot;</span>
+<span class="go">        ]</span>
+<span class="go">    },</span>
+<span class="go">    {</span>
+<span class="go">        &quot;entityId&quot;: {</span>
+<span class="go">            &quot;id&quot;: {</span>
+<span class="go">                &quot;instanceId&quot;: &quot;purchases&quot;,</span>
+<span class="go">                &quot;namespace&quot;: {</span>
+<span class="go">                    &quot;id&quot;: &quot;default&quot;</span>
+<span class="go">                }</span>
+<span class="go">            },</span>
+<span class="go">            &quot;type&quot;: &quot;datasetinstance&quot;</span>
+<span class="go">        },</span>
+<span class="go">        &quot;properties&quot;: {},</span>
+<span class="go">        &quot;scope&quot;: &quot;USER&quot;,</span>
+<span class="go">        &quot;tags&quot;: []</span>
+<span class="go">    },</span>
+<span class="go">    {</span>
+<span class="go">        &quot;entityId&quot;: {</span>
+<span class="go">            &quot;id&quot;: {</span>
+<span class="go">                &quot;applicationId&quot;: &quot;PurchaseHistory&quot;,</span>
+<span class="go">                &quot;namespace&quot;: {</span>
+<span class="go">                    &quot;id&quot;: &quot;default&quot;</span>
+<span class="go">                }</span>
+<span class="go">            },</span>
+<span class="go">            &quot;type&quot;: &quot;application&quot;</span>
+<span class="go">        },</span>
+<span class="go">        &quot;properties&quot;: {},</span>
+<span class="go">        &quot;scope&quot;: &quot;USER&quot;,</span>
+<span class="go">        &quot;tags&quot;: [</span>
+<span class="go">            &quot;app-tag1&quot;</span>
+<span class="go">        ]</span>
+<span class="go">    }</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workflows</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, or <code class="docutils literal"><span class="pre">workers</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the program</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">run-id</span></code></td>
+<td>Program run id</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The properties requested were returned as a JSON string in the body of the response</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
+<td>The entity, program, or run for which properties are being requested was not found</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html">Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Metadata</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#metadata-properties">Metadata Properties</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#annotating-properties">Annotating Properties</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#retrieving-properties">Retrieving Properties</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deleting-properties">Deleting Properties</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#metadata-tags">Metadata Tags</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#adding-tags">Adding Tags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#retrieving-tags">Retrieving Tags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#removing-tags">Removing Tags</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#searching-for-metadata">Searching for Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#viewing-lineages">Viewing Lineages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#collapsing-lineage-output">Collapsing Lineage Output</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#retrieving-metadata-for-a-program-run">Retrieving Metadata for a Program Run</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security.html">Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html">Transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Logging HTTP RESTful API" href="logging.html" />Logging HTTP RESTful API</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Metrics HTTP RESTful API" href="metrics.html" />Metrics HTTP RESTful API</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

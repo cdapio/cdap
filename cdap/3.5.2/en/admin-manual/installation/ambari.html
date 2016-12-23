@@ -1,0 +1,686 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Installation using Apache Ambari &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/admin-manual/installation/ambari.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+        <link rel="stylesheet" href="../_static/section-numbering.css" type="text/css" />
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Installation" href="index.html" />
+    <link rel="next" title="Installation for MapR" href="mapr.html" />
+    <link rel="prev" title="Installation using Cloudera Manager" href="cloudera.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="mapr.html" title="Installation for MapR"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="cloudera.html" title="Installation using Cloudera Manager"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Administration Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Installation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installation-using-apache-ambari">
+<span id="admin-installation-ambari"></span><h1><a class="headerlink" href="#installation-using-apache-ambari" title="Perma-link to this heading">🔗</a>Installation using Apache Ambari</h1>
+<div class="admin-manual-step-images container">
+<a class="reference internal" href="#preparing-the-cluster"><img alt="step-1" class="align-top" src="../_images/step-1.png" /></a><a class="reference internal" href="#downloading-and-distributing-packages"><img alt="step-2" class="align-top" src="../_images/step-2.png" /></a><a class="reference internal" href="#installing-cdap-services"><img alt="step-3" class="align-top" src="../_images/step-3.png" /></a><a class="reference internal" href="#starting-cdap-services"><img alt="step-4" class="align-top" src="../_images/step-4.png" /></a><a class="reference internal" href="#verification"><img alt="step-5" class="align-top" src="../_images/step-5.png" /></a></div>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><a class="reference external" href="https://ambari.apache.org/">Apache Ambari</a> can only be used to add CDAP to an <strong>existing</strong>
+Hadoop cluster, one that already has the required services (Hadoop: HDFS, YARN, HBase,
+ZooKeeper, and—optionally—Hive and Spark) installed.</li>
+<li>Ambari is for setting up HDP (Hortonworks Data Platform) on bare clusters; it can't be
+used for clusters with HDP already installed, where the original installation was
+<strong>not</strong> with Ambari.</li>
+<li>A number of features are currently planned to be added, including:<ul>
+<li>select <a class="reference external" href="https://issues.cask.co/browse/CDAP-4108">CDAP metrics</a> and</li>
+<li>a full <a class="reference external" href="https://issues.cask.co/browse/CDAP-4105">smoke test of CDAP functionality</a> after installation.</li>
+</ul>
+</li>
+</ul>
+<div class="section" id="preparing-the-cluster">
+<h2><a class="headerlink" href="#preparing-the-cluster" title="Perma-link to this heading">🔗</a>Preparing the Cluster</h2>
+<div class="section" id="hadoop-configuration">
+<h3><a class="headerlink" href="#hadoop-configuration" title="Perma-link to this heading">🔗</a>Hadoop Configuration</h3>
+<ol class="arabic">
+<li><p class="first">ZooKeeper's <code class="docutils literal"><span class="pre">maxClientCnxns</span></code> must be raised from its default.  We suggest setting it to zero
+(0: unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper,
+the number of connections required is a function of usage.</p>
+</li>
+<li><p class="first">Ensure that YARN has sufficient memory capacity by lowering the default minimum container
+size (controlled by the property <code class="docutils literal"><span class="pre">yarn.scheduler.minimum-allocation-mb</span></code>). Lack of
+YARN memory capacity is the leading cause of apparent failures that we see reported.
+We recommend starting with these settings:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">yarn.nodemanager.delete.debug-delay-sec</span></code>: 43200</li>
+<li><code class="docutils literal"><span class="pre">yarn.scheduler.minimum-allocation-mb</span></code>: 512 mb</li>
+</ul>
+<p>Please ensure your <code class="docutils literal"><span class="pre">yarn.nodemanager.resource.cpu-vcores</span></code> and
+<code class="docutils literal"><span class="pre">yarn.nodemanager.resource.memory-mb</span></code> settings are set sufficiently to run CDAP,
+as described in the <a class="reference internal" href="../system-requirements.html#admin-manual-memory-core-requirements"><span>CDAP Memory and Core Requirements</span></a>.</p>
+</li>
+</ol>
+<p>You can make these changes during the configuration of your cluster <a class="reference external" href="http://docs.hortonworks.com/HDPDocuments/Ambari-2.2.0.0/bk_Installing_HDP_AMB/content/_customize_services.html">using Ambari</a>.</p>
+</div>
+<div class="section" id="hdfs-permissions">
+<h3><a class="headerlink" href="#hdfs-permissions" title="Perma-link to this heading">🔗</a>HDFS Permissions</h3>
+<p>Ensure YARN is configured properly to run MapReduce programs.  Often, this includes
+ensuring that the HDFS <code class="docutils literal"><span class="pre">/user/yarn</span></code> directory exists with proper permissions:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> su hdfs
+<span class="gp">$</span> hdfs dfs -mkdir -p /user/yarn <span class="o">&amp;&amp;</span> hadoop fs -chown yarn /user/yarn <span class="o">&amp;&amp;</span> hadoop fs -chgrp yarn /user/yarn
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="downloading-and-distributing-packages">
+<h2><a class="headerlink" href="#downloading-and-distributing-packages" title="Perma-link to this heading">🔗</a>Downloading and Distributing Packages</h2>
+<div class="section" id="downloading-cdap-ambari-service">
+<h3><a class="headerlink" href="#downloading-cdap-ambari-service" title="Perma-link to this heading">🔗</a>Downloading CDAP Ambari Service</h3>
+<p>To install CDAP on a cluster managed by Ambari, we have available packages for
+RHEL-compatible and Ubuntu systems, which you can install onto your Ambari management server.
+These packages add CDAP to the list of available services which Ambari can install.</p>
+<p>To install the <code class="docutils literal"><span class="pre">cdap-ambari-service</span></code> package, first add the appropriate CDAP repository
+to your system’s package manager by following the steps below. These steps will install a
+Cask repository on your Ambari server.</p>
+<p>The <strong>repository version</strong> (shown in the commands below as <code class="docutils literal"><span class="pre">cdap/3.5</span></code>)
+must match the <strong>CDAP series</strong> which you’d like installed on your cluster. To install the
+<strong>latest</strong> version of the <em>CDAP 3.0 series,</em> you would install the <em>CDAP 3.0 repository.</em>
+The default (in the commands below) is to use <strong>cdap/3.3</strong>, which has the widest
+compatibility with the Ambari-supported Hadoop distributions.</p>
+<p>Replace—in the commands that follow on this page—all references to <code class="docutils literal"><span class="pre">cdap/3.5</span></code>
+with the CDAP Repository from the list below that you would like to use:</p>
+<table border="1" class="docutils" id="ambari-compatibility-matrix">
+<colgroup>
+<col width="28%" />
+<col width="29%" />
+<col width="43%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" colspan="3">Supported Hortonworks Data Platform (HDP) Distributions</th>
+</tr>
+<tr class="row-even"><th class="head">CDAP Series</th>
+<th class="head">CDAP Repository</th>
+<th class="head">Hadoop Distributions</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td>CDAP 3.5.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.5</span></code></td>
+<td>HDP 2.0 through HDP 2.4</td>
+</tr>
+<tr class="row-even"><td>CDAP 3.4.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.4</span></code></td>
+<td>HDP 2.0 through HDP 2.4</td>
+</tr>
+<tr class="row-odd"><td>CDAP 3.3.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.3</span></code></td>
+<td>HDP 2.0 through HDP 2.3</td>
+</tr>
+<tr class="row-even"><td>CDAP 3.2.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.2</span></code></td>
+<td>HDP 2.0 through HDP 2.3</td>
+</tr>
+<tr class="row-odd"><td>CDAP 3.1.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.1</span></code></td>
+<td>HDP 2.0 through HDP 2.2</td>
+</tr>
+<tr class="row-even"><td>CDAP 3.0.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.0</span></code></td>
+<td>HDP 2.0 and HDP 2.1</td>
+</tr>
+</tbody>
+</table>
+<p id="ambari-compatibility-matrix-end"><strong>Note:</strong> The CDAP Ambari service has been tested on Ambari Server 2.0 and 2.1, as
+supplied from Hortonworks.</p>
+<div class="section" id="on-rpm-using-yum">
+<h4><a class="headerlink" href="#on-rpm-using-yum" title="Perma-link to this heading">🔗</a>On RPM using Yum</h4>
+<p>Download the Cask Yum repo definition file:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/3.5/cask.repo
+</pre>
+</div>
+<p>This will create the file <code class="docutils literal"><span class="pre">/etc/yum.repos.d/cask.repo</span></code> with:</p>
+<pre class="literal-block">
+[cask]
+name=Cask Packages
+baseurl=http://repository.cask.co/centos/6/x86_64/cdap/3.5
+enabled=1
+gpgcheck=1
+</pre>
+<p>Add the Cask Public GPG Key to your repository:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo rpm --import http://repository.cask.co/centos/6/x86_64/cdap/3.5/pubkey.gpg
+</pre>
+</div>
+<p>Update your Yum cache:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo yum makecache
+</pre></div>
+</div>
+</div>
+<div class="section" id="on-debian-using-apt">
+<h4><a class="headerlink" href="#on-debian-using-apt" title="Perma-link to this heading">🔗</a>On Debian using APT</h4>
+<p>Download the Cask APT repo definition file:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo curl -o /etc/apt/sources.list.d/cask.list http://repository.cask.co/ubuntu/precise/amd64/cdap/3.5/cask.list
+</pre>
+</div>
+<p>This will create the file <code class="docutils literal"><span class="pre">/etc/apt/sources.list.d/cask.list</span></code> with:</p>
+<pre class="literal-block">
+deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/cdap/3.5 precise cdap
+</pre>
+<p>Add the Cask Public GPG Key to your repository:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> curl -s http://repository.cask.co/ubuntu/precise/amd64/cdap/3.5/pubkey.gpg | sudo apt-key add -
+</pre>
+</div>
+<p>Update your APT-cache:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo apt-get update
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="installing-cdap-ambari-service">
+<h3><a class="headerlink" href="#installing-cdap-ambari-service" title="Perma-link to this heading">🔗</a>Installing CDAP Ambari Service</h3>
+<p>Now, install the <code class="docutils literal"><span class="pre">cdap-ambari-service</span></code> package from the repo you specified above:</p>
+<div class="section" id="installing-the-cdap-service-via-yum">
+<h4><a class="headerlink" href="#installing-the-cdap-service-via-yum" title="Perma-link to this heading">🔗</a>Installing the CDAP Service via YUM</h4>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo yum install -y cdap-ambari-service
+<span class="gp">$</span> sudo ambari-server restart
+</pre></div>
+</div>
+</div>
+<div class="section" id="installing-the-cdap-service-via-apt">
+<h4><a class="headerlink" href="#installing-the-cdap-service-via-apt" title="Perma-link to this heading">🔗</a>Installing the CDAP Service via APT</h4>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo apt-get install -y cdap-ambari-service
+<span class="gp">$</span> sudo ambari-server restart
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="installing-cdap-services">
+<h2><a class="headerlink" href="#installing-cdap-services" title="Perma-link to this heading">🔗</a>Installing CDAP Services</h2>
+<p>You can now install CDAP using the Ambari Service Wizard.</p>
+<div class="section" id="start-the-ambari-service-wizard">
+<h3><a class="headerlink" href="#start-the-ambari-service-wizard" title="Perma-link to this heading">🔗</a>Start the Ambari Service Wizard</h3>
+<ol class="arabic">
+<li><p class="first">In the Ambari UI (the Ambari Dashboard), start the <strong>Add Service Wizard</strong>.</p>
+<div class="figure align-center" id="id1" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/ss01-add-service.png"><img alt="../_images/ss01-add-service.png" class="bordered-image" src="../_images/ss01-add-service.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>Ambari Dashboard:</strong> Starting the <em>Add Service</em> Wizard</span></p>
+</div>
+</li>
+<li><p class="first">Select CDAP from the list and click <em>Next</em>. If there are core dependencies which are not
+currently installed on the cluster, Ambari will prompt you to install them.</p>
+<div class="figure align-center" id="id2" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/ss02-select-cdap.png"><img alt="../_images/ss02-select-cdap.png" class="bordered-image" src="../_images/ss02-select-cdap.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>Ambari Dashboard:</strong> Selecting <em>CDAP</em></span></p>
+</div>
+</li>
+</ol>
+</div>
+<div class="section" id="assign-cdap-services-to-hosts">
+<h3><a class="headerlink" href="#assign-cdap-services-to-hosts" title="Perma-link to this heading">🔗</a>Assign CDAP Services to Hosts</h3>
+<ol class="arabic" start="3">
+<li><p class="first">Next, assign CDAP services to hosts.</p>
+<p>CDAP consists of five daemons:</p>
+<ol class="arabic simple">
+<li><strong>Master:</strong> Coordinator service which launches CDAP system services into YARN</li>
+<li><strong>Router:</strong> Serves HTTP endpoints for CDAP applications and REST API</li>
+<li><strong>Auth Server:</strong> For managing authentication tokens on CDAP clusters with perimeter security enabled</li>
+<li><strong>Kafka Server:</strong> For transporting CDAP metrics and CDAP system service log data</li>
+<li><strong>UI:</strong> Web interface to CDAP and <a class="reference external" href="../source/../../hydrator-manual/index.html#cask-hydrator" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Cask Hydrator</span></a>
+(for CDAP 3.2.x and later installations)</li>
+</ol>
+<div class="figure align-center" id="id3" style="width: 100%">
+<a class="bordered-image-top-margin reference internal image-reference" href="../_images/ss03-assign-masters.png"><img alt="../_images/ss03-assign-masters.png" class="bordered-image-top-margin" src="../_images/ss03-assign-masters.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>Ambari Dashboard:</strong> Assigning Masters</span></p>
+</div>
+<p>We recommended you install all CDAP services onto an edge node (or the <em>NameNode</em>, for
+smaller clusters) such as in our example above. After assigning the master hosts, click
+<em>Next</em>.</p>
+</li>
+<li><p class="first">Select hosts for the CDAP CLI client. This should be installed on every edge node on
+the cluster or, for smaller clusters, on the same node as the CDAP services.</p>
+<div class="figure align-center" id="id4" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/ss04-choose-clients.png"><img alt="../_images/ss04-choose-clients.png" class="bordered-image" src="../_images/ss04-choose-clients.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>Ambari Dashboard:</strong> Selecting hosts for <em>CDAP</em></span></p>
+</div>
+</li>
+<li><p class="first">Click <em>Next</em> to customize the CDAP installation.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="customize-cdap">
+<h3><a class="headerlink" href="#customize-cdap" title="Perma-link to this heading">🔗</a>Customize CDAP</h3>
+<ol class="arabic" start="6">
+<li><p class="first">On the <strong>Customize Services</strong> screen, click the <em>Advanced</em> tab to bring up the CDAP configuration.
+Under <em>Advanced cdap-env</em>, you can configure environment settings such as heap sizes
+and the directories used to store logs and pids for the CDAP services which run on the edge nodes.</p>
+<div class="figure align-center" id="id5" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/ss05-config-cdap-env.png"><img alt="../_images/ss05-config-cdap-env.png" class="bordered-image" src="../_images/ss05-config-cdap-env.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>Ambari Dashboard:</strong> Customizing Services 1</span></p>
+</div>
+</li>
+<li><p class="first">Under <em>Advanced cdap-site</em>, you can configure all options for the operation and running
+of CDAP and CDAP applications.</p>
+<div class="figure align-center" id="id6" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/ss06-config-cdap-site.png"><img alt="../_images/ss06-config-cdap-site.png" class="bordered-image" src="../_images/ss06-config-cdap-site.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>Ambari Dashboard:</strong> Customizing Services 2</span></p>
+</div>
+</li>
+<li><p class="first"><strong>Router Bind Port, Router Server Port:</strong> These two ports should match; <em>Router Server
+Port</em> is used by the CDAP UI to connect to the CDAP Router service.</p>
+<div class="figure align-center" id="id7" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/ss07-config-enable-explore.png"><img alt="../_images/ss07-config-enable-explore.png" class="bordered-image" src="../_images/ss07-config-enable-explore.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>Ambari Dashboard:</strong> Enabling <em>CDAP Explore</em></span></p>
+</div>
+<p><strong>Additional CDAP configuration properties</strong>, not shown in the web interface, can be
+added using Ambari's advanced custom properties at the end of the page. Documentation
+of the available CDAP properties is in the <a class="reference internal" href="../appendices/cdap-site.html#appendix-cdap-site-xml"><span>Appendix: cdap-site.xml, cdap-default.xml</span></a>.</p>
+<p>For a <strong>complete explanation of these options,</strong> refer to the <a class="reference internal" href="../appendices/cdap-site.html#appendix-cdap-site-xml"><span>CDAP documentation
+of cdap-site.xml</span></a>.</p>
+<p><strong>Additional environment variables</strong> can be set, as required, using Ambari's
+&quot;Configs &gt; Advanced &gt; Advanced cdap-env&quot;.</p>
+<p><strong>Note:</strong> Service-specific Java heap memory settings (that override the default values)
+can be created by setting these environment variables:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">AUTH_JAVA_HEAPMAX</span>
+<span class="go">KAFKA_JAVA_HEAPMAX</span>
+<span class="go">MASTER_JAVA_HEAPMAX</span>
+<span class="go">ROUTER_JAVA_HEAPMAX</span>
+</pre></div>
+</div>
+<p>When finished with configuration changes, click <em>Next</em>.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="starting-cdap-services">
+<h2><a class="headerlink" href="#starting-cdap-services" title="Perma-link to this heading">🔗</a>Starting CDAP Services</h2>
+<div class="section" id="deploying-cdap">
+<h3><a class="headerlink" href="#deploying-cdap" title="Perma-link to this heading">🔗</a>Deploying CDAP</h3>
+<ol class="arabic" start="9">
+<li><p class="first">Review the desired service layout and click <em>Deploy</em> to begin the actual deployment of CDAP.</p>
+<div class="figure align-center" id="id8" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/ss08-review-deploy.png"><img alt="../_images/ss08-review-deploy.png" class="bordered-image" src="../_images/ss08-review-deploy.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>Ambari Dashboard:</strong> Summary of Services</span></p>
+</div>
+</li>
+<li><p class="first">Ambari will install CDAP and start the services.</p>
+<div class="figure align-center" id="id9" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/ss09-install-start-test.png"><img alt="../_images/ss09-install-start-test.png" class="bordered-image" src="../_images/ss09-install-start-test.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>Ambari Dashboard:</strong> Install, Start, and Test</span></p>
+</div>
+</li>
+<li><p class="first">After the services are installed and started, you will click <em>Next</em> to get to the
+Summary screen.</p>
+</li>
+<li><p class="first">This screen shows a summary of the changes that were made to the cluster. No services
+should need to be restarted following this operation.</p>
+<div class="figure align-center" id="id10" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/ss10-post-install-summary.png"><img alt="../_images/ss10-post-install-summary.png" class="bordered-image" src="../_images/ss10-post-install-summary.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>Ambari Dashboard:</strong> Summary</span></p>
+</div>
+</li>
+<li><p class="first">Click <em>Complete</em> to complete the CDAP installation.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="cdap-started">
+<h3><a class="headerlink" href="#cdap-started" title="Perma-link to this heading">🔗</a>CDAP Started</h3>
+<ol class="arabic simple" start="14">
+<li>You should now see <strong>CDAP</strong> listed on the main summary screen for your cluster.</li>
+</ol>
+<blockquote>
+<div><div class="figure align-center" id="id11" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/ss11-main-screen.png"><img alt="../_images/ss11-main-screen.png" class="bordered-image" src="../_images/ss11-main-screen.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>Ambari Dashboard:</strong> Selecting <em>CDAP</em></span></p>
+</div>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="verification">
+<span id="ambari-verification"></span><h2><a class="headerlink" href="#verification" title="Perma-link to this heading">🔗</a>Verification</h2>
+<div class="section" id="service-checks-in-apache-ambari">
+<h3><a class="headerlink" href="#service-checks-in-apache-ambari" title="Perma-link to this heading">🔗</a>Service Checks in Apache Ambari</h3>
+<ol class="arabic simple" start="15">
+<li>Selecting <em>CDAP</em> from the left sidebar, or choosing it from the Services drop-down menu, will take
+you to the CDAP service screen.</li>
+</ol>
+<blockquote>
+<div><div class="figure align-center" id="id12" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/ss12-cdap-screen.png"><img alt="../_images/ss12-cdap-screen.png" class="bordered-image" src="../_images/ss12-cdap-screen.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>Ambari Dashboard:</strong> <em>CDAP</em> Service Screen</span></p>
+</div>
+</div></blockquote>
+<p>CDAP is now running on your cluster, managed by Ambari. You can login to the CDAP UI at
+the address of the node running the CDAP UI service at port 9999.</p>
+</div>
+<div class="section" id="cdap-smoke-test">
+<h3><a class="headerlink" href="#cdap-smoke-test" title="Perma-link to this heading">🔗</a>CDAP Smoke Test</h3>
+<p>The CDAP UI may initially show errors while all of the CDAP YARN containers are
+starting up. Allow for up to a few minutes for this. The <em>System Health</em> link in the CDAP
+UI in the left side shows the status of the CDAP services.</p>
+<div class="figure align-center" id="id13" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/console-distributed.png"><img alt="../_images/console-distributed.png" class="bordered-image" src="../_images/console-distributed.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>CDAP UI:</strong> Showing started-up before data or applications are deployed.</span></p>
+</div>
+<p>Further instructions for verifying your installation are contained in <a class="reference internal" href="../verification.html#admin-manual-verification"><span>Verification</span></a>.</p>
+</div>
+</div>
+<div class="section" id="advanced-topics">
+<span id="ambari-installation-advanced-topics"></span><h2><a class="headerlink" href="#advanced-topics" title="Perma-link to this heading">🔗</a>Advanced Topics</h2>
+<span class="target" id="ambari-configuration-security"></span><div class="section" id="enabling-security">
+<h3><a class="headerlink" href="#enabling-security" title="Perma-link to this heading">🔗</a>Enabling Security</h3>
+<p>Cask Data Application Platform (CDAP) supports securing clusters using perimeter security, authorization,
+impersonation and secure storage.</p>
+<p>Network (or cluster) perimeter security limits outside access, providing a first level of
+security. However, perimeter security itself does not provide the safeguards of authentication,
+authorization and service request management that a secure Hadoop cluster provides.</p>
+<p>Authorization provides a way of enforcing access control on CDAP entities.</p>
+<p>Impersonation ensures that programs inside CDAP are run as configured users at the namespace level. When enabled, it
+guarantees that all actions on datasets, streams and other resources happen as the configured user.</p>
+<p>We recommend that in order for CDAP to be secure, CDAP security should always be used in conjunction with
+<a class="reference external" href="http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SecureMode.html">secure Hadoop clusters</a>.
+In cases where secure Hadoop is not or cannot be used, it is inherently insecure and any applications
+running on the cluster are effectively &quot;trusted”. Although there is still value in having perimeter security,
+authorization enforcement and secure storage in that situation, whenever possible a secure Hadoop
+cluster should be employed with CDAP security.</p>
+<p>For instructions on enabling CDAP Security, see <a class="reference internal" href="../security/index.html#admin-security"><span>CDAP Security</span></a>.</p>
+<p><a class="reference internal" href="../security/index.html#admin-security"><span>CDAP Security</span></a> is configured by setting the appropriate
+settings under Ambari for your environment.</p>
+</div>
+<div class="section" id="enabling-kerberos">
+<span id="ambari-configuration-enabling-kerberos"></span><h3><a class="headerlink" href="#enabling-kerberos" title="Perma-link to this heading">🔗</a>Enabling Kerberos</h3>
+<p>Kerberos support in CDAP is automatically enabled when enabling Kerberos security on your
+cluster via Ambari. Consult the appropriate Ambari documentation for instructions on enabling
+Kerberos support for your cluster.</p>
+</div>
+<div class="section" id="enabling-cdap-ha">
+<span id="ambari-configuration-highly-available"></span><h3><a class="headerlink" href="#enabling-cdap-ha" title="Perma-link to this heading">🔗</a>Enabling CDAP HA</h3>
+<p>In addition to having a <a class="reference internal" href="../deployment-architectures.html#admin-manual-install-deployment-architectures-ha"><span>cluster architecture</span></a>
+that supports HA (high availability), these additional configuration steps need to be followed and completed:</p>
+<div class="section" id="cdap-components">
+<h4><a class="headerlink" href="#cdap-components" title="Perma-link to this heading">🔗</a>CDAP Components</h4>
+<p>For each of the CDAP components listed below (Master, Router, Kafka, UI, Authentication Server), these
+comments apply:</p>
+<ul class="simple">
+<li>Sync the configuration files (such as <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> and <code class="docutils literal"><span class="pre">cdap-security.xml</span></code>) on all the nodes.</li>
+<li>While the default <em>bind.address</em> settings (<code class="docutils literal"><span class="pre">0.0.0.0</span></code>, used for <code class="docutils literal"><span class="pre">app.bind.address</span></code>,
+<code class="docutils literal"><span class="pre">data.tx.bind.address</span></code>, <code class="docutils literal"><span class="pre">router.bind.address</span></code>, and so on) can be synced across hosts,
+if you customize them to a particular IP address, they will—as a result—be
+different on different hosts. This can be controlled by the settings for an individual <em>Role Instance</em>.</li>
+</ul>
+</div>
+<div class="section" id="cdap-master">
+<h4><a class="headerlink" href="#cdap-master" title="Perma-link to this heading">🔗</a>CDAP Master</h4>
+<p>The CDAP Master service primarily performs coordination tasks and can be scaled for redundancy. The
+instances coordinate amongst themselves, electing one as a leader at all times.</p>
+<ul class="simple">
+<li>Using the Ambari UI, add additional hosts for the <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Master</span>
+<span class="pre">Service</span></code> to additional machines.</li>
+</ul>
+</div>
+<div class="section" id="cdap-router">
+<h4><a class="headerlink" href="#cdap-router" title="Perma-link to this heading">🔗</a>CDAP Router</h4>
+<p>The CDAP Router service is a stateless API endpoint for CDAP, and simply routes requests to the
+appropriate service. It can be scaled horizontally for performance. A load balancer, if
+desired, can be placed in front of the nodes running the service.</p>
+<ul class="simple">
+<li>Using the Ambari UI, add additional hosts for the <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Router</span> <span class="pre">Service</span></code> to additional machines.</li>
+<li>Start each <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Router</span> <span class="pre">Service</span></code> role.</li>
+</ul>
+</div>
+<div class="section" id="cdap-kafka">
+<h4><a class="headerlink" href="#cdap-kafka" title="Perma-link to this heading">🔗</a>CDAP Kafka</h4>
+<ul class="simple">
+<li>Using the Ambari UI, add additional hosts for the <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Kafka</span> <span class="pre">Service</span></code>
+to additional machines.</li>
+<li>Two properties govern the Kafka setting in the cluster:<ul>
+<li>The <strong>list of Kafka seed brokers</strong> is generated automatically, but the
+replication factor (<code class="docutils literal"><span class="pre">kafka.default.replication.factor</span></code>) is not set
+automatically. Instead, it needs to be set manually.</li>
+<li>The <strong>replication factor</strong> is used to replicate Kafka messages across
+multiple machines to prevent data loss in the event of a hardware
+failure.</li>
+</ul>
+</li>
+<li>The recommended setting is to run <strong>at least two</strong> Kafka brokers with a <strong>minimum replication
+factor of two</strong>; set this property to the maximum number of tolerated machine failures
+plus one (assuming you have that number of machines). For example, if you were running
+five Kafka brokers, and would tolerate two of those failing, you would set the
+replication factor to three. The number of Kafka brokers listed should always be equal to
+or greater than the replication factor.</li>
+</ul>
+</div>
+<div class="section" id="cdap-ui">
+<h4><a class="headerlink" href="#cdap-ui" title="Perma-link to this heading">🔗</a>CDAP UI</h4>
+<ul class="simple">
+<li>Using the Ambari UI, add additional hosts for the <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">UI</span> <span class="pre">Service</span></code>
+to additional machines.</li>
+</ul>
+</div>
+<div class="section" id="cdap-authentication-server">
+<h4><a class="headerlink" href="#cdap-authentication-server" title="Perma-link to this heading">🔗</a>CDAP Authentication Server</h4>
+<ul class="simple">
+<li>Using the Ambari UI, add additional hosts for the <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Security</span> <span class="pre">Auth</span>
+<span class="pre">Service</span></code> (the CDAP Authentication Server) to additional machines.</li>
+<li>Note that when an unauthenticated request is made in a secure HA setup, a list of all
+running authentication endpoints will be returned in the body of the request.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdap-components.html"> CDAP Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deployment-architectures.html"> Deployment Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hadoop-compatibility.html"> Hadoop Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system-requirements.html"> System Requirements</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Installation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cloudera.html">Cloudera Manager</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Apache Ambari</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#preparing-the-cluster">Preparing the Cluster</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#downloading-and-distributing-packages">Downloading and Distributing Packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installing-cdap-services">Installing CDAP Services</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#starting-cdap-services">Starting CDAP Services</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#verification">Verification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#advanced-topics">Advanced Topics</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mapr.html">MapR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packages.html">Packages</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../verification.html"> Verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../upgrading/index.html"> Upgrading</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendices/index.html"> Appendices</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Installation using Cloudera Manager" href="cloudera.html" />Installation using Cloudera Manager</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Installation for MapR" href="mapr.html" />Installation for MapR</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,2291 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Quick Start &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/getting-started/quick-start.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Getting Started Developing with CDAP" href="index.html" />
+    <link rel="next" title="Development Environment Setup" href="dev-env.html" />
+    <link rel="prev" title="Docker Image" href="standalone/docker.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="dev-env.html" title="Development Environment Setup"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="standalone/docker.html" title="Docker Image"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Getting Started Developing with CDAP</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="quick-start">
+<span id="id1"></span><h1><a class="headerlink" href="#quick-start" title="Perma-link to this heading">🔗</a>Quick Start</h1>
+<p>These instructions will take you from downloading the CDAP SDK through the running of an application.</p>
+<div class="section" id="download-install-and-start-cdap">
+<h2><a class="headerlink" href="#download-install-and-start-cdap" title="Perma-link to this heading">🔗</a>Download, Install and Start CDAP</h2>
+<p>If you haven't already, download, install and start CDAP
+<a class="reference internal" href="standalone/index.html"><em>following these instructions.</em></a></p>
+</div>
+<div class="section" id="your-first-cdap-application">
+<h2><a class="headerlink" href="#your-first-cdap-application" title="Perma-link to this heading">🔗</a>Your First CDAP Application</h2>
+<p>CDAP is a platform for developing and running big data applications. To get started, we
+have a collection of pre-built applications available that will allow you to quickly
+experience the power of CDAP.</p>
+<p>In this example, we will use one of these applications to complete a very common Big Data
+use case: web log analytics.</p>
+<p>This <a class="reference external" href="https://github.com/caskdata/cdap-apps/tree/develop/Wise">web log analytics application</a>,
+or <em>WISE</em>, will show you how CDAP can aggregate logs, perform real-time and batch
+analytics of the logs ingested, and expose the results using multiple interfaces.</p>
+<p>Specifically, this application processes web server access logs, counts page-views by IP
+in real time, and computes the bounce ratio of each web page encountered in batch. (The
+bounce rate is the percentage of views that are not followed by another view on the same
+site.)</p>
+<div class="section" id="conventions">
+<h3><a class="headerlink" href="#conventions" title="Perma-link to this heading">🔗</a>Conventions</h3>
+<p>In the examples and commands that follow, for brevity we will use these conventions:</p>
+<ul>
+<li><p class="first"><code class="docutils literal"><span class="pre">&lt;CDAP-SDK-HOME&gt;</span></code> is the directory that you have installed the CDAP Standalone SDK, either
+on a UNIX-type system or Windows.</p>
+</li>
+<li><p class="first">The <a class="reference external" href="http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html">CDAP Command Line Interface (CLI)</a>
+is included in the SDK in the <code class="docutils literal"><span class="pre">bin</span></code> directory, either at <code class="docutils literal"><span class="pre">bin/cdap-cli.sh</span></code> or—on Windows—<code class="docutils literal"><span class="pre">bin\cdap-cli.bat</span></code>. The CLI allows you to quickly access CDAP
+facilities from a command line environment.</p>
+</li>
+<li><p class="first">For brevity in the commands given below, we will simply use <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code> for the CDAP
+Command Line Interface. Substitute the actual path of <code class="docutils literal"><span class="pre">./&lt;CDAP-SDK-HOME&gt;/bin/cdap-cli.sh</span></code>,
+or <code class="docutils literal"><span class="pre">&lt;CDAP-SDK-HOME&gt;\bin\cdap-cli.bat</span></code> on Windows, as appropriate.</p>
+</li>
+<li><p class="first">A Windows-version of the application <code class="docutils literal"><span class="pre">curl</span></code> is included in the CDAP SDK as
+<code class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></code>; use it as a substitute for <code class="docutils literal"><span class="pre">curl</span></code> in examples.</p>
+</li>
+<li><p class="first">If you add the SDK bin directory to your path, you can simplify the commands. From within
+the CDAP-SDK-home directory, enter:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral43() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral43 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral43", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral43" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text"><span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="si">${</span><span class="nv">PATH</span><span class="si">}</span>:<span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>/bin</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">set path=%PATH%;%CD%\bin;%CD%\libexec\bin</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>The Windows path has been augmented with a directory where the SDK includes
+Windows-versions of commands such as <code class="docutils literal"><span class="pre">curl</span></code>.</p>
+</li>
+</ul>
+<p><strong>Note:</strong> There is an issue with running Microsoft Windows and using the CDAP Standalone
+scripts when <code class="docutils literal"><span class="pre">CDAP_HOME</span></code> is defined as a path with spaces in it. Until this is addressed,
+do not use a path with space characters in it for <code class="docutils literal"><span class="pre">CDAP_HOME.</span></code></p>
+</div>
+</div>
+<div class="section" id="downloading-the-artifact">
+<h2><a class="headerlink" href="#downloading-the-artifact" title="Perma-link to this heading">🔗</a>Downloading the Artifact</h2>
+<p>An artifact is a JAR file that contains Application code. You can either download the
+application zip archive that we have built for you, or you can pull the source code from
+GitHub. If you download the zip file, then the artifact is already built and packaged:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral44() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral44 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral44", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral44" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text"><span class="nb">cd</span> &lt;CDAP-SDK-HOME&gt;</span>
+<span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -O -X GET <span class="s2">&quot;http://repository.cask.co/downloads/co/cask/cdap/apps/0.8.0/cdap-wise-0.8.0.zip&quot;</span></span>
+<span class="gp">$ </span><span class="copyable-text">unzip cdap-wise-0.8.0.zip</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cd &lt;CDAP-SDK-HOME&gt;</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -O -X GET &quot;http://repository.cask.co/downloads/co/cask/cdap/apps/0.8.0/cdap-wise-0.8.0.zip&quot;</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">jar xf cdap-wise-0.8.0.zip</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>If instead you would like to clone the source code from GitHub, you can build and package
+the artifact with these commands:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral45() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral45 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral45", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral45" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">git clone https://github.com/caskdata/cdap-apps --branch release/cdap-3.5-compatible</span>
+<span class="gp">$ </span><span class="copyable-text"><span class="nb">cd </span>cdap-apps/Wise</span>
+<span class="gp">$ </span><span class="copyable-text">mvn clean package -DskipTests</span>
+<span class="gp">$ </span><span class="copyable-text"><span class="nb">cd</span> &lt;CDAP-SDK-HOME&gt;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">git clone https://github.com/caskdata/cdap-apps --branch release/cdap-3.5-compatible</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cd cdap-apps\Wise</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">mvn clean package -DskipTests</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cd &lt;CDAP-SDK-HOME&gt;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>In both cases (downloading the artifact or building from source), the artifact is in a
+<code class="docutils literal"><span class="pre">target/</span></code> directory with the file name:</p>
+<div class="highlight container">
+<pre class="literal-block">
+cdap-wise-0.8.0.jar
+</pre>
+</div>
+<p><strong>Learn More:</strong> A detailed description of the application and its implementation is
+available in the <a class="reference external" href="../source/../../examples-manual/examples/web-analytics.html#examples-web-analytics" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Web Analytics Application</span></a> documentation.</p>
+</div>
+<div class="section" id="deploying-the-application">
+<h2><a class="headerlink" href="#deploying-the-application" title="Perma-link to this heading">🔗</a>Deploying the Application</h2>
+<p>You can load the artifact into your running instance of CDAP either by using the
+<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP Command Line Interface</span></a>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral46() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral46 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral46", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral46" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact cdap-wise-0.8.0/target/cdap-wise-0.8.0.jar</span>
+
+<span class="go">Successfully added artifact with name &#39;cdap-wise&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact cdap-wise-0.8.0\target\cdap-wise-0.8.0.jar</span></span>
+
+<span class="go">Successfully added artifact with name &#39;cdap-wise&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>or using <code class="docutils literal"><span class="pre">curl</span></code> to directly make an HTTP request:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral47() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral47 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral47", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral47" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> localhost:10000/v3/namespaces/default/artifacts/cdap-wise <span class="se">\</span>
+<span class="go">--data-binary @cdap-wise-0.8.0/target/cdap-wise-0.8.0.jar</span></span>
+
+<span class="go">Artifact added successfully</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl localhost:10000/v3/namespaces/default/artifacts/cdap-wise ^</span>
+<span class="go">--data-binary @cdap-wise-0.8.0\target\cdap-wise-0.8.0.jar</span></span>
+
+<span class="go">Artifact added successfully</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>If you cloned the source code and built the app, you'll need to adjust the above paths to
+include the <code class="docutils literal"><span class="pre">cdap-apps/Wise</span></code> directory, such as:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral48() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral48 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral48", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral48" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact cdap-apps/Wise/target/cdap-wise-0.8.0.jar</span>
+
+<span class="go">or</span>
+
+<span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> localhost:10000/v3/namespaces/default/artifacts/cdap-wise <span class="se">\</span>
+<span class="go">--data-binary @cdap-apps/Wise/target/cdap-wise-0.8.0.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact cdap-apps\Wise\target\cdap-wise-0.8.0.jar</span></span>
+
+<span class="go">or</span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl localhost:10000/v3/namespaces/default/artifacts/cdap-wise ^</span>
+<span class="go">--data-binary @cdap-apps/Wise/target/cdap-wise-0.8.0.jar</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Once the artifact has been added to CDAP, you can create an application using that artifact.
+You can create the application by using the CLI:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral49() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral49 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral49", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral49" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app Wise cdap-wise 0.8.0 user</span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app Wise cdap-wise 0.8.0 user</span></span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>or by using <code class="docutils literal"><span class="pre">curl</span></code>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral50() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral50 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral50", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral50" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X PUT -H <span class="s2">&quot;Content-Type: application/json&quot;</span> localhost:10000/v3/namespaces/default/apps/Wise <span class="se">\</span>
+<span class="go">-d &#39;{ &quot;artifact&quot;:{ &quot;name&quot;: &quot;cdap-wise&quot;, &quot;version&quot;: &quot;0.8.0&quot;, &quot;scope&quot;: &quot;user&quot; } }&#39;</span></span>
+
+<span class="go">Deploy Complete</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X PUT -H &quot;Content-Type: application/json&quot; localhost:10000/v3/namespaces/default/apps/Wise ^</span>
+<span class="go">-d &quot;{ \&quot;artifact\&quot;:{ \&quot;name\&quot;: \&quot;cdap-wise\&quot;, \&quot;version\&quot;: \&quot;0.8.0\&quot;, \&quot;scope\&quot;: \&quot;user\&quot; } }&quot;</span></span>
+
+<span class="go">Deploy Complete</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p><strong>Learn More:</strong> <em>You can also deploy artifacts and apps in one step by dragging and dropping their JARs on</em>
+<a class="reference external" href="../source/../../admin-manual/operations/cdap-ui.html#cdap-ui" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">the CDAP UI</span></a>.</p>
+</div>
+<div class="section" id="starting-real-time-processing">
+<h2><a class="headerlink" href="#starting-real-time-processing" title="Perma-link to this heading">🔗</a>Starting Real-time Processing</h2>
+<p>Now that the application is deployed, we can start the real-time processing:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral51() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral51 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral51", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral51" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start flow Wise.WiseFlow</span>
+
+<span class="go">Successfully started Flow &#39;WiseFlow&#39; of application &#39;Wise&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start flow Wise.WiseFlow</span></span>
+
+<span class="go">Successfully started Flow &#39;WiseFlow&#39; of application &#39;Wise&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>This starts the flow named <em>WiseFlow,</em> which listens for log events from web servers to
+analyze them in real time. Another way to start the flow is using <code class="docutils literal"><span class="pre">curl</span></code>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral52() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral52 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral52", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral52" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/start&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/start&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>At any time, you can find out whether the flow is running:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral53() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral53 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral53", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral53" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh get flow status Wise.WiseFlow</span>
+
+<span class="go">RUNNING</span>
+
+<span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/status&quot;</span></span>
+
+<span class="go">{&quot;status&quot;:&quot;RUNNING&quot;}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat get flow status Wise.WiseFlow</span></span>
+
+<span class="go">RUNNING</span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl &quot;localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/status&quot;</span></span>
+
+<span class="go">{&quot;status&quot;:&quot;RUNNING&quot;}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+<div class="section" id="injecting-data">
+<h2><a class="headerlink" href="#injecting-data" title="Perma-link to this heading">🔗</a>Injecting Data</h2>
+<p>The <em>WiseFlow</em> uses a stream to receive log events from Web servers. The stream has a REST
+endpoint used to ingest data with HTTP requests, and you can do that using the
+Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral54() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral54 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral54", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral54" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh send stream logEventStream <span class="se">\&#39;</span><span class="s1">&#39;255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] &#39;</span><span class="se">\</span>
+<span class="go">&#39;&quot;GET /cdap.html HTTP/1.0&quot; 401 2969 &quot; &quot; &quot;Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)&quot;&#39;\&#39;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat send stream logEventStream ^</span>
+<span class="go">\&quot;255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] &#39;GET /cdap.html HTTP/1.0&#39; 401 2969 &#39; &#39; &#39;Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)&#39;\&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Or, you can use <code class="docutils literal"><span class="pre">curl</span></code> and an HTTP request:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral55() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral55 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral55", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral55" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/streams/logEventStream&quot;</span> <span class="se">\</span>
+<span class="go">  -d &quot;255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] &#39;GET /cdap.html HTTP/1.0&#39; \</span>
+<span class="go">  401 2969 &#39; &#39; &#39;Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)&#39;&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/streams/logEventStream&quot; ^</span>
+<span class="go">-d &quot;255.255.255.200 - - [23\Sep\2014:11:45:38 -0400] &#39;GET \cdap.html HTTP\1.0&#39; 2969 &#39; &#39; &#39;Mozilla\4.0 (compatible; MSIE 7.0; Windows NT 5.1)&#39;&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Because it is tedious to send events manually (not to mention difficult to correctly quote
+a multi-line command), a file with sample web log events is included in the WISE
+application source. The CDAP CLI can read it line-by-line and submit them as events
+to the stream. Use the CLI to send the events to the stream:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral56() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral56 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral56", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral56" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load stream logEventStream cdap-wise-0.8.0/resources/apache.accesslog text/plain</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load stream logEventStream cdap-wise-0.8.0/resources/apache.accesslog text/plain</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>If you have downloaded the source code instead of the artifact, the file will be a different location:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral57() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral57 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral57", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral57" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load stream logEventStream cdap-apps/Wise/resources/apache.accesslog text/plain</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load stream logEventStream cdap-apps/Wise/resources/apache.accesslog text/plain</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>This will run for a number of seconds until all events are inserted.</p>
+</div>
+<div class="section" id="inspecting-the-injected-data">
+<h2><a class="headerlink" href="#inspecting-the-injected-data" title="Perma-link to this heading">🔗</a>Inspecting the Injected Data</h2>
+<p>Now that you have data in the stream, you can verify it by reading the events back. Each
+event is tagged with a timestamp of when it was received by CDAP. (Note: this is not the
+same time as the date included in each event—that is the time when the event actually
+occurred on the web server.)</p>
+<p>You can retrieve events from a stream by specifying a time range and a limit on the number
+of events you want to see. For example, using the Command Line Interface, this shows up to 5 events
+in a time range of 3 minutes duration, starting 5 minutes ago:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral58() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral58 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral58", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral58" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh get stream logEventStream -5m +3m 5</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat get stream logEventStream -5m +3m 5</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Results:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+========================================================================================================+</span>
+<span class="go">| timestamp     | headers | body size | body                                                             |</span>
+<span class="go">+========================================================================================================+</span>
+<span class="go">| 1412386081819 |         | 140       | 255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] &quot;GET /cdap.html |</span>
+<span class="go">|               |         |           |  HTTP/1.0&quot; 401 2969 &quot; &quot; &quot;Mozilla/4.0 (compatible; MSIE 7.0; Wind |</span>
+<span class="go">|               |         |           | ows NT 5.1)&quot;                                                     |</span>
+<span class="go">|--------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 1412386081830 |         | 146       | 255.255.255.250 - - [23/Sep/2014:11:45:39 -0400] &quot;POST /quicksta |</span>
+<span class="go">|               |         |           | rt.html HTTP/1.1&quot; 401 837 &quot; &quot; &quot;Googlebot/2.1 ( http://www.google |</span>
+<span class="go">|               |         |           | bot.com/bot.html)&quot;                                               |</span>
+<span class="go">|--------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 1412386081841 |         | 141       | 255.255.255.158 - - [23/Sep/2014:11:45:40 -0400] &quot;GET /index.htm |</span>
+<span class="go">|               |         |           | l HTTP/1.0&quot; 200 2565 &quot; &quot; &quot;Googlebot/2.1 ( http://www.googlebot.c |</span>
+<span class="go">|               |         |           | om/bot.html)&quot;                                                    |</span>
+<span class="go">|--------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 1412386081851 |         | 139       | 255.255.255.211 - - [23/Sep/2014:11:45:41 -0400] &quot;GET /cdap.html |</span>
+<span class="go">|               |         |           |  HTTP/1.0&quot; 200 135 &quot; &quot; &quot;Googlebot/2.1 ( http://www.googlebot.com |</span>
+<span class="go">|               |         |           | /bot.html)&quot;                                                      |</span>
+<span class="go">|--------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 1412386081862 |         | 141       | 255.255.255.135 - - [23/Sep/2014:11:45:44 -0400] &quot;POST /cdap.htm |</span>
+<span class="go">|               |         |           | l HTTP/1.0&quot; 401 3939 &quot; &quot; &quot;Googlebot/2.1 ( http://www.googlebot.c |</span>
+<span class="go">|               |         |           | om/bot.html)&quot;                                                    |</span>
+<span class="go">+========================================================================================================+</span>
+<span class="go">Fetched 5 events from stream logEventStream</span>
+</pre></div>
+</div>
+<p>Note: you may have to adjust the time range according to when you injected the
+events into the stream. The longer after you inject the events, the farther back in time
+you will need to go to find the events:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral59() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral59 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral59", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral59" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh get stream logEventStream -60m +3m 5</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat get stream logEventStream -60m +3m 5</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>The same query can be made using curl with an HTTP request. However, you'll need to adjust the
+start and end of the time range to milliseconds since the start of the Epoch:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral60() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral60 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral60", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral60" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> <span class="s2">&quot;localhost:10000/v3/namespaces/default/streams/logEventStream/events?start=1412386081819\&amp;end=1412386081870\&amp;limit=5&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl &quot;localhost:10000/v3/namespaces/default/streams/logEventStream/events?start=1412386081819\&amp;end=1412386081870\&amp;limit=5&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>The current time in seconds since the start of the Epoch can be found with:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral61() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral61 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral61", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral61" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">date +%s</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">echo.WScript.Echo(DateDiff(&quot;s&quot;, &quot;01/01/1970 00:00:00&quot;, Now())) &gt; t.vbs &amp; cscript /nologo t.vbs &amp; del t.vbs</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Note that it is important to escape the ampersands in the URL of the <code class="docutils literal"><span class="pre">curl</span></code> command to
+prevent the shell from interpreting it as a special character. The RESTful API will return
+the events in a JSON format; there are a <a class="reference external" href="https://www.google.com/search?q=json+pretty+print">variety of tools available</a> to pretty-print it on the
+Command Line.</p>
+</div>
+<div class="section" id="monitoring-with-the-cdap-ui">
+<h2><a class="headerlink" href="#monitoring-with-the-cdap-ui" title="Perma-link to this heading">🔗</a>Monitoring with the CDAP UI</h2>
+<p>You may recall that before we started injecting data into the stream, we started the
+<em>WiseFlow</em> to process these events in real time. You can observe the flow while it is
+processing events by retrieving metrics about how many events it has processed. For that,
+we need to know the name of the flowlet inside the <em>WiseFlow</em> that performs the actual
+processing.</p>
+<p>In this case, it is a flowlet named <em>parser</em>. Here is a <code class="docutils literal"><span class="pre">curl</span></code> command to retreive the
+number of events it has processed (the endTime and the value returned will vary, depending
+on when and how many events you have sent):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral62() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral62 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral62", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral62" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/metrics/query?&quot;</span><span class="se">\</span>
+<span class="go">&quot;context=namespace.default.app.Wise.flow.WiseFlow.flowlet.parser&quot;\</span>
+<span class="go">&quot;&amp;metric=system.process.events.processed&amp;aggregate=true&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/metrics/query?context=namespace.default.app.Wise.flow.WiseFlow.flowlet.parser&amp;metric=system.process.events.processed&amp;aggregate=true&quot;</span></span>
+
+<span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1431467057,&quot;series&quot;:[{&quot;metricName&quot;:&quot;system.process.events.processed&quot;,&quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:3007}]}]}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>A much easier way to observe the flow is in the <a class="reference external" href="http://localhost:9999">CDAP UI:</a>
+it shows a <a class="reference external" href="http://localhost:9999/ns/default/apps/Wise/programs/flows/WiseFlow/runs">visualization of the flow,</a>
+annotated with its real-time metrics:</p>
+<a class="reference internal image-reference" href="../_images/wise-flow1.png"><img alt="../_images/wise-flow1.png" src="../_images/wise-flow1.png" style="width: 600px;" /></a>
+<p>In this screenshot, we see that the stream has thousands of events and all of them
+have been processed by both flowlets. You can watch these metrics update in real time by
+repeating the injection of events into the stream:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral63() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral63 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral63", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral63" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load stream logEventStream cdap-wise-0.8.0/resources/apache.accesslog text/plain</span>
+
+<span class="go">or</span>
+
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load stream logEventStream cdap-apps/Wise/resources/apache.accesslog text/plain</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load stream logEventStream cdap-wise-0.8.0/resources/apache.accesslog text/plain</span></span>
+
+<span class="go">or</span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load stream logEventStream cdap-apps/Wise/resources/apache.accesslog text/plain</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>If you double-click on the right-most flowlet (<em>pageViewCount</em>) you see the current number of
+events being processed by each flowlet:</p>
+<a class="reference internal image-reference" href="../_images/wise-flow2.png"><img alt="../_images/wise-flow2.png" src="../_images/wise-flow2.png" style="width: 600px;" /></a>
+</div>
+<div class="section" id="retrieving-the-results-of-processing">
+<h2><a class="headerlink" href="#retrieving-the-results-of-processing" title="Perma-link to this heading">🔗</a>Retrieving the Results of Processing</h2>
+<p>The flow counts URL requests by the origin IP address, using a dataset called
+<em>pageViewStore</em>. To make these counts available, the application implements a service called
+<em>WiseService</em>. Before we can use this service, we need to make sure that it is running. We
+can start the service using the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral64() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral64 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral64", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral64" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start service Wise.WiseService</span>
+
+<span class="go">Successfully started Service &#39;WiseService&#39; of application &#39;Wise&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start service Wise.WiseService</span></span>
+
+<span class="go">Successfully started Service &#39;WiseService&#39; of application &#39;Wise&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Or, using RESTful calls:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral65() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral65 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral65", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral65" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/start&quot;</span></span>
+
+<span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X GET <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/status&quot;</span></span>
+
+<span class="go">{&quot;status&quot;:&quot;RUNNING&quot;}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/start&quot;</span></span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X GET &quot;localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/status&quot;</span></span>
+
+<span class="go">{&quot;status&quot;:&quot;RUNNING&quot;}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Now that the service is running, we can query it to find out the current count for a
+particular IP address. For example, the data injected by our script contains this line
+(reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">255.255.255.239 - - [23/Sep/2014:11:46:05 -0400] &quot;POST /home.html HTTP/1.1&quot;</span>
+<span class="go">  401 2620 &quot; &quot; &quot;Opera/9.20 (Windows NT 6.0; U; en)&quot;</span>
+</pre></div>
+</div>
+<p>To find out the total number of page views from this IP address, we can query the service
+using a REST call:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral66() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral66 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral66", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral66" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count&quot;</span></span>
+<span class="go">42</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl &quot;localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count&quot;</span></span>
+<span class="go">42</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Or, we can find out how many times the URL <code class="docutils literal"><span class="pre">/home.html</span></code> was accessed from the same IP address:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral67() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral67 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral67", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral67" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count&quot;</span> <span class="se">\</span>
+<span class="go">-d &quot;/home.html&quot;</span></span>
+<span class="go">6</span>
+
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh call service Wise.WiseService POST ip/255.255.255.249/count body <span class="s2">&quot;/home.html&quot;</span></span>
+
+<span class="go">&lt; 200 OK</span>
+<span class="go">&lt; Content-Length: 2</span>
+<span class="go">&lt; Connection: keep-alive</span>
+<span class="go">&lt; Content-Type: application/json</span>
+<span class="go">6</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count&quot; ^</span>
+<span class="go">-d &quot;/home.html&quot;</span></span>
+<span class="go">6</span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat call service Wise.WiseService POST ip/255.255.255.249/count body &quot;/home.html&quot;</span></span>
+
+<span class="go">&lt; 200 OK</span>
+<span class="go">&lt; Content-Length: 2</span>
+<span class="go">&lt; Connection: keep-alive</span>
+<span class="go">&lt; Content-Type: application/json</span>
+<span class="go">6</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Note that this is a POST request, because we need to send over the URL of interest.
+Because an URL can contain characters that have special meaning within URLs, it is most
+convenient to send the URL as the body of a POST request.</p>
+<p>We can also use SQL to bypass the service and query the raw contents of the underlying
+table (reformatted to fit):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral68() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral68 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral68", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral68" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh execute <span class="s2">&quot;\&quot;SELECT * FROM dataset_pageviewstore WHERE key = &#39;255.255.255.249&#39;\&quot;&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat execute &quot;\&quot;SELECT * FROM dataset_pageviewstore WHERE key = &#39;255.255.255.249&#39;\&quot;&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Results:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+============================================================================================+</span>
+<span class="go">| dataset_pageviewstore.key: STRING | dataset_pageviewstore.value: map&lt;string,bigint&gt;        |</span>
+<span class="go">+============================================================================================+</span>
+<span class="go">| 255.255.255.249                   | {&quot;/about.html&quot;:2,&quot;/world.html&quot;:4,&quot;/index.html&quot;:14,     |</span>
+<span class="go">|                                   | &quot;/news.html&quot;:4,&quot;/team.html&quot;:2,&quot;/cdap.html&quot;:4,          |</span>
+<span class="go">|                                   | &quot;/contact.html&quot;:2,&quot;/home.html&quot;:6,&quot;/developers.html&quot;:4} |</span>
+<span class="go">+============================================================================================+</span>
+</pre></div>
+</div>
+<p>Here we can see that the storage format is one table row per IP address, with a column for
+each URL that was requested from that IP address. This is an implementation detail that
+the service hides from external clients. However, there are situations where inspecting
+the underlying table is useful; for example, when debugging a problem.</p>
+</div>
+<div class="section" id="processing-in-batch">
+<h2><a class="headerlink" href="#processing-in-batch" title="Perma-link to this heading">🔗</a>Processing in Batch</h2>
+<p>The WISE application also processes the web log to compute the “bounce count” of each URL.
+For this purpose, we consider it a “bounce” if a user views a page but does not view
+another page within a time threshold: essentially, that means the user has left the web site.</p>
+<p>Bounces are difficult to detect with a flow. This is because processing in a flow is
+triggered by incoming events; a bounce, however, is indicated by the absence of an event:
+the same user’s next page view.</p>
+<p>It is much easier to detect bounces with a MapReduce. The WISE application includes a
+MapReduce that computes the total number of bounces for each URL. It is part of a workflow
+that is scheduled to run every 10 minutes; we can also start the job immediately using the
+CLI:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral69() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral69 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral69", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral69" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start mapreduce Wise.BounceCountsMapReduce</span>
+
+<span class="go">Successfully started MapReduce program &#39;BounceCountsMapReduce&#39; of application &#39;Wise&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start mapreduce Wise.BounceCountsMapReduce</span></span>
+
+<span class="go">Successfully started MapReduce program &#39;BounceCountsMapReduce&#39; of application &#39;Wise&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>or using a RESTful call:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral70() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral70 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral70", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral70" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/Wise/mapreduce/BounceCountsMapReduce/start&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/apps/Wise/mapreduce/BounceCountsMapReduce/start&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Note that this MapReduce program processes the exact same data that is consumed by the
+<em>WiseFlow</em>, namely, the log event stream, and both programs can run at the same time without
+getting in each other’s way.</p>
+<p>We can inquire as to the status of the MapReduce:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral71() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral71 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral71", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral71" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> <span class="s2">&quot;localhost:10000/v3/namespaces/default/apps/Wise/mapreduce/BounceCountsMapReduce/status&quot;</span></span>
+
+<span class="go">{&quot;status&quot;:&quot;RUNNING&quot;}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl &quot;localhost:10000/v3/namespaces/default/apps/Wise/mapreduce/BounceCountsMapReduce/status&quot;</span></span>
+
+<span class="go">{&quot;status&quot;:&quot;RUNNING&quot;}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>When the job has finished, the returned status will be <em>STOPPED</em>. Now we can query the
+bounce counts with SQL. Let's take a look at the schema first:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral72() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral72 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral72", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral72" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh execute <span class="s2">&quot;\&quot;DESCRIBE dataset_bouncecountstore\&quot;&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat execute &quot;\&quot;DESCRIBE dataset_bouncecountstore\&quot;&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Results:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+==========================================================+</span>
+<span class="go">| col_name: STRING | data_type: STRING | comment: STRING   |</span>
+<span class="go">+==========================================================+</span>
+<span class="go">| uri              | string            | from deserializer |</span>
+<span class="go">| totalvisits      | bigint            | from deserializer |</span>
+<span class="go">| bounces          | bigint            | from deserializer |</span>
+<span class="go">+==========================================================+</span>
+</pre></div>
+</div>
+<p>For example, to get the five URLs with the highest bounce-to-visit ratio (or bounce rate):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral73() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral73 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral73", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral73" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh execute <span class="s2">&quot;\&quot;SELECT uri, bounces/totalvisits AS ratio \</span>
+<span class="go">FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 5\&quot;&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat execute &quot;\&quot;SELECT uri, bounces/totalvisits AS ratio ^</span>
+<span class="go">FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 5\&quot;&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Results:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+===================================+</span>
+<span class="go">| uri: STRING | ratio: DOUBLE       |</span>
+<span class="go">+===================================+</span>
+<span class="go">| /cdap.html  | 0.18867924528301888 |</span>
+<span class="go">| /world.html | 0.1875              |</span>
+<span class="go">| /news.html  | 0.18545454545454546 |</span>
+<span class="go">| /team.html  | 0.18181818181818182 |</span>
+<span class="go">| /intro.html | 0.18072289156626506 |</span>
+<span class="go">+===================================+</span>
+</pre></div>
+</div>
+<p>Apparently, the <code class="docutils literal"><span class="pre">/cdap.html</span></code> has the highest bounce rate of all the URLs.</p>
+<p>We can also use the full power of the <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual">Hive query language</a> in formulating our
+queries. For example, Hive allows us to explode the page view counts into a table with
+fixed columns:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral74() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral74 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral74", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral74" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh execute <span class="s2">&quot;\&quot;SELECT key AS ip, uri, count FROM dataset_pageviewstore \</span>
+<span class="go">LATERAL VIEW explode(value) t AS uri,count ORDER BY count DESC LIMIT 10\&quot;&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat execute &quot;\&quot;SELECT key AS ip, uri, count FROM dataset_pageviewstore ^</span>
+<span class="go">LATERAL VIEW explode(value) t AS uri,count ORDER BY count DESC LIMIT 10\&quot;&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Results:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+====================================================+</span>
+<span class="go">| ip: STRING      | uri: STRING      | count: BIGINT |</span>
+<span class="go">+====================================================+</span>
+<span class="go">| 255.255.255.113 | /home.html       | 9             |</span>
+<span class="go">| 255.255.255.131 | /home.html       | 9             |</span>
+<span class="go">| 255.255.255.246 | /quickstart.html | 8             |</span>
+<span class="go">| 255.255.255.153 | /quickstart.html | 8             |</span>
+<span class="go">| 255.255.255.236 | /quickstart.html | 8             |</span>
+<span class="go">| 255.255.255.181 | /index.html      | 8             |</span>
+<span class="go">| 255.255.255.198 | /index.html      | 7             |</span>
+<span class="go">| 255.255.255.249 | /index.html      | 7             |</span>
+<span class="go">| 255.255.255.194 | /cdap.html       | 7             |</span>
+<span class="go">| 255.255.255.180 | /index.html      | 7             |</span>
+<span class="go">+====================================================+</span>
+</pre></div>
+</div>
+<p>We can even join two datasets: the one produced by the real-time flow; and the other one
+produced by the MapReduce. The query below returns, for each of the three URLs with the
+highest bounce ratio, the IP addresses that have made more than three requests for that
+URL. In other words: who are the users who are most interested in the least interesting
+pages?</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral75() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral75 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral75", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral75" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh execute <span class="s2">&quot;\&quot;SELECT views.uri, ratio, ip, count FROM \</span>
+<span class="go">     (SELECT uri, totalvisits/bounces AS ratio \</span>
+<span class="go">        FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 3) bounce, \</span>
+<span class="go">     (SELECT key AS ip, uri, count \</span>
+<span class="go">        FROM dataset_pageviewstore LATERAL VIEW explode(value) t AS uri,count) views \</span>
+<span class="go">  WHERE views.uri = bounce.uri AND views.count &gt;= 3\&quot;&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat execute \&quot;SELECT views.uri, ratio, ip, count FROM (SELECT uri, totalvisits/bounces AS ratio FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 3) bounce, (SELECT key AS ip, uri, count FROM dataset_pageviewstore LATERAL VIEW explode(value) t AS uri,count) views WHERE views.uri = bounce.uri AND views.count &gt;= 3\&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Results:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+=========================================================================+</span>
+<span class="go">| views.uri: STRING | ratio: DOUBLE     | ip: STRING      | count: BIGINT |</span>
+<span class="go">+=========================================================================+</span>
+<span class="go">| /contact.html     | 8.666666666666666 | 255.255.255.166 | 3             |</span>
+<span class="go">| /contact.html     | 8.666666666666666 | 255.255.255.199 | 3             |</span>
+<span class="go">| /contact.html     | 8.666666666666666 | 255.255.255.216 | 3             |</span>
+<span class="go">| /about.html       | 7.333333333333333 | 255.255.255.227 | 3             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.105 | 3             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.106 | 6             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.107 | 4             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.111 | 5             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.112 | 5             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.113 | 9             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.114 | 5             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.115 | 4             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.117 | 4             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.118 | 3             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.120 | 3             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.123 | 5             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.124 | 5             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.126 | 5             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.127 | 4             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.129 | 4             |</span>
+<span class="go">+=========================================================================+</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="conclusion">
+<h2><a class="headerlink" href="#conclusion" title="Perma-link to this heading">🔗</a>Conclusion</h2>
+<p>Congratulations! You've just successfully run your first Big Data log analytics application on CDAP.</p>
+<p>You can deploy the same application on a real cluster and experience the power of CDAP.</p>
+<p>Additional <a class="reference external" href="../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">examples</span></a>, <a class="reference external" href="../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">guides</span></a>, and
+<a class="reference external" href="../source/../../examples-manual/tutorials/index.html#tutorials" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">tutorials</span></a> on building CDAP applications <a class="reference external" href="../source/../../examples-manual/index.html#examples-introduction-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">are available</span></a>.</p>
+<p>As a next step, we recommend reviewing all of these <a class="reference external" href="../source/../../examples-manual/index.html#examples-introduction-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">training materials</span></a>
+as being the easiest way to become familiar and proficient with CDAP.</p>
+<p>If you want to begin writing your own application, continue with the instructions on the
+<a class="reference internal" href="index.html#getting-started-index"><span>Getting Started</span></a> page.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Getting Started Developing</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="standalone/index.html">CDAP SDK</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Quick Start</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#download-install-and-start-cdap">Download, Install and Start CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#your-first-cdap-application">Your First CDAP Application</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#conventions">Conventions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#downloading-the-artifact">Downloading the Artifact</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deploying-the-application">Deploying the Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#starting-real-time-processing">Starting Real-time Processing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#injecting-data">Injecting Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#inspecting-the-injected-data">Inspecting the Injected Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#monitoring-with-the-cdap-ui">Monitoring with the CDAP UI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#retrieving-the-results-of-processing">Retrieving the Results of Processing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#processing-in-batch">Processing in Batch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#conclusion">Conclusion</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dev-env.html">Development Environment Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="start-stop-cdap.html">Starting and Stopping CDAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building-apps.html">Building and Running Applications</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Docker Image" href="standalone/docker.html" />Docker Image</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Development Environment Setup" href="dev-env.html" />Development Environment Setup</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

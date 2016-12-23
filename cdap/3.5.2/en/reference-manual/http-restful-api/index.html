@@ -1,0 +1,551 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>CDAP HTTP RESTful API v3 &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/http-restful-api/index.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+        <link rel="stylesheet" href="../_static/hide-toc.css" type="text/css" />
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="next" title="Introduction" href="introduction.html" />
+    <link rel="prev" title="Command Line Interface API" href="../cli-api.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="../cli-api.html" title="Command Line Interface API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Reference Manual</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cdap-http-restful-api-v3">
+<span id="http-restful-api-v3"></span><span id="restful-api"></span><span id="http-restful-api"></span><h1><a class="headerlink" href="#cdap-http-restful-api-v3" title="Perma-link to this heading">🔗</a>CDAP HTTP RESTful API v3</h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#conventions">Conventions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="introduction.html#base-url">Base URL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="introduction.html#variable-replacement">Variable Replacement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="introduction.html#reserved-and-unsafe-characters">Reserved and Unsafe Characters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="introduction.html#names-and-characters-for-namespace-identifiers">Names and Characters for Namespace Identifiers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#status-codes">Status Codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#converting-from-v2-apis">Converting from V2 APIs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#working-with-cdap-security">Working with CDAP Security</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="artifact.html">Artifact</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#add-an-artifact">Add an Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#list-available-artifacts">List Available Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#list-artifact-versions">List Artifact Versions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#retrieve-artifact-details">Retrieve Artifact Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#set-artifact-properties">Set Artifact Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#set-an-artifact-property">Set an Artifact Property</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#retrieve-artifact-properties">Retrieve Artifact Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#retrieve-an-artifact-property">Retrieve an Artifact Property</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#delete-artifact-properties">Delete Artifact Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#delete-an-artifact-property">Delete an Artifact Property</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#list-extensions-plugin-types-available-to-an-artifact">List Extensions (Plugin Types) available to an Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#list-plugins-available-to-an-artifact">List Plugins available to an Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#retrieve-plugin-details">Retrieve Plugin Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#delete-an-artifact">Delete an Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#load-system-artifacts">Load System Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#delete-a-system-artifact">Delete a System Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#list-application-classes">List Application Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html#retrieve-application-class-details">Retrieve Application Class Details</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#cdap-version">CDAP Version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#cdap-configurations">CDAP Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#hbase-configurations">HBase Configurations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dataset.html">Dataset</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#listing-all-datasets">Listing all Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#creating-a-dataset">Creating a Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#properties-of-an-existing-dataset">Properties of an Existing Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#updating-an-existing-dataset">Updating an Existing Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#deleting-a-dataset">Deleting a Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#deleting-all-datasets">Deleting all Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#truncating-a-dataset">Truncating a Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#datasets-used-by-an-application">Datasets used by an Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#datasets-used-by-a-program">Datasets used by a Program</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#programs-using-a-dataset">Programs using a Dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="lifecycle.html">Lifecycle</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html#application-lifecycle">Application Lifecycle</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#create-an-application">Create an Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#update-an-application">Update an Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#deploy-an-artifact-and-application">Deploy an Artifact and Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#deployed-applications">Deployed Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#details-of-a-deployed-application">Details of a Deployed Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#delete-an-application">Delete an Application</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html#program-lifecycle">Program Lifecycle</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#details-of-a-program">Details of a Program</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#start-a-program">Start a Program</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#start-multiple-programs">Start Multiple Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#stop-a-program">Stop a Program</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#stop-a-program-run">Stop a Program Run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#stop-multiple-programs">Stop Multiple Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#status-of-a-program">Status of a Program</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#status-of-multiple-programs">Status of Multiple Programs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html#container-information">Container Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html#scaling">Scaling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#scaling-flowlets">Scaling Flowlets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#scaling-services">Scaling Services</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#scaling-workers">Scaling Workers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html#run-records-and-schedules">Run Records and Schedules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#retrieving-specific-run-information">Retrieving Specific Run Information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#schedules-suspend-and-resume">Schedules: Suspend and Resume</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html#workflow-runs-suspend-and-resume">Workflow Runs: Suspend and Resume</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">Logging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="logging.html#downloading-application-logs">Downloading Application Logs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html#downloading-application-logs-for-a-run">Downloading Application Logs for a Run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html#downloading-system-logs">Downloading System Logs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html#formatting-and-filtering">Formatting and Filtering</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="logging.html#formatting">Formatting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging.html#filtering">Filtering</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="metadata.html">Metadata</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#metadata-properties">Metadata Properties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#annotating-properties">Annotating Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#retrieving-properties">Retrieving Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#deleting-properties">Deleting Properties</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#metadata-tags">Metadata Tags</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#adding-tags">Adding Tags</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#retrieving-tags">Retrieving Tags</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#removing-tags">Removing Tags</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#searching-for-metadata">Searching for Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#viewing-lineages">Viewing Lineages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="metadata.html#collapsing-lineage-output">Collapsing Lineage Output</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html#retrieving-metadata-for-a-program-run">Retrieving Metadata for a Program Run</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">Metrics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html#metrics-data">Metrics Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="metrics.html#available-contexts">Available Contexts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metrics.html#available-system-metrics">Available System Metrics</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html#searches-and-queries">Searches and Queries</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="metrics.html#search-for-contexts">Search for Contexts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metrics.html#search-for-metrics">Search for Metrics</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html#querying-a-metric">Querying a Metric</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="metrics.html#query-examples">Query Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metrics.html#query-results">Query Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metrics.html#querying-for-multiple-metrics">Querying for Multiple Metrics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="metrics.html#multiple-metrics-with-the-same-context">Multiple Metrics with the Same Context</a></li>
+<li class="toctree-l4"><a class="reference internal" href="metrics.html#multiple-metrics-with-different-contexts">Multiple Metrics with Different Contexts</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="metrics.html#querying-for-multiple-time-series">Querying for Multiple Time-series</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metrics.html#querying-by-a-time-range">Querying by a Time Range</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metrics.html#querying-by-run-id">Querying by Run-ID</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metrics.html#query-tips">Query Tips</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="monitor.html">Monitor</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html#listing-all-system-services-and-their-details">Listing all System Services and their Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html#checking-the-status-of-all-system-services">Checking the Status of all System Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html#checking-the-status-of-a-system-service">Checking the Status of a System Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html#container-information-of-a-system-service">Container Information of a System Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html#restarting-system-service-instances">Restarting System Service Instances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html#scaling-system-services">Scaling System Services</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="namespace.html">Namespace</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html#create-a-namespace">Create a Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html#list-existing-namespaces">List Existing Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html#details-of-a-namespace">Details of a Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html#editing-a-namespace">Editing a Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html#deleting-a-namespace">Deleting a Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html#namespace-configurations">Namespace Configurations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="preferences.html">Preferences</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html#set-preferences">Set Preferences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html#get-preferences">Get Preferences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html#delete-preferences">Delete Preferences</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="query.html">Query</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="query.html#submitting-a-query">Submitting a Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html#status-of-a-query">Status of a Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html#obtaining-the-result-schema">Obtaining the Result Schema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html#retrieving-query-results">Retrieving Query Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html#closing-a-query">Closing a Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html#list-of-queries">List of Queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html#count-of-active-queries">Count of Active Queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html#download-query-results">Download Query Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html#enabling-and-disabling-querying">Enabling and Disabling Querying</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="security.html">Security</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="security.html#authorization">Authorization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="security.html#grant-privileges">Grant Privileges</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#revoke-privileges">Revoke Privileges</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#list-privileges">List Privileges</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="security.html#secure-storage">Secure Storage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="security.html#add-a-secure-key">Add a Secure Key</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#retrieve-a-secure-key">Retrieve a Secure Key</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#retrieve-the-metadata-for-a-secure-key">Retrieve the Metadata for a Secure Key</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#list-all-secure-keys">List all Secure Keys</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#remove-a-secure-key">Remove a Secure Key</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="service.html">Service</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="service.html#listing-all-services">Listing all Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html#checking-service-availability">Checking Service Availability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html#requesting-service-methods">Requesting Service Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="stream.html">Stream</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#creating-a-stream">Creating a Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#sending-events-to-a-stream">Sending Events to a Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#sending-events-to-a-stream-in-batch">Sending Events to a Stream in Batch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#reading-events-from-a-stream">Reading Events from a Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#truncating-a-stream">Truncating a Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#deleting-a-stream">Deleting a Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#getting-and-setting-stream-properties">Getting and Setting Stream Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#streams-used-by-an-application">Streams used by an Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#streams-used-by-a-program">Streams used by a Program</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html#programs-using-a-stream">Programs using a Stream</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="transactions.html">Transactions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html#number-of-invalid-transactions">Number of Invalid Transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html#truncate-invalid-transactions-by-time">Truncate Invalid Transactions by Time</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="views.html">Views</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="views.html#creating-a-stream-view">Creating a Stream View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html#listing-stream-views">Listing Stream Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html#details-of-a-stream-view">Details of a Stream View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html#deleting-a-stream-view">Deleting a Stream View</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html#workflow-tokens">Workflow Tokens</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="workflow.html#obtaining-a-token-s-values">Obtaining a Token's Values</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html#workflow-local-datasets">Workflow Local Datasets</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="workflow.html#listing-local-datasets">Listing Local Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="workflow.html#deleting-local-datasets">Deleting Local Datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html#workflow-state">Workflow State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html#workflow-statistics">Workflow Statistics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="workflow.html#statistics-of-successful-runs">Statistics of Successful Runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="workflow.html#comparing-a-run-to-runs-before-and-after">Comparing a Run to Runs Before and After</a></li>
+<li class="toctree-l3"><a class="reference internal" href="workflow.html#comparing-two-runs">Comparing Two Runs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<p>The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude of
+purposes: from sending data events to a stream and inspecting the contents of a
+stream through checking the status of system and custom CDAP services. V3 of the
+API includes the namespacing of applications, data, and metadata to achieve application and
+data isolation. This is an inital step towards introducing <a class="reference external" href="http://en.wikipedia.org/wiki/Multitenancy">multi-tenancy</a> into CDAP.</p>
+<p><strong>Introduction</strong></p>
+<ul class="simple">
+<li><a class="reference internal" href="introduction.html"><em>Introduction:</em></a> conventions, converting from HTTP RESTful API v2, naming restrictions, status codes, and working with CDAP security</li>
+</ul>
+<p><strong>General APIs</strong></p>
+<ul class="simple">
+<li><a class="reference internal" href="namespace.html"><em>Namespace:</em></a> creating and managing namespaces</li>
+<li><a class="reference internal" href="metadata.html"><em>Metadata:</em></a> setting, retrieving, and deleting user metadata annotations</li>
+<li><a class="reference internal" href="preferences.html"><em>Preferences:</em></a> setting, retrieving, and deleting preferences</li>
+<li><a class="reference internal" href="configuration.html"><em>Configuration:</em></a> retrieving the CDAP and HBase configurations</li>
+<li><a class="reference internal" href="security.html"><em>Security:</em></a> granting, revoking and listing privileges on CDAP entities, managing secure storage</li>
+<li><a class="reference internal" href="transactions.html"><em>Transactions:</em></a> interacting with the transaction service</li>
+</ul>
+<p><strong>Major CDAP Entities APIs</strong></p>
+<ul class="simple">
+<li><a class="reference internal" href="artifact.html"><em>Artifact:</em></a> deploying artifacts and retrieving details about plugins available to artifacts and classes contained within artifacts</li>
+<li><a class="reference internal" href="lifecycle.html"><em>Lifecycle:</em></a> deploying and managing applications, and managing the lifecycle of flows, MapReduce programs, Spark programs, workflows, and custom services</li>
+<li><a class="reference internal" href="stream.html"><em>Stream:</em></a> sending data events to a stream or to inspect the contents of a stream</li>
+<li><a class="reference internal" href="dataset.html"><em>Dataset:</em></a> interacting with datasets, dataset modules, and dataset types</li>
+<li><a class="reference internal" href="service.html"><em>Service:</em></a> supports making requests to the methods of an application’s services</li>
+<li><a class="reference internal" href="workflow.html"><em>Workflow:</em></a> retrieving values from workflow tokens and statistics on workflow runs</li>
+</ul>
+<p><strong>Querying and Viewing APIs</strong></p>
+<ul class="simple">
+<li><a class="reference internal" href="query.html"><em>Query:</em></a> sending ad-hoc queries to CDAP datasets</li>
+<li><a class="reference internal" href="views.html"><em>Views:</em></a> a read-only view of a stream, with a specific read format</li>
+</ul>
+<p><strong>Logging, Metrics, and Monitoring APIs</strong></p>
+<ul class="simple">
+<li><a class="reference internal" href="logging.html"><em>Logging:</em></a> retrieving application logs</li>
+<li><a class="reference internal" href="metrics.html"><em>Metrics:</em></a> retrieving metrics for system and user applications (user-defined metrics)</li>
+<li><a class="reference internal" href="monitor.html"><em>Monitor:</em></a> checking the status of various system and custom CDAP services</li>
+</ul>
+<p class="rubric">Alphabetical List of APIs</p>
+<ul class="simple">
+<li><a class="reference internal" href="introduction.html"><em>Introduction:</em></a> conventions, converting from HTTP RESTful API v2, naming restrictions, status codes, and working with CDAP security</li>
+</ul>
+<ul class="simple">
+<li><a class="reference internal" href="artifact.html"><em>Artifact:</em></a> deploying artifacts and retrieving details about plugins available to artifacts and classes contained within artifacts</li>
+<li><a class="reference internal" href="configuration.html"><em>Configuration:</em></a> retrieving the CDAP and HBase configurations</li>
+<li><a class="reference internal" href="dataset.html"><em>Dataset:</em></a> interacting with datasets, dataset modules, and dataset types</li>
+<li><a class="reference internal" href="lifecycle.html"><em>Lifecycle:</em></a> deploying and managing applications, and managing the lifecycle of flows, MapReduce programs, Spark programs, workflows, and custom services</li>
+<li><a class="reference internal" href="logging.html"><em>Logging:</em></a> retrieving application logs</li>
+<li><a class="reference internal" href="metadata.html"><em>Metadata:</em></a> setting, retrieving, and deleting user metadata annotations</li>
+<li><a class="reference internal" href="metrics.html"><em>Metrics:</em></a> retrieving metrics for system and user applications (user-defined metrics)</li>
+<li><a class="reference internal" href="monitor.html"><em>Monitor:</em></a> checking the status of various system and custom CDAP services</li>
+<li><a class="reference internal" href="namespace.html"><em>Namespace:</em></a> creating and managing namespaces</li>
+<li><a class="reference internal" href="preferences.html"><em>Preferences:</em></a> setting, retrieving, and deleting preferences</li>
+<li><a class="reference internal" href="query.html"><em>Query:</em></a> sending ad-hoc queries to CDAP datasets</li>
+<li><a class="reference internal" href="security.html"><em>Security:</em></a> granting, revoking, and listing privileges, as well as adding, retrieving,
+and managing <em>Secure Keys</em></li>
+<li><a class="reference internal" href="service.html"><em>Service:</em></a> supports making requests to the methods of an application’s services</li>
+<li><a class="reference internal" href="stream.html"><em>Stream:</em></a> sending data events to a stream or to inspect the contents of a stream</li>
+<li><a class="reference internal" href="transactions.html"><em>Transactions:</em></a> interacting with the transaction service</li>
+<li><a class="reference internal" href="views.html"><em>Views:</em></a> a read-only view of a stream, with a specific read format</li>
+<li><a class="reference internal" href="workflow.html"><em>Workflow:</em></a> retrieving values from workflow tokens and statistics on workflow runs</li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> HTTP RESTful API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html">Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html">Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security.html">Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html">Transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Command Line Interface API" href="../cli-api.html" />Command Line Interface API</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Introduction" href="introduction.html" />Introduction</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

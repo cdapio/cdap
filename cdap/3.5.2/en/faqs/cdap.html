@@ -1,0 +1,558 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Frequently Asked Questions about starting the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>FAQs: CDAP &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/faqs/cdap.html">
+
+    
+    <link rel="stylesheet" href="_static/cdap-faqs.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="index.html" />
+    <link rel="next" title="FAQs: Cloudera Manager" href="cloudera-manager.html" />
+    <link rel="prev" title="FAQs: General Questions" href="general.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cloudera-manager.html" title="FAQs: Cloudera Manager"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="general.html" title="FAQs: General Questions"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="table-of-contents.html">FAQs</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="faqs-cdap">
+<span id="id1"></span><h1><a class="headerlink" href="#faqs-cdap" title="Perma-link to this heading">🔗</a>FAQs: CDAP</h1>
+<p class="rubric">Configuration: General</p>
+<div class="section" id="what-are-the-memory-and-core-requirements-for-cdap">
+<span id="faq-installation-startup-memory-core-requirements"></span><h2><a class="headerlink" href="#what-are-the-memory-and-core-requirements-for-cdap" title="Perma-link to this heading">🔗</a>What are the memory and core requirements for CDAP?</h2>
+<p>The requirements are governed by two sources: CDAP and YARN, and the requirements are
+<a class="reference external" href="source/../../admin-manual/system-requirements.html#admin-manual-memory-core-requirements" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">described here</span></a>.</p>
+</div>
+<div class="section" id="how-do-i-set-the-cdap-properties-for-components-running-on-multiple-machines">
+<h2><a class="headerlink" href="#how-do-i-set-the-cdap-properties-for-components-running-on-multiple-machines" title="Perma-link to this heading">🔗</a>How do I set the CDAP properties for components running on multiple machines?</h2>
+<p>In the configuration file <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>, there are numerous properties that specify an
+IP address where a service is running, such as <code class="docutils literal"><span class="pre">router.server.address</span></code>,
+<code class="docutils literal"><span class="pre">metrics.query.bind.address</span></code>, <code class="docutils literal"><span class="pre">data.tx.bind.address</span></code>, <code class="docutils literal"><span class="pre">app.bind.address</span></code>,
+<code class="docutils literal"><span class="pre">router.bind.address</span></code>.</p>
+<p>Our convention is that:</p>
+<ul class="simple">
+<li><em>*.bind.*</em> properties are what services use during startup to listen on a particular interface/port.</li>
+<li><em>*.server.*</em> properties are used by clients to connect to another (potentially remote) service.</li>
+</ul>
+<p>For <em>*.bind.address</em> properties, it is often easiest just to set these to <code class="docutils literal"><span class="pre">'0.0.0.0'</span></code>
+to listen on all interfaces.</p>
+<p>The <em>*.server.*</em> properties are used by clients to connect to another remote service.
+The only one you should need to configure initially is <code class="docutils literal"><span class="pre">router.server.address</span></code>, which is
+used by the UI to connect to the router.  As an example, ideally routers running in
+production would have a load balancer in front, which is what you would set
+<code class="docutils literal"><span class="pre">router.server.address</span></code> to. Alternatively, you could configure each UI instance to point
+to a particular router, and if you have both UI and router running on each node, you could
+use <code class="docutils literal"><span class="pre">'127.0.0.1'</span></code>.</p>
+</div>
+<div class="section" id="how-do-i-use-yarn-with-the-linux-container-executor">
+<h2><a class="headerlink" href="#how-do-i-use-yarn-with-the-linux-container-executor" title="Perma-link to this heading">🔗</a>How do I use YARN with the Linux Container Executor?</h2>
+<p>If you have YARN configured to use <code class="docutils literal"><span class="pre">LinuxContainerExecutor</span></code> (see the setting for
+<code class="docutils literal"><span class="pre">yarn.nodemanager.container-executor.class</span></code>):</p>
+<ul>
+<li><p class="first">The <code class="docutils literal"><span class="pre">cdap</span></code> user needs to be present on all Hadoop nodes.</p>
+</li>
+<li><p class="first">When using a <code class="docutils literal"><span class="pre">LinuxContainerExecutor</span></code>, if the UID for the <code class="docutils literal"><span class="pre">cdap</span></code> user is less than
+500, you will need to add the <code class="docutils literal"><span class="pre">cdap</span></code> user to the allowed users configuration for the
+<code class="docutils literal"><span class="pre">LinuxContainerExecutor</span></code> in YARN by editing the <code class="docutils literal"><span class="pre">/etc/hadoop/conf/container-executor.cfg</span></code>
+file. Change the line for <code class="docutils literal"><span class="pre">allowed.system.users</span></code> to:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">allowed.system.users=cdap</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="where-is-the-cdap-cli-command-line-interface-in-distributed-mode">
+<h2><a class="headerlink" href="#where-is-the-cdap-cli-command-line-interface-in-distributed-mode" title="Perma-link to this heading">🔗</a>Where is the CDAP CLI (Command Line Interface) in Distributed mode?</h2>
+<p>If you've installed the <code class="docutils literal"><span class="pre">cdap-cli</span></code> RPM or DEB, it's located under <code class="docutils literal"><span class="pre">/opt/cdap/cli/bin</span></code>.
+If you have installed CDAP manually (without using Cloudera Manager or Apache Ambari),
+you can add this location to your PATH to prevent the need for specifying the entire script every time.</p>
+<p><strong>Note:</strong> These commands will list the contents of the package <code class="docutils literal"><span class="pre">cdap-cli</span></code>, once it has
+been installed:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> rpm -ql cdap-cli
+<span class="gp">$</span> dpkg -L cdap-cli
+</pre></div>
+</div>
+<p class="rubric">Installation: YARN</p>
+</div>
+<div class="section" id="i-ve-followed-the-install-instructions-yet-cdap-does-not-start-and-fails-verification-what-next">
+<h2><a class="headerlink" href="#i-ve-followed-the-install-instructions-yet-cdap-does-not-start-and-fails-verification-what-next" title="Perma-link to this heading">🔗</a>I've followed the install instructions, yet CDAP does not start and fails verification. What next?</h2>
+<p>If you have followed <a class="reference external" href="source/../../admin-manual/installation/index.html#installation-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">the installation instructions</span></a>, and CDAP either did not pass the
+<a class="reference external" href="source/../../admin-manual/verification.html#admin-manual-verification" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">verification step</span></a> or did not startup, check:</p>
+<ul>
+<li><p class="first">Look in the CDAP logs for error messages (located either in <code class="docutils literal"><span class="pre">/var/log/cdap</span></code> for CDAP Distributed or
+<code class="docutils literal"><span class="pre">$CDAP_HOME/logs</span></code> for CDAP SDK Standalone)</p>
+</li>
+<li><p class="first">If you see an error such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">ERROR [main:c.c.c.StandaloneMain@268] - Failed to start Standalone CDAP</span>
+<span class="go">java.lang.NoSuchMethodError:</span>
+<span class="go">co.cask.cdap.UserInterfaceService.getServiceName()Ljava/lang/String</span>
+</pre></div>
+</div>
+<p>then you have downloaded the standalone version of CDAP, which is not intended
+to be run on Hadoop clusters. Download the appropriate distributed packages (RPM or
+Debian version) from <a class="reference external" href="http://cask.co/downloads">http://cask.co/downloads</a>.</p>
+</li>
+<li><p class="first">Check permissions of directories:</p>
+<ul class="simple">
+<li>The <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP HDFS User</span></a> (by default, <code class="docutils literal"><span class="pre">yarn</span></code>) owns the HDFS directory (by default,  <code class="docutils literal"><span class="pre">/cdap</span></code>).</li>
+<li>The <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Kafka Log directory</span></a> (by default, <code class="docutils literal"><span class="pre">/data/cdap/kafka-logs</span></code>),
+must be writable by the CDAP UNIX user.</li>
+<li>The <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-tmp-files" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">temp directories</span></a> utilized by CDAP must be writable by the CDAP UNIX user.</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><p class="first">Check YARN using the YARN Resource Manager UI and see if the CDAP Master services are starting up.
+Log into the cluster at <code class="docutils literal"><span class="pre">http://&lt;host&gt;:8088/cluster/apps/RUNNING</span></code>. The CDAP Master
+services should be listed under &quot;RUNNING&quot;:</p>
+<a class="reference internal image-reference" href="_images/yarn-rm-running.png"><img alt="_images/yarn-rm-running.png" class="align-center" src="_images/yarn-rm-running.png" style="width: 8in;" /></a>
+</li>
+</ul>
+<ul>
+<li><p class="first">If CDAP Master has started, query the backend by using a command (substituting for <code class="docutils literal"><span class="pre">&lt;host&gt;</span></code> as appropriate):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> &lt;host&gt;:10000/v3/system/services/status
+</pre></div>
+</div>
+<p>The response should be something similar to:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;dataset.executor&quot;:&quot;OK&quot;,&quot;metrics&quot;:&quot;OK&quot;,&quot;transaction&quot;:&quot;OK&quot;,&quot;appfabric&quot;:&quot;OK&quot;,&quot;metadata.service&quot;:&quot;OK&quot;,</span>
+<span class="go"> &quot;streams&quot;:&quot;OK&quot;,&quot;explore.service&quot;:&quot;OK&quot;,&quot;log.saver&quot;:&quot;OK&quot;,&quot;metrics.processor&quot;:&quot;OK&quot;}</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<ul class="simple">
+<li>Check that the CDAP UI is accessible (by default, the URL will be
+<code class="docutils literal"><span class="pre">http://&lt;host&gt;:9999</span></code> where <code class="docutils literal"><span class="pre">&lt;host&gt;</span></code> is the IP address of one of the machines where you
+installed the packages and started the services).</li>
+</ul>
+</div>
+<div class="section" id="the-cdap-ui-is-showing-a-message-namespace-cannot-be-found">
+<h2><a class="headerlink" href="#the-cdap-ui-is-showing-a-message-namespace-cannot-be-found" title="Perma-link to this heading">🔗</a>The CDAP UI is showing a message &quot;namespace cannot be found&quot;.</h2>
+<p>This is indicative that the UI cannot connect to the CDAP system service containers running in YARN.</p>
+<ul class="simple">
+<li>First, check if the CDAP Master service container shows as RUNNING in the YARN ResourceManager UI.
+The CDAP Master, once it starts, starts the other CDAP system service containers, so if it isn't running,
+the others won't be able to start or work correctly. It can take several minutes for everything to start up.</li>
+<li>If this doesn't resolve the issue, then it means the CDAP system services were unable to launch.
+Ensure <a class="reference internal" href="#faq-installation-startup-memory-core-requirements"><span>YARN has enough spare memory and vcore capacity</span></a>.
+CDAP attempts to launch between 8 and 11 containers, depending on the configuration. Check
+the master container (Application Master) logs to see if it was able to launch all containers.</li>
+<li>If it was able to launch all containers, then you may need to check the launched container logs for any errors.
+The <code class="docutils literal"><span class="pre">yarn-site.xml</span></code> configuration file determines the container log directory.</li>
+<li>Ensure that the CDAP UI can connect to the CDAP Router. Check that the configured <code class="docutils literal"><span class="pre">router.server.address</span></code> and
+<code class="docutils literal"><span class="pre">router.server.port</span></code> (default 10000) in <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">cdap-site.xml file</span></a> corresponds with where the CDAP Router is listening.</li>
+</ul>
+</div>
+<div class="section" id="i-don-t-see-the-cdap-master-service-on-yarn">
+<h2><a class="headerlink" href="#i-don-t-see-the-cdap-master-service-on-yarn" title="Perma-link to this heading">🔗</a>I don't see the CDAP Master service on YARN.</h2>
+<ul class="simple">
+<li>Ensure that the node where CDAP is running has a properly configured YARN client.
+Can you log into the cluster at <code class="docutils literal"><span class="pre">http://&lt;host&gt;:8088</span></code> and access the YARN Resource Manager webapp?</li>
+<li>Ensure <a class="reference internal" href="#faq-installation-startup-memory-core-requirements"><span>YARN has enough memory and vcore capacity</span></a>.</li>
+<li>Is the router address properly configured (<code class="docutils literal"><span class="pre">router.server.address</span></code> and <code class="docutils literal"><span class="pre">router.server.port</span></code>
+(default 10000) in <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">cdap-site.xml file</span></a>) and the boxes using it?</li>
+<li>Check that the classpath used includes the YARN configuration in it.</li>
+</ul>
+</div>
+<div class="section" id="yarn-application-shows-accepted-for-some-time-but-then-fails">
+<h2><a class="headerlink" href="#yarn-application-shows-accepted-for-some-time-but-then-fails" title="Perma-link to this heading">🔗</a>YARN Application shows ACCEPTED for some time but then fails.</h2>
+<p>It's possible that YARN can't extract the .JARs to the <code class="docutils literal"><span class="pre">/tmp</span></code>,
+either due to a lack of disk space or permissions.</p>
+<p class="rubric">Installation: General</p>
+</div>
+<div class="section" id="the-cdap-master-log-shows-permissions-issues">
+<h2><a class="headerlink" href="#the-cdap-master-log-shows-permissions-issues" title="Perma-link to this heading">🔗</a>The CDAP Master log shows permissions issues.</h2>
+<p>Ensure that <code class="docutils literal"><span class="pre">hdfs:///${hdfs.namespace}</span></code> and <code class="docutils literal"><span class="pre">hdfs:///user/${hdfs.user}</span></code> exist and are owned by <code class="docutils literal"><span class="pre">${hdfs.user}</span></code>.
+(<code class="docutils literal"><span class="pre">hdfs.namespace</span></code> and <code class="docutils literal"><span class="pre">hdfs.user</span></code> are defined in your installation's <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">cdap-site.xml file</span></a>.)</p>
+<p>In any other cases, the error should show which directory it is attempting to access, such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">2015-10-30 22:14:27,528 - ERROR [ STARTING:...MasterServiceMain$2@452] - master.services failed with exception; restarting with back-off</span>
+<span class="go">java.lang.RuntimeException: java.io.IOException: failed to copy bundle from file:/tmp/appMaster.37a86cfd....jar5052.tmp</span>
+<span class="go">to hdfs://nameservice/cdap/twill/master.services/b4ce41a5e7e5.../appMaster.37a86cfd-1d88.jar</span>
+<span class="go">      at com.google.common.base.Throwables.propagate(Throwables.java:160) ~[com.google.guava.guava-13.0.1.jar:na]</span>
+<span class="go">      ...</span>
+<span class="go">Caused by: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.AccessControlException):</span>
+<span class="go">Permission denied: user=yarn, access=WRITE, inode=&quot;/&quot;:hdfs:supergroup:drwxr-xr-x</span>
+<span class="go">at org.apache.hadoop.hdfs.server.namenode.FSPermissionChecker.checkFsPermission(FSPermissionChecker.java:271)</span>
+<span class="go">at org.apache.hadoop.hdfs.server.namenode.FSPermissionChecker.check(FSPermissionChecker.java:257)</span>
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">Deploy failed: Could not create temporary directory at: /var/tmp/cdap/data/namespaces/phoenix/tmp</span>
+</pre></div>
+</div>
+<p>Don't hesitate to ask for help at the <a class="reference external" href="https://groups.google.com/d/forum/cdap-user">cdap-user&#64;googlegroups.com</a>.</p>
+</div>
+<div class="section" id="the-cdap-master-log-shows-an-error-about-the-dataset-service-not-being-found">
+<h2><a class="headerlink" href="#the-cdap-master-log-shows-an-error-about-the-dataset-service-not-being-found" title="Perma-link to this heading">🔗</a>The CDAP Master log shows an error about the dataset service not being found.</h2>
+<p>If you see an error such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">2015-05-15 12:15:53,028 - ERROR [heartbeats-scheduler:c.c.c.d.s.s.MDSStreamMetaStore$1@71]</span>
+<span class="go">- Failed to access app.meta table co.cask.cdap.api.dataset.DatasetManagementException:</span>
+<span class="go">Cannot retrieve dataset instance app.meta info, details: Response code: 407,</span>
+<span class="go">message:&#39;Proxy Authentication Required&#39;,</span>
+<span class="go">body: &#39;&lt;HTML&gt;&lt;HEAD&gt; &lt;TITLE&gt;Access Denied&lt;/TITLE&gt; &lt;/HEAD&gt;</span>
+</pre></div>
+</div>
+<p>According to that log, this error can be caused by a proxy setting. CDAP services
+internally makes HTTP requests to each other; one example is the dataset service.
+Depending on your proxy and its settings, these requests can end up being sent to the
+proxy instead.</p>
+<p>One item to check is that your system's network setting is configured to exclude both
+<code class="docutils literal"><span class="pre">localhost</span></code> and <code class="docutils literal"><span class="pre">127.0.0.1</span></code> from the proxy routing. If they aren't, the services will
+not be able to communicate with each other, and you'll see error messages such as these.
+You can set a system's network setting for a proxy by using:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">export </span><span class="nv">no_proxy</span><span class="o">=</span><span class="s2">&quot;localhost,127.0.0.1&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-hiveserver2-already-listens-on-port-10000-what-should-i-do">
+<h2><a class="headerlink" href="#the-hiveserver2-already-listens-on-port-10000-what-should-i-do" title="Perma-link to this heading">🔗</a>The HiveServer2 already listens on port 10000; what should I do?</h2>
+<p>By default, CDAP uses port 10000. If port 10000 is being used by another service, simply
+change the <code class="docutils literal"><span class="pre">router.bind.port</span></code> in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> to another available port. Since
+in the Hadoop ecosystem, HiveServer2 defaults to 10000, we are considering changing the
+router default port.</p>
+<p>If you use CDM or Apache Ambari to install CDAP, it will detect this and run the CDAP
+Router on port 11015. Another solution is to simply run the CDAP Router on a different
+host than HiveServer2.</p>
+</div>
+<div class="section" id="cdap-services-on-distributed-cdap-aren-t-starting-up-due-to-an-exception-what-should-i-do">
+<h2><a class="headerlink" href="#cdap-services-on-distributed-cdap-aren-t-starting-up-due-to-an-exception-what-should-i-do" title="Perma-link to this heading">🔗</a>CDAP services on distributed CDAP aren't starting up due to an exception. What should I do?</h2>
+<p>If the CDAP services on a distributed CDAP environment wouldn't start up due to a
+<code class="docutils literal"><span class="pre">java.lang.ClassNotFoundException</span></code>, you will see errors in the logs. You will find in
+the logs for <code class="docutils literal"><span class="pre">cdap-master</span></code> under <code class="docutils literal"><span class="pre">/var/log/cdap/master*.log</span></code> errors such as these:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&quot;Exception in thread &quot;main&quot; java.lang.NoClassDefFoundError:</span>
+<span class="go">  co.cask.cdap.data.runtime.main.MasterServiceMain</span>
+<span class="go">    at gnu.java.lang.MainThread.run(libgcj.so.10)&quot;</span>
+</pre></div>
+</div>
+<p>Things to check as possible solutions:</p>
+<ol class="arabic">
+<li><p class="first">Check if the JDK being used is <a class="reference external" href="source/../../admin-manual/system-requirements.html#admin-manual-install-java-runtime" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">supported by CDAP</span></a>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> java -version
+</pre></div>
+</div>
+</li>
+<li><p class="first">Check if the CDAP user is using a <a class="reference external" href="source/../../admin-manual/system-requirements.html#admin-manual-install-java-runtime" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">correct version of the JDK</span></a>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo su - &lt;cdap-user&gt;
+<span class="gp">$</span> java -version
+</pre></div>
+</div>
+</li>
+<li><p class="first">Run this command to see if all the CDAP classpaths are included:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> /opt/cdap/master/bin/svc-master classpath <span class="p">|</span> tr <span class="s1">&#39;:&#39;</span> <span class="s1">&#39;\n&#39;</span>
+</pre></div>
+</div>
+<p>Expect to see (where <em>&lt;version&gt;</em> is the appropriate <code class="docutils literal"><span class="pre">hbase-compat</span></code> version):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">/etc/cdap/conf/</span>
+<span class="go">/opt/cdap/hbase-compat-&lt;version&gt;/lib/*</span>
+<span class="go">/opt/cdap/master/conf/</span>
+<span class="go">/opt/cdap/master/lib/*</span>
+</pre></div>
+</div>
+<p>If the classpath is incorrect (in general, the <code class="docutils literal"><span class="pre">hbase-compat-&lt;version&gt;/lib/*</span></code> and
+<code class="docutils literal"><span class="pre">cdap/master/lib/*</span></code> entries must precede any other paths that contain JARs or classes
+such as the HBase classpath), review the <a class="reference external" href="source/../../admin-manual/installation/index.html#installation-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">installation instructions</span></a> and correct.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="we-aren-t-seeing-any-metrics-or-logs-what-should-we-do">
+<h2><a class="headerlink" href="#we-aren-t-seeing-any-metrics-or-logs-what-should-we-do" title="Perma-link to this heading">🔗</a>We aren't seeing any Metrics or Logs. What should we do?</h2>
+<p>Check that:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">cdap_kafka</span></code> is running and listening on the configured port (9092 by default);</li>
+<li>All nodes of the cluster can successfully connect to the <code class="docutils literal"><span class="pre">cdap_kafka</span></code> host/port;
+use telnet or similar to verify connectivity;</li>
+<li>The <em>Kafka</em> server is running;</li>
+<li>The local <code class="docutils literal"><span class="pre">kafka.logs.dir</span></code> exists and has full permissions for the <code class="docutils literal"><span class="pre">cdap</span></code> user; and</li>
+<li>For systems with high availability (HA), on the initial startup the number of available
+seed brokers must be greater than or equal to the <em>Kafka</em> default replication factor.</li>
+</ul>
+<p>In a two-box HA setup with a replication factor of two, if one box fails to startup,
+metrics will not show up though the application will still run:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[2013-10-10 20:48:46,160] ERROR [KafkaApi-1511941310]</span>
+<span class="go">      Error while retrieving topic metadata (kafka.server.KafkaApis)</span>
+<span class="go">      kafka.admin.AdministrationException:</span>
+<span class="go">             replication factor: 2 larger than available brokers: 1</span>
+</pre></div>
+</div>
+<p>As a last resort, <code class="docutils literal"><span class="pre">cdap_kafka</span></code> can be reset by stopping CDAP (including <code class="docutils literal"><span class="pre">cdap_kafka</span></code>),
+removing the Kafka <code class="docutils literal"><span class="pre">znode</span></code> (from within ZooKeeper use <code class="docutils literal"><span class="pre">rmr</span> <span class="pre">/${cdap.namespace}/kafka</span></code>)
+and restarting CDAP.</p>
+</div>
+<div class="section" id="only-the-first-flowlet-of-our-cdap-application-is-showing-activity">
+<h2><a class="headerlink" href="#only-the-first-flowlet-of-our-cdap-application-is-showing-activity" title="Perma-link to this heading">🔗</a>Only the first flowlet of our CDAP application is showing activity.</h2>
+<p>Check that YARN has the capacity to start any of the remaining containers.</p>
+</div>
+<div class="section" id="log-saver-process-throws-an-out-of-memory-error-the-cdap-ui-shows-service-not-ok">
+<h2><a class="headerlink" href="#log-saver-process-throws-an-out-of-memory-error-the-cdap-ui-shows-service-not-ok" title="Perma-link to this heading">🔗</a>Log Saver Process throws an Out-of-Memory Error; the CDAP UI shows service &quot;Not OK&quot;</h2>
+<p>The CDAP Log Saver uses an internal buffer that may overflow and result in Out-of-Memory
+Errors when applications create excessive amounts of logs. One symptom of this is that the CDAP
+UI <em>Services Explorer</em> shows the <code class="docutils literal"><span class="pre">log.saver</span></code> service as not <em>OK</em>, in addition to seeing error
+messages in the logs.</p>
+<p>By default, the Log Saver process is limited to 1GB of memory and the buffer keeps eight buckets of events
+in-memory. Each event bucket contains logs generated for one second. When it is expected that logs exceeding
+these settings will be produced—for example, greater than 1GB of logs generated in eight seconds—increase
+the memory allocated to the Log Saver or increase the number of Log Saver instances. If the cluster has
+limited memory or containers available, you can choose instead to decrease the number of in-memory event buckets.
+However, decreasing the number of in-memory buckets may lead to out-of-order log events.</p>
+<p>In the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>, you can:</p>
+<ul class="simple">
+<li>Increase the memory by adjusting <code class="docutils literal"><span class="pre">log.saver.run.memory.megs</span></code>;</li>
+<li>Increase the number of Log Saver instances using <code class="docutils literal"><span class="pre">log.saver.num.instances</span></code>; and</li>
+<li>Adjust the number of in-memory log buckets <code class="docutils literal"><span class="pre">log.saver.event.max.inmemory.buckets</span></code>.</li>
+</ul>
+<p>See the <code class="docutils literal"><span class="pre">log.saver</span></code> parameter section of the <a class="reference external" href="source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Appendix cdap-site.xml</span></a> for a list of these configuration parameters and their
+values that can be adjusted.</p>
+<p class="rubric">Upgrading CDAP</p>
+</div>
+<div class="section" id="can-a-cdap-installation-be-upgraded-more-than-one-version">
+<h2><a class="headerlink" href="#can-a-cdap-installation-be-upgraded-more-than-one-version" title="Perma-link to this heading">🔗</a>Can a CDAP installation be upgraded more than one version?</h2>
+<p>In general, no. (The exception is an upgrade from 2.8.x to 3.0.x.)
+This table lists the upgrade paths available for different CDAP versions:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="70%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Version</th>
+<th class="head">Upgrade Directly To</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>3.2.x</td>
+<td>3.3.x</td>
+</tr>
+<tr class="row-odd"><td>3.1.x</td>
+<td>3.2.x</td>
+</tr>
+<tr class="row-even"><td>3.0.x</td>
+<td>3.1.x</td>
+</tr>
+<tr class="row-odd"><td>2.8.x</td>
+<td>3.0.x</td>
+</tr>
+<tr class="row-even"><td>2.6.3</td>
+<td>2.8.2</td>
+</tr>
+</tbody>
+</table>
+<p>If you are doing a new installation, we recommend using the current version of CDAP.</p>
+</div>
+<div class="section" id="i-missed-doing-a-step-while-upgrading-how-do-i-fix-my-system">
+<span id="faqs-cloudera-troubleshooting-upgrade-cdh"></span><h2><a class="headerlink" href="#i-missed-doing-a-step-while-upgrading-how-do-i-fix-my-system" title="Perma-link to this heading">🔗</a>I missed doing a step while upgrading; how do I fix my system?</h2>
+<p>If you miss a step in the upgrade process and something goes wrong, it's possible that the
+tables will get re-enabled before the coprocessors are upgraded. This could cause the
+regionservers to abort and may make it very difficult to get the cluster back to a stable
+state where the tables can be disabled again and complete the upgrade process.</p>
+<p>In that case, set this configuration property in <code class="docutils literal"><span class="pre">hbase-site.xml</span></code>:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>hbase.coprocessor.abortonerror<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>false<span class="nt">&lt;/value&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</div>
+<p>and restart the HBase regionservers. This will allow the regionservers to start up
+despite the coprocessor version mismatch. At this point, you should be able to run through
+the upgrade steps successfully.</p>
+<p>At the end, remove the entry for <code class="docutils literal"><span class="pre">hbase.coprocessor.abortonerror</span></code> in order to ensure
+that data correctness is maintained.</p>
+<p class="rubric">Ask the CDAP Community for assistance</p>
+<p>You can post a question at the <a class="reference external" href="https://groups.google.com/d/forum/cdap-user">cdap-user&#64;googlegroups.com</a>.</p>
+<p>The <em>cdap-user</em> mailing list is primarily for users using the product to develop
+applications. You can expect questions from users, release announcements, and any other
+discussions that we think will be helpful to the users.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">FAQs: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="general.html"> General Questions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> CDAP</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cloudera-manager.html"> Cloudera Manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydrator.html"> Hydrator</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="FAQs: General Questions" href="general.html" />FAQs: General Questions</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="FAQs: Cloudera Manager" href="cloudera-manager.html" />FAQs: Cloudera Manager</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

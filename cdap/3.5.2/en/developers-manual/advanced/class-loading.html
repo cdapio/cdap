@@ -1,0 +1,290 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Class Loading in CDAP &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/advanced/class-loading.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Advanced Topics" href="index.html" />
+    <link rel="next" title="Configuring Program Resources" href="configuring-resources.html" />
+    <link rel="prev" title="Best Practices for Developing Applications" href="best-practices.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="configuring-resources.html" title="Configuring Program Resources"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="best-practices.html" title="Best Practices for Developing Applications"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Advanced Topics</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="class-loading-in-cdap">
+<span id="class-loading"></span><h1><a class="headerlink" href="#class-loading-in-cdap" title="Perma-link to this heading">🔗</a>Class Loading in CDAP</h1>
+<p>In this advanced section, we talk about how we used Java class loading to design an
+extensible application framework with a flexible class loading strategy. In terms of class
+loading strategy, we provide these properties for an application:</p>
+<ul class="simple">
+<li>an application can choose to use any library of any version;</li>
+<li>an application can define a custom plugin API for extending itself;</li>
+<li>plugins can be written for an application by implementing the application plugin API; and</li>
+<li>different plugins can choose to use any library of any version, yet all plugins are
+usable by the same application at the same time.</li>
+</ul>
+<div class="section" id="parent-delegation-model">
+<h2><a class="headerlink" href="#parent-delegation-model" title="Perma-link to this heading">🔗</a>Parent Delegation Model</h2>
+<p>When a Java Virtual Machine (JVM) needs to load a class, by default it follows the
+<a class="reference external" href="https://www-01.ibm.com/support/knowledgecenter/#!/SSYKE2_7.0.0/com.ibm.java.zos.70.doc/diag/understanding/cl_delegation.html">parent delegation model</a>.
+The parent delegation model allows for one class to be loadable from multiple class
+loaders, as long as those class loaders have the defining class loader of that class as a
+common ancestor. This property enables one to define an extensible class loading
+architecture that provides class isolation, yet at the same time they’re able to
+inter-operate with a set of common API classes.</p>
+</div>
+<div class="section" id="id1">
+<h2><a class="headerlink" href="#id1" title="Perma-link to this heading">🔗</a>Class Loading in CDAP</h2>
+<p>The CDAP class loader hierarchy is based on the parent delegation model as follows:</p>
+<img alt="../_images/class-loading01.png" class="align-center" src="../_images/class-loading01.png" />
+<p>With this class loader hierarchy, the CDAP runtime system interacts with custom
+applications only through classes and interfaces defined in the API class loader; hence,
+libraries used by the CDAP system itself won’t interfere with applications.</p>
+<p>Moreover, CDAP allows an application to define its own plugin API for extending the
+functionalities of the application itself. Each plugin implementation will be loaded
+through a separate plugin class loader. The parent of each plugin class loader is a filter
+class loader that ensures that only CDAP and plugin API classes are loaded from the
+application class loader. All other classes required by the plugin are loaded by the
+plugin class loader itself. This allows an application to use multiple plugins at the same
+time, while providing class loading isolation between different plugins.</p>
+<p>In CDAP, both applications and plugins are deployed as JAR files to the system. Instead of
+a normal JAR file that contains a collection of class files, a bundle JAR file has content
+similar to this example:</p>
+<img alt="../_images/class-loading02.png" class="align-center" src="../_images/class-loading02.png" />
+<p>Inside an application bundle JAR file, besides the class files for the application, are
+the JAR files for third party libraries that are needed by the application. In the
+application JAR manifest, a special attribute (“Export-Package”) can be added to instruct
+the filter class loader which packages are contained in the application plugin API. Hence,
+only classes under those packages will be available to the plugin. This is to avoid
+libraries used by the application interfering with the ones used by the plugin. The plugin
+JAR file is following a similar structure as an application JAR file.</p>
+</div>
+<div class="section" id="class-loading-in-apache-hadoop-mapreduce-and-apache-spark">
+<h2><a class="headerlink" href="#class-loading-in-apache-hadoop-mapreduce-and-apache-spark" title="Perma-link to this heading">🔗</a>Class Loading in Apache Hadoop MapReduce and Apache Spark</h2>
+<p>One of the major challenges faced when we integrate CDAP with data processing frameworks,
+such as MapReduce and Spark, is the class loading. Both frameworks use a
+flat classpath approach. For example, in MapReduce, all the job classes, the
+libraries that the job needs, together with the Hadoop libraries and their dependencies,
+are in one classpath. The classpath is used to create a single class loader, which loads
+classes by sequentially searching through the classpath. This approach doesn’t provide the
+class loading isolation that is desired. For example, if a MapReduce job requires a
+different version of a library than the one used by the Hadoop framework in the cluster,
+the job can fail with exceptions such as <code class="docutils literal"><span class="pre">NoSuchMethodError</span></code> or <code class="docutils literal"><span class="pre">ClassNotFoundException</span></code>.</p>
+<p>When launching a MapReduce or Spark job from CDAP, we want to provide the same class
+isolation behavior as described in the previous section. To do so, we alter the classpath
+of the YARN container for the job and make it first call the main method of our launcher
+class. The launcher class will setup the class loader hierarchy as desired and then
+delegate the call to the actual MapReduce or Spark task runner.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Advanced Topics</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="application-logback.html"> Application Logback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="best-practices.html"> Best Practices</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Class Loading</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#parent-delegation-model">Parent Delegation Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Class Loading in CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#class-loading-in-apache-hadoop-mapreduce-and-apache-spark">Class Loading in Apache Hadoop MapReduce and Apache Spark</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="configuring-resources.html"> Configuring Program Resources</a></li>
+</ul>
+</li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Best Practices for Developing Applications" href="best-practices.html" />Best Practices for Developing Applications</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Configuring Program Resources" href="configuring-resources.html" />Configuring Program Resources</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

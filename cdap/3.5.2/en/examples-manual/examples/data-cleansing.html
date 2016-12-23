@@ -1,0 +1,882 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform Data Cleansing Application" name="description" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Data Cleansing &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/examples-manual/examples/data-cleansing.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="FileSet Example" href="fileset-example.html" />
+    <link rel="prev" title="Count Random" href="count-random.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="fileset-example.html" title="FileSet Example"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="count-random.html" title="Count Random"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="data-cleansing">
+<span id="examples-data-cleansing"></span><h1><a class="headerlink" href="#data-cleansing" title="Perma-link to this heading">🔗</a>Data Cleansing</h1>
+<p>A Cask Data Application Platform (CDAP) example demonstrating incrementally consuming
+partitions of a partitioned file set using MapReduce.</p>
+<div class="section" id="overview">
+<h2><a class="headerlink" href="#overview" title="Perma-link to this heading">🔗</a>Overview</h2>
+<p>This application has a MapReduce which processes records from one partitioned file set into another partitioned file set,
+while filtering records that do not match a particular schema.</p>
+<ul class="simple">
+<li>The <code class="docutils literal"><span class="pre">DataCleansingService</span></code> writes to the <em>rawRecords</em> partitioned file set.</li>
+<li>The <code class="docutils literal"><span class="pre">DataCleansingMapReduce</span></code> processes the records, while filtering 'unclean' or invalid records.</li>
+</ul>
+<p>Let's look at some of these components, and then run the application and see the results.</p>
+<div class="section" id="the-data-cleansing-application">
+<h3><a class="headerlink" href="#the-data-cleansing-application" title="Perma-link to this heading">🔗</a>The Data Cleansing Application</h3>
+<p>As in the other <a class="reference internal" href="index.html#examples-index"><span>examples</span></a>, the components
+of the application are tied together by the class <code class="docutils literal"><span class="pre">DataCleansing</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">DataCleansing</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+  <span class="kd">protected</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;DataCleansing&quot;</span><span class="o">;</span>
+  <span class="kd">protected</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">RAW_RECORDS</span> <span class="o">=</span> <span class="s">&quot;rawRecords&quot;</span><span class="o">;</span>
+  <span class="kd">protected</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">CLEAN_RECORDS</span> <span class="o">=</span> <span class="s">&quot;cleanRecords&quot;</span><span class="o">;</span>
+  <span class="kd">protected</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">INVALID_RECORDS</span> <span class="o">=</span> <span class="s">&quot;invalidRecords&quot;</span><span class="o">;</span>
+  <span class="kd">protected</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">CONSUMING_STATE</span> <span class="o">=</span> <span class="s">&quot;consumingState&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="n">NAME</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Example data cleansing application&quot;</span><span class="o">);</span>
+
+    <span class="c1">// Ingest and retrieve the data using a Service</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">DataCleansingService</span><span class="o">());</span>
+
+    <span class="c1">// Process the records from &quot;rawRecords&quot; partitioned file set using MapReduce</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">DataCleansingMapReduce</span><span class="o">());</span>
+
+    <span class="c1">// Store the state of the incrementally processing MapReduce</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">CONSUMING_STATE</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+    <span class="c1">// Create the &quot;rawRecords&quot; partitioned file set for storing the input records, </span>
+    <span class="c1">// configure it to work with MapReduce</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">RAW_RECORDS</span><span class="o">,</span> <span class="n">PartitionedFileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">PartitionedFileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="c1">// Properties for partitioning</span>
+      <span class="o">.</span><span class="na">setPartitioning</span><span class="o">(</span><span class="n">Partitioning</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addLongField</span><span class="o">(</span><span class="s">&quot;time&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">())</span>
+      <span class="c1">// Properties for file set</span>
+      <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Store input records&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">CLEAN_RECORDS</span><span class="o">,</span> <span class="n">PartitionedFileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">PartitionedFileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="c1">// Properties for partitioning</span>
+      <span class="o">.</span><span class="na">setPartitioning</span><span class="o">(</span><span class="n">Partitioning</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addLongField</span><span class="o">(</span><span class="s">&quot;time&quot;</span><span class="o">).</span><span class="na">addIntField</span><span class="o">(</span><span class="s">&quot;zip&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">())</span>
+      <span class="c1">// Properties for file set</span>
+      <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="c1">// Properties for Explore (to create a partitioned Hive table)</span>
+      <span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreFormatProperty</span><span class="o">(</span><span class="s">&quot;delimiter&quot;</span><span class="o">,</span> <span class="s">&quot;\n&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreSchema</span><span class="o">(</span><span class="s">&quot;record STRING&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Store clean records&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">INVALID_RECORDS</span><span class="o">,</span> <span class="n">PartitionedFileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">PartitionedFileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="c1">// Properties for partitioning</span>
+      <span class="o">.</span><span class="na">setPartitioning</span><span class="o">(</span><span class="n">Partitioning</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addLongField</span><span class="o">(</span><span class="s">&quot;time&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">())</span>
+      <span class="c1">// Properties for file set</span>
+      <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="c1">// Properties for Explore (to create a partitioned Hive table)</span>
+      <span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreFormatProperty</span><span class="o">(</span><span class="s">&quot;delimiter&quot;</span><span class="o">,</span> <span class="s">&quot;\n&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreSchema</span><span class="o">(</span><span class="s">&quot;record STRING&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Store invalid records&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="data-storage">
+<h3><a class="headerlink" href="#data-storage" title="Perma-link to this heading">🔗</a>Data Storage</h3>
+<ul class="simple">
+<li><em>rawRecords</em> input <code class="docutils literal"><span class="pre">PartitionedFileSet</span></code> of the <code class="docutils literal"><span class="pre">DataCleansingMapReduce</span></code>, contains any ingested records.</li>
+<li><em>cleanRecords</em> output <code class="docutils literal"><span class="pre">PartitionedFileSet</span></code>, contains only the filtered records.</li>
+<li><em>consumingState</em> stores the state of the <code class="docutils literal"><span class="pre">DataCleansingMapReduce</span></code>, such that in each run,
+it processes only new partitions.</li>
+</ul>
+</div>
+<div class="section" id="datacleansingservice">
+<h3><a class="headerlink" href="#datacleansingservice" title="Perma-link to this heading">🔗</a>DataCleansingService</h3>
+<p>The service allows writing to the <em>rawRecords</em> <code class="docutils literal"><span class="pre">PartitionedFileSet</span></code>.
+It exposes this endpoint:</p>
+<ul class="simple">
+<li>POST <code class="docutils literal"><span class="pre">/records/raw</span></code> allows for writing to a partition of the <em>rawRecords</em> dataset;</li>
+</ul>
+</div>
+<div class="section" id="mapreduce-over-partitionedfileset">
+<h3><a class="headerlink" href="#mapreduce-over-partitionedfileset" title="Perma-link to this heading">🔗</a>MapReduce over PartitionedFileSet</h3>
+<p><code class="docutils literal"><span class="pre">DataCleansingMapReduce</span></code> is a simple MapReduce that reads from the <em>rawRecords</em> <code class="docutils literal"><span class="pre">PartitionedFileSet</span></code> and writes to
+the <em>cleanRecords</em> <code class="docutils literal"><span class="pre">PartitionedFileSet</span></code>. The <code class="docutils literal"><span class="pre">beforeSubmit</span></code> method prepares the MapReduce program:</p>
+<ul class="simple">
+<li>It uses the <code class="docutils literal"><span class="pre">PartitionBatchInput</span></code> to specify the partitions to process as input, in order to only process new
+partitions since its last run.</li>
+<li>It specifies the output partition that is written to, based upon the supplied runtime arguments.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="building-and-starting">
+<h2><a class="headerlink" href="#building-and-starting" title="Perma-link to this heading">🔗</a>Building and Starting</h2>
+<ul>
+<li><p class="first">You can either build the example (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-example" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Building an Example Application</span></a>) or use the pre-built JAR file included in the CDAP SDK
+(as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying an Application</span></a>):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral14() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral14 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral14", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral14" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">examples/DataCleansing/target/DataCleansing-3.5.2.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">examples\DataCleansing\target\DataCleansing-3.5.2.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Start CDAP (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Starting and Stopping CDAP</span></a>).</p>
+</li>
+<li><p class="first">Deploy the application, as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying an Application</span></a>.
+For example, from the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral15() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral15 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral15", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral15" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact examples/DataCleansing/target/DataCleansing-3.5.2.jar</span>
+
+<span class="go">Successfully added artifact with name &#39;DataCleansing&#39;</span>
+
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app DataCleansing DataCleansing 3.5.2 user</span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact examples\DataCleansing\target\DataCleansing-3.5.2.jar</span></span>
+
+<span class="go">Successfully added artifact with name &#39;DataCleansing&#39;</span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app DataCleansing DataCleansing 3.5.2 user</span></span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Once the application has been deployed, you can start its components, as described in
+<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-starting-application" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Starting an Application</span></a>, and detailed at the
+start of <a class="reference external" href="#running-the-example">running the example</a>.</p>
+</li>
+<li><p class="first">Once all components are started, <a class="reference external" href="#running-the-example">run the example</a>.</p>
+</li>
+<li><p class="first">When finished, you can <a class="reference external" href="#stopping-and-removing-the-application">stop and remove the application</a>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="running-the-example">
+<h2><a class="headerlink" href="#running-the-example" title="Perma-link to this heading">🔗</a>Running the Example</h2>
+<div class="section" id="starting-the-service">
+<h3><a class="headerlink" href="#starting-the-service" title="Perma-link to this heading">🔗</a>Starting the Service</h3>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>DataCleansing</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/DataCleansing/overview/programs">application overview page, programs tab</a>,
+click <em>DataCleansingService</em> to get to the service detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral16() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral16 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral16", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral16" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start service DataCleansing.DataCleansingService</span>
+
+<span class="go">Successfully started service &#39;DataCleansingService&#39; of application &#39;DataCleansing&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start service DataCleansing.DataCleansingService</span></span>
+
+<span class="go">Successfully started service &#39;DataCleansingService&#39; of application &#39;DataCleansing&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="ingesting-records">
+<h3><a class="headerlink" href="#ingesting-records" title="Perma-link to this heading">🔗</a>Ingesting Records</h3>
+<p>Begin by uploading a file containing some newline-separated JSON records into the <em>rawRecords</em> dataset:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral17() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral17 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral17", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral17" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh call service DataCleansing.DataCleansingService POST v1/records/raw body:file examples/DataCleansing/resources/person.json</span>
+
+<span class="go">&lt; 200 OK</span>
+<span class="go">&lt; Content-Length: 0</span>
+<span class="go">&lt; Connection: keep-alive</span>
+<span class="go">&lt; Content-Type: text/plain</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat call service DataCleansing.DataCleansingService POST v1/records/raw body:file examples\DataCleansing\resources\person.json</span></span>
+
+<span class="go">&lt; 200 OK</span>
+<span class="go">&lt; Content-Length: 0</span>
+<span class="go">&lt; Connection: keep-alive</span>
+<span class="go">&lt; Content-Type: text/plain</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+<div class="section" id="starting-the-mapreduce">
+<h3><a class="headerlink" href="#starting-the-mapreduce" title="Perma-link to this heading">🔗</a>Starting the MapReduce</h3>
+<p>The MapReduce must be started with a runtime argument <code class="docutils literal"><span class="pre">output.partition.key</span></code> that
+specifies the output partition of the <em>cleanRecords</em> dataset to write to. In this
+example, we'll simply use <code class="docutils literal"><span class="pre">1</span></code> as the value.</p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>DataCleansing</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/DataCleansing/overview/programs">application overview page, programs tab</a>,
+click <em>DataCleansingMapReduce</em> to get to the MapReduce detail page, set the runtime
+arguments using <code class="docutils literal"><span class="pre">output.partition.key</span></code> as the key and <code class="docutils literal"><span class="pre">1</span></code> as the value, then click
+the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral18() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral18 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral18", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral18" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start mapreduce DataCleansing.DataCleansingMapReduce output.partition.key<span class="o">=</span>1</span>
+
+<span class="go">Successfully started mapreduce &#39;DataCleansingMapReduce&#39; of application &#39;DataCleansing&#39;</span>
+<span class="go">with provided runtime arguments &#39;output.partition.key=1&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start mapreduce DataCleansing.DataCleansingMapReduce output.partition.key=1</span></span>
+
+<span class="go">Successfully started mapreduce &#39;DataCleansingMapReduce&#39; of application &#39;DataCleansing&#39;</span>
+<span class="go">with provided runtime arguments &#39;output.partition.key=1&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p>Optionally, to specify a custom schema to match records against, the JSON of the schema can be
+specified as an additional runtime argument to the MapReduce with the key <code class="docutils literal"><span class="pre">'schema.key'</span></code>.
+Otherwise, this is the default schema that is matched against the records:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Schema</span> <span class="n">DEFAULT_SCHEMA</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span><span class="s">&quot;person&quot;</span><span class="o">,</span>
+                                                            <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;pid&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">LONG</span><span class="o">)),</span>
+                                                            <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;name&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+                                                            <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;dob&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+                                                            <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;zip&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">INT</span><span class="o">)));</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="querying-the-results">
+<h3><a class="headerlink" href="#querying-the-results" title="Perma-link to this heading">🔗</a>Querying the Results</h3>
+<p>To sample the <em>cleanRecords</em> <code class="docutils literal"><span class="pre">PartitionedFileSet</span></code>, execute an explore query using the CDAP CLI:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral19() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral19 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral19", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral19" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh execute <span class="s2">&quot;\&quot;SELECT record FROM dataset_cleanRecords where TIME = 1 LIMIT 5\&quot;&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat execute &quot;\&quot;SELECT record FROM dataset_cleanRecords where TIME = 1 LIMIT 5\&quot;&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<ul class="simple">
+<li>Alternatively, go to the <em>rawRecords</em>
+<a class="reference external" href="http://localhost:9999/ns/default/datasets/rawRecords/overview/explore">dataset overview page, explore tab</a>
+and execute the query from there.</li>
+</ul>
+<p>The records that are not filtered out (those that adhere to the given schema) will be displayed:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+======================================================================+</span>
+<span class="go">| record: STRING                                                       |</span>
+<span class="go">+======================================================================+</span>
+<span class="go">| {&quot;pid&quot;:223986723,&quot;name&quot;:&quot;bob&quot;,&quot;dob&quot;:&quot;02-12-1983&quot;,&quot;zip&quot;:&quot;84125&quot;}      |</span>
+<span class="go">| {&quot;pid&quot;:001058370,&quot;name&quot;:&quot;jill&quot;,&quot;dob&quot;:&quot;12-12-1963&quot;,&quot;zip&quot;:&quot;84125&quot;}     |</span>
+<span class="go">| {&quot;pid&quot;:000150018,&quot;name&quot;:&quot;wendy&quot;,&quot;dob&quot;:&quot;06-19-1987&quot;,&quot;zip&quot;:&quot;84125&quot;}    |</span>
+<span class="go">| {&quot;pid&quot;:013587810,&quot;name&quot;:&quot;john&quot;,&quot;dob&quot;:&quot;10-10-1991&quot;,&quot;zip&quot;:&quot;84125&quot;}     |</span>
+<span class="go">| {&quot;pid&quot;:811638015,&quot;name&quot;:&quot;samantha&quot;,&quot;dob&quot;:&quot;04-20-1965&quot;,&quot;zip&quot;:&quot;84125&quot;} |</span>
+<span class="go">+======================================================================+</span>
+<span class="go">Fetched 5 rows</span>
+</pre></div>
+</div>
+<p>This process—ingesting records, running the MapReduce job with a <strong>different</strong> output partition key,
+and requesting the filtered data—can be repeated. Each time, the MapReduce job will pickup and process
+only the newly ingested set of records.</p>
+</div>
+</div>
+<div class="section" id="stopping-and-removing-the-application">
+<h2><a class="headerlink" href="#stopping-and-removing-the-application" title="Perma-link to this heading">🔗</a>Stopping and Removing the Application</h2>
+<p>Once done, you can stop the application—if it hasn't stopped
+already—as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-stopping" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Stopping an Application</span></a>. Here is an example-specific
+description of the steps:</p>
+<p><strong>Stopping the Service</strong></p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>DataCleansing</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/DataCleansing/overview/programs">application overview page, programs tab</a>,
+click <em>DataCleansingService</em> to get to the service detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral20() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral20 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral20", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral20" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh stop service DataCleansing.DataCleansingService</span>
+
+<span class="go">Successfully stopped service &#39;DataCleansingService&#39; of application &#39;DataCleansing&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat stop service DataCleansing.DataCleansingService</span></span>
+
+<span class="go">Successfully stopped service &#39;DataCleansingService&#39; of application &#39;DataCleansing&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p><strong>Removing the Application</strong></p>
+<p>You can now remove the application as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-removing" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Removing an Application</span></a>, or:</p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>DataCleansing</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/DataCleansing/overview/programs">application overview page, programs tab</a>,
+click the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management
+pane for the application, then click the <em>Actions</em> menu on the right side and select
+<em>Delete</em> to delete the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral21() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral21 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral21", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral21" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh delete app DataCleansing</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat delete app DataCleansing</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clicks-and-views.html">Clicks and Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Data Cleansing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stopping-and-removing-the-application">Stopping and Removing the Application</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fileset-example.html">FileSet Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="log-analysis.html">Log Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spam-classifier.html">Spam Classifier</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sport-results.html">Sport Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream-conversion.html">Stream Conversion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user-profiles.html">User Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wikipedia-data-pipeline.html">Wikipedia Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Count Random" href="count-random.html" />Count Random</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="FileSet Example" href="fileset-example.html" />FileSet Example</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

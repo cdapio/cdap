@@ -1,0 +1,285 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Anatomy of a Big Data Application &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/overview/anatomy.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Cask Data Application Platform Overview" href="index.html" />
+    <link rel="next" title="CDAP Modes and Components" href="modes.html" />
+    <link rel="prev" title="Cask Data Application Platform Overview" href="index.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="modes.html" title="CDAP Modes and Components"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Cask Data Application Platform Overview"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Cask Data Application Platform Overview</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="anatomy-of-a-big-data-application">
+<h1><a class="headerlink" href="#anatomy-of-a-big-data-application" title="Perma-link to this heading">🔗</a>Anatomy of a Big Data Application</h1>
+<p>As an application developer building a Big Data application, you are primarily concerned with five areas:</p>
+<ul>
+<li><p class="first"><strong>Data Collection:</strong> A method of getting data into the system so that it can be processed.
+We distinguish these types of data collecting:</p>
+<ul class="simple">
+<li>A system or application service may poll an external source for available data and then retrieve it (&quot;pull&quot;),
+or external clients may send data to a public endpoint of the platform (&quot;push&quot;).</li>
+<li>Data can come steadily, one event at a time (&quot;real-time&quot;), or many events at once in bulk (&quot;batch&quot;).</li>
+<li>Data can be acquired with a fixed schedule (&quot;periodic&quot;), or whenever new data is available (&quot;on-demand&quot;).</li>
+</ul>
+<p>CDAP provides <em>Streams</em> as a means to push events into the platform in real time. It also provides tools that
+pull data in batch, be it periodic or on-demand, from external sources.</p>
+<p>Streams are a special type of datasets that are exposed as a push endpoint for external clients. They support
+ingesting events in real time at massive scale. Events in the stream can then be consumed by applications in
+real time or batch.</p>
+</li>
+<li><p class="first"><strong>Data Exploration:</strong> One of the most powerful paradigms of Big Data is the ability to
+collect and store data without knowing details about its structure. These details are only
+needed at processing time. An important step—between collecting the data and processing
+it—is exploration; that is, examining data with ad-hoc queries to learn about its
+structure and nature.</p>
+</li>
+<li><p class="first"><strong>Data Processing:</strong> After data is collected, we need to process it in various ways. For example:</p>
+<ul class="simple">
+<li>Raw events are filtered and transformed into a canonical form, to ensure quality of input data for
+down-stream processing.</li>
+<li>Events (or certain dimensions of the events) are counted or aggregated.</li>
+<li>Events are annotated and used by an iterative algorithm to train a machine-learned model.</li>
+<li>Events from different sources are joined to find associations, correlations or other views across
+multiple sources.</li>
+<li>. . .</li>
+</ul>
+<p>Processing can happen in real time, where a stream processor consumes events immediately after they are collected.
+Real time processing provides less expressive power than other processing paradigms, but it provides insights into the
+data in a very timely manner. CDAP offers Flows as the real-time processing framework.</p>
+<p>Processing can also happen in batch, where many events are processed at the same time to analyze an entire data
+corpus at once. Batch processing is more powerful than real-time processing, but due its very nature is always
+time-lagging and thus often performed over historical data. In CDAP, batch processing can be done via
+MapReduce or Spark, and it can also be scheduled on a periodic basis as part of a workflow.</p>
+</li>
+<li><p class="first"><strong>Data Storage:</strong> The results of processing data must be stored in a persistent and durable way that allows other
+programs or applications to further process or analyze the data. In CDAP, data is stored in datasets.</p>
+</li>
+<li><p class="first"><strong>Data Serving:</strong> The ultimate purpose of processing data is not to store the results, but to make these results
+available to other applications. For example, a web analytics application may find ways to optimize the traffic
+on a website. However, these insights are worthless without a way to feed them back to the actual web application.
+CDAP allows serving datasets to external clients through services.</p>
+</li>
+</ul>
+<p>A CDAP application consists of combinations of these components:</p>
+<ul class="simple">
+<li><a class="reference internal" href="../building-blocks/streams.html#streams"><span>Streams</span></a> for real-time data collection;</li>
+<li>Programs—<a class="reference internal" href="../building-blocks/flows-flowlets/index.html#flows-flowlets-index"><span>Flows,</span></a> <a class="reference internal" href="../building-blocks/mapreduce-programs.html#mapreduce"><span>MapReduce,</span></a>
+<a class="reference internal" href="../building-blocks/spark-programs.html#spark"><span>Spark</span></a>—for data processing in real time or in batch;</li>
+<li><a class="reference internal" href="../building-blocks/datasets/index.html#datasets-index"><span>Datasets</span></a> for data storage abstraction; and</li>
+<li><a class="reference internal" href="../building-blocks/services.html#user-services"><span>Services</span></a> for data serving to external clients.</li>
+</ul>
+<p>This diagram illustrates a typical Big Data application:</p>
+<a class="reference internal image-reference" href="../_images/app_unified_batch_real_time.png"><img alt="../_images/app_unified_batch_real_time.png" class="align-center" src="../_images/app_unified_batch_real_time.png" style="width: 8in;" /></a>
+<p>It illustrates the power of data abstraction in CDAP: a stream is not just a means to collect data; it can
+be consumed by real-time and batch processing at the same time. Similarly, datasets allow sharing of data between
+programs of different paradigms, real time or batch, without compromising the consistency of the data,
+because all data access happens under ACID (Atomicity, Consistency, Isolation, and Durability) guarantees.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Overview</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Anatomy of a Big Data Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modes.html"> Modes and Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="abstractions.html"> Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html"> Programming Interfaces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Cask Data Application Platform Overview" href="index.html" />Cask Data Application Platform Overview</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="CDAP Modes and Components" href="modes.html" />CDAP Modes and Components</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

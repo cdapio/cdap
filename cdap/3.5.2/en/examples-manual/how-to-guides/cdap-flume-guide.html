@@ -1,0 +1,549 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Ingesting Data into CDAP using Apache Flume &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/examples-manual/how-to-guides/cdap-flume-guide.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="How-To Guides" href="index.html" />
+    <link rel="next" title="Consuming Data from Kafka" href="cdap-kafka-ingest-guide.html" />
+    <link rel="prev" title="Real-Time Data Processing with a Flow" href="cdap-flow-guide.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cdap-kafka-ingest-guide.html" title="Consuming Data from Kafka"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="cdap-flow-guide.html" title="Real-Time Data Processing with a Flow"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">How-To Guides</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ingesting-data-into-cdap-using-apache-flume">
+<span id="cdap-flume-guide"></span><h1><a class="headerlink" href="#ingesting-data-into-cdap-using-apache-flume" title="Perma-link to this heading">🔗</a>Ingesting Data into CDAP using Apache Flume</h1>
+<blockquote class="pull-quote">
+<div><strong>Source Code Repository:</strong> Source code (and other resources) for this guide are available at the
+<a class="reference external" href="https://github.com/cdap-guides/cdap-flume-guide/tree/release/cdap-3.5-compatible">CDAP Guides GitHub repository</a>.</div></blockquote>
+<p>Ingesting realtime log data into Hadoop for analysis is a common use
+case which can be solved with <a class="reference external" href="http://flume.apache.org/">Apache Flume</a>.
+In this guide, you will learn how to ingest data into CDAP with Apache
+Flume and process it in realtime.</p>
+<div class="section" id="what-you-will-build">
+<h2><a class="headerlink" href="#what-you-will-build" title="Perma-link to this heading">🔗</a>What You Will Build</h2>
+<p>You will build a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/applications.html">CDAP application</a>
+that uses web logs aggregated by Flume to find page view counts. You will:</p>
+<ul class="simple">
+<li>Configure Flume to ingest data into a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/streams.html">CDAP Stream</a>;</li>
+<li>Build a realtime
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/flows-flowlets/flows.html">Flow</a>
+to process the ingested web logs; and</li>
+<li>Build a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/services.html">Service</a>
+to serve the analysis results via HTTP.</li>
+</ul>
+</div>
+<div class="section" id="what-you-will-need">
+<h2><a class="headerlink" href="#what-you-will-need" title="Perma-link to this heading">🔗</a>What You Will Need</h2>
+<ul class="simple">
+<li><a class="reference external" href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">JDK 7 or 8</a></li>
+<li><a class="reference external" href="http://maven.apache.org/">Apache Maven 3.0+</a></li>
+<li><a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/getting-started/standalone/index.html">CDAP SDK</a></li>
+<li><a class="reference external" href="http://flume.apache.org/download.html">Apache Flume</a></li>
+</ul>
+</div>
+<div class="section" id="lets-build-it">
+<h2><a class="headerlink" href="#lets-build-it" title="Perma-link to this heading">🔗</a>Let’s Build It!</h2>
+<p>The following sections will guide you through configuring and running Flume, and
+implementing an application from scratch. If you want to deploy and run the application
+right away, you can clone the sources from this GitHub repository. In that case, feel free
+to skip the following two sections and jump directly to the
+<a class="reference external" href="#build-and-run-application">Build and Run Application</a> section.</p>
+<div class="section" id="application-design">
+<h3><a class="headerlink" href="#application-design" title="Perma-link to this heading">🔗</a>Application Design</h3>
+<p>Web logs are aggregated using Flume which pushes the data to a <code class="docutils literal"><span class="pre">webLogs</span></code>
+Stream using a special <code class="docutils literal"><span class="pre">StreamSink</span></code> from the
+<a class="reference external" href="https://github.com/caskdata/cdap-ingest/cdap-flume">cdap-ingest</a> library. Then,
+logs are processed in realtime with a Flow that consumes data from the
+<code class="docutils literal"><span class="pre">webLogs</span></code> Stream and persists the computation results in a <code class="docutils literal"><span class="pre">pageViews</span></code>
+Dataset. The <code class="docutils literal"><span class="pre">WebLogAnalyticsService</span></code> makes the computation results
+stored in the <code class="docutils literal"><span class="pre">pageViews</span></code> Dataset accessible via HTTP.</p>
+<a class="reference internal image-reference" href="../_images/app-design3.png"><img alt="../_images/app-design3.png" class="align-center" src="../_images/app-design3.png" style="width: 8in;" /></a>
+<p>First, we will build the app, then deploy the app and start it. Once it
+is ready to accept and process the data, we will configure Flume to push
+data into the stream in realtime.</p>
+</div>
+<div class="section" id="application-implementation">
+<h3><a class="headerlink" href="#application-implementation" title="Perma-link to this heading">🔗</a>Application Implementation</h3>
+<p>The recommended way to build a CDAP application from scratch is to use a
+maven project. Use this directory structure:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">./pom.xml</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/PageViewCounterFlowlet.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/WebLogAnalyticsApplication.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/WebLogAnalyticsFlow.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/WebLogAnalyticsHandler.java</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">WebLogAnalyticsApplication</span></code> declares that the application has a Stream,
+a Flow, a Service and uses a Dataset:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WebLogAnalyticsApplication</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;WebLogAnalyticsApp&quot;</span><span class="o">);</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="s">&quot;webLogs&quot;</span><span class="o">));</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;pageViewTable&quot;</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">addFlow</span><span class="o">(</span><span class="k">new</span> <span class="n">WebLogAnalyticsFlow</span><span class="o">());</span>
+    <span class="n">addService</span><span class="o">(</span><span class="s">&quot;WebLogAnalyticsService&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">WebLogAnalyticsHandler</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">WebLogAnalyticsFlow</span></code> makes use of the <code class="docutils literal"><span class="pre">PageViewCounterFlowlet</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WebLogAnalyticsFlow</span> <span class="kd">extends</span> <span class="n">AbstractFlow</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;WebLogAnalyticsFlow&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;A flow that collects and performs web log analysis&quot;</span><span class="o">);</span>
+    <span class="n">addFlowlet</span><span class="o">(</span><span class="s">&quot;pageViewCounter&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">PageViewCounterFlowlet</span><span class="o">());</span>
+    <span class="n">connectStream</span><span class="o">(</span><span class="s">&quot;webLogs&quot;</span><span class="o">,</span> <span class="s">&quot;pageViewCounter&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">PageViewCounterFlowlet</span></code> receives the log events from the <code class="docutils literal"><span class="pre">webLogs</span></code>
+Stream. It parses the log event and extracts the requested page URL from
+the log event. Then it increments respective counter in the <code class="docutils literal"><span class="pre">pageViewTable</span></code>
+Dataset:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PageViewCounterFlowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Logger</span> <span class="n">LOG</span> <span class="o">=</span> <span class="n">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">PageViewCounterFlowlet</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Pattern</span> <span class="n">ACCESS_LOG_PATTERN</span> <span class="o">=</span> <span class="n">Pattern</span><span class="o">.</span><span class="na">compile</span><span class="o">(</span>
+    <span class="c1">//   IP       id    user      date          request     code     size    referrer    user agent</span>
+    <span class="s">&quot;^([\\d.]+) (\\S+) (\\S+) \\[([^\\]]+)\\] \&quot;([^\&quot;]+)\&quot; (\\d{3}) (\\d+) \&quot;([^\&quot;]+)\&quot; \&quot;([^\&quot;]+)\&quot;&quot;</span><span class="o">);</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Pattern</span> <span class="n">REQUEST_PAGE_PATTERN</span> <span class="o">=</span> <span class="n">Pattern</span><span class="o">.</span><span class="na">compile</span><span class="o">(</span><span class="s">&quot;(\\S+)\\s(\\S+).*&quot;</span><span class="o">);</span>
+
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;pageViewTable&quot;</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">pageViewTable</span><span class="o">;</span>
+
+  <span class="nd">@ProcessInput</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">StreamEvent</span> <span class="n">log</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">String</span> <span class="n">event</span> <span class="o">=</span> <span class="n">Charsets</span><span class="o">.</span><span class="na">UTF_8</span><span class="o">.</span><span class="na">decode</span><span class="o">(</span><span class="n">log</span><span class="o">.</span><span class="na">getBody</span><span class="o">()).</span><span class="na">toString</span><span class="o">();</span>
+    <span class="n">Matcher</span> <span class="n">logMatcher</span> <span class="o">=</span> <span class="n">ACCESS_LOG_PATTERN</span><span class="o">.</span><span class="na">matcher</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">logMatcher</span><span class="o">.</span><span class="na">matches</span><span class="o">()</span> <span class="o">||</span> <span class="n">logMatcher</span><span class="o">.</span><span class="na">groupCount</span><span class="o">()</span> <span class="o">&lt;</span> <span class="mi">8</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Invalid event received {}&quot;</span><span class="o">,</span> <span class="n">log</span><span class="o">);</span>
+      <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="n">String</span> <span class="n">request</span> <span class="o">=</span> <span class="n">logMatcher</span><span class="o">.</span><span class="na">group</span><span class="o">(</span><span class="mi">5</span><span class="o">);</span>
+    <span class="n">Matcher</span> <span class="n">requestMatcher</span> <span class="o">=</span> <span class="n">REQUEST_PAGE_PATTERN</span><span class="o">.</span><span class="na">matcher</span><span class="o">(</span><span class="n">request</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">requestMatcher</span><span class="o">.</span><span class="na">matches</span><span class="o">()</span> <span class="o">||</span> <span class="n">requestMatcher</span><span class="o">.</span><span class="na">groupCount</span><span class="o">()</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Invalid event received {}&quot;</span><span class="o">,</span> <span class="n">log</span><span class="o">);</span>
+      <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="n">String</span> <span class="n">uri</span> <span class="o">=</span> <span class="n">requestMatcher</span><span class="o">.</span><span class="na">group</span><span class="o">(</span><span class="mi">2</span><span class="o">);</span>
+    <span class="n">pageViewTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">uri</span><span class="o">),</span> <span class="mi">1L</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>For example, given the following event:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">192.168.139.1 - - [14/Jan/2014:08:40:43 -0400] &quot;GET https://accounts.example.org/signup HTTP/1.0&quot; 200 809 &quot;http://www.example.org&quot; &quot;example v4.10.5 (www.example.org)&quot;</span>
+</pre></div>
+</div>
+<p>the extracted requested page URL is <code class="docutils literal"><span class="pre">https://accounts.example.org/signup</span></code>.
+This will be used as a counter key in the <code class="docutils literal"><span class="pre">pageViewTable</span></code> Dataset.</p>
+<p><code class="docutils literal"><span class="pre">WebLogAnalyticsHandler</span></code> returns a map of the webpage and its page-views
+counts for an HTTP GET request at <code class="docutils literal"><span class="pre">/views</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WebLogAnalyticsHandler</span> <span class="kd">extends</span> <span class="n">AbstractHttpServiceHandler</span> <span class="o">{</span>
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;pageViewTable&quot;</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">pageViewTable</span><span class="o">;</span>
+
+  <span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;views&quot;</span><span class="o">)</span>
+  <span class="nd">@GET</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">getViews</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">KeyValue</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="kt">byte</span><span class="o">[]&gt;&gt;</span> <span class="n">pageViewScan</span> <span class="o">=</span> <span class="n">pageViewTable</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+    <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;</span> <span class="n">pageViews</span> <span class="o">=</span> <span class="n">Maps</span><span class="o">.</span><span class="na">newHashMap</span><span class="o">();</span>
+    <span class="k">while</span> <span class="o">(</span><span class="n">pageViewScan</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+     <span class="n">KeyValue</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="kt">byte</span><span class="o">[]&gt;</span> <span class="n">uri</span> <span class="o">=</span> <span class="n">pageViewScan</span><span class="o">.</span><span class="na">next</span><span class="o">();</span>
+     <span class="n">pageViews</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="k">new</span> <span class="n">String</span><span class="o">(</span><span class="n">uri</span><span class="o">.</span><span class="na">getKey</span><span class="o">()),</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toLong</span><span class="o">(</span><span class="n">uri</span><span class="o">.</span><span class="na">getValue</span><span class="o">()));</span>
+    <span class="o">}</span>
+    <span class="n">responder</span><span class="o">.</span><span class="na">sendString</span><span class="o">(</span><span class="mi">200</span><span class="o">,</span> <span class="n">pageViews</span><span class="o">.</span><span class="na">toString</span><span class="o">(),</span> <span class="n">Charsets</span><span class="o">.</span><span class="na">UTF_8</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="build-and-run-application">
+<h2><a class="headerlink" href="#build-and-run-application" title="Perma-link to this heading">🔗</a>Build and Run Application</h2>
+<p>The <code class="docutils literal"><span class="pre">WebLogAnalyticsApp</span></code> can be built and packaged using the Apache Maven command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn clean package
+</pre></div>
+</div>
+<p>Note that the remaining commands assume that the <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code> script is
+available on your PATH. If this is not the case, please add it:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:&lt;CDAP home&gt;/bin
+</pre></div>
+</div>
+<p>If you haven't already started a standalone CDAP installation, start it with the command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap.sh start
+</pre></div>
+</div>
+<p>We can then deploy the application to a standalone CDAP installation and
+start the flow and service:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh -u localhost:10000/default load artifact target/cdap-flume-guide-&lt;version&gt;.jar
+<span class="gp">$</span> cdap-cli.sh -u localhost:10000/default create app WebLogAnalyticsApp cdap-flume-guide &lt;version&gt; user
+<span class="gp">$</span> cdap-cli.sh -u localhost:10000/default start flow WebLogAnalyticsApp.WebLogAnalyticsFlow
+<span class="gp">$</span> cdap-cli.sh -u localhost:10000/default start service WebLogAnalyticsApp.WebLogAnalyticsService
+</pre></div>
+</div>
+<p>Once the flow has started, it is ready to receive the web logs from the
+stream. Now, let’s configure and start Flume to push web logs into the
+stream.</p>
+<div class="section" id="ingest-data-with-flume">
+<h3><a class="headerlink" href="#ingest-data-with-flume" title="Perma-link to this heading">🔗</a>Ingest Data with Flume</h3>
+<p>In the provided sources for this guide, you can find an Apache web
+server’s <code class="docutils literal"><span class="pre">access.log</span></code> file that we will use as a source of data. If you
+have access to live Apache web server’s access logs, you can use them
+instead.</p>
+<p>In order to configure Apache Flume to push web logs to a CDAP Stream,
+you need to create a simple Flume flow which includes:</p>
+<ul class="simple">
+<li>Flume source that tail access logs;</li>
+<li>In-memory channel; and</li>
+<li>Flume sink that sends log lines into the CDAP Stream.</li>
+</ul>
+<p>In this example, we will configure the source to tail <code class="docutils literal"><span class="pre">access.log</span></code> and
+<code class="docutils literal"><span class="pre">sink</span></code> to send data to the <code class="docutils literal"><span class="pre">webLogs</span></code> stream.</p>
+</div>
+<div class="section" id="download-flume">
+<h3><a class="headerlink" href="#download-flume" title="Perma-link to this heading">🔗</a>Download Flume</h3>
+<ul>
+<li><p class="first">You can download the Apache Flume distribution at the <a class="reference external" href="http://flume.apache.org/download.html">Apache Flume
+download</a>.</p>
+</li>
+<li><p class="first">Once downloaded, extract the archive into <code class="docutils literal"><span class="pre">&lt;flume-base-dir&gt;</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> tar -xvf apache-flume-*-bin.tar.gz
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="configure-flume-flow">
+<h3><a class="headerlink" href="#configure-flume-flow" title="Perma-link to this heading">🔗</a>Configure Flume Flow</h3>
+<p>Download the CDAP Flume sink jar into your Flume installation:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">cd</span> &lt;flume-base-dir&gt;/lib
+<span class="gp">$</span> curl --remote-name https://oss.sonatype.org/content/repositories/releases/co/cask/cdap/cdap-flume/1.3.0/cdap-flume-1.3.0.jar
+</pre></div>
+</div>
+<p>The CDAP Flume sink requires a newer version of
+<a class="reference external" href="https://code.google.com/p/guava-libraries/">Guava</a> library than that is
+usually shipped with Flume. You need to replace the existing Flume Guava
+library with <code class="docutils literal"><span class="pre">guava-17.0.jar</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">cd</span> &lt;flume-base-dir&gt;/lib
+<span class="gp">$</span> rm guava-*.jar
+<span class="gp">$</span> curl --remote-name https://repo1.maven.org/maven2/com/google/guava/guava/17.0/guava-17.0.jar
+</pre></div>
+</div>
+<p>Now, let’s configure the flow by creating the configuration file
+<code class="docutils literal"><span class="pre">weblog-analysis.conf</span></code> at <code class="docutils literal"><span class="pre">&lt;flume-base-dir&gt;/conf</span></code> with these contents:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">a1.sources = r1</span>
+<span class="go">a1.channels = c1</span>
+<span class="go">a1.sources.r1.type = exec</span>
+<span class="go">a1.sources.r1.command = tail -F &lt;cdap-flume-ingest-guide-basedir&gt;/data/access.log</span>
+<span class="go">a1.sources.r1.channels = c1</span>
+<span class="go">a1.sinks = k1</span>
+<span class="go">a1.sinks.k1.type = co.cask.cdap.flume.StreamSink</span>
+<span class="go">a1.sinks.k1.channel = c1</span>
+<span class="go">a1.sinks.k1.host  = 127.0.0.1</span>
+<span class="go">a1.sinks.k1.namespace = default</span>
+<span class="go">a1.sinks.k1.port = 10000</span>
+<span class="go">a1.sinks.k1.streamName = webLogs</span>
+<span class="go">a1.channels.c1.type = memory</span>
+<span class="go">a1.channels.c1.capacity = 1000</span>
+<span class="go">a1.channels.c1.transactionCapacity = 100</span>
+</pre></div>
+</div>
+<p>Change <code class="docutils literal"><span class="pre">&lt;cdap-flume-ingest-guide-basedir&gt;</span></code> in the configuration file to
+point to the <code class="docutils literal"><span class="pre">&lt;cdap-flume-ingest-guide&gt;</span></code> directory. Alternatively, you can
+point it to <code class="docutils literal"><span class="pre">/tmp/access.log</span></code>, and create <code class="docutils literal"><span class="pre">/tmp/access.log</span></code> with these
+sample contents:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">192.168.99.124 - - [14/Jan/2014:06:51:04 -0400] &quot;GET https://accounts.example.org/signup HTTP/1.1&quot; 200 392 &quot;http://www.example.org&quot; &quot;Mozilla/5.0 (compatible; YandexBot/3.0; +http://www.example.org/bots)&quot;</span>
+<span class="go">192.168.67.103 - - [14/Jan/2014:08:03:05 -0400] &quot;GET https://accounts.example.org/login HTTP/1.1&quot; 404 182 &quot;http://www.example.org&quot; &quot;Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)&quot;</span>
+<span class="go">192.168.67.103 - - [14/Jan/2014:08:03:05 -0400] &quot;GET https://accounts.example.org/signup HTTP/1.1&quot; 200 394 &quot;http://www.example.org&quot; &quot;Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)&quot;</span>
+<span class="go">192.168.139.1 - - [14/Jan/2014:08:40:43 -0400] &quot;GET https://accounts.example.org/login HTTP/1.0&quot; 404 208 &quot;http://www.example.org&quot; &quot;example v4.10.5 (www.example.org)&quot;</span>
+<span class="go">192.168.139.1 - - [14/Jan/2014:08:40:43 -0400] &quot;GET https://accounts.example.org/signup HTTP/1.0&quot; 200 809 &quot;http://www.example.org&quot; &quot;example v4.10.5 (www.example.org)&quot;</span>
+<span class="go">192.168.139.1 - - [14/Jan/2014:08:40:43 -0400] &quot;GET https://www.example.org/ HTTP/1.0&quot; 200 809 &quot;-&quot; &quot;example v4.10.5 (www.example.org)&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="run-flume-flow-with-agent">
+<h3><a class="headerlink" href="#run-flume-flow-with-agent" title="Perma-link to this heading">🔗</a>Run Flume Flow with Agent</h3>
+<p>To run a Flume flow, start an agent with the flow’s configuration:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">cd</span> &lt;flume-base-dir&gt;
+<span class="gp">$</span> ./bin/flume-ng agent --conf conf --conf-file conf/weblog-analysis.conf --name a1 -Dflume.root.logger<span class="o">=</span>INFO,console
+</pre></div>
+</div>
+<p>Once the agent has started, it begins to push data to the CDAP Stream.
+The CDAP application, started earlier, processes the log events as soon as
+data is received. Then you can query the computed page views statistics.</p>
+</div>
+<div class="section" id="query-results">
+<h3><a class="headerlink" href="#query-results" title="Perma-link to this heading">🔗</a>Query Results</h3>
+<p><code class="docutils literal"><span class="pre">WebLogAnalyticsService</span></code> exposes an HTTP endpoint for you to query the
+results of processing:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh -u localhost:10000/default call service WebLogAnalyticsApp.WebLogAnalyticsService GET /views
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;https://www.example.org/&quot;:1,&quot;https://accounts.example.org/signup&quot;:4,&quot;/contact-sales&quot;:2,&quot;https://accounts.example.org/login&quot;:3}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="related-topics">
+<h2><a class="headerlink" href="#related-topics" title="Perma-link to this heading">🔗</a>Related Topics</h2>
+<ul class="simple">
+<li><a class="reference external" href="http://docs.cask.co/cdap/current/en/examples-manual/tutorials/wise.html">Wise: Web Analytics</a>
+tutorial, part of CDAP</li>
+</ul>
+</div>
+<div class="section" id="extend-this-example">
+<h2><a class="headerlink" href="#extend-this-example" title="Perma-link to this heading">🔗</a>Extend This Example</h2>
+<p>To make this application more useful, you can extend it:</p>
+<ul class="simple">
+<li>Find the top visited pages by maintaining the top pages in a Dataset
+and updating them from the <code class="docutils literal"><span class="pre">PageViewCounterFlowlet</span></code>; and</li>
+<li>Calculate the bounce ratio of web pages, with batch processing.</li>
+</ul>
+</div>
+<div class="section" id="share-and-discuss">
+<h2><a class="headerlink" href="#share-and-discuss" title="Perma-link to this heading">🔗</a>Share and Discuss!</h2>
+<p>Have a question? Discuss at the <a class="reference external" href="https://groups.google.com/forum/#!forum/cdap-user">CDAP User Mailing List.</a></p>
+</div>
+<div class="section" id="license">
+<h2><a class="headerlink" href="#license" title="Perma-link to this heading">🔗</a>License</h2>
+<p>Copyright © 2014-2015 Cask Data, Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+not use this file except in compliance with the License. You may obtain
+a copy of the License at</p>
+<p><a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></p>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">How-To Guides</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cdap-bi-guide.html">Analyzing CDAP Data from BI Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-cube-guide.html">Data Analysis with OLAP Cube</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-etl-guide.html">Creating Hydrator Applications using CDAP System Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-flow-guide.html">Real-Time Data Processing with a Flow</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Ingesting Data into CDAP using Apache Flume</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-you-will-build">What You Will Build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-you-will-need">What You Will Need</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lets-build-it">Let’s Build It!</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#build-and-run-application">Build and Run Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#related-topics">Related Topics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#extend-this-example">Extend This Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#share-and-discuss">Share and Discuss!</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#license">License</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-kafka-ingest-guide.html">Consuming Data from Kafka</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-mapreduce-guide.html">Batch Data Processing with CDAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-spark-guide.html">Iterative Data Processing with Apache Spark</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-timeseries-guide.html">Storing Timeseries Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-twitter-ingest-guide.html">Consuming Twitter Data in Real Time</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-workflow-guide.html">Batch Data Processing with CDAP using Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Real-Time Data Processing with a Flow" href="cdap-flow-guide.html" />Real-Time Data Processing with a Flow</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Consuming Data from Kafka" href="cdap-kafka-ingest-guide.html" />Consuming Data from Kafka</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

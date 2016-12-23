@@ -1,0 +1,1109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform WordCount Application" name="description" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>User Profiles &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/examples-manual/examples/user-profiles.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="Web Analytics Application" href="web-analytics.html" />
+    <link rel="prev" title="Stream Conversion" href="stream-conversion.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="web-analytics.html" title="Web Analytics Application"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="stream-conversion.html" title="Stream Conversion"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="user-profiles">
+<span id="examples-user-profiles"></span><h1><a class="headerlink" href="#user-profiles" title="Perma-link to this heading">🔗</a>User Profiles</h1>
+<p>A Cask Data Application Platform (CDAP) example demonstrating column-level conflict
+detection in datasets using the example of managing user profiles in a Table.</p>
+<div class="section" id="overview">
+<h2><a class="headerlink" href="#overview" title="Perma-link to this heading">🔗</a>Overview</h2>
+<p>This application demonstrates the use of the column-level conflict detection in a dataset,
+through the example of an application that manages user profiles in a Table.
+The fields of a user profile are updated in different ways:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Attributes such as name and email address are changed through a RESTful call when the
+user updates their profile.</li>
+<li>The time of the last login is updated by a sign-on service every
+time the user logs in, also through a RESTful call.</li>
+<li>The time of the last activity is updated by a flow that processes
+events whenever it encounters an event from that user.</li>
+</ul>
+</div></blockquote>
+<p>This application illustrates both row-level and column-level conflict detection for a Table.</p>
+<p>Let's look at some of these components, and then run the application and see the results.</p>
+</div>
+<div class="section" id="introducing-column-level-conflict-detection">
+<h2><a class="headerlink" href="#introducing-column-level-conflict-detection" title="Perma-link to this heading">🔗</a>Introducing Column-Level Conflict Detection</h2>
+<p>As in the other <a class="reference internal" href="index.html#examples-index"><span>examples</span></a>, the components
+of the application are tied together by a class <code class="docutils literal"><span class="pre">UserProfiles</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UserProfiles</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;UserProfiles&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Demonstrates the use of column-level conflict detection&quot;</span><span class="o">);</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="s">&quot;events&quot;</span><span class="o">));</span>
+    <span class="n">addFlow</span><span class="o">(</span><span class="k">new</span> <span class="n">ActivityFlow</span><span class="o">());</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">UserProfileService</span><span class="o">());</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;counters&quot;</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                  <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Counters key-value table&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+
+    <span class="c1">// create the profiles table with a schema so that it can be explored via Hive</span>
+    <span class="n">Schema</span> <span class="n">profileSchema</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span>
+      <span class="s">&quot;profile&quot;</span><span class="o">,</span>
+      <span class="c1">// id, name, and email are never null and are set when a user profile is created</span>
+      <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;id&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+      <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;name&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+      <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;email&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+      <span class="c1">// login and active are never set when a profile is created but are set later, so they are nullable.</span>
+      <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;login&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">nullableOf</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">LONG</span><span class="o">))),</span>
+      <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;active&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">nullableOf</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">LONG</span><span class="o">)))</span>
+    <span class="o">);</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;profiles&quot;</span><span class="o">,</span> <span class="n">Table</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">(),</span> <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="c1">// create the profiles table with column-level conflict detection</span>
+      <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">Table</span><span class="o">.</span><span class="na">PROPERTY_CONFLICT_LEVEL</span><span class="o">,</span> <span class="n">ConflictDetection</span><span class="o">.</span><span class="na">COLUMN</span><span class="o">.</span><span class="na">name</span><span class="o">())</span>
+      <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">Table</span><span class="o">.</span><span class="na">PROPERTY_SCHEMA</span><span class="o">,</span> <span class="n">profileSchema</span><span class="o">.</span><span class="na">toString</span><span class="o">())</span>
+      <span class="c1">// to indicate that the id field should come from the row key and not a row column</span>
+      <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">Table</span><span class="o">.</span><span class="na">PROPERTY_SCHEMA_ROW_FIELD</span><span class="o">,</span> <span class="s">&quot;id&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Profiles table with column-level conflict detection&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>This application uses a Table with conflict detection either at the row level or
+at the column level.</p>
+<p>A conflict occurs if two transactions that overlap in time modify the same data in a table.
+For example, a flowlet's process method might overlap with a service handler.
+Such a conflict is detected at the time that the transactions are committed,
+and the transaction that attempts to commit last is rolled back.</p>
+<p>By default, the granularity of the conflict detection is at the row-level.
+That means it is sufficient for two overlapping transactions writing to
+the same row of a table to cause a conflict, even if they write to different
+columns.</p>
+<p>Specifying a conflict detection level of <code class="docutils literal"><span class="pre">COLUMN</span></code> means that a conflict is
+only detected if both transactions modify the same column of the same row.
+This is more precise, but it requires more book-keeping in the transaction
+system and thus can impact performance.</p>
+<p>Column-level conflict detection should be enabled if it is known that different
+transactions frequently modify different columns of the same row concurrently.</p>
+<div class="section" id="userprofiles-application">
+<h3><a class="headerlink" href="#userprofiles-application" title="Perma-link to this heading">🔗</a>UserProfiles Application</h3>
+<p>This application uses:</p>
+<ul class="simple">
+<li>a stream <code class="docutils literal"><span class="pre">events</span></code> to receive events of user activity;</li>
+<li>a dataset <code class="docutils literal"><span class="pre">profiles</span></code> to store user profiles with conflict detection at either the row or column level;</li>
+<li>a dataset <code class="docutils literal"><span class="pre">counters</span></code> to count events by URL (this is not essential for the purpose of the example);</li>
+<li>a service <code class="docutils literal"><span class="pre">UserProfileService</span></code> to create, delete, and update profiles; and</li>
+<li>a flow <code class="docutils literal"><span class="pre">ActivityFlow</span></code> to count events and record the time of last activity for the users.</li>
+</ul>
+<p>The <code class="docutils literal"><span class="pre">UserProfileService</span></code> is a service for creating and modifying user profiles. It has
+handlers to create, update, and retrieve user profiles.</p>
+<p>A script (<code class="docutils literal"><span class="pre">add-users.sh</span></code>) is used to populate the <code class="docutils literal"><span class="pre">profiles</span></code> dataset. Two additional
+scripts (<code class="docutils literal"><span class="pre">update-login.sh</span></code> and <code class="docutils literal"><span class="pre">send-events.sh</span></code>) are used to create a conflict by attempting
+to write to two different columns of the same row at the same time.</p>
+</div>
+</div>
+<div class="section" id="building-and-starting">
+<h2><a class="headerlink" href="#building-and-starting" title="Perma-link to this heading">🔗</a>Building and Starting</h2>
+<ul>
+<li><p class="first">You can either build the example (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-example" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Building an Example Application</span></a>) or use the pre-built JAR file included in the CDAP SDK
+(as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying an Application</span></a>):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral141() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral141 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral141", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral141" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">examples/UserProfiles/target/UserProfiles-3.5.2.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="go">examples\UserProfiles\target\UserProfiles-3.5.2.jar</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Start CDAP (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Starting and Stopping CDAP</span></a>).</p>
+</li>
+<li><p class="first">Deploy the application, as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Deploying an Application</span></a>.
+For example, from the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral142() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral142 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral142", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral142" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact examples/UserProfiles/target/UserProfiles-3.5.2.jar</span>
+
+<span class="go">Successfully added artifact with name &#39;UserProfiles&#39;</span>
+
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app UserProfiles UserProfiles 3.5.2 user</span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact examples\UserProfiles\target\UserProfiles-3.5.2.jar</span></span>
+
+<span class="go">Successfully added artifact with name &#39;UserProfiles&#39;</span>
+
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app UserProfiles UserProfiles 3.5.2 user</span></span>
+
+<span class="go">Successfully created application</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Once the application has been deployed, you can start its components, as described in
+<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-starting-application" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Starting an Application</span></a>, and detailed at the
+start of <a class="reference external" href="#running-the-example">running the example</a>.</p>
+</li>
+<li><p class="first">Once all components are started, <a class="reference external" href="#running-the-example">run the example</a>.</p>
+</li>
+<li><p class="first">When finished, you can <a class="reference external" href="#stopping-and-removing-the-application">stop and remove the application</a>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="running-the-example">
+<h2><a class="headerlink" href="#running-the-example" title="Perma-link to this heading">🔗</a>Running the Example</h2>
+<div class="section" id="observing-conflict-detection">
+<h3><a class="headerlink" href="#observing-conflict-detection" title="Perma-link to this heading">🔗</a>Observing Conflict Detection</h3>
+<p>To observe conflict detection at both the row-level and column-level, you will need to modify
+and build this example twice:</p>
+<ul class="simple">
+<li>The first time, you will use row-level conflict detection, and see errors appearing in a log;</li>
+<li>The second time, you will use column-level conflict detection and see the scripts complete successfully without errors.</li>
+</ul>
+<ol class="arabic">
+<li><p class="first">Build the Application with Row-level Conflict Detection</p>
+<p>Before building the application, set the <code class="docutils literal"><span class="pre">ConflictDetection</span></code> appropriately in the class <code class="docutils literal"><span class="pre">UserProfiles</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;profiles&quot;</span><span class="o">,</span> <span class="n">Table</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">(),</span> <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+  <span class="c1">// create the profiles table with column-level conflict detection</span>
+  <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">Table</span><span class="o">.</span><span class="na">PROPERTY_CONFLICT_LEVEL</span><span class="o">,</span> <span class="n">ConflictDetection</span><span class="o">.</span><span class="na">COLUMN</span><span class="o">.</span><span class="na">name</span><span class="o">())</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>The first time you build the application, set the <code class="docutils literal"><span class="pre">Table.PROPERTY_CONFLICT_LEVEL</span></code> to
+<code class="docutils literal"><span class="pre">ConflictDetection.ROW.name()</span></code>.</li>
+<li>Build the example (as described <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-example" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Building an Example Application</span></a>).</li>
+<li>Start CDAP, deploy and start the application and its component.
+Make sure you start the flow and service as described below.</li>
+<li>Once the application has been deployed and started, you can run the example by <a class="reference external" href="#starting-the-flow">starting the flow and service.</a></li>
+<li>You should observe errors as described below, in the <code class="docutils literal"><span class="pre">&lt;CDAP-SDK-home&gt;/logs/cdap-debug.log</span></code>.</li>
+</ul>
+</li>
+<li><p class="first">Re-build the Application with Column-level Conflict Detection</p>
+<ul class="simple">
+<li>Stop the application's flow and service (as described <a class="reference external" href="#stopping-and-removing-the-application">below</a>).</li>
+<li><a class="reference internal" href="#user-profiles-delete-dataset"><span>Delete the existing dataset</span></a> <code class="docutils literal"><span class="pre">profiles</span></code>,
+either through the CDAP Command Line Interface or by making a <code class="docutils literal"><span class="pre">curl</span></code> call.</li>
+<li>Now, rebuild the application, setting the <code class="docutils literal"><span class="pre">Table.PROPERTY_CONFLICT_LEVEL</span></code> back to its
+original value, <code class="docutils literal"><span class="pre">ConflictDetection.COLUMN.name()</span></code>.</li>
+<li>Re-deploy and re-run the application. You should not see any errors in the log.</li>
+</ul>
+</li>
+</ol>
+</div>
+<div class="section" id="starting-the-flow">
+<h3><a class="headerlink" href="#starting-the-flow" title="Perma-link to this heading">🔗</a>Starting the Flow</h3>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>UserProfiles</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/UserProfiles/overview/programs">application overview page, programs tab</a>,
+click <em>ActivityFlow</em> to get to the flow detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral143() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral143 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral143", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral143" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start flow UserProfiles.ActivityFlow</span>
+
+<span class="go">Successfully started flow &#39;ActivityFlow&#39; of application &#39;UserProfiles&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start flow UserProfiles.ActivityFlow</span></span>
+
+<span class="go">Successfully started flow &#39;ActivityFlow&#39; of application &#39;UserProfiles&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-the-service">
+<h3><a class="headerlink" href="#starting-the-service" title="Perma-link to this heading">🔗</a>Starting the Service</h3>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>UserProfiles</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/UserProfiles/overview/programs">application overview page, programs tab</a>,
+click <em>UserProfileService</em> to get to the service detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral144() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral144 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral144", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral144" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start service UserProfiles.UserProfileService</span>
+
+<span class="go">Successfully started service &#39;UserProfileService&#39; of application &#39;UserProfiles&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start service UserProfiles.UserProfileService</span></span>
+
+<span class="go">Successfully started service &#39;UserProfileService&#39; of application &#39;UserProfiles&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="populate-the-profiles-table">
+<h3><a class="headerlink" href="#populate-the-profiles-table" title="Perma-link to this heading">🔗</a>Populate the <em>profiles</em> Table</h3>
+<p>Populate the <code class="docutils literal"><span class="pre">profiles</span></code> table with users using a script. From the Standalone CDAP SDK directory, use:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral145() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral145 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral145", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral145" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">./examples/UserProfiles/bin/add-users.sh</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">.\examples\UserProfiles\bin\add-users.bat</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+<div class="section" id="create-a-conflict">
+<h3><a class="headerlink" href="#create-a-conflict" title="Perma-link to this heading">🔗</a>Create a Conflict</h3>
+<p>Now, from two different terminals, run the following commands concurrently
+(they are set to run, by default, for 100 seconds):</p>
+<ul>
+<li><p class="first">To randomly update the time of last login for users:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral146() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral146 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral146", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral146" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">./examples/UserProfiles/bin/update-login.sh</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">.\examples\UserProfiles\bin\update-login.bat 100 1</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">To generate random user activity events and send them to the stream:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral147() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral147 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral147", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral147" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">./examples/UserProfiles/bin/send-events.sh</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">.\examples\UserProfiles\bin\send-events.bat 100 1</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p>If both scripts are running at the same time, then some user profiles will be updated at
+the same time by the service and by the flow. With row-level conflict detection, you would
+see transaction conflicts in the logs. But when the <code class="docutils literal"><span class="pre">profiles</span></code> table uses
+column-level conflict detection, these conflicts are avoided.</p>
+<p>To see the behavior with row-level conflict detection, set the dataset creation statement
+at the bottom of <code class="docutils literal"><span class="pre">UserProfiles.java</span></code> to use <code class="docutils literal"><span class="pre">ConflictDetection.ROW.name()</span></code> and re-run the
+steps as above. You should see transaction conflicts in the logs. (One of the scripts will
+stop when a conflict occurs. You can stop the other one at that time.)</p>
+<p>For example, such a conflict would show as (reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">2015-XX-XX 13:22:30,520 - ERROR [executor-</span>
+<span class="go">7:c.c.c.e.p.UserProfileService$UserProfileServiceHandlera910e557f239fd6b95a3ded5c922df3a@-1] - Transaction Failure:</span>
+<span class="go">co.cask.tephra.TransactionConflictException: Conflict detected for transaction 1432066950514000002. at</span>
+<span class="go">co.cask.tephra.TransactionContext.checkForConflicts(TransactionContext.java:174) ~[co.cask.tephra.tephra-core-0.4.1.jar:na] at</span>
+<span class="go">co.cask.tephra.TransactionContext.finish(TransactionContext.java:79) ~[co.cask.tephra.tephra-core-0.4.1.jar:na] at</span>
+<span class="go">. . .</span>
+</pre></div>
+</div>
+<p>(The log file is located at <code class="docutils literal"><span class="pre">&lt;CDAP-SDK-HOME&gt;/logs/cdap-debug.log</span></code>. You should also see
+error in the CDAP UI, in the <a class="reference external" href="http://localhost:9999/ns/default/apps/UserProfiles/programs/services/UserProfileService/logs?filter=error">UserProfileService error log</a>.)</p>
+<p>Note that in order to see this happen (and to change from row- to column- and vice-versa),
+you need to <a class="reference internal" href="#user-profiles-delete-dataset"><span>delete the existing dataset</span></a> <code class="docutils literal"><span class="pre">profiles</span></code>
+before redeploying the application, to force its recreation with the new properties.</p>
+<p>Running the example with <code class="docutils literal"><span class="pre">ConflictDetection.COLUMN.name()</span></code> will result in the two scripts running
+concurrently without transaction conflicts.</p>
+</div>
+<div class="section" id="deleting-any-existing-profiles-dataset">
+<span id="user-profiles-delete-dataset"></span><h3><a class="headerlink" href="#deleting-any-existing-profiles-dataset" title="Perma-link to this heading">🔗</a>Deleting any Existing <em>profiles</em> Dataset</h3>
+<p>If the <code class="docutils literal"><span class="pre">profiles</span></code> dataset has been created from an earlier deployment of the application
+and running of the example, it needs to be removed before the next deployment and running,
+so that it is created with the correct properties.</p>
+<p>To delete the <code class="docutils literal"><span class="pre">profiles</span></code> dataset, either use the CDAP Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral148() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral148 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral148", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral148" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh delete dataset instance profiles</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat delete dataset instance profiles</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>or by making a <code class="docutils literal"><span class="pre">curl</span></code> call:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral149() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral149 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral149", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral149" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X DELETE <span class="s2">&quot;http://localhost:10000/v3/namespaces/default/data/datasets/profiles&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X DELETE &quot;http://localhost:10000/v3/namespaces/default/data/datasets/profiles&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>Then re-deploy the application.</p>
+</div>
+</div>
+<div class="section" id="stopping-and-removing-the-application">
+<h2><a class="headerlink" href="#stopping-and-removing-the-application" title="Perma-link to this heading">🔗</a>Stopping and Removing the Application</h2>
+<p>Once done, you can stop the application—if it hasn't stopped
+already—as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-stopping" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Stopping an Application</span></a>. Here is an example-specific
+description of the steps:</p>
+<p><strong>Stopping the Flow</strong></p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>UserProfiles</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/UserProfiles/overview/programs">application overview page, programs tab</a>,
+click <em>ActivityFlow</em> to get to the flow detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral150() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral150 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral150", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral150" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh stop flow UserProfiles.ActivityFlow</span>
+
+<span class="go">Successfully stopped flow &#39;ActivityFlow&#39; of application &#39;UserProfiles&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat stop flow UserProfiles.ActivityFlow</span></span>
+
+<span class="go">Successfully stopped flow &#39;ActivityFlow&#39; of application &#39;UserProfiles&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p><strong>Stopping the Service</strong></p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>UserProfiles</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/UserProfiles/overview/programs">application overview page, programs tab</a>,
+click <em>UserProfileService</em> to get to the service detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral151() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral151 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral151", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral151" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh stop service UserProfiles.UserProfileService</span>
+
+<span class="go">Successfully stopped service &#39;UserProfileService&#39; of application &#39;UserProfiles&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat stop service UserProfiles.UserProfileService</span></span>
+
+<span class="go">Successfully stopped service &#39;UserProfileService&#39; of application &#39;UserProfiles&#39;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p><strong>Removing the Application</strong></p>
+<p>You can now remove the application as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-removing" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Removing an Application</span></a>, or:</p>
+<ul>
+<li><p class="first">Using the CDAP UI, go to the <em>UserProfiles</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/UserProfiles/overview/programs">application overview page, programs tab</a>,
+click the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management
+pane for the application, then click the <em>Actions</em> menu on the right side and select
+<em>Delete</em> to delete the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral152() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral152 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral152", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral152" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh delete app UserProfiles</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat delete app UserProfiles</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clicks-and-views.html">Clicks and Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-cleansing.html">Data Cleansing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fileset-example.html">FileSet Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="log-analysis.html">Log Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spam-classifier.html">Spam Classifier</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sport-results.html">Sport Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream-conversion.html">Stream Conversion</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">User Profiles</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#introducing-column-level-conflict-detection">Introducing Column-Level Conflict Detection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stopping-and-removing-the-application">Stopping and Removing the Application</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wikipedia-data-pipeline.html">Wikipedia Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Stream Conversion" href="stream-conversion.html" />Stream Conversion</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Web Analytics Application" href="web-analytics.html" />Web Analytics Application</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

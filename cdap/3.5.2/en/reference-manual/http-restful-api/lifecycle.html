@@ -1,0 +1,1787 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Lifecycle HTTP RESTful API &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/http-restful-api/lifecycle.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Logging HTTP RESTful API" href="logging.html" />
+    <link rel="prev" title="Dataset HTTP RESTful API" href="dataset.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="logging.html" title="Logging HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="dataset.html" title="Dataset HTTP RESTful API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Reference Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="lifecycle-http-restful-api">
+<span id="http-restful-api-lifecycle"></span><h1><a class="headerlink" href="#lifecycle-http-restful-api" title="Perma-link to this heading">🔗</a>Lifecycle HTTP RESTful API</h1>
+<p>Use the CDAP Lifecycle HTTP RESTful API to deploy or delete applications and manage the lifecycle of
+flows, MapReduce and Spark programs, custom services, workers, and workflows.</p>
+<p>Details of these CDAP components can be found in the <a class="reference external" href="../source/../../developers-manual/building-blocks/index.html#building-blocks" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Developers' Manual: Building Blocks</span></a>.</p>
+<p>All methods or endpoints described in this API have a base URL (typically
+<code class="docutils literal"><span class="pre">http://&lt;host&gt;:10000</span></code> or <code class="docutils literal"><span class="pre">https://&lt;host&gt;:10443</span></code>) that precedes the resource
+identifier, as described in the <a class="reference internal" href="introduction.html#http-restful-api-conventions-base-url"><span>RESTful API Conventions</span></a>.
+These methods return a status code, as listed in the <a class="reference internal" href="introduction.html#http-restful-api-status-codes"><span>RESTful API  Status Codes</span></a>.</p>
+<div class="section" id="application-lifecycle">
+<h2><a class="headerlink" href="#application-lifecycle" title="Perma-link to this heading">🔗</a>Application Lifecycle</h2>
+<div class="section" id="create-an-application">
+<span id="http-restful-api-lifecycle-create-app"></span><h3><a class="headerlink" href="#create-an-application" title="Perma-link to this heading">🔗</a>Create an Application</h3>
+<p>To create an application, submit an HTTP PUT request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-name&gt;</span>
+</pre></div>
+</div>
+<p>The request body is a JSON object specifying the artifact to use to create the application,
+and an optional application configuration. For example:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> PUT /v3/namespaces/default/apps/purchaseWordCount -d
+{
+  &quot;artifact&quot;: {
+    &quot;name&quot;: &quot;WordCount&quot;,
+    &quot;version&quot;: &quot;3.5.2&quot;,
+    &quot;scope&quot;: &quot;user&quot;
+  },
+  &quot;config&quot;: {
+    &quot;stream&quot;: &quot;purchaseStream&quot;
+  }
+}
+</pre>
+</div>
+<p>will create an application named <code class="docutils literal"><span class="pre">purchaseWordCount</span></code> from the example <code class="docutils literal"><span class="pre">WordCount</span></code> artifact. The application
+will receive the specified config, which will configure the application to create a stream named
+<code class="docutils literal"><span class="pre">purchaseStream</span></code> instead of using the default stream name.</p>
+</div>
+<div class="section" id="update-an-application">
+<h3><a class="headerlink" href="#update-an-application" title="Perma-link to this heading">🔗</a>Update an Application</h3>
+<p>To update an application, submit an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-name&gt;/update</span>
+</pre></div>
+</div>
+<p>The request body is a JSON object specifying the updated artifact version and the updated application
+config. For example, a request body of:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> POST /v3/namespaces/default/apps/purchaseWordCount -d
+{
+  &quot;artifact&quot;: {
+    &quot;name&quot;: &quot;WordCount&quot;,
+    &quot;version&quot;: &quot;3.5.2&quot;,
+    &quot;scope&quot;: &quot;user&quot;
+  },
+  &quot;config&quot;: {
+    &quot;stream&quot;: &quot;logStream&quot;;
+  }
+}
+</pre>
+</div>
+<p>will update the <code class="docutils literal"><span class="pre">purchaseWordCount</span></code> application to use version 3.5.2 of the <code class="docutils literal"><span class="pre">WordCount</span></code> artifact,
+and update the name of the stream to <code class="docutils literal"><span class="pre">logStream</span></code>. If no artifact is given, the current artifact will be
+used. Only changes to artifact version are supported; changes to the artifact name are not allowed. If no
+config is given, the current config will be used. If the config key is present, the current config will be
+overwritten by the config specified in the request.</p>
+</div>
+<div class="section" id="deploy-an-artifact-and-application">
+<h3><a class="headerlink" href="#deploy-an-artifact-and-application" title="Perma-link to this heading">🔗</a>Deploy an Artifact and Application</h3>
+<p>To deploy an application from your local file system into the namespace <em>namespace-id</em>,
+submit an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/apps</span>
+</pre></div>
+</div>
+<p>with the name of the JAR file as a header:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">X-Archive-Name: &lt;JAR filename&gt;</span>
+</pre></div>
+</div>
+<p>This will add the JAR file as an artifact and then create an application from that artifact.
+The archive name must be in the form <code class="docutils literal"><span class="pre">&lt;artifact-name&gt;-&lt;artifact-version&gt;.jar</span></code>.
+An optional header can supply a configuration object as a serialized JSON string:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">X-App-Config: &lt;JSON Serialization String of the Configuration Object&gt;</span>
+</pre></div>
+</div>
+<p>The application's content is the body of the request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&lt;JAR binary content&gt;</span>
+</pre></div>
+</div>
+<p>Invoke the same command to update an application to a newer version.
+However, be sure to stop all of its flows, Spark and MapReduce programs before updating the application.</p>
+<p>For an application that has a configuration class such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">public static class MyAppConfig extends Config {</span>
+<span class="go">  String streamName;</span>
+<span class="go">  String datasetName;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>We can deploy it with this RESTful call:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/apps</span>
+<span class="go">-H &quot;X-Archive-Name: &lt;jar-name&gt;&quot; \</span>
+<span class="go">-H &#39;X-App-Config: &quot;{\&quot;streamName\&quot; : \&quot;newStream\&quot;, \&quot;datasetName\&quot; : \&quot;newDataset\&quot; }&quot; &#39; \</span>
+<span class="go">--data-binary &quot;@&lt;jar-location&gt;&quot;</span>
+</pre></div>
+</div>
+<p>Note that the <code class="docutils literal"><span class="pre">X-App-Config</span></code> header contains the JSON serialization string of the <code class="docutils literal"><span class="pre">MyAppConfig</span></code> object.</p>
+</div>
+<div class="section" id="deployed-applications">
+<h3><a class="headerlink" href="#deployed-applications" title="Perma-link to this heading">🔗</a>Deployed Applications</h3>
+<p>To list all of the deployed applications in the namespace <em>namespace-id</em>, issue an HTTP
+GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps[?artifactName=&lt;artifact-names&gt;[&amp;artifactVersion=&lt;artifact-version&gt;]]</span>
+</pre></div>
+</div>
+<p>This will return a JSON String map that lists each application with its name, description, and artifact.
+The list can optionally be filtered by one or more artifact names. It can also be filtered by artifact version.
+For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps?artifactName=cdap-data-pipeline,cdap-etl-realtime</span>
+</pre></div>
+</div>
+<p>will return all applications that use either the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> or <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> artifacts.</p>
+</div>
+<div class="section" id="details-of-a-deployed-application">
+<h3><a class="headerlink" href="#details-of-a-deployed-application" title="Perma-link to this heading">🔗</a>Details of a Deployed Application</h3>
+<p>For detailed information on an application that has been deployed in the namespace
+<em>namespace-id</em>, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;</span>
+</pre></div>
+</div>
+<p>The information will be returned in the body of the response. It includes the name and description
+of the application; the artifact, streams, and datasets that it uses; and all of its programs.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The event successfully called the method, and the body contains the results</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="delete-an-application">
+<h3><a class="headerlink" href="#delete-an-application" title="Perma-link to this heading">🔗</a>Delete an Application</h3>
+<p>To delete an application—together with all of its flows, MapReduce or Spark
+programs, schedules, custom services, and workflows—submit an HTTP DELETE:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;application-name&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">application-name</span></code></td>
+<td>Name of the application to be deleted</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> The <code class="docutils literal"><span class="pre">application-name</span></code> in this URL is the name of the application
+as configured by the application Specification,
+and not necessarily the same as the name of the JAR file that was used to deploy the application.
+This does not delete the streams and datasets associated with the application
+because they belong to the namespace, not the application.
+Also, this does not delete the artifact used to create the application.</p>
+</div>
+</div>
+<div class="section" id="program-lifecycle">
+<span id="http-restful-api-program-lifecycle"></span><h2><a class="headerlink" href="#program-lifecycle" title="Perma-link to this heading">🔗</a>Program Lifecycle</h2>
+<div class="section" id="details-of-a-program">
+<h3><a class="headerlink" href="#details-of-a-program" title="Perma-link to this heading">🔗</a>Details of a Program</h3>
+<p>After an application is deployed, you can retrieve the details of its flows, MapReduce and Spark programs,
+custom services, schedules, workers, and workflows by submitting an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;</span>
+</pre></div>
+</div>
+<p>To retrieve information about the schedules of the program's workflows, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/workflows/&lt;workflow-id&gt;/schedules</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workers</span></code>, or <code class="docutils literal"><span class="pre">workflows</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the <em>flow</em>, <em>MapReduce</em>, <em>custom service</em>, <em>Spark</em>, <em>worker</em>, or <em>workflow</em>
+being called</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">workflow-id</span></code></td>
+<td>Name of the <em>workflow</em> being called, when retrieving schedules</td>
+</tr>
+</tbody>
+</table>
+<p>The response will be a JSON array containing details about the program. The details returned depend on the
+program type.</p>
+<p>For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow</span>
+</pre></div>
+</div>
+<p>will return in a JSON array information about the <em>WhoFlow</em> of the application <em>HelloWorld</em>. The results will
+be similar to this (pretty-printed and portions deleted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">    &quot;className&quot;: &quot;co.cask.cdap.examples.helloworld.HelloWorld$WhoFlow&quot;,</span>
+<span class="go">    &quot;name&quot;: &quot;WhoFlow&quot;,</span>
+<span class="go">    &quot;description&quot;: &quot;A flow that collects names&quot;,</span>
+<span class="go">    &quot;flowlets&quot;: {</span>
+<span class="go">        &quot;saver&quot;: {</span>
+<span class="go">            &quot;flowletSpec&quot;: {</span>
+<span class="go">                &quot;className&quot;: &quot;co.cask.cdap.examples.helloworld.HelloWorld$NameSaver&quot;,</span>
+<span class="go">                &quot;name&quot;: &quot;saver&quot;,</span>
+<span class="go">                &quot;description&quot;: &quot;&quot;,</span>
+<span class="go">                &quot;failurePolicy&quot;: &quot;RETRY&quot;,</span>
+<span class="go">                &quot;dataSets&quot;: [</span>
+<span class="go">                    &quot;whom&quot;</span>
+<span class="go">                ],</span>
+<span class="go">                &quot;properties&quot;: {</span>
+<span class="go">                },</span>
+<span class="go">                &quot;resources&quot;: {</span>
+<span class="go">                    &quot;virtualCores&quot;: 1,</span>
+<span class="go">                    &quot;memoryMB&quot;: 512</span>
+<span class="go">                }</span>
+<span class="go">            },</span>
+<span class="go">            &quot;streams&quot;: {</span>
+<span class="go">            },</span>
+<span class="go">            &quot;datasetModules&quot;: {</span>
+<span class="go">            },</span>
+<span class="go">            &quot;datasetSpecs&quot;: {</span>
+<span class="go">            },</span>
+<span class="go">            &quot;instances&quot;: 1,</span>
+<span class="go">            &quot;datasets&quot;: [</span>
+<span class="go">                &quot;whom&quot;</span>
+<span class="go">            ],</span>
+<span class="go">            &quot;inputs&quot;: {</span>
+
+<span class="go">              . . .</span>
+
+<span class="go">            },</span>
+<span class="go">            &quot;outputs&quot;: {</span>
+<span class="go">            }</span>
+<span class="go">        }</span>
+<span class="go">    },</span>
+<span class="go">    &quot;connections&quot;: [</span>
+<span class="go">        {</span>
+<span class="go">            &quot;sourceType&quot;: &quot;STREAM&quot;,</span>
+<span class="go">            &quot;sourceName&quot;: &quot;who&quot;,</span>
+<span class="go">            &quot;targetName&quot;: &quot;saver&quot;</span>
+<span class="go">        }</span>
+<span class="go">    ]</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="start-a-program">
+<span id="http-restful-api-lifecycle-start"></span><h3><a class="headerlink" href="#start-a-program" title="Perma-link to this heading">🔗</a>Start a Program</h3>
+<p>After an application is deployed, you can start its flows, MapReduce and Spark programs,
+custom services, workers, and workflows by submitting an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/start</span>
+</pre></div>
+</div>
+<p>When starting an program, you can optionally specify runtime arguments as a JSON map in the request body.
+CDAP will use these these runtime arguments only for this single invocation of the program.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workers</span></code>, or <code class="docutils literal"><span class="pre">workflows</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the <em>flow</em>, <em>MapReduce</em>, <em>custom service</em>, <em>Spark</em>, <em>worker</em>, or <em>workflow</em>
+being called</td>
+</tr>
+</tbody>
+</table>
+<p><em>Flow</em>, <em>Service</em>, <em>Spark</em>, and <em>Worker</em> programs do not allow concurrent program runs.
+Programs of these types cannot be started unless the program is in the <em>STOPPED</em> state.
+<em>MapReduce</em> and <em>Workflow</em> programs support concurrent runs. If you start one of these programs,
+a new run will be started even if other runs of the program have not finished yet.</p>
+<p>For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/start -d &#39;{ &quot;foo&quot;:&quot;bar&quot;, &quot;this&quot;:&quot;that&quot; }&#39;</span>
+</pre></div>
+</div>
+<p>will start the <em>WhoFlow</em> flow in the <em>HelloWorld</em> application with two runtime arguments.</p>
+</div>
+<div class="section" id="start-multiple-programs">
+<span id="http-restful-api-lifecycle-start-multiple"></span><h3><a class="headerlink" href="#start-multiple-programs" title="Perma-link to this heading">🔗</a>Start Multiple Programs</h3>
+<p>You can start multiple programs from different applications and program types
+by submitting an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/start</span>
+</pre></div>
+</div>
+<p>with a JSON array in the request body consisting of multiple JSON objects with these parameters:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;appId&quot;</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;programType&quot;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">service</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">worker</span></code>, or <code class="docutils literal"><span class="pre">workflow</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;programId&quot;</span></code></td>
+<td>Name of the <em>flow</em>, <em>MapReduce</em>, <em>custom service</em>, <em>Spark</em>, <em>worker</em>, or <em>workflow</em>
+being called</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;runtimeargs&quot;</span></code></td>
+<td>Optional JSON object containing a string to string mapping of runtime arguments to start the program with</td>
+</tr>
+</tbody>
+</table>
+<p>The response will be a JSON array containing a JSON object for each object in the input.
+Each JSON object will contain these parameters:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;appId&quot;</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;programType&quot;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">service</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">worker</span></code>, or <code class="docutils literal"><span class="pre">workflow</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;programId&quot;</span></code></td>
+<td>Name of the <em>flow</em>, <em>MapReduce</em>, <em>custom service</em>, <em>Spark</em>, <em>worker</em>, or <em>workflow</em>
+being called</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;statusCode&quot;</span></code></td>
+<td>The status code from starting an individual JSON object</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;error&quot;</span></code></td>
+<td>If an error, a description of why the program could not be started (for example, the specified program was not found)</td>
+</tr>
+</tbody>
+</table>
+<p>For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/default/start -d &#39;</span>
+<span class="go">  [</span>
+<span class="go">    {&quot;appId&quot;: &quot;App1&quot;, &quot;programType&quot;: &quot;Service&quot;, &quot;programId&quot;: &quot;Service1&quot;},</span>
+<span class="go">    {&quot;appId&quot;: &quot;App1&quot;, &quot;programType&quot;: &quot;Mapreduce&quot;, &quot;programId&quot;: &quot;MapReduce2&quot;},</span>
+<span class="go">    {&quot;appId&quot;: &quot;App2&quot;, &quot;programType&quot;: &quot;Flow&quot;, &quot;programId&quot;: &quot;Flow1&quot;, &quot;runtimeargs&quot;: { &quot;arg1&quot;:&quot;val1&quot; }}</span>
+<span class="go">  ]&#39;</span>
+</pre></div>
+</div>
+<p>will attempt to start the three programs listed in the request body. It will receive a response such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">  {&quot;appId&quot;: &quot;App1&quot;, &quot;programType&quot;: &quot;Service&quot;, &quot;programId&quot;: &quot;Service1&quot;, &quot;statusCode&quot;: 200},</span>
+<span class="go">  {&quot;appId&quot;: &quot;App1&quot;, &quot;programType&quot;: &quot;Mapreduce&quot;, &quot;programId&quot;: &quot;Mapreduce2&quot;, &quot;statusCode&quot;: 200},</span>
+<span class="go">  {&quot;appId&quot;: &quot;App2&quot;, &quot;programType&quot;:&quot;Flow&quot;, &quot;programId&quot;:&quot;Flow1&quot;, &quot;statusCode&quot;:404, &quot;error&quot;: &quot;App: App2 not found&quot;}</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>In this particular example, the service and mapreduce programs in the <em>App1</em> application were successfully
+started, and there was an error starting the last program because the <em>App2</em> application does not exist.</p>
+</div>
+<div class="section" id="stop-a-program">
+<span id="http-restful-api-lifecycle-stop"></span><h3><a class="headerlink" href="#stop-a-program" title="Perma-link to this heading">🔗</a>Stop a Program</h3>
+<p>You can stop the flows, MapReduce and Spark programs, custom services, workers, and
+workflows of an application by submitting an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/stop</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workers</span></code>, or <code class="docutils literal"><span class="pre">workflows</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the <em>flow</em>, <em>MapReduce</em>, <em>custom service</em>, <em>Spark</em>, <em>worker</em>, or <em>workflow</em>
+being called</td>
+</tr>
+</tbody>
+</table>
+<p>A program that is in the STOPPED state cannot be stopped. If there are multiple runs of the program
+in the RUNNING state, this call will stop one of the runs, but not all of the runs.</p>
+<p>For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/stop</span>
+</pre></div>
+</div>
+<p>will stop the <em>WhoFlow</em> flow in the <em>HelloWorld</em> application.</p>
+</div>
+<div class="section" id="stop-a-program-run">
+<span id="http-restful-api-lifecycle-stop-run"></span><h3><a class="headerlink" href="#stop-a-program-run" title="Perma-link to this heading">🔗</a>Stop a Program Run</h3>
+<p>You can stop a specific run of a program by submitting an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/runs/&lt;run-id&gt;/stop</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workers</span></code>, or <code class="docutils literal"><span class="pre">workflows</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the <em>flow</em>, <em>MapReduce</em>, <em>custom service</em>, <em>Spark</em>, <em>worker</em>, or <em>workflow</em>
+being called</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">run-id</span></code></td>
+<td>Run id of the run being called</td>
+</tr>
+</tbody>
+</table>
+<p>For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/default/apps/PurchaseHistory/mapreduce/PurchaseHistoryBuilder/runs/631bc459-a9dd-4218-9ea0-d46fb1991f82/stop</span>
+</pre></div>
+</div>
+<p>will stop the specific run of the <em>PurchaseHistoryBuilder</em> mapreduce in the <em>PurchaseHistory</em> application.</p>
+</div>
+<div class="section" id="stop-multiple-programs">
+<span id="http-restful-api-lifecycle-stop-multiple"></span><h3><a class="headerlink" href="#stop-multiple-programs" title="Perma-link to this heading">🔗</a>Stop Multiple Programs</h3>
+<p>You can stop multiple programs from different applications and program types
+by submitting an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/stop</span>
+</pre></div>
+</div>
+<p>with a JSON array in the request body consisting of multiple JSON objects with these parameters:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;appId&quot;</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;programType&quot;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">service</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">worker</span></code>, or <code class="docutils literal"><span class="pre">workflow</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;programId&quot;</span></code></td>
+<td>Name of the <em>flow</em>, <em>MapReduce</em>, <em>custom service</em>, <em>Spark</em>, <em>worker</em>, or <em>workflow</em>
+being called</td>
+</tr>
+</tbody>
+</table>
+<p>The response will be a JSON array containing a JSON object corresponding to each object in the input.
+Each JSON object will contain these parameters:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;appId&quot;</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;programType&quot;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">service</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">worker</span></code>, or <code class="docutils literal"><span class="pre">workflow</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;programId&quot;</span></code></td>
+<td>Name of the <em>flow</em>, <em>MapReduce</em>, <em>custom service</em>, <em>Spark</em>, <em>worker</em>, or <em>workflow</em>
+being called</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;statusCode&quot;</span></code></td>
+<td>The status code from stopping an individual JSON object</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;error&quot;</span></code></td>
+<td>If an error, a description of why the program could not be stopped (for example, the specified program was not found)</td>
+</tr>
+</tbody>
+</table>
+<p>For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/default/stop -d &#39;</span>
+<span class="go">  [</span>
+<span class="go">    {&quot;appId&quot;: &quot;App1&quot;, &quot;programType&quot;: &quot;Service&quot;, &quot;programId&quot;: &quot;Service1&quot;},</span>
+<span class="go">    {&quot;appId&quot;: &quot;App1&quot;, &quot;programType&quot;: &quot;Mapreduce&quot;, &quot;programId&quot;: &quot;MapReduce2&quot;},</span>
+<span class="go">    {&quot;appId&quot;: &quot;App2&quot;, &quot;programType&quot;: &quot;Flow&quot;, &quot;programId&quot;: &quot;Flow1&quot;}</span>
+<span class="go">  ]&#39;</span>
+</pre></div>
+</div>
+<p>will attempt to stop the three programs listed in the request body. It will receive a response such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">  {&quot;appId&quot;: &quot;App1&quot;, &quot;programType&quot;: &quot;Service&quot;, &quot;programId&quot;: &quot;Service1&quot;, &quot;statusCode&quot;: 200},</span>
+<span class="go">  {&quot;appId&quot;: &quot;App1&quot;, &quot;programType&quot;: &quot;Mapreduce&quot;, &quot;programId&quot;: &quot;Mapreduce2&quot;, &quot;statusCode&quot;: 200},</span>
+<span class="go">  {&quot;appId&quot;: &quot;App2&quot;, &quot;programType&quot;:&quot;Flow&quot;, &quot;programId&quot;:&quot;Flow1&quot;, &quot;statusCode&quot;:404, &quot;error&quot;: &quot;App: App2 not found&quot;}</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>In this particular example, the service and mapreduce programs in the <em>App1</em> application were successfully
+stopped, and there was an error starting the last program because the <em>App2</em> application does not exist.</p>
+</div>
+<div class="section" id="status-of-a-program">
+<span id="http-restful-api-lifecycle-status"></span><h3><a class="headerlink" href="#status-of-a-program" title="Perma-link to this heading">🔗</a>Status of a Program</h3>
+<p>To retrieve the status of a program, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/status</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">schedules</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workers</span></code>, or <code class="docutils literal"><span class="pre">workflows</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the <em>flow</em>, <em>MapReduce</em>, <em>schedule</em>, <em>custom service</em>, <em>Spark</em>, <em>worker</em>, or <em>workflow</em>
+being called</td>
+</tr>
+</tbody>
+</table>
+<p>The response will be a JSON array with status of the program. For example, retrieving the status of the
+<em>WhoFlow</em> of the program <em>HelloWorld</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/status</span>
+</pre></div>
+</div>
+<p>will return (pretty-printed) a response such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">    &quot;status&quot;: &quot;STOPPED&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="status-of-multiple-programs">
+<span id="http-restful-api-lifecycle-status-multi"></span><h3><a class="headerlink" href="#status-of-multiple-programs" title="Perma-link to this heading">🔗</a>Status of Multiple Programs</h3>
+<p>You can retrieve the status of multiple programs from different applications and program types
+by submitting an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/status</span>
+</pre></div>
+</div>
+<p>with a JSON array in the request body consisting of multiple JSON objects with these parameters:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;appId&quot;</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;programType&quot;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">schedule</span></code>, <code class="docutils literal"><span class="pre">service</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">worker</span></code>, or <code class="docutils literal"><span class="pre">workflow</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;programId&quot;</span></code></td>
+<td>Name of the <em>flow</em>, <em>MapReduce</em>, <em>schedule</em>, <em>custom service</em>, <em>Spark</em>, <em>worker</em>, or <em>workflow</em>
+being called</td>
+</tr>
+</tbody>
+</table>
+<p>The response will be the same JSON array as submitted with additional parameters for each of the underlying JSON objects:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;status&quot;</span></code></td>
+<td>Maps to the status of an individual JSON object's queried program
+if the query is valid and the program was found</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;statusCode&quot;</span></code></td>
+<td>The status code from retrieving the status of an individual JSON object</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;error&quot;</span></code></td>
+<td>If an error, a description of why the status was not retrieved (for example, the specified program was not found)</td>
+</tr>
+</tbody>
+</table>
+<p>The <code class="docutils literal"><span class="pre">status</span></code> and <code class="docutils literal"><span class="pre">error</span></code> fields are mutually exclusive meaning if there is an error,
+then there will never be a status and vice versa.</p>
+<p>For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/default/status -d &#39;</span>
+<span class="go">  [</span>
+<span class="go">    { &quot;appId&quot;: &quot;MyApp&quot;, &quot;programType&quot;: &quot;flow&quot;, &quot;programId&quot;: &quot;MyFlow&quot; },</span>
+<span class="go">    { &quot;appId&quot;: &quot;MyApp2&quot;, &quot;programType&quot;: &quot;service&quot;, &quot;programId&quot;: &quot;MyService&quot; }</span>
+<span class="go">  ]</span>
+</pre></div>
+</div>
+<p>will retrieve the status of two programs. It will receive a response such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">  { &quot;appId&quot;:&quot;MyApp&quot;, &quot;programType&quot;:&quot;flow&quot;, &quot;programId&quot;:&quot;MyFlow&quot;, &quot;status&quot;:&quot;RUNNING&quot;, &quot;statusCode&quot;:200 },</span>
+<span class="go">  { &quot;appId&quot;:&quot;MyApp2&quot;, &quot;programType&quot;:&quot;service&quot;, &quot;programId&quot;:&quot;MyService&quot;, &quot;error&quot;:&quot;Program not found&quot;, &quot;statusCode&quot;:404 }</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="container-information">
+<span id="http-restful-api-lifecycle-container-information"></span><h2><a class="headerlink" href="#container-information" title="Perma-link to this heading">🔗</a>Container Information</h2>
+<p>To find out the address of an program's container host and the container’s debug port, you can query
+CDAP for a flow or service’s live info via an HTTP GET method:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/live-info</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, or  <code class="docutils literal"><span class="pre">workers</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the program (<em>flow</em>, <em>service</em>, or <em>worker</em>)</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/WordCount/flows/WordCounter/live-info</span>
+</pre></div>
+</div>
+<p>The response is formatted in JSON; an example of this is shown in
+<a class="reference external" href="../source/../../developers-manual/testing/debugging.html#debugging-distributed" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP Testing and Debugging.</span></a></p>
+</div>
+<div class="section" id="scaling">
+<span id="http-restful-api-lifecycle-scale"></span><h2><a class="headerlink" href="#scaling" title="Perma-link to this heading">🔗</a>Scaling</h2>
+<p>You can retrieve the instance count executing different components from various applications and
+different program types using an HTTP POST method:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/instances</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+</tbody>
+</table>
+<p>with a JSON array in the request body consisting of multiple JSON objects with these parameters:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;appId&quot;</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;programType&quot;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">service</span></code>, or <code class="docutils literal"><span class="pre">worker</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;programId&quot;</span></code></td>
+<td>Name of the program (<em>flow</em>, <em>service</em>, or <em>worker</em>) being called</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;runnableId&quot;</span></code></td>
+<td>Name of the <em>flowlet</em>, only required if the program type is <code class="docutils literal"><span class="pre">flow</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>The response will be the same JSON array as submitted with additional parameters for each of the underlying JSON objects:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;requested&quot;</span></code></td>
+<td>Number of instances the user requested for the program defined by the individual JSON object's parameters</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;provisioned&quot;</span></code></td>
+<td>Number of instances that are actually running for the program defined by the individual JSON object's parameters.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;statusCode&quot;</span></code></td>
+<td>The status code from retrieving the instance count of an individual JSON object</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;error&quot;</span></code></td>
+<td>If an error, a description of why the status was not retrieved (for example, the specified program was not found, or
+the requested JSON object was missing a parameter)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> The <code class="docutils literal"><span class="pre">requested</span></code> and <code class="docutils literal"><span class="pre">provisioned</span></code> fields are mutually exclusive of the <code class="docutils literal"><span class="pre">error</span></code> field.</p>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/namespaces/default/instances</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">HTTP Body</th>
+<td><code class="docutils literal"><span class="pre">[{&quot;appId&quot;:&quot;MyApp1&quot;,&quot;programType&quot;:&quot;Flow&quot;,&quot;programId&quot;:&quot;MyFlow1&quot;,&quot;runnableId&quot;:&quot;MyFlowlet5&quot;},</span></code>
+<code class="docutils literal"><span class="pre">{&quot;appId&quot;:&quot;MyApp3&quot;,&quot;programType&quot;:&quot;Service&quot;,&quot;programId&quot;:&quot;MySvc1,&quot;runnableId&quot;:&quot;MyHandler1&quot;}]</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">HTTP Response</th>
+<td><code class="docutils literal"><span class="pre">[{&quot;appId&quot;:&quot;MyApp1&quot;,&quot;programType&quot;:&quot;Flow&quot;,&quot;programId&quot;:&quot;MyFlow1&quot;,</span></code>
+<code class="docutils literal"><span class="pre">&quot;runnableId&quot;:&quot;MyFlowlet5&quot;,&quot;provisioned&quot;:2,&quot;requested&quot;:2,&quot;statusCode&quot;:200},</span></code>
+<code class="docutils literal"><span class="pre">{&quot;appId&quot;:&quot;MyApp3&quot;,&quot;programType&quot;:&quot;Service&quot;,&quot;programId&quot;:&quot;MySvc1,</span></code>
+<code class="docutils literal"><span class="pre">&quot;runnableId&quot;:&quot;MyHandler1&quot;,&quot;statusCode&quot;:404,&quot;error&quot;:&quot;Runnable:</span> <span class="pre">MyHandler1</span> <span class="pre">not</span> <span class="pre">found&quot;}]</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Attempt to retrieve the instances of the flowlet <em>MyFlowlet5</em> in the flow <em>MyFlow1</em> in the
+application <em>MyApp1</em>, and the service handler <em>MyHandler1</em> in the user service
+<em>MySvc1</em> in the application <em>MyApp3</em>, all in the namespace <em>default</em></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="scaling-flowlets">
+<span id="rest-scaling-flowlets"></span><h3><a class="headerlink" href="#scaling-flowlets" title="Perma-link to this heading">🔗</a>Scaling Flowlets</h3>
+<p>You can query and set the number of instances executing a given flowlet
+by using the <code class="docutils literal"><span class="pre">instances</span></code> parameter with HTTP GET and PUT methods:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/flows/&lt;flow-id&gt;/flowlets/&lt;flowlet-id&gt;/instances</span>
+<span class="go">PUT /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/flows/&lt;flow-id&gt;/flowlets/&lt;flowlet-id&gt;/instances</span>
+</pre></div>
+</div>
+<p>with the arguments as a JSON string in the body:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{ &quot;instances&quot; : &lt;quantity&gt; }</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">flow-id</span></code></td>
+<td>Name of the flow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">flowlet-id</span></code></td>
+<td>Name of the flowlet</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">quantity</span></code></td>
+<td>Number of instances to be used</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<ul>
+<li><p class="first">Retrieve the number of instances of the flowlet <em>saver</em> in the flow <em>WhoFlow</em> of the
+application <em>HelloWorld</em> in the namespace <em>default</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Set the number of instances of the flowlet <em>saver</em> in the flow <em>WhoFlow</em> of the
+application <em>HelloWorld</em> in the namespace <em>default</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances</span>
+</pre></div>
+</div>
+<p>with the arguments as a JSON string in the body:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{ &quot;instances&quot; : 2 }</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="scaling-services">
+<h3><a class="headerlink" href="#scaling-services" title="Perma-link to this heading">🔗</a>Scaling Services</h3>
+<p>You can query or change the number of instances of a service
+by using the <code class="docutils literal"><span class="pre">instances</span></code> parameter with HTTP GET or PUT methods:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/services/&lt;service-id&gt;/instances</span>
+<span class="go">PUT /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/services/&lt;service-id&gt;/instances</span>
+</pre></div>
+</div>
+<p>with the arguments as a JSON string in the body:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{ &quot;instances&quot; : &lt;quantity&gt; }</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">service-id</span></code></td>
+<td>Name of the service</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">quantity</span></code></td>
+<td>Number of instances to be used</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> You can scale system services using the Monitor HTTP RESTful API
+<a class="reference internal" href="monitor.html#http-restful-api-monitor-scaling-system-services"><span>Scaling System Services</span></a>.</p>
+<p class="rubric">Examples</p>
+<ul>
+<li><p class="first">Retrieve the number of instances of the service <em>CatalogLookup</em> in the application
+<em>PurchaseHistory</em> in the namespace <em>default</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/instances</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Set the number of handler instances of the service <em>RetrieveCounts</em>
+of the application <em>WordCount</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/instances</span>
+</pre></div>
+</div>
+<p>with the arguments as a JSON string in the body:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{ &quot;instances&quot; : 2 }</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Using <code class="docutils literal"><span class="pre">curl</span></code> and the <a class="reference external" href="../source/../../developers-manual/getting-started/standalone/index.html#standalone-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP Standalone SDK</span></a>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral5() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral5 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral5", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral5" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X PUT <span class="s2">&quot;http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/instances&quot;</span> <span class="se">\</span>
+<span class="go">  -d &#39;{ &quot;instances&quot; : 2 }&#39;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X PUT &quot;http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/instances&quot; ^</span>
+<span class="go">  -d &quot;{ \&quot;instances\&quot; : 2 }&quot;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="scaling-workers">
+<h3><a class="headerlink" href="#scaling-workers" title="Perma-link to this heading">🔗</a>Scaling Workers</h3>
+<p>You can query or change the number of instances of a worker by using the <code class="docutils literal"><span class="pre">instances</span></code>
+parameter with HTTP GET or PUT methods:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/workers/&lt;worker-id&gt;/instances</span>
+<span class="go">PUT /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/workers/&lt;worker-id&gt;/instances</span>
+</pre></div>
+</div>
+<p>with the arguments as a JSON string in the body:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{ &quot;instances&quot; : &lt;quantity&gt; }</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">worker-id</span></code></td>
+<td>Name of the worker</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">quantity</span></code></td>
+<td>Number of instances to be used</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<p>Retrieve the number of instances of the worker <em>DataWorker</em> in the application
+<em>HelloWorld</em> in the namespace <em>default</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/HelloWorld/workers/DataWorker/instances</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="run-records-and-schedules">
+<span id="rest-program-runs"></span><h2><a class="headerlink" href="#run-records-and-schedules" title="Perma-link to this heading">🔗</a>Run Records and Schedules</h2>
+<p>To see all the runs of a selected program (flows, MapReduce programs, Spark programs,
+services, or workflows), issue an HTTP GET to the program’s URL with the <code class="docutils literal"><span class="pre">runs</span></code>
+parameter. This will return a JSON list of all runs for the program, each with a start
+time, end time, and program status:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/runs</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, or <code class="docutils literal"><span class="pre">workflows</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the <em>flow</em>, <em>MapReduce</em>, <em>custom service</em>, <em>Spark</em>, or <em>workflow</em> being called</td>
+</tr>
+</tbody>
+</table>
+<p>You can filter the runs by the status of a program, the start and end times,
+and can limit the number of returned records:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Query Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">status</span></code></td>
+<td>running/completed/failed</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start</span></code></td>
+<td>start timestamp</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">end</span></code></td>
+<td>end timestamp</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">limit</span></code></td>
+<td>maximum number of returned records</td>
+</tr>
+</tbody>
+</table>
+<p>The result returned will include the <em>runid</em> field, a UUID that uniquely identifies a run within CDAP,
+with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
+Use that runid in subsequent calls to obtain additional information.</p>
+<div class="table-block-example container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="99%" />
+<col width="1%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Example: Retrieving Run Records</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Description</td>
+<td>Retrieve the run records of the flow <em>WhoFlow</em> of the application <em>HelloWorld</em></td>
+</tr>
+<tr class="row-even"><td>HTTP Method</td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs</span></code></td>
+</tr>
+<tr class="row-odd"><td>Returns</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">{&quot;runid&quot;:&quot;...&quot;,&quot;start&quot;:1382567598,&quot;status&quot;:&quot;RUNNING&quot;},</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">{&quot;runid&quot;:&quot;...&quot;,&quot;start&quot;:1382567447,&quot;end&quot;:1382567492,&quot;status&quot;:&quot;STOPPED&quot;},</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">{&quot;runid&quot;:&quot;...&quot;,&quot;start&quot;:1382567383,&quot;end&quot;:1382567397,&quot;status&quot;:&quot;STOPPED&quot;}</span></code></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="retrieving-specific-run-information">
+<h3><a class="headerlink" href="#retrieving-specific-run-information" title="Perma-link to this heading">🔗</a>Retrieving Specific Run Information</h3>
+<p>To fetch the run record for a particular run of a program, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/runs/&lt;run-id&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">program-type</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, or <code class="docutils literal"><span class="pre">workflows</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">program-id</span></code></td>
+<td>Name of the <em>flow</em>, <em>MapReduce</em>, <em>custom service</em>, <em>Spark</em>, or <em>workflow</em> being called</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">run-id</span></code></td>
+<td>Run id of the run</td>
+</tr>
+</tbody>
+</table>
+<div class="table-block-example container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="99%" />
+<col width="1%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Example: Retrieving A Particular Run Record</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Description</td>
+<td>Retrieve the run record of the flow <em>WhoFlow</em> of the application <em>HelloWorld</em> for run <em>b78d0091-da42-11e4-878c-2217c18f435d</em></td>
+</tr>
+<tr class="row-even"><td>HTTP Method</td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs/b78d0091-da42-11e4-878c-2217c18f435d</span></code></td>
+</tr>
+<tr class="row-odd"><td>Returns</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">{&quot;runid&quot;:&quot;...&quot;,&quot;start&quot;:1382567598,&quot;status&quot;:&quot;RUNNING&quot;}</span></code></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>For services, you can retrieve:</p>
+<ul>
+<li><p class="first">the history of successfully completed Twill service runs using:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/services/&lt;service-id&gt;/runs?status=completed</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>For workflows, you can retrieve:</p>
+<ul>
+<li><p class="first">the information about the currently running node(s) in the workflow:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/workflows/&lt;workflow-id&gt;/runs/&lt;run-id&gt;/current</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">the schedules defined for a workflow (using the parameter <code class="docutils literal"><span class="pre">schedules</span></code>):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/workflows/&lt;workflow-id&gt;/schedules</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">the next time that the workflow is scheduled to run (using the parameter <code class="docutils literal"><span class="pre">nextruntime</span></code>):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/workflows/&lt;workflow-id&gt;/nextruntime</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="table-block-example container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="99%" />
+<col width="1%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Example: Retrieving The Most Recent Run</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Description</td>
+<td>Retrieve the most recent successful completed run of the service <em>CatalogLookup</em> of the application <em>PurchaseHistory</em></td>
+</tr>
+<tr class="row-even"><td>HTTP Method</td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/runs?status=completed&amp;limit=1</span></code></td>
+</tr>
+<tr class="row-odd"><td>Returns</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">[{&quot;runid&quot;:&quot;cad83d45-ecfb-4bf8-8cdb-4928a5601b0e&quot;,&quot;start&quot;:1415051892,&quot;end&quot;:1415057103,&quot;status&quot;:&quot;STOPPED&quot;}]</span></code></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block-example container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="99%" />
+<col width="1%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Example: Retrieving a Schedule</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Description</td>
+<td>Retrieves the schedules of the workflow <em>PurchaseHistoryWorkflow</em> of the application <em>PurchaseHistory</em></td>
+</tr>
+<tr class="row-even"><td>HTTP Method</td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules</span></code></td>
+</tr>
+<tr class="row-odd"><td>Returns</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">[{&quot;schedule&quot;:{&quot;name&quot;:&quot;DailySchedule&quot;,&quot;description&quot;:&quot;DailySchedule</span> <span class="pre">with</span> <span class="pre">crontab</span> <span class="pre">0</span> <span class="pre">4</span> <span class="pre">*</span> <span class="pre">*</span> <span class="pre">*&quot;,&quot;cronEntry&quot;:&quot;0</span> <span class="pre">4</span> <span class="pre">*</span> <span class="pre">*</span> <span class="pre">*&quot;},</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;&quot;program&quot;:{&quot;programName&quot;:&quot;PurchaseHistoryWorkflow&quot;,&quot;programType&quot;:&quot;WORKFLOW&quot;},&quot;properties&quot;:{}}]</span></code></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table-block-example container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="99%" />
+<col width="1%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Example: Retrieving The Next Runtime</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Description</td>
+<td>Retrieves the next runtime of the workflow <em>PurchaseHistoryWorkflow</em> of the application <em>PurchaseHistory</em></td>
+</tr>
+<tr class="row-even"><td>HTTP Method</td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime</span></code></td>
+</tr>
+<tr class="row-odd"><td>Returns</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">[{&quot;id&quot;:&quot;DEFAULT.WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule&quot;,&quot;time&quot;:1415102400000}]</span></code></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="schedules-suspend-and-resume">
+<span id="http-restful-api-lifecycle-schedules-suspend-resume"></span><h3><a class="headerlink" href="#schedules-suspend-and-resume" title="Perma-link to this heading">🔗</a>Schedules: Suspend and Resume</h3>
+<p>For schedules, you can suspend and resume them using the RESTful API.</p>
+<p><strong>Suspend:</strong> To <em>suspend</em> a schedule means that the program associated with that schedule will not
+trigger again until the schedule is resumed.</p>
+<p><strong>Resume:</strong> To <em>resume</em> a schedule means that the trigger is reset, and the program associated will
+run again at the next scheduled time.</p>
+<p>As a schedule is initially deployed in a <em>suspended</em> state, a call to this API is needed to <em>resume</em> it.</p>
+<p>To suspend or resume a schedule use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/schedules/&lt;schedule-name&gt;/suspend</span>
+<span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/schedules/&lt;schedule-name&gt;/resume</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">schedule-name</span></code></td>
+<td>Name of the schedule</td>
+</tr>
+</tbody>
+</table>
+<div class="table-block-example container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="99%" />
+<col width="1%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Example: Suspending a Schedule</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Description</td>
+<td>Suspends the schedule <em>DailySchedule</em> of the application <em>PurchaseHistory</em></td>
+</tr>
+<tr class="row-even"><td>HTTP Method</td>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/namespaces/default/apps/PurchaseHistory/schedules/DailySchedule/suspend</span></code></td>
+</tr>
+<tr class="row-odd"><td>Returns</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">OK</span></code> if successfully set as suspended</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="workflow-runs-suspend-and-resume">
+<span id="http-restful-api-lifecycle-workflow-runs-suspend-resume"></span><h3><a class="headerlink" href="#workflow-runs-suspend-and-resume" title="Perma-link to this heading">🔗</a>Workflow Runs: Suspend and Resume</h3>
+<p>For workflows, in addition to <a class="reference internal" href="#http-restful-api-lifecycle-start"><span>starting</span></a> and
+<a class="reference internal" href="#http-restful-api-lifecycle-stop"><span>stopping</span></a>, you can suspend and resume individual
+runs of a workflow using the RESTful API.</p>
+<p><strong>Suspend:</strong> To <em>suspend</em> means that the current activity will be taken to completion, but no further
+programs will be initiated. Programs will not be left partially uncompleted, barring any errors.</p>
+<p>In the case of a workflow with multiple MapReduce programs, if one of them is running (first of
+three perhaps) and you suspend the workflow, that first MapReduce will be completed but the
+following two will not be started.</p>
+<p><strong>Resume:</strong> To <em>resume</em> means that activity will start up where it was left off, beginning with the start
+of the next program in the sequence.</p>
+<p>In the case of the workflow mentioned above, resuming it after suspension would start up with the
+second of the three MapReduce programs, which is where it would have left off when it was suspended.</p>
+<p>With workflows, <em>suspend</em> and <em>resume</em> require a <em>run-id</em> as the action takes place on
+either a currently running or suspended workflow.</p>
+<p>To suspend or resume a workflow, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/workflows/&lt;workflow-name&gt;/runs/&lt;run-id&gt;/suspend</span>
+<span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/apps/&lt;app-id&gt;/workflows/&lt;workflow-name&gt;/runs/&lt;run-id&gt;/resume</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">app-id</span></code></td>
+<td>Name of the application</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">workflow-name</span></code></td>
+<td>Name of the workflow</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">run-id</span></code></td>
+<td>UUID of the workflow run</td>
+</tr>
+</tbody>
+</table>
+<div class="table-block-example container">
+<table border="1" class="docutils">
+<colgroup>
+<col width="99%" />
+<col width="1%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">Example: Suspending a Workflow</th>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="triple-table docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Description</td>
+<td>Suspends the run <code class="docutils literal"><span class="pre">0ce13912-e980-11e4-a7d7-8cae4cfd0e64</span></code> of the workflow
+<em>PurchaseHistoryWorkflow</em> of the application <em>PurchaseHistory</em></td>
+</tr>
+<tr class="row-even"><td>HTTP Method</td>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/runs/0ce13912-e980-11e4-a7d7-8cae4cfd0e64/suspend</span></code></td>
+</tr>
+<tr class="row-odd"><td>Returns</td>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">Program</span> <span class="pre">run</span> <span class="pre">suspended.</span></code> if successfully set as suspended</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html">Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Lifecycle</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#application-lifecycle">Application Lifecycle</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#create-an-application">Create an Application</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#update-an-application">Update an Application</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deploy-an-artifact-and-application">Deploy an Artifact and Application</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deployed-applications">Deployed Applications</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#details-of-a-deployed-application">Details of a Deployed Application</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#delete-an-application">Delete an Application</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#program-lifecycle">Program Lifecycle</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#details-of-a-program">Details of a Program</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#start-a-program">Start a Program</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#start-multiple-programs">Start Multiple Programs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stop-a-program">Stop a Program</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stop-a-program-run">Stop a Program Run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stop-multiple-programs">Stop Multiple Programs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#status-of-a-program">Status of a Program</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#status-of-multiple-programs">Status of Multiple Programs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#container-information">Container Information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scaling">Scaling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#scaling-flowlets">Scaling Flowlets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scaling-services">Scaling Services</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scaling-workers">Scaling Workers</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#run-records-and-schedules">Run Records and Schedules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#retrieving-specific-run-information">Retrieving Specific Run Information</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#schedules-suspend-and-resume">Schedules: Suspend and Resume</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#workflow-runs-suspend-and-resume">Workflow Runs: Suspend and Resume</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html">Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security.html">Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html">Transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Dataset HTTP RESTful API" href="dataset.html" />Dataset HTTP RESTful API</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Logging HTTP RESTful API" href="logging.html" />Logging HTTP RESTful API</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

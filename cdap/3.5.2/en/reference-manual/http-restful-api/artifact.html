@@ -1,0 +1,1109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Artifact HTTP RESTful API &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/http-restful-api/artifact.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Configuration HTTP RESTful API" href="configuration.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="configuration.html" title="Configuration HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Reference Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="artifact-http-restful-api">
+<span id="http-restful-api-artifact"></span><h1><a class="headerlink" href="#artifact-http-restful-api" title="Perma-link to this heading">🔗</a>Artifact HTTP RESTful API</h1>
+<p>Use the CDAP Artifact HTTP RESTful API to deploy artifacts, list available artifacts, and
+retrieve information about plugins available to artifacts. Artifacts, their use, and
+examples of using them, are described in the
+<a class="reference external" href="../source/../../developers-manual/building-blocks/artifacts.html#artifacts" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Developers' Manual: Artifacts</span></a>.</p>
+<p>All methods or endpoints described in this API have a base URL (typically
+<code class="docutils literal"><span class="pre">http://&lt;host&gt;:10000</span></code> or <code class="docutils literal"><span class="pre">https://&lt;host&gt;:10443</span></code>) that precedes the resource
+identifier, as described in the <a class="reference internal" href="introduction.html#http-restful-api-conventions-base-url"><span>RESTful API Conventions</span></a>.
+These methods return a status code, as listed in the <a class="reference internal" href="introduction.html#http-restful-api-status-codes"><span>RESTful API  Status Codes</span></a>.</p>
+<div class="section" id="add-an-artifact">
+<span id="http-restful-api-artifact-add"></span><h2><a class="headerlink" href="#add-an-artifact" title="Perma-link to this heading">🔗</a>Add an Artifact</h2>
+<p>An artifact can be added (loaded) with an HTTP POST method to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-name&gt;</span>
+</pre></div>
+</div>
+<p>The request body must contain the binary contents of the artifact.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-name</span></code></td>
+<td>Name of the artifact to be created</td>
+</tr>
+</tbody>
+</table>
+<p>Several optional headers may also be specified:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="40%" />
+<col width="40%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Header</th>
+<th class="head">Description</th>
+<th class="head">Example</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><strong>Artifact-Version</strong></td>
+<td>The version of the artifact to add. If not specified, the <code class="docutils literal"><span class="pre">Bundle-Version</span></code> attribute
+in the JAR file's Manifest will be used.</td>
+<td><code class="docutils literal"><span class="pre">1.0.0</span></code></td>
+</tr>
+<tr class="row-odd"><td><strong>Artifact-Extends</strong></td>
+<td>If the artifact contains plugins, describes which parent artifacts should have access to those plugins.
+Multiple parents can be given by separating them with a <code class="docutils literal"><span class="pre">/</span></code></td>
+<td><code class="docutils literal"><span class="pre">cdap-data-pipeline[3.2.0,4.0.0)/cdap-etl-realtime[3.2.0,4.0.0)</span></code></td>
+</tr>
+<tr class="row-even"><td><strong>Artifact-Plugins</strong></td>
+<td>JSON Array of plugins contained in the artifact that are not annotated as a plugin.
+This should be used for third-party JARs that need to be plugins, such as JDBC drivers. Each element
+in the array is a JSON object containing name, type, and className of the plugin.</td>
+<td><code class="docutils literal"><span class="pre">[</span> <span class="pre">{</span> <span class="pre">&quot;name&quot;:</span> <span class="pre">&quot;mysql&quot;,</span> <span class="pre">&quot;type&quot;:</span> <span class="pre">&quot;jdbc&quot;,</span> <span class="pre">&quot;className&quot;:</span> <span class="pre">&quot;com.mysql.jdbc.Driver&quot;</span> <span class="pre">}</span> <span class="pre">]</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="list-available-artifacts">
+<span id="http-restful-api-artifact-available"></span><h2><a class="headerlink" href="#list-available-artifacts" title="Perma-link to this heading">🔗</a>List Available Artifacts</h2>
+<p>To retrieve a list of available artifacts, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/artifacts[?scope=&lt;scope&gt;]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">scope</span></code></td>
+<td>Optional scope filter. If not specified, artifacts in the <code class="docutils literal"><span class="pre">user</span></code> and
+<code class="docutils literal"><span class="pre">system</span></code> scopes are returned. Otherwise, only artifacts in the specified scope are returned.</td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON array that lists each artifact with its name, version, and scope.
+Example output (pretty-printed):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> GET /v3/namespaces/default/artifacts
+[
+  {
+    &quot;name&quot;: &quot;cdap-data-pipeline&quot;,
+    &quot;scope&quot;: &quot;SYSTEM&quot;,
+    &quot;version&quot;: &quot;3.5.2&quot;
+  },
+  {
+    &quot;name&quot;: &quot;cdap-etl-realtime&quot;,
+    &quot;scope&quot;: &quot;SYSTEM&quot;,
+    &quot;version&quot;: &quot;3.5.2&quot;
+  },
+  {
+    &quot;name&quot;: &quot;Purchase&quot;,
+    &quot;scope&quot;: &quot;USER&quot;,
+    &quot;version&quot;: &quot;3.5.2&quot;
+  }
+]
+</pre>
+</div>
+</div>
+<div class="section" id="list-artifact-versions">
+<span id="http-restful-api-artifact-versions"></span><h2><a class="headerlink" href="#list-artifact-versions" title="Perma-link to this heading">🔗</a>List Artifact Versions</h2>
+<p>To list all versions of a specific artifact, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/artifact/&lt;artifact-name&gt;[?scope=&lt;scope&gt;]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-name</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">scope</span></code></td>
+<td>Optional scope filter. If not specified, defaults to <code class="docutils literal"><span class="pre">user</span></code>.</td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON array that lists each version of the specified artifact with
+its name, version, and scope. Example output for the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> artifact (pretty-printed):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> GET /v3/namespaces/default/artifacts/cdap-data-pipeline?scope=system
+[
+  {
+    &quot;name&quot;: &quot;cdap-data-pipeline&quot;,
+    &quot;scope&quot;: &quot;SYSTEM&quot;,
+    &quot;version&quot;: &quot;3.5.2&quot;
+  }
+]
+</pre>
+</div>
+</div>
+<div class="section" id="retrieve-artifact-details">
+<span id="http-restful-api-artifact-detail"></span><h2><a class="headerlink" href="#retrieve-artifact-details" title="Perma-link to this heading">🔗</a>Retrieve Artifact Details</h2>
+<p>To retrieve details about a specific version of an artifact, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-name&gt;/versions/&lt;artifact-version&gt;[?scope=&lt;scope&gt;]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-name</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">scope</span></code></td>
+<td>Optional scope filter. If not specified, defaults to 'user'.</td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON object that contains information about: classes in the artifact;
+the schema of the config object supported by the <code class="docutils literal"><span class="pre">Application</span></code> class; and the artifact name,
+version, and scope. Example output for version <code class="docutils literal"><span class="pre">3.5.2</span></code> of the <code class="docutils literal"><span class="pre">WordCount</span></code>
+artifact (pretty-printed and reformatted to fit):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> GET /v3/namespaces/default/artifact/WordCount/versions/3.5.2?scope=system
+{
+  &quot;classes&quot;: {
+    &quot;apps&quot;: [
+      {
+        &quot;className&quot;: &quot;co.cask.cdap.examples.wordcount.WordCount&quot;,
+        &quot;configSchema&quot;: {
+          &quot;fields&quot;: [
+            { &quot;name&quot;: &quot;stream&quot;, &quot;type&quot;: [ &quot;string&quot;, &quot;null&quot; ] },
+            { &quot;name&quot;: &quot;uniqueCountTable&quot;, &quot;type&quot;: [ &quot;string&quot;, &quot;null&quot; ] },
+            { &quot;name&quot;: &quot;wordAssocTable&quot;, &quot;type&quot;: [ &quot;string&quot;, &quot;null&quot; ] },
+            { &quot;name&quot;: &quot;wordCountTable&quot;, &quot;type&quot;: [ &quot;string&quot;, &quot;null&quot; ] },
+            { &quot;name&quot;: &quot;wordStatsTable&quot;, &quot;type&quot;: [ &quot;string&quot;, &quot;null&quot; ] }
+          ],
+          &quot;name&quot;: &quot;co.cask.cdap.examples.wordcount.WordCount$WordCountConfig&quot;,
+          &quot;type&quot;: &quot;record&quot;
+        },
+        &quot;description&quot;: &quot;&quot;
+      }
+    ],
+    &quot;plugins&quot;: []
+  },
+  &quot;name&quot;: &quot;WordCount&quot;,
+  &quot;scope&quot;: &quot;USER&quot;,
+  &quot;version&quot;: &quot;3.5.2&quot;
+}
+</pre>
+</div>
+</div>
+<div class="section" id="set-artifact-properties">
+<span id="http-restful-api-artifact-set-properties"></span><h2><a class="headerlink" href="#set-artifact-properties" title="Perma-link to this heading">🔗</a>Set Artifact Properties</h2>
+<p>To set properties for a specific version of an artifact, submit an HTTP PUT request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-name&gt;/versions/&lt;artifact-version&gt;/properties</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-name</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+</tbody>
+</table>
+<p>The request body must be a JSON object that contains the properties for the artifact.
+The keys and values in the object must be strings. If any properties are already
+defined, they will be overwritten.</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> PUT /v3/namespaces/default/artifact/WordCount/versions/3.5.2/properties -d
+{
+    &quot;author&quot;: &quot;samuel&quot;,
+    &quot;company&quot;: &quot;cask&quot;
+}
+</pre>
+</div>
+</div>
+<div class="section" id="set-an-artifact-property">
+<span id="http-restful-api-artifact-set-property"></span><h2><a class="headerlink" href="#set-an-artifact-property" title="Perma-link to this heading">🔗</a>Set an Artifact Property</h2>
+<p>To set a specific property for a specific version of an artifact, submit an HTTP PUT request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-name&gt;/versions/&lt;artifact-version&gt;/properties/&lt;property&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-name</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">property</span></code></td>
+<td>Property to set</td>
+</tr>
+</tbody>
+</table>
+<p>The request body must contain the value to set for the property. If the property already exists,
+the previous value will be overwritten.</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> PUT /v3/namespaces/default/artifact/WordCount/versions/3.5.2/properties/author -d
+samuel
+</pre>
+</div>
+</div>
+<div class="section" id="retrieve-artifact-properties">
+<span id="http-restful-api-artifact-retrieve-properties"></span><h2><a class="headerlink" href="#retrieve-artifact-properties" title="Perma-link to this heading">🔗</a>Retrieve Artifact Properties</h2>
+<p>To retrieve properties for a specific version of an artifact, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-name&gt;/versions/&lt;artifact-version&gt;/properties[?scope=&lt;scope&gt;&amp;keys=&lt;keys&gt;]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-name</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">scope</span></code></td>
+<td>Optional scope filter. If not specified, defaults to 'user'.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">keys</span></code></td>
+<td>Optional comma-separated list of property keys to return. If not specified, all keys are returned.</td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON object that contains the properties of the artifact.</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> GET /v3/namespaces/default/artifact/WordCount/versions/3.5.2/properties?keys=author,company
+{ &quot;author&quot;: &quot;samuel&quot;, &quot;company&quot;: &quot;cask&quot; }
+</pre>
+</div>
+</div>
+<div class="section" id="retrieve-an-artifact-property">
+<span id="http-restful-api-artifact-retrieve-property"></span><h2><a class="headerlink" href="#retrieve-an-artifact-property" title="Perma-link to this heading">🔗</a>Retrieve an Artifact Property</h2>
+<p>To retrieve a specific property for a specific version of an artifact, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-name&gt;/versions/&lt;artifact-version&gt;/properties/&lt;property&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-name</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">property</span></code></td>
+<td>Property to retrieve</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> GET /v3/namespaces/default/artifact/WordCount/versions/3.5.2/properties/author
+samuel
+</pre>
+</div>
+</div>
+<div class="section" id="delete-artifact-properties">
+<span id="http-restful-api-artifact-delete-properties"></span><h2><a class="headerlink" href="#delete-artifact-properties" title="Perma-link to this heading">🔗</a>Delete Artifact Properties</h2>
+<p>To delete all properties for a specific version of an artifact, submit an HTTP DELETE request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-name&gt;/versions/&lt;artifact-version&gt;/properties</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-name</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> DELETE /v3/namespaces/default/artifact/WordCount/versions/3.5.2/properties
+</pre>
+</div>
+</div>
+<div class="section" id="delete-an-artifact-property">
+<span id="http-restful-api-artifact-delete-property"></span><h2><a class="headerlink" href="#delete-an-artifact-property" title="Perma-link to this heading">🔗</a>Delete an Artifact Property</h2>
+<p>To delete a specific property for a specific version of an artifact, submit an HTTP DELETE request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-name&gt;/versions/&lt;artifact-version&gt;/properties/&lt;property&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-name</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">property</span></code></td>
+<td>Property key to delete</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> DELETE /v3/namespaces/default/artifact/WordCount/versions/3.5.2/properties/author
+</pre>
+</div>
+</div>
+<div class="section" id="list-extensions-plugin-types-available-to-an-artifact">
+<span id="http-restful-api-artifact-extensions"></span><h2><a class="headerlink" href="#list-extensions-plugin-types-available-to-an-artifact" title="Perma-link to this heading">🔗</a>List Extensions (Plugin Types) available to an Artifact</h2>
+<p>To list the extensions (plugin types) available to an artifact, submit
+an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-name&gt;/versions/&lt;artifact-version&gt;/extensions[?scope=&lt;scope&gt;]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-name</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">scope</span></code></td>
+<td>Optional scope filter. If not specified, defaults to 'user'.</td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON array that lists the extensions (plugin types) available to the artifact.
+Example output for version <code class="docutils literal"><span class="pre">3.5.2</span></code> of the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> artifact:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> GET /v3/namespaces/default/artifacts/cdap-data-pipeline/versions/3.5.2/extensions?scope=system
+[&quot;sparksink&quot;,&quot;postaction&quot;,&quot;transform&quot;,&quot;batchaggregator&quot;,&quot;sparkcompute&quot;,&quot;validator&quot;,&quot;realtimesource&quot;,&quot;action&quot;,&quot;batchsource&quot;,&quot;realtimesink&quot;,&quot;batchsink&quot;,&quot;batchjoiner&quot;]
+</pre>
+</div>
+</div>
+<div class="section" id="list-plugins-available-to-an-artifact">
+<span id="http-restful-api-artifact-available-plugins"></span><h2><a class="headerlink" href="#list-plugins-available-to-an-artifact" title="Perma-link to this heading">🔗</a>List Plugins available to an Artifact</h2>
+<p>To list plugins of a specific type available to an artifact, submit
+an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-name&gt;/versions/&lt;artifact-version&gt;/extensions/&lt;plugin-type&gt;[?scope=&lt;scope&gt;]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-name</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">plugin-type</span></code></td>
+<td>Type of plugins to list</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">scope</span></code></td>
+<td>Optional scope filter. If not specified, defaults to 'user'.</td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON array that lists the plugins of the specified type
+available to the artifact. Each element in the array is a JSON object containing
+the artifact that the plugin originated from, and the plugin's class name, description,
+name, and type. Note that the details provided are a summary compared to those provided by
+the endpoint <a class="reference internal" href="#http-restful-api-artifact-plugin-detail"><span>Retrieve Plugin Details</span></a>.</p>
+<p>Example output for plugins of type <code class="docutils literal"><span class="pre">transform</span></code> available to version <code class="docutils literal"><span class="pre">3.5.2</span></code>
+of the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> artifact (pretty-printed and reformatted to fit):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> GET /v3/namespaces/default/artifacts/cdap-data-pipeline/versions/3.5.2/extensions/transform?scope=system
+
+[
+    {
+        &quot;name&quot;: &quot;LogParser&quot;,
+        &quot;type&quot;: &quot;transform&quot;,
+        &quot;description&quot;: &quot;Parses logs from any input source for relevant information such as
+            URI, IP, browser, device, HTTP status code, and timestamp.&quot;,
+        &quot;className&quot;: &quot;co.cask.hydrator.plugin.transform.LogParserTransform&quot;,
+        &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;SYSTEM&quot;
+        }
+    },
+    {
+        &quot;name&quot;: &quot;JavaScript&quot;,
+        &quot;type&quot;: &quot;transform&quot;,
+        ...
+    },
+    ...
+]
+</pre>
+</div>
+</div>
+<div class="section" id="retrieve-plugin-details">
+<span id="http-restful-api-artifact-plugin-detail"></span><h2><a class="headerlink" href="#retrieve-plugin-details" title="Perma-link to this heading">🔗</a>Retrieve Plugin Details</h2>
+<p>To retrieve details about a specific plugin available to an artifact, submit
+an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-name&gt;/versions/&lt;artifact-version&gt;/extensions/&lt;plugin-type&gt;/plugins/&lt;plugin-name&gt;[?scope=&lt;scope&gt;]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-name</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">plugin-type</span></code></td>
+<td>Type of the plugin</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">plugin-name</span></code></td>
+<td>Name of the plugin</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">scope</span></code></td>
+<td>Optional scope filter. If not specified, defaults to 'user'.</td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON array that lists the plugins of the specified type and name
+available to the artifact. As can been seen compared with the endpoint
+<a class="reference internal" href="#http-restful-api-artifact-available-plugins"><span>List Plugins available to an Artifact</span></a>, this provides all details
+on the specified plugin. Each element in the array is a JSON object containing the
+artifact that the plugin originated from, and the plugin's class name, description, name,
+type, and properties.</p>
+<p>Example output for the <code class="docutils literal"><span class="pre">ScriptFilter</span></code> plugin available to version <code class="docutils literal"><span class="pre">3.5.2</span></code>
+of the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> artifact (pretty-printed and reformatted to fit):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> GET /v3/namespaces/default/artifacts/cdap-data-pipeline/versions/3.5.2/extensions/transform/plugins/ScriptFilter?scope=system
+
+[
+    {
+        &quot;properties&quot;: {
+            &quot;lookup&quot;: {
+                &quot;name&quot;: &quot;lookup&quot;,
+                &quot;description&quot;: &quot;Lookup tables to use during transform. Currently supports KeyValueTable.&quot;,
+                &quot;type&quot;: &quot;string&quot;,
+                &quot;required&quot;: false
+            },
+            &quot;script&quot;: {
+                &quot;name&quot;: &quot;script&quot;,
+                &quot;description&quot;: &quot;JavaScript that must implement a function
+                  'shouldFilter' that takes a JSON object representation of the input
+                  record and a context object (which encapsulates CDAP metrics and
+                  logger) and returns true if the input record should be filtered and
+                  false if not. For example:n'function shouldFilter(input, context)
+                  {nif (input.count &lt; 0) {ncontext.getLogger().info(&quot;Got input record
+                  with negative
+                  count&quot;);ncontext.getMetrics().count(&quot;negative.count&quot;,
+                  1);n}nreturn input.count &gt; 100;n}n' will filter out any records
+                  whose 'count' field is greater than 100.&quot;,
+                &quot;type&quot;: &quot;string&quot;,
+                &quot;required&quot;: true
+            }
+        },
+        &quot;endpoints&quot;: [
+
+        ],
+        &quot;name&quot;: &quot;ScriptFilter&quot;,
+        &quot;type&quot;: &quot;transform&quot;,
+        &quot;description&quot;: &quot;A transform plugin that filters records using a custom
+            JavaScript provided in the plugin's config.&quot;,
+        &quot;className&quot;: &quot;co.cask.hydrator.plugin.transform.ScriptFilterTransform&quot;,
+        &quot;artifact&quot;: {
+            &quot;name&quot;: &quot;core-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1&quot;,
+            &quot;scope&quot;: &quot;SYSTEM&quot;
+        }
+    }
+]
+</pre>
+</div>
+</div>
+<div class="section" id="delete-an-artifact">
+<span id="http-restful-api-artifact-delete"></span><h2><a class="headerlink" href="#delete-an-artifact" title="Perma-link to this heading">🔗</a>Delete an Artifact</h2>
+<p>To delete an artifact, submit an HTTP DELETE request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/&lt;namespace-id&gt;/artifacts/&lt;artifact-name&gt;/versions/&lt;artifact-version&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-name</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+</tbody>
+</table>
+<p>Deleting an artifact is an advanced feature. If there are programs that use the artifact, those
+programs will not be able to start unless the artifact is added again, or the program application
+is updated to use a different artifact.</p>
+</div>
+<div class="section" id="load-system-artifacts">
+<span id="http-restful-api-artifact-system-load"></span><h2><a class="headerlink" href="#load-system-artifacts" title="Perma-link to this heading">🔗</a>Load System Artifacts</h2>
+<p>To load all system artifacts on the CDAP Master node(s), submit an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/namespaces/system/artifacts</span>
+</pre></div>
+</div>
+<p>This call will make the CDAP master scan the artifacts directly and add any new artifacts
+that it finds. Any snapshot artifacts will be re-loaded.</p>
+</div>
+<div class="section" id="delete-a-system-artifact">
+<span id="http-restful-api-artifact-system-delete"></span><h2><a class="headerlink" href="#delete-a-system-artifact" title="Perma-link to this heading">🔗</a>Delete a System Artifact</h2>
+<p>To delete a system artifact, submit an HTTP DELETE request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE /v3/namespaces/system/artifacts/&lt;artifact-name&gt;/versions/&lt;artifact-version&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">artifact-name</span></code></td>
+<td>Name of the artifact</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">artifact-version</span></code></td>
+<td>Version of the artifact</td>
+</tr>
+</tbody>
+</table>
+<p>Deleting an artifact is an advanced feature. If there are programs that use the artifact, those
+programs will not be able to start unless the artifact is added again, or the program application
+is updated to use a different artifact.</p>
+</div>
+<div class="section" id="list-application-classes">
+<span id="http-restful-api-artifact-app-classes"></span><h2><a class="headerlink" href="#list-application-classes" title="Perma-link to this heading">🔗</a>List Application Classes</h2>
+<p>To list application classes, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/classes/apps[?scope=&lt;scope&gt;]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">scope</span></code></td>
+<td>Optional scope filter. If not specified, classes from artifacts in the <code class="docutils literal"><span class="pre">user</span></code> and
+<code class="docutils literal"><span class="pre">system</span></code> scopes are returned. Otherwise, only classes from artifacts in the specified scope are returned.</td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON array that lists all application classes contained in artifacts.
+Each element in the array is a JSON object that describes the artifact the class originates in
+as well as the class name. Example output for the <code class="docutils literal"><span class="pre">ScriptFilter</span></code> (pretty-printed and reformatted to fit):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> GET /v3/namespaces/default/classes/apps
+
+[
+  {
+    &quot;artifact&quot;: {
+      &quot;name&quot;: &quot;cdap-data-pipeline&quot;,
+      &quot;scope&quot;: &quot;SYSTEM&quot;,
+      &quot;version&quot;: &quot;3.5.2&quot;
+    },
+    &quot;className&quot;: &quot;co.cask.cdap.datapipeline.DataPipelineApp&quot;
+  },
+  {
+    &quot;artifact&quot;: {
+      &quot;name&quot;: &quot;cdap-etl-realtime&quot;,
+      &quot;scope&quot;: &quot;SYSTEM&quot;,
+      &quot;version&quot;: &quot;3.5.2&quot;
+    },
+    &quot;className&quot;: &quot;co.cask.cdap.etl.realtime.ETLRealtimeApplication&quot;
+  },
+  {
+    &quot;artifact&quot;: {
+      &quot;name&quot;: &quot;Purchase&quot;,
+      &quot;scope&quot;: &quot;USER&quot;,
+      &quot;version&quot;: &quot;3.5.2&quot;
+    },
+    &quot;className&quot;: &quot;co.cask.cdap.examples.purchase.PurchaseApp&quot;
+  },
+]
+</pre>
+</div>
+</div>
+<div class="section" id="retrieve-application-class-details">
+<span id="http-restful-api-artifact-appclass-detail"></span><h2><a class="headerlink" href="#retrieve-application-class-details" title="Perma-link to this heading">🔗</a>Retrieve Application Class Details</h2>
+<p>To retrieve details about a specific application class, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/classes/apps/&lt;class-name&gt;[?scope=&lt;scope&gt;]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">namespace-id</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">class-name</span></code></td>
+<td>Application class name</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">scope</span></code></td>
+<td>Optional scope filter. If not specified, defaults to <code class="docutils literal"><span class="pre">user</span></code>.</td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON array that lists each application class with that class name.
+Each element in the array is a JSON object that contains details about the application
+class, including the artifact the class is from, the class name, and the schema of
+the config supported by the application class.
+Example output for the <code class="docutils literal"><span class="pre">WordCount</span></code> application (pretty-printed and reformatted to fit):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> GET /v3/namespaces/default/classes/apps/co.cask.cdap.examples.wordcount.WordCount
+[
+  {
+    &quot;artifact&quot;: {
+      &quot;name&quot;: &quot;WordCount&quot;,
+      &quot;scope&quot;: &quot;USER&quot;,
+      &quot;version&quot;: &quot;3.5.2&quot;
+    },
+    &quot;className&quot;: &quot;co.cask.cdap.examples.wordcount.WordCount&quot;,
+    &quot;configSchema&quot;: {
+      &quot;fields&quot;: [
+        { &quot;name&quot;: &quot;stream&quot;, &quot;type&quot;: [ &quot;string&quot;, &quot;null&quot; ] },
+        { &quot;name&quot;: &quot;uniqueCountTable&quot;, &quot;type&quot;: [ &quot;string&quot;, &quot;null&quot; ] },
+        { &quot;name&quot;: &quot;wordAssocTable&quot;, &quot;type&quot;: [ &quot;string&quot;, &quot;null&quot; ] },
+        { &quot;name&quot;: &quot;wordCountTable&quot;, &quot;type&quot;: [ &quot;string&quot;, &quot;null&quot; ] },
+        { &quot;name&quot;: &quot;wordStatsTable&quot;, &quot;type&quot;: [ &quot;string&quot;, &quot;null&quot; ] },
+      ],
+      &quot;name&quot;: &quot;co.cask.cdap.examples.wordcount.WordCount$WordCountConfig&quot;,
+      &quot;type&quot;: &quot;record&quot;
+    }
+  }
+]
+</pre>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Artifact</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#add-an-artifact">Add an Artifact</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#list-available-artifacts">List Available Artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#list-artifact-versions">List Artifact Versions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#retrieve-artifact-details">Retrieve Artifact Details</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#set-artifact-properties">Set Artifact Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#set-an-artifact-property">Set an Artifact Property</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#retrieve-artifact-properties">Retrieve Artifact Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#retrieve-an-artifact-property">Retrieve an Artifact Property</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#delete-artifact-properties">Delete Artifact Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#delete-an-artifact-property">Delete an Artifact Property</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#list-extensions-plugin-types-available-to-an-artifact">List Extensions (Plugin Types) available to an Artifact</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#list-plugins-available-to-an-artifact">List Plugins available to an Artifact</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#retrieve-plugin-details">Retrieve Plugin Details</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#delete-an-artifact">Delete an Artifact</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#load-system-artifacts">Load System Artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#delete-a-system-artifact">Delete a System Artifact</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#list-application-classes">List Application Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#retrieve-application-class-details">Retrieve Application Class Details</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html">Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security.html">Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html">Transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Introduction" href="introduction.html" />Introduction</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Configuration HTTP RESTful API" href="configuration.html" />Configuration HTTP RESTful API</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

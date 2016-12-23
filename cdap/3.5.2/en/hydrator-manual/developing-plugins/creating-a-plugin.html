@@ -1,0 +1,1269 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Creating a Plugin &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/hydrator-manual/developing-plugins/creating-a-plugin.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Developing Plugins" href="index.html" />
+    <link rel="next" title="Testing Plugins" href="testing-plugins.html" />
+    <link rel="prev" title="Plugin Basics" href="plugin-basics.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="testing-plugins.html" title="Testing Plugins"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="plugin-basics.html" title="Plugin Basics"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Cask Hydrator</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Developing Plugins</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="creating-a-plugin">
+<span id="cask-hydrator-creating-a-plugin"></span><h1><a class="headerlink" href="#creating-a-plugin" title="Perma-link to this heading">🔗</a>Creating a Plugin</h1>
+<div class="section" id="action-plugin">
+<h2><a class="headerlink" href="#action-plugin" title="Perma-link to this heading">🔗</a>Action Plugin</h2>
+<p>An <code class="docutils literal"><span class="pre">Action</span></code> plugin runs arbitrary logic at the start or end of a batch data pipeline.</p>
+<p>In order to implement an Action plugin, you
+extend the <code class="docutils literal"><span class="pre">Action</span></code> class. Only one method is required to be implemented:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">run</span><span class="o">()</span>
+</pre></div>
+</div>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">run()</span></code>: Used to implement the functionality of the plugin.</li>
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to perform any validation on the application configuration
+that is required by this plugin or create any streams or datasets if the fieldName for a
+stream or dataset is not a macro.</li>
+</ul>
+</div>
+<div class="section" id="post-run-action-plugin">
+<h2><a class="headerlink" href="#post-run-action-plugin" title="Perma-link to this heading">🔗</a>Post-run Action Plugin</h2>
+<p>A <code class="docutils literal"><span class="pre">PostAction</span></code> plugin runs arbitrary logic after the end of a pipeline run.
+It can be set to execute based on whether the run completed successfully,
+if it failed, or in either case.</p>
+<p>The difference between a <code class="docutils literal"><span class="pre">PostAction</span></code> and an <code class="docutils literal"><span class="pre">Action</span></code> that is placed at the
+end of a pipeline is that a <code class="docutils literal"><span class="pre">PostAction</span></code> will always be executed, even if the pipeline run fails.
+An <code class="docutils literal"><span class="pre">Action</span></code> will only be executed if every stage preceding it successfully runs.</p>
+<p>In order to implement an Post-run Action plugin, you extend the <code class="docutils literal"><span class="pre">PostAction</span></code> class.
+Only one method is required to be implemented:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">run</span><span class="o">()</span>
+</pre></div>
+</div>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">run()</span></code>: Used to implement the functionality of the plugin.</li>
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to perform any validation on the application configuration
+that is required by this plugin or create any streams or datasets if the fieldName for a
+stream or dataset is not a macro.</li>
+</ul>
+</div>
+<div class="section" id="batch-source-plugin">
+<h2><a class="headerlink" href="#batch-source-plugin" title="Perma-link to this heading">🔗</a>Batch Source Plugin</h2>
+<p>A <code class="docutils literal"><span class="pre">BatchSource</span></code> plugin is used as a source of a batch data pipeline. It is used to prepare
+and configure the input of a pipeline run.</p>
+<p>In order to implement a Batch Source, you extend the
+<code class="docutils literal"><span class="pre">BatchSource</span></code> class. You need to define the types of the KEY and VALUE that the Batch
+Source will receive and the type of object that the Batch Source will emit to the
+subsequent stage (which could be either a Transformation or a Batch Sink). After defining
+the types, only one method is required to be implemented:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">prepareRun</span><span class="o">()</span>
+</pre></div>
+</div>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">prepareRun()</span></code>: Used to configure the input for each run of the pipeline.
+If the fieldName for a stream or dataset is a macro, their creation will happen during this stage.
+This is called by the client that will submit the job for the pipeline run.</li>
+<li><code class="docutils literal"><span class="pre">onRunFinish()</span></code>: Used to run any required logic at the end of a pipeline run. This is called
+by the client that submitted the job for the pipeline run.</li>
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to perform any validation on the application configuration
+that is required by this plugin or create any streams or datasets if the fieldName for a
+stream or dataset is not a macro.</li>
+<li><code class="docutils literal"><span class="pre">initialize()</span></code>: Initialize the Batch Source. Guaranteed to be executed before any call
+to the plugin’s <code class="docutils literal"><span class="pre">transform</span></code> method. This is called by each executor of the job. For example,
+if the MapReduce engine is being used, each mapper will call this method.</li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code>: Destroy any resources created by <code class="docutils literal"><span class="pre">initialize</span></code>. Guaranteed to be executed after all calls
+to the plugin’s <code class="docutils literal"><span class="pre">transform</span></code> method have been made. This is called by each executor of the job.
+For example, if the MapReduce engine is being used, each mapper will call this method.</li>
+<li><code class="docutils literal"><span class="pre">transform()</span></code>: This method will be called for every input key-value pair generated by
+the batch job. By default, the value is emitted to the subsequent stage.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * Batch Source that reads from a FileSet that has its data formatted as text.</span>
+<span class="cm"> *</span>
+<span class="cm"> * LongWritable is the first parameter because that is the key used by Hadoop&#39;s {@link TextInputFormat}.</span>
+<span class="cm"> * Similarly, Text is the second parameter because that is the value used by Hadoop&#39;s {@link TextInputFormat}.</span>
+<span class="cm"> * {@link StructuredRecord} is the third parameter because that is what the source will output.</span>
+<span class="cm"> * All the plugins included with Hydrator operate on StructuredRecords.</span>
+<span class="cm"> */</span>
+<span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">BatchSource</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="n">TextFileSetSource</span><span class="o">.</span><span class="na">NAME</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Reads from a FileSet that has its data formatted as text.&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">TextFileSetSource</span> <span class="kd">extends</span> <span class="n">BatchSource</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;TextFileSet&quot;</span><span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Schema</span> <span class="n">OUTPUT_SCHEMA</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span>
+    <span class="s">&quot;textRecord&quot;</span><span class="o">,</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;position&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">LONG</span><span class="o">)),</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">))</span>
+  <span class="o">);</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Conf</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config properties for the plugin.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Conf</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">FILESET_NAME</span> <span class="o">=</span> <span class="s">&quot;fileSetName&quot;</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">CREATE_IF_NOT_EXISTS</span> <span class="o">=</span> <span class="s">&quot;createIfNotExists&quot;</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">DELETE_INPUT_ON_SUCCESS</span> <span class="o">=</span> <span class="s">&quot;deleteInputOnSuccess&quot;</span><span class="o">;</span>
+
+    <span class="c1">// The name annotation tells CDAP what the property name is. It is optional, and defaults to the variable name.</span>
+    <span class="c1">// Note: only primitives (including boxed types) and string are the types that are supported.</span>
+    <span class="nd">@Name</span><span class="o">(</span><span class="n">FILESET_NAME</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;The name of the FileSet to read from.&quot;</span><span class="o">)</span>
+    <span class="nd">@Macro</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">fileSetName</span><span class="o">;</span>
+
+    <span class="c1">// A nullable fields tells CDAP that this is an optional field.</span>
+    <span class="nd">@Nullable</span>
+    <span class="nd">@Name</span><span class="o">(</span><span class="n">CREATE_IF_NOT_EXISTS</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Whether to create the FileSet if it doesn&#39;t already exist. Defaults to false.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">Boolean</span> <span class="n">createIfNotExists</span><span class="o">;</span>
+
+    <span class="nd">@Nullable</span>
+    <span class="nd">@Name</span><span class="o">(</span><span class="n">DELETE_INPUT_ON_SUCCESS</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Whether to delete the data read by the source after the run succeeds. Defaults to false.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">Boolean</span> <span class="n">deleteInputOnSuccess</span><span class="o">;</span>
+
+    <span class="c1">// Use a no-args constructor to set field defaults.</span>
+    <span class="kd">public</span> <span class="nf">Conf</span><span class="o">()</span> <span class="o">{</span>
+      <span class="n">fileSetName</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="o">;</span>
+      <span class="n">createIfNotExists</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+      <span class="n">deleteInputOnSuccess</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="c1">// CDAP will pass in a config with its fields populated based on the configuration given when creating the pipeline.</span>
+  <span class="kd">public</span> <span class="nf">TextFileSetSource</span><span class="o">(</span><span class="n">Conf</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="c1">// configurePipeline is called exactly once when the pipeline is being created.</span>
+  <span class="c1">// Any static configuration should be performed here.</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configurePipeline</span><span class="o">(</span><span class="n">PipelineConfigurer</span> <span class="n">pipelineConfigurer</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// If the user has set createIfNotExists to true, and the fileSetName is not a macro, create the FileSet here.</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">createIfNotExists</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">config</span><span class="o">.</span><span class="na">containsMacro</span><span class="o">(</span><span class="s">&quot;fileSetName&quot;</span><span class="o">))</span> <span class="o">{</span>
+      <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">createDataset</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fileSetName</span><span class="o">,</span>
+                                       <span class="n">FileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                                       <span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+                                         <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">setExploreSchema</span><span class="o">(</span><span class="s">&quot;text string&quot;</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+      <span class="o">);</span>
+    <span class="o">}</span>
+    <span class="c1">// Set the output schema of this stage so that stages further down the pipeline will know their input schema.</span>
+    <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">getStageConfigurer</span><span class="o">().</span><span class="na">setOutputSchema</span><span class="o">(</span><span class="n">OUTPUT_SCHEMA</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="c1">// prepareRun is called before every pipeline run, and is used to configure what the input should be,</span>
+  <span class="c1">// as well as any arguments the input should use. It is called by the client that is submitting the batch job.</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">prepareRun</span><span class="o">(</span><span class="n">BatchSourceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+    <span class="c1">// If the user has set createIfNotExists to true, and the fileSetName is a macro,</span>
+    <span class="c1">// the FileSet name will be available now, so create the FileSet here.</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">containsMacro</span><span class="o">(</span><span class="s">&quot;fileSetName&quot;</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="n">config</span><span class="o">.</span><span class="na">createIfNotExists</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">createDataset</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fileSetName</span><span class="o">,</span>
+                                       <span class="n">FileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                                       <span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+                                         <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">setExploreSchema</span><span class="o">(</span><span class="s">&quot;text string&quot;</span><span class="o">)</span>
+                                         <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+      <span class="o">);</span>
+    <span class="o">}</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">setInput</span><span class="o">(</span><span class="n">Input</span><span class="o">.</span><span class="na">ofDataset</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fileSetName</span><span class="o">));</span>
+  <span class="o">}</span>
+
+  <span class="c1">// onRunFinish is called at the end of the pipeline run by the client that submitted the batch job.</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onRunFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">BatchSourceContext</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// perform any actions that should happen at the end of the run.</span>
+    <span class="c1">// in our case, we want to delete the data read during this run if the run succeeded.</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">succeeded</span> <span class="o">&amp;&amp;</span> <span class="n">config</span><span class="o">.</span><span class="na">deleteInputOnSuccess</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">FileSet</span> <span class="n">fileSet</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getDataset</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fileSetName</span><span class="o">);</span>
+      <span class="k">for</span> <span class="o">(</span><span class="n">Location</span> <span class="n">inputLocation</span> <span class="o">:</span> <span class="n">fileSet</span><span class="o">.</span><span class="na">getInputLocations</span><span class="o">())</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+          <span class="n">inputLocation</span><span class="o">.</span><span class="na">delete</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+          <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="c1">// transform is used to transform the key-value pair output by the input into objects output by this source.</span>
+  <span class="c1">// The output should be a StructuredRecord if you want the source to be compatible with the plugins included</span>
+  <span class="c1">// with Hydrator.</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">transform</span><span class="o">(</span><span class="n">KeyValue</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="n">input</span><span class="o">,</span> <span class="n">Emitter</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">emitter</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">emitter</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">StructuredRecord</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="n">OUTPUT_SCHEMA</span><span class="o">)</span>
+                   <span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;position&quot;</span><span class="o">,</span> <span class="n">input</span><span class="o">.</span><span class="na">getKey</span><span class="o">().</span><span class="na">get</span><span class="o">())</span>
+                   <span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">,</span> <span class="n">input</span><span class="o">.</span><span class="na">getValue</span><span class="o">().</span><span class="na">toString</span><span class="o">())</span>
+                   <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+    <span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="batch-sink-plugin">
+<h2><a class="headerlink" href="#batch-sink-plugin" title="Perma-link to this heading">🔗</a>Batch Sink Plugin</h2>
+<p>A <code class="docutils literal"><span class="pre">BatchSink</span></code> plugin is used to write data in either batch or real-time data pipelines.
+It is used to prepare and configure the output of a batch of data from a pipeline run.</p>
+<p>In order to implement a Batch Sink, you extend the
+<code class="docutils literal"><span class="pre">BatchSink</span></code> class. Similar to a Batch Source, you need to define the types of the KEY and
+VALUE that the Batch Sink will write in the Batch job and the type of object that it will
+accept from the previous stage (which could be either a Transformation or a Batch Source).</p>
+<p>After defining the types, only one method is required to be implemented:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">prepareRun</span><span class="o">()</span>
+</pre></div>
+</div>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">prepareRun()</span></code>: Used to configure the output for each run of the pipeline. This is called by
+the client that will submit the job for the pipeline run.</li>
+<li><code class="docutils literal"><span class="pre">onRunFinish()</span></code>: Used to run any required logic at the end of a pipeline run. This is called
+by the client that submitted the job for the pipeline run.</li>
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to perform any validation on the application configuration
+that is required by this plugin or create any streams or datasets if the fieldName for a
+stream or dataset is not a macro.</li>
+<li><code class="docutils literal"><span class="pre">initialize()</span></code>: Initialize the Batch Sink. Guaranteed to be executed before any call
+to the plugin’s <code class="docutils literal"><span class="pre">transform</span></code> method. This is called by each executor of the job. For example,
+if the MapReduce engine is being used, each mapper will call this method.</li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code>: Destroy any resources created by <code class="docutils literal"><span class="pre">initialize</span></code>. Guaranteed to be executed after all calls
+to the plugin’s <code class="docutils literal"><span class="pre">transform</span></code> method have been made. This is called by each executor of the job.
+For example, if the MapReduce engine is being used, each mapper will call this method.</li>
+<li><code class="docutils literal"><span class="pre">transform()</span></code>: This method will be called for every object that is received from the
+previous stage. The logic inside the method will transform the object to the key-value
+pair expected by the Batch Sink's output format. If you don't override this method, the
+incoming object is set as the key and the value is set to null.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * Batch Sink that writes to a FileSet in text format.</span>
+<span class="cm"> * Each record will be written as a single line, with record fields separated by a configurable separator.</span>
+<span class="cm"> *</span>
+<span class="cm"> * StructuredRecord is the first parameter because that is the input to the sink.</span>
+<span class="cm"> * The second and third parameters are the key and value expected by Hadoop&#39;s {@link TextOutputFormat}.</span>
+<span class="cm"> */</span>
+<span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">BatchSink</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="n">TextFileSetSink</span><span class="o">.</span><span class="na">NAME</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Writes to a FileSet in text format.&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">TextFileSetSink</span> <span class="kd">extends</span> <span class="n">BatchSink</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">,</span> <span class="n">NullWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;TextFileSet&quot;</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Conf</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config properties for the plugin.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Conf</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">FILESET_NAME</span> <span class="o">=</span> <span class="s">&quot;fileSetName&quot;</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">FIELD_SEPARATOR</span> <span class="o">=</span> <span class="s">&quot;fieldSeparator&quot;</span><span class="o">;</span>
+
+    <span class="c1">// The name annotation tells CDAP what the property name is. It is optional, and defaults to the variable name.</span>
+    <span class="c1">// Note: only primitives (including boxed types) and string are the types that are supported.</span>
+    <span class="nd">@Name</span><span class="o">(</span><span class="n">FILESET_NAME</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;The name of the FileSet to read from.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">fileSetName</span><span class="o">;</span>
+
+    <span class="nd">@Nullable</span>
+    <span class="nd">@Name</span><span class="o">(</span><span class="n">FIELD_SEPARATOR</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;The separator to use to join input record fields together. Defaults to &#39;,&#39;.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">fieldSeparator</span><span class="o">;</span>
+
+    <span class="c1">// Use a no-args constructor to set field defaults.</span>
+    <span class="kd">public</span> <span class="nf">Conf</span><span class="o">()</span> <span class="o">{</span>
+      <span class="n">fileSetName</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="o">;</span>
+      <span class="n">fieldSeparator</span> <span class="o">=</span> <span class="s">&quot;,&quot;</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="c1">// CDAP will pass in a config with its fields populated based on the configuration given when creating the pipeline.</span>
+  <span class="kd">public</span> <span class="nf">TextFileSetSink</span><span class="o">(</span><span class="n">Conf</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="c1">// configurePipeline is called exactly once when the pipeline is being created.</span>
+  <span class="c1">// Any static configuration should be performed here.</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configurePipeline</span><span class="o">(</span><span class="n">PipelineConfigurer</span> <span class="n">pipelineConfigurer</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// create the FileSet here.</span>
+    <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">createDataset</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fileSetName</span><span class="o">,</span>
+                                     <span class="n">FileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                                     <span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+                                       <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+                                       <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+                                       <span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+                                       <span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">)</span>
+                                       <span class="o">.</span><span class="na">setExploreSchema</span><span class="o">(</span><span class="s">&quot;text string&quot;</span><span class="o">)</span>
+                                       <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+    <span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="c1">// prepareRun is called before every pipeline run, and is used to configure what the input should be,</span>
+  <span class="c1">// as well as any arguments the input should use. It is called by the client that is submitting the batch job.</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">prepareRun</span><span class="o">(</span><span class="n">BatchSinkContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">addOutput</span><span class="o">(</span><span class="n">Output</span><span class="o">.</span><span class="na">ofDataset</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fileSetName</span><span class="o">));</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">transform</span><span class="o">(</span><span class="n">StructuredRecord</span> <span class="n">input</span><span class="o">,</span> <span class="n">Emitter</span><span class="o">&lt;</span><span class="n">KeyValue</span><span class="o">&lt;</span><span class="n">NullWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;&gt;</span> <span class="n">emitter</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">StringBuilder</span> <span class="n">joinedFields</span> <span class="o">=</span> <span class="k">new</span> <span class="n">StringBuilder</span><span class="o">();</span>
+    <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">&gt;</span> <span class="n">fieldIter</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">getSchema</span><span class="o">().</span><span class="na">getFields</span><span class="o">().</span><span class="na">iterator</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">fieldIter</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+      <span class="c1">// shouldn&#39;t happen</span>
+      <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="n">Object</span> <span class="n">val</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">fieldIter</span><span class="o">.</span><span class="na">next</span><span class="o">().</span><span class="na">getName</span><span class="o">());</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">val</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">joinedFields</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">val</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">while</span> <span class="o">(</span><span class="n">fieldIter</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+      <span class="n">String</span> <span class="n">fieldName</span> <span class="o">=</span> <span class="n">fieldIter</span><span class="o">.</span><span class="na">next</span><span class="o">().</span><span class="na">getName</span><span class="o">();</span>
+      <span class="n">joinedFields</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fieldSeparator</span><span class="o">);</span>
+      <span class="n">val</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">fieldName</span><span class="o">);</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">val</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">joinedFields</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">val</span><span class="o">);</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="n">emitter</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="k">new</span> <span class="n">KeyValue</span><span class="o">&lt;&gt;(</span><span class="n">NullWritable</span><span class="o">.</span><span class="na">get</span><span class="o">(),</span> <span class="k">new</span> <span class="n">Text</span><span class="o">(</span><span class="n">joinedFields</span><span class="o">.</span><span class="na">toString</span><span class="o">())));</span>
+  <span class="o">}</span>
+
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="transformation-plugin">
+<h2><a class="headerlink" href="#transformation-plugin" title="Perma-link to this heading">🔗</a>Transformation Plugin</h2>
+<p>A <code class="docutils literal"><span class="pre">Transform</span></code> plugin is used to convert one input record into zero or more output records.
+It can be used in both batch and real-time data pipelines.</p>
+<p>The only method that needs to be implemented is:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">transform</span><span class="o">()</span>
+</pre></div>
+</div>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">initialize()</span></code>: Used to perform any initialization step that might be required during
+the runtime of the <code class="docutils literal"><span class="pre">Transform</span></code>. It is guaranteed that this method will be invoked
+before the <code class="docutils literal"><span class="pre">transform</span></code> method.</li>
+<li><code class="docutils literal"><span class="pre">transform()</span></code>: This method contains the logic that will be applied on each
+incoming data object. An emitter can be used to pass the results to the subsequent stage
+(which could be either another Transformation or a Sink).</li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code>: Used to perform any cleanup before the plugin shuts down.</li>
+</ul>
+<p>Below is an example of a <code class="docutils literal"><span class="pre">DuplicateTransform</span></code> that emits copies of the incoming record
+based on the value in the record. In addition, a user metric indicating the number of
+copies in each transform is emitted. The user metrics can be queried by using the CDAP
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Metrics HTTP RESTful API</span></a>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">Transform</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;Duplicator&quot;</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Transformation example that makes copies.&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">DuplicateTransform</span> <span class="kd">extends</span> <span class="n">Transform</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">,</span> <span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+
+<span class="kd">private</span> <span class="kd">final</span> <span class="n">Config</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">Config</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+
+    <span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Field that indicates number of copies to make.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">fieldName</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">transform</span><span class="o">(</span><span class="n">StructuredRecord</span> <span class="n">input</span><span class="o">,</span> <span class="n">Emitter</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">emitter</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">copies</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fieldName</span><span class="o">);</span>
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">copies</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+      <span class="n">emitter</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">input</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="n">getContext</span><span class="o">().</span><span class="na">getMetrics</span><span class="o">().</span><span class="na">count</span><span class="o">(</span><span class="s">&quot;copies&quot;</span><span class="o">,</span> <span class="n">copies</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">destroy</span><span class="o">()</span> <span class="o">{</span>
+
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<div class="section" id="script-transformations">
+<h3><a class="headerlink" href="#script-transformations" title="Perma-link to this heading">🔗</a>Script Transformations</h3>
+<p>In the script transformations (<em>JavaScriptTransform</em>, <em>PythonEvaluator</em>,
+<em>ScriptFilterTransform</em>, and the <em>ValidatorTransform</em>), a <code class="docutils literal"><span class="pre">ScriptContext</span></code> object is
+passed to the <code class="docutils literal"><span class="pre">transform()</span></code> method:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">function</span> <span class="nf">transform</span><span class="o">(</span><span class="n">input</span><span class="o">,</span> <span class="n">context</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The different Transforms that are passed this context object have similar signatures:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Transform</th>
+<th class="head">Signature</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">JavaScriptTransform</span></code></td>
+<td><code class="docutils literal"><span class="pre">{{function</span> <span class="pre">transform(input,</span> <span class="pre">emitter,</span> <span class="pre">context)}}</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">PythonEvaluator</span></code></td>
+<td><code class="docutils literal"><span class="pre">{{function</span> <span class="pre">transform(input,</span> <span class="pre">emitter,</span> <span class="pre">context)}}</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">ScriptFilterTransform</span></code></td>
+<td><code class="docutils literal"><span class="pre">{{function</span> <span class="pre">shouldFilter(input,</span> <span class="pre">context)}}</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">ValidatorTransform</span></code></td>
+<td><code class="docutils literal"><span class="pre">{{function</span> <span class="pre">isValid(input,</span> <span class="pre">context)}}</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>The <code class="docutils literal"><span class="pre">ScriptContext</span></code> has these methods:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="n">Logger</span> <span class="nf">getLogger</span><span class="o">();</span>
+<span class="kd">public</span> <span class="n">StageMetrics</span> <span class="nf">getMetrics</span><span class="o">();</span>
+<span class="kd">public</span> <span class="n">ScriptLookup</span> <span class="nf">getLookup</span><span class="o">(</span><span class="n">String</span> <span class="n">table</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The context passed by the <em>ValidatorTransform</em> has an additional method that returns a validator:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="n">Object</span> <span class="nf">getValidator</span><span class="o">(</span><span class="n">String</span> <span class="n">validatorName</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>These methods allow access within the script to CDAP loggers, metrics, lookup tables, and the validator object.</p>
+<p><strong>Logger</strong></p>
+<p><code class="docutils literal"><span class="pre">Logger</span></code> is an <a class="reference external" href="http://www.slf4j.org/api/org/slf4j/Logger.html">org.slf4j.Logger</a>.</p>
+<p>For example, a JavaScript transform step can access and write to the <em>debug</em> log with:</p>
+<div class="highlight-java"><div class="highlight"><pre>context.getLogger().debug(&#39;Received record with id &#39; + input.id);
+</pre></div>
+</div>
+<p><strong>StageMetrics</strong></p>
+<p><code class="docutils literal"><span class="pre">StageMetrics</span></code> has these methods:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">count(String</span> <span class="pre">metricName,</span> <span class="pre">int</span> <span class="pre">delta)</span></code>: Increases the value of the specific metric by
+delta. Metrics name will be prefixed by the stage ID, hence it will be aggregated for
+the current stage.</li>
+<li><code class="docutils literal"><span class="pre">gauge(String</span> <span class="pre">metricName,</span> <span class="pre">long</span> <span class="pre">value)</span></code>: Sets the specific metric to the provided
+value. Metrics name will be prefixed by the stage ID, hence it will be aggregated for
+the current stage.</li>
+<li><code class="docutils literal"><span class="pre">pipelineCount(String</span> <span class="pre">metricName,</span> <span class="pre">int</span> <span class="pre">delta)</span></code>: Increases the value of the specific
+metric by delta. Metrics emitted will be aggregated for the entire pipeline.</li>
+<li><code class="docutils literal"><span class="pre">pipelineGauge(String</span> <span class="pre">metricName,</span> <span class="pre">long</span> <span class="pre">value)</span></code>: Sets the specific metric to the
+provided value. Metrics emitted will be aggregated for the entire pipeline.</li>
+</ul>
+<p><strong>ScriptLookup</strong></p>
+<p>Currently, <code class="docutils literal"><span class="pre">ScriptContext.getLookup(String</span> <span class="pre">table)</span></code> only supports <a class="reference external" href="../source/../../developers-manual/building-blocks/datasets/index.html#datasets-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">key-value tables</span></a>.</p>
+<p>For example, if a lookup table <em>purchases</em> is configured, then you will be able to perform
+operations with that lookup table in your script: <code class="docutils literal"><span class="pre">context.getLookup('purchases').lookup('key')</span></code></p>
+<p><strong>Validator Object</strong></p>
+<p>For example, in a validator transform, you can retrieve the validator object and call its
+functions as part of your JavaScript:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="kd">var</span> <span class="nx">coreValidator</span> <span class="o">=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">getValidator</span><span class="p">(</span><span class="s2">&quot;coreValidator&quot;</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">coreValidator</span><span class="p">.</span><span class="nx">isDate</span><span class="p">(</span><span class="nx">input</span><span class="p">.</span><span class="nx">date</span><span class="p">))</span> <span class="p">{</span>
+<span class="p">.</span> <span class="p">.</span> <span class="p">.</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="batch-aggregator-plugin">
+<h2><a class="headerlink" href="#batch-aggregator-plugin" title="Perma-link to this heading">🔗</a>Batch Aggregator Plugin</h2>
+<p>A <code class="docutils literal"><span class="pre">BatchAggregator</span></code> plugin is used to compute aggregates over a batch of data.
+It is used in both batch and real-time data pipelines.
+An aggregation takes place in two steps: <em>groupBy</em> and then <em>aggregate</em>.</p>
+<ul class="simple">
+<li>In the <em>groupBy</em> step, the aggregator creates zero or more group keys for each input
+record. Before the <em>aggregate</em> step occurs, Hydrator will take all records that have the
+same group key, and collect them into a group. If a record does not have any of the
+group keys, it is filtered out. If a record has multiple group keys, it will belong to
+multiple groups.</li>
+<li>The <em>aggregate</em> step is then called. In this step, the plugin receives group keys and
+all records that had that group key. It is then left to the plugin to decide what to do
+with each of the groups.</li>
+</ul>
+<p>In order to implement a Batch Aggregator, you extend the
+<code class="docutils literal"><span class="pre">BatchAggregator</span></code> class. Unlike a <code class="docutils literal"><span class="pre">Transform</span></code>, which operates on a single record at a time, a
+<code class="docutils literal"><span class="pre">BatchAggregator</span></code> operates on a collection of records.</p>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to perform any validation on the application configuration
+that is required by this plugin or create any streams or datasets if the fieldName for a
+stream or dataset is not a macro.</li>
+<li><code class="docutils literal"><span class="pre">initialize()</span></code>: Initialize the Batch Aggregator. Guaranteed to be executed before any call
+to the plugin’s <code class="docutils literal"><span class="pre">groupBy</span></code> or <code class="docutils literal"><span class="pre">aggregate</span></code> methods. This is called by each executor of the job.
+For example, if the MapReduce engine is being used, each mapper will call this method.</li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code>: Destroy any resources created by <code class="docutils literal"><span class="pre">initialize</span></code>. Guaranteed to be
+executed after all calls to the plugin’s <code class="docutils literal"><span class="pre">groupBy</span></code> or <code class="docutils literal"><span class="pre">aggregate</span></code> methods have been
+made. This is called by each executor of the job. For example, if the MapReduce engine
+is being used, each mapper will call this method.</li>
+<li><code class="docutils literal"><span class="pre">groupBy()</span></code>: This method will be called for every object that is received from the
+previous stage. This method returns zero or more group keys for each object it recieves.
+Objects with the same group key will be grouped together for the <code class="docutils literal"><span class="pre">aggregate</span></code> method.</li>
+<li><code class="docutils literal"><span class="pre">aggregate()</span></code>: The method is called after every object has been assigned their group keys.
+This method is called once for each group key emitted by the <code class="docutils literal"><span class="pre">groupBy</span></code> method.
+The method recieves a group key as well as an iterator over all objects that had that group key.
+Objects emitted in this method are the output for this stage.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * Aggregator that counts how many times each word appears in records input to the aggregator.</span>
+<span class="cm"> */</span>
+<span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">BatchAggregator</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="n">WordCountAggregator</span><span class="o">.</span><span class="na">NAME</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Counts how many times each word appears in all records input to the aggregator.&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountAggregator</span> <span class="kd">extends</span> <span class="n">BatchAggregator</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">StructuredRecord</span><span class="o">,</span> <span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;WordCount&quot;</span><span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Schema</span> <span class="n">OUTPUT_SCHEMA</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span>
+    <span class="s">&quot;wordCount&quot;</span><span class="o">,</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">LONG</span><span class="o">))</span>
+  <span class="o">);</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Pattern</span> <span class="n">WHITESPACE</span> <span class="o">=</span> <span class="n">Pattern</span><span class="o">.</span><span class="na">compile</span><span class="o">(</span><span class="s">&quot;\\s&quot;</span><span class="o">);</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Conf</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config properties for the plugin.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Conf</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;The field from the input records containing the words to count.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">field</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="nf">WordCountAggregator</span><span class="o">(</span><span class="n">Conf</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configurePipeline</span><span class="o">(</span><span class="n">PipelineConfigurer</span> <span class="n">pipelineConfigurer</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// Any static configuration validation should happen here.</span>
+    <span class="c1">// We will check that the field is in the input schema and is of type string.</span>
+    <span class="n">Schema</span> <span class="n">inputSchema</span> <span class="o">=</span> <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">getStageConfigurer</span><span class="o">().</span><span class="na">getInputSchema</span><span class="o">();</span>
+    <span class="c1">// A null input schema means it is unknown until runtime, or it is not constant.</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">inputSchema</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="c1">// If the input schema is constant and known at configure time, check that the input field exists and is a string.</span>
+      <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span> <span class="n">inputField</span> <span class="o">=</span> <span class="n">inputSchema</span><span class="o">.</span><span class="na">getField</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">);</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">inputField</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalArgumentException</span><span class="o">(</span>
+          <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;Field &#39;%s&#39; does not exist in input schema %s.&quot;</span><span class="o">,</span> <span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">,</span> <span class="n">inputSchema</span><span class="o">));</span>
+      <span class="o">}</span>
+      <span class="n">Schema</span> <span class="n">fieldSchema</span> <span class="o">=</span> <span class="n">inputField</span><span class="o">.</span><span class="na">getSchema</span><span class="o">();</span>
+      <span class="n">Schema</span><span class="o">.</span><span class="na">Type</span> <span class="n">fieldType</span> <span class="o">=</span> <span class="n">fieldSchema</span><span class="o">.</span><span class="na">isNullable</span><span class="o">()</span> <span class="o">?</span> <span class="n">fieldSchema</span><span class="o">.</span><span class="na">getNonNullable</span><span class="o">().</span><span class="na">getType</span><span class="o">()</span> <span class="o">:</span> <span class="n">fieldSchema</span><span class="o">.</span><span class="na">getType</span><span class="o">();</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">fieldType</span> <span class="o">!=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalArgumentException</span><span class="o">(</span>
+          <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;Field &#39;%s&#39; is of illegal type %s. Must be of type %s.&quot;</span><span class="o">,</span>
+                        <span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">,</span> <span class="n">fieldType</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">));</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="c1">// Set the output schema so downstream stages will know their input schema.</span>
+    <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">getStageConfigurer</span><span class="o">().</span><span class="na">setOutputSchema</span><span class="o">(</span><span class="n">OUTPUT_SCHEMA</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">groupBy</span><span class="o">(</span><span class="n">StructuredRecord</span> <span class="n">input</span><span class="o">,</span> <span class="n">Emitter</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">groupKeyEmitter</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">String</span> <span class="n">val</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">val</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">word</span> <span class="o">:</span> <span class="n">WHITESPACE</span><span class="o">.</span><span class="na">split</span><span class="o">(</span><span class="n">val</span><span class="o">))</span> <span class="o">{</span>
+      <span class="n">groupKeyEmitter</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">word</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">aggregate</span><span class="o">(</span><span class="n">String</span> <span class="n">groupKey</span><span class="o">,</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">groupValues</span><span class="o">,</span>
+                        <span class="n">Emitter</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">emitter</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="kt">long</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="k">while</span> <span class="o">(</span><span class="n">groupValues</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+      <span class="n">groupValues</span><span class="o">.</span><span class="na">next</span><span class="o">();</span>
+      <span class="n">count</span><span class="o">++;</span>
+    <span class="o">}</span>
+    <span class="n">emitter</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">StructuredRecord</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="n">OUTPUT_SCHEMA</span><span class="o">).</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">,</span> <span class="n">groupKey</span><span class="o">).</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">,</span> <span class="n">count</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="spark-compute-plugin">
+<h2><a class="headerlink" href="#spark-compute-plugin" title="Perma-link to this heading">🔗</a>Spark Compute Plugin</h2>
+<p>A <code class="docutils literal"><span class="pre">SparkCompute</span></code> plugin is used to transform a collection of input records into a collection
+of output records. It can be used in both batch and real-time data pipelines.
+It is similar to a <code class="docutils literal"><span class="pre">Transform</span></code>, except instead of transforming its input
+record by record, it transforms an entire collection. In a <code class="docutils literal"><span class="pre">SparkCompute</span></code>
+plugin, you are given access to anything you would be able to do in a Spark program.</p>
+<p>In order to implement a Spark Compute Plugin, you extend the <code class="docutils literal"><span class="pre">SparkCompute</span></code> class.</p>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to perform any validation on the application configuration
+that is required by this plugin or create any streams or datasets if the fieldName for a
+stream or dataset is not a macro.</li>
+<li><code class="docutils literal"><span class="pre">transform()</span></code>: This method is given a Spark RDD (Resilient Distributed Dataset) containing
+every object that is received from the previous stage. This method then performs Spark operations
+on the input to transform it into an output RDD that will be sent to the next stage.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * SparkCompute plugin that counts how many times each word appears in records input to the compute stage.</span>
+<span class="cm"> */</span>
+<span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">SparkCompute</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="n">WordCountCompute</span><span class="o">.</span><span class="na">NAME</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Counts how many times each word appears in all records input to the aggregator.&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountCompute</span> <span class="kd">extends</span> <span class="n">SparkCompute</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">,</span> <span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;WordCount&quot;</span><span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Schema</span> <span class="n">OUTPUT_SCHEMA</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span>
+    <span class="s">&quot;wordCount&quot;</span><span class="o">,</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">LONG</span><span class="o">))</span>
+  <span class="o">);</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Conf</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config properties for the plugin.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Conf</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;The field from the input records containing the words to count.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">field</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="nf">WordCountCompute</span><span class="o">(</span><span class="n">Conf</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configurePipeline</span><span class="o">(</span><span class="n">PipelineConfigurer</span> <span class="n">pipelineConfigurer</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// Any static configuration validation should happen here.</span>
+    <span class="c1">// We will check that the field is in the input schema and is of type string.</span>
+    <span class="n">Schema</span> <span class="n">inputSchema</span> <span class="o">=</span> <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">getStageConfigurer</span><span class="o">().</span><span class="na">getInputSchema</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">inputSchema</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">WordCount</span> <span class="n">wordCount</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WordCount</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">);</span>
+      <span class="n">wordCount</span><span class="o">.</span><span class="na">validateSchema</span><span class="o">(</span><span class="n">inputSchema</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="c1">// Set the output schema so downstream stages will know their input schema.</span>
+    <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">getStageConfigurer</span><span class="o">().</span><span class="na">setOutputSchema</span><span class="o">(</span><span class="n">OUTPUT_SCHEMA</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">JavaRDD</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="nf">transform</span><span class="o">(</span><span class="n">SparkExecutionPluginContext</span> <span class="n">sparkExecutionPluginContext</span><span class="o">,</span>
+                                             <span class="n">JavaRDD</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">javaRDD</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">WordCount</span> <span class="n">wordCount</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WordCount</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">);</span>
+    <span class="k">return</span> <span class="n">wordCount</span><span class="o">.</span><span class="na">countWords</span><span class="o">(</span><span class="n">javaRDD</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">flatMap</span><span class="o">(</span><span class="k">new</span> <span class="n">FlatMapFunction</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;,</span> <span class="n">StructuredRecord</span><span class="o">&gt;()</span> <span class="o">{</span>
+        <span class="nd">@Override</span>
+        <span class="kd">public</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="nf">call</span><span class="o">(</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;</span> <span class="n">stringLongTuple2</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+          <span class="n">List</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">output</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;&gt;();</span>
+          <span class="n">output</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">StructuredRecord</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="n">OUTPUT_SCHEMA</span><span class="o">)</span>
+                       <span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">,</span> <span class="n">stringLongTuple2</span><span class="o">.</span><span class="na">_1</span><span class="o">())</span>
+                       <span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">,</span> <span class="n">stringLongTuple2</span><span class="o">.</span><span class="na">_2</span><span class="o">())</span>
+                       <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+          <span class="k">return</span> <span class="n">output</span><span class="o">;</span>
+        <span class="o">}</span>
+      <span class="o">});</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="spark-sink-plugin">
+<h2><a class="headerlink" href="#spark-sink-plugin" title="Perma-link to this heading">🔗</a>Spark Sink Plugin</h2>
+<p>A <code class="docutils literal"><span class="pre">SparkSink</span></code> plugin is used to perform computations on a collection of input records
+and optionally write output data. It can only be used in batch data pipelines.
+A <code class="docutils literal"><span class="pre">SparkSink</span></code> is similar to a <code class="docutils literal"><span class="pre">SparkCompute</span></code> plugin except that it has no output.
+In a <code class="docutils literal"><span class="pre">SparkSink</span></code>, you are given access to anything you would be able to do in a Spark
+program. For example, one common use case is to train a machine-learning model in this
+plugin.</p>
+<p>In order to implement a Spark Sink Plugin, you extend the <code class="docutils literal"><span class="pre">SparkSink</span></code> class.</p>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to perform any validation on the application configuration
+that is required by this plugin or create any streams or datasets if the fieldName for a
+stream or dataset is not a macro.</li>
+<li><code class="docutils literal"><span class="pre">run()</span></code>: This method is given a Spark RDD (Resilient Distributed Dataset) containing every
+object that is received from the previous stage. This method then performs Spark operations
+on the input, and usually saves the result to a dataset.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * SparkSink plugin that counts how many times each word appears in records input to it</span>
+<span class="cm"> * and stores the result in a KeyValueTable.</span>
+<span class="cm"> */</span>
+<span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">SparkSink</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="n">WordCountSink</span><span class="o">.</span><span class="na">NAME</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Counts how many times each word appears in all records input to the aggregator.&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountSink</span> <span class="kd">extends</span> <span class="n">SparkSink</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;WordCount&quot;</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Conf</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config properties for the plugin.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Conf</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;The field from the input records containing the words to count.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">field</span><span class="o">;</span>
+
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;The name of the KeyValueTable to write to.&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">tableName</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="nf">WordCountSink</span><span class="o">(</span><span class="n">Conf</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configurePipeline</span><span class="o">(</span><span class="n">PipelineConfigurer</span> <span class="n">pipelineConfigurer</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// Any static configuration validation should happen here.</span>
+    <span class="c1">// We will check that the field is in the input schema and is of type string.</span>
+    <span class="n">Schema</span> <span class="n">inputSchema</span> <span class="o">=</span> <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">getStageConfigurer</span><span class="o">().</span><span class="na">getInputSchema</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">inputSchema</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">WordCount</span> <span class="n">wordCount</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WordCount</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">);</span>
+      <span class="n">wordCount</span><span class="o">.</span><span class="na">validateSchema</span><span class="o">(</span><span class="n">inputSchema</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">createDataset</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">tableName</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">EMPTY</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">(</span><span class="n">SparkExecutionPluginContext</span> <span class="n">sparkExecutionPluginContext</span><span class="o">,</span>
+                  <span class="n">JavaRDD</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">javaRDD</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">WordCount</span> <span class="n">wordCount</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WordCount</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">field</span><span class="o">);</span>
+    <span class="n">JavaPairRDD</span> <span class="n">outputRDD</span> <span class="o">=</span> <span class="n">wordCount</span><span class="o">.</span><span class="na">countWords</span><span class="o">(</span><span class="n">javaRDD</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">mapToPair</span><span class="o">(</span><span class="k">new</span> <span class="n">PairFunction</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;,</span> <span class="kt">byte</span><span class="o">[],</span> <span class="kt">byte</span><span class="o">[]&gt;()</span> <span class="o">{</span>
+        <span class="nd">@Override</span>
+        <span class="kd">public</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="kt">byte</span><span class="o">[]&gt;</span> <span class="nf">call</span><span class="o">(</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;</span> <span class="n">stringLongTuple2</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+          <span class="k">return</span> <span class="k">new</span> <span class="n">Tuple2</span><span class="o">&lt;&gt;(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">stringLongTuple2</span><span class="o">.</span><span class="na">_1</span><span class="o">()),</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">stringLongTuple2</span><span class="o">.</span><span class="na">_2</span><span class="o">()));</span>
+        <span class="o">}</span>
+      <span class="o">});</span>
+    <span class="n">sparkExecutionPluginContext</span><span class="o">.</span><span class="na">saveAsDataset</span><span class="o">(</span><span class="n">outputRDD</span><span class="o">,</span> <span class="n">config</span><span class="o">.</span><span class="na">tableName</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="streaming-source-plugin">
+<h2><a class="headerlink" href="#streaming-source-plugin" title="Perma-link to this heading">🔗</a>Streaming Source Plugin</h2>
+<p>A Streaming Source plugin is used as a source in real-time data pipelines.
+It is used to fetch a Spark DStream, which is an object that represents a
+collection of Spark RDDs and that produces a new RDD every batch interval of the pipeline.</p>
+<p>In order to implement a Streaming Source Plugin, you extend the <code class="docutils literal"><span class="pre">StreamingSource</span></code> class.</p>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to perform any validation on the application configuration
+that is required by this plugin or create any streams or datasets if the fieldName for a
+stream or dataset is not a macro.</li>
+<li><code class="docutils literal"><span class="pre">getStream()</span></code>: Returns the <code class="docutils literal"><span class="pre">JavaDStream</span></code> that will be used as a source in the pipeline.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">StreamingSource</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;Twitter&quot;</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Twitter streaming source.&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">TwitterStreamingSource</span> <span class="kd">extends</span> <span class="n">StreamingSource</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">TwitterStreamingConfig</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config class for TwitterStreamingSource.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">TwitterStreamingConfig</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="kd">implements</span> <span class="n">Serializable</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">long</span> <span class="n">serialVersionUID</span> <span class="o">=</span> <span class="mi">4218063781909515444L</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">consumerKey</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">consumerSecret</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">accessToken</span><span class="o">;</span>
+
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">accessTokenSecret</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="nf">TwitterStreamingSource</span><span class="o">(</span><span class="n">TwitterStreamingConfig</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configurePipeline</span><span class="o">(</span><span class="n">PipelineConfigurer</span> <span class="n">pipelineConfigurer</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">pipelineConfigurer</span><span class="o">.</span><span class="na">getStageConfigurer</span><span class="o">().</span><span class="na">setOutputSchema</span><span class="o">(</span><span class="n">TwitterConstants</span><span class="o">.</span><span class="na">SCHEMA</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">JavaDStream</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="nf">getStream</span><span class="o">(</span><span class="n">StreamingContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">JavaStreamingContext</span> <span class="n">javaStreamingContext</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getSparkStreamingContext</span><span class="o">();</span>
+
+    <span class="c1">// Create authorization from user-provided properties</span>
+    <span class="n">ConfigurationBuilder</span> <span class="n">configurationBuilder</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ConfigurationBuilder</span><span class="o">();</span>
+    <span class="n">configurationBuilder</span><span class="o">.</span><span class="na">setDebugEnabled</span><span class="o">(</span><span class="kc">false</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOAuthConsumerKey</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">consumerKey</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOAuthConsumerSecret</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">consumerSecret</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOAuthAccessToken</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">accessToken</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOAuthAccessTokenSecret</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">accessTokenSecret</span><span class="o">);</span>
+    <span class="n">Authorization</span> <span class="n">authorization</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OAuthAuthorization</span><span class="o">(</span><span class="n">configurationBuilder</span><span class="o">.</span><span class="na">build</span><span class="o">());</span>
+
+    <span class="k">return</span> <span class="n">TwitterUtils</span><span class="o">.</span><span class="na">createStream</span><span class="o">(</span><span class="n">javaStreamingContext</span><span class="o">,</span> <span class="n">authorization</span><span class="o">).</span><span class="na">map</span><span class="o">(</span>
+      <span class="k">new</span> <span class="n">Function</span><span class="o">&lt;</span><span class="n">Status</span><span class="o">,</span> <span class="n">StructuredRecord</span><span class="o">&gt;()</span> <span class="o">{</span>
+        <span class="kd">public</span> <span class="n">StructuredRecord</span> <span class="nf">call</span><span class="o">(</span><span class="n">Status</span> <span class="n">status</span><span class="o">)</span> <span class="o">{</span>
+          <span class="k">return</span> <span class="n">convertTweet</span><span class="o">(</span><span class="n">status</span><span class="o">);</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+    <span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="kd">private</span> <span class="n">StructuredRecord</span> <span class="nf">convertTweet</span><span class="o">(</span><span class="n">Status</span> <span class="n">tweet</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// logic to convert a Twitter Status into a CDAP StructuredRecord</span>
+  <span class="o">}</span>
+
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="windower-plugin">
+<h2><a class="headerlink" href="#windower-plugin" title="Perma-link to this heading">🔗</a>Windower Plugin</h2>
+<p>A Windower plugin is used in real-time data pipelines to create sliding windows over the data.
+It does this by combining multiple micro batches into larger batches.</p>
+<p>A window is defined by its <em>size</em> and its <em>slide interval</em>. Both are defined in seconds and
+must be multiples of the <code class="docutils literal"><span class="pre">batchInterval</span></code> of the pipeline. The <em>size</em> defines how much data
+is contained in the window. The <em>slide interval</em> defines have often a window is created.</p>
+<p>For example, consider a pipeline with a <code class="docutils literal"><span class="pre">batchInterval</span></code> of 10 seconds. The pipeline uses a
+<code class="docutils literal"><span class="pre">windower</span></code> that has a size of 60 and a slide interval of 30. The input into the <code class="docutils literal"><span class="pre">windower</span></code>
+will be micro batches containing 10 seconds of data. Every 30 seconds, the windower will
+output a batch of data containing the past 60 seconds of data, meaning the previous six
+micro batches that it received as input.</p>
+<p>This also means that each window output will overlap (repeat) some of the data from the
+previous window. This is useful in calculating aggregates, such as how many &quot;404&quot; responses
+did a website send out in the past ten seconds, past minute, past five minutes.</p>
+<p>In order to implement a Windower Plugin, you extend the <code class="docutils literal"><span class="pre">Windower</span></code> class.</p>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to perform any validation on the application configuration
+that is required by this plugin or create any streams or datasets if the fieldName for a
+stream or dataset is not a macro.</li>
+<li><code class="docutils literal"><span class="pre">getWidth()</span></code>: Return the width in seconds of windows created by this plugin.
+Must be a multiple of the <code class="docutils literal"><span class="pre">batchInterval</span></code> of the pipeline.</li>
+<li><code class="docutils literal"><span class="pre">getSlideInterval()</span></code>: Get the slide interval in seconds of windows created by this plugin.
+Must be a multiple of the <code class="docutils literal"><span class="pre">batchInterval</span></code> of the pipeline.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="n">Windower</span><span class="o">.</span><span class="na">PLUGIN_TYPE</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;Window&quot;</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Creates a sliding window over the data&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Window</span> <span class="kd">extends</span> <span class="n">Windower</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Conf</span> <span class="n">conf</span><span class="o">;</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config for window plugin.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Conf</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+    <span class="kt">long</span> <span class="n">width</span><span class="o">;</span>
+
+    <span class="kt">long</span> <span class="n">slideInterval</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="nf">Window</span><span class="o">(</span><span class="n">Conf</span> <span class="n">conf</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">conf</span> <span class="o">=</span> <span class="n">conf</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">long</span> <span class="nf">getWidth</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">conf</span><span class="o">.</span><span class="na">width</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">long</span> <span class="nf">getSlideInterval</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">conf</span><span class="o">.</span><span class="na">slideInterval</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="real-time-source-plugin-deprecated">
+<h2><a class="headerlink" href="#real-time-source-plugin-deprecated" title="Perma-link to this heading">🔗</a>Real-Time Source Plugin (Deprecated)</h2>
+<p>The only method that needs to be implemented is:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">poll</span><span class="o">()</span>
+</pre></div>
+</div>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">initialize()</span></code>: Initialize the real-time source runtime. Guaranteed to be executed
+before any call to the poll method. Usually used to setup the connection to external
+sources.</li>
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to create any streams or datasets or perform any validation
+on the application configuration that are required by this plugin.</li>
+<li><code class="docutils literal"><span class="pre">poll()</span></code>: Poll method will be invoked during the run of the plugin and in each call,
+the source is expected to emit zero or more objects for the next stage to process.</li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code>: Cleanup method executed during the shutdown of the Source. Could be used
+to tear down any external connections made during the initialize method.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * Real-Time Source to poll data from external sources.</span>
+<span class="cm"> */</span>
+<span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;realtimesource&quot;</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;Source&quot;</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Real-Time Source&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Source</span> <span class="kd">extends</span> <span class="n">RealtimeSource</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="o">{</span>
+
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">SourceConfig</span> <span class="n">config</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="nf">Source</span><span class="o">(</span><span class="n">SourceConfig</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config class for Source.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">SourceConfig</span> <span class="kd">extends</span> <span class="n">PluginConfig</span> <span class="o">{</span>
+
+    <span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;param&quot;</span><span class="o">)</span>
+    <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Source Param&quot;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">param</span><span class="o">;</span>
+    <span class="c1">// Note: only primitives (included boxed types) and string are the types that are supported.</span>
+
+  <span class="o">}</span>
+
+  <span class="nd">@Nullable</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">SourceState</span> <span class="nf">poll</span><span class="o">(</span><span class="n">Emitter</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">writer</span><span class="o">,</span> <span class="n">SourceState</span> <span class="n">currentState</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// Poll for new data</span>
+    <span class="c1">// Write structured record to the writer</span>
+    <span class="c1">// writer.emit(writeDefaultRecords(writer);</span>
+    <span class="k">return</span> <span class="n">currentState</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">RealtimeContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="kd">super</span><span class="o">.</span><span class="na">initialize</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+    <span class="c1">// Get Config param and use to initialize</span>
+    <span class="c1">// String param = config.param</span>
+    <span class="c1">// Perform init operations, external operations etc.</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">destroy</span><span class="o">()</span> <span class="o">{</span>
+    <span class="kd">super</span><span class="o">.</span><span class="na">destroy</span><span class="o">();</span>
+    <span class="c1">// Handle destroy lifecycle</span>
+  <span class="o">}</span>
+
+  <span class="kd">private</span> <span class="kt">void</span> <span class="nf">writeDefaultRecords</span><span class="o">(</span><span class="n">Emitter</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">writer</span><span class="o">){</span>
+    <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span> <span class="n">bodyField</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;body&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">));</span>
+    <span class="n">StructuredRecord</span><span class="o">.</span><span class="na">Builder</span> <span class="n">recordBuilder</span> <span class="o">=</span> <span class="n">StructuredRecord</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span><span class="s">&quot;defaultRecord&quot;</span><span class="o">,</span> <span class="n">bodyField</span><span class="o">));</span>
+    <span class="n">recordBuilder</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="s">&quot;body&quot;</span><span class="o">,</span> <span class="s">&quot;Hello&quot;</span><span class="o">);</span>
+    <span class="n">writer</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">recordBuilder</span><span class="o">.</span><span class="na">build</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<div class="section" id="source-state">
+<h3><a class="headerlink" href="#source-state" title="Perma-link to this heading">🔗</a>Source State</h3>
+<p><strong>Source State in a Real-Time Source:</strong> Real-time plugins are executed in workers; during
+failure, there is the possibility that the data that is emitted from the Source will not
+be processed by subsequent stages. In order to avoid such data loss, <code class="docutils literal"><span class="pre">SourceState</span></code> can be
+used to persist the information about the external source (for example, an offset) if
+supported by the source.</p>
+<p>In case of failure, when the poll method is invoked, the offset last persisted is passed
+to the poll method, which can be used to fetch the data from the last processed point. The
+updated <code class="docutils literal"><span class="pre">SourceState</span></code> information is returned by the poll method. After the data is
+processed by any transformations and then finally persisted by the sink, the new
+<code class="docutils literal"><span class="pre">SourceState</span></code> information is also persisted. This ensures that there will be no data loss in
+case of failures.</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;realtimesource&quot;</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;Demo&quot;</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Demo Real-Time Source&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">DemoSource</span> <span class="kd">extends</span> <span class="n">RealtimeSource</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Logger</span> <span class="n">LOG</span> <span class="o">=</span> <span class="n">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">TestSource</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">COUNT</span> <span class="o">=</span> <span class="s">&quot;count&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Nullable</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">SourceState</span> <span class="nf">poll</span><span class="o">(</span><span class="n">Emitter</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">writer</span><span class="o">,</span> <span class="n">SourceState</span> <span class="n">currentState</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MILLISECONDS</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">100</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">&quot;Some Error in Source&quot;</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kt">int</span> <span class="n">prevCount</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">currentState</span><span class="o">.</span><span class="na">getState</span><span class="o">(</span><span class="n">COUNT</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">prevCount</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toInt</span><span class="o">(</span><span class="n">currentState</span><span class="o">.</span><span class="na">getState</span><span class="o">(</span><span class="n">COUNT</span><span class="o">));</span>
+      <span class="n">prevCount</span><span class="o">++;</span>
+      <span class="n">currentState</span><span class="o">.</span><span class="na">setState</span><span class="o">(</span><span class="n">COUNT</span><span class="o">,</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">prevCount</span><span class="o">));</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+      <span class="n">prevCount</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
+      <span class="n">currentState</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SourceState</span><span class="o">();</span>
+      <span class="n">currentState</span><span class="o">.</span><span class="na">setState</span><span class="o">(</span><span class="n">COUNT</span><span class="o">,</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">prevCount</span><span class="o">));</span>
+    <span class="o">}</span>
+
+    <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Emitting data! {}&quot;</span><span class="o">,</span> <span class="n">prevCount</span><span class="o">);</span>
+    <span class="n">writer</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="s">&quot;Hello World!&quot;</span><span class="o">);</span>
+    <span class="k">return</span> <span class="n">currentState</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="real-time-sink-plugin-deprecated">
+<h2><a class="headerlink" href="#real-time-sink-plugin-deprecated" title="Perma-link to this heading">🔗</a>Real-Time Sink Plugin (Deprecated)</h2>
+<p>The only method that needs to be implemented is:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">write</span><span class="o">()</span>
+</pre></div>
+</div>
+<p class="rubric">Methods</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">initialize()</span></code>: Initialize the real-time sink runtime. Guaranteed to be executed before
+any call to the <code class="docutils literal"><span class="pre">write</span></code> method.</li>
+<li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to create any datasets or perform any validation
+on the application configuration that are required by this plugin.</li>
+<li><code class="docutils literal"><span class="pre">write()</span></code>: The write method will be invoked for a set of objects that needs to be
+persisted. A <code class="docutils literal"><span class="pre">DataWriter</span></code> object can be used to write data to CDAP streams and/or datasets.
+The method is expected to return the number of objects written; this is used for collecting
+metrics.</li>
+<li><code class="docutils literal"><span class="pre">destroy()</span></code>: Cleanup method executed during the shutdown of the Sink.</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;realtimesink&quot;</span><span class="o">)</span>
+<span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;Demo&quot;</span><span class="o">)</span>
+<span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Demo Real-Time Sink&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">DemoSink</span> <span class="kd">extends</span> <span class="n">RealtimeSink</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">write</span><span class="o">(</span><span class="n">Iterable</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">objects</span><span class="o">,</span> <span class="n">DataWriter</span> <span class="n">dataWriter</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">written</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">object</span> <span class="o">:</span> <span class="n">objects</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">written</span> <span class="o">+=</span> <span class="mi">1</span><span class="o">;</span>
+      <span class="o">.</span> <span class="o">.</span> <span class="o">.</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">written</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Cask Hydrator: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../concepts-design.html"> Concepts and Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio.html"> Hydrator Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../creating-pipelines.html"> Creating Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running-pipelines.html"> Running Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugin-management.html"> Plugin Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugins/index.html"> Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developing-pipelines.html"> Developing Pipelines</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Developing Plugins</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="plugin-basics.html">Plugin Basics</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Creating a Plugin</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#action-plugin">Action Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#post-run-action-plugin">Post-run Action Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#batch-source-plugin">Batch Source Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#batch-sink-plugin">Batch Sink Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transformation-plugin">Transformation Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#batch-aggregator-plugin">Batch Aggregator Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spark-compute-plugin">Spark Compute Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spark-sink-plugin">Spark Sink Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#streaming-source-plugin">Streaming Source Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#windower-plugin">Windower Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#real-time-source-plugin-deprecated">Real-Time Source Plugin (Deprecated)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#real-time-sink-plugin-deprecated">Real-Time Sink Plugin (Deprecated)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="testing-plugins.html">Testing Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="packaging-plugins.html">Packaging Plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-hydrator-works.html"> How Hydrator Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faqs.html"> FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html"> Glossary</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Plugin Basics" href="plugin-basics.html" />Plugin Basics</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Testing Plugins" href="testing-plugins.html" />Testing Plugins</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

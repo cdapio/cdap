@@ -1,0 +1,1337 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Metrics HTTP RESTful API &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/reference-manual/http-restful-api/metrics.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Monitor HTTP RESTful API" href="monitor.html" />
+    <link rel="prev" title="Metadata HTTP RESTful API" href="metadata.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="monitor.html" title="Monitor HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="metadata.html" title="Metadata HTTP RESTful API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Reference Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="metrics-http-restful-api">
+<span id="http-restful-api-metrics"></span><h1><a class="headerlink" href="#metrics-http-restful-api" title="Perma-link to this heading">🔗</a>Metrics HTTP RESTful API</h1>
+<p>Use the CDAP Metrics HTTP RESTful API to retrieve the metrics created and saved by CDAP.</p>
+<p>As applications process data, CDAP collects metrics about the application’s behavior and
+performance. Some of these metrics are similar for every application—how many events are
+processed, how many data operations are performed, etc.—and are thus called <strong>system</strong> or CDAP
+metrics.</p>
+<p>Other metrics are <strong>user-defined</strong> and differ from application to application.
+For details on how to add metrics to your application, see the section
+<a class="reference external" href="../source/../../admin-manual/operations/metrics.html#operations-metrics" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Administration Manual: User-Defined Metrics</span></a>.</p>
+<p>All methods or endpoints described in this API have a base URL (typically
+<code class="docutils literal"><span class="pre">http://&lt;host&gt;:10000</span></code> or <code class="docutils literal"><span class="pre">https://&lt;host&gt;:10443</span></code>) that precedes the resource
+identifier, as described in the <a class="reference internal" href="introduction.html#http-restful-api-conventions-base-url"><span>RESTful API Conventions</span></a>.
+These methods return a status code, as listed in the <a class="reference internal" href="introduction.html#http-restful-api-status-codes"><span>RESTful API  Status Codes</span></a>.</p>
+<div class="section" id="metrics-data">
+<h2><a class="headerlink" href="#metrics-data" title="Perma-link to this heading">🔗</a>Metrics Data</h2>
+<p>Metrics data is identified by a combination of <strong>context</strong> and <strong>name</strong>.</p>
+<p>A <strong>metrics context</strong> consists of a collection of tags.
+Each tag is composed of a <em>tag name</em> and a <em>tag value</em>.</p>
+<p>Metrics contexts are hierarchal, rooted in the CDAP instance, and extend through
+namespaces, applications, and down to the individual components.</p>
+<p>For example, the metrics context:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">namespace:default app:PurchaseHistory flow:PurchaseFlow</span>
+</pre></div>
+</div>
+<p>is a context that identifies a flow. It has a parent context,
+<code class="docutils literal"><span class="pre">namespace:default</span> <span class="pre">app:PurchaseHistory</span></code>, which identifies the parent application.</p>
+<p>Each level of the context is described by a pair—composed of a tag name and a value—such as:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">namespace:default</span></code> (tag name: <em>namespace</em>, value: <em>default</em>)</li>
+<li><code class="docutils literal"><span class="pre">app:PurchaseHistory</span></code> (tag name: <em>app</em>, value: <em>PurchaseHistory</em>)</li>
+<li><code class="docutils literal"><span class="pre">flow:PurchaseFlow</span></code> (tag name: <em>flow</em>, value: <em>PurchaseFlow</em>)</li>
+</ul>
+<p>A <strong>metrics name</strong> is either a name generated by CDAP, and pre-pended with <code class="docutils literal"><span class="pre">system</span></code>, or
+is a name set by a developer when writing an application, which are pre-pended with <code class="docutils literal"><span class="pre">user</span></code>.</p>
+<p>The <strong>system metrics</strong> vary depending on the context; a list is available of <a class="reference internal" href="#available-system-metrics"><span>common
+system metrics</span></a> for different contexts.</p>
+<p><strong>User metrics</strong> are defined by the application developer and thus are completely
+dependent on what the developer sets.</p>
+<p>In both cases, searches using this API will show—for a given context—all
+available metrics.</p>
+<div class="section" id="available-contexts">
+<h3><a class="headerlink" href="#available-contexts" title="Perma-link to this heading">🔗</a>Available Contexts</h3>
+<p>The context of a metric is typically enclosed into a hierarchy of contexts. For example,
+the flowlet context is enclosed in the flow context, which in turn is enclosed in the
+application context. A metric can always be queried (and aggregated) relative to any
+enclosing context.</p>
+<p>The <em>consumer</em> context relates to entities that are a recipient of events, typically a
+flowlet. A consumer flowlet is the recipient of a queue. Conversely, <em>producers</em> are
+entities that emits events, such as a stream or a flowlet. Flowlets can at the same time
+be both consumers and producers. The difference between the total of a producer's events and the
+consumed events is the <a class="reference internal" href="#http-restful-api-metrics-pending"><span>pending events</span></a>.</p>
+<p>These are the available application contexts of CDAP:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="70%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">System Metric</th>
+<th class="head">Context</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>One Run of a flowlet</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">flow:&lt;flow-id&gt;</span> <span class="pre">flowlet:&lt;flowlet-id&gt;</span> <span class="pre">run:&lt;run-id&gt;</span></code></td>
+</tr>
+<tr class="row-odd"><td>One flowlet of a flow</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">flow:&lt;flow-id&gt;</span> <span class="pre">flowlet:&lt;flowlet-id&gt;</span></code></td>
+</tr>
+<tr class="row-even"><td>All flowlets of a flow</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">flow:&lt;flow-id&gt;</span></code></td>
+</tr>
+<tr class="row-odd"><td>All flowlets of all flows of an application</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">flow:*</span></code></td>
+</tr>
+<tr class="row-even"><td>All Mappers of a MapReduce</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">mapreduce:&lt;mapreduce-id&gt;</span> <span class="pre">tasktype:m</span></code></td>
+</tr>
+<tr class="row-odd"><td>All Reducers of a MapReduce</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">mapreduce:&lt;mapreduce-id&gt;</span> <span class="pre">tasktype:r</span></code></td>
+</tr>
+<tr class="row-even"><td>One Run of a MapReduce</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">mapreduce:&lt;mapreduce-id&gt;</span> <span class="pre">run:&lt;run-id&gt;</span></code></td>
+</tr>
+<tr class="row-odd"><td>One MapReduce</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">mapreduce:&lt;mapreduce-id&gt;</span></code></td>
+</tr>
+<tr class="row-even"><td>All MapReduce of an application</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">mapreduce:*</span></code></td>
+</tr>
+<tr class="row-odd"><td>One service</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">service:&lt;service-id&gt;</span></code></td>
+</tr>
+<tr class="row-even"><td>All services of an application</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">service:*</span></code></td>
+</tr>
+<tr class="row-odd"><td>One Spark program</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">spark:&lt;spark-id&gt;</span></code></td>
+</tr>
+<tr class="row-even"><td>All Spark programs of an application</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">spark:*</span></code></td>
+</tr>
+<tr class="row-odd"><td>One worker</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">worker:&lt;worker-id&gt;</span></code></td>
+</tr>
+<tr class="row-even"><td>All workers of an application</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">workers:*</span></code></td>
+</tr>
+<tr class="row-odd"><td>All components of an application</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span></code></td>
+</tr>
+<tr class="row-even"><td>All components of all applications</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">app:*</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>Stream metrics are only available at the stream level and the only available context is:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="70%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Stream Metric</th>
+<th class="head">Context</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>A single stream</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">stream:&lt;stream-id&gt;</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>Dataset metrics are available at the dataset level, but they can also be queried down to the
+flowlet, worker, service, Mapper, or Reducer level:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="70%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Dataset Metric</th>
+<th class="head">Context</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>A single dataset in the context of a single flowlet</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">dataset:&lt;dataset-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">flow:&lt;flow-id&gt;</span> <span class="pre">flowlet:&lt;flowlet-id&gt;</span></code></td>
+</tr>
+<tr class="row-odd"><td>A single dataset in the context of a single flow</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">dataset:&lt;dataset-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span> <span class="pre">flow:&lt;flow-id&gt;</span></code></td>
+</tr>
+<tr class="row-even"><td>A single dataset in the context of a specific application</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">dataset:&lt;dataset-id&gt;</span> <span class="pre">app:&lt;app-id&gt;</span></code></td>
+</tr>
+<tr class="row-odd"><td>A single dataset</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">dataset:&lt;dataset-id&gt;</span></code></td>
+</tr>
+<tr class="row-even"><td>All datasets</td>
+<td><code class="docutils literal"><span class="pre">namespace:&lt;namespace-id&gt;</span> <span class="pre">dataset:*</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="available-system-metrics">
+<span id="id1"></span><h3><a class="headerlink" href="#available-system-metrics" title="Perma-link to this heading">🔗</a>Available System Metrics</h3>
+<p><strong>Note:</strong> A user metric may have the same name as a system metric; they are distinguished
+by prepending the respective prefix when querying: <code class="docutils literal"><span class="pre">user</span></code> or <code class="docutils literal"><span class="pre">system</span></code>.</p>
+<p>These metrics are available in a dataset context:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="60%" />
+<col width="40%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Dataset Metric</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.dataset.store.bytes</span></code></td>
+<td>Number of bytes written</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">system.dataset.store.ops</span></code></td>
+<td>Operations (reads and writes) performed</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.dataset.store.reads</span></code></td>
+<td>Read operations performed</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">system.dataset.store.writes</span></code></td>
+<td>Write operations performed</td>
+</tr>
+</tbody>
+</table>
+<p>These metrics are available in a flowlet context:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="60%" />
+<col width="40%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Flowlet Metric</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.process.errors</span></code></td>
+<td>Number of errors while processing</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">system.process.events.processed</span></code></td>
+<td>Number of events/data objects processed</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.process.events.in</span></code></td>
+<td>Number of events read in by the flowlet</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">system.process.events.out</span></code></td>
+<td>Number of events emitted by the flowlet</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.process.tuples.read</span></code></td>
+<td>Number of tuples read by the flowlet</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">system.dataset.store.bytes</span></code></td>
+<td>Number of bytes written to datasets</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.dataset.store.ops</span></code></td>
+<td>Operations (writes and read) performed on datasets</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">system.dataset.store.reads</span></code></td>
+<td>Read operations performed on datasets</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.dataset.store.writes</span></code></td>
+<td>Write operations performed on datasets</td>
+</tr>
+</tbody>
+</table>
+<p>These metrics are available in a Mappers or Reducers context (specify whether a Mapper or
+Reducer context is desired, as shown above):</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="60%" />
+<col width="40%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Mappers or Reducers Metric</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.process.completion</span></code></td>
+<td>A number from 0 to 100 indicating the progress of the Map or Reduce phase</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">system.process.entries.in</span></code></td>
+<td>Number of entries read in by the Map or Reduce phase</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.process.entries.out</span></code></td>
+<td>Number of entries written out by the Map or Reduce phase</td>
+</tr>
+</tbody>
+</table>
+<p>These metrics are available in a service context:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="60%" />
+<col width="40%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Service Metric</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.requests.count</span></code></td>
+<td>Number of requests made to the service</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">system.response.successful.count</span></code></td>
+<td>Number of successful requests completed by the service</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.response.server.error.count</span></code></td>
+<td>Number of failures seen by the service</td>
+</tr>
+</tbody>
+</table>
+<p>These metrics are available in a Spark context, where <code class="docutils literal"><span class="pre">&lt;spark-id&gt;</span></code>
+depends on the Spark program being queried:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="60%" />
+<col width="40%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Spark Metric</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.&lt;spark-id&gt;.driver.BlockManager.disk.diskSpaceUsed_MB</span></code></td>
+<td>Disk space used by the Block Manager</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">system.&lt;spark-id&gt;.driver.BlockManager.memory.maxMem_MB</span></code></td>
+<td>Maximum memory given to the Block Manager</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.&lt;spark-id&gt;.driver.BlockManager.memory.memUsed_MB</span></code></td>
+<td>Memory used by the Block Manager</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">system.&lt;spark-id&gt;.driver.BlockManager.memory.remainingMem_MB</span></code></td>
+<td>Memory remaining to the Block Manager</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.&lt;spark-id&gt;.driver.DAGScheduler.job.activeJobs</span></code></td>
+<td>Number of active jobs</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">system.&lt;spark-id&gt;.driver.DAGScheduler.job.allJobs</span></code></td>
+<td>Total number of jobs</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.&lt;spark-id&gt;.driver.DAGScheduler.stage.failedStages</span></code></td>
+<td>Number of failed stages</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">system.&lt;spark-id&gt;.driver.DAGScheduler.stage.runningStages</span></code></td>
+<td>Number of running stages</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.&lt;spark-id&gt;.driver.DAGScheduler.stage.waitingStages</span></code></td>
+<td>Number of waiting stages</td>
+</tr>
+</tbody>
+</table>
+<p>These metrics are available in a stream context:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="60%" />
+<col width="40%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Stream Metric</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">system.collect.events</span></code></td>
+<td>Number of events collected by the stream</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">system.collect.bytes</span></code></td>
+<td>Number of bytes collected by the stream</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="searches-and-queries">
+<h2><a class="headerlink" href="#searches-and-queries" title="Perma-link to this heading">🔗</a>Searches and Queries</h2>
+<p>The process of retrieving a metric involves these steps:</p>
+<ol class="arabic simple">
+<li>Obtain (usually through a search) the correct context for a metric;</li>
+<li>Obtain (usually through a search within the context) the available metrics;</li>
+<li>Querying for a specific metric, supplying the context and any parameters.</li>
+</ol>
+<div class="section" id="search-for-contexts">
+<span id="http-restful-api-metrics-search-for-contexts"></span><h3><a class="headerlink" href="#search-for-contexts" title="Perma-link to this heading">🔗</a>Search for Contexts</h3>
+<p>To search for the available contexts, perform an HTTP request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/search?target=tag[&amp;tag=&lt;context&gt;]</span>
+</pre></div>
+</div>
+<p>The optional <code class="docutils literal"><span class="pre">&lt;context&gt;</span></code> defines a metrics context to search within. If it is not
+provided, the search is performed across all data. The available contexts that are returned
+can be used to query for a lower-level of contexts.</p>
+<p>You can also define the query to search in a given context across all values of one or
+more tags provided in the context by specifying <code class="docutils literal"><span class="pre">*</span></code> as a value for a tag. See the
+examples below for its use.</p>
+<p><strong>Note:</strong> An earlier version of this API (introduced in CDAP 2.8.0) has been deprecated, and
+should be replaced, as it will be removed in a later version of CDAP:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/search?target=childContext[&amp;context=&lt;context&gt;]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">context</span></code> <em>[Optional]</em></td>
+<td>Metrics context to search within. If not provided, the search is provided across
+all contexts. Consists of a collection of tags.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/metrics/search?target=tag</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Returns</th>
+<td><code class="docutils literal"><span class="pre">[{&quot;name&quot;:&quot;namespace&quot;,&quot;value&quot;:&quot;default&quot;},{&quot;name&quot;:&quot;namespace&quot;,&quot;value&quot;:&quot;system&quot;}]</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Returns all first-level tags; in this case, two namespaces.</td>
+</tr>
+<tr class="row-even"><th class="stub">&nbsp;</th>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/metrics/search?target=tag&amp;tag=namespace:default</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Returns</th>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">[{&quot;name&quot;:&quot;app&quot;,&quot;value&quot;:&quot;HelloWorld&quot;},{&quot;name&quot;:&quot;app&quot;,&quot;value&quot;:&quot;PurchaseHistory&quot;},</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;{&quot;name&quot;:&quot;component&quot;,&quot;value&quot;:&quot;gateway&quot;},{&quot;name&quot;:&quot;dataset&quot;,&quot;value&quot;:&quot;frequentCustomers&quot;},</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;{&quot;name&quot;:&quot;dataset&quot;,&quot;value&quot;:&quot;history&quot;},{&quot;name&quot;:&quot;dataset&quot;,&quot;value&quot;:&quot;purchases&quot;},</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;{&quot;name&quot;:&quot;dataset&quot;,&quot;value&quot;:&quot;userProfiles&quot;},{&quot;name&quot;:&quot;dataset&quot;,&quot;value&quot;:&quot;whom&quot;},</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;{&quot;name&quot;:&quot;stream&quot;,&quot;value&quot;:&quot;purchaseStream&quot;},{&quot;name&quot;:&quot;stream&quot;,&quot;value&quot;:&quot;who&quot;}]</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Returns all tags of the of the given parent context; in this case, all entities in the default namespace.</td>
+</tr>
+<tr class="row-even"><th class="stub">&nbsp;</th>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/metrics/search?target=tag&amp;tag=</span></code>
+<code class="docutils literal"><span class="pre">namespace:default&amp;tag=app:PurchaseHistory&amp;tag=flow:PurchaseFlow&amp;tag=run:*</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Returns</th>
+<td><code class="docutils literal"><span class="pre">[{&quot;name&quot;:&quot;flowlet&quot;,&quot;value&quot;:&quot;collector&quot;},{&quot;name&quot;:&quot;flowlet&quot;,&quot;value&quot;:&quot;reader&quot;}]</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Queries all available contexts within the <em>PurchaseHistory</em>'s <em>PurchaseFlow</em> for any run;
+in this case, it returns all available flowlets.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="search-for-metrics">
+<span id="http-restful-api-metrics-search-for-metrics"></span><h3><a class="headerlink" href="#search-for-metrics" title="Perma-link to this heading">🔗</a>Search for Metrics</h3>
+<p>To search for the available metrics within a given context, perform an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/search?target=metric&amp;tag=&lt;context&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">context</span></code></td>
+<td>Metrics context to search within. Consists of a collection of tags.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> An earlier version of this API (introduced in CDAP 2.8.0) has been deprecated, and
+should be replaced, as it will be removed in a later version of CDAP:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/search?target=metric&amp;context=&lt;context&gt;</span>
+</pre></div>
+</div>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/metrics/search?target=metric&amp;tag=namespace:default&amp;tag=app:PurchaseHistory</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Returns</th>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">[&quot;system.process.events.in&quot;,&quot;system.process.events.processed&quot;,&quot;system.process.instance&quot;,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;&quot;system.process.tuples.attempt.read&quot;,&quot;system.process.tuples.read&quot;]</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Returns all metrics in the context of the application <em>PurchaseHistory</em> of the
+<em>default</em> namespace; in this case, returns a list of system and (possibly) user-defined metrics.</td>
+</tr>
+<tr class="row-even"><th class="stub">&nbsp;</th>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/metrics/search?target=metric&amp;tag=namespace:default&amp;tag=app:HelloWorld&amp;tag=service:Greeting</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Returns</th>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">[&quot;system.dataset.store.ops&quot;,&quot;system.dataset.store.reads&quot;,&quot;system.requests.count&quot;,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;&quot;system.response.successful.count&quot;,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;&quot;user.greetings.count.jane_doe&quot;]</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Returns all metrics in the context of the service <em>Greeting</em> of the application <em>HelloWorld</em> of the
+<em>default</em> namespace; in this case, returns a list of system and user-defined metrics.</td>
+</tr>
+<tr class="row-even"><th class="stub">&nbsp;</th>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/metrics/search?target=metric&amp;tag=namespace:default&amp;tag=app:HelloWorld&amp;tag=flow:WhoFlow&amp;tag=flowlet:saver</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Returns</th>
+<td><div class="first last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">[&quot;system.dataset.store.bytes&quot;,&quot;system.dataset.store.ops&quot;,&quot;system.dataset.store.writes&quot;,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;&quot;system.process.events.in&quot;,&quot;system.process.events.processed&quot;,&quot;system.process.instance&quot;,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;&quot;system.process.tuples.attempt.read&quot;,&quot;system.process.tuples.read&quot;,&quot;system.store.bytes&quot;,</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">&nbsp;&quot;system.store.ops&quot;,&quot;system.store.writes&quot;,&quot;user.names.bytes&quot;]</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Returns all metrics in the context of the flowlet <em>saver</em> of the application <em>HelloWorld</em> of the
+<em>default</em> namespace; in this case, returns a list of system and user-defined metrics.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="querying-a-metric">
+<span id="http-restful-api-metrics-querying-a-metric"></span><h2><a class="headerlink" href="#querying-a-metric" title="Perma-link to this heading">🔗</a>Querying a Metric</h2>
+<p>Once you know the context and the metric to query, you can formulate a request for the
+metrics data.</p>
+<p>In general, a metrics query is performed by making an HTTP POST request, with parameters
+supplied either in the URL or in the body of the request. If you submit the parameters in
+the body, you can make multiple queries with a single request.</p>
+<p>Metric parameters include:</p>
+<ul class="simple">
+<li>tag values for filtering by context;</li>
+<li>metric names (multiple metric names can be queried in each request);</li>
+<li>time range or <code class="docutils literal"><span class="pre">aggregate=true</span></code> for an aggregated result; and</li>
+<li>tag values for grouping results (optional)</li>
+</ul>
+<p>To query a metric within a given context, perform an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/query?tag=&lt;context&gt;&amp;metric=&lt;metric&gt;&amp;&lt;time-range&gt;[&amp;groupBy=&lt;tags&gt;]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">context</span></code></td>
+<td>Metrics context to search within, a collection of tags</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metric</span></code></td>
+<td>Metric(s) being queried, a collection of metric names</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">time-range</span></code></td>
+<td>A <a class="reference internal" href="#http-restful-api-metrics-time-range"><span>time range</span></a> or <code class="docutils literal"><span class="pre">aggregate=true</span></code> for
+all since the application was deployed</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">tags</span></code> <em>(optional)</em></td>
+<td><a class="reference internal" href="#http-restful-api-metrics-groupby"><span>Tag list</span></a> by which to group results (optional)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> An earlier version of this API (introduced in CDAP 2.8.0) has been deprecated, and
+should be replaced, as it will be removed in a later version of CDAP:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/query?context=&lt;context&gt;[&amp;groupBy=&lt;tags&gt;]&amp;metric=&lt;metric&gt;&amp;&lt;time-range&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="query-examples">
+<h3><a class="headerlink" href="#query-examples" title="Perma-link to this heading">🔗</a>Query Examples</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/metrics/query?tag=namespace:default&amp;tag=app:HelloWorld&amp;tag=flow:WhoFlow</span></code>
+<code class="docutils literal"><span class="pre">&amp;tag=flowlet:saver&amp;metric=system.process.events.processed&amp;aggregate=true</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Returns</th>
+<td><code class="docutils literal"><span class="pre">{&quot;startTime&quot;:0,&quot;endTime&quot;:1429327964,&quot;series&quot;:[{&quot;metricName&quot;:&quot;system.process.events.processed&quot;,&quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:1}]}]}</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Using a <em>System</em> metric, <em>system.process.events.processed</em></td>
+</tr>
+<tr class="row-even"><th class="stub">&nbsp;</th>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/metrics/query?tag=namespace:default&amp;tag=app:HelloWorld&amp;tag=flow.WhoFlow</span></code>
+<code class="docutils literal"><span class="pre">&amp;tag=run:13ac3a50-a435-49c8-a752-83b3c1e1b9a8&amp;tag=flowlet:saver&amp;metric=user.names.bytes&amp;aggregate=true</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Returns</th>
+<td><code class="docutils literal"><span class="pre">{&quot;startTime&quot;:0,&quot;endTime&quot;:1429328212,&quot;series&quot;:[{&quot;metricName&quot;:&quot;user.names.bytes&quot;,&quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:8}]}]}</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Querying the <em>User-defined</em> metric <em>names.bytes</em>, of the flowlet <em>saver</em>, by its run-ID</td>
+</tr>
+<tr class="row-even"><th class="stub">&nbsp;</th>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/metrics/query?tag=namespace:default&amp;tag=app:HelloWorld&amp;tag=flow:WhoFlow&amp;metric=user.names.bytes</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Returns</th>
+<td><code class="docutils literal"><span class="pre">{&quot;startTime&quot;:0,&quot;endTime&quot;:1429475995,&quot;series&quot;:[]}</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Using a <em>User-defined</em> metric, <em>names.bytes</em> in a service's Handler, called before any data entered, returning an empty series</td>
+</tr>
+<tr class="row-even"><th class="stub">&nbsp;</th>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/v3/metrics/query?tag=namespace:default&amp;tag=app:HelloWorld&amp;tag=flow:WhoFlow&amp;metric=user.names.bytes</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Returns</th>
+<td><code class="docutils literal"><span class="pre">{&quot;startTime&quot;:0,&quot;endTime&quot;:1429477901,&quot;series&quot;:[{&quot;metricName&quot;:&quot;user.names.bytes&quot;,&quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:44}]}]}</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">Description</th>
+<td>Using a <em>User-defined</em> metric, <em>names.bytes</em> in a service's Handler</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="query-results">
+<h3><a class="headerlink" href="#query-results" title="Perma-link to this heading">🔗</a>Query Results</h3>
+<p>Results from a query are returned as a JSON string, in the format:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;startTime&quot;:&lt;start-time&gt;, &quot;endTime&quot;:&lt;end-time&gt;, &quot;series&quot;:&lt;series-array&gt;}</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Name</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">start-time</span></code></td>
+<td>Start time, in seconds, with 0 being from the beginning of the query records</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">metric</span></code></td>
+<td>End time, in seconds</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">series-array</span></code></td>
+<td>An array of metric results, which can be one series, a multiple time series, or
+none (an empty array)</td>
+</tr>
+</tbody>
+</table>
+<p>If a particular metric has no value, a query will return an empty array in the
+<code class="docutils literal"><span class="pre">&quot;series&quot;</span></code> of the results, such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1429475995,&quot;series&quot;:[]}</span>
+</pre></div>
+</div>
+<p>You can also receive such a result from querying a metric that does not exist, either
+because it does not exist at the context given or if the query is incorrectly
+formulated:</p>
+<blockquote>
+<div><code class="docutils literal"><span class="pre">...metric=user.names.bytes?aggregate=true</span></code></div></blockquote>
+<p>will return the empty result, as the metric name will be interpreted as
+<code class="docutils literal"><span class="pre">&quot;user.names.bytes?aggregate=true&quot;</span></code> instead of <code class="docutils literal"><span class="pre">&quot;user.names.bytes&quot;</span></code>.</p>
+</div>
+<div class="section" id="querying-for-multiple-metrics">
+<span id="http-restful-api-metrics-multiple"></span><span id="http-restful-api-v3-metrics-multiple"></span><h3><a class="headerlink" href="#querying-for-multiple-metrics" title="Perma-link to this heading">🔗</a>Querying for Multiple Metrics</h3>
+<p>Retrieving multiple metrics at once can be accomplished by issuing an HTTP POST request
+with a JSON list as the request body that enumerates the name and attributes for each
+metric. The format of the request and the JSON body depends on whether the metrics share
+the same context or are being called for different contexts.</p>
+<div class="section" id="multiple-metrics-with-the-same-context">
+<h4><a class="headerlink" href="#multiple-metrics-with-the-same-context" title="Perma-link to this heading">🔗</a>Multiple Metrics with the Same Context</h4>
+<p>Retrieving multiple metrics at once for the same contexts can be accomplished by issuing a
+request as in previous examples, but providing the additional metrics. For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/query?tag=flow:CountRandom&amp;metric=system.process.events.processed</span>
+<span class="go">  &amp;metric=system.dataset.store.bytes&amp;start=now-5s&amp;count=5</span>
+</pre></div>
+</div>
+<p>The result (pretty-printed to fit) would be:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;startTime&quot;:1429487786,</span>
+<span class="go"> &quot;endTime&quot;:1429487791,</span>
+<span class="go"> &quot;series&quot;:[{&quot;metricName&quot;:&quot;system.process.events.processed&quot;,</span>
+<span class="go">            &quot;grouping&quot;:{},</span>
+<span class="go">            &quot;data&quot;:[{&quot;time&quot;:1429487786,&quot;value&quot;:1268},</span>
+<span class="go">                    {&quot;time&quot;:1429487787,&quot;value&quot;:1324},</span>
+<span class="go">                    {&quot;time&quot;:1429487788,&quot;value&quot;:1206},</span>
+<span class="go">                    {&quot;time&quot;:1429487789,&quot;value&quot;:1125},</span>
+<span class="go">                    {&quot;time&quot;:1429487790,&quot;value&quot;:1035}]},</span>
+<span class="go">           {&quot;metricName&quot;:&quot;system.dataset.store.bytes&quot;,</span>
+<span class="go">            &quot;grouping&quot;:{},</span>
+<span class="go">            &quot;data&quot;:[{&quot;time&quot;:1429487786,&quot;value&quot;:15600},</span>
+<span class="go">                    {&quot;time&quot;:1429487787,&quot;value&quot;:14998},</span>
+<span class="go">                    {&quot;time&quot;:1429487788,&quot;value&quot;:13712},</span>
+<span class="go">                    {&quot;time&quot;:1429487789,&quot;value&quot;:12246},</span>
+<span class="go">                    {&quot;time&quot;:1429487790,&quot;value&quot;:9924}]</span>
+<span class="go">            }]</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="multiple-metrics-with-different-contexts">
+<h4><a class="headerlink" href="#multiple-metrics-with-different-contexts" title="Perma-link to this heading">🔗</a>Multiple Metrics with Different Contexts</h4>
+<p>Retrieving multiple metrics at once for different contexts can be accomplished by issuing
+a request with a JSON list as the request body that enumerates the name, attributes and
+context for each metric. Use an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/query</span>
+</pre></div>
+</div>
+<p>with the arguments as a JSON string in the body. The format of the JSON follows this
+structure (pretty-printed):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{ “query1”: {</span>
+<span class="go">      tags: {“namespace”: “default”, “app”: “PurchaseHistory”},</span>
+<span class="go">      metrics: [“metric1”, “metric2”],</span>
+<span class="go">      groupBy: [“app”, “dataset”],</span>
+<span class="go">      timeRange: {“aggregate”: “true”}</span>
+<span class="go">      },</span>
+<span class="go">  “query2”: {</span>
+<span class="go">      tags: {“namespace”: “default”},</span>
+<span class="go">      metrics: [“metric1”, “metric2”],</span>
+<span class="go">      timeRange: {“start”: “now­2s”, “end”: “now”}</span>
+<span class="go">      }</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>Queries are identified by a <code class="docutils literal"><span class="pre">&lt;query-id&gt;</span></code> (in the example above, <em>query1</em>, <em>query2</em>; in
+the example below, <em>eventsIn</em>, <em>eventsOut</em>). The <code class="docutils literal"><span class="pre">&lt;query-id&gt;</span></code> is then used in the
+returned result to identify the series.</p>
+<p>For example, to retrieve multiple metrics using a <code class="docutils literal"><span class="pre">curl</span></code> call (command and results reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> -X POST <span class="s1">&#39;http://localhost:10000/v3/metrics/query&#39;</span> -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
+<span class="go">    -d &#39;{&quot;eventsIn&quot;:{&quot;tags&quot;: {&quot;flow&quot;:&quot;CountRandom&quot;}, &quot;metrics&quot;: [&quot;system.process.events.in&quot;],</span>
+<span class="go">                     &quot;timeRange&quot;: {&quot;start&quot;:&quot;now-5s&quot;, &quot;count&quot;:&quot;5&quot;} },</span>
+<span class="go">         &quot;eventsOut&quot;:{&quot;tags&quot;: {&quot;flow&quot;:&quot;CountRandom&quot;}, &quot;metrics&quot;: [&quot;system.process.events.out&quot;],</span>
+<span class="go">                      &quot;timeRange&quot;: {&quot;start&quot;:&quot;now-5s&quot;, &quot;count&quot;:&quot;5&quot;} }</span>
+<span class="go">        }&#39;</span>
+
+<span class="go">{&quot;eventsIn&quot;:{&quot;startTime&quot;:1429593961,&quot;endTime&quot;:1429593966,</span>
+<span class="go">             &quot;series&quot;:[{&quot;metricName&quot;:&quot;system.process.events.in&quot;,&quot;grouping&quot;:{},</span>
+<span class="go">                        &quot;data&quot;:[{&quot;time&quot;:1429593961,&quot;value&quot;:2828},</span>
+<span class="go">                                {&quot;time&quot;:1429593962,&quot;value&quot;:3218},</span>
+<span class="go">                                {&quot;time&quot;:1429593963,&quot;value&quot;:3419},</span>
+<span class="go">                                {&quot;time&quot;:1429593964,&quot;value&quot;:3593},</span>
+<span class="go">                                {&quot;time&quot;:1429593965,&quot;value&quot;:3990}]</span>
+<span class="go">                       }]</span>
+<span class="go">            },</span>
+<span class="go"> &quot;eventsOut&quot;:{&quot;startTime&quot;:1429593961,&quot;endTime&quot;:1429593966,</span>
+<span class="go">              &quot;series&quot;:[{&quot;metricName&quot;:&quot;system.process.events.out&quot;,&quot;grouping&quot;:{},</span>
+<span class="go">                         &quot;data&quot;:[{&quot;time&quot;:1429593961,&quot;value&quot;:3211},</span>
+<span class="go">                                 {&quot;time&quot;:1429593962,&quot;value&quot;:3865},</span>
+<span class="go">                                 {&quot;time&quot;:1429593963,&quot;value&quot;:3919},</span>
+<span class="go">                                 {&quot;time&quot;:1429593964,&quot;value&quot;:3906},</span>
+<span class="go">                                 {&quot;time&quot;:1429593965,&quot;value&quot;:3993}]</span>
+<span class="go">                        }]</span>
+<span class="go">            }</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>If the context of the requested metric or metric itself doesn't exist, the system returns a
+status 200 (OK) with JSON formed following the above description, with an empty <code class="docutils literal"><span class="pre">series</span></code> for values:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;query1&quot;:{&quot;startTime&quot;:1429486465,&quot;endTime&quot;:1429486470,&quot;series&quot;:[]}}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="querying-for-multiple-time-series">
+<span id="http-restful-api-metrics-groupby"></span><h3><a class="headerlink" href="#querying-for-multiple-time-series" title="Perma-link to this heading">🔗</a>Querying for Multiple Time-series</h3>
+<p>In a query, the optional <code class="docutils literal"><span class="pre">groupBy</span></code> parameter defines a list of tags whose values are
+used to build multiple timeseries. All data points that have the same values in tags
+specified in the <code class="docutils literal"><span class="pre">groupBy</span></code> parameter will form a single timeseries. You can define
+multiple tags for grouping by providing a list, similar to a tag combination list.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="70%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Tag List</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">groupBy=app</span></code></td>
+<td>Retrieves the time series for each application</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">groupBy=flowlet</span></code></td>
+<td>Retrieves the time series for each flowlet</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">groupBy=app&amp;groupBy=flow</span></code></td>
+<td>Retrieves a time series for each App and flow combination</td>
+</tr>
+</tbody>
+</table>
+<p>An example method (re-formatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/query?tag=namespace:default&amp;tag=app:PurchaseHistory&amp;</span>
+<span class="go">  groupBy=flow&amp;metric=user.customers.count&amp;start=now-2s&amp;end=now</span>
+</pre></div>
+</div>
+<p>returns the <em>user.customers.count</em> metric in the context of the application
+<em>PurchaseHistory</em> of the <em>default</em> namespace, for the specified time range, and grouped by
+<code class="docutils literal"><span class="pre">flow</span></code> (results reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;startTime&quot;: 1421188775,</span>
+<span class="go">  &quot;endTime&quot;: 1421188777,</span>
+<span class="go">  &quot;series&quot;: [</span>
+<span class="go">    {</span>
+<span class="go">      &quot;metricName&quot;: &quot;user.customers.count&quot;,</span>
+<span class="go">      &quot;grouping&quot;: { &quot;flow&quot;: &quot;PurchaseHistoryFlow&quot; },</span>
+<span class="go">      &quot;data&quot;: [</span>
+<span class="go">        { &quot;time&quot;: 1421188776, &quot;value&quot;: 3 },</span>
+<span class="go">        { &quot;time&quot;: 1421188777, &quot;value&quot;: 2 }</span>
+<span class="go">      ]</span>
+<span class="go">    },</span>
+<span class="go">    {</span>
+<span class="go">      &quot;metricName&quot;: &quot;user.customers.count&quot;,</span>
+<span class="go">      &quot;grouping&quot;: { &quot;flow&quot;: &quot;PurchaseAnalysisFlow&quot; },</span>
+<span class="go">      &quot;data&quot;: [</span>
+<span class="go">        { &quot;time&quot;: 1421188775, &quot;value&quot;: 1 },</span>
+<span class="go">        { &quot;time&quot;: 1421188777, &quot;value&quot;: 2 }</span>
+<span class="go">      ]</span>
+<span class="go">    }</span>
+<span class="go">  ]</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="querying-by-a-time-range">
+<span id="http-restful-api-metrics-time-range"></span><h3><a class="headerlink" href="#querying-by-a-time-range" title="Perma-link to this heading">🔗</a>Querying by a Time Range</h3>
+<p>The time range of a metric query can be specified in various ways: either
+<code class="docutils literal"><span class="pre">aggregate=true</span></code> to retrieve the total aggregated since the application was deployed
+or—in the case of dataset metrics—since a dataset was created;
+or as a <code class="docutils literal"><span class="pre">start</span></code> and <code class="docutils literal"><span class="pre">end</span></code> to define a specific range and return a series of data points.</p>
+<p>By default, queries without a time range retrieve a value based on <code class="docutils literal"><span class="pre">aggregate=true</span></code>.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="70%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">aggregate=true</span></code></td>
+<td>Total aggregated value for the metric since the application was deployed.
+If the metric is a gauge type, the aggregate will return the latest value set for
+the metric.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start=&lt;time&gt;&amp;end=&lt;time&gt;</span></code></td>
+<td>Time range defined by start and end times, where the times are either in seconds
+since the start of the Epoch, or a relative time, using <code class="docutils literal"><span class="pre">now</span></code> and times added to it.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">count=&lt;count&gt;</span></code></td>
+<td>Number of time intervals since start with length of time interval defined by <em>resolution</em>.
+If <code class="docutils literal"><span class="pre">count=60</span></code> and <code class="docutils literal"><span class="pre">resolution=1s</span></code>, the time range would be 60 seconds in length.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">resolution=[1s|1m|1h|auto]</span></code></td>
+<td>Time resolution in seconds, minutes or hours; or if &quot;auto&quot;, one of <code class="docutils literal"><span class="pre">{1s,</span> <span class="pre">1m,</span> <span class="pre">1h}</span></code>
+is used based on the time difference.</td>
+</tr>
+</tbody>
+</table>
+<p>With a specific time range, a <code class="docutils literal"><span class="pre">resolution</span></code> can be included to retrieve a series of data
+points for a metric. By default, 1 second resolution is used. Acceptable values are noted
+above. If <code class="docutils literal"><span class="pre">resolution=auto</span></code>, the resolution will be determined based on a time
+difference calculated between the start and end times:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">(endTime</span> <span class="pre">-</span> <span class="pre">startTime)</span> <span class="pre">&gt;</span> <span class="pre">36000</span> <span class="pre">seconds</span></code> (ten hours), resolution will be 1 hour;</li>
+<li><code class="docutils literal"><span class="pre">(endTime</span> <span class="pre">-</span> <span class="pre">startTime)</span> <span class="pre">&gt;</span>&nbsp; <span class="pre">600</span> <span class="pre">seconds</span></code> (ten minutes), resolution will be 1 minute;</li>
+<li>otherwise, resolution will be 1 second.</li>
+</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="70%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Time Range</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">start=now-30s&amp;end=now</span></code></td>
+<td>The last 30 seconds. The start time is given in seconds relative to the current time.
+You can apply simple math, using <code class="docutils literal"><span class="pre">now</span></code> for the current time,
+<code class="docutils literal"><span class="pre">s</span></code> for seconds, <code class="docutils literal"><span class="pre">m</span></code> for minutes, <code class="docutils literal"><span class="pre">h</span></code> for hours and <code class="docutils literal"><span class="pre">d</span></code> for days.
+For example: <code class="docutils literal"><span class="pre">now-5d-12h</span></code> is 5 days and 12 hours ago.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start=1385625600&amp;</span></code> <code class="docutils literal"><span class="pre">end=1385629200</span></code></td>
+<td>From <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">08:00:00</span> <span class="pre">GMT</span></code> to <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">09:00:00</span> <span class="pre">GMT</span></code>,
+both given as since the start of the Epoch.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">start=1385625600&amp;</span></code> <code class="docutils literal"><span class="pre">count=3600&amp;</span></code> <code class="docutils literal"><span class="pre">resolution=1s</span></code></td>
+<td>The same as before, the count given as a number of time intervals, each 1 second.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start=1385625600&amp;</span></code> <code class="docutils literal"><span class="pre">end=1385629200&amp;</span></code> <code class="docutils literal"><span class="pre">resolution=1m</span></code></td>
+<td>From <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">08:00:00</span> <span class="pre">GMT</span></code> to <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">09:00:00</span> <span class="pre">GMT</span></code>,
+with 1 minute resolution, will return 61 data points with metrics aggregated for each minute.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">start=1385625600&amp;</span></code> <code class="docutils literal"><span class="pre">end=1385632800&amp;</span></code> <code class="docutils literal"><span class="pre">resolution=1h</span></code></td>
+<td>From <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">08:00:00</span> <span class="pre">GMT</span></code> to <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">10:00:00</span> <span class="pre">GMT</span></code>,
+with 1 hour resolution, will return 3 data points with metrics aggregated for each hour.</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/query?tag=namespace:default&amp;tag=app:CountRandom&amp;</span>
+<span class="go">  metric=system.process.events.processed&amp;start=now-1h&amp;end=now&amp;resolution=1m</span>
+</pre></div>
+</div>
+<p>This will return the value of the metric <em>system.process.events.processed</em> for the last
+hour at one-minute intervals.</p>
+<p>For aggregates, you cannot specify a time range. As an example, to return the total number
+of input objects processed since the application <em>CountRandom</em> was deployed, assuming that
+CDAP has not been stopped or restarted:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/query?tag=namespace:default&amp;tag=app:CountRandom</span>
+<span class="go">  &amp;metric=system.process.events.processed&amp;aggregate=true</span>
+</pre></div>
+</div>
+<p>If a metric is a gauge type, the aggregate will return the latest value set for the metric.
+For example, this request will retrieve the completion percentage for the map-stage of the MapReduce
+<code class="docutils literal"><span class="pre">PurchaseHistoryBuilder</span></code> (reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/query?tag=namespace:default&amp;tag=app:PurchaseHistory</span>
+<span class="go">  &amp;tag=mapreduce:PurchaseHistoryBuilder&amp;tage=tasktype:m&amp;metric=system.process.completion&amp;aggregate=true</span>
+
+<span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1429497700,&quot;series&quot;:[{&quot;metricName&quot;:&quot;system.process.completion&quot;,</span>
+<span class="go"> &quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:100}]}]}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="querying-by-run-id">
+<span id="http-restful-api-metrics-querying-by-run-id"></span><h3><a class="headerlink" href="#querying-by-run-id" title="Perma-link to this heading">🔗</a>Querying by Run-ID</h3>
+<p>Each execution of an program (flow, MapReduce, Spark, service, worker) has an <a class="reference internal" href="lifecycle.html#rest-program-runs"><span>associated
+run-ID</span></a> that uniquely identifies that program's run. We can query
+metrics for a program by its run-ID to retrieve the metrics for a particular run. Please see
+the <a class="reference internal" href="lifecycle.html#rest-program-runs"><span>Run Records and Schedule</span></a> on retrieving active and historical
+program runs.</p>
+<p>When querying by <code class="docutils literal"><span class="pre">run-ID</span></code>, it is specified in the context—in the collection of tags—after the <code class="docutils literal"><span class="pre">program-id</span></code> with the tag <code class="docutils literal"><span class="pre">run</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">...app:&lt;app-id&gt;&amp;tag=&lt;program-type&gt;:&lt;program-id&gt;&amp;tag=run:&lt;run-id&gt;</span>
+</pre></div>
+</div>
+<p>Examples of using a run-ID (with both commands and results reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/query?tag=namespace:default&amp;tag=app:PurchaseHistory&amp;tag=flow:PurchaseFlow</span>
+<span class="go">    &amp;tag=run:364-789-1636765&amp;metric=system.process.events.processed</span>
+
+<span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1429498228,&quot;series&quot;:[{&quot;metricName&quot;:&quot;system.process.events.processed&quot;,</span>
+<span class="go"> &quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:10}]}]}</span>
+
+<span class="go">POST /v3/metrics/query?tag=namespace:default&amp;tag=app:PurchaseHistory&amp;tag=mapreduce:</span>
+<span class="go">    PurchaseHistoryBuilder&amp;tag=run:453-454-447683&amp;tag=tasktype:m&amp;metric=system.process.completion</span>
+
+<span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1429498425,&quot;series&quot;:[{&quot;metricName&quot;:&quot;system.process.completion&quot;,</span>
+<span class="go"> &quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:100}]}]}</span>
+
+
+<span class="go">POST /v3/metrics/query?tag=namespace:default&amp;tag=app:CountRandom&amp;tag=flow:CountRandom&amp;tag=run:</span>
+<span class="go">  bca50436-9650-448e-9ab1-f1d186eb2285&amp;tag=flowlet:splitter&amp;metric=system.process.events.processed&amp;aggregate=true</span>
+</pre></div>
+</div>
+<p>The last example will return (where <code class="docutils literal"><span class="pre">&quot;time&quot;=0</span></code> means aggregated total number, and <code class="docutils literal"><span class="pre">endTime</span></code> is
+the time of the query) something similar to:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:1421188775,&quot;series&quot;:[{&quot;metricName&quot;:&quot;system.process.events.processed&quot;,</span>
+<span class="go"> &quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:11188}]}]}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="query-tips">
+<h3><a class="headerlink" href="#query-tips" title="Perma-link to this heading">🔗</a>Query Tips</h3>
+<ul>
+<li><p class="first">To retrieve the number of input data objects (“events”) processed by the flowlet named <em>splitter</em>,
+in the flow <em>CountRandom</em> of the example application <em>CountRandom</em>, over the last 5 seconds, you can issue an HTTP
+POST method:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/query?tag=namespace:default&amp;tag=app:CountRandom&amp;tag=flow:CountRandom</span>
+<span class="go">  &amp;tag=flowlet:splitter&amp;metric=system.process.events.processed&amp;start=now-5s&amp;count=5</span>
+</pre></div>
+</div>
+<p>This returns a JSON response that has one entry for every second in the requested time interval. It will have
+values only for the times where the metric was actually emitted (shown here &quot;pretty-printed&quot;):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;startTime&quot;: 1427225350,</span>
+<span class="go">  &quot;endTime&quot;: 1427225354,</span>
+<span class="go">  &quot;series&quot;: [</span>
+<span class="go">    {</span>
+<span class="go">      &quot;metricName&quot;: &quot;system.process.events.processed&quot;,</span>
+<span class="go">      &quot;grouping&quot;: { },</span>
+<span class="go">      &quot;data&quot;: [</span>
+<span class="go">        {</span>
+<span class="go">          &quot;time&quot;: 1427225350,</span>
+<span class="go">          &quot;value&quot;: 760</span>
+<span class="go">        },</span>
+<span class="go">        {</span>
+<span class="go">          &quot;time&quot;: 1427225351,</span>
+<span class="go">          &quot;value&quot;: 774</span>
+<span class="go">        },</span>
+<span class="go">        {</span>
+<span class="go">          &quot;time&quot;: 1427225352,</span>
+<span class="go">          &quot;value&quot;: 792</span>
+<span class="go">        },</span>
+<span class="go">        {</span>
+<span class="go">          &quot;time&quot;: 1427225353,</span>
+<span class="go">          &quot;value&quot;: 756</span>
+<span class="go">        },</span>
+<span class="go">        {</span>
+<span class="go">          &quot;time&quot;: 1427225354,</span>
+<span class="go">          &quot;value&quot;: 766</span>
+<span class="go">        }</span>
+<span class="go">      ]</span>
+<span class="go">    }</span>
+<span class="go">  ]</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">If a run-ID is not specified, CDAP aggregates the events processed for all the runs of a flow.
+The resulting timeseries will represent aggregated values for the context specified.
+Currently, summation is used as the aggregation function.</p>
+<p>For example, if you query for the <code class="docutils literal"><span class="pre">system.process.events.processed</span></code> metric for a flow—and thus across all flowlets—since this metric was actually emitted at the
+flowlet level, the resulting values retrieved will be a sum across all flowlets of the flow.</p>
+</li>
+<li><p class="first">To see events processed by all flowlets of a flow in an application, instead of querying
+for each individual flowlet of the flow, you can perform a single query, using
+<code class="docutils literal"><span class="pre">groupBy=flowlet</span></code>.</p>
+<p>For example, to request the information for each of the flowlets of the
+<em>PurchaseHistory</em> application, this query will return a multiple series, each grouped by
+flowlet and with the returned value being the number of events processed (command and
+result reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/query?tag=namespace:default&amp;tag=app:PurchaseHistory</span>
+<span class="go">  &amp;tag=flow:PurchaseFlow&amp;groupBy=flowlet&amp;metric=system.process.events.processed</span>
+
+<span class="go">{&quot;startTime&quot;:0,</span>
+<span class="go"> &quot;endTime&quot;:1429756509,</span>
+<span class="go"> &quot;series&quot;:[{&quot;metricName&quot;:&quot;system.process.events.processed&quot;,</span>
+<span class="go">            &quot;grouping&quot;:{&quot;flowlet&quot;:&quot;collector&quot;},</span>
+<span class="go">            &quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:5}]},</span>
+<span class="go">           {&quot;metricName&quot;:&quot;system.process.events.processed&quot;,</span>
+<span class="go">            &quot;grouping&quot;:{&quot;flowlet&quot;:&quot;reader&quot;},</span>
+<span class="go">            &quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:5}]}</span>
+<span class="go">          ]</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">User-defined metrics are always prefixed with the word <code class="docutils literal"><span class="pre">user</span></code>, and must be queried by
+using that prefix with the metric name.</p>
+<p>For example, to request the user-defined metric <em>names.byte</em> for the <em>HelloWorld</em>
+application's <em>WhoFlow</em> flow:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/query?tag=namespace:default&amp;tag=app:HelloWorld</span>
+<span class="go">  &amp;tag=flow:WhoFlow&amp;tag=flowlet:saver&amp;metric=user.names.bytes&amp;aggregate=true</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<ul id="http-restful-api-metrics-pending">
+<li><p class="first">The point-in-time pending metric is the difference between the number of events added to
+the queue and the number of events consumed, within a given interval.  For example, if the
+first flowlet in a flow emits 750 events in one second, and the second flowlet consumes
+500, the pending count is 250 events.</p>
+<p>To retrieve the cumulative pending count, you can run a metrics query without a start and end time range.
+By default, metrics are aggregated across all available time. Your query (using the CDAP example
+<a class="reference external" href="../source/../../examples-manual/examples/count-random.html#examples-count-random" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Count Random</span></a>) could look like:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST /v3/metrics/query?tag=namespace:default&amp;tag=app:CountRandom&amp;tag=flow:CountRandom</span>
+<span class="go">  &amp;tag=consumer:counter&amp;tag=producer:splitter&amp;tag=queue:queue&amp;metric=system.queue.pending</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html">Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html">Metadata</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Metrics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#metrics-data">Metrics Data</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#available-contexts">Available Contexts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#available-system-metrics">Available System Metrics</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#searches-and-queries">Searches and Queries</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#search-for-contexts">Search for Contexts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#search-for-metrics">Search for Metrics</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#querying-a-metric">Querying a Metric</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#query-examples">Query Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#query-results">Query Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#querying-for-multiple-metrics">Querying for Multiple Metrics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#querying-for-multiple-time-series">Querying for Multiple Time-series</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#querying-by-a-time-range">Querying by a Time Range</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#querying-by-run-id">Querying by Run-ID</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#query-tips">Query Tips</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security.html">Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html">Transactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Metadata HTTP RESTful API" href="metadata.html" />Metadata HTTP RESTful API</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Monitor HTTP RESTful API" href="monitor.html" />Monitor HTTP RESTful API</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

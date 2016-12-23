@@ -1,0 +1,335 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Namespaces &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/building-blocks/namespaces.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Transaction System" href="transaction-system.html" />
+    <link rel="prev" title="Audit Logging" href="audit-logging.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="transaction-system.html" title="Transaction System"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="audit-logging.html" title="Audit Logging"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="namespaces">
+<span id="id1"></span><h1><a class="headerlink" href="#namespaces" title="Perma-link to this heading">🔗</a>Namespaces</h1>
+<div class="section" id="overview">
+<h2><a class="headerlink" href="#overview" title="Perma-link to this heading">🔗</a>Overview</h2>
+<p>A <em>Namespace</em> is a logical grouping of application, data and its metadata in CDAP. Conceptually,
+namespaces can be thought of as a partitioning of a CDAP instance. Any application or data
+(referred to here as an “entity”) can exist independently in multiple namespaces at the
+same time. The data and metadata of an entity is stored independent of another instance of
+the same entity in a different namespace.</p>
+<p>The primary motivation for namespaces in CDAP is to achieve application and data
+isolation. This is an intial step towards introducing <a class="reference external" href="http://en.wikipedia.org/wiki/Multitenancy">multi-tenancy</a> into CDAP. Use-cases that benefit from
+namespaces include partitioning a single Hadoop Cluster into multiple namespaces:</p>
+<ul class="simple">
+<li>to support different computing environments, such as development, QA, and staging;</li>
+<li>to support multiple customers; and</li>
+<li>to support multiple sub-organizations within an organization.</li>
+</ul>
+<p>The first version of namespaces was introduced in <a class="reference external" href="../source/../../reference-manual/release-notes.html#release-notes" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP v2.8.0</span></a>, and
+is part of the <a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#http-restful-api-v3" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">HTTP RESTful API v3</span></a>.</p>
+</div>
+<div class="section" id="namespace-components">
+<h2><a class="headerlink" href="#namespace-components" title="Perma-link to this heading">🔗</a>Namespace Components</h2>
+<p>A namespace has a namespace identifier (the namespace 'name') and a description.</p>
+<p>Namespace IDs are composed from a limited set of characters; they are restricted to
+letters (a-z, A-Z), digits (0-9), and underscores (_). There is no size limit
+on the length of a namespace ID nor on the number of namespaces.</p>
+<p>The namespace IDs <code class="docutils literal"><span class="pre">cdap</span></code>, <code class="docutils literal"><span class="pre">default</span></code>, and <code class="docutils literal"><span class="pre">system</span></code> are reserved. The <code class="docutils literal"><span class="pre">default</span></code>
+namespace, however, can be used by anyone, though like all reserved namespaces, it cannot
+be deleted.</p>
+</div>
+<div class="section" id="independent-and-non-hierarchical">
+<h2><a class="headerlink" href="#independent-and-non-hierarchical" title="Perma-link to this heading">🔗</a>Independent and Non-hierarchical</h2>
+<p>Namespaces are flat, with no hierarchy inside them. (Namespaces are not allowed inside
+another namespace.)</p>
+<p>As part of the independence of namespaces, inter-namespace operations are not possible:
+for example, an application from one namespace using datasets from a different namespace.
+Similarly, moving applications or data from one namespace to another is not possible.</p>
+<p>Quota management based on namespaces is also not possible in this release, but may be a
+feature in a future release.</p>
+</div>
+<div class="section" id="identifying-entities-in-a-namespace">
+<h2><a class="headerlink" href="#identifying-entities-in-a-namespace" title="Perma-link to this heading">🔗</a>Identifying Entities in a Namespace</h2>
+<p>The ID of an entity in a namespace is composed of a combination of the namespace ID plus
+the entity ID, since an entity cannot exist independently of a namespace.</p>
+</div>
+<div class="section" id="using-namespaces">
+<h2><a class="headerlink" href="#using-namespaces" title="Perma-link to this heading">🔗</a>Using Namespaces</h2>
+<p>The best practice with using namespaces would be to create desired namespaces and use
+them for all operations. Otherwise, CDAP will use the <code class="docutils literal"><span class="pre">default</span></code> namespace for any
+operations undertaken.</p>
+<p>Once a namespace has been created, you can edit its description and configuration
+preferences, either by using a <a class="reference external" href="../source/../../reference-manual/http-restful-api/namespace.html#http-restful-api-namespace" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">RESTful API</span></a> or the
+<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Command Line Interface</span></a>.</p>
+<p>CDAP includes the <code class="docutils literal"><span class="pre">default</span></code> namespace out-of-the-box. It is guaranteed to always be
+present, and is recommended for:</p>
+<ol class="arabic simple">
+<li>Proof-of-concept or sandbox applications for trying out CDAP; and</li>
+<li>Testing your apps before deploying them in development, QA, or production environments.</li>
+</ol>
+<p>It is the namespace used when no other namespace is specified. However, for most usecases
+beyond the proof-of-concept stage, we recommend that you create appropriate namespaces and
+operate CDAP within them.</p>
+<p>Namespaces can be deleted. When a namespace is deleted, all components (applications,
+streams, flows, datasets, MapReduce programs, metrics, etc.) are first deleted, and then
+the namespace itself is removed. In the case of the <code class="docutils literal"><span class="pre">default</span></code> namespace, the name is
+retained, as the <code class="docutils literal"><span class="pre">default</span></code> namespace is always available in CDAP.</p>
+<p>As this is an unrecoverable operation, extreme caution must be used when deleting
+namespaces. It can only be done if all programs of the namespace have been stopped, and if
+the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> parameter <code class="docutils literal"><span class="pre">enable.unrecoverable.reset</span></code> has been enabled.</p>
+</div>
+<div class="section" id="custom-mapping-of-storage-providers">
+<span id="namespaces-custom-mapping"></span><h2><a class="headerlink" href="#custom-mapping-of-storage-providers" title="Perma-link to this heading">🔗</a>Custom Mapping of Storage Providers</h2>
+<p>When creating a namespace, the underlying storage provider can also be configured for the
+namespace. For example, a custom HBase namespace, Hive database, or HDFS directory can be
+specified to be used for the data in a particular namespace.
+See <a class="reference external" href="../source/../../reference-manual/http-restful-api/namespace.html#http-restful-api-namespace-configs" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Namespace Configurations</span></a> for how to specify
+the properties of a namespace.</p>
+<p>When configuring an underlying storage provider, CDAP will not manage the lifecycle of these
+entities; they must exist before the CDAP namespace is created, and they will not be removed
+upon the deletion of the CDAP namespace. The contents (the data) of the storage provider are
+deleted when a CDAP namespace is deleted through CDAP.</p>
+</div>
+<div class="section" id="namespace-examples">
+<h2><a class="headerlink" href="#namespace-examples" title="Perma-link to this heading">🔗</a>Namespace Examples</h2>
+<ul class="simple">
+<li>All examples, starting with <a class="reference external" href="../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Hello World</span></a>, demonstrate using
+namespaces when using the CDAP HTTP RESTful API.</li>
+<li>The CDAP <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Command Line Interface</span></a> is namespace-aware. You set the
+namespace you are currently using; the command prompt displays it as a visual reminder.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html"> Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html"> Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-keys.html"> Secure Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifacts.html"> Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata-lineage.html"> Metadata and Lineage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="audit-logging.html"> Audit Logging</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Namespaces</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#namespace-components">Namespace Components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#independent-and-non-hierarchical">Independent and Non-hierarchical</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#identifying-entities-in-a-namespace">Identifying Entities in a Namespace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-namespaces">Using Namespaces</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#custom-mapping-of-storage-providers">Custom Mapping of Storage Providers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#namespace-examples">Namespace Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Audit Logging" href="audit-logging.html" />Audit Logging</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Transaction System" href="transaction-system.html" />Transaction System</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

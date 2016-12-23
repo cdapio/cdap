@@ -1,0 +1,718 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="CDAP Docker Image" name="description" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Docker Image &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/getting-started/standalone/docker.html">
+
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../../index.html" />
+    <link rel="up" title="CDAP Software Development Kit (SDK)" href="index.html" />
+    <link rel="next" title="Quick Start" href="../quick-start.html" />
+    <link rel="prev" title="Virtual Machine Image" href="virtual-machine.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../quick-start.html" title="Quick Start"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="virtual-machine.html" title="Virtual Machine Image"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="../index.html" >Getting Started Developing with CDAP</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP Software Development Kit (SDK)</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="docker-image">
+<h1><a class="headerlink" href="#docker-image" title="Perma-link to this heading">🔗</a>Docker Image</h1>
+<p>Docker is one of the easiest ways to start working with CDAP without having to manually
+configure anything. A Docker image with the CDAP SDK pre-installed is available on the Docker Hub
+for download.</p>
+<p>To use the <strong>Docker image</strong>, you can either start the container from <a class="reference internal" href="#docker-command-line"><span>a command line</span></a> or use Docker's <a class="reference internal" href="#docker-kitematic"><span>Kitematic</span></a> (on Mac OS X
+and Windows), a graphical user interface for running Docker containers.</p>
+<div class="section" id="docker-from-a-command-line">
+<span id="docker-command-line"></span><h2><a class="headerlink" href="#docker-from-a-command-line" title="Perma-link to this heading">🔗</a>Docker from a Command Line</h2>
+<p>Docker environments are available for a variety of platforms. Download and install Docker for your platform by
+following the <a class="reference external" href="https://docs.docker.com/engine/installation/">platform-specific installation instructions</a>
+from <a class="reference external" href="https://docker.com">Docker.com</a>, and verify that the Docker environment is working and has
+started correctly.</p>
+<ol class="arabic">
+<li><p class="first">If you are not running on Linux, you will need to create and start a Docker Virtual Machine (VM) before you
+can use containers. For example:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral76() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral76 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral76", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral76" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Mac OS X</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">docker-machine create --driver virtualbox cdap</span>
+<span class="gp">$ </span><span class="copyable-text">docker-machine env cdap</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">docker-machine create --driver virtualbox cdap</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">docker-machine env cdap</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>This will create a new Docker virtual machine using VirtualBox named <code class="docutils literal"><span class="pre">cdap</span></code> and print out the environment.</p>
+</li>
+<li><p class="first">When you run <code class="docutils literal"><span class="pre">docker-machine</span> <span class="pre">env</span> <span class="pre">cdap</span></code>, it will print a message on the screen such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">export DOCKER_TLS_VERIFY=&quot;1&quot;</span>
+<span class="go">export DOCKER_HOST=&quot;tcp://192.168.99.100:2376&quot;</span>
+<span class="go">export DOCKER_CERT_PATH=&quot;/Users/&lt;username&gt;/.docker/machine/machines/cdap&quot;</span>
+<span class="go">export DOCKER_MACHINE_NAME=&quot;cdap&quot;</span>
+<span class="gp">#</span> Run this <span class="nb">command </span>to configure your shell:
+<span class="gp">#</span> <span class="nb">eval</span> <span class="k">$(</span>docker-machine env cdap<span class="k">)</span>
+</pre></div>
+</div>
+<p>It is essential to run these export commands (or the single <code class="docutils literal"><span class="pre">eval</span></code> command). Otherwise,
+subsequent Docker commands will fail because they won't be able to connect to the correct
+Docker VM.</p>
+</li>
+<li><p class="first">If you are running <strong>Docker on either Mac OS X or Microsoft Windows</strong>, Docker is running a
+virtual Linux machine on top of your host OS. You will need to use the address shown
+above (such as <code class="docutils literal"><span class="pre">192.168.99.100</span></code>) as the host name when either connecting to the CDAP
+UI or making an HTTP request.</p>
+</li>
+<li><p class="first">Once Docker has started, pull down the <em>CDAP Docker Image</em> from the Docker Hub using:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral77() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral77 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral77", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral77" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux or Mac OS X</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">docker pull caskdata/cdap-standalone:3.5.2</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">docker pull caskdata/cdap-standalone:3.5.2</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Start the <em>CDAP Standalone Docker container</em> with:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral78() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral78 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral78", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral78" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux or Mac OS X</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">docker run -d --name cdap-standalone -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:3.5.2</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">docker run -d --name cdap-standalone -p 9999:9999 -p 10000:10000 caskdata\cdap-standalone:3.5.2</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>This will start the container, name it <code class="docutils literal"><span class="pre">cdap-standalone</span></code>, and setup the proxying of ports.</p>
+</li>
+<li><p class="first">CDAP will start automatically once the container starts. CDAP’s software
+directory is under <code class="docutils literal"><span class="pre">/opt/cdap/sdk</span></code>.</p>
+</li>
+<li><p class="first">Once CDAP starts, it will instruct you to connect to the CDAP UI with a web browser
+at <code class="docutils literal"><span class="pre">http://localhost:9999</span></code>.</p>
+</li>
+<li><p class="first">If you are <strong>running Docker on either Mac OS X or Microsoft Windows</strong>, replace <code class="docutils literal"><span class="pre">localhost</span></code>
+with the Docker VM's IP address (such as <code class="docutils literal"><span class="pre">192.168.99.100</span></code>) that you obtained earlier.
+Start a browser and enter the address to access the CDAP UI from outside Docker.</p>
+</li>
+<li><p class="first">To control the CDAP instance, use this command, substituting one of <code class="docutils literal"><span class="pre">start</span></code>, <code class="docutils literal"><span class="pre">restart</span></code>, <code class="docutils literal"><span class="pre">status</span></code>,
+or <code class="docutils literal"><span class="pre">stop</span></code> for <code class="docutils literal"><span class="pre">&lt;command&gt;</span></code>:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral79() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral79 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral79", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral79" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux or Mac OS X</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">docker <span class="nb">exec</span> -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh &lt;<span class="nb">command</span>&gt;</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh &lt;command&gt;</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">When you are finished, stop CDAP and then shutdown Docker:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral80() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral80 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral80", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral80" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux or Mac OS X</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">docker <span class="nb">exec</span> -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh stop</span>
+<span class="gp">$ </span><span class="copyable-text">docker-machine stop cdap</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh stop</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">docker-machine stop cdap</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">For a full list of Docker Commands, see the <a class="reference external" href="https://docs.docker.com/reference/commandline/cli/">Docker Command Line Documentation.</a></p>
+</li>
+</ol>
+</div>
+<div class="section" id="docker-using-kitematic">
+<span id="docker-kitematic"></span><h2><a class="headerlink" href="#docker-using-kitematic" title="Perma-link to this heading">🔗</a>Docker using Kitematic</h2>
+<p><a class="reference external" href="https://www.docker.com/docker-kitematic">Docker Kitematic</a> is available as part of the
+<a class="reference external" href="https://www.docker.com/docker-toolbox">Docker Toolbox</a> for either Mac OS X or Microsoft Windows.
+It is a graphical user interface for running Docker containers. Follow these steps to install
+Kitematic and then download, start, and connect to a CDAP container.</p>
+<ol class="arabic">
+<li><p class="first">Download and install the <a class="reference external" href="https://www.docker.com/docker-toolbox">Docker Toolbox</a> for
+either Mac OS X or Microsoft Windows.</p>
+</li>
+<li><p class="first">Start Kitematic. On Mac OS X, it will be installed in <code class="docutils literal"><span class="pre">/Applications/Docker/Kitematic</span></code>; on
+Windows, in <code class="docutils literal"><span class="pre">Start</span> <span class="pre">Menu</span> <span class="pre">&gt;</span> <span class="pre">Docker</span> <span class="pre">&gt;</span> <span class="pre">Kitematic</span></code>.</p>
+</li>
+<li><p class="first">Once Kitematic has started, search for the <strong>CDAP image</strong> using the search box at the
+top of the window and <code class="docutils literal"><span class="pre">caskdata:cdap-standalone</span></code>. Then click on the repository menu,
+circled in red here:</p>
+<blockquote>
+<div><div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/kitematic-1-searching.png"><img alt="../../_images/kitematic-1-searching.png" class="bordered-image" src="../../_images/kitematic-1-searching.png" style="width: 800px;" /></a>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first">Click on the tags button:</p>
+<blockquote>
+<div><div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/kitematic-2-tags.png"><img alt="../../_images/kitematic-2-tags.png" class="bordered-image" src="../../_images/kitematic-2-tags.png" style="width: 400px;" /></a>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first">Select the desired version.
+Note that the tag <strong>latest</strong> is the last version that was put up at Docker Hub, which is not the
+necessarily the desired version, which is <code class="docutils literal"><span class="pre">3.5.2</span></code>:</p>
+<blockquote>
+<div><div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/kitematic-3-select-tag.png"><img alt="../../_images/kitematic-3-select-tag.png" class="bordered-image" src="../../_images/kitematic-3-select-tag.png" style="width: 400px;" /></a>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first">Close the menu by pressing the <code class="docutils literal"><span class="pre">X</span></code> in the circle. Press &quot;Create&quot; to download and start the CDAP image.
+When it has started up, you will see in the logs a message that the CDAP UI is listening on port 9999:</p>
+<blockquote>
+<div><div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/kitematic-4-cdap-started.png"><img alt="../../_images/kitematic-4-cdap-started.png" class="bordered-image" src="../../_images/kitematic-4-cdap-started.png" style="width: 800px;" /></a>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first">To connect a web browser for the CDAP UI, you'll need to find the external IP addresses
+and ports that the Docker host is exposing. The easiest way to do that is click on the
+<em>Settings</em> tab, and then the <em>Ports</em> tab:</p>
+<blockquote>
+<div><div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/kitematic-5-links.png"><img alt="../../_images/kitematic-5-links.png" class="bordered-image" src="../../_images/kitematic-5-links.png" style="width: 800px;" /></a>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first">This shows that the CDAP container is listening on the internal port <code class="docutils literal"><span class="pre">9999</span></code> within the
+Docker host, while the Docker host proxies that port on the virtual machine IP address
+and port (<code class="docutils literal"><span class="pre">192.168.99.100:32769</span></code>). Enter that address and port into your system web browser to
+connect to the CDAP UI:</p>
+<blockquote>
+<div><div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/kitematic-6-cdap-ui.png"><img alt="../../_images/kitematic-6-cdap-ui.png" class="bordered-image" src="../../_images/kitematic-6-cdap-ui.png" style="width: 800px;" /></a>
+</div>
+</div></blockquote>
+</li>
+</ol>
+</div>
+<div class="section" id="docker-and-cdap-applications">
+<span id="docker-cdap-applications"></span><h2><a class="headerlink" href="#docker-and-cdap-applications" title="Perma-link to this heading">🔗</a>Docker and CDAP Applications</h2>
+<ul class="simple">
+<li>In order to begin building CDAP applications, have our <a class="reference internal" href="index.html#system-requirements"><span>recommended software and tools</span></a> installed in your environment.</li>
+</ul>
+</div>
+<div class="section" id="development-environment-setup">
+<h2><a class="headerlink" href="#development-environment-setup" title="Perma-link to this heading">🔗</a>Development Environment Setup</h2>
+<div class="section" id="creating-an-application">
+<h3><a class="headerlink" href="#creating-an-application" title="Perma-link to this heading">🔗</a>Creating an Application</h3>
+<p>When writing a CDAP application, it's best to use an integrated development environment that
+understands the application interface to provide code-completion in writing interface
+methods.</p>
+<p>The best way to start developing a CDAP application is by using the Maven archetype:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral81() {
+  var tabs = ['linux', 'windows'];
+  var mapping = {'windows': 'windows', 'linux': 'linux'};
+  var tabSetID = 'linux-windows';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral81 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral81", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral81" class="dependent-linux-windows">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-linux active"><a href="#">Linux</a></li>
+<li class="example-tab example-tab-windows "><a href="#">Windows</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-linux active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">mvn archetype:generate <span class="se">\</span>
+<span class="go">    -DarchetypeGroupId=co.cask.cdap \</span>
+<span class="go">    -DarchetypeArtifactId=cdap-app-archetype \</span>
+<span class="go">    -DarchetypeVersion=3.5.2</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-windows ">
+<div class="code code-tab">
+<div class="highlight-shell-session">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">mvn archetype:generate ^</span>
+<span class="go">    -DarchetypeGroupId=co.cask.cdap ^</span>
+<span class="go">    -DarchetypeArtifactId=cdap-app-archetype ^</span>
+<span class="go">    -DarchetypeVersion=3.5.2</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>This creates a Maven project with all required dependencies, Maven plugins, and a simple
+application template for the development of your application. You can import this Maven project
+into your preferred IDE—such as <a class="reference external" href="https://www.jetbrains.com/idea/">IntelliJ</a> or
+<a class="reference external" href="https://www.eclipse.org/">Eclipse</a>—and start developing your first CDAP application.</p>
+<p>For an application that contains a MapReduce program, set the <code class="docutils literal"><span class="pre">archetypeArtifactId</span></code> to
+<code class="docutils literal"><span class="pre">cdap-mapreduce-archetype</span></code>; for Spark, use either <code class="docutils literal"><span class="pre">cdap-spark-java-archetype</span></code> or
+<code class="docutils literal"><span class="pre">cdap-spark-scala-archetype</span></code>.</p>
+</div>
+<div class="section" id="using-intellij">
+<h3><a class="headerlink" href="#using-intellij" title="Perma-link to this heading">🔗</a>Using IntelliJ</h3>
+<ol class="arabic simple">
+<li>Open <a class="reference external" href="https://www.jetbrains.com/idea/">IntelliJ</a> and import the Maven project.</li>
+<li>Go to menu <em>File -&gt; Import Project</em>...</li>
+<li>Select the <code class="docutils literal"><span class="pre">pom.xml</span></code> in the Maven project's directory.</li>
+<li>Select the <em>Import Maven projects automatically</em> and <em>Automatically download: Sources, Documentation</em>
+boxes in the <em>Import Project from Maven</em> dialog.</li>
+<li>Click <em>Next</em>, complete the remaining dialogs, and the new CDAP project will be created and opened.</li>
+</ol>
+</div>
+<div class="section" id="using-eclipse">
+<h3><a class="headerlink" href="#using-eclipse" title="Perma-link to this heading">🔗</a>Using Eclipse</h3>
+<ol class="arabic simple">
+<li>In your <a class="reference external" href="https://www.eclipse.org/">Eclipse</a> installation, make sure you have the
+<a class="reference external" href="http://m2eclipse.sonatype.org">m2eclipse</a> plugin installed.</li>
+<li>Go to menu <em>File -&gt; Import</em></li>
+<li>Enter <em>maven</em> in the <em>Select an import source</em> dialog to filter for Maven options.</li>
+<li>Select <em>Existing Maven Projects</em> as the import source.</li>
+<li>Browse for the Maven project's directory.</li>
+<li>Click <em>Finish</em>, and the new CDAP project will be imported, created and opened.</li>
+</ol>
+</div>
+</div>
+<div class="section" id="building-and-running-cdap-applications">
+<h2><a class="headerlink" href="#building-and-running-cdap-applications" title="Perma-link to this heading">🔗</a>Building and Running CDAP Applications</h2>
+<p>See <a class="reference internal" href="../building-apps.html#cdap-building-running"><span>Building and Running CDAP Applications</span></a> for information
+on accessing the CDAP CLI and CDAP SDK bin utilities, building examples, starting CDAP,
+and deploying, starting, and stopping applications.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Getting Started Developing</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">CDAP SDK</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="zip.html">Binary Zip File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="virtual-machine.html">Virtual Machine Image</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">Docker Image</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#docker-from-a-command-line">Docker from a Command Line</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#docker-using-kitematic">Docker using Kitematic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#docker-and-cdap-applications">Docker and CDAP Applications</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#development-environment-setup">Development Environment Setup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#building-and-running-cdap-applications">Building and Running CDAP Applications</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quick-start.html">Quick Start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev-env.html">Development Environment Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../start-stop-cdap.html">Starting and Stopping CDAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../building-apps.html">Building and Running Applications</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Virtual Machine Image" href="virtual-machine.html" />Virtual Machine Image</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Quick Start" href="../quick-start.html" />Quick Start</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

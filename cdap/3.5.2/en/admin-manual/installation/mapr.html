@@ -1,0 +1,958 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Installation for MapR &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/admin-manual/installation/mapr.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+        <link rel="stylesheet" href="../_static/section-numbering.css" type="text/css" />
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Installation" href="index.html" />
+    <link rel="next" title="Manual Installation using Packages" href="packages.html" />
+    <link rel="prev" title="Installation using Apache Ambari" href="ambari.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="packages.html" title="Manual Installation using Packages"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="ambari.html" title="Installation using Apache Ambari"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Administration Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Installation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installation-for-mapr">
+<span id="admin-installation-mapr"></span><h1><a class="headerlink" href="#installation-for-mapr" title="Perma-link to this heading">🔗</a>Installation for MapR</h1>
+<div class="admin-manual-step-images container">
+<a class="reference internal" href="#preparing-the-cluster"><img alt="step-1" class="align-top" src="../_images/step-1.png" /></a><a class="reference internal" href="#downloading-and-distributing-packages"><img alt="step-2" class="align-top" src="../_images/step-2.png" /></a><a class="reference internal" href="#installing-cdap-services"><img alt="step-3" class="align-top" src="../_images/step-3.png" /></a><a class="reference internal" href="#starting-cdap-services"><img alt="step-4" class="align-top" src="../_images/step-4.png" /></a><a class="reference internal" href="#verification"><img alt="step-5" class="align-top" src="../_images/step-5.png" /></a></div>
+<div class="section" id="preparing-the-cluster">
+<h2><a class="headerlink" href="#preparing-the-cluster" title="Perma-link to this heading">🔗</a>Preparing the Cluster</h2>
+<p>Please review the <a class="reference internal" href="../system-requirements.html#admin-manual-software-requirements"><span>Software Prerequisites</span></a>, as a
+configured Hadoop, HBase, and Hive (plus an optional Spark client) <a class="reference external" href="https://www.mapr.com">MapR Converged Data
+Platform</a> cluster needs to be available for the node(s) where CDAP
+will run.</p>
+<p>If colocating CDAP on cluster hosts with actual services, such as the <em>MapR CLDB</em>, <em>YARN
+ResourceManager</em>, or <em>HBase Master</em>, then the client configurations will already be in place.</p>
+<ul class="simple">
+<li>To configure a MapR client, see the MapR documentation on <a class="reference external" href="http://doc.mapr.com/display/MapR/Setting+Up+the+Client">Setting Up the Client</a>.</li>
+<li>To configure a MapR HBase client, see the MapR documentation on <a class="reference external" href="http://doc.mapr.com/display/MapR/Installing+HBase#InstallingHBase-HBaseonaClientInstallingHBaseonaClient">Installing HBase on a Client</a>.</li>
+<li>To configure a MapR Hive client, see the MapR documentation on <a class="reference external" href="http://doc.mapr.com/display/MapR/Installing+Hive">Installing Hive</a>.</li>
+</ul>
+<p>A typical client node should have the <code class="docutils literal"><span class="pre">mapr-client</span></code>, <code class="docutils literal"><span class="pre">mapr-hbase</span></code>, and <code class="docutils literal"><span class="pre">mapr-hive</span></code>
+packages installed, and can be configured using the MapR <a class="reference external" href="http://doc.mapr.com/display/MapR/configure.sh">configure.sh</a> utility.</p>
+<div class="section" id="hadoop-configuration">
+<h3><a class="headerlink" href="#hadoop-configuration" title="Perma-link to this heading">🔗</a>Hadoop Configuration</h3>
+<ol class="arabic">
+<li><p class="first">ZooKeeper's <code class="docutils literal"><span class="pre">maxClientCnxns</span></code> must be raised from its default.  We suggest setting it to zero
+(0: unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper,
+the number of connections required is a function of usage.</p>
+</li>
+<li><p class="first">Ensure that YARN has sufficient memory capacity by lowering the default minimum container
+size (controlled by the property <code class="docutils literal"><span class="pre">yarn.scheduler.minimum-allocation-mb</span></code>). Lack of
+YARN memory capacity is the leading cause of apparent failures that we see reported.
+We recommend starting with these settings:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">yarn.nodemanager.delete.debug-delay-sec</span></code>: 43200</li>
+<li><code class="docutils literal"><span class="pre">yarn.scheduler.minimum-allocation-mb</span></code>: 512 mb</li>
+</ul>
+<p>Please ensure your <code class="docutils literal"><span class="pre">yarn.nodemanager.resource.cpu-vcores</span></code> and
+<code class="docutils literal"><span class="pre">yarn.nodemanager.resource.memory-mb</span></code> settings are set sufficiently to run CDAP,
+as described in the <a class="reference internal" href="../system-requirements.html#admin-manual-memory-core-requirements"><span>CDAP Memory and Core Requirements</span></a>.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="hdfs-permissions">
+<h3><a class="headerlink" href="#hdfs-permissions" title="Perma-link to this heading">🔗</a>HDFS Permissions</h3>
+<p>Ensure YARN is configured properly to run MapReduce programs.  Often, this includes
+ensuring that the HDFS <code class="docutils literal"><span class="pre">/user/yarn</span></code> directory exists with proper permissions:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> su hdfs
+<span class="gp">$</span> hdfs dfs -mkdir -p /user/yarn <span class="o">&amp;&amp;</span> hadoop fs -chown yarn /user/yarn <span class="o">&amp;&amp;</span> hadoop fs -chgrp yarn /user/yarn
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="downloading-and-distributing-packages">
+<h2><a class="headerlink" href="#downloading-and-distributing-packages" title="Perma-link to this heading">🔗</a>Downloading and Distributing Packages</h2>
+<table border="1" class="docutils" id="mapr-compatibility-matrix">
+<colgroup>
+<col width="34%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" colspan="2">Supported MapR Distributions for Apache Hadoop</th>
+</tr>
+<tr class="row-even"><th class="head">CDAP Series</th>
+<th class="head">MapR Distributions</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td>CDAP 3.4.x</td>
+<td>MapR 4.1, MapR 5.0, MapR 5.1</td>
+</tr>
+<tr class="row-even"><td>CDAP 3.3.x</td>
+<td>MapR 4.1, MapR 5.0, MapR 5.1</td>
+</tr>
+<tr class="row-odd"><td>CDAP 3.2.x</td>
+<td>MapR 4.1, MapR 5.0</td>
+</tr>
+<tr class="row-even"><td>CDAP 3.1.x</td>
+<td>MapR 4.1</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="preparing-package-managers">
+<span id="mapr-compatibility-matrix-end"></span><h3><a class="headerlink" href="#preparing-package-managers" title="Perma-link to this heading">🔗</a>Preparing Package Managers</h3>
+<p>CDAP components are available as either Yum <code class="docutils literal"><span class="pre">.rpm</span></code> or APT <code class="docutils literal"><span class="pre">.deb</span></code> packages. There is
+one package for each CDAP component, and each component may have multiple services.
+Additionally, there is a base CDAP package with three utility packages (for HBase
+compatibility) installed which creates the base configuration and the <code class="docutils literal"><span class="pre">cdap</span></code> user. We
+provide packages for <em>Ubuntu 12</em> and <em>CentOS 6</em>.</p>
+<p>Available packaging types:</p>
+<ul class="simple">
+<li>RPM: Yum repo</li>
+<li>Debian: APT repo</li>
+<li>Tar: For specialized installations only</li>
+</ul>
+<p><strong>Note:</strong> If you are using <a class="reference external" href="https://www.getchef.com">Chef</a> to install CDAP, an
+<a class="reference external" href="https://supermarket.getchef.com/cookbooks/cdap">official cookbook is available</a>.</p>
+<div class="section" id="on-rpm-using-yum">
+<span id="mapr-install-rpm-using-yum"></span><h4><a class="headerlink" href="#on-rpm-using-yum" title="Perma-link to this heading">🔗</a>On RPM using Yum</h4>
+<p>Download the Cask Yum repo definition file:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/3.5/cask.repo
+</pre>
+</div>
+<p>This will create the file <code class="docutils literal"><span class="pre">/etc/yum.repos.d/cask.repo</span></code> with:</p>
+<pre class="literal-block">
+[cask]
+name=Cask Packages
+baseurl=http://repository.cask.co/centos/6/x86_64/cdap/3.5
+enabled=1
+gpgcheck=1
+</pre>
+<p>Add the Cask Public GPG Key to your repository:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo rpm --import http://repository.cask.co/centos/6/x86_64/cdap/3.5/pubkey.gpg
+</pre>
+</div>
+<p>Update your Yum cache:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo yum makecache
+</pre></div>
+</div>
+</div>
+<div class="section" id="on-debian-using-apt">
+<h4><a class="headerlink" href="#on-debian-using-apt" title="Perma-link to this heading">🔗</a>On Debian using APT</h4>
+<p>Download the Cask APT repo definition file:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo curl -o /etc/apt/sources.list.d/cask.list http://repository.cask.co/ubuntu/precise/amd64/cdap/3.5/cask.list
+</pre>
+</div>
+<p>This will create the file <code class="docutils literal"><span class="pre">/etc/apt/sources.list.d/cask.list</span></code> with:</p>
+<pre class="literal-block">
+deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/cdap/3.5 precise cdap
+</pre>
+<p>Add the Cask Public GPG Key to your repository:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> curl -s http://repository.cask.co/ubuntu/precise/amd64/cdap/3.5/pubkey.gpg | sudo apt-key add -
+</pre>
+</div>
+<p>Update your APT-cache:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo apt-get update
+</pre></div>
+</div>
+</div>
+<div class="section" id="using-tar">
+<span id="mapr-install-using-tar"></span><h4><a class="headerlink" href="#using-tar" title="Perma-link to this heading">🔗</a>Using Tar</h4>
+<p>Download the appropriate CDAP tar file, and then unpack it to an appropriate directory (indicated by <code class="docutils literal"><span class="pre">$dir</span></code>):</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral1() {
+  var tabs = ['rhel', 'ubuntu'];
+  var mapping = {'rhel': 'rhel', 'ubuntu': 'ubuntu'};
+  var tabSetID = 'rhel-ubuntu';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral1 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral1", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral1" class="dependent-rhel-ubuntu">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-rhel active"><a href="#">RHEL</a></li>
+<li class="example-tab example-tab-ubuntu "><a href="#">Ubuntu</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-rhel active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl http://repository.cask.co/downloads/co/cask/cdap/cdap-distributed-rpm-bundle/3.5/cdap-distributed-rpm-bundle-3.5.tgz</span>
+<span class="gp">$ </span><span class="copyable-text">tar xf cdap-distributed-rpm-bundle-3.5.tgz -C <span class="nv">$dir</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-ubuntu ">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl http://repository.cask.co/downloads/co/cask/cdap/cdap-distributed-deb-bundle/3.5/cdap-distributed-deb-bundle-3.5.tgz</span>
+<span class="gp">$ </span><span class="copyable-text">tar xf cdap-distributed-deb-bundle-3.5.tgz -C <span class="nv">$dir</span></span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="installing-cdap-services">
+<h2><a class="headerlink" href="#installing-cdap-services" title="Perma-link to this heading">🔗</a>Installing CDAP Services</h2>
+<div class="section" id="package-installation">
+<h3><a class="headerlink" href="#package-installation" title="Perma-link to this heading">🔗</a>Package Installation</h3>
+<p>Install the CDAP packages by using one of the following methods. Do this on each of the
+boxes that are being used for the CDAP components; our recommended installation is a
+minimum of two boxes.</p>
+<p>This will download and install the latest version of CDAP with all of its dependencies.</p>
+<p id="mapr-cli-package-installation">To install the optional <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP CLI</span></a> on a node, add the <code class="docutils literal"><span class="pre">cdap-cli</span></code> package to
+the list of packages in the commands below.</p>
+<div class="section" id="using-chef">
+<h4><a class="headerlink" href="#using-chef" title="Perma-link to this heading">🔗</a>Using Chef</h4>
+<p>If you are using <a class="reference external" href="https://www.getchef.com">Chef</a> to install CDAP, an <a class="reference external" href="https://supermarket.getchef.com/cookbooks/cdap">official
+cookbook is available</a>.</p>
+<p>To install the optional <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">CDAP CLI</span></a> on a node, use the <code class="docutils literal"><span class="pre">fullstack</span></code> recipe.</p>
+</div>
+<div class="section" id="id1">
+<h4><a class="headerlink" href="#id1" title="Perma-link to this heading">🔗</a>On RPM using Yum</h4>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h4><a class="headerlink" href="#id2" title="Perma-link to this heading">🔗</a>On Debian using APT</h4>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h4><a class="headerlink" href="#id3" title="Perma-link to this heading">🔗</a>Using Tar</h4>
+<p>Having <a class="reference internal" href="#mapr-install-using-tar"><span>previously downloaded and unpacked</span></a>
+the appropriate tar file to a directory <code class="docutils literal"><span class="pre">$dir</span></code>, use:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral2() {
+  var tabs = ['rhel', 'ubuntu'];
+  var mapping = {'rhel': 'rhel', 'ubuntu': 'ubuntu'};
+  var tabSetID = 'rhel-ubuntu';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral2 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral2", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral2" class="dependent-rhel-ubuntu">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-rhel active"><a href="#">RHEL</a></li>
+<li class="example-tab example-tab-ubuntu "><a href="#">Ubuntu</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-rhel active">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">sudo yum localinstall <span class="nv">$dir</span>/*.rpm</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-ubuntu ">
+<div class="code code-tab">
+<div class="highlight-console">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">sudo dpkg -i <span class="nv">$dir</span>/*.deb</span>
+<span class="gp">$ </span><span class="copyable-text">sudo apt-get install -f</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+<div class="section" id="create-required-directories">
+<h3><a class="headerlink" href="#create-required-directories" title="Perma-link to this heading">🔗</a>Create Required Directories</h3>
+<p>To prepare your cluster so that CDAP can write to its default namespace,
+create a top-level <code class="docutils literal"><span class="pre">/cdap</span></code> directory in MapRFS, owned by the MapRFS user <code class="docutils literal"><span class="pre">cdap</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> su mapr
+<span class="gp">$</span> hadoop fs -mkdir -p /cdap <span class="o">&amp;&amp;</span> hadoop fs -chown cdap /cdap
+</pre></div>
+</div>
+<p>In the CDAP packages, the default property <code class="docutils literal"><span class="pre">hdfs.namespace</span></code> is <code class="docutils literal"><span class="pre">/cdap</span></code> and the default property
+<code class="docutils literal"><span class="pre">hdfs.user</span></code> is <code class="docutils literal"><span class="pre">yarn</span></code>.</p>
+<p>Also, create a <code class="docutils literal"><span class="pre">tx.snapshot</span></code> subdirectory:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> su mapr
+<span class="gp">$</span> hadoop fs -mkdir -p /cdap/tx.snapshot <span class="o">&amp;&amp;</span> hadoop fs -chown cdap /cdap/tx.snapshot
+</pre></div>
+</div>
+<p><strong>Note:</strong> If you have customized (or will be customizing) the property
+<code class="docutils literal"><span class="pre">data.tx.snapshot.dir</span></code> in your <a class="reference internal" href="../appendices/cdap-site.html#appendix-cdap-site-xml"><span>CDAP configuration</span></a>, use
+that value instead for <code class="docutils literal"><span class="pre">/cdap/tx.snapshot</span></code>.</p>
+</div>
+<div class="section" id="cdap-configuration">
+<span id="mapr-configuration-central"></span><span id="mapr-configuration"></span><h3><a class="headerlink" href="#cdap-configuration" title="Perma-link to this heading">🔗</a>CDAP Configuration</h3>
+<p>This section describes how to configure the CDAP components so they work with your
+existing Hadoop cluster. Certain Hadoop components may need changes, as described below,
+for CDAP to run successfully.</p>
+<ol class="arabic">
+<li><p class="first">CDAP packages utilize a central configuration, stored by default in <code class="docutils literal"><span class="pre">/etc/cdap</span></code>.</p>
+<p>When you install the CDAP base package, a default configuration is placed in
+<code class="docutils literal"><span class="pre">/etc/cdap/conf.dist</span></code>. The <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> file is a placeholder
+where you can define your specific configuration for all CDAP components.
+The <code class="docutils literal"><span class="pre">cdap-site.xml.example</span></code> file shows the properties that usually require customization
+for all installations.</p>
+<p id="mapr-configuration-alternatives">Similar to Hadoop, CDAP utilizes the <code class="docutils literal"><span class="pre">alternatives</span></code> framework to allow you to
+easily switch between multiple configurations. The <code class="docutils literal"><span class="pre">alternatives</span></code> system is used for ease of
+management and allows you to to choose between different directories to fulfill the
+same purpose.</p>
+<p>Simply copy the contents of <code class="docutils literal"><span class="pre">/etc/cdap/conf.dist</span></code> into a directory of your choice
+(such as <code class="docutils literal"><span class="pre">/etc/cdap/conf.mycdap</span></code>) and make all of your customizations there.
+Then run the <code class="docutils literal"><span class="pre">alternatives</span></code> command to point the <code class="docutils literal"><span class="pre">/etc/cdap/conf</span></code> symlink
+to your custom directory <code class="docutils literal"><span class="pre">/etc/cdap/conf.mycdap</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo cp -r /etc/cdap/conf.dist /etc/cdap/conf.mycdap
+<span class="gp">$</span> sudo update-alternatives --install /etc/cdap/conf cdap-conf /etc/cdap/conf.mycdap 10
+</pre></div>
+</div>
+</li>
+<li id="mapr-configuration-options"><p class="first">Configure the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> after you have installed the CDAP packages.</p>
+<p>To configure your particular installation, modify <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>, using
+<code class="docutils literal"><span class="pre">cdap-site.xml.example</span></code> as a model. (See the <a class="reference internal" href="../appendices/minimal-cdap-site.html#appendix-minimal-cdap-site-xml"><span>appendix</span></a> for a listing of <code class="docutils literal"><span class="pre">cdap-site.xml.example</span></code>,
+the minimal <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> file required.)</p>
+<p>Customize your configuration by creating (or editing if existing) an <cite>.xml</cite> file
+<code class="docutils literal"><span class="pre">conf/cdap-site.xml</span></code> and set appropriate properties:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo cp -f /etc/cdap/conf.mycdap/cdap-site.xml.example /etc/cdap/conf.mycdap/cdap-site.xml
+<span class="gp">$</span> sudo vi /etc/cdap/conf.mycdap/cdap-site.xml
+</pre></div>
+</div>
+</li>
+<li><p class="first">If necessary, customize the file <code class="docutils literal"><span class="pre">cdap-env.sh</span></code> after you have installed the CDAP packages.</p>
+<p>Environment variables that will be included in the environment used when launching CDAP and
+can be set in the <code class="docutils literal"><span class="pre">cdap-env.sh</span></code> file, usually at <code class="docutils literal"><span class="pre">/etc/cdap/conf/cdap-env.sh</span></code>.</p>
+<p>This is only necessary if you need to customize the environment launching CDAP, such
+as described below under <a class="reference internal" href="#mapr-configuration-local-storage"><span>Local Storage Configuration</span></a>.</p>
+</li>
+<li><p class="first">Due to an issue with the version of the Kafka ZooKeeper client shipped with MapR,
+it is necessary to disable use of the embedded Kafka in CDAP by setting these properties:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;property&gt;</span>
+   <span class="nt">&lt;name&gt;</span>master.collect.containers.log<span class="nt">&lt;/name&gt;</span>
+   <span class="nt">&lt;value&gt;</span>false<span class="nt">&lt;/value&gt;</span>
+ <span class="nt">&lt;/property&gt;</span>
+
+<span class="nt">&lt;property&gt;</span>
+   <span class="nt">&lt;name&gt;</span>master.collect.app.containers.log.level<span class="nt">&lt;/name&gt;</span>
+   <span class="nt">&lt;value&gt;</span>OFF<span class="nt">&lt;/value&gt;</span>
+ <span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</div>
+<p>As a consequence of this setting, the container logs will not be streamed back to the
+master process log file. This issue is due to a <a class="reference external" href="https://issues.apache.org/jira/browse/TWILL-139?focusedCommentId=14598628">known Kafka issue</a>.</p>
+</li>
+<li><p class="first">Depending on your installation, you may need to set these properties:</p>
+</li>
+</ol>
+<blockquote>
+<div><ol class="lowerroman">
+<li><p class="first">Check that the <code class="docutils literal"><span class="pre">zookeeper.quorum</span></code> property in <code class="docutils literal"><span class="pre">conf/cdap-site.xml</span></code> is set to the
+<strong>ZooKeeper quorum string</strong>, a comma-delimited list of fully-qualified domain names for
+the ZooKeeper quorum:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>zookeeper.quorum<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>FQDN1:2181,FQDN2:2181/${root.namespace}<span class="nt">&lt;/value&gt;</span>
+  <span class="nt">&lt;description&gt;</span>
+    ZooKeeper quorum string; specifies the ZooKeeper host:port;
+    substitute the quorum for the components shown here (FQDN1:2181,FQDN2:2181)
+  <span class="nt">&lt;/description&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Check that the <code class="docutils literal"><span class="pre">router.server.address</span></code> property in <code class="docutils literal"><span class="pre">conf/cdap-site.xml</span></code> is set to the
+<strong>hostname of the CDAP Router</strong>. The CDAP UI uses this property to connect to the Router:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>router.server.address<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>{router-host-name}<span class="nt">&lt;/value&gt;</span>
+  <span class="nt">&lt;description&gt;</span>CDAP Router address to which CDAP UI connects<span class="nt">&lt;/description&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Check that there exists in HDFS a user directory for the <code class="docutils literal"><span class="pre">hdfs.user</span></code> property of <code class="docutils literal"><span class="pre">conf/cdap-site.xml</span></code>.
+By default, the HDFS user is <code class="docutils literal"><span class="pre">cdap</span></code>. If necessary, create the directory:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> su hdfs
+<span class="gp">$</span> hdfs dfs -mkdir -p /user/<code class="docutils literal"><span class="pre">cdap</span></code> &amp;&amp; hadoop fs -chown <code class="docutils literal"><span class="pre">cdap</span></code> /user/<code class="docutils literal"><span class="pre">cdap</span></code> &amp;&amp; hadoop fs -chgrp <code class="docutils literal"><span class="pre">cdap</span></code> /user/<code class="docutils literal"><span class="pre">cdap</span></code>
+</pre>
+</div>
+</li>
+<li><p class="first">If you want to use <strong>an HDFS directory</strong> with a name other than <code class="docutils literal"><span class="pre">/cdap</span></code>:</p>
+<ol class="arabic">
+<li><p class="first">Create the HDFS directory you want to use, such as <code class="docutils literal"><span class="pre">/myhadoop/myspace</span></code>.</p>
+</li>
+<li><p class="first">Create an <code class="docutils literal"><span class="pre">hdfs.namespace</span></code> property for the HDFS directory in <code class="docutils literal"><span class="pre">conf/cdap-site.xml</span></code>:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>hdfs.namespace<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>/myhadoop/myspace<span class="nt">&lt;/value&gt;</span>
+  <span class="nt">&lt;description&gt;</span>Default HDFS namespace<span class="nt">&lt;/description&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Check that the default HDFS user <code class="docutils literal"><span class="pre">cdap</span></code> owns that HDFS directory.</p>
+</li>
+</ol>
+</li>
+<li><p class="first">If you want to use <strong>an HDFS user</strong> other than <code class="docutils literal"><span class="pre">cdap</span></code>, such as <code class="docutils literal"><span class="pre">my_username</span></code>:</p>
+<ol class="arabic">
+<li><p class="first">Check that there is—and create if necessary—a corresponding user on all machines
+in the cluster on which YARN is running (typically, all of the machines).</p>
+</li>
+<li><p class="first">Create an <code class="docutils literal"><span class="pre">hdfs.user</span></code> property for that user in <code class="docutils literal"><span class="pre">conf/cdap-site.xml</span></code>:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>hdfs.user<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>my_username<span class="nt">&lt;/value&gt;</span>
+  <span class="nt">&lt;description&gt;</span>User for accessing HDFS<span class="nt">&lt;/description&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Check that the HDFS user owns the HDFS directory described by <code class="docutils literal"><span class="pre">hdfs.namespace</span></code> on all machines.</p>
+</li>
+<li><p class="first">Check that there exists in HDFS a <code class="docutils literal"><span class="pre">/user/</span></code> directory for that HDFS user, as described above, such as:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> su hdfs
+<span class="gp">$</span> hdfs dfs -mkdir -p /user/<code class="docutils literal"><span class="pre">my_username</span></code> &amp;&amp; hadoop fs -chown <code class="docutils literal"><span class="pre">my_username</span></code> /user/<code class="docutils literal"><span class="pre">my_username</span></code> &amp;&amp; hadoop fs -chgrp <code class="docutils literal"><span class="pre">my_username</span></code> /user/<code class="docutils literal"><span class="pre">my_username</span></code>
+</pre>
+</div>
+</li>
+<li><p class="first">If you use an HDFS user other than <code class="docutils literal"><span class="pre">cdap</span></code>, you must use either a secure
+cluster or use the <a class="reference external" href="https://hadoop.apache.org/docs/stable/hadoop-yarn/hadoop-yarn-site/SecureContainer.html">LinuxContainerExecutor</a>
+instead of the <code class="docutils literal"><span class="pre">DefaultContainerExecutor</span></code>. (Because of how <code class="docutils literal"><span class="pre">DefaultContainerExecutor</span></code>
+works, other containers will launch as <code class="docutils literal"><span class="pre">cdap</span></code> rather than the specified
+<code class="docutils literal"><span class="pre">hdfs.user</span></code>.) On Kerberos-enabled clusters, you must use <code class="docutils literal"><span class="pre">LinuxContainerExecutor</span></code>
+as the <code class="docutils literal"><span class="pre">DefaultContainerExecutor</span></code> will not work correctly.</p>
+</li>
+</ol>
+</li>
+<li><p class="first">To use the <strong>ad-hoc querying capabilities of CDAP,</strong> ensure the cluster has a
+compatible version of Hive installed. See the section on <a class="reference internal" href="../hadoop-compatibility.html#admin-manual-hadoop-compatibility-matrix"><span>Hadoop Compatibility</span></a>. To use this feature on secure Hadoop
+clusters, please see these instructions on <a class="reference internal" href="#mapr-configuration-enabling-kerberos"><span>configuring secure Hadoop</span></a>.</p>
+<p id="mapr-configuration-explore-service"><strong>Note:</strong> Some versions of Hive contain a bug that may prevent the CDAP Explore Service from starting
+up. See <a class="reference external" href="https://issues.cask.co/browse/CDAP-1865">CDAP-1865</a> for more information about the issue.
+If the CDAP Explore Service fails to start and you see a
+<code class="docutils literal"><span class="pre">javax.jdo.JDODataStoreException:</span> <span class="pre">Communications</span> <span class="pre">link</span> <span class="pre">failure</span></code> in the log, try
+adding this property to the Hive <code class="docutils literal"><span class="pre">hive-site.xml</span></code> file:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>datanucleus.connectionPoolingType<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>DBCP<span class="nt">&lt;/value&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">If Hive is <strong>not</strong> going to be installed, disable the CDAP Explore Service in
+<code class="docutils literal"><span class="pre">conf/cdap-site.xml</span></code> (by default, it is enabled):</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>explore.enabled<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>false<span class="nt">&lt;/value&gt;</span>
+  <span class="nt">&lt;description&gt;</span>Enable Explore functionality<span class="nt">&lt;/description&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">If you'd like to publish metadata updates to an external Apache Kafka instance,
+CDAP has the capability of publishing notifications upon metadata updates. Details on
+the configuration settings and an example output are shown in the <a class="reference external" href="../source/../../developers-manual/building-blocks/metadata-lineage.html#metadata-update-notifications" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Metadata and
+Lineage section</span></a> of the Developers' Manual.</p>
+</li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="ulimit-configuration">
+<span id="mapr-configuration-ulimit"></span><h3><a class="headerlink" href="#ulimit-configuration" title="Perma-link to this heading">🔗</a>ULIMIT Configuration</h3>
+<p>When you install the CDAP packages, the <code class="docutils literal"><span class="pre">ulimit</span></code> settings for the CDAP user are
+specified in the <code class="docutils literal"><span class="pre">/etc/security/limits.d/cdap.conf</span></code> file. On Ubuntu, they won't take
+effect unless you make changes to the <code class="docutils literal"><span class="pre">/etc/pam.d/common-session</span> <span class="pre">file</span></code>. You can check
+this setting with the command <code class="docutils literal"><span class="pre">ulimit</span> <span class="pre">-n</span></code> when logged in as the CDAP user.
+For more information, refer to the <code class="docutils literal"><span class="pre">ulimit</span></code> discussion in the <a class="reference external" href="https://hbase.apache.org/book.html#ulimit">Apache HBase Reference
+Guide</a>.</p>
+</div>
+<div class="section" id="local-storage-configuration">
+<span id="mapr-configuration-tmp-files"></span><span id="mapr-configuration-local-storage"></span><h3><a class="headerlink" href="#local-storage-configuration" title="Perma-link to this heading">🔗</a>Local Storage Configuration</h3>
+<p>Local storage directories—depending on the distribution—are utilized
+by CDAP for deploying applications and operating CDAP.</p>
+<p>The CDAP user (the <code class="docutils literal"><span class="pre">cdap</span></code> system user) <strong>must</strong> be able to write to <strong>all</strong> of these
+directories, as they are used for deploying applications and for operating CDAP.</p>
+<ul>
+<li><p class="first"><strong>List of local storage directories</strong></p>
+<ul class="simple">
+<li>Properties specified in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> file, as described in the <a class="reference internal" href="../appendices/cdap-site.html#appendix-cdap-site-xml"><span>Appendix: cdap-site.xml, cdap-default.xml</span></a>:<ul>
+<li><code class="docutils literal"><span class="pre">app.temp.dir</span></code> (default: <code class="docutils literal"><span class="pre">/tmp</span></code>)</li>
+<li><code class="docutils literal"><span class="pre">kafka.server.log.dirs</span></code> (default: <code class="docutils literal"><span class="pre">/tmp/kafka-logs</span></code>)</li>
+<li><code class="docutils literal"><span class="pre">local.data.dir</span></code> (default: <code class="docutils literal"><span class="pre">data</span></code>; if this is instead an absolute path, needs to be writable)</li>
+</ul>
+</li>
+<li>Additional directories:<ul>
+<li><code class="docutils literal"><span class="pre">/var/cdap/run</span></code> (used as a PID directory, created by the packages)</li>
+<li><code class="docutils literal"><span class="pre">/var/log/cdap</span></code> (used as log directory, created by the packages)</li>
+<li><code class="docutils literal"><span class="pre">/var/run/cdap</span></code> (default CDAP user's home directory, created by the packages)</li>
+<li><code class="docutils literal"><span class="pre">/var/tmp/cdap</span></code> (default <code class="docutils literal"><span class="pre">LOCAL_DIR</span></code>—see below—defined and created in the CDAP init scripts)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p class="first">Note that <code class="docutils literal"><span class="pre">local.data.dir</span></code>—which defines the directory for program jar storage
+when deploying to YARN—is set in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> and defaults to the
+relative path <code class="docutils literal"><span class="pre">data</span></code>. If the value of <code class="docutils literal"><span class="pre">local.data.dir</span></code> is <em>relative,</em> it is put
+under <code class="docutils literal"><span class="pre">LOCAL_DIR</span></code>, such as <code class="docutils literal"><span class="pre">/var/tmp/cdap/data</span></code>. However, if instead it is an
+<em>absolute</em> path, that alone is used as the value. This is desirable so you can easily
+configure this directory to be elsewhere.</p>
+</li>
+<li><p class="first">The CDAP Master service is governed by environment variables, which set the
+directories it uses:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">TEMP_DIR</span></code> (default: <code class="docutils literal"><span class="pre">/tmp</span></code>): The directory serving as the <code class="docutils literal"><span class="pre">java.io.tmpdir</span></code>
+directory</li>
+<li><code class="docutils literal"><span class="pre">LOCAL_DIR</span></code> (default: <code class="docutils literal"><span class="pre">/var/tmp/cdap</span></code>): The directory serving as the user directory
+for CDAP Master</li>
+</ul>
+<p>These variables can be set in the file <code class="docutils literal"><span class="pre">/etc/cdap/conf/cdap-env.sh</span></code> and will be included in
+the environment when launching CDAP. See <a class="reference internal" href="#mapr-configuration-central"><span>CDAP Configuration</span></a>
+for details of the central configuration used by CDAP and how to implement this.</p>
+</li>
+<li><p class="first">As in all installations, the <code class="docutils literal"><span class="pre">kafka.server.log.dirs</span></code> may need to be created locally.
+If you configure <code class="docutils literal"><span class="pre">kafka.server.log.dirs</span></code> (or any of the other settable parameters) to
+a particular directory or directories, you need to make sure that <strong>the directories
+exist</strong> and that they <strong>are writable</strong> by the CDAP user.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="yarn-application-classpath">
+<h3><a class="headerlink" href="#yarn-application-classpath" title="Perma-link to this heading">🔗</a>YARN Application Classpath</h3>
+<p>CDAP requires that an additional entry—<code class="docutils literal"><span class="pre">/opt/mapr/lib/*</span></code>—be appended to the
+<code class="docutils literal"><span class="pre">yarn.application.classpath</span></code> setting of <code class="docutils literal"><span class="pre">yarn-site.xml</span></code>. (This file is usually in
+<code class="docutils literal"><span class="pre">/data/mapr/hadoop/hadoop-&lt;hadoop-version&gt;/etc/hadoop/yarn-site.xml</span></code>.) The default
+<code class="docutils literal"><span class="pre">yarn.application.classpath</span></code> for Linux with this additional entry appended is
+(reformatted to fit):</p>
+<div class="highlight-xml"><div class="highlight"><pre>$HADOOP_CONF_DIR,
+$HADOOP_COMMON_HOME/share/hadoop/common/*,
+$HADOOP_COMMON_HOME/share/hadoop/common/lib/*,
+$HADOOP_HDFS_HOME/share/hadoop/hdfs/*,
+$HADOOP_HDFS_HOME/share/hadoop/hdfs/lib/*,
+$HADOOP_YARN_HOME/share/hadoop/yarn/*,
+$HADOOP_YARN_HOME/share/hadoop/yarn/lib/*,
+$HADOOP_COMMON_HOME/share/hadoop/mapreduce/*,
+$HADOOP_COMMON_HOME/share/hadoop/mapreduce/lib/*,
+/opt/mapr/lib/*
+</pre></div>
+</div>
+<p><strong>Notes:</strong></p>
+<ul class="simple">
+<li>Since MapR might not dereference the Hadoop variables (such as <code class="docutils literal"><span class="pre">$HADOOP_CONF_DIR</span></code>)
+correctly, we recommend specifying their full paths instead of the variables we have
+included here.</li>
+<li>MapR does not, by default, provide a configured <code class="docutils literal"><span class="pre">yarn.application.classpath</span></code>, and
+you will need to add this entry to <code class="docutils literal"><span class="pre">yarn-site.xml</span></code>. If you install using <a class="reference external" href="https://www.getchef.com">Chef</a>, that file and entry is created automatically, but not
+with dereferenced Hadoop variables.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="starting-cdap-services">
+<span id="mapr-starting-services"></span><h2><a class="headerlink" href="#starting-cdap-services" title="Perma-link to this heading">🔗</a>Starting CDAP Services</h2>
+<p>When all the packages and dependencies have been installed, and the configuration
+parameters set, you can start the services on each of the CDAP boxes by running the
+command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="k">for</span> i in <span class="sb">`</span>ls /etc/init.d/ <span class="p">|</span> grep cdap<span class="sb">`</span> <span class="p">;</span> <span class="k">do</span> sudo service <span class="nv">$i</span> start <span class="p">;</span> <span class="k">done</span>
+</pre></div>
+</div>
+<p>When all the services have completed starting, the CDAP UI should then be
+accessible through a browser at port <code class="docutils literal"><span class="pre">9999</span></code>.</p>
+<p>The URL will be <code class="docutils literal"><span class="pre">http://&lt;host&gt;:9999</span></code> where <code class="docutils literal"><span class="pre">&lt;host&gt;</span></code> is the IP address of
+one of the machines where you installed the packages and started the services.</p>
+<p id="mapr-starting-services-java-heapmax"><strong>Note:</strong> Service-specific Java heap memory settings (that override the default values)
+can be created by setting these environment variables:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">AUTH_JAVA_HEAPMAX</span>
+<span class="go">KAFKA_JAVA_HEAPMAX</span>
+<span class="go">MASTER_JAVA_HEAPMAX</span>
+<span class="go">ROUTER_JAVA_HEAPMAX</span>
+</pre></div>
+</div>
+<p>such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">export </span><span class="nv">AUTH_JAVA_HEAPMAX</span><span class="o">=</span><span class="s2">&quot;-Xmx1024m&quot;</span>
+</pre></div>
+</div>
+<p>Add any overriding settings to a file, usually <code class="docutils literal"><span class="pre">/etc/cdap/conf/cdap-env.sh</span></code>. As
+described above (in <a class="reference internal" href="#mapr-configuration"><span>CDAP Configuration</span></a>), the location of this file will
+depend on your particular configuration.</p>
+</div>
+<div class="section" id="verification">
+<span id="mapr-verification"></span><h2><a class="headerlink" href="#verification" title="Perma-link to this heading">🔗</a>Verification</h2>
+<div class="section" id="cdap-smoke-test">
+<h3><a class="headerlink" href="#cdap-smoke-test" title="Perma-link to this heading">🔗</a>CDAP Smoke Test</h3>
+<p>The CDAP UI may initially show errors while all of the CDAP YARN containers are
+starting up. Allow for up to a few minutes for this. The <em>System Health</em> link in the CDAP
+UI in the left side shows the status of the CDAP services.</p>
+<div class="figure align-center" id="id4" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/console-distributed.png"><img alt="../_images/console-distributed.png" class="bordered-image" src="../_images/console-distributed.png" style="width: 800px;" /></a>
+<p class="caption"><span class="caption-text"><strong>CDAP UI:</strong> Showing started-up before data or applications are deployed.</span></p>
+</div>
+<p>Further instructions for verifying your installation are contained in <a class="reference internal" href="../verification.html#admin-manual-verification"><span>Verification</span></a>.</p>
+</div>
+</div>
+<div class="section" id="advanced-topics">
+<span id="mapr-installation-advanced-topics"></span><h2><a class="headerlink" href="#advanced-topics" title="Perma-link to this heading">🔗</a>Advanced Topics</h2>
+<span class="target" id="mapr-configuration-security"></span><div class="section" id="enabling-security">
+<h3><a class="headerlink" href="#enabling-security" title="Perma-link to this heading">🔗</a>Enabling Security</h3>
+<p>Cask Data Application Platform (CDAP) supports securing clusters using perimeter security, authorization,
+impersonation and secure storage.</p>
+<p>Network (or cluster) perimeter security limits outside access, providing a first level of
+security. However, perimeter security itself does not provide the safeguards of authentication,
+authorization and service request management that a secure Hadoop cluster provides.</p>
+<p>Authorization provides a way of enforcing access control on CDAP entities.</p>
+<p>Impersonation ensures that programs inside CDAP are run as configured users at the namespace level. When enabled, it
+guarantees that all actions on datasets, streams and other resources happen as the configured user.</p>
+<p>We recommend that in order for CDAP to be secure, CDAP security should always be used in conjunction with
+<a class="reference external" href="http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SecureMode.html">secure Hadoop clusters</a>.
+In cases where secure Hadoop is not or cannot be used, it is inherently insecure and any applications
+running on the cluster are effectively &quot;trusted”. Although there is still value in having perimeter security,
+authorization enforcement and secure storage in that situation, whenever possible a secure Hadoop
+cluster should be employed with CDAP security.</p>
+<p>For instructions on enabling CDAP Security, see <a class="reference internal" href="../security/index.html#admin-security"><span>CDAP Security</span></a>.</p>
+</div>
+<div class="section" id="enabling-kerberos">
+<span id="mapr-configuration-enabling-kerberos"></span><h3><a class="headerlink" href="#enabling-kerberos" title="Perma-link to this heading">🔗</a>Enabling Kerberos</h3>
+<p>Kerberos is currently not supported by CDAP on secure MapR clusters.</p>
+</div>
+<div class="section" id="enabling-cdap-ha">
+<span id="mapr-highly-available"></span><h3><a class="headerlink" href="#enabling-cdap-ha" title="Perma-link to this heading">🔗</a>Enabling CDAP HA</h3>
+<p>In addition to having a <a class="reference internal" href="../deployment-architectures.html#admin-manual-install-deployment-architectures-ha"><span>cluster architecture</span></a>
+that supports HA (high availability), these additional configuration steps need to be followed and completed:</p>
+<div class="section" id="cdap-components">
+<h4><a class="headerlink" href="#cdap-components" title="Perma-link to this heading">🔗</a>CDAP Components</h4>
+<p>For each of the CDAP components listed below (Master, Router, Kafka, UI, Authentication Server), these
+comments apply:</p>
+<ul class="simple">
+<li>Sync the configuration files (such as <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> and <code class="docutils literal"><span class="pre">cdap-security.xml</span></code>) on all the nodes.</li>
+<li>While the default <em>bind.address</em> settings (<code class="docutils literal"><span class="pre">0.0.0.0</span></code>, used for <code class="docutils literal"><span class="pre">app.bind.address</span></code>,
+<code class="docutils literal"><span class="pre">data.tx.bind.address</span></code>, <code class="docutils literal"><span class="pre">router.bind.address</span></code>, and so on) can be synced across hosts,
+if you customize them to a particular IP address, they will—as a result—be
+different on different hosts.</li>
+<li>Starting services is described in <a class="reference internal" href="#mapr-starting-services"><span>Starting CDAP Services</span></a>.</li>
+</ul>
+</div>
+<div class="section" id="cdap-master">
+<h4><a class="headerlink" href="#cdap-master" title="Perma-link to this heading">🔗</a>CDAP Master</h4>
+<p>The CDAP Master service primarily performs coordination tasks and can be scaled for redundancy. The
+instances coordinate amongst themselves, electing one as a leader at all times.</p>
+<ul class="simple">
+<li>Install the <code class="docutils literal"><span class="pre">cdap-master</span></code> package on different nodes.</li>
+<li>Ensure they are configured identically (<code class="docutils literal"><span class="pre">/etc/cdap/conf/cdap-site.xml</span></code>).</li>
+<li>Start the <code class="docutils literal"><span class="pre">cdap-master</span></code> service on each node.</li>
+</ul>
+</div>
+<div class="section" id="cdap-router">
+<h4><a class="headerlink" href="#cdap-router" title="Perma-link to this heading">🔗</a>CDAP Router</h4>
+<p>The CDAP Router service is a stateless API endpoint for CDAP, and simply routes requests to the
+appropriate service. It can be scaled horizontally for performance. A load balancer, if
+desired, can be placed in front of the nodes running the service.</p>
+<ul class="simple">
+<li>Install the <code class="docutils literal"><span class="pre">cdap-gateway</span></code> package on different nodes.</li>
+<li>The <code class="docutils literal"><span class="pre">router.bind.address</span></code> may need to be customized on each box if it is not set to
+the default wildcard address (<code class="docutils literal"><span class="pre">0.0.0.0</span></code>).</li>
+<li>Start the <code class="docutils literal"><span class="pre">cdap-router</span></code> service on each node.</li>
+</ul>
+</div>
+<div class="section" id="cdap-kafka">
+<h4><a class="headerlink" href="#cdap-kafka" title="Perma-link to this heading">🔗</a>CDAP Kafka</h4>
+<ul>
+<li><p class="first">Install the <code class="docutils literal"><span class="pre">cdap-kafka</span></code> package on different nodes.</p>
+</li>
+<li><p class="first">Two properties need to be set in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> files on each node:</p>
+<ul>
+<li><p class="first">The <strong>Kafka seed brokers list</strong> is a comma-separated list of hosts, followed by <code class="docutils literal"><span class="pre">/${root.namespace}</span></code>:</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">kafka.seed.brokers</span></code>: <code class="docutils literal"><span class="pre">myhost.example.com:9092,.../${root.namespace}</span></code></p>
+</div></blockquote>
+<p>Substitute appropriate addresses for <code class="docutils literal"><span class="pre">myhost.example.com</span></code> in the above example.</p>
+</li>
+<li><p class="first">The <strong>replication factor</strong> is used to replicate Kafka messages across multiple
+machines to prevent data loss in the event of a hardware failure:</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">kafka.default.replication.factor</span></code>: 2</p>
+</div></blockquote>
+</li>
+</ul>
+</li>
+<li><p class="first">The recommended setting is to run at least two Kafka brokers with a minimum replication
+factor of two; set this property to the maximum number of tolerated machine failures
+plus one (assuming you have that number of machines). For example, if you were running
+five Kafka brokers, and would tolerate two of those failing, you would set the
+replication factor to three. The number of Kafka brokers listed should always be equal to
+or greater than the replication factor.</p>
+</li>
+<li><p class="first">Start the <code class="docutils literal"><span class="pre">cdap-kafka</span></code> service on each node.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="cdap-ui">
+<h4><a class="headerlink" href="#cdap-ui" title="Perma-link to this heading">🔗</a>CDAP UI</h4>
+<ul class="simple">
+<li>Install the <code class="docutils literal"><span class="pre">cdap-ui</span></code> package on different nodes.</li>
+<li>Start the <code class="docutils literal"><span class="pre">cdap-ui</span></code> service on each node.</li>
+</ul>
+</div>
+<div class="section" id="cdap-authentication-server">
+<h4><a class="headerlink" href="#cdap-authentication-server" title="Perma-link to this heading">🔗</a>CDAP Authentication Server</h4>
+<ul class="simple">
+<li>Install the <code class="docutils literal"><span class="pre">cdap-security</span></code> package (the CDAP Authentication Server) on different nodes.</li>
+<li>Start the <code class="docutils literal"><span class="pre">cdap-security</span></code> service on each node.</li>
+<li>Note that when an unauthenticated request is made in a secure HA setup, a list of all
+running authentication endpoints will be returned in the body of the request.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdap-components.html"> CDAP Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deployment-architectures.html"> Deployment Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hadoop-compatibility.html"> Hadoop Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system-requirements.html"> System Requirements</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Installation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cloudera.html">Cloudera Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ambari.html">Apache Ambari</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">MapR</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#preparing-the-cluster">Preparing the Cluster</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#downloading-and-distributing-packages">Downloading and Distributing Packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installing-cdap-services">Installing CDAP Services</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#starting-cdap-services">Starting CDAP Services</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#verification">Verification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#advanced-topics">Advanced Topics</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="packages.html">Packages</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../verification.html"> Verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../upgrading/index.html"> Upgrading</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendices/index.html"> Appendices</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Installation using Apache Ambari" href="ambari.html" />Installation using Apache Ambari</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Manual Installation using Packages" href="packages.html" />Manual Installation using Packages</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

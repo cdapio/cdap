@@ -1,0 +1,670 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Authorization &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/admin-manual/security/authorization.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Security" href="index.html" />
+    <link rel="next" title="Impersonation" href="impersonation.html" />
+    <link rel="prev" title="Perimeter Security" href="perimeter-security.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="impersonation.html" title="Impersonation"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="perimeter-security.html" title="Perimeter Security"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Administration Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Security</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="authorization">
+<span id="admin-authorization"></span><h1><a class="headerlink" href="#authorization" title="Perma-link to this heading">🔗</a>Authorization</h1>
+<p>Authorization allows users to enforce fine-grained access control on CDAP entities:
+namespaces, artifacts, applications, programs, datasets, streams, and secure keys. All
+operations on these entities—listing, viewing, creating, updating, managing,
+deleting—are governed by authorization policies.</p>
+<div class="section" id="enabling-authorization">
+<span id="security-enabling-authorization"></span><h2><a class="headerlink" href="#enabling-authorization" title="Perma-link to this heading">🔗</a>Enabling Authorization</h2>
+<p>To enable authorization in <a class="reference external" href="../source/../../reference-manual/glossary.html#term-distributed-cdap" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-term">Distributed CDAP</span></a>, add these
+properties to <a class="reference internal" href="../appendices/cdap-site.html#appendix-cdap-default-security"><span>cdap-site.xml</span></a>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Value</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authorization.enabled</span></code></td>
+<td>true</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authorization.extension.extension.jar.path</span></code></td>
+<td>Absolute path of the JAR file to be used as the authorization extension. This file
+must be present on the local file system of the CDAP Master. In an HA environment, it
+should be present on the local file system of all CDAP Master hosts.</td>
+</tr>
+</tbody>
+</table>
+<p>Authorization in CDAP only takes effect once <a class="reference internal" href="perimeter-security.html#admin-perimeter-security"><span>perimeter security</span></a> is also enabled by setting <code class="docutils literal"><span class="pre">security.enabled</span></code> to <code class="docutils literal"><span class="pre">true</span></code>.
+Additionally, it is recommended that Kerberos be enabled on the cluster by setting
+<code class="docutils literal"><span class="pre">kerberos.auth.enabled</span></code> to <code class="docutils literal"><span class="pre">true</span></code>.</p>
+<p>These additional properties can also be optionally modified to configure authorization:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">security.authorization.admin.users</span></code></li>
+<li><code class="docutils literal"><span class="pre">security.authorization.cache.enabled</span></code></li>
+<li><code class="docutils literal"><span class="pre">security.authorization.cache.refresh.interval.secs</span></code></li>
+<li><code class="docutils literal"><span class="pre">security.authorization.cache.ttl.secs</span></code></li>
+</ul>
+<p>Please refer to <a class="reference internal" href="../appendices/cdap-site.html#appendix-cdap-default-security"><span>cdap-defaults.xml</span></a> for
+documentation on these configuration settings.</p>
+<p>Authorization in CDAP is implemented as <a class="reference external" href="../source/../../developers-manual/security/authorization-extensions.html#authorization-extensions" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">authorization extensions</span></a>. Apart from the above configuration settings, an extension may
+require additional properties to be configured. Please see the documentation on
+individual extensions for configuring properties specific to that extension:</p>
+<ul class="simple">
+<li><a class="reference external" href="../source/../../integrations/apache-sentry.html#apache-sentry" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Integrations: Apache Sentry</span></a></li>
+</ul>
+<p><a class="reference internal" href="../appendices/cdap-site.html#appendix-cdap-default-security"><span>Security extension properties</span></a>, which are specified
+in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>, begin with the prefix <code class="docutils literal"><span class="pre">security.authorization.extension.config</span></code>.</p>
+</div>
+<div class="section" id="cdap-instances">
+<span id="security-cdap-instance"></span><h2><a class="headerlink" href="#cdap-instances" title="Perma-link to this heading">🔗</a>CDAP Instances</h2>
+<p>The concept of a <em>CDAP Instance</em> has been introduced to support authorization policies in
+CDAP. A <em>CDAP Instance</em> is uniquely identified by an <em>instance name</em>, specified by the
+property <code class="docutils literal"><span class="pre">instance.name</span></code> in the <a class="reference internal" href="../appendices/cdap-site.html#appendix-cdap-site-xml"><span>cdap-site.xml</span></a>. Certain
+operations in CDAP (listed in the next section) require privileges on the CDAP instance
+identified by this property. One purpose of introducing this concept is to support, in the
+future, the notion of multiple CDAP instances on which authorization policies are enforced
+using the same authorization backend.</p>
+</div>
+<div class="section" id="authorization-policies">
+<span id="security-authorization-policies"></span><h2><a class="headerlink" href="#authorization-policies" title="Perma-link to this heading">🔗</a>Authorization Policies</h2>
+<p>Currently, CDAP allows users to enforce authorization for <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, and
+<em>EXECUTE</em> operations. (This list will be expanded to allow for additional distinctions and
+be made finer-grained in the future.)</p>
+<p>In general, this summarizes the authorization policies in CDAP:</p>
+<ul class="simple">
+<li>A <strong>create</strong> operation on an entity requires <em>WRITE</em> on the entity's parent. For
+example, creating a namespace requires <em>WRITE</em> on the CDAP instance. Deploying an
+application, artifact, or dataset, or creating a stream requires a <em>WRITE</em> on the
+namespace.</li>
+<li>A <strong>read</strong> operation (such as reading from a dataset or a stream) on an entity requires
+<em>READ</em> on the entity.</li>
+<li>A <strong>write</strong> operation (such as writing to a dataset or a stream) on an entity requires
+<em>WRITE</em> on the entity.</li>
+<li>An <strong>admin</strong> operation (such as setting properties) on an entity requires <em>ADMIN</em> on
+the entity.</li>
+<li>A <strong>delete</strong> operation on an entity requires <em>ADMIN</em> on the entity.</li>
+<li>A <strong>list</strong> operation (such as listing or searching applications, datasets, streams,
+artifacts) only returns those entities that the logged-in user has at least one (<em>READ</em>,
+<em>WRITE</em>, <em>ADMIN</em>, <em>EXECUTE</em>) privilege on.</li>
+<li>A <strong>view</strong> operation on an entity only succeeds if the user has at least one (<em>READ</em>,
+<em>WRITE</em>, <em>ADMIN</em>, <em>EXECUTE</em>) privilege on it.</li>
+</ul>
+<p>Additionally:</p>
+<ul class="simple">
+<li>Upon successful creation of an entity, the logged-in user receives all privileges
+(<em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, and <em>EXECUTE</em>) on that entity.</li>
+<li>Upon successful deletion of an entity, all privileges on that entity for all users are revoked.</li>
+</ul>
+<p>CDAP supports hierarchical authorization enforcement, which means that an operation that
+requires a certain privilege on an entity is allowed if the user has the same privilege on
+the entity's parent. For example, reading from a CDAP dataset will succeed even if the
+user does not have specific <em>READ</em> privileges on the dataset, but instead has <em>READ</em>
+privileges on the namespace in which the dataset exists.</p>
+<p>Authorization policies for various CDAP operations are listed in these tables:</p>
+<div class="section" id="namespaces">
+<span id="security-authorization-policies-namespaces"></span><h3><a class="headerlink" href="#namespaces" title="Perma-link to this heading">🔗</a>Namespaces</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="25%" />
+<col width="75%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Privileges Required</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Create</td>
+<td><em>WRITE</em> (on the CDAP instance)</td>
+</tr>
+<tr class="row-odd"><td>Update</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-even"><td>Delete</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-odd"><td>List</td>
+<td>Only returns those namespaces on which user has at least one of <em>READ, WRITE, ADMIN,</em> or <em>EXECUTE</em></td>
+</tr>
+<tr class="row-even"><td>View</td>
+<td>At least one of <em>READ, WRITE, ADMIN,</em> or <em>EXECUTE</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="artifacts">
+<span id="security-authorization-policies-artifacts"></span><h3><a class="headerlink" href="#artifacts" title="Perma-link to this heading">🔗</a>Artifacts</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="25%" />
+<col width="75%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Privileges Required</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Add</td>
+<td><em>WRITE</em> (on the namespace)</td>
+</tr>
+<tr class="row-odd"><td>Add a property</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-even"><td>Remove a property</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-odd"><td>Delete</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-even"><td>List</td>
+<td>Only returns those artifacts on which user has at least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+<tr class="row-odd"><td>View</td>
+<td>At least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="applications">
+<span id="security-authorization-policies-applications"></span><h3><a class="headerlink" href="#applications" title="Perma-link to this heading">🔗</a>Applications</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="25%" />
+<col width="75%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Privileges Required</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Add</td>
+<td><em>WRITE</em> (on the namespace)</td>
+</tr>
+<tr class="row-odd"><td>Delete</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-even"><td>List</td>
+<td>Only returns those applications on which user has at least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+<tr class="row-odd"><td>View</td>
+<td>At least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="programs">
+<span id="security-authorization-policies-programs"></span><h3><a class="headerlink" href="#programs" title="Perma-link to this heading">🔗</a>Programs</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="25%" />
+<col width="75%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Privileges Required</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Start, Stop, or Debug</td>
+<td><em>EXECUTE</em></td>
+</tr>
+<tr class="row-odd"><td>Set instances</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-even"><td>Set runtime arguments</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-odd"><td>Retrieving status</td>
+<td>At least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+<tr class="row-even"><td>List</td>
+<td>Only returns those programs on which user has at least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+<tr class="row-odd"><td>View</td>
+<td>At least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="datasets">
+<span id="security-authorization-policies-datasets"></span><h3><a class="headerlink" href="#datasets" title="Perma-link to this heading">🔗</a>Datasets</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="25%" />
+<col width="75%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Privileges Required</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Create</td>
+<td><em>WRITE</em> (on the namespace)</td>
+</tr>
+<tr class="row-odd"><td>Read</td>
+<td><em>READ</em></td>
+</tr>
+<tr class="row-even"><td>Write</td>
+<td><em>WRITE</em></td>
+</tr>
+<tr class="row-odd"><td>Update</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-even"><td>Upgrade</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-odd"><td>Truncate</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-even"><td>Drop</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-odd"><td>List</td>
+<td>Only returns those artifacts on which user has at least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+<tr class="row-even"><td>View</td>
+<td>At least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="dataset-modules">
+<span id="security-authorization-policies-dataset-modules"></span><h3><a class="headerlink" href="#dataset-modules" title="Perma-link to this heading">🔗</a>Dataset Modules</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="25%" />
+<col width="75%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Privileges Required</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Deploy</td>
+<td><em>WRITE</em> (on the namespace)</td>
+</tr>
+<tr class="row-odd"><td>Delete</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-even"><td>Delete-all in the namespace</td>
+<td><em>ADMIN</em> (on the namespace)</td>
+</tr>
+<tr class="row-odd"><td>List</td>
+<td>Only returns those artifacts on which user has at least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+<tr class="row-even"><td>View</td>
+<td>At least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="dataset-types">
+<span id="security-authorization-policies-dataset-types"></span><h3><a class="headerlink" href="#dataset-types" title="Perma-link to this heading">🔗</a>Dataset Types</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="25%" />
+<col width="75%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Privileges Required</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>List</td>
+<td>Only returns those artifacts on which user has at least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+<tr class="row-odd"><td>View</td>
+<td>At least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="secure-keys">
+<span id="security-authorization-policies-secure-keys"></span><h3><a class="headerlink" href="#secure-keys" title="Perma-link to this heading">🔗</a>Secure Keys</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="25%" />
+<col width="75%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Privileges Required</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Create</td>
+<td><em>WRITE</em> (on the namespace)</td>
+</tr>
+<tr class="row-odd"><td>Delete</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-even"><td>List</td>
+<td>Only returns those artifacts on which user has at least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+<tr class="row-odd"><td>View</td>
+<td>At least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="streams">
+<span id="security-authorization-policies-streams"></span><h3><a class="headerlink" href="#streams" title="Perma-link to this heading">🔗</a>Streams</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="25%" />
+<col width="75%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Privileges Required</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Create</td>
+<td><em>WRITE</em> (on the namespace)</td>
+</tr>
+<tr class="row-odd"><td>Retrieving events</td>
+<td><em>READ</em></td>
+</tr>
+<tr class="row-even"><td>Retrieving properties</td>
+<td>At least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+<tr class="row-odd"><td>Sending events to a stream (sync, async, or batch)</td>
+<td><em>WRITE</em></td>
+</tr>
+<tr class="row-even"><td>Drop</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-odd"><td>Drop-all in the namespace</td>
+<td><em>ADMIN</em> (on the namespace)</td>
+</tr>
+<tr class="row-even"><td>Update</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-odd"><td>Truncate</td>
+<td><em>ADMIN</em></td>
+</tr>
+<tr class="row-even"><td>List</td>
+<td>Only returns those artifacts on which user has at least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+<tr class="row-odd"><td>View</td>
+<td>At least one of <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, or <em>EXECUTE</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="bootstrapping-authorization">
+<span id="security-bootstrapping-authorization"></span><h2><a class="headerlink" href="#bootstrapping-authorization" title="Perma-link to this heading">🔗</a>Bootstrapping Authorization</h2>
+<p>When CDAP is first started with authorization enabled, no users are granted privileges on
+any CDAP entities. Without any privileges, it can be impossible to bootstrap CDAP (create
+a new namespace or create entities in the <em>default</em> namespace) unless an
+external interface (such as <a class="reference external" href="http://gethue.com/">Hue</a>) is used for a supported
+authorization extension (such as <a class="reference external" href="../source/../../integrations/apache-sentry.html#apache-sentry" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Integrations: Apache Sentry</span></a>).</p>
+<p>To make this bootstrap process easier, during startup the CDAP Master issues these grants to
+select users:</p>
+<ul class="simple">
+<li>The user that runs the CDAP Master is granted <em>ADMIN</em> on the CDAP instance, so that the
+<em>default</em> namespace can be created by that user if it does not already exist.</li>
+<li>The user that runs the CDAP Master is granted <em>READ</em>, <em>WRITE</em>, <em>ADMIN</em>, and
+<em>EXECUTE</em> on the system namespace, so operations such as creation of system tables,
+deployment of system artifacts, and deployment of system dataset modules can be
+performed by that user.</li>
+<li>Additionally, a comma-separated list of users specified as the
+<code class="docutils literal"><span class="pre">security.authorization.admin.users</span></code> in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> is granted <em>ADMIN</em>
+privileges on the CDAP instance and the <em>default</em> namespace, so that they have the
+required privileges to create namespaces and grant other users access to the <em>default</em>
+namespace. It is recommended that this property be set to the list of users that will
+administer and manage the CDAP installation.</li>
+</ul>
+</div>
+<div class="section" id="authorization-policy-pushdown">
+<span id="security-auth-policy-pushdown"></span><h2><a class="headerlink" href="#authorization-policy-pushdown" title="Perma-link to this heading">🔗</a>Authorization Policy Pushdown</h2>
+<p>Currently, CDAP does not support the pushing of authorization policy grants and revokes to
+<a class="reference external" href="../source/../../reference-manual/glossary.html#term-storage-provider" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-term">storage providers</span></a>. As a result, when a user is granted <em>READ</em>
+or <em>WRITE</em> access on existing datasets or streams, permissions are not updated in the
+storage providers. The same applies when authorization policies are revoked.</p>
+<p>A newly-applied authorization policy will be enforced when the dataset or stream is
+accessed from CDAP, but not when it is accessed directly in the storage provider. If the
+pushdown of permissions to storage providers is desired, it needs to be done manually.
+This will be done automatically in a future release of CDAP.</p>
+<p>This limitation has a larger implication when <a class="reference external" href="../source/../../developers-manual/building-blocks/datasets/overview.html#cross-namespace-dataset-access" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Cross-namespace Dataset Access</span></a> is used. When accessing a dataset from a different
+namespace, CDAP currently presumes that the user accessing the dataset has been granted
+permissions on the dataset in the storage provider prior to accessing the dataset from
+CDAP.</p>
+<p>For example, if a program in the namespace <em>ns1</em> tries to access a <a class="reference external" href="../source/../../reference-manual/glossary.html#term-fileset" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-term">fileset</span></a> in the
+namespace <em>ns2</em>, the user running the program should be granted the appropriate (<em>READ</em>,
+<em>WRITE</em>, or both) privileges on the fileset. Additionally, the user needs to be granted
+appropriate permissions on the HDFS directory that the fileset points to. When
+<a class="reference internal" href="impersonation.html#admin-impersonation"><span>impersonation</span></a> is used in the program's namespace, this user
+is the impersonated user, otherwise it is the user that the CDAP Master runs as.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdap-components.html"> CDAP Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deployment-architectures.html"> Deployment Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hadoop-compatibility.html"> Hadoop Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system-requirements.html"> System Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html"> Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../verification.html"> Verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../upgrading/index.html"> Upgrading</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Security</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="perimeter-security.html">Perimeter Security</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Authorization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enabling-authorization">Enabling Authorization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cdap-instances">CDAP Instances</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#authorization-policies">Authorization Policies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bootstrapping-authorization">Bootstrapping Authorization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#authorization-policy-pushdown">Authorization Policy Pushdown</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="impersonation.html">Impersonation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-storage.html">Secure Storage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendices/index.html"> Appendices</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Perimeter Security" href="perimeter-security.html" />Perimeter Security</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Impersonation" href="impersonation.html" />Impersonation</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

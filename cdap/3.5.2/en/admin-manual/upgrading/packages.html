@@ -1,0 +1,601 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Upgrading CDAP using Packages &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/admin-manual/upgrading/packages.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Upgrading" href="index.html" />
+    <link rel="next" title="Security" href="../security/index.html" />
+    <link rel="prev" title="Upgrading CDAP using MapR" href="mapr.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../security/index.html" title="Security"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="mapr.html" title="Upgrading CDAP using MapR"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Administration Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Upgrading</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="upgrading-cdap-using-packages">
+<span id="admin-upgrading-packages"></span><h1><a class="headerlink" href="#upgrading-cdap-using-packages" title="Perma-link to this heading">🔗</a>Upgrading CDAP using Packages</h1>
+<div class="section" id="upgrading-cdap">
+<span id="admin-upgrading-packages-upgrading-cdap"></span><h2><a class="headerlink" href="#upgrading-cdap" title="Perma-link to this heading">🔗</a>Upgrading CDAP</h2>
+<p>When upgrading an existing CDAP installation from a previous version, you will need
+to make sure the CDAP table definitions in HBase are up-to-date.</p>
+<p><strong>These steps will upgrade from CDAP</strong> <strong>3.4</strong><strong>.x to</strong>
+<strong>3.5.2</strong><strong>.</strong> If you are on an earlier version of CDAP, please follow the
+upgrade instructions for the earlier versions and upgrade first to
+3.4.x before proceeding.</p>
+<div class="section" id="upgrading-cdap-patch-release-versions">
+<h3><a class="headerlink" href="#upgrading-cdap-patch-release-versions" title="Perma-link to this heading">🔗</a>Upgrading CDAP Patch Release Versions</h3>
+<p>Upgrading between patch versions of CDAP refers to upgrading from one 3.5.x
+version to a higher 3.5.x version.</p>
+</div>
+<div class="section" id="upgrading-cdap-major-minor-release-versions">
+<h3><a class="headerlink" href="#upgrading-cdap-major-minor-release-versions" title="Perma-link to this heading">🔗</a>Upgrading CDAP Major/Minor Release Versions</h3>
+<p>Upgrading between major/minor versions of CDAP refers to upgrading from a
+3.4.x version to 3.5.x. Upgrades
+between multiple major/minor versions must be done consecutively, and a
+version cannot be skipped unless otherwise noted.</p>
+</div>
+<div class="section" id="upgrade-steps">
+<h3><a class="headerlink" href="#upgrade-steps" title="Perma-link to this heading">🔗</a>Upgrade Steps</h3>
+<p>These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
+and then restart CDAP:</p>
+<ol class="arabic">
+<li><p class="first">Stop all flows, services, and other programs in all your applications.</p>
+</li>
+<li><p class="first">Stop all CDAP processes:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="k">for</span> i in <span class="sb">`</span>ls /etc/init.d/ <span class="p">|</span> grep cdap<span class="sb">`</span> <span class="p">;</span> <span class="k">do</span> sudo service <span class="nv">$i</span> stop <span class="p">;</span> <span class="k">done</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Update the CDAP repository definition by running either of these methods:</p>
+<ul>
+<li><p class="first">On RPM using Yum:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/3.5/cask.repo
+</pre>
+</div>
+<p>This will create the file <code class="docutils literal"><span class="pre">/etc/yum.repos.d/cask.repo</span></code> with:</p>
+<pre class="literal-block">
+[cask]
+name=Cask Packages
+baseurl=http://repository.cask.co/centos/6/x86_64/cdap/3.5
+enabled=1
+gpgcheck=1
+</pre>
+<p>Add the Cask Public GPG Key to your repository:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo rpm --import http://repository.cask.co/centos/6/x86_64/cdap/3.5/pubkey.gpg
+</pre>
+</div>
+<p>Update your Yum cache:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo yum makecache
+</pre></div>
+</div>
+</li>
+<li><p class="first">On Debian using APT:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo curl -o /etc/apt/sources.list.d/cask.list http://repository.cask.co/ubuntu/precise/amd64/cdap/3.5/cask.list
+</pre>
+</div>
+<p>This will create the file <code class="docutils literal"><span class="pre">/etc/apt/sources.list.d/cask.list</span></code> with:</p>
+<pre class="literal-block">
+deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/cdap/3.5 precise cdap
+</pre>
+<p>Add the Cask Public GPG Key to your repository:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> curl -s http://repository.cask.co/ubuntu/precise/amd64/cdap/3.5/pubkey.gpg | sudo apt-key add -
+</pre>
+</div>
+<p>Update your APT-cache:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo apt-get update
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+<li><p class="first">Update the CDAP packages by running either of these methods:</p>
+<ul>
+<li><p class="first">On RPM using Yum:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo yum upgrade <span class="s1">&#39;cdap*&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">On Debian using APT:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo apt-get install --only-upgrade <span class="s1">&#39;^cdap.*&#39;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+<li><p class="first">Run the upgrade tool, as the user that runs CDAP Master (the CDAP user, indicated by <code class="docutils literal"><span class="pre">&lt;cdap-user&gt;</span></code>):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo -u &lt;cdap-user&gt; /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
+</pre></div>
+</div>
+<p>Note that once you have upgraded an instance of CDAP, you cannot reverse the process; down-grades
+to a previous version are not possible. Also, note that authorization is disabled in the <em>UpgradeTool</em>
+so that the <code class="docutils literal"><span class="pre">cdap</span></code> user can upgrade all users' data.</p>
+<p>The <em>UpgradeTool</em> will produce output similar to the following, prompting you to continue with the upgrade:</p>
+<blockquote>
+<div><div class="highlight container">
+<pre class="literal-block">
+UpgradeTool - version 3.5.2-&lt;build timestamp&gt;.
+
+upgrade - Upgrades CDAP to 3.5.2
+  The upgrade tool upgrades the following:
+  1. User Datasets
+      - Upgrades the coprocessor jars for tables
+      - Migrates the metadata for PartitionedFileSets
+  2. System Datasets
+  3. UsageRegistry Dataset Type
+  Note: Once you run the upgrade tool you cannot rollback to the previous version.
+Do you want to continue (y/n)
+y
+Starting upgrade ...
+</pre>
+</div>
+</div></blockquote>
+<p>You can run the tool in a non-interactive fashion by using the <code class="docutils literal"><span class="pre">force</span></code> flag, in which case
+it will run unattended and not prompt for continuing:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo -u &lt;cdap-user&gt; /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade force
+</pre></div>
+</div>
+</li>
+<li><p class="first">Restart the CDAP processes:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="k">for</span> i in <span class="sb">`</span>ls /etc/init.d/ <span class="p">|</span> grep cdap<span class="sb">`</span> <span class="p">;</span> <span class="k">do</span> sudo service <span class="nv">$i</span> start <span class="p">;</span> <span class="k">done</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">To upgrade existing data pipeline applications created using the 3.4.x versions of
+system artifacts, there are <a class="reference external" href="../source/../../hydrator-manual/running-pipelines.html#cask-hydrator-operating-upgrading-pipeline" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">separate instructions on doing so</span></a>.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="upgrading-hadoop">
+<span id="admin-upgrading-packages-upgrading-hadoop"></span><h2><a class="headerlink" href="#upgrading-hadoop" title="Perma-link to this heading">🔗</a>Upgrading Hadoop</h2>
+<p>These tables list different versions of CDAP and the Hadoop distributions for which they are
+supported. If your particular distribution is not listed here, you can determine its
+components and from that determine which version of CDAP may be compatible. <a class="reference external" href="http://blog.cask.co/2015/06/hadoop-components-versions-in-distros-matrix/">Our blog
+lists</a> the
+different components of the common Hadoop distributions.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="32%" />
+<col width="52%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" colspan="3">Supported Cloudera Manager (CM) and Cloudera Data Hub (CDH) Distributions</th>
+</tr>
+<tr class="row-even"><th class="head">CM Version</th>
+<th class="head">CDH Version</th>
+<th class="head">CDAP Parcel / CSD Version</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td>5.8</td>
+<td>5.8.x</td>
+<td>3.5.x</td>
+</tr>
+<tr class="row-even"><td colspan="3">&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>5.7</td>
+<td>5.7.x</td>
+<td>3.4.x through 3.5.x</td>
+</tr>
+<tr class="row-even"><td>5.7</td>
+<td>5.5.x through 5.6.x</td>
+<td>3.3.x through 3.5.x</td>
+</tr>
+<tr class="row-odd"><td>5.7</td>
+<td>5.4.x</td>
+<td>3.1.x through 3.5.x</td>
+</tr>
+<tr class="row-even"><td>5.7</td>
+<td>no greater than 5.3.x</td>
+<td>3.0.x through 3.5.x</td>
+</tr>
+<tr class="row-odd"><td colspan="3">&nbsp;</td>
+</tr>
+<tr class="row-even"><td>5.6</td>
+<td>5.5.x through 5.6.x</td>
+<td>3.3.x through 3.5.x</td>
+</tr>
+<tr class="row-odd"><td>5.6</td>
+<td>5.4.x</td>
+<td>3.1.x through 3.5.x</td>
+</tr>
+<tr class="row-even"><td>5.6</td>
+<td>no greater than 5.3.x</td>
+<td>3.0.x through 3.5.x</td>
+</tr>
+<tr class="row-odd"><td colspan="3">&nbsp;</td>
+</tr>
+<tr class="row-even"><td>5.5</td>
+<td>5.5.x</td>
+<td>3.3.x through 3.5.x</td>
+</tr>
+<tr class="row-odd"><td>5.5</td>
+<td>5.4.x</td>
+<td>3.1.x through 3.5.x</td>
+</tr>
+<tr class="row-even"><td>5.5</td>
+<td>no greater than 5.3.x</td>
+<td>3.0.x through 3.5.x</td>
+</tr>
+<tr class="row-odd"><td colspan="3">&nbsp;</td>
+</tr>
+<tr class="row-even"><td>5.4</td>
+<td>5.4.x</td>
+<td>3.1.x through 3.5.x</td>
+</tr>
+<tr class="row-odd"><td>5.4</td>
+<td>no greater than 5.3.x</td>
+<td>3.0.x through 3.5.x</td>
+</tr>
+<tr class="row-even"><td colspan="3">&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>5.3</td>
+<td>no greater than 5.3.x</td>
+<td>3.0.x through 3.1.x</td>
+</tr>
+<tr class="row-even"><td>5.2</td>
+<td>no greater than 5.2.x</td>
+<td>3.0.x through 3.1.x</td>
+</tr>
+<tr class="row-odd"><td>5.1</td>
+<td>no greater than 5.1.x</td>
+<td><em>Not supported</em></td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="34%" />
+<col width="66%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="28%" />
+<col width="29%" />
+<col width="43%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" colspan="3">Supported Hortonworks Data Platform (HDP) Distributions</th>
+</tr>
+<tr class="row-even"><th class="head">CDAP Series</th>
+<th class="head">CDAP Repository</th>
+<th class="head">Hadoop Distributions</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td>CDAP 3.5.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.5</span></code></td>
+<td>HDP 2.0 through HDP 2.4</td>
+</tr>
+<tr class="row-even"><td>CDAP 3.4.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.4</span></code></td>
+<td>HDP 2.0 through HDP 2.4</td>
+</tr>
+<tr class="row-odd"><td>CDAP 3.3.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.3</span></code></td>
+<td>HDP 2.0 through HDP 2.3</td>
+</tr>
+<tr class="row-even"><td>CDAP 3.2.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.2</span></code></td>
+<td>HDP 2.0 through HDP 2.3</td>
+</tr>
+<tr class="row-odd"><td>CDAP 3.1.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.1</span></code></td>
+<td>HDP 2.0 through HDP 2.2</td>
+</tr>
+<tr class="row-even"><td>CDAP 3.0.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.0</span></code></td>
+<td>HDP 2.0 and HDP 2.1</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="34%" />
+<col width="66%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="34%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" colspan="2">Supported MapR Distributions for Apache Hadoop</th>
+</tr>
+<tr class="row-even"><th class="head">CDAP Series</th>
+<th class="head">MapR Distributions</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td>CDAP 3.4.x</td>
+<td>MapR 4.1, MapR 5.0, MapR 5.1</td>
+</tr>
+<tr class="row-even"><td>CDAP 3.3.x</td>
+<td>MapR 4.1, MapR 5.0, MapR 5.1</td>
+</tr>
+<tr class="row-odd"><td>CDAP 3.2.x</td>
+<td>MapR 4.1, MapR 5.0</td>
+</tr>
+<tr class="row-even"><td>CDAP 3.1.x</td>
+<td>MapR 4.1</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="id1">
+<h3><a class="headerlink" href="#id1" title="Perma-link to this heading">🔗</a>Upgrade Steps</h3>
+<p>These steps cover what to do when upgrading the version of Hadoop of an existing CDAP installation.
+As the different versions of Hadoop can use different versions of HBase, upgrading from
+one version to the next can require that the HBase coprocessors be upgraded to the correct
+version. The steps below will, if required, update the coprocessors appropriately.</p>
+<p><strong>It is important to perform these steps as described, otherwise the coprocessors may not
+get upgraded correctly and HBase regionservers may crash.</strong></p>
+<ol class="arabic">
+<li><p class="first">Upgrade CDAP to a version that will support the new Hadoop version, following the usual
+<a class="reference internal" href="#admin-upgrading-packages-upgrading-cdap"><span>CDAP upgrade procedure for packages</span></a>.</p>
+</li>
+<li><p class="first">After upgrading CDAP, start CDAP and check that it is working correctly.</p>
+</li>
+<li><p class="first">Stop all CDAP applications and services:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="k">for</span> i in <span class="sb">`</span>ls /etc/init.d/ <span class="p">|</span> grep cdap<span class="sb">`</span> <span class="p">;</span> <span class="k">do</span> sudo service <span class="nv">$i</span> stop <span class="p">;</span> <span class="k">done</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Disable all CDAP tables; from an HBase shell, run the command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">&gt;</span> disable_all <span class="s1">&#39;cdap.*&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Upgrade to the new version of Hadoop.</p>
+</li>
+<li><p class="first">Run the <em>Post-Hadoop Upgrade Tasks</em>—to upgrade CDAP for the new version of Hadoop—by running
+the <em>CDAP Upgrade Tool</em>, as the user that runs CDAP Master (the CDAP user, indicated by <code class="docutils literal"><span class="pre">&lt;cdap-user&gt;</span></code>):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo -u &lt;cdap-user&gt; /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade_hbase
+</pre></div>
+</div>
+</li>
+<li><p class="first">Enable all CDAP tables; from an HBase shell, run this command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">&gt;</span> enable_all <span class="s1">&#39;cdap.*&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Restart CDAP:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="k">for</span> i in <span class="sb">`</span>ls /etc/init.d/ <span class="p">|</span> grep cdap<span class="sb">`</span> <span class="p">;</span> <span class="k">do</span> sudo service <span class="nv">$i</span> start <span class="p">;</span> <span class="k">done</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdap-components.html"> CDAP Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deployment-architectures.html"> Deployment Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hadoop-compatibility.html"> Hadoop Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system-requirements.html"> System Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html"> Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../verification.html"> Verification</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Upgrading</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cloudera.html">Cloudera Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ambari.html">Apache Ambari</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapr.html">MapR</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Packages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#upgrading-cdap">Upgrading CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#upgrading-hadoop">Upgrading Hadoop</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendices/index.html"> Appendices</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Upgrading CDAP using MapR" href="mapr.html" />Upgrading CDAP using MapR</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Security" href="../security/index.html" />Security</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

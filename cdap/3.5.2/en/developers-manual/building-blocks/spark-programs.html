@@ -1,0 +1,841 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Spark Programs &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/developers-manual/building-blocks/spark-programs.html">
+
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="../_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Workers" href="workers.html" />
+    <link rel="prev" title="Services" href="services.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="workers.html" title="Workers"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="services.html" title="Services"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="../table-of-contents.html">Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="spark-programs">
+<span id="spark"></span><h1><a class="headerlink" href="#spark-programs" title="Perma-link to this heading">🔗</a>Spark Programs</h1>
+<p><em>Apache Spark</em> is used for in-memory cluster computing. It lets you load large sets of
+data into memory and query them repeatedly. This makes it suitable for both iterative and
+interactive programs. Similar to MapReduce, Spark can access <a class="reference internal" href="#spark-datasets"><span>datasets</span></a>
+as both input and output. <em>Spark programs</em> in CDAP can be written in either Java or Scala.</p>
+<p>To process data using Spark, specify <code class="docutils literal"><span class="pre">addSpark()</span></code> in your application specification:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+  <span class="o">...</span>
+    <span class="n">addSpark</span><span class="o">(</span><span class="k">new</span> <span class="n">WordCountProgram</span><span class="o">());</span>
+</pre></div>
+</div>
+<p>You must implement the <code class="docutils literal"><span class="pre">Spark</span></code> interface, which requires the
+implementation of three methods:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">configure()</span></code></li>
+<li><code class="docutils literal"><span class="pre">beforeSubmit()</span></code></li>
+<li><code class="docutils literal"><span class="pre">onFinish()</span></code></li>
+</ul>
+<p>You can extend from the abstract class <code class="docutils literal"><span class="pre">AbstractSpark</span></code> to simplify the implementation:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountProgram</span> <span class="kd">extends</span> <span class="n">AbstractSpark</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">SparkSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">SparkSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">&quot;WordCountProgram&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Calculates word frequency&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setMainClassName</span><span class="o">(</span><span class="s">&quot;com.example.WordCounter&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>The configure method is similar to the one found in flows and MapReduce programs. It
+defines the name, description, and the class containing the Spark program to be executed
+by the Spark framework.</p>
+<p>The <code class="docutils literal"><span class="pre">beforeSubmit()</span></code> method is invoked at runtime, before the
+Spark program is executed. Because many Spark programs do not
+need this method, the <code class="docutils literal"><span class="pre">AbstractSpark</span></code> class provides a default
+implementation that does nothing:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">beforeSubmit</span><span class="o">(</span><span class="n">SparkContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+  <span class="c1">// Do nothing by default</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">onFinish()</span></code> method is invoked after the Spark program has
+finished. You could perform cleanup or send a notification of program
+completion, if that was required. Like <code class="docutils literal"><span class="pre">beforeSubmit()</span></code>, since many Spark programs do not
+need this method, the <code class="docutils literal"><span class="pre">AbstractSpark</span></code> class also provides a default
+implementation for this method that does nothing:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">SparkContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+  <span class="c1">// Do nothing by default</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<div class="section" id="spark-and-resources">
+<h2><a class="headerlink" href="#spark-and-resources" title="Perma-link to this heading">🔗</a>Spark and Resources</h2>
+<p>When a Spark program is configured, the resource requirements for both the Spark driver
+processes and the Spark executor processes can be set, both in terms of the amount of
+memory (in megabytes) and the number of virtual cores assigned.</p>
+<p>For example, in the <a class="reference external" href="../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Spark Page Rank</span></a> example, in the configuration of
+the <code class="docutils literal"><span class="pre">PageRankSpark</span></code>, the amount of memory is specified:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * A Spark program that calculates page rank.</span>
+<span class="cm"> */</span>
+<span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">PageRankSpark</span> <span class="kd">extends</span> <span class="n">AbstractSpark</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Spark page rank program&quot;</span><span class="o">);</span>
+    <span class="n">setMainClass</span><span class="o">(</span><span class="n">SparkPageRankProgram</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">setDriverResources</span><span class="o">(</span><span class="k">new</span> <span class="n">Resources</span><span class="o">(</span><span class="mi">1024</span><span class="o">));</span>
+    <span class="n">setExecutorResources</span><span class="o">(</span><span class="k">new</span> <span class="n">Resources</span><span class="o">(</span><span class="mi">1024</span><span class="o">));</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>If both the memory and the number of cores needs to be set, this can be done using:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">setExecutorResources</span><span class="o">(</span><span class="k">new</span> <span class="n">Resources</span><span class="o">(</span><span class="mi">1024</span><span class="o">,</span> <span class="mi">2</span><span class="o">));</span>
+</pre></div>
+</div>
+<p>In this case, 1024 MB and two cores is assigned to each executor process.</p>
+</div>
+<div class="section" id="cdap-spark-program">
+<h2><a class="headerlink" href="#cdap-spark-program" title="Perma-link to this heading">🔗</a>CDAP Spark Program</h2>
+<p>The main class being set through the <code class="docutils literal"><span class="pre">setMainClass</span></code> or <code class="docutils literal"><span class="pre">setMainClassName</span></code> method inside the <code class="docutils literal"><span class="pre">Spark.configure()</span></code>
+method will be executed by the Spark framework. The main class must have one of these properties:</p>
+<ol class="arabic simple">
+<li>Extends from <code class="docutils literal"><span class="pre">SparkMain</span></code>, if written in Scala</li>
+<li>Have a <code class="docutils literal"><span class="pre">def</span> <span class="pre">main(args:</span> <span class="pre">Array[String])</span></code> method, if written in Scala</li>
+<li>Implements <code class="docutils literal"><span class="pre">JavaSparkMain</span></code>, if written in Java</li>
+<li>Have a <code class="docutils literal"><span class="pre">public</span> <span class="pre">static</span> <span class="pre">void</span> <span class="pre">main(String[]</span> <span class="pre">args)</span></code> method, if written in Java</li>
+</ol>
+<p>A user program is responsible for creating a <code class="docutils literal"><span class="pre">SparkContext</span></code> or <code class="docutils literal"><span class="pre">JavaSparkContext</span></code> instance, either inside
+the <code class="docutils literal"><span class="pre">run</span></code> methods of <code class="docutils literal"><span class="pre">SparkMain</span></code> or <code class="docutils literal"><span class="pre">JavaSparkMain</span></code>, or inside their <code class="docutils literal"><span class="pre">main</span></code> methods.</p>
+</div>
+<div class="section" id="cdap-sparkexecutioncontext">
+<h2><a class="headerlink" href="#cdap-sparkexecutioncontext" title="Perma-link to this heading">🔗</a>CDAP SparkExecutionContext</h2>
+<p>CDAP provides a <code class="docutils literal"><span class="pre">SparkExecutionContext</span></code>, which is needed to access <a class="reference internal" href="#spark-datasets"><span>datasets</span></a> and to
+interact with CDAP services such as metrics and service discovery. It is only available to Spark programs that
+are extended from either <code class="docutils literal"><span class="pre">SparkMain</span></code> or <code class="docutils literal"><span class="pre">JavaSparkMain</span></code>.</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral27() {
+  var tabs = ['scala', 'java'];
+  var mapping = {'java': 'java', 'scala': 'scala'};
+  var tabSetID = 'java-scala';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral27 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral27", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral27" class="dependent-java-scala">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-scala active"><a href="#">Scala</a></li>
+<li class="example-tab example-tab-java "><a href="#">Java</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-scala active">
+<div class="code code-tab">
+<div class="highlight-scala">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="k">class</span> <span class="nc">MyScalaSparkProgram</span> <span class="k">extends</span> <span class="nc">SparkMain</span> <span class="o">{</span>
+  <span class="k">override</span> <span class="k">def</span> <span class="n">run</span><span class="o">(</span><span class="k">implicit</span> <span class="n">sec</span><span class="k">:</span> <span class="kt">SparkExecutionContext</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="n">sc</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">SparkContext</span>
+    <span class="k">val</span> <span class="nc">RDD</span><span class="o">[(</span><span class="kt">String</span>, <span class="kt">String</span><span class="o">)]</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">fromDataset</span><span class="o">(</span><span class="s">&quot;mydataset&quot;</span><span class="o">)</span>
+      <span class="o">...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-java ">
+<div class="code code-tab">
+<div class="highlight-java">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyJavaSparkProgram</span> <span class="kd">implements</span> <span class="n">JavaSparkMain</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">(</span><span class="n">JavaSparkExecutionContext</span> <span class="n">sec</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">JavaSparkContext</span> <span class="n">jsc</span> <span class="o">=</span> <span class="k">new</span> <span class="n">JavaSparkContext</span><span class="o">();</span>
+    <span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">rdd</span> <span class="o">=</span> <span class="n">sec</span><span class="o">.</span><span class="na">fromDataset</span><span class="o">(</span><span class="s">&quot;mydataset&quot;</span><span class="o">);</span>
+      <span class="o">...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+<div class="section" id="spark-and-datasets">
+<span id="spark-datasets"></span><h2><a class="headerlink" href="#spark-and-datasets" title="Perma-link to this heading">🔗</a>Spark and Datasets</h2>
+<p>Spark programs in CDAP can directly access <strong>datasets</strong> similar to the way a MapReduce can.
+These programs can create Spark's Resilient Distributed Dataset (RDD) by reading a dataset
+and can also write RDD to a dataset. In Scala, implicit objects are provided for reading
+and writing datasets directly through the <code class="docutils literal"><span class="pre">SparkContext</span></code> and <code class="docutils literal"><span class="pre">RDD</span></code> objects.</p>
+<p>In order to access a dataset in Spark, both the key and value classes have to be
+serializable. Otherwise, Spark will fail to read or write them. For example, the Table
+dataset has a value type of Row, which is not serializable. An <code class="docutils literal"><span class="pre">ObjectStore</span></code> dataset can
+be used, provided its classes are serializable.</p>
+<ul>
+<li><p class="first">Creating an RDD from a dataset:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral28() {
+  var tabs = ['scala', 'java'];
+  var mapping = {'java': 'java', 'scala': 'scala'};
+  var tabSetID = 'java-scala';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral28 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral28", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral28" class="dependent-java-scala">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-scala active"><a href="#">Scala</a></li>
+<li class="example-tab example-tab-java "><a href="#">Java</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-scala active">
+<div class="code code-tab">
+<div class="highlight-scala">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="k">val</span> <span class="n">sc</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">SparkContext</span>
+<span class="k">val</span> <span class="n">purchaseRDD</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">readFromDataset</span><span class="o">[</span><span class="kt">Array</span><span class="o">[</span><span class="kt">Byte</span><span class="o">]</span>, <span class="kt">Purchase</span><span class="o">](</span><span class="s">&quot;purchases&quot;</span><span class="o">);</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-java ">
+<div class="code code-tab">
+<div class="highlight-java">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="n">JavaSparkContext</span> <span class="n">jsc</span> <span class="o">=</span> <span class="k">new</span> <span class="n">JavaSparkContext</span><span class="o">();</span>
+<span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Purchase</span><span class="o">&gt;</span> <span class="n">purchaseRDD</span> <span class="o">=</span> <span class="n">sec</span><span class="o">.</span><span class="na">fromDataset</span><span class="o">(</span><span class="s">&quot;purchases&quot;</span><span class="o">);</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+<li><p class="first">Writing an RDD to a dataset:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral29() {
+  var tabs = ['scala', 'java'];
+  var mapping = {'java': 'java', 'scala': 'scala'};
+  var tabSetID = 'java-scala';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral29 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral29", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral29" class="dependent-java-scala">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-scala active"><a href="#">Scala</a></li>
+<li class="example-tab example-tab-java "><a href="#">Java</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-scala active">
+<div class="code code-tab">
+<div class="highlight-scala">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="n">purchaseRDD</span><span class="o">.</span><span class="n">saveAsDataset</span><span class="o">(</span><span class="s">&quot;purchases&quot;</span><span class="o">)</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-java ">
+<div class="code code-tab">
+<div class="highlight-java">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="n">sec</span><span class="o">.</span><span class="na">saveAsDataset</span><span class="o">(</span><span class="n">purchaseRDD</span><span class="o">,</span> <span class="s">&quot;purchases&quot;</span><span class="o">);</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</li>
+</ul>
+<p><strong>Note</strong>: Spark programs can read or write to datasets in different namespaces using
+<a class="reference internal" href="datasets/overview.html#cross-namespace-dataset-access"><span>Cross Namespace Dataset Access</span></a> by passing a
+<code class="docutils literal"><span class="pre">String</span></code> containing the <a class="reference external" href="../source/../../reference-manual/glossary.html#term-namespace" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-term">namespace</span></a> as an additional parameter before the <a class="reference external" href="../source/../../reference-manual/glossary.html#term-dataset" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-term">dataset</span></a>
+name parameter. (By default, if the namespace parameter is not supplied, the namespace in
+which the program runs is used.).</p>
+</div>
+<div class="section" id="spark-and-streams">
+<h2><a class="headerlink" href="#spark-and-streams" title="Perma-link to this heading">🔗</a>Spark and Streams</h2>
+<p>Spark programs in CDAP can directly access <strong>streams</strong> similar to the way a MapReduce can.
+These programs can create Spark's Resilient Distributed Dataset (RDD) by reading a stream.
+You can read from a stream using:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral30() {
+  var tabs = ['scala', 'java'];
+  var mapping = {'java': 'java', 'scala': 'scala'};
+  var tabSetID = 'java-scala';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral30 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral30", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral30" class="dependent-java-scala">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-scala active"><a href="#">Scala</a></li>
+<li class="example-tab example-tab-java "><a href="#">Java</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-scala active">
+<div class="code code-tab">
+<div class="highlight-scala">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="k">val</span> <span class="n">ratingsDataset</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">fromStream</span><span class="o">[(</span><span class="kt">Long</span>, <span class="kt">String</span><span class="o">)](</span><span class="s">&quot;ratingsStream&quot;</span><span class="o">)</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-java ">
+<div class="code code-tab">
+<div class="highlight-java">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">ratingsDataset</span> <span class="o">=</span> <span class="n">sec</span><span class="o">.</span><span class="na">fromStream</span><span class="o">(</span><span class="s">&quot;ratingsStream&quot;</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>It’s possible to read parts of a stream by specifying start and end timestamps using:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral31() {
+  var tabs = ['scala', 'java'];
+  var mapping = {'java': 'java', 'scala': 'scala'};
+  var tabSetID = 'java-scala';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral31 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral31", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral31" class="dependent-java-scala">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-scala active"><a href="#">Scala</a></li>
+<li class="example-tab example-tab-java "><a href="#">Java</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-scala active">
+<div class="code code-tab">
+<div class="highlight-scala">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="k">val</span> <span class="n">ratingsDataset</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">fromStream</span><span class="o">[(</span><span class="kt">Long</span>, <span class="kt">String</span><span class="o">)](</span><span class="s">&quot;ratingsStream&quot;</span><span class="o">,</span> <span class="n">startTime</span><span class="o">,</span> <span class="n">endTime</span><span class="o">)</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-java ">
+<div class="code code-tab">
+<div class="highlight-java">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">ratingsDataset</span> <span class="o">=</span> <span class="n">sec</span><span class="o">.</span><span class="na">fromStream</span><span class="o">(</span><span class="s">&quot;ratingsStream&quot;</span><span class="o">,</span> <span class="n">startTime</span><span class="o">,</span> <span class="n">endTime</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+<p>In Scala, custom object conversion is done through an implicit conversion function:</p>
+<div class="highlight-scala"><div class="highlight"><pre><span class="c1">// The SparkMain provides implicit functions for (Long, String) and String conversion already</span>
+<span class="k">val</span> <span class="n">pairRDD</span><span class="k">:</span> <span class="kt">RDD</span><span class="o">[(</span><span class="kt">Long</span>, <span class="kt">String</span><span class="o">)]</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">fromStream</span><span class="o">(</span><span class="n">streamName</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">valueRDD</span><span class="k">:</span> <span class="kt">RDD</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">fromStream</span><span class="o">(</span><span class="n">streamName</span><span class="o">)</span>
+
+<span class="c1">// Defining a custom conversion</span>
+<span class="k">implicit</span> <span class="k">def</span> <span class="n">toArray</span><span class="o">(</span><span class="n">event</span><span class="k">:</span> <span class="kt">StreamEvent</span><span class="o">)</span><span class="k">:</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Bytes</span><span class="o">.</span><span class="n">toString</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="n">getBody</span><span class="o">).</span><span class="n">split</span><span class="o">(</span><span class="s">&quot;,&quot;</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">rdd</span><span class="k">:</span> <span class="kt">RDD</span><span class="o">[</span><span class="kt">Array</span><span class="o">[</span><span class="kt">String</span><span class="o">]]</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">fromStream</span><span class="o">(</span><span class="n">streamName</span><span class="o">)</span>
+</pre></div>
+</div>
+<p>In Java, you can read custom objects from a stream by providing a <code class="docutils literal"><span class="pre">decoderType</span></code> extended from
+<a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/stream/StreamEventDecoder.html">StreamEventDecoder</a>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">sec</span><span class="o">.</span><span class="na">fromStream</span><span class="o">(</span><span class="n">streamName</span><span class="o">,</span> <span class="n">startTime</span><span class="o">,</span> <span class="n">endTime</span><span class="o">,</span> <span class="n">decoderType</span><span class="o">,</span> <span class="n">keyType</span><span class="o">,</span> <span class="n">valueType</span><span class="o">);</span>
+</pre></div>
+</div>
+<p><strong>Note</strong>: Spark programs can read from streams in different namespaces by passing a
+<code class="docutils literal"><span class="pre">String</span></code> containing the <a class="reference external" href="../source/../../reference-manual/glossary.html#term-namespace" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-term">namespace</span></a> as an additional parameter before the
+<a class="reference external" href="../source/../../reference-manual/glossary.html#term-stream" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-term">stream</span></a> name parameter. (By default, if the namespace parameter is not supplied,
+the namespace in which the program runs is used.)</p>
+</div>
+<div class="section" id="spark-and-services">
+<h2><a class="headerlink" href="#spark-and-services" title="Perma-link to this heading">🔗</a>Spark and Services</h2>
+<p>Spark programs in CDAP, including worker nodes, can discover Services.
+Service Discovery by worker nodes ensures that if an endpoint changes during the execution of a Spark program,
+due to failure or another reason, worker nodes will see the most recent endpoint.</p>
+<p>Here is an example of service discovery in a Spark program:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">final</span> <span class="n">ServiceDiscoverer</span> <span class="n">serviceDiscover</span> <span class="o">=</span> <span class="n">sec</span><span class="o">.</span><span class="na">getServiceDiscoverer</span><span class="o">();</span>
+<span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">ranksRaw</span> <span class="o">=</span> <span class="n">ranks</span><span class="o">.</span><span class="na">mapToPair</span><span class="o">(</span><span class="k">new</span> <span class="n">PairFunction</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;,</span>
+                                                        <span class="kt">byte</span><span class="o">[],</span> <span class="n">Integer</span><span class="o">&gt;()</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="nf">call</span><span class="o">(</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;</span> <span class="n">tuple</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">URL</span> <span class="n">serviceURL</span> <span class="o">=</span> <span class="n">serviceDiscover</span><span class="o">.</span><span class="na">getServiceURL</span><span class="o">(</span><span class="n">SparkPageRankApp</span><span class="o">.</span><span class="na">GOOGLE_TYPE_PR_SERVICE_NAME</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">serviceURL</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="o">(</span><span class="s">&quot;Failed to discover service: &quot;</span> <span class="o">+</span>
+                                                             <span class="n">SparkPageRankApp</span><span class="o">.</span><span class="na">GOOGLE_TYPE_PR_SERVICE_NAME</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="n">URLConnection</span> <span class="n">connection</span> <span class="o">=</span> <span class="k">new</span> <span class="n">URL</span><span class="o">(</span><span class="n">serviceURL</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;transform/%s&quot;</span><span class="o">,</span>
+                                                                  <span class="n">tuple</span><span class="o">.</span><span class="na">_2</span><span class="o">().</span><span class="na">toString</span><span class="o">())).</span><span class="na">openConnection</span><span class="o">();</span>
+      <span class="k">try</span> <span class="o">(</span>
+        <span class="n">BufferedReader</span> <span class="n">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BufferedReader</span><span class="o">(</span><span class="k">new</span> <span class="n">InputStreamReader</span><span class="o">(</span><span class="n">connection</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">(),</span> <span class="n">Charsets</span><span class="o">.</span><span class="na">UTF_8</span><span class="o">))</span>
+      <span class="o">)</span> <span class="o">{</span>
+        <span class="n">String</span> <span class="n">pr</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="na">readLine</span><span class="o">();</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Integer</span><span class="o">&gt;(</span><span class="n">tuple</span><span class="o">.</span><span class="na">_1</span><span class="o">().</span><span class="na">getBytes</span><span class="o">(</span><span class="n">Charsets</span><span class="o">.</span><span class="na">UTF_8</span><span class="o">),</span> <span class="n">Integer</span><span class="o">.</span><span class="na">parseInt</span><span class="o">(</span><span class="n">pr</span><span class="o">));</span>
+      <span class="o">}</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">&quot;Failed to read the stream for service {}&quot;</span><span class="o">,</span>
+                                                          <span class="n">SparkPageRankApp</span><span class="o">.</span><span class="na">GOOGLE_PR_SERVICE</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+      <span class="k">throw</span> <span class="n">Throwables</span><span class="o">.</span><span class="na">propagate</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">});</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="spark-metrics">
+<h2><a class="headerlink" href="#spark-metrics" title="Perma-link to this heading">🔗</a>Spark Metrics</h2>
+<p>Spark programs in CDAP emit metrics, similar to a MapReduce program.
+CDAP collect system metrics emitted by Spark and display them in the <strong>CDAP UI</strong>.
+This helps in monitoring the progress and resources used by a Spark program.
+You can also emit custom user metrics from the worker nodes of your Spark program:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">final</span> <span class="n">Metrics</span> <span class="n">sparkMetrics</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="na">getMetrics</span><span class="o">();</span>
+<span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">ranksRaw</span> <span class="o">=</span> <span class="n">ranks</span><span class="o">.</span><span class="na">mapToPair</span><span class="o">(</span><span class="k">new</span> <span class="n">PairFunction</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;,</span>
+                                                        <span class="kt">byte</span><span class="o">[],</span> <span class="n">Integer</span><span class="o">&gt;()</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="nf">call</span><span class="o">(</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;</span> <span class="n">tuple</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">tuple</span><span class="o">.</span><span class="na">_2</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">sparkMetrics</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="n">MORE_THAN_100_KEY</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">});</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="spark-in-workflows">
+<h2><a class="headerlink" href="#spark-in-workflows" title="Perma-link to this heading">🔗</a>Spark in Workflows</h2>
+<p>Spark programs in CDAP can also be added to a <a class="reference internal" href="workflows.html#workflows"><span>workflow</span></a>, similar to a
+<a class="reference internal" href="mapreduce-programs.html#mapreduce"><span>MapReduce</span></a>. The Spark program can get information about the workflow
+through the <code class="docutils literal"><span class="pre">SparkExecutionContext.getWorkflowInfo</span></code> method.</p>
+</div>
+<div class="section" id="transactions-and-spark">
+<h2><a class="headerlink" href="#transactions-and-spark" title="Perma-link to this heading">🔗</a>Transactions and Spark</h2>
+<p>When a Spark program interacts with datasets, CDAP will automatically create a
+long-running transaction that covers the Spark job execution. A Spark job refers to a
+Spark action and any tasks that need to be executed to evaluate the action (see <a class="reference external" href="http://spark.apache.org/docs/1.6.1/job-scheduling.html#scheduling-within-an-application">Spark Job
+Scheduling</a>
+for details).</p>
+<p>You can also control the transaction scope yourself explicitly. It's useful when you want
+multiple Spark actions to be committed in the same transaction. For example, in Kafka
+Spark Streaming, you can persist the Kafka offsets together with the changes in the
+datasets in the same transaction to obtain exactly-once processing semantics.</p>
+<p>When using an <em>explicit</em> transaction, you can access a dataset directly by calling the
+<code class="docutils literal"><span class="pre">getDataset()</span></code> method of the <code class="docutils literal"><span class="pre">DatasetContext</span></code> provided to the transaction. However,
+the dataset acquired through <code class="docutils literal"><span class="pre">getDataset()</span></code> cannot be used through a function closure.
+See the section on <a class="reference internal" href="datasets/overview.html#datasets-in-programs"><span>Using Datasets in Programs</span></a> for additional
+information.</p>
+<p>Here is an example of using an explicit transaction in Spark:</p>
+<script type="text/javascript">
+
+$(function tabbedparsedliteral32() {
+  var tabs = ['scala', 'java'];
+  var mapping = {'java': 'java', 'scala': 'scala'};
+  var tabSetID = 'java-scala';
+  for (var i = 0; i < tabs.length; i++) {
+    var tab = tabs[i];
+    $("#tabbedparsedliteral32 .example-tab-" + tab).click(changeExampleTab(tab, mapping, "tabbedparsedliteral32", tabSetID));
+  }
+});
+
+</script>
+
+<div id="tabbedparsedliteral32" class="dependent-java-scala">
+
+<ul class="nav nav-tabs">
+<li class="example-tab example-tab-scala active"><a href="#">Scala</a></li>
+<li class="example-tab example-tab-java "><a href="#">Java</a></li>
+</ul>
+
+<div class="tab-contents">
+
+<div class="tab-pane tab-pane-scala active">
+<div class="code code-tab">
+<div class="highlight-scala">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="c1">// Perform multiple operations in the same transaction</span>
+<span class="nc">Transaction</span> <span class="o">{</span>
+  <span class="c1">// Create a standard wordcount RDD</span>
+  <span class="k">val</span> <span class="n">wordCountRDD</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">fromStream</span><span class="o">[</span><span class="kt">String</span><span class="o">](</span><span class="s">&quot;stream&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="n">flatMap</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">split</span><span class="o">(</span><span class="s">&quot; &quot;</span><span class="o">))</span>
+      <span class="o">.</span><span class="n">map</span><span class="o">((</span><span class="k">_</span><span class="o">,</span> <span class="mi">1</span><span class="o">))</span>
+      <span class="o">.</span><span class="n">reduceByKey</span><span class="o">(</span><span class="k">_</span> <span class="o">+</span> <span class="k">_</span><span class="o">)</span>
+
+  <span class="c1">// Save those words that have count &gt; 10 to the &quot;aboveten&quot; dataset</span>
+  <span class="n">wordCountRDD</span>
+    <span class="o">.</span><span class="n">filter</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">_2</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="o">)</span>
+    <span class="o">.</span><span class="n">saveAsDataset</span><span class="o">(</span><span class="s">&quot;aboveten&quot;</span><span class="o">)</span>
+
+  <span class="c1">// Save all wordcount to an &quot;allcounts&quot; dataset</span>
+  <span class="n">wordCountRDD</span><span class="o">.</span><span class="n">saveAsDataset</span><span class="o">(</span><span class="s">&quot;allcounts&quot;</span><span class="o">)</span>
+
+  <span class="c1">// Updates to both the &quot;aboveten&quot; and &quot;allcounts&quot; datasets will be committed within the same transaction</span>
+<span class="o">}</span>
+
+<span class="c1">// Perform RDD operations together with direct dataset access in the same transaction</span>
+<span class="nc">Transaction</span><span class="o">((</span><span class="n">datasetContext</span><span class="k">:</span> <span class="kt">DatasetContext</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="o">{</span>
+  <span class="n">sc</span><span class="o">.</span><span class="n">fromDataset</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">Int</span><span class="o">](</span><span class="s">&quot;source&quot;</span><span class="o">)</span>
+    <span class="o">.</span><span class="n">saveAsDataset</span><span class="o">(</span><span class="s">&quot;sink&quot;</span><span class="o">)</span>
+
+  <span class="k">val</span> <span class="n">table</span><span class="k">:</span> <span class="kt">Table</span> <span class="o">=</span> <span class="n">datasetContext</span><span class="o">.</span><span class="n">getDataset</span><span class="o">(</span><span class="s">&quot;copyCount&quot;</span><span class="o">)</span>
+  <span class="n">table</span><span class="o">.</span><span class="n">increment</span><span class="o">(</span><span class="k">new</span> <span class="nc">Increment</span><span class="o">(</span><span class="s">&quot;source&quot;</span><span class="o">,</span> <span class="s">&quot;sink&quot;</span><span class="o">,</span> <span class="mi">1L</span><span class="o">))</span>
+<span class="o">})</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+<div class="tab-pane tab-pane-java ">
+<div class="code code-tab">
+<div class="highlight-java">
+<!-- tabbed-parsed-literal start -->
+<div class="highlight"><pre><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">(</span><span class="n">JavaSparkExecutionContext</span> <span class="n">sec</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+  <span class="c1">// Perform RDD operations together with direct dataset access in the same transaction</span>
+  <span class="n">sec</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="k">new</span> <span class="n">TransactionRunnable</span><span class="o">(</span><span class="n">sec</span><span class="o">));</span>
+<span class="o">}</span>
+
+<span class="kd">static</span> <span class="kd">class</span> <span class="nc">TransactionRunnable</span> <span class="kd">implements</span> <span class="n">TxRunnable</span><span class="o">,</span> <span class="n">Serializable</span> <span class="o">{</span>
+
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">JavaSparkExecutionContext</span> <span class="n">sec</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="nf">TransactionRunnable</span><span class="o">(</span><span class="n">JavaSparkExecutionContext</span> <span class="n">sec</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">sec</span> <span class="o">=</span> <span class="n">sec</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">(</span><span class="n">DatasetContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">source</span> <span class="o">=</span> <span class="n">sec</span><span class="o">.</span><span class="na">fromDataset</span><span class="o">(</span><span class="s">&quot;source&quot;</span><span class="o">);</span>
+    <span class="n">sec</span><span class="o">.</span><span class="na">saveAsDataset</span><span class="o">(</span><span class="n">source</span><span class="o">,</span> <span class="s">&quot;sink&quot;</span><span class="o">);</span>
+
+    <span class="n">Table</span> <span class="n">table</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getDataset</span><span class="o">(</span><span class="s">&quot;copyCount&quot;</span><span class="o">);</span>
+    <span class="n">table</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="k">new</span> <span class="n">Increment</span><span class="o">(</span><span class="s">&quot;source&quot;</span><span class="o">,</span> <span class="s">&quot;sink&quot;</span><span class="o">,</span> <span class="mi">1L</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+<!-- tabbed-parsed-literal end -->
+</div>
+
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+<div class="section" id="spark-program-examples">
+<h2><a class="headerlink" href="#spark-program-examples" title="Perma-link to this heading">🔗</a>Spark Program Examples</h2>
+<ul class="simple">
+<li>For examples of <strong>Spark programs,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/spam-classifier.html#examples-spam-classifier" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Spam Classifier</span></a>, <a class="reference external" href="../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Spark K-Means</span></a>, and
+<a class="reference external" href="../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Spark Page Rank</span></a> examples.</li>
+<li>For a longer example, the how-to guide <a class="reference external" href="../source/../../examples-manual/how-to-guides/cdap-spark-guide.html#cdap-spark-guide" title="(in Cask Data Application Platform v3.5.2)"><span>Iterative Data Processing with Apache Spark</span></a> gives another demonstration.</li>
+<li>If you have problems with resolving methods when developing Spark problems in an IDE
+or running Spark programs, see <a class="reference internal" href="../testing/troubleshooting.html#development-troubleshooting-spark"><span>these hints</span></a>.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="views.html"> Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html"> Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-keys.html"> Secure Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Spark Programs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#spark-and-resources">Spark and Resources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cdap-spark-program">CDAP Spark Program</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cdap-sparkexecutioncontext">CDAP SparkExecutionContext</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spark-and-datasets">Spark and Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spark-and-streams">Spark and Streams</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spark-and-services">Spark and Services</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spark-metrics">Spark Metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spark-in-workflows">Spark in Workflows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transactions-and-spark">Transactions and Spark</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spark-program-examples">Spark Program Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifacts.html"> Artifacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata-lineage.html"> Metadata and Lineage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="audit-logging.html"> Audit Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Services" href="services.html" />Services</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Workers" href="workers.html" />Workers</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,470 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KWLFGH');</script>
+    <!-- End Google Tag Manager -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.2">
+    <meta name="git_hash" content="28d974c3a6a8995059f074de1cdf61c0eb530596">
+    <meta name="git_timestamp" content="2016-12-22 16:59:20 -0800">
+    <title>Getting Started &mdash; Cask Data Application Platform 3.5.2 Documentation</title>
+
+    <link rel="canonical" href="http://docs.cask.co/cdap/3.5.2/en/hydrator-manual/getting-started.html">
+
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="_static/tabbed-parsed-literal.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.2 Documentation" href="index.html" />
+    <link rel="next" title="Hydrator Studio" href="studio.html" />
+    <link rel="prev" title="Introduction to Hydrator" href="concepts-design.html" /> 
+  </head>
+  <body role="document">
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWLFGH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="studio.html" title="Hydrator Studio"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="concepts-design.html" title="Introduction to Hydrator"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.2');</script>
+       
+        <li><a href="table-of-contents.html">Cask Hydrator</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="getting-started">
+<span id="cask-hydrator-getting-started"></span><h1><a class="headerlink" href="#getting-started" title="Perma-link to this heading">🔗</a>Getting Started</h1>
+<p>This is a quick tutorial, covering the basics of Hydrator. It assumes that you are familiar with
+CDAP, the concepts of streams, datasets, and applications in CDAP and basic operations
+in the CDAP UI, such as entering events into a stream and exploring a dataset:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><a class="reference internal" href="#install-cdap">Install CDAP</a></li>
+<li><a class="reference internal" href="#start-hydrator">Start Hydrator</a></li>
+<li><a class="reference internal" href="#start-hydrator-studio">Start Hydrator Studio</a></li>
+<li><a class="reference internal" href="#quick-tour-of-hydrator-studio">Quick Tour of Hydrator Studio</a></li>
+<li><a class="reference internal" href="#creating-a-simple-pipeline">Creating a Simple Pipeline</a></li>
+</ol>
+</div></blockquote>
+<div class="section" id="install-cdap">
+<span id="cask-hydrator-getting-started-install"></span><h2><a class="headerlink" href="#install-cdap" title="Perma-link to this heading">🔗</a>Install CDAP</h2>
+<ul class="simple">
+<li>If you haven't already, <a class="reference external" href="source/../../developers-manual/getting-started/standalone/index.html#standalone-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">download and install the CDAP SDK</span></a>.</li>
+<li><a class="reference external" href="source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Start CDAP</span></a>, open up a web browser, and go to the <a class="reference external" href="http://localhost:9999/ns/default/">CDAP UI</a>.</li>
+</ul>
+</div>
+<div class="section" id="start-hydrator">
+<span id="cask-hydrator-getting-started-hydrator"></span><h2><a class="headerlink" href="#start-hydrator" title="Perma-link to this heading">🔗</a>Start Hydrator</h2>
+<ul>
+<li><p class="first">To start Hydrator, either select <em>Cask Hydrator</em> from the pull-down menu in the upper
+left, or go to the <a class="reference external" href="http://localhost:9999/ns/default/hydrator/">Cask Hydrator URL</a>.</p>
+<p>This will take you to a list of pipelines, which will most likely be empty:</p>
+<div class="figure align-center" id="id1" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-no-pipelines.png"><img alt="_images/hydrator-no-pipelines.png" class="bordered-image" src="_images/hydrator-no-pipelines.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>Cask Hydrator:</strong> List of Pipelines</span></p>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="start-hydrator-studio">
+<span id="cask-hydrator-getting-started-hydrator-studio"></span><h2><a class="headerlink" href="#start-hydrator-studio" title="Perma-link to this heading">🔗</a>Start Hydrator Studio</h2>
+<ul>
+<li><p class="first">To start <em>Hydrator Studio</em> and start creating a pipeline, do any of these:</p>
+<ul class="simple">
+<li>Click the <em>+</em> button to add a new pipeline;</li>
+<li>Click the tool bar label <em>Studio</em> (to the left of the label <em>Pipelines</em>); or</li>
+<li>Go to the <a class="reference external" href="http://localhost:9999/ns/default/hydrator/studio?artifactType=cdap-data-pipeline">Cask Hydrator Studio</a> URL</li>
+</ul>
+<p>The Studio will start and you will be creating a new pipeline, by default the first
+pipeline type in the menu, a <em>Data Pipeline - Batch</em>, which is a batch-type pipeline:</p>
+<div class="figure align-center" id="id2" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-studio-empty.png"><img alt="_images/hydrator-studio-empty.png" class="bordered-image" src="_images/hydrator-studio-empty.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>Cask Hydrator Studio:</strong> Empty canvas for creating pipelines</span></p>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="quick-tour-of-hydrator-studio">
+<span id="cask-hydrator-getting-started-studio"></span><h2><a class="headerlink" href="#quick-tour-of-hydrator-studio" title="Perma-link to this heading">🔗</a>Quick Tour of Hydrator Studio</h2>
+<p>Before we begin an example, let's look at the Studio and its different components:</p>
+<div class="figure align-center" id="id3" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-studio-annotated.png"><img alt="_images/hydrator-studio-annotated.png" class="bordered-image" src="_images/hydrator-studio-annotated.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>Cask Hydrator Studio:</strong> Annotations showing components</span></p>
+</div>
+<p>In the upper-left is a menu that specifies which <strong>application template artifact</strong> you are
+currently using for your pipeline. For now, we'll leave it with the default, <em>Data
+Pipeline - Batch</em>.</p>
+<p>In the left sidebar are icons representing the different <strong>available plugins</strong> that work
+with the current application template. They are grouped into different categories, and are
+revealed by clicking the disclosure triangles to the left of each category label
+(<em>Source, Transform, Analytics, Sink, Action</em>).</p>
+<p>In the middle is the grey, gridded <strong>Hydrator canvas</strong>, used to create the pipeline on by
+clicking an available plugin in the left sidebar to add the plugin's icon to the canvas, and
+then by dragging the icon into position.</p>
+<p>The image shows an existing <strong>pipeline</strong>, with three <strong>plugin icons</strong> in place and the
+first two connected.</p>
+<p>Note that icons are of different <strong>colors</strong>, <strong>shapes</strong>, and different shaped <strong>connection
+nodes</strong> (either <strong>circular</strong> for data connections or <strong>square</strong> for control connections).</p>
+<ul class="simple">
+<li><strong>Green:</strong> a data <strong>generator</strong>, with a single <strong>right-side</strong> data connection node, such
+as a <em>source</em> plugin</li>
+<li><strong>Blue:</strong> a data <strong>receiver and generator</strong>, with <strong>both left- and right-side</strong> data
+connection nodes, such as a <em>transform</em> or <em>analytic</em> plugin</li>
+<li><strong>Purple:</strong> a data <strong>receiver</strong>, with only a <strong>left-side</strong> data connection node, such as
+a <em>sink</em> plugin</li>
+<li><strong>Brown:</strong> an <strong>control</strong>, octagonal-shaped, with <strong>both left- and right-side</strong> control
+connection nodes, such as an <em>action</em> plugin</li>
+</ul>
+<p>The small yellow circles with numerals show that there are <strong>missing configuration
+values</strong> for the different plugins.</p>
+<p>Between the icons are grey <strong>connection lines</strong>, with the arrow indicating the direction
+of data flow. Solid connection lines indicate data flow; dashed connection lines indicate
+control flow.</p>
+<p>Now, let's create a pipeline!</p>
+</div>
+<div class="section" id="creating-a-simple-pipeline">
+<span id="cask-hydrator-getting-started-simple"></span><h2><a class="headerlink" href="#creating-a-simple-pipeline" title="Perma-link to this heading">🔗</a>Creating a Simple Pipeline</h2>
+<p>In this example, we'll create a pipeline that reads log file events from a source,
+parses them into separate fields, and writes them as individual records to a table.</p>
+<ol class="arabic">
+<li><p class="first">Start by clicking on the <em>Stream</em> source in the left panel to add a <em>Stream</em> icon to the canvas.</p>
+</li>
+<li><p class="first">Click on the disclosure triangle to the left of the <em>Transform</em> label section to show
+the <em>Transforms</em>, and then click the <em>LogParser</em> transform to add another icon to the canvas.</p>
+</li>
+<li><p class="first">Click on the disclosure triangle to the left of the <em>Sink</em> label section to show the
+<em>Sinks</em>, and then click the <em>Table</em> transform to add another icon to the canvas.</p>
+<p>Your canvas should look like this:</p>
+<div class="figure align-center" id="id4" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-gs-1-1-icons.png"><img alt="_images/hydrator-gs-1-1-icons.png" class="bordered-image" src="_images/hydrator-gs-1-1-icons.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>Cask Hydrator Studio:</strong> Showing icons</span></p>
+</div>
+</li>
+<li><p class="first">Connect the <em>Stream</em> to the <em>LogParser</em> by clicking on the green connection on the
+right-hand side of the <em>Stream</em> and dragging out to the left-side connection of the
+<em>LogParser</em> and lifting the mouse-button when you reach it. Your canvas should now look like this:</p>
+<div class="figure align-center" id="id5" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-gs-1-2-connected.png"><img alt="_images/hydrator-gs-1-2-connected.png" class="bordered-image" src="_images/hydrator-gs-1-2-connected.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>Cask Hydrator Studio:</strong> Showing connection</span></p>
+</div>
+</li>
+<li><p class="first">Similarly, connect the <em>LogParser</em> to the <em>Table</em> to complete the connections. Your
+canvas should now look like this, showing that there are a number of properties to
+be completed on each plugin:</p>
+<div class="figure align-center" id="id6" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-gs-1-3-connected.png"><img alt="_images/hydrator-gs-1-3-connected.png" class="bordered-image" src="_images/hydrator-gs-1-3-connected.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>Cask Hydrator Studio:</strong> Showing connections</span></p>
+</div>
+<p>(If you make a mistake or need to remove a connection, click and drag on the white
+circle just to the right of the connection arrow you'd like to disconnect. When you
+drag off that circle and release the mouse, the connection will be deleted and
+disappear.)</p>
+</li>
+<li><p class="first">To set these properties, click on each icon in turn. When you click an icon, a dialog box
+comes up, showing the properties available for each plugin. Any <strong>required</strong> properties
+are indicated with a red asterisk after the label. In this case, the <em>Stream</em> icon has
+been clicked, and the <em>Label</em>, <em>Stream Name</em>, and <em>Duration</em> are showing as required
+properties:</p>
+<div class="figure align-center" id="id7" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-gs-1-4-stream.png"><img alt="_images/hydrator-gs-1-4-stream.png" class="bordered-image" src="_images/hydrator-gs-1-4-stream.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>Cask Hydrator Studio:</strong> Showing editing of the Stream plugin properties</span></p>
+</div>
+<p>Enter a stream name, such as <em>demoStream</em>, and a duration, such as <em>1d</em>. As the changes
+are automatically saved, you can just close the dialog by either hitting the close button (an <em>X</em> in
+the upper-right corner), the <em>escape</em> key on your keyboard, or clicking outside the dialog box.</p>
+</li>
+<li><p class="first">In a similar fashion, edit the <em>LogParser</em>, setting the <em>Input Name</em> as <em>body</em>, and
+accepting the default <em>Log Format</em> of <em>CLF</em>.</p>
+<p>Edit the <em>Table</em>, and set the <em>Name</em> as <em>demoTable</em> and the <em>Row Field</em> as <em>ts</em> (for timestamp).</p>
+<p>You might notice that the schema displayed has changed as you move from the stream to
+the table; the <em>LogParser</em> modifies the schema, breaking the <em>body</em> into the separate
+fields we require in the table.</p>
+</li>
+<li><p class="first">When you are finished, all icons should show that all required fields have been completed
+by the absence of yellow circles on the icons.</p>
+<p>Name your pipeline by clicking on the text (what else!) <em>Name your pipeline</em> above the
+canvas area, and enter a name such as <em>demoPipeline</em>. No spaces are allowed in pipeline
+names.</p>
+<p>To check that everything is complete, click the validate button, located on buttons
+above the canvas area. These controls are available:</p>
+<div class="figure align-center" id="id8" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-gs-1-5-buttons.png"><img alt="_images/hydrator-gs-1-5-buttons.png" class="bordered-image" src="_images/hydrator-gs-1-5-buttons.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>Cask Hydrator Studio:</strong> Button labels, upper-right toolbar</span></p>
+</div>
+<p>Clicking the <em>Validate</em> button should produce a banner message similar to:</p>
+<div class="highlight-none"><div class="highlight"><pre>Validation success! Pipeline demoPipeline is valid.
+</pre></div>
+</div>
+</li>
+<li><p class="first">If there are any errors, correct them before continuing.</p>
+<p>Otherwise, click the <em>Publish</em> button: the pipeline configuration will be saved; a CDAP
+application will be created, based on the configuration you have set, complete with a
+stream and dataset table; and the application will be ready to run.</p>
+<p>Note that errors can occur at the publishing phase that were not caught during
+validation; resolve those, if any, before continuing.</p>
+<p>The view changes to show the completed application:</p>
+<div class="figure align-center" id="id9" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-gs-1-6-pipeline.png"><img alt="_images/hydrator-gs-1-6-pipeline.png" class="bordered-image" src="_images/hydrator-gs-1-6-pipeline.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>Cask Hydrator:</strong> Demo pipeline</span></p>
+</div>
+<p>Though this pipeline view is not editable, clicking the icons will bring up the same dialogs
+as before, showing which values have been configured for each stage of the pipeline.</p>
+</li>
+<li><p class="first">The pipeline view has controls for launching the application and managing the physical
+application; important buttons to note are the <em>Run</em> (on the left) and the <em>View in
+CDAP</em> (on the right):</p>
+<div class="figure align-center" id="id10" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-gs-1-8-pipeline-annotated.png"><img alt="_images/hydrator-gs-1-8-pipeline-annotated.png" class="bordered-image" src="_images/hydrator-gs-1-8-pipeline-annotated.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>Cask Hydrator:</strong> Control Buttons, pipeline view</span></p>
+</div>
+</li>
+<li><p class="first">Before we can run the pipeline, we need to put data into the stream for the application to
+act on. Navigate to the stream by clicking on the <em>View in CDAP</em> button, then the
+<em>Datasets</em> button, and then the <em>demoStream</em> button:</p>
+<blockquote>
+<div><div class="figure align-center" id="id11" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-gs-1-7-stream.png"><img alt="_images/hydrator-gs-1-7-stream.png" class="bordered-image" src="_images/hydrator-gs-1-7-stream.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>CDAP demoStream:</strong> Status page, with <em>Actions</em> menu for sending events</span></p>
+</div>
+</div></blockquote>
+<p>We can send events to the stream by clicking the <em>Actions</em> menu, selecting <em>Send
+Events</em>, and then clicking <em>Upload</em> in the dialog that follows. Navigate on your drive
+to your CDAP home directory, and locate the file <code class="docutils literal"><span class="pre">examples/resources/accesslog.txt</span></code>
+included in your CDAP SDK. This file contains 10,000 records in CLF format.</p>
+<p>Once the file has been uploaded successfully by CDAP, you should see the <em>Total Events</em>
+for the stream change by 10,000.</p>
+<p>Return to <em>Hydrator</em> by clicking your browser back-button.</p>
+</li>
+<li><p class="first">You can now run the pipeline. Click the <em>Run</em> button, located in the upper-left. (No
+runtime arguments are required; you can click <em>Start Now</em> in the dialog that appears.):</p>
+<p>The pipeline should start running, as indicated by the green <em>Running</em> text indicating
+the status.</p>
+<div class="figure align-center" id="id12" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-gs-1-9-pipeline-running.png"><img alt="_images/hydrator-gs-1-9-pipeline-running.png" class="bordered-image" src="_images/hydrator-gs-1-9-pipeline-running.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>Cask Hydrator:</strong> <em>Running</em> pipeline</span></p>
+</div>
+</li>
+<li><p class="first">The number of records processed will, in time, change from zero to 10,000.
+When the run completes, the status icon will change to <em>Completed</em>. A start time and
+duration should appear in the status panel:</p>
+<div class="figure align-center" id="id13" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-gs-1-10-completed.png"><img alt="_images/hydrator-gs-1-10-completed.png" class="bordered-image" src="_images/hydrator-gs-1-10-completed.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>Cask Hydrator:</strong> Completed run of <em>demoPipeline</em></span></p>
+</div>
+</li>
+<li><p class="first">You can now check the results by looking at the contents of the <em>demoTable</em>. Rather
+than using the <em>View in CDAP</em> button, we'll use a faster method to find the dataset.
+Click on the icon representing the table, to bring up the table configuration. In the
+upper-right of the dialog is a <em>Jump button</em> that brings down a menu with two items on
+it. The first one takes you directly to the table in CDAP. (The second takes you to the
+table in <a class="reference external" href="source/../../tracker-manual/index.html#cask-tracker-index" title="(in Cask Data Application Platform v3.5.2)"><span class="xref std std-ref">Cask Tracker</span></a>.)</p>
+<div class="figure align-center" id="id14" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-gs-1-11-jump-button.png"><img alt="_images/hydrator-gs-1-11-jump-button.png" class="bordered-image" src="_images/hydrator-gs-1-11-jump-button.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>Cask Hydrator:</strong> <em>Jump button</em> in the pipeline configuration dialog</span></p>
+</div>
+<p>Navigate to <em>demoTable</em> dataset, and run a default explore query that selects the first
+five records, by:</p>
+<ul class="simple">
+<li>clicking <em>Explore</em> and then</li>
+<li>clicking <em>Execute SQL</em>:</li>
+</ul>
+<div class="figure align-center" id="id15" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="_images/hydrator-gs-1-12-demotable.png"><img alt="_images/hydrator-gs-1-12-demotable.png" class="bordered-image" src="_images/hydrator-gs-1-12-demotable.png" style="width: 6in;" /></a>
+<p class="caption"><span class="caption-text"><strong>Cask Hydrator:</strong> Results of exploring the <em>demoTable</em></span></p>
+</div>
+<p>Here you can see that the log records have been successfully loaded into the stream,
+parsed by the log parser, and then saved as parsed records to the table. This data is
+now available for further analysis, such looking for unique records, sorting, etc.</p>
+</li>
+</ol>
+<p>This completes the <em>Getting Started</em> for Cask Hydrator.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.2</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">Cask Hydrator: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts-design.html"> Concepts and Design</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#install-cdap">Install CDAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#start-hydrator">Start Hydrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#start-hydrator-studio">Start Hydrator Studio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quick-tour-of-hydrator-studio">Quick Tour of Hydrator Studio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-a-simple-pipeline">Creating a Simple Pipeline</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="studio.html"> Hydrator Studio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-pipelines.html"> Creating Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running-pipelines.html"> Running Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugin-management.html"> Plugin Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugins/index.html"> Plugin Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developing-pipelines.html"> Developing Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developing-plugins/index.html"> Developing Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how-hydrator-works.html"> How Hydrator Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faqs.html"> FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html"> Glossary</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.2/cdap-docs-3.5.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Introduction to Hydrator" href="concepts-design.html" />Introduction to Hydrator</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Hydrator Studio" href="studio.html" />Hydrator Studio</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
