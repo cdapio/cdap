@@ -20,8 +20,8 @@
     
     
     <meta name="git_release" content="4.0.0">
-    <meta name="git_hash" content="b42fa316137c37affef8cfa3f20d0e4b966b41ec">
-    <meta name="git_timestamp" content="2016-12-19 22:18:59 -0800">
+    <meta name="git_hash" content="0c15d1656b6063df42a5fcb2eea7c1bf80b1cb9b">
+    <meta name="git_timestamp" content="2016-12-22 16:57:33 -0800">
     <title>Cask Data Application Platform Release Notes &mdash; Cask Data Application Platform 4.0.0 Documentation</title>
 
     <link rel="canonical" href="http://docs.cask.co/cdap/4.0.0/en/reference-manual/release-notes.html">
@@ -250,7 +250,7 @@
 <h2><a class="headerlink" href="#release-4-0-0" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/4.0.0/index.html">Release 4.0.0</a></h2>
 <div class="section" id="new-features">
 <h3><a class="headerlink" href="#new-features" title="Perma-link to this heading">🔗</a>New Features</h3>
-<ol class="arabic simple">
+<ul class="simple">
 <li>Cask Market<ul>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-7203">CDAP-7203</a> - Adds Cask Market: Cask's <em>Big Data</em> app store, providing an
 ecosystem of pre-built Hadoop solutions, re-usable templates, and plugins. Within CDAP,
@@ -334,18 +334,7 @@ columns for datasets, enforce a common naming convention, and apply masking to P
 (personally identifiable information).</li>
 </ul>
 </li>
-<li>Additional New Features<ul>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-5632">CDAP-5632</a> - New menu option in Cloudera Manager when running the CDAP CSD
-enables running utilities such as the HBaseQueueDebugger.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-6577">CDAP-6577</a> - Improved the UpgradeTool to upgrade tables in namespaces with
-impersonation configured.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-6587">CDAP-6587</a> - Added support for impersonation with CDAP Explore (Hive)
-operations, including enabling exploring of a dataset or running queries against it.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-7287">CDAP-7287</a> - Added support for enabling client certificate-based
-authentication to the CDAP Authentication server.</li>
 </ul>
-</li>
-</ol>
 </div>
 <div class="section" id="improvements">
 <h3><a class="headerlink" href="#improvements" title="Perma-link to this heading">🔗</a>Improvements</h3>
@@ -365,6 +354,8 @@ was being silently ignored.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-5068">CDAP-5068</a> - Added pagination for the search RESTful API. Pagination is
 achieved via <code class="docutils literal"><span class="pre">{{offset}}</span></code>, <code class="docutils literal"><span class="pre">{{limit}}`</span></code>, <code class="docutils literal"><span class="pre">{{numCursors}}</span></code>, and <code class="docutils literal"><span class="pre">{{cursor}}</span></code>
 parameters in the RESTful API.</li>
+<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-5632">CDAP-5632</a> - New menu option in Cloudera Manager when running the CDAP CSD
+enables running utilities such as the HBaseQueueDebugger.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-6183">CDAP-6183</a> - Added the property <code class="docutils literal"><span class="pre">program.container.dist.jars</span></code> to set
 extra jars to be localized to every program container and to be added to classpaths of
 CDAP programs.</li>
@@ -372,6 +363,10 @@ CDAP programs.</li>
 corresponding directory already existed.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-6572">CDAP-6572</a> - The namespace that integration test cases run against by
 default has been made configurable.</li>
+<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-6577">CDAP-6577</a> - Improved the UpgradeTool to upgrade tables in namespaces with
+impersonation configured.</li>
+<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-6587">CDAP-6587</a> - Added support for impersonation with CDAP Explore (Hive)
+operations, including enabling exploring of a dataset or running queries against it.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-6635">CDAP-6635</a> - Added a feature that implements caching of user credentials in
 CDAP system services.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-6837">CDAP-6837</a> - Fixed an issue in WorkerContext that did not properly
@@ -404,6 +399,8 @@ that it launches.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-7240">CDAP-7240</a> - Fixed a NullPointerException being logged on closing network
 connection.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-7284">CDAP-7284</a> - Upgraded the Apache Tephra version to 0.10-incubating.</li>
+<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-7287">CDAP-7287</a> - Added support for enabling client certificate-based
+authentication to the CDAP Authentication server.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-7291">CDAP-7291</a> - Added support for CDH 5.9.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-7319">CDAP-7319</a> - Provided programs more control over when and how transactions
 are executed.</li>
@@ -625,6 +622,15 @@ writing to a dataset does not work in a MapReduce Mapper's <code class="docutils
 </div>
 <div class="section" id="api-changes">
 <h3><a class="headerlink" href="#api-changes" title="Perma-link to this heading">🔗</a>API Changes</h3>
+<ul class="simple">
+<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-1696">CDAP-1696</a> - <strong>Updated the default CDAP Router port to 11015</strong> to avoid
+conflicting with HiveServer2's default port. <strong>Note that this change may cause
+incompatibilities with previous releases if hardcoded in scripts or other programs.</strong></li>
+<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-5897">CDAP-5897</a> - <strong>Updated the default CDAP UI port to 11011</strong> to avoid
+conflicting with Accumulo and Cloudera Manager's Activity Monitor. <strong>Note that this change
+may cause incompatibilities with previous releases if hardcoded in scripts or other
+programs.</strong></li>
+</ul>
 <ul id="release-notes-cdap-6837">
 <li><p class="first"><a class="reference external" href="https://issues.cask.co/browse/CDAP-6837">CDAP-6837</a> - Fixed an issue in <code class="docutils literal"><span class="pre">WorkerContext</span></code> that did not properly
 implement the contract of the Transactional interface. <strong>Note that this fix may cause
