@@ -28,15 +28,16 @@ import co.cask.cdap.app.store.preview.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
-import co.cask.cdap.internal.app.namespace.DefaultNamespaceEnsurer;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.preview.PreviewConfig;
@@ -78,9 +79,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final SystemArtifactLoader systemArtifactLoader;
   private final ProgramRuntimeService programRuntimeService;
   private final ProgramLifecycleService programLifecycleService;
-  private final DefaultNamespaceEnsurer namespaceEnsurer;
   private final PreviewStore previewStore;
   private final DataTracerFactory dataTracerFactory;
+  private final NamespaceAdmin namespaceAdmin;
 
   private volatile PreviewStatus status;
   private ProgramId programId;
@@ -89,22 +90,24 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   DefaultPreviewRunner(DatasetService datasetService, LogAppenderInitializer logAppenderInitializer,
                        ApplicationLifecycleService applicationLifecycleService,
                        SystemArtifactLoader systemArtifactLoader, ProgramRuntimeService programRuntimeService,
-                       ProgramLifecycleService programLifecycleService, DefaultNamespaceEnsurer namespaceEnsurer,
-                       PreviewStore previewStore, DataTracerFactory dataTracerFactory) {
+                       ProgramLifecycleService programLifecycleService,
+                       PreviewStore previewStore, DataTracerFactory dataTracerFactory,
+                       NamespaceAdmin namespaceAdmin) {
     this.datasetService = datasetService;
     this.logAppenderInitializer = logAppenderInitializer;
     this.applicationLifecycleService = applicationLifecycleService;
     this.systemArtifactLoader = systemArtifactLoader;
     this.programRuntimeService = programRuntimeService;
     this.programLifecycleService = programLifecycleService;
-    this.namespaceEnsurer = namespaceEnsurer;
     this.previewStore = previewStore;
     this.status = null;
     this.dataTracerFactory = dataTracerFactory;
+    this.namespaceAdmin = namespaceAdmin;
   }
 
   @Override
   public void startPreview(PreviewRequest<?> previewRequest) throws Exception {
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(previewRequest.getProgram().getNamespaceId()).build());
     programId = previewRequest.getProgram();
     AppRequest<?> request = previewRequest.getAppRequest();
     ArtifactSummary artifactSummary = request.getArtifact();
@@ -203,14 +206,12 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       applicationLifecycleService.start(),
       systemArtifactLoader.start(),
       programRuntimeService.start(),
-      programLifecycleService.start(),
-      namespaceEnsurer.start()
+      programLifecycleService.start()
     ).get();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    namespaceEnsurer.stopAndWait();
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     systemArtifactLoader.stopAndWait();
