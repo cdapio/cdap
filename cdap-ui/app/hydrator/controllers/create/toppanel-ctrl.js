@@ -37,7 +37,7 @@ class HydratorPlusPlusTopPanelCtrl{
     this.myAlertOnValium = myAlertOnValium;
     this.currentPreviewId = null;
     this.showRunTimeArguments = false;
-    // This is for now run time arguments. It is will be a map of macroMap
+    // This is for now run time arguments. It will be a map of macroMap
     // in the future once we get list of macros for a pipeline config.
     this.macrosMap = {};
     this.$stateParams = $stateParams;
@@ -219,7 +219,7 @@ class HydratorPlusPlusTopPanelCtrl{
     let previewConfig = {
       startStages: [],
       endStages: [],
-      runTimeArguments: this.macrosMap
+      runtimeArgs: this.macrosMap
     };
 
     if (this.state.artifact.name === this.GLOBALS.etlDataPipeline) {

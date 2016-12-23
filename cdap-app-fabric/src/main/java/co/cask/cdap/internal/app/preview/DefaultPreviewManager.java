@@ -22,6 +22,7 @@ import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.app.preview.PreviewRequest;
 import co.cask.cdap.app.preview.PreviewRunner;
 import co.cask.cdap.app.preview.PreviewRunnerModule;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -242,10 +243,9 @@ public class DefaultPreviewManager implements PreviewManager {
     );
   }
 
-  private ProgramId getProgramIdFromRequest(ApplicationId preview, AppRequest request) {
-    // TODO remove this when UI passes the program name and type in the AppRequest.
+  private ProgramId getProgramIdFromRequest(ApplicationId preview, AppRequest request) throws BadRequestException {
     if (request.getPreview() == null) {
-      return preview.workflow("DataPipelineWorkflow");
+      throw new BadRequestException("preview config cannot be null");
     }
 
     String programName = request.getPreview().getProgramName();
