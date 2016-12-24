@@ -111,12 +111,10 @@ export default class HeaderActions extends Component {
           >
             <span
               className={classNames('fa', 'fa-cog', {'menu-open' : this.state.settingsOpen})}
-            >
-            </span>
+            />
             <span
               className={classNames('navbar-cog-arrow', {'hidden' : !this.state.settingsOpen})}
-            >
-            </span>
+            />
             <Dropdown
               isOpen={this.state.settingsOpen}
               toggle={this.toggleSettingsDropdown}
@@ -124,24 +122,33 @@ export default class HeaderActions extends Component {
             >
               <DropdownMenu>
                 {topRow}
-                <div className="dropdown-item">
-                  <a href="http://cask.co/community">
+                <a
+                  target="_blank"
+                  href="http://cask.co/community"
+                >
+                  <div className="dropdown-item">
                     <span className="dropdown-icon fa fa-life-ring"></span>
                     {T.translate('features.Navbar.HeaderActions.support')}
-                  </a>
-                </div>
-                <div className="dropdown-item">
-                  <a href="http://cask.co/">
+                  </div>
+                </a>
+                <a
+                  target="_blank"
+                  href="http://cask.co/"
+                >
+                  <div className="dropdown-item">
                     <span className="dropdown-icon fa fa-home"></span>
                     {T.translate('features.Navbar.HeaderActions.caskHome')}
-                  </a>
-                </div>
-                <div className="dropdown-item">
-                  <a href="http://docs.cask.co/">
+                  </div>
+                </a>
+                <a
+                  target="_blank"
+                  href="http://docs.cask.co/"
+                >
+                  <div className="dropdown-item">
                     <span className="dropdown-icon fa fa-file"></span>
                     {T.translate('features.Navbar.HeaderActions.documentation')}
-                  </a>
-                </div>
+                  </div>
+                </a>
                 {signoutRow}
               </DropdownMenu>
             </Dropdown>
