@@ -90,7 +90,7 @@ export default class EntityListHeader extends Component {
     ;
 
     const sortDropdown = (
-          <Dropdown
+        <Dropdown
           disabled={this.props.isSortDisabled}
           isOpen={this.state.isSortExpanded}
           toggle={this.handleSortToggle.bind(this)}
@@ -149,7 +149,7 @@ export default class EntityListHeader extends Component {
                         checked={this.state.activeFilter.indexOf(option.id) !== -1}
                         onChange={this.props.onFilterClick.bind(this, option)}
                       />
-                        {option.displayName}
+                      {option.displayName}
                     </label>
                   </div>
                 </DropdownItem>
