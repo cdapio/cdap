@@ -106,6 +106,7 @@ features:
       sortdropdown-tooltip: Clear Search to enable Sort
       search-disabled-placeholder: Sort by Relevance to Search
       sort: Sort
+      sortLabel: "Sort by "
       sortOptions:
         none: Relevance
         entityNameAsc:
