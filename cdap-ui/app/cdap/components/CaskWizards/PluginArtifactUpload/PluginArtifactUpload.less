@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 @import '../../WizardModal/WizardModal.less';
+
 .artifact-upload-wizard {
   .modal-body {
 
@@ -39,16 +41,15 @@
   }
 }
 
-
- // Specific hack for hydrator.
- body {
-   .modal {
-     .wizard-modal.create-stream-wizard {
-       &.artifact-upload-wizard {
-         &.modal-dialog {
-           margin-top: @wizard-modal-margin-top;
-         }
-       }
-     }
-   }
- }
+// Specific hack for hydrator.
+body {
+  .modal {
+    .wizard-modal.create-stream-wizard {
+      &.artifact-upload-wizard {
+        &.modal-dialog {
+          margin-top: @wizard-modal-margin-top;
+        }
+      }
+    }
+  }
+}
