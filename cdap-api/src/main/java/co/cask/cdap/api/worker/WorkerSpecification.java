@@ -20,12 +20,14 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.retry.RetryPolicy;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Specification for {@link Worker}s.
@@ -38,9 +40,11 @@ public final class WorkerSpecification implements ProgramSpecification, Property
   private final Set<String> datasets;
   private final Resources resources;
   private final int instances;
+  private final RetryPolicy remoteRetryPolicy;
 
   public WorkerSpecification(String className, String name, String description, Map<String, String> properties,
-                             Set<String> datasets, Resources resources, int instances) {
+                             Set<String> datasets, Resources resources, int instances,
+                             @Nullable RetryPolicy remoteRetryPolicy) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -48,6 +52,7 @@ public final class WorkerSpecification implements ProgramSpecification, Property
     this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
     this.resources = resources;
     this.instances = instances;
+    this.remoteRetryPolicy = remoteRetryPolicy;
   }
 
   @Override
@@ -94,5 +99,13 @@ public final class WorkerSpecification implements ProgramSpecification, Property
    */
   public int getInstances() {
     return instances;
+  }
+
+  /**
+   * @return RetryPolicy for remote calls or {@code null} if the CDAP default should be used.
+   */
+  @Nullable
+  public RetryPolicy getRemoteRetryPolicy() {
+    return remoteRetryPolicy;
   }
 }

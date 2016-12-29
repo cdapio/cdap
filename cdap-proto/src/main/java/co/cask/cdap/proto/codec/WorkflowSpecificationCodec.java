@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.codec;
 
+import co.cask.cdap.api.retry.RetryPolicy;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
@@ -43,6 +44,7 @@ public final class WorkflowSpecificationCodec extends AbstractSpecificationCodec
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
     jsonObj.add("nodes", serializeList(src.getNodes(), context, WorkflowNode.class));
     jsonObj.add("localDatasetSpecs", serializeMap(src.getLocalDatasetSpecs(), context, DatasetCreationSpec.class));
+    jsonObj.add("remoteRetryPolicy", context.serialize(src.getRemoteRetryPolicy()));
     return jsonObj;
   }
 
@@ -58,7 +60,9 @@ public final class WorkflowSpecificationCodec extends AbstractSpecificationCodec
     List<WorkflowNode> nodes = deserializeList(jsonObj.get("nodes"), context, WorkflowNode.class);
     Map<String, DatasetCreationSpec> localDatasetSpec = deserializeMap(jsonObj.get("localDatasetSpecs"), context,
                                                                        DatasetCreationSpec.class);
+    RetryPolicy remoteRetryPolicy = context.deserialize(jsonObj.get("remoteRetryPolicy"), RetryPolicy.class);
 
-    return new WorkflowSpecification(className, name, description, properties, nodes, localDatasetSpec);
+    return new WorkflowSpecification(className, name, description, properties,
+                                     nodes, localDatasetSpec, remoteRetryPolicy);
   }
 }

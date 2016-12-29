@@ -19,6 +19,7 @@ package co.cask.cdap.api.mapreduce;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
+import co.cask.cdap.api.retry.RetryPolicy;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,11 +43,13 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
   private final Resources driverResources;
   private final Resources mapperResources;
   private final Resources reducerResources;
+  private final RetryPolicy remoteRetryPolicy;
 
   public MapReduceSpecification(String className, String name, String description, String inputDataSet,
                                 String outputDataSet, Set<String> dataSets, Map<String, String> properties,
                                 @Nullable Resources driverResources,
-                                @Nullable Resources mapperResources, @Nullable Resources reducerResources) {
+                                @Nullable Resources mapperResources, @Nullable Resources reducerResources,
+                                @Nullable RetryPolicy remoteRetryPolicy) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -58,6 +61,7 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
     this.mapperResources = mapperResources;
     this.reducerResources = reducerResources;
     this.dataSets = getAllDatasets(dataSets, inputDataSet, outputDataSet);
+    this.remoteRetryPolicy = remoteRetryPolicy;
   }
 
   @Override
@@ -133,6 +137,14 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
   @Nullable
   public Resources getReducerResources() {
     return reducerResources;
+  }
+
+  /**
+   * @return RetryPolicy for remote calls or {@code null} if the CDAP default should be used.
+   */
+  @Nullable
+  public RetryPolicy getRemoteRetryPolicy() {
+    return remoteRetryPolicy;
   }
 
   private Set<String> getAllDatasets(Set<String> dataSets, String inputDataSet, String outputDataSet) {

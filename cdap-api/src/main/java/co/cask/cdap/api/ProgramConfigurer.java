@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api;
 
+import co.cask.cdap.api.retry.RetryPolicy;
+
 import java.util.Map;
 
 /**
@@ -44,4 +46,13 @@ public interface ProgramConfigurer {
    * @param properties the properties to set
    */
   void setProperties(Map<String, String> properties);
+
+  /**
+   * Sets the {@link RetryPolicy} to use when a retry-able remote failure is encountered.
+   * If none is set, the configured CDAP default values will be used. Different program types have different
+   * default retry policies. This policy can be overridden by preferences and runtime arguments.
+   *
+   * @param retryPolicy the retry policy to set
+   */
+  void setRemoteRetryPolicy(RetryPolicy retryPolicy);
 }

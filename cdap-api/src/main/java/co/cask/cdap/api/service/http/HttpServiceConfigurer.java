@@ -18,6 +18,7 @@ package co.cask.cdap.api.service.http;
 
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.api.retry.RetryPolicy;
 
 import java.util.Map;
 
@@ -33,4 +34,14 @@ public interface HttpServiceConfigurer extends DatasetConfigurer, PluginConfigur
    * @param properties the properties to set
    */
   void setProperties(Map<String, String> properties);
+
+  /**
+   * Sets the {@link RetryPolicy} to use when a retry-able remote failure is encountered.
+   * If none is set, the configured CDAP default values will be used.
+   * This policy can be overridden by preferences and runtime arguments.
+   * Individual service endpoints can override this retry policy through the RetryPolicy annotation.
+   *
+   * @param retryPolicy the retry policy to set
+   */
+  void setRemoteRetryPolicy(RetryPolicy retryPolicy);
 }

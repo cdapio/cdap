@@ -16,34 +16,13 @@
 
 package co.cask.cdap.api.customaction;
 
+import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.workflow.Workflow;
-
-import java.util.Map;
 
 /**
  * Configurer for configuring the {@link CustomAction} in the {@link Workflow}.
  */
-public interface CustomActionConfigurer extends PluginConfigurer {
+public interface CustomActionConfigurer extends PluginConfigurer, ProgramConfigurer {
 
-  /**
-   * Sets the name of the {@link CustomAction}.
-   *
-   * @param name name of the CustomAction
-   */
-  void setName(String name);
-
-  /**
-   * Sets the description of the {@link CustomAction}.
-   *
-   * @param description description of the CustomAction
-   */
-  void setDescription(String description);
-
-  /**
-   * Sets a map of properties that will be available through {@link CustomActionSpecification} at runtime.
-   *
-   * @param properties properties
-   */
-  void setProperties(Map<String, String> properties);
 }

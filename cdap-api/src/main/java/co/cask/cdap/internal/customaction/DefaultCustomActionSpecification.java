@@ -17,12 +17,14 @@ package co.cask.cdap.internal.customaction;
 
 import co.cask.cdap.api.customaction.CustomActionConfigurer;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
+import co.cask.cdap.api.retry.RetryPolicy;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * The default implementation for a {@link CustomActionSpecification}.
@@ -34,17 +36,20 @@ public class DefaultCustomActionSpecification implements CustomActionSpecificati
   private final String description;
   private final Map<String, String> properties;
   private final Set<String> datasets;
+  private final RetryPolicy remoteRetryPolicy;
 
   /**
    * Constructor used by {@link CustomActionConfigurer}.
    */
   public DefaultCustomActionSpecification(String className, String name, String description,
-                                          Map<String, String> properties, Set<String> datasets) {
+                                          Map<String, String> properties, Set<String> datasets,
+                                          RetryPolicy remoteRetryPolicy) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
+    this.remoteRetryPolicy = remoteRetryPolicy;
   }
 
   @Override
@@ -65,6 +70,12 @@ public class DefaultCustomActionSpecification implements CustomActionSpecificati
   @Override
   public Set<String> getDatasets() {
     return datasets;
+  }
+
+  @Nullable
+  @Override
+  public RetryPolicy getRemoteRetryPolicy() {
+    return remoteRetryPolicy;
   }
 
   @Override

@@ -17,6 +17,7 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.retry.RetryPolicy;
 import co.cask.cdap.api.spark.SparkSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -45,6 +46,7 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     jsonObj.add("mainClassName", new JsonPrimitive(src.getMainClassName()));
     jsonObj.add("datasets", serializeSet(src.getDatasets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
+    jsonObj.add("remoteRetryPolicy", context.serialize(src.getRemoteRetryPolicy()));
 
     serializeResources(jsonObj, "client", context, src.getClientResources());
     serializeResources(jsonObj, "driver", context, src.getDriverResources());
@@ -64,13 +66,15 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     String mainClassName = jsonObj.get("mainClassName").getAsString();
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
+    RetryPolicy remoteRetryPolicy = context.deserialize(jsonObj.get("remoteRetryPolicy"), RetryPolicy.class);
 
     Resources clientResources = deserializeResources(jsonObj, "client", context);
     Resources driverResources = deserializeResources(jsonObj, "driver", context);
     Resources executorResources = deserializeResources(jsonObj, "executor", context);
 
     return new SparkSpecification(className, name, description, mainClassName,
-                                  datasets, properties, clientResources, driverResources, executorResources);
+                                  datasets, properties, clientResources, driverResources, executorResources,
+                                  remoteRetryPolicy);
   }
 
   /**

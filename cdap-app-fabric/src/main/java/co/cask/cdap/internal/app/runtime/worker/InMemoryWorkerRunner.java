@@ -71,7 +71,8 @@ public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
     WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
                                                                 workerSpec.getDescription(), workerSpec.getProperties(),
                                                                 workerSpec.getDatasets(), newResources,
-                                                                Integer.valueOf(instances));
+                                                                Integer.valueOf(instances),
+                                                                workerSpec.getRemoteRetryPolicy());
 
     //RunId for worker
     RunId runId = ProgramRunners.getRunId(options);

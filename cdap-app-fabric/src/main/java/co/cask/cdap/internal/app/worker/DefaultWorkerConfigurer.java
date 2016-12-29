@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.worker;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.retry.RetryPolicy;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerConfigurer;
 import co.cask.cdap.api.worker.WorkerSpecification;
@@ -45,6 +46,7 @@ public class DefaultWorkerConfigurer extends DefaultPluginConfigurer implements 
   private int instances;
   private Map<String, String> properties;
   private Set<String> datasets;
+  private RetryPolicy remoteRetryPolicy;
 
   public DefaultWorkerConfigurer(Worker worker, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                  ArtifactRepository artifactRepository,
@@ -86,10 +88,15 @@ public class DefaultWorkerConfigurer extends DefaultPluginConfigurer implements 
     this.properties = new HashMap<>(properties);
   }
 
+  @Override
+  public void setRemoteRetryPolicy(RetryPolicy retryPolicy) {
+    remoteRetryPolicy = retryPolicy;
+  }
+
   public WorkerSpecification createSpecification() {
     // Grab all @Property fields
     Reflections.visit(worker, worker.getClass(), new PropertyFieldExtractor(properties));
     return new WorkerSpecification(worker.getClass().getName(), name, description,
-                                   properties, datasets, resource, instances);
+                                   properties, datasets, resource, instances, remoteRetryPolicy);
   }
 }

@@ -559,7 +559,8 @@ public class DefaultStore implements Store {
                                                                        workerSpec.getProperties(),
                                                                        workerSpec.getDatasets(),
                                                                        workerSpec.getResources(),
-                                                                       instances);
+                                                                       instances,
+                                                                       workerSpec.getRemoteRetryPolicy());
         ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
         metaStore.updateAppSpec(id.getNamespace(), id.getApplication(), id.getVersion(), newAppSpec);
 
