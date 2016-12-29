@@ -27,7 +27,7 @@ const defaultInitialState = {
 };
 
 const version = (state = '', action = defaultAction) => {
-  switch(action.type) {
+  switch (action.type) {
     case VersionActions.updateVersion:
         return action.payload.version;
     default:

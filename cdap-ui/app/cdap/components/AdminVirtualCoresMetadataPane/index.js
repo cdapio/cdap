@@ -27,13 +27,13 @@ var loading = false;
 //   }, 1500);
 // }
 
-function AdminVirtualCoresMetadataPane(){
+function AdminVirtualCoresMetadataPane() {
 
   // simulateLoading();
 
   var stats = [];
 
-  for(var i = 0; i < 4; i++){
+  for (var i = 0; i < 4; i++) {
     stats.push(
       <StatContainer
         isLoading={loading}
@@ -44,10 +44,10 @@ function AdminVirtualCoresMetadataPane(){
 
   var containers = [];
 
-  for(var j = 0 ; j < stats.length; j+=2){
+  for (var j = 0; j < stats.length; j+=2) {
     var temp;
 
-    if(j+1 < stats.length){
+    if (j+1 < stats.length) {
       temp = <div><span>{stats[j]}</span><br/><span>{stats[j+1]}</span></div>;
     }
     else {

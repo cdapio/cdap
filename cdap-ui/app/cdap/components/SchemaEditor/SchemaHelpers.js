@@ -50,7 +50,7 @@ function parseType(type) {
     try {
       type = cdapavsc.parse(type, {wrapUnions: true});
       storedType = type;
-    } catch(e) {
+    } catch (e) {
       return;
     }
   }
@@ -99,7 +99,7 @@ function getParsedSchema(schema) {
 
   try {
     parsed = cdapavsc.parse(schema, { wrapUnions: true });
-  } catch(e) {
+  } catch (e) {
     return;
   }
 
@@ -127,7 +127,7 @@ function checkParsedTypeForError(parsedTypes) {
   let error = '';
   try {
     cdapavsc.parse(parsedTypes);
-  } catch(e) {
+  } catch (e) {
     error = e.message;
   }
   return error;

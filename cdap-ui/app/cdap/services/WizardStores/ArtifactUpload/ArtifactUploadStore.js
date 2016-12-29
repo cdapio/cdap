@@ -69,7 +69,7 @@ const upload = (state = defaultUploadState, action = defaultAction) => {
 const configure = (state = defaultConfigureState, action = defaultAction) => {
   let stateCopy;
 
-  switch(action.type) {
+  switch (action.type) {
     case ArtifactUploadActions.setName:
       stateCopy = Object.assign({}, state, {
         name: action.payload.name

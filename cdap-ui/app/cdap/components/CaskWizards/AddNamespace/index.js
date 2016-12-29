@@ -33,7 +33,7 @@ export default class AddNamespaceWizard extends Component {
       showWizard: isOpen
     });
   }
-  createNamespace(){
+  createNamespace() {
     return PublishNamespace()
       .flatMap(
         () => {

@@ -126,7 +126,7 @@ export default class InformationalWizard extends Component {
       }
     };
 
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.Informational.headerlabel') ;
+    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.Informational.headerlabel');
     return (
       <WizardModal
         title={wizardModalTitle}

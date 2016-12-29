@@ -54,20 +54,20 @@ export default class RouteToNamespace extends Component {
     let selectedNamespace;
     let defaultNamespace;
 
-    //Check #1
-    if(!selectedNamespace){
+    // Check #1
+    if (!selectedNamespace) {
       defaultNamespace = localStorage.getItem('DefaultNamespace');
       let defaultNsFromBackend = list.filter(ns => ns.name === defaultNamespace);
       if (defaultNsFromBackend.length) {
         selectedNamespace = defaultNsFromBackend[0];
       }
     }
-    //Check #2
-    if(!selectedNamespace) {
+    // Check #2
+    if (!selectedNamespace) {
       selectedNamespace = this.findNamespace(list, 'default');
     }
-    //Check #3
-    if(!selectedNamespace){
+    // Check #3
+    if (!selectedNamespace) {
       selectedNamespace = list[0].name;
     } else {
       selectedNamespace = selectedNamespace.name;

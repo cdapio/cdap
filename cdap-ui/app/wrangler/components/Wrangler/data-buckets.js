@@ -32,7 +32,7 @@ export function createBucket(array, columnName, columnType) {
       });
       break;
     case 'boolean':
-      //??????
+      // ??????
       break;
   }
 

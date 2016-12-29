@@ -29,7 +29,7 @@ export default class SchemaEditor extends Component {
     let rows;
     try {
       rows = cdapavsc.parse(state.schema, { wrapUnions: true });
-    } catch(e) {
+    } catch (e) {
       console.log('Error parsing schema: ', e);
     }
     this.state = {
@@ -41,7 +41,7 @@ export default class SchemaEditor extends Component {
       let rows;
       try {
         rows = getParsedSchema(state.schema);
-      } catch(e) {
+      } catch (e) {
         return;
       }
       this.setState({

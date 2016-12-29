@@ -39,7 +39,7 @@ const canFinish = (id, wizardConfig) => {
   return canFinish;
 };
 
-export default class Wizard extends Component{
+export default class Wizard extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -240,7 +240,7 @@ export default class Wizard extends Component{
       });
     let wizardFooter;
     let steps = this.props.wizardConfig.steps;
-    if(this.state.success){
+    if (this.state.success) {
       wizardFooter = onSubmitSuccessMessage();
     }
     if (this.state.error) {

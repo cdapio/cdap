@@ -22,7 +22,7 @@ import shortid from 'shortid';
 require('./Pagination.less');
 
 export default class PaginationDropdown extends Component {
-  constructor(props){
+  constructor(props) {
     super(props);
     this.state = {
       isPaginationExpanded : false
@@ -39,7 +39,7 @@ export default class PaginationDropdown extends Component {
   render() {
     let dropdownItems = [];
 
-    for(let i = 0; i < this.props.numberOfPages; i++){
+    for (let i = 0; i < this.props.numberOfPages; i++) {
       dropdownItems.push(
         <div className="dropdownItems">
           {i + 1}

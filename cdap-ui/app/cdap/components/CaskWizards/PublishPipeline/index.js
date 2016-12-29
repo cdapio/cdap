@@ -42,7 +42,7 @@ export default class PublishPipelineWizard extends Component {
     const args = this.props.input.action.arguments || [];
 
     args.forEach((arg) => {
-      switch(arg.name) {
+      switch (arg.name) {
         case 'name':
           PublishPipelineWizardStore.dispatch({
             type: PublishPipelineAction.setPipelineName,
@@ -91,7 +91,7 @@ export default class PublishPipelineWizard extends Component {
       __ui__: {}
     };
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
-    if(this.props.input.action.type === 'create_pipeline_draft') {
+    if (this.props.input.action.type === 'create_pipeline_draft') {
       return MyUserStoreApi
         .get()
         .flatMap((res) => {
@@ -120,7 +120,7 @@ export default class PublishPipelineWizard extends Component {
   render() {
     let input = this.props.input || {};
     let pkg = input.package || {};
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.PublishPipeline.headerlabel') ;
+    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.PublishPipeline.headerlabel');
     return (
       <div>
         {

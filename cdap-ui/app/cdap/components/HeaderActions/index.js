@@ -39,7 +39,7 @@ export default class HeaderActions extends Component {
   logout() {
     RedirectToLogin({statusCode: 401});
   }
-  toggleSettingsDropdown(){
+  toggleSettingsDropdown() {
     this.setState({
       settingsOpen : !this.state.settingsOpen
     });
@@ -54,7 +54,7 @@ export default class HeaderActions extends Component {
       secured: window.CDAP_CONFIG.securityEnabled
     };
 
-    if(this.state.name && window.CDAP_CONFIG.securityEnabled){
+    if (this.state.name && window.CDAP_CONFIG.securityEnabled) {
       topRow = (
         <div>
           <div className="dropdown-item dropdown-name-row">
