@@ -6,8 +6,8 @@ describe 'cdap::repo' do
       ChefSpec::SoloRunner.new(platform: 'centos', version: 6.6).converge(described_recipe)
     end
 
-    it 'adds cdap-3.6 yum repository' do
-      expect(chef_run).to add_yum_repository('cdap-3.6')
+    it 'adds cdap-4.0 yum repository' do
+      expect(chef_run).to add_yum_repository('cdap-4.0')
     end
 
     it 'deletes cask yum repository' do
@@ -44,8 +44,8 @@ describe 'cdap::repo' do
       ChefSpec::SoloRunner.new(platform: 'ubuntu', version: 12.04).converge(described_recipe)
     end
 
-    it 'adds cdap-3.6 apt repository' do
-      expect(chef_run).to add_apt_repository('cdap-3.6')
+    it 'adds cdap-4.0 apt repository' do
+      expect(chef_run).to add_apt_repository('cdap-4.0')
     end
 
     it 'deletes cask apt repository' do
