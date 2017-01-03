@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _spark:
 
@@ -19,12 +19,12 @@ To process data using Spark, specify ``addSpark()`` in your application specific
     ...
       addSpark(new WordCountProgram());
 
-You must implement the ``Spark`` interface, which requires the
-implementation of three methods:
+It is recommended to implement the ``Spark`` interface by extending the ``AbstractSpark``
+class, which allows the overriding of these three methods:
 
 - ``configure()``
-- ``beforeSubmit()``
-- ``onFinish()``
+- ``initialize()``
+- ``destroy()``
 
 You can extend from the abstract class ``AbstractSpark`` to simplify the implementation::
 
@@ -42,26 +42,16 @@ The configure method is similar to the one found in flows and MapReduce programs
 defines the name, description, and the class containing the Spark program to be executed
 by the Spark framework.
 
-The ``beforeSubmit()`` method is invoked at runtime, before the
+The ``initialize()`` method is invoked at runtime, before the
 Spark program is executed. Because many Spark programs do not
 need this method, the ``AbstractSpark`` class provides a default
-implementation that does nothing::
+implementation that does nothing.
 
-  @Override
-  public void beforeSubmit(SparkContext context) throws Exception {
-    // Do nothing by default
-  }
-
-The ``onFinish()`` method is invoked after the Spark program has
+The ``destroy()`` method is invoked after the Spark program has
 finished. You could perform cleanup or send a notification of program
-completion, if that was required. Like ``beforeSubmit()``, since many Spark programs do not
+completion, if that was required. Like ``initialize()``, since many Spark programs do not
 need this method, the ``AbstractSpark`` class also provides a default
-implementation for this method that does nothing::
-
-  @Override
-  public void onFinish(boolean succeeded, SparkContext context) throws Exception {
-    // Do nothing by default
-  }
+implementation for this method that does nothing.
 
 
 Spark and Resources
