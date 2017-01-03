@@ -19,7 +19,7 @@ import { connect, Provider } from 'react-redux';
 import ApplicationUploadStore from 'services/WizardStores/ApplicationUpload/ApplicationUploadStore';
 import ApplicationUploadActions from 'services/WizardStores/ApplicationUpload/ApplicationUploadActions';
 import FileDnD from 'components/FileDnD';
-require('./UploadStep.less');
+require('./UploadStep.scss');
 
 const mapStateToApplicationUploaderProps = (state) => {
   return {

@@ -15,7 +15,7 @@
  */
 
 import React, {PropTypes} from 'react';
-require('./OverviewPaneCard.less');
+require('./OverviewPaneCard.scss');
 
 const propTypes = {
   name: PropTypes.string,

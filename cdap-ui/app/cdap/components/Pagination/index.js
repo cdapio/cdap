@@ -19,7 +19,7 @@ import classNames from 'classnames';
 import Mousetrap from 'mousetrap';
 import classnames from 'classnames';
 
-require('./Pagination.less');
+require('./Pagination.scss');
 
 export default class Pagination extends Component {
 

@@ -1,0 +1,211 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+@import '../../styles/variables.scss';
+
+.entity-overview {
+  position: absolute;
+  z-index: 1;
+  background: white;
+  margin-bottom: 20px;
+  max-width: 700px;
+  min-height: 500px;
+  max-height: 700px;
+  box-shadow: 0px 4px 10px 1000px rgba(0, 0, 0, 0.3);
+
+  &.right,
+  &.left {
+    top: 0;
+    .overview-header {
+      &:before {
+        width: 0;
+        height: 0;
+        border: 12px solid #464a56;
+        position: absolute;
+        content: ' ';
+        border-top-color: transparent;
+        border-bottom-color: transparent;
+      }
+    }
+    &.application {
+      .overview-header {
+        &:before {
+          border-color: $application-entity-header-bg;
+          border-top-color: transparent;
+          border-bottom-color: transparent;
+        }
+      }
+    }
+    &.datapipeline {
+      .overview-header {
+        &:before {
+          border-color: $datapipeline-entity-header-bg;
+          border-top-color: transparent;
+          border-bottom-color: transparent;
+        }
+      }
+    }
+  }
+  &.bottom {
+    margin-top: 12px;
+    .overview-header {
+      &:before {
+        width: 0;
+        height: 0;
+        border: 12px solid #464a56;
+        position: absolute;
+        content: ' ';
+        top: -24px;
+        right: 8px;
+        border-left-color: transparent;
+        border-top-color: transparent;
+        border-right-color: transparent;
+      }
+    }
+    &.application {
+      .overview-header {
+        &:before {
+          border-color: $application-entity-header-bg;
+          border-top-color: transparent;
+          border-left-color: transparent;
+          border-right-color: transparent;
+        }
+      }
+    }
+    &.datapipeline {
+      .overview-header {
+        &:before {
+          border-color: $datapipeline-entity-header-bg;
+          border-top-color: transparent;
+          border-left-color: transparent;
+          border-right-color: transparent;
+        }
+      }
+    }
+  }
+
+  &.right {
+    .overview-header {
+      &:before {
+        left: -12px;
+        top: 8px;
+        border-left: 0;
+      }
+    }
+  }
+  &.left {
+    .overview-header {
+      &:before {
+        right: -12px;
+        top: 8px;
+        border-right: 0;
+      }
+    }
+  }
+  &.application {
+    .overview-header {
+      background-color: $application-entity-header-bg;
+    }
+  }
+  &.datapipeline {
+    .overview-header {
+      background-color: $datapipeline-entity-header-bg;
+    }
+  }
+  .overview-header {
+    border-bottom: 1px solid #cccccc;
+    background: $navbar-bg;
+    color: white;
+    font-size: 15px;
+    display: flex;
+    > .fa {
+      font-size: 24px;
+      padding: 5px;
+    }
+    span {
+      display: flex;
+      width: calc(100% - 34px - 100px);
+      padding: 10px;
+      border: 0;
+      padding: 5px;
+      flex-direction: column;
+      small {
+        font-size: 70%;
+      }
+      &:last-child {
+        border-right: 0;
+        width: 100px;
+        align-items: center;
+        justify-content: flex-end;
+        flex-direction: row;
+      }
+    }
+    i {
+      line-height: inherit;
+      cursor: pointer;
+    }
+    a {
+      text-decoration: none;
+      color: white;
+      margin: 0 12px;
+      line-height: 2;
+    }
+  }
+  .overview-description {
+    padding: 5px;
+    font-weight: 500;
+    font-size: 12px;
+    color: #999999;
+    background: #ebebeb;
+    border-bottom: 1px solid #cccccc;
+  }
+  .overview-content {
+    position: relative;
+    border-top: 0;
+    .cask-tabs {
+      &.horizontal {
+        > div:first-child {
+          &.cask-tab-headers {
+            height: 50px;
+            line-height: 50px;
+            .cask-tab-head {
+              padding: 0 10px;
+            }
+          }
+        }
+        .tab-content {
+          .tab-pane {
+            .metrics-container {
+              position: static;
+            }
+          }
+        }
+      }
+    }
+    > .metrics-container {
+      position: absolute;
+      right: 0;
+      border-bottom: 0;
+      .metric-item {
+        padding: 5px 20px;
+      }
+    }
+    .metrics-container {
+      .metric-item {
+        border: 0;
+      }
+    }
+  }
+}

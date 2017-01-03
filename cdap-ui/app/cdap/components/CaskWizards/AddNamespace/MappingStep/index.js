@@ -106,7 +106,7 @@ export default function MappingStep() {
           return false;
         }}
       >
-        <FormGroup>
+        <FormGroup row>
           <Col xs="3">
             <Label className="control-label">
               {T.translate('features.Wizard.Add-Namespace.Step2.hdfs-root-directory-label')}
@@ -116,7 +116,7 @@ export default function MappingStep() {
             <InputRootDirectory />
           </Col>
         </FormGroup>
-        <FormGroup>
+        <FormGroup row>
           <Col xs="3">
             <Label className="control-label">
               {T.translate('features.Wizard.Add-Namespace.Step2.hive-db-name-label')}
@@ -126,7 +126,7 @@ export default function MappingStep() {
             <InputHiveDbName />
           </Col>
         </FormGroup>
-        <FormGroup>
+        <FormGroup row>
           <Col xs="3">
             <Label className="control-label">
               {T.translate('features.Wizard.Add-Namespace.Step2.hbase-nm-name-label')}

@@ -26,7 +26,7 @@ import T from 'i18n-react';
 import CardActionFeedback from 'components/CardActionFeedback';
 import FileDataUpload from 'components/FileDataUpload';
 
-require('./Wrangler.less');
+require('./Wrangler.scss');
 
 /**
  * 3 Steps for any transforms:
@@ -301,7 +301,7 @@ export default class Wrangler extends Component {
 
     if (this.state.loading) {
       return (
-        <div className="loading text-center">
+        <div className="loading text-xs-center">
           <div>
             <span className="fa fa-spinner fa-spin"></span>
           </div>
@@ -336,20 +336,22 @@ export default class Wrangler extends Component {
 
               <hr/>
 
-              <div className="checkbox">
+              <div className="checkbox form-check">
                 {/* header */}
-                <label>
+                <label className="form-check-label">
                   <input type="checkbox"
+                    className="form-check-input"
                     onChange={this.handleSetHeaders}
                     checked={this.state.headers}
                   /> {T.translate('features.Wrangler.InputScreen.Options.firstLineAsColumns')}
                 </label>
               </div>
 
-              <div className="checkbox">
+              <div className="checkbox form-check">
                 {/* skipEmptyLines */}
-                <label>
+                <label className="form-check-label">
                   <input type="checkbox"
+                    className="form-check-input"
                     onChange={this.handleSetSkipEmptyLines}
                   /> {T.translate('features.Wrangler.InputScreen.Options.skipEmptyLines')}
                 </label>
@@ -362,7 +364,7 @@ export default class Wrangler extends Component {
 
         <br/>
 
-        <div className="text-center">
+        <div className="text-xs-center">
           <button
             className="btn btn-wrangler wrangle-button"
             onClick={this.onWrangleClick}

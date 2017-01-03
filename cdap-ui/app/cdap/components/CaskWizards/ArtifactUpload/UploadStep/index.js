@@ -20,7 +20,7 @@ import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUp
 import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
 import T from 'i18n-react';
 import FileDnD from 'components/FileDnD';
-require('./UploadStep.less');
+require('./UploadStep.scss');
 
 const mapStateWithDNDFileProps = (state) => {
   return {

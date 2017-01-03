@@ -18,7 +18,7 @@ import React, {Component} from 'react';
 import MarketStore from 'components/Market/store/market-store.js';
 import Fuse from 'fuse.js';
 import MarketPlaceUsecaseEntity from 'components/MarketPlaceUsecaseEntity';
-require('./UsecaseTab.less');
+require('./UsecaseTab.scss');
 
 export default class UsecaseTab extends Component {
   constructor(props) {

@@ -19,7 +19,7 @@ import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import classnames from 'classnames';
 import T from 'i18n-react';
-require('./WrangleHistory.less');
+require('./WrangleHistory.scss');
 
 export default class WrangleHistory extends Component {
   constructor(props) {
@@ -65,7 +65,7 @@ export default class WrangleHistory extends Component {
                   <span>: {history.payload.activeColumn}</span>
                   {/* Commenting out the delete history button since it may come back */}
                   {/* <span
-                    className="fa fa-times-circle pull-right history-delete"
+                    className="fa fa-times-circle float-xs-right history-delete"
                     onClick={this.deleteHistory.bind(this, index)}
                   />*/}
                 </span>
@@ -88,7 +88,7 @@ export default class WrangleHistory extends Component {
           <span className="transform-item-text">
             {T.translate('features.Wrangler.history')}
           </span>
-          <span className={classnames('fa pull-right', {
+          <span className={classnames('fa float-xs-right', {
             'fa-chevron-down': !this.state.showHistory,
             'fa-chevron-up': this.state.showHistory
           })} />

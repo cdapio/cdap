@@ -23,7 +23,7 @@ import isEmpty from 'lodash/isEmpty';
 import {MyStreamApi} from 'api/stream';
 import FileDataUpload from 'components/FileDataUpload';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
-require('./SendEventAction.less');
+require('./SendEventAction.scss');
 
 import cookie from 'react-cookie';
 import Rx from 'rx';
@@ -180,10 +180,10 @@ export default class SendEventAction extends Component {
               size="lg"
             >
               <ModalHeader>
-                <div className="pull-left">
+                <div className="float-xs-left">
                   {headerTitle}
                 </div>
-                <div className="pull-right">
+                <div className="float-xs-right">
                   <div className="close-modal-btn"
                     onClick={this.toggleModal.bind(this)}
                   >
@@ -202,12 +202,12 @@ export default class SendEventAction extends Component {
                   <div className="clearfix send-event-button">
                     {
                       this.state.error ?
-                        <span className="pull-left text-danger"></span>
+                        <span className="float-xs-left text-danger"></span>
                       :
                         null
                     }
                     <button
-                      className="btn btn-primary pull-right"
+                      className="btn btn-primary float-xs-right"
                       onClick={this.action}
                       disabled={(this.noInputYet() || this.state.loading) ? 'disabled' : null}
                     >

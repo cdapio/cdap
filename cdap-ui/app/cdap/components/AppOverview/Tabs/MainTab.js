@@ -17,7 +17,7 @@
 import React, {Component, PropTypes} from 'react';
 import EntityCard from 'components/EntityCard';
 import {parseMetadata} from 'services/metadata-parser';
-require('./MainTab.less');
+require('./MainTab.scss');
 
 export default class MainTab extends Component {
   constructor(props) {

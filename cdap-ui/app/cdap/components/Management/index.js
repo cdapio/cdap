@@ -15,7 +15,7 @@
 */
 
 import React, {Component} from 'react';
-require('./Management.less');
+require('./Management.scss');
 import InfoCard from '../InfoCard';
 import ServiceLabel from '../ServiceLabel';
 import ServiceStatusPanel from '../ServiceStatusPanel';

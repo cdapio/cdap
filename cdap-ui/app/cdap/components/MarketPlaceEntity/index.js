@@ -23,7 +23,7 @@ import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import MarketStore from 'components/Market/store/market-store';
 import T from 'i18n-react';
 
-require('./MarketPlaceEntity.less');
+require('./MarketPlaceEntity.scss');
 export default class MarketPlaceEntity extends Component {
   constructor(props) {
     super(props);
@@ -118,9 +118,9 @@ export default class MarketPlaceEntity extends Component {
               <MarketActionsContainer
                 actions={this.state.entityDetail.actions}
               />
-              <div className="text-right">
+              <div className="text-xs-right">
                 <button
-                  className="btn btn-default"
+                  className="btn btn-secondary"
                   onClick={this.toggleDetailedMode}
                 >
                   Cancel
@@ -130,7 +130,7 @@ export default class MarketPlaceEntity extends Component {
           );
         } else if (this.state.entityDetail.actions.length === 1) {
           return (
-            <div className="text-right">
+            <div className="text-xs-right">
               <button
                 className="btn btn-primary"
                 onClick={() => this.setState({performSingleAction: true})}
@@ -144,7 +144,7 @@ export default class MarketPlaceEntity extends Component {
                 />
               </button>
               <button
-                className="btn btn-default"
+                className="btn btn-secondary"
                 onClick={this.toggleDetailedMode}
               >
                 Cancel
@@ -197,13 +197,13 @@ export default class MarketPlaceEntity extends Component {
               :
                 null
             }
-            <div className="text-center">
+            <div className="text-xs-center">
               <div
                 className={beta}>
                 <img src={MyMarketApi.getIcon(this.props.entity)} />
               </div>
 
-              <div className="package-metadata-container text-left">
+              <div className="package-metadata-container text-xs-left">
                 <strong className="package-label"> {this.props.entity.label} </strong>
                 <div className="package-metadata">
                   <div>

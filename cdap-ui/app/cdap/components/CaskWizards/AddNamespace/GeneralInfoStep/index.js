@@ -81,16 +81,16 @@ export default function GeneralInfoStep() {
           return false;
         }}
       >
-          <FormGroup>
+          <FormGroup row>
             <Col xs="3">
               <Label className="control-label">{T.translate('features.Wizard.Add-Namespace.Step1.name-label')}</Label>
             </Col>
             <Col xs="7">
               <InputNamespaceName />
             </Col>
-            <span className="fa fa-asterisk text-danger pull-left" />
+            <span className="fa fa-asterisk text-danger float-xs-left" />
           </FormGroup>
-          <FormGroup>
+          <FormGroup row>
             <Col xs="3">
               <Label className="control-label">{T.translate('features.Wizard.Add-Namespace.Step1.description-label')}</Label>
             </Col>

@@ -23,7 +23,7 @@ import RecordSchemaRow from 'components/SchemaEditor/RecordSchemaRow';
 // import {parseType} from 'components/SchemaEditor/SchemaHelpers';
 
 
-require('./AbstractSchemaRow.less');
+require('./AbstractSchemaRow.scss');
 
 export default function AbstractSchemaRow({row, onChange}) {
   const renderSchemaRow = (row) => {

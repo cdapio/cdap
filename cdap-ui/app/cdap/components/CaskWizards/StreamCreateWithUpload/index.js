@@ -24,7 +24,7 @@ import NamespaceStore from 'services/NamespaceStore';
 
 import CreateStreamUploadWizardConfig from 'services/WizardConfigs/CreateStreamWithUploadWizardConfig';
 import T from 'i18n-react';
-require('./StreamCreate.less');
+require('./StreamCreate.scss');
 import cookie from 'react-cookie';
 
 export default class StreamCreateWithUploadWizard extends Component {

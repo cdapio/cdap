@@ -16,7 +16,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import T from 'i18n-react';
-require('./EntityCardHeader.less');
+require('./EntityCardHeader.scss');
 import classnames from 'classnames';
 
 const classNames = require('classnames');

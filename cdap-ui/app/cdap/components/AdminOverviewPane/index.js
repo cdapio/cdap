@@ -15,7 +15,7 @@
  */
 
 import React, {PropTypes} from 'react';
-require('./AdminOverviewPane.less');
+require('./AdminOverviewPane.scss');
 import OverviewPaneCard from '../OverviewPaneCard/index.js';
 var shortid = require('shortid');
 import T from 'i18n-react';

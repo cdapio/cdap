@@ -21,7 +21,7 @@ import isObject from 'lodash/isObject';
 import shortid from 'shortid';
 import 'whatwg-fetch';
 import {contructUrl, insertAt, removeAt, humanReadableDate} from 'services/helpers';
-require('./ExploreModal.less');
+require('./ExploreModal.scss');
 import NamespaceStore from 'services/NamespaceStore';
 
 export default class ExploreModal extends Component {
@@ -224,19 +224,19 @@ export default class ExploreModal extends Component {
               <a
                 href={this.getDownloadUrl(query)}
                 onClick={this.updateQueryState.bind(this, query)}
-                className="btn btn-default"
+                className="btn btn-secondary"
                 disabled={!query.is_active || query.status !== 'FINISHED' ? 'disabled' : null}
               >
                 <i className="fa fa-download"></i>
               </a>
               <button
-                className="btn btn-default"
+                className="btn btn-secondary"
                 onClick={this.showPreview.bind(this, query)}
                 disabled={!query.is_active || query.status !== 'FINISHED' ? 'disabled' : null}
               >
                 <i className="fa fa-eye"></i>
               </button>
-              <button className="btn btn-default" onClick={this.setQueryString.bind(this, query)}>
+              <button className="btn btn-secondary" onClick={this.setQueryString.bind(this, query)}>
                 <i className="fa fa-clone"></i>
               </button>
             </div>
@@ -282,7 +282,7 @@ export default class ExploreModal extends Component {
               </div>
             )
           :
-            <div className="text-center">
+            <div className="text-xs-center">
               No Results
             </div>
         );
@@ -292,7 +292,7 @@ export default class ExploreModal extends Component {
           <td colSpan="4" className="preview-cell">
             {
               query.schema && !query.preview ?
-                <div className="fa fa-spinner fa-spin text-center"></div>
+                <div className="fa fa-spinner fa-spin text-xs-center"></div>
               :
                 previewContent(query)
             }
@@ -310,7 +310,7 @@ export default class ExploreModal extends Component {
           Explore Dataset
           <div
            onClick={this.props.onClose}
-           className="pull-right"
+           className="float-xs-right"
           >
             <span className="fa fa-times" />
           </div>
@@ -327,12 +327,12 @@ export default class ExploreModal extends Component {
             <div className="clearfix">
               {
                 this.state.error ?
-                  <span className="pull-left text-danger">{this.state.error}</span>
+                  <span className="float-xs-left text-danger">{this.state.error}</span>
                 :
                   null
               }
               <button
-                className="btn btn-primary pull-right"
+                className="btn btn-primary float-xs-right"
                 onClick={this.submitQuery}
                 disabled={this.state.loading ? 'disabled': null}
               >
@@ -361,7 +361,7 @@ export default class ExploreModal extends Component {
                     <tr>
                       <td
                         colSpan="4"
-                        className="text-center"
+                        className="text-xs-center"
                       > No Results</td>
                     </tr>
                   :

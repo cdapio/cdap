@@ -260,7 +260,7 @@ export default class ChartPanel extends Component {
           <h5>
             <span>{graph.label}</span>
             <span
-              className={classnames('fa pull-right', {
+              className={classnames('fa float-xs-right', {
                 'fa-chevron-up': this.state.isExpanded,
                 'fa-chevron-down': !this.state.isExpanded
               })}

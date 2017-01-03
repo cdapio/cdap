@@ -21,7 +21,7 @@ import classnames from 'classnames';
 import NamespaceStore from 'services/NamespaceStore';
 import Rx from 'rx';
 
-require('./JumpButton.less');
+require('./JumpButton.scss');
 
 export default class JumpButton extends Component {
   constructor(props) {
@@ -125,8 +125,8 @@ export default class JumpButton extends Component {
     return (
       <ButtonDropdown isOpen={this.state.dropdownOpen} toggle={() => {}}>
         <DropdownToggle className="jump-button clearfix" onClick={this.toggle}>
-          <span className="pull-left">{T.translate('features.JumpButton.buttonLabel')}</span>
-          <span className={classnames('fa pull-right', {
+          <span className="float-xs-left">{T.translate('features.JumpButton.buttonLabel')}</span>
+          <span className={classnames('fa float-xs-right', {
             'fa-chevron-down': !this.state.dropdownOpen,
             'fa-chevron-up': this.state.dropdownOpen
           })} />

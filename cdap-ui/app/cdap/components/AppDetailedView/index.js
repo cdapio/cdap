@@ -29,7 +29,7 @@ import AppDetailedViewTabConfig from './AppDetailedViewTabConfig';
 import ConfigurableTab from 'components/ConfigurableTab';
 import ApplicationMetrics from 'components/EntityCard/ApplicationMetrics';
 
-require('./AppDetailedView.less');
+require('./AppDetailedView.scss');
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import {fetchTables} from 'services/ExploreTables/ActionCreator';
 
@@ -126,7 +126,7 @@ export default class AppDetailedView extends Component {
                 {this.state.entityDetail.name}
                 <small>1.0.0</small>
               </span>
-              <span className="text-right hidden">
+              <span className="text-xs-right hidden">
                 <i className="fa fa-info fa-lg"></i>
               </span>
             </div>

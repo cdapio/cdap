@@ -16,7 +16,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import {Modal} from 'reactstrap';
-require('./Alert.less');
+require('./Alert.scss');
 
 export default class Alert extends Component {
   constructor(props) {

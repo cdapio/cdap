@@ -17,7 +17,7 @@
 import React, { Component, PropTypes } from 'react';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 
-require('./c3.less');
+require('./c3.scss');
 
 export default class Charts extends Component {
   constructor(props) {

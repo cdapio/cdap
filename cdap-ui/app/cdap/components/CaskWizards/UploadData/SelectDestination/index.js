@@ -19,7 +19,7 @@ import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import UploadDataActions from 'services/WizardStores/UploadData/UploadDataActions';
 import SelectWithOptions from 'components/SelectWithOptions';
 import {Input, Form, FormGroup, Col, Label} from 'reactstrap';
-require('./SelectDestination.less');
+require('./SelectDestination.scss');
 import T from 'i18n-react';
 
 const mapStateToDestinationTypeProps = (state) => {
@@ -74,7 +74,7 @@ export default function SelectDestination() {
       <Form
         className="form-horizontal select-destination-step"
       >
-      <FormGroup>
+      <FormGroup row>
         <Col xs="3">
           <Label className="control-label">{T.translate('features.Wizard.UploadData.Step2.destinationtype')}</Label>
         </Col>
@@ -82,7 +82,7 @@ export default function SelectDestination() {
           <DestinationType />
         </Col>
       </FormGroup>
-      <FormGroup>
+      <FormGroup row>
         <Col xs="3">
           <Label className="control-label">{T.translate('features.Wizard.UploadData.Step2.destinationname')}</Label>
         </Col>

@@ -18,10 +18,10 @@ import React, {Component, PropTypes} from 'react';
 import ReactDOM from 'react-dom';
 
 require('../ui-utils/url-generator');
-require('font-awesome-webpack!./styles/font-awesome.config.js');
-require('./styles/lib-styles.less');
-require('./styles/common.less');
-require('./styles/main.less');
+require('font-awesome-sass-loader!./styles/font-awesome.config.js');
+require('./styles/lib-styles.scss');
+require('./styles/common.scss');
+require('./styles/main.scss');
 
 import Management from 'components/Management';
 import Dashboard from 'components/Dashboard';

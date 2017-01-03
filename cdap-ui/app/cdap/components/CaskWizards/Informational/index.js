@@ -20,7 +20,7 @@ import InformationalWizardConfig from 'services/WizardConfigs/InformationalWizar
 import InformationalWizardStore from 'services/WizardStores/Informational/InformationalStore';
 import InformationalActions from 'services/WizardStores/Informational/InformationalActions';
 import {MyMarketApi} from 'api/market';
-require('./Informational.less');
+require('./Informational.scss');
 
 import T from 'i18n-react';
 

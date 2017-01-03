@@ -15,7 +15,7 @@
  */
 
 import React, {PropTypes} from 'react';
-require('./ConfigureButton.less');
+require('./ConfigureButton.scss');
 
 
 const propTypes  = {

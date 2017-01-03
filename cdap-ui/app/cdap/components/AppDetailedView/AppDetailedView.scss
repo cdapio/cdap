@@ -1,0 +1,161 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.scss';
+$height-off-set: $height-of-header + $height-of-footer;
+
+.app-detailed-view {
+  height: calc(100vh - #{$height-off-set});
+
+  &.application {
+    .app-detailed-view-header {
+      background-color: $application-entity-header-bg;
+    }
+  }
+  &.datapipeline {
+    .app-detailed-view-header {
+      background-color: $datapipeline-entity-header-bg;
+    }
+  }
+  .app-detailed-view-header {
+    border-bottom: 1px solid #cccccc;
+    background: $navbar-bg;
+    color: white;
+    font-size: 15px;
+    display: flex;
+    > .fa {
+      font-size: 24px;
+      padding: 5px;
+    }
+    span {
+      display: flex;
+      width: calc(100% - 34px - 100px);
+      padding: 10px;
+      border: 0;
+      padding: 5px;
+      flex-direction: column;
+      small {
+        font-size: 70%;
+      }
+      &:last-child {
+        border-right: 0;
+        width: 100px;
+        align-items: center;
+        justify-content: flex-end;
+        flex-direction: row;
+      }
+    }
+    i {
+      line-height: inherit;
+      cursor: pointer;
+    }
+    a {
+      text-decoration: none;
+      color: white;
+      margin: 0 12px;
+      line-height: 2;
+    }
+  }
+  .app-detailed-view-description {
+    padding: 5px;
+    font-weight: 500;
+    font-size: 12px;
+    color: #999999;
+    background: #ebebeb;
+    border-bottom: 1px solid #cccccc;
+  }
+  .fa.fa-spinner.loading-spinner {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: gray;
+  }
+  .app-detailed-view-content {
+    position: relative;
+    border-top: 0;
+    height: calc(100% - 75px);
+
+    .empty-message {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 20px;
+      font-weight: 500;
+    }
+    .cask-tabs {
+      &.horizontal {
+        > div:first-child {
+          &.cask-tab-headers {
+            height: 50px;
+            line-height: 50px;
+            .cask-tab-head {
+              padding: 0 10px;
+            }
+          }
+        }
+        .tab-content {
+          .tab-pane {
+            width: 100%;
+            overflow: auto;
+            .metrics-container {
+              position: static;
+            }
+          }
+        }
+      }
+    }
+    > .metrics-container {
+      position: absolute;
+      right: 0;
+      border-bottom: 0;
+      display: flex;
+
+      .metric-item {
+        -webkit-box-flex: 1;
+        flex-grow: 1;
+        text-align: center;
+        border: 0;
+        padding: 5px 20px;
+
+        &:not(:last-child) {
+          border-right: 1px solid #cccccc;
+        }
+        p {
+          margin-bottom: 4px;
+          color: #333333;
+        }
+        .metric-header {
+          font-weight: 500;
+          font-size: 11px;
+          margin-bottom: 3px;
+          color: #999999;
+        }
+      }
+    }
+    .metrics-container {
+      display: flex;
+
+      .metric-item {
+        border: 0;
+        &:not(:last-child) {
+          border-right: 1px solid #cccccc;
+        }
+      }
+    }
+  }
+}
