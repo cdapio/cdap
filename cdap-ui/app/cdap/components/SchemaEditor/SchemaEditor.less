@@ -13,11 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 @import '../../styles/mixins.less';
+
 .schema-editor {
   max-width: 400px;
   min-height: 1500px;
-  .schema-header{
+  .schema-header {
     padding: 5px 0;
     .field-name {
       width: ~"calc(100% - 80px - 75px)";
@@ -42,18 +44,18 @@
   .schema-body {
     .schema-row {
       &:first-child {
-        border-top: 1px solid #ccc;
+        border-top: 1px solid #cccccc;
         border-top: 0;
       }
-      border-top: 1px solid #ccc;
+      border-top: 1px solid #cccccc;
       &:not(.nested) {
         box-shadow: none;
         &.borderless {
           border-top: 0;
         }
       }
-      >.abstract-schema-row {
-        box-shadow: 1px -2px 1px rgba(0,0,0,0.25);
+      > .abstract-schema-row {
+        box-shadow: 1px -2px 1px rgba(0, 0, 0, 0.25);
       }
       > .field-name {
         width: ~"calc(100% - 80px - 75px)";
@@ -121,7 +123,7 @@
         border-bottom-right-radius: 0;
         border-top-right-radius: 0;
 
-        >.field-name {
+        > .field-name {
           box-shadow: rgba(1, 0, 0, 0.25) 1px -1px 7px;
           border-radius: 4px;
           position: relative;

@@ -16,7 +16,8 @@
 
 @import "../../styles/variables.less";
 @plus-button-color: #52b746;
-@namespace-dropdown-color: #333;
+@namespace-dropdown-color: #333333;
+
 .cask-header {
   .active {
     color: #ff6600;
@@ -30,7 +31,7 @@
             right: 410px;
             color: rgba(117, 117, 117, 0.7);
             font-size: 13px;
-            color: hsla(0,0%,46%,.7);
+            color: hsla(0, 0%, 46%, 0.7); // why are we using hsla??
             span {
               &:nth-child(2) {
                 margin-left: 5px;
@@ -111,7 +112,7 @@
               background-color: transparent;
             }
             .dropdown-name {
-              color: #FC6600;
+              color: #fc6600;
               margin-left: 5px;
             }
             .dropdown-name-icon {

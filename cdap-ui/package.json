@@ -58,7 +58,7 @@
     "gulp-postcss": "6.1.0",
     "gulp-replace": "0.5.4",
     "gulp-rev": "7.0.0",
-    "gulp-stylelint": "2.0.2",
+    "gulp-stylelint": "3.7.0",
     "gulp-uglify": "1.5.1",
     "gulp-util": "3.0.7",
     "gulp-wrapper": "1.0.0",
@@ -71,6 +71,7 @@
     "postcss-loader": "1.1.1",
     "react-addons-test-utils": "15.3.2",
     "style-loader": "0.13.1",
+    "stylelint-webpack-plugin": "0.4.2",
     "url-loader": "0.5.7",
     "webpack-livereload-plugin": "0.9.0"
   },
