@@ -17,6 +17,7 @@
 package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.TxRunnable;
@@ -31,7 +32,6 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowInfo;
@@ -52,8 +52,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * A {@link SparkClientContext} only being used during {@link Spark#beforeSubmit(SparkClientContext)}
- * and {@link Spark#onFinish(boolean, SparkClientContext)} calls.
+ * A {@link SparkClientContext} only being used by a Spark program's {@link ProgramLifecycle#initialize}.
  */
 final class BasicSparkClientContext implements SparkClientContext {
 

@@ -50,7 +50,7 @@ The interesting part is the creation of the dataset *converted*:
 
 The MapReduce Program
 ---------------------
-In its ``beforeSubmit`` method, the ``StreamConversionMapReduce`` determines its logical start time,
+In its ``initialize()`` method, the ``StreamConversionMapReduce`` determines its logical start time,
 and it configures the *events* stream as its input and the *converted* dataset as its output:
 
 - This is a map-only MapReduce program; in other words, it has no reducers,
