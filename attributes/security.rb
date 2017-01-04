@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Attribute:: security
 #
-# Copyright © 2013-2015 Cask Data, Inc.
+# Copyright © 2013-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,18 +49,12 @@ default['cdap']['security']['realmfile'] = {}
 default['cdap']['security']['ssl_common_name'] = node['fqdn']
 
 if node['cdap']['cdap_site'].key?('kerberos.auth.enabled') && node['cdap']['cdap_site']['kerberos.auth.enabled'].to_s == 'true'
-  include_attribute 'krb5_utils'
-
-  # For keytab creation
-  default['krb5_utils']['krb5_service_keytabs']['cdap'] = { 'owner' => 'cdap', 'group' => 'cdap', 'mode' => '0640' }
-
   default_realm = node['krb5']['krb5_conf']['realms']['default_realm'].upcase
-
   # For cdap-master init script
   if node['cdap'].key?('security') && node['cdap']['security'].key?('cdap_keytab')
     default['cdap']['kerberos']['cdap_keytab'] = node['cdap']['security']['cdap_keytab']
   else
-    default['cdap']['kerberos']['cdap_keytab'] = "#{node['krb5_utils']['keytabs_dir']}/cdap.service.keytab"
+    default['cdap']['kerberos']['cdap_keytab'] = "#{node['krb5']['keytabs_dir']}/cdap.service.keytab"
     # Backwards compat
     default['cdap']['security']['cdap_keytab'] = node['cdap']['kerberos']['cdap_keytab']
   end

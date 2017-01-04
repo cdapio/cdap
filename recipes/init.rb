@@ -54,3 +54,41 @@ end
     end
   end
 end
+
+include_recipe 'krb5' if hadoop_kerberos?
+
+princ =
+  if node['cdap']['cdap_site'].key?('cdap.master.kerberos.principal')
+    node['cdap']['cdap_site']['cdap.master.kerberos.principal']
+  else
+    "#{hdfs_user}/_HOST"
+  end
+
+# Set principal with _HOST in config, so configs match across cluster
+node.default['cdap']['cdap_site']['cdap.master.kerberos.principal'] = princ
+# Substitite _HOST with FQDN, for creating actual principals
+princ.gsub!('_HOST', node['fqdn'])
+
+krb5_principal princ do
+  randkey true
+  action :create
+  only_if { hadoop_kerberos? }
+end
+
+keytab =
+  if node['cdap']['cdap_site'].key?('cdap.master.kerberos.keytab')
+    node['cdap']['cdap_site']['cdap.master.kerberos.keytab']
+  else
+    "#{node['krb5']['keytabs_dir']}/cdap.service.keytab"
+  end
+
+node.default['cdap']['cdap_site']['cdap.master.kerberos.keytab'] = keytab
+
+krb5_keytab keytab do
+  principals [princ]
+  owner 'cdap'
+  group 'cdap'
+  mode '0640'
+  action :create
+  only_if { hadoop_kerberos? }
+end
