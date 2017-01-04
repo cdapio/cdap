@@ -4,15 +4,15 @@ maintainer_email 'ops@cask.co'
 license          'Apache 2.0'
 description      'Installs/Configures Cask Data Application Platform (CDAP)'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
-version          '2.26.2'
+version          '2.27.0'
 
-%w(apt ark java nodejs ntp yum yum-epel).each do |cb|
+%w(ambari apt java nodejs ntp yum yum-epel).each do |cb|
   depends cb
 end
 
+depends 'ark', '< 2.2.0' # Fails saying "owner" isn't a valid attribute
 depends 'hadoop', '>= 2.0.0'
 depends 'krb5', '>= 2.2.0'
-recommends 'ambari' # ~FC053
 
 %w(amazon centos debian redhat scientific ubuntu).each do |os|
   supports os

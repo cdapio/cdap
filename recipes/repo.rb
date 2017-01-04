@@ -24,7 +24,7 @@ when 'debian'
   include_recipe 'apt'
   codename = node['lsb']['codename']
   case codename
-  when 'raring', 'saucy', 'trusty'
+  when 'raring', 'saucy', 'trusty', 'utopic', 'vivid', 'wily', 'xenial'
     codename = 'precise'
     Chef::Log.warn('Overriding repository distribution to Precise')
   end
