@@ -14,6 +14,7 @@
     "ubuntu": ">= 0.0.0"
   },
   "dependencies": {
+    "ambari": ">= 0.0.0",
     "apt": ">= 0.0.0",
     "hadoop": ">= 0.0.0",
     "java": ">= 0.0.0",
@@ -25,7 +26,7 @@
     "krb5_utils": ">= 0.0.0"
   },
   "recommendations": {
-    "ambari": ">= 0.0.0"
+
   },
   "suggestions": {
 
