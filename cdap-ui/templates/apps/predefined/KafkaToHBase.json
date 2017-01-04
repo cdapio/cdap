@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-etl-realtime",
         "scope": "SYSTEM",
-        "version": "3.5.2"
+        "version": "3.5.3-SNAPSHOT"
     },
     "description": "Ingests in real time from Kafka into an HBase table",
     "name": "KafkaToHbase",
