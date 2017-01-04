@@ -46,7 +46,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   public static final RouteDestination STREAMS_SERVICE = new RouteDestination(Constants.Service.STREAMS);
   public static final RouteDestination PREVIEW_HTTP = new RouteDestination(Constants.Service.PREVIEW_HTTP);
 
-  private Map<MultiKey, RouteDestination> _routeDestinationCache = Collections.synchronizedMap(
+  private Map<MultiKey, RouteDestination> routeDestinationCache = Collections.synchronizedMap(
     new HashMap<MultiKey, RouteDestination>());
 
   /**
@@ -93,10 +93,10 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       String version = uriParts[6];
       MultiKey cacheKey = new MultiKey(serviceName, version);
 
-      if (!_routeDestinationCache.containsKey(cacheKey)) {
-        _routeDestinationCache.put(cacheKey, new RouteDestination(serviceName, version));
+      if (!routeDestinationCache.containsKey(cacheKey)) {
+        routeDestinationCache.put(cacheKey, new RouteDestination(serviceName, version));
       }
-      return _routeDestinationCache.get(cacheKey);
+      return routeDestinationCache.get(cacheKey);
     } else if ((uriParts.length >= 9) && "services".equals(uriParts[5]) && "methods".equals(uriParts[7])) {
       //User defined services handle methods on them:
       //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
