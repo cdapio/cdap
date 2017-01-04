@@ -42,6 +42,7 @@ import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -197,7 +198,7 @@ public class CLIMainTest extends CLITestBase {
   @Test
   public void testProgram() throws Exception {
     String flowId = FakeApp.FLOWS.get(0);
-    ProgramId flow = fakeAppId.flow(flowId);
+    final ProgramId flow = fakeAppId.flow(flowId);
 
     String qualifiedFlowId = FakeApp.NAME + "." + flowId;
     testCommandOutputContains(cli, "start flow " + qualifiedFlowId, "Successfully started flow");
@@ -205,6 +206,13 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "stop flow " + qualifiedFlowId, "Successfully stopped flow");
     assertProgramStatus(programClient, flow, "STOPPED");
     testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        List<RunRecord> output = programClient.getProgramRuns(flow, "KILLED", 0L, Long.MAX_VALUE, Integer.MAX_VALUE);
+        return output != null && output.size() != 0;
+      }
+    }, 5, TimeUnit.SECONDS);
     testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "KILLED");
     testCommandOutputContains(cli, "get flow live " + qualifiedFlowId, flowId);
   }
