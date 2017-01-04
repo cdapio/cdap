@@ -167,7 +167,14 @@ window.getOldCDAPUrl = function(navigationObj = {}) {
     'datasets.detail.overview.explore': '/datasets/:datasetId/overview/explore',
     'streams.detail.overview.status': '/streams/:streamId/overview/status',
     'streams.detail.overview.explore': '/streams/:streamId/overview/explore',
-    'apps.detail.overview.status': '/apps/:appId/overview/status'
+    'apps.detail.overview.status': '/apps/:appId/overview/status',
+    'apps.detail.overview.programs': '/apps/:appId/overview/programs',
+    'mapreduce.detail': '/apps/:appId/programs/mapreduce/:programId/runs',
+    'workflows.detail': '/apps/:appId/programs/workflows/:programId/runs',
+    'workers.detail': '/apps/:appId/programs/workers/:programId/runs',
+    'spark.detail': '/apps/:appId/programs/spark/:programId/runs',
+    'flows.detail': '/apps/:appId/programs/flows/:programId/runs',
+    'services.detail': '/apps/:appId/programs/services/:programId/runs'
   };
   let url = baseUrl + stateToUrlMap[stateName || 'hydrator'];
   url = buildCustomUrl(url, stateParams);
