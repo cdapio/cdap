@@ -125,7 +125,7 @@ function isDescendant(parent, child) {
 
 function getArtifactNameAndVersion (nameWithVersion) {
   // core-plugins-3.4.0-SNAPSHOT.jar
-  // extracts version from the jar file name. We then get the name of the artifact (that is from the beginning until version beginning)
+  // extracts version from the jar file name. We then get the name of the artifact (that is from the beginning up to version beginning)
   let regExpRule = new RegExp('(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:[.\\-](.*))?$');
   let version = regExpRule.exec(nameWithVersion)[0];
   let name = nameWithVersion.substr(0, nameWithVersion.indexOf(version) -1);

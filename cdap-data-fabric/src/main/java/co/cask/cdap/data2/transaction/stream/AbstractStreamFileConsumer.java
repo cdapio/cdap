@@ -523,7 +523,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   /**
    * Returns the initial scanned states for the given entry key.
    *
-   * Conceptually scan will perform from the given entry key until the end of entry represented
+   * Conceptually scan will perform from the given entry key up to the end of entry represented
    * by that stream file (i.e. offset = Long.MAX_VALUE) as indicated by the row prefix (row prefix uniquely identify
    * the stream file).
    * However, due to memory limit, scanning is done progressively until it sees an entry with state value

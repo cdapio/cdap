@@ -90,7 +90,7 @@ public class Join<JOIN_KEY, INPUT_RECORD, OUT> {
   private void getCartesianProduct(List<List<JoinElement<INPUT_RECORD>>> list, int index,
                                    List<JoinElement<INPUT_RECORD>> joinRow,
                                    Set<String> joinRowInputs, Set<String> requiredInputs) throws Exception {
-    // Check until the end of the list and emit only if records from all the required inputs are present in joinElements
+    // Check up to the end of the list and emit only if records from all the required inputs are present in joinElements
     if (index == list.size() && joinRowInputs.containsAll(requiredInputs)) {
       emitter.emit(joiner.merge(joinKey, joinRow));
       return;

@@ -122,6 +122,7 @@ public final class FileMetaDataManager {
 
   /**
    * Returns a list of log files for a logging context.
+   *
    * @param loggingContext logging context.
    * @return Sorted map containing key as start time, and value as log file.
    */
@@ -155,7 +156,7 @@ public final class FileMetaDataManager {
   }
 
   /**
-   * Scans meta data and gathers all the files older than untilTime
+   * Scans meta data and gathers all the files up to a limited number of records.
    *
    * @param startTableKey row key for the scan and column from where scan will be started
    * @param limit batch size for number of columns to be read
@@ -232,7 +233,8 @@ public final class FileMetaDataManager {
   }
 
   /**
-   * Deletes meta data until a given time, while keeping the latest meta data even if less than untilTime.
+   * Deletes meta data until a given time, while keeping the latest meta data even if less than the given time.
+   *
    * @param untilTime time until the meta data will be deleted.
    * @param callback callback called before deleting a meta data column.
    * @return total number of columns deleted.

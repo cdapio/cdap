@@ -215,7 +215,7 @@ public class AvroFileReader {
         skipLen = DEFAULT_SKIP_LEN;
       }
 
-      // For open file, endPosition sync marker is unknown so start from file length and read until the actual eof
+      // For open file, endPosition sync marker is unknown so start from file length and read up to the actual EOF
       dataFileReader.sync(length);
       long finalSync = dataFileReader.previousSync();
       logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, -1);
@@ -266,8 +266,8 @@ public class AvroFileReader {
     List<LogEvent> logSegment = new ArrayList<>();
     GenericRecord datum = null;
     long currentSyncPosition = dataFileReader.previousSync();
-    // Read until the end if endSyncPosition is not known (in case of open file)
-    // or read until endSyncPosition has reached
+    // Read up to the end if endSyncPosition is not known (in case of an open file)
+    // or read until endSyncPosition has been reached
     while (dataFileReader.hasNext() && (endSyncPosition == -1 || (currentSyncPosition < endSyncPosition))) {
       datum = dataFileReader.next(datum);
       ILoggingEvent loggingEvent = LoggingEvent.decode(datum);
