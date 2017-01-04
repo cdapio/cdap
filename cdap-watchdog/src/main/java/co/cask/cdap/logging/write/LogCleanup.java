@@ -85,7 +85,7 @@ public final class LogCleanup implements Runnable {
       long untilTime = System.currentTimeMillis() - retentionDurationMs;
       final SetMultimap<String, Location> parentDirs = HashMultimap.create();
       final Map<String, NamespaceId> namespacedLogBaseDirMap = new HashMap<>();
-      fileMetaDataManager.cleanMetaData(tillTime,
+      fileMetaDataManager.cleanMetaData(untilTime,
                                         new FileMetaDataManager.DeleteCallback() {
                                           @Override
                                           public void handle(NamespaceId namespaceId, final Location location,
@@ -102,7 +102,7 @@ public final class LogCleanup implements Runnable {
 
       // clean log files which does not have corresponding meta data
       try {
-        cleanFilesWithoutMeta(tillTime, namespacedLogBaseDirMap, parentDirs,
+        cleanFilesWithoutMeta(untilTime, namespacedLogBaseDirMap, parentDirs,
                               MAX_DISK_FILES_SCANNED, MAX_META_FILES_SCANNED);
       } catch (Exception e) {
         LOG.error("Got exception while cleaning up disk files without meta data", e);
