@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -82,7 +82,7 @@ public final class LogCleanup implements Runnable {
   public void run() {
     LOG.info("Running log cleanup...");
     try {
-      long tillTime = System.currentTimeMillis() - retentionDurationMs;
+      long untilTime = System.currentTimeMillis() - retentionDurationMs;
       final SetMultimap<String, Location> parentDirs = HashMultimap.create();
       final Map<String, NamespaceId> namespacedLogBaseDirMap = new HashMap<>();
       fileMetaDataManager.cleanMetaData(tillTime,
@@ -130,15 +130,15 @@ public final class LogCleanup implements Runnable {
 
   /**
    * Clean log files which does not have corresponding meta data
-   * @param tillTime time till the meta data will be deleted.
+   * @param untilTime time until the meta data will be deleted.
    * @param namespacedLogBaseDirMap namespace to directory map
    * @param parentDirs parent directories for deleted files
    */
   @VisibleForTesting
-  void cleanFilesWithoutMeta(final long tillTime, final Map<String, NamespaceId> namespacedLogBaseDirMap,
+  void cleanFilesWithoutMeta(final long untilTime, final Map<String, NamespaceId> namespacedLogBaseDirMap,
                              final SetMultimap<String, Location> parentDirs, final int maxDiskFilesScanned,
                              final int maxMetaFilesScanned) throws Exception {
-    LOG.info("Starting deletion of log files older than {} without metadata", tillTime);
+    LOG.info("Starting deletion of log files older than {} without metadata", untilTime);
     List<NamespaceMeta> namespaces = namespaceQueryAdmin.list();
     // For all the namespaces present in NamespaceMeta, gather log files from disk and log meta. Then delete the log
     // files for which metadata is not present
@@ -149,7 +149,7 @@ public final class LogCleanup implements Runnable {
                                                                                               impersonator);
       if (namespacedLogBaseDir.exists()) {
         // Get all the disk log files on disk for a given namespace
-        Set<Location> diskFileLocations = getDiskLocations(namespaceId, namespacedLogBaseDir, tillTime,
+        Set<Location> diskFileLocations = getDiskLocations(namespaceId, namespacedLogBaseDir, untilTime,
                                                            maxDiskFilesScanned);
         // remove log files from diskFileLocations for which metadata is present.
         filterLocationsWithMeta(namespaceId, diskFileLocations, maxMetaFilesScanned);
@@ -184,7 +184,7 @@ public final class LogCleanup implements Runnable {
     do {
       Processor<URI, Set<URI>> metaProcessor = getMetaFilesProcessor();
       nextTableKey = fileMetaDataManager.scanFiles(nextTableKey, maxMetaFilesScanned, metaProcessor);
-      // create location from scanned uris and remove all the metadata files modified before tillTime
+      // create location from scanned uris and remove all the metadata files modified before untilTime
       for (final URI uri : metaProcessor.getResult()) {
         try {
           Location fileLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
@@ -207,15 +207,15 @@ public final class LogCleanup implements Runnable {
    *
    * @param namespaceId namespace for which metadata needs to be scanned
    * @param namespacedLogBaseDir namespaced log base dir without the root dir prefixed
-   * @param tillTime time till disk locations are scanned.
+   * @param untilTime time until disk locations are scanned.
    * @param maxDiskFilesScanned Max disk files scanned. If reached this limit, other files will be processed in next
    *                            cleanup run
    * @return set of locations on disk
    */
   private Set<Location> getDiskLocations(NamespaceId namespaceId, final Location namespacedLogBaseDir,
-                                         final long tillTime, final int maxDiskFilesScanned) {
+                                         final long untilTime, final int maxDiskFilesScanned) {
     // processor to get list of log files older than retention duration
-    final Processor<LocationStatus, Set<Location>> diskFilesProcessor = getDiskFilesProcessor(namespaceId, tillTime,
+    final Processor<LocationStatus, Set<Location>> diskFilesProcessor = getDiskFilesProcessor(namespaceId, untilTime,
                                                                                               maxDiskFilesScanned);
     try {
       impersonator.doAs(namespaceId, new Callable<Void>() {
@@ -264,7 +264,7 @@ public final class LogCleanup implements Runnable {
   }
 
   private Processor<LocationStatus, Set<Location>> getDiskFilesProcessor(final NamespaceId namespaceId,
-                                                                         final long tillTime,
+                                                                         final long untilTime,
                                                                          final int maxDiskFilesScanned) {
     return new Processor<LocationStatus, Set<Location>>() {
       private Set<Location> locations = new HashSet<>();
@@ -279,7 +279,7 @@ public final class LogCleanup implements Runnable {
             }
           });
           // For each namespace, only scan maxDiskFilesScanned disk files per clean up run
-          if (!input.isDir() && location.lastModified() < tillTime && locations.size() < maxDiskFilesScanned) {
+          if (!input.isDir() && location.lastModified() < untilTime && locations.size() < maxDiskFilesScanned) {
             locations.add(location);
           }
 

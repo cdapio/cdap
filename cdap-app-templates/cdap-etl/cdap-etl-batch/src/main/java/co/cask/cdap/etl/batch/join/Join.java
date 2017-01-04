@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -90,7 +90,7 @@ public class Join<JOIN_KEY, INPUT_RECORD, OUT> {
   private void getCartesianProduct(List<List<JoinElement<INPUT_RECORD>>> list, int index,
                                    List<JoinElement<INPUT_RECORD>> joinRow,
                                    Set<String> joinRowInputs, Set<String> requiredInputs) throws Exception {
-    // check till the end of the list and emit only if records from all the required inputs are present in joinElements
+    // Check until the end of the list and emit only if records from all the required inputs are present in joinElements
     if (index == list.size() && joinRowInputs.containsAll(requiredInputs)) {
       emitter.emit(joiner.merge(joinKey, joinRow));
       return;

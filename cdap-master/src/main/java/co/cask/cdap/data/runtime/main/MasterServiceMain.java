@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -191,7 +191,7 @@ public class MasterServiceMain extends DaemonMain {
   public static void main(final String[] args) throws Exception {
     ClassLoader classLoader = MainClassLoader.createFromContext();
     if (classLoader == null) {
-      LOG.warn("Failed to create CDAP system ClassLoader. AuthEnforce annotation will not be rewritten");
+      LOG.warn("Failed to create CDAP system ClassLoader. AuthEnforce annotation will not be rewritten.");
       new MasterServiceMain().doMain(args);
     } else {
       Thread.currentThread().setContextClassLoader(classLoader);
@@ -270,7 +270,7 @@ public class MasterServiceMain extends DaemonMain {
    * we want other users to be able to write to the "path" directory,
    * currently only cdap.user has read-write permissions
    * while other users can only read the "{hdfs.namespace}/{path}" dir,
-   * we want to let others to be able to write to "path" directory, till we have a better solution.
+   * we want to let others to be able to write to "path" directory, until we have a better solution.
    */
   private void createDirectory(String path) {
     String hdfsNamespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);

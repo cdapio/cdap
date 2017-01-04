@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -319,7 +319,7 @@ trait SparkMain extends Serializable {
       * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
       *                  default is 0, which means reading from beginning of the stream.
       * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-      *                default is [[scala.Long.MaxValue]], which means reading till the last event.
+      *                default is [[scala.Long.MaxValue]], which means reading until the last event.
       * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
       * @param decoder a function to convert a [[co.cask.cdap.api.flow.flowlet.StreamEvent]] to a value of type `T`
       * @tparam T value type
@@ -340,7 +340,7 @@ trait SparkMain extends Serializable {
       * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
       *                  default is 0, which means reading from beginning of the stream.
       * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-      *                default is [[scala.Long.MaxValue]], which means reading till the last event.
+      *                default is [[scala.Long.MaxValue]], which means reading until the last event.
       * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
       * @param decoder a function to convert a [[co.cask.cdap.api.flow.flowlet.StreamEvent]] to a value of type `T`
       * @tparam T value type

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -425,7 +425,7 @@ public class LogCleanupTest {
     final Map<String, NamespaceId> namespaceIdMap = new HashMap<>();
 
 
-    // Here, we have kept disk scan limit as 15. Since we do not collect files modified after till time, we only have
+    // Here, we have kept disk scan limit as 15. Since we do not collect files modified after "till time", we only have
     // 10 log files with meta and 10 log file without meta. So in worst case 10 + 4, 10 + 4, 10 + 2 we will need 3
     // iterations of cleanFilesWithoutMeta()
     for (int i = 0; i < 3; i++) {

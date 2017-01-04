@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -238,7 +238,7 @@ public class AppWithServices extends AbstractApplication {
     @Override
     public void run() {
       try {
-        // Run this loop till stop is called.
+        // Run this loop until stop is called.
         while (!workerStopped) {
           getContext().execute(new TxRunnable() {
             @Override

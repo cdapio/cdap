@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -383,7 +383,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Resume on already running Workflow should give conflict
     resumeWorkflow(programId, runId, 409);
 
-    // Wait till fork execution in the Workflow starts
+    // Wait  fork execution in the Workflow starts
     while (!(forkedSimpleActionFile.exists() && anotherForkedSimpleActionFile.exists())) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
@@ -553,7 +553,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Get the runId for the currently running Workflow
     String runId = getRunIdOfRunningProgram(programId);
 
-    // Wait till first action in the Workflow starts executing
+    // Wait until first action in the Workflow starts executing
     verifyFileExists(Lists.newArrayList(firstFile));
 
     verifyRunningProgramCount(programId, runId, 1);
@@ -582,7 +582,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Store the new RunId
     runId = newRunId;
 
-    // Wait till first action in the Workflow starts executing
+    // Wait until first action in the Workflow starts executing
     verifyFileExists(Lists.newArrayList(firstFile));
 
     verifyRunningProgramCount(programId, runId, 1);
@@ -590,7 +590,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Signal the first action to continue
     Assert.assertTrue(firstDoneFile.createNewFile());
 
-    // Wait till fork in the Workflow starts executing
+    // Wait until fork in the Workflow starts executing
     verifyFileExists(Lists.newArrayList(branch1File, branch2File));
 
     // Two actions should be running in Workflow as a part of the fork
@@ -599,7 +599,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Stop the program while in fork
     stopProgram(programId, 200);
 
-    // Wait till the program stop
+    // Wait until the program stop
     waitState(programId, ProgramStatus.STOPPED.name());
 
     // Current endpoint would return 404
@@ -618,13 +618,13 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Restart the run again
     startProgram(programId);
 
-    // Wait till the Workflow is running
+    // Wait until the Workflow is running
     waitState(programId, ProgramStatus.RUNNING.name());
 
     // Store the new RunRecord for the currently running run
     runId = getRunIdOfRunningProgram(programId);
 
-    // Wait till first action in the Workflow starts executing
+    // Wait until first action in the Workflow starts executing
     verifyFileExists(Lists.newArrayList(firstFile));
 
     verifyRunningProgramCount(programId, runId, 1);
@@ -632,7 +632,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Signal the first action to continue
     Assert.assertTrue(firstDoneFile.createNewFile());
 
-    // Wait till fork in the Workflow starts executing
+    // Wait until fork in the Workflow starts executing
     verifyFileExists(Lists.newArrayList(branch1File, branch2File));
 
     // Two actions should be running in Workflow as a part of the fork
@@ -1041,7 +1041,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(404, suspendSchedule(TEST_NAMESPACE1, appName, scheduleName1));
     Assert.assertEquals(404, resumeSchedule(TEST_NAMESPACE1, appName, scheduleName1));
 
-    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
+    TimeUnit.SECONDS.sleep(2); // Wait until any running jobs just before suspend call completes.
   }
 
   @Test
@@ -1070,7 +1070,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
                                   "simple.action.donefile", doneFile.getAbsolutePath());
     startProgram(programId, propertyMap);
 
-    // Wait till the execution of actions in both Workflow runs is started.
+    // Wait until the execution of actions in both Workflow runs is started.
     while (!(instance1File.exists() && instance2File.exists())) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
@@ -1185,7 +1185,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Since the number of good records are lesser than the number of bad records,
     // 'else' branch of the condition will get executed.
-    // Wait till the execution of the fork on the else branch starts
+    // Wait until the execution of the fork on the else branch starts
     while (!(elseForkOneActionFile.exists() &&
              elseForkAnotherActionFile.exists() &&
              elseForkThirdActionFile.exists())) {
@@ -1236,7 +1236,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Since the number of good records are greater than the number of bad records,
     // 'if' branch of the condition will get executed.
-    // Wait till the execution of the fork on the if branch starts
+    // Wait until the execution of the fork on the 'if' branch starts
     while (!(ifForkOneActionFile.exists() && ifForkAnotherActionFile.exists())) {
       TimeUnit.MILLISECONDS.sleep(50);
     }

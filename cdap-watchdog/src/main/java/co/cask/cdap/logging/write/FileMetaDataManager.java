@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -155,7 +155,7 @@ public final class FileMetaDataManager {
   }
 
   /**
-   * Scans meta data and gathers all the files older than tillTime
+   * Scans meta data and gathers all the files older than untilTime
    *
    * @param startTableKey row key for the scan and column from where scan will be started
    * @param limit batch size for number of columns to be read
@@ -232,12 +232,12 @@ public final class FileMetaDataManager {
   }
 
   /**
-   * Deletes meta data until a given time, while keeping the latest meta data even if less than tillTime.
-   * @param tillTime time till the meta data will be deleted.
+   * Deletes meta data until a given time, while keeping the latest meta data even if less than untilTime.
+   * @param untilTime time until the meta data will be deleted.
    * @param callback callback called before deleting a meta data column.
    * @return total number of columns deleted.
    */
-  public int cleanMetaData(final long tillTime, final DeleteCallback callback) throws Exception {
+  public int cleanMetaData(final long untilTime, final DeleteCallback callback) throws Exception {
     return execute(new TransactionExecutor.Function<Table, Integer>() {
       @Override
       public Integer apply(Table table) throws Exception {
@@ -274,8 +274,8 @@ public final class FileMetaDataManager {
                   LOG.warn("Log file {} does not exist, but metadata is present", file);
                   table.delete(rowKey, colName);
                   deletedColumns++;
-                } else if (fileLocation.lastModified() < tillTime) {
-                  // Delete if file last modified time is less than tillTime
+                } else if (fileLocation.lastModified() < untilTime) {
+                  // Delete if file last modified time is less than untilTime
                   callback.handle(namespaceId, fileLocation, namespacedLogDir);
                   table.delete(rowKey, colName);
                   deletedColumns++;
