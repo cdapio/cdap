@@ -16,8 +16,12 @@
 var webpack = require('webpack');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 var StyleLintPlugin = require('stylelint-webpack-plugin');
+var path = require('path');
 var plugins = [
-  new webpack.optimize.CommonsChunkPlugin("common", "common.js", Infinity),
+  new webpack.DllReferencePlugin({
+    context: path.resolve(__dirname, 'dll'),
+    manifest: require(path.join(__dirname, 'dll', '/shared-vendor-manifest.json'))
+  }),
   new webpack.optimize.DedupePlugin(),
   new CopyWebpackPlugin([
     {
@@ -88,8 +92,7 @@ var loaders = [
 module.exports = {
   context: __dirname + '/app/login',
   entry: {
-    'login': ['./login.js'],
-    'common': ['react', 'react-dom']
+    'login': ['./login.js']
   },
   module: {
     preLoaders: [

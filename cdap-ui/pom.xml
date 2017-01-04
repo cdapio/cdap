@@ -90,6 +90,7 @@
               <directory>node</directory>
               <followSymlinks>false</followSymlinks>
             </fileset>
+
           </filesets>
         </configuration>
       </plugin>
@@ -161,7 +162,9 @@
                   <exclude>**/npm-debug.log</exclude>
                   <exclude>**/node/**</exclude>
                   <exclude>**/*.json</exclude>
+                  <exclude>**/*.lock</exclude>
                   <exclude>**/*.yaml</exclude>
+                  <exclude>**/dll/**</exclude>
                   <exclude>**/LICENSE-node</exclude>
                 </excludes>
               </configuration>
@@ -322,6 +325,9 @@
                     </copy>
                     <copy todir = "${stage.opt.dir}/cdap_dist">
                       <fileset dir = "cdap_dist" />
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/dll">
+                      <fileset dir = "dll" />
                     </copy>
                     <copy todir = "${stage.opt.dir}/login_dist">
                       <fileset dir = "login_dist" />

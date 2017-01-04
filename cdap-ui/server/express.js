@@ -28,6 +28,7 @@ module.exports = {
   }
 };
 var pkg = require('../package.json');
+var path = require('path');
 var express = require('express'),
     cookieParser = require('cookie-parser'),
     compression = require('compression'),
@@ -37,24 +38,13 @@ var express = require('express'),
     uuid = require('node-uuid'),
     log4js = require('log4js'),
     bodyParser = require('body-parser'),
-    DIST_PATH = require('path').normalize(
-      __dirname + '/../dist'
-    ),
-    OLD_DIST_PATH = require('path').normalize(
-      __dirname + '/../old_dist'
-    ),
-    LOGIN_DIST_PATH= require('path').normalize(
-      __dirname + '/../login_dist'
-    ),
-    CDAP_DIST_PATH=require('path').normalize(
-      __dirname + '/../cdap_dist'
-    ),
-    WRANGLER_DIST_PATH=require('path').normalize(
-      __dirname + '/../wrangler_dist'
-    ),
-    MARKET_DIST_PATH=require('path').normalize(
-      __dirname + '/../common_dist'
-    ),
+    DLL_PATH = path.normalize(__dirname + '/../dll'),
+    DIST_PATH = path.normalize(__dirname + '/../dist'),
+    OLD_DIST_PATH = path.normalize(__dirname + '/../old_dist'),
+    LOGIN_DIST_PATH= path.normalize(__dirname + '/../login_dist'),
+    CDAP_DIST_PATH= path.normalize(__dirname + '/../cdap_dist'),
+    WRANGLER_DIST_PATH= path.normalize(__dirname + '/../wrangler_dist'),
+    MARKET_DIST_PATH= path.normalize(__dirname + '/../common_dist'),
     fs = require('fs');
 
 var log = log4js.getLogger('default');
@@ -291,6 +281,14 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     }),
     function(req, res) {
       finalhandler(req, res)(false); // 404
+    }
+  ]);
+  app.use('/dll_assets', [
+    express.static(DLL_PATH, {
+      index: false
+    }),
+    function(req, res) {
+      finalhandler(req, res)(false);
     }
   ]);
   app.use('/wrangler_assets', [
