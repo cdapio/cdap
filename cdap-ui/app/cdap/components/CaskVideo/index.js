@@ -19,11 +19,11 @@ import React, {Component} from 'react';
 
 export default class CaskVideo extends Component {
 
-  constructor(props){
+  constructor(props) {
     super(props);
   }
 
-  render(){
+  render() {
     const opts = {
       height: '240',
       width: '560',

@@ -18,7 +18,7 @@ import React, {PropTypes} from 'react';
 import classnames from 'classnames';
 require('./WizardStepHeader.less');
 
-export default function WizardStepHeader({id, className, label, onClick}, context){
+export default function WizardStepHeader({id, className, label, onClick}, context) {
   return (
     <div
       className={classnames('cask-wizard-step-header', {

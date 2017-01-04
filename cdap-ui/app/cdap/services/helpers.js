@@ -72,7 +72,7 @@ function humanReadableNumber(num, type) {
     return num;
   }
 
-  switch(type) {
+  switch (type) {
     case HUMANREADABLESTORAGE:
       return convertBytesToHumanReadable(num);
     case HUMANREADABLESTORAGE_NODECIMAL:
@@ -106,7 +106,7 @@ function convertBytesToHumanReadable(bytes, type) {
   if (!bytes || typeof bytes !== 'number') {
     return bytes;
   }
-  if(type === HUMANREADABLESTORAGE_NODECIMAL){
+  if (type === HUMANREADABLESTORAGE_NODECIMAL) {
     return numeral(bytes).format('0b');
   }
   return numeral(bytes).format('0.00b');
@@ -149,7 +149,7 @@ function removeAt(arr, index) {
 }
 
 function getIcon(entity) {
-  switch(entity) {
+  switch (entity) {
     case 'application':
     case 'app':
       return 'icon-fist';

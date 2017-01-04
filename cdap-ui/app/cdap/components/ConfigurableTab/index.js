@@ -22,7 +22,7 @@ import {TabContent, TabPane} from 'reactstrap';
 import TabHead from '../TabHead';
 require('./ConfigurableTab.less');
 
-export default class ConfigurableTab extends Component{
+export default class ConfigurableTab extends Component {
   constructor(props) {
     super(props);
     /* Eventually we will be adding more to the state,
@@ -58,7 +58,7 @@ export default class ConfigurableTab extends Component{
         <Tabs layout={this.state.layout}>
           <TabHeaders>
             {this.state.tabs.map((tab, index) => {
-              return(
+              return (
                 <TabHead
                   layout={this.state.layout}
                   key={index}

@@ -42,7 +42,7 @@ function AdminOverviewPane({services}) {
   cards = services
     .filter(service => service.name !== 'CDAP')
     .map((service) => {
-      if(service.name !== 'CDAP'){
+      if (service.name !== 'CDAP') {
         return (
           <OverviewPaneCard
             key={shortid.generate()}

@@ -31,7 +31,7 @@ const defaultAction = {
 };
 const schema = (state = defaultSchema, action = defaultAction) => {
  let stateCopy;
- switch(action.type) {
+ switch (action.type) {
    case SchemaStoreActions.setFieldName:
      stateCopy = Object.assign({}, state);
      if (action.payload.keyCode === 13) {

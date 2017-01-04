@@ -21,7 +21,7 @@ import T from 'i18n-react';
 import InputWithValidations from 'components/InputWithValidations';
 import {Provider, connect} from 'react-redux';
 
-//HDFS Root Directory
+// HDFS Root Directory
 const mapStateToHDFSRootDirectoryProps = (state) => {
   return {
     value: state.mapping.hdfsDirectory,
@@ -41,7 +41,7 @@ const mapDispatchToHDFSRootDirectoryProps = (dispatch) => {
   };
 };
 
-//Hive Database Name
+// Hive Database Name
 const mapStateToHiveDatabaseNameProps = (state) => {
   return {
     value: state.mapping.hiveDatabaseName,
@@ -61,7 +61,7 @@ const mapDispatchToHiveDatabaseNameProps = (dispatch) => {
   };
 };
 
-//HBASE Namespace Name
+// HBASE Namespace Name
 const mapStateToHBASENamespaceNameProps = (state) => {
   return {
     value: state.mapping.hbaseNamespace,
@@ -97,7 +97,7 @@ const InputHbaseNamespace = connect(
 )(InputWithValidations);
 
 export default function MappingStep() {
-  return(
+  return (
     <Provider store={AddNamespaceStore}>
       <Form
         className="form-horizontal mapping-step"

@@ -47,7 +47,7 @@ export default class TruncateAction extends Component {
       event.nativeEvent.stopImmediatePropagation();
     }
   }
-  toggleTooltip(){
+  toggleTooltip() {
     this.setState({ tooltipOpen : !this.state.tooltipOpen });
   }
   action() {
