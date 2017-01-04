@@ -19,14 +19,14 @@ import NamespaceStore from 'services/NamespaceStore';
 import FastActionButton from '../FastActionButton';
 import T from 'i18n-react';
 import { Modal, Tooltip, ModalHeader, ModalBody } from 'reactstrap';
+import isEmpty from 'lodash/isEmpty';
 import {MyStreamApi} from 'api/stream';
-import FileDnD from 'components/FileDnD';
+import FileDataUpload from 'components/FileDataUpload';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
 require('./SendEventAction.less');
 
 import cookie from 'react-cookie';
 import Rx from 'rx';
-import classnames from 'classnames';
 
 export default class SendEventAction extends Component {
   constructor(props) {
@@ -47,16 +47,17 @@ export default class SendEventAction extends Component {
     this.eventText = '';
     this.action = this.action.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
-    this.renderStreamEventCopyPaste = this.renderStreamEventCopyPaste.bind(this);
     this.handleTextInput = this.handleTextInput.bind(this);
     this.onDrop = this.onDrop.bind(this);
     this.toggleTextareaOff = this.toggleTextareaOff.bind(this);
-    this.FileDnDClickHandler = this.FileDnDClickHandler.bind(this);
     this.toggleTooltip = this.toggleTooltip.bind(this);
+    this.noInputYet = this.noInputYet.bind(this);
   }
+
   toggleTooltip() {
     this.setState({ tooltipOpen : !this.state.tooltipOpen });
   }
+
   toggleModal(event) {
     this.setState({
       modal: !this.state.modal,
@@ -84,7 +85,7 @@ export default class SendEventAction extends Component {
       namespace
     };
     let subscriptions = [];
-    if (!Object.keys(this.state.droppedFile).length) {
+    if (isEmpty(this.state.droppedFile)) {
       let events = this.state.textInput.replace(/\r\n/g, '\n').split('\n');
       params.streamId = streamId;
       events.forEach(event => {
@@ -127,9 +128,9 @@ export default class SendEventAction extends Component {
       });
   }
 
-  handleTextInput(e) {
+  handleTextInput(input) {
     this.setState({
-      textInput : e.target.value
+      textInput : input
     });
   }
 
@@ -141,49 +142,12 @@ export default class SendEventAction extends Component {
     });
   }
 
-  onDrop(e) {
-    this.setState({droppedFile : e[0]});
+  onDrop(file) {
+    this.setState({droppedFile : file});
   }
 
-  FileDnDClickHandler(e) {
-    e.stopPropagation();
-    e.preventDefault();
-    this.setState({
-      textarea : true,
-      droppedFile: {}
-    });
-  }
-
-  renderStreamEventCopyPaste() {
-    if (!this.state.textarea) {
-      return (
-        <div
-          className={classnames("dropzone-container", {
-            "file-dropped": Object.keys(this.state.droppedFile).length
-          })}
-          onClick={this.FileDnDClickHandler}
-        >
-          <span className="fa fa-plus-circle fa-3x"></span>
-          <FileDnD
-            file={this.state.droppedFile}
-            clickLabel={T.translate('features.FastAction.sendEventsClickLabel')}
-            onDropHandler={this.onDrop}
-          />
-        </div>
-      );
-    }
-
-    return (
-      <textarea
-        autoFocus
-        className="form-control"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        onChange={this.handleTextInput}
-      />
-    );
+  noInputYet() {
+    return isEmpty(this.state.droppedFile) && this.state.textInput === '';
   }
 
   render() {
@@ -234,8 +198,8 @@ export default class SendEventAction extends Component {
                 onClick={this.toggleTextareaOff}
               >
                 <div className="events-drop-container">
-                  {this.renderStreamEventCopyPaste()}
-                  <div className="clearfix">
+                  <FileDataUpload onDataUpload={this.onDrop} onTextInput={this.handleTextInput}/>
+                  <div className="clearfix send-event-button">
                     {
                       this.state.error ?
                         <span className="pull-left text-danger"></span>
@@ -245,7 +209,7 @@ export default class SendEventAction extends Component {
                     <button
                       className="btn btn-primary pull-right"
                       onClick={this.action}
-                      disabled={this.state.loading ? 'disabled' : null}
+                      disabled={(this.noInputYet() || this.state.loading) ? 'disabled' : null}
                     >
                       {
                         this.state.loading ?
