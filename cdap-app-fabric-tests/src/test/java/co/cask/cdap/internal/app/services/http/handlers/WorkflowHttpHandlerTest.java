@@ -383,7 +383,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Resume on already running Workflow should give conflict
     resumeWorkflow(programId, runId, 409);
 
-    // Wait  fork execution in the Workflow starts
+    // Wait until fork execution in the Workflow starts
     while (!(forkedSimpleActionFile.exists() && anotherForkedSimpleActionFile.exists())) {
       TimeUnit.MILLISECONDS.sleep(50);
     }

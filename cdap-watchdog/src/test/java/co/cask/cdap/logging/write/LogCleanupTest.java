@@ -425,7 +425,7 @@ public class LogCleanupTest {
     final Map<String, NamespaceId> namespaceIdMap = new HashMap<>();
 
 
-    // Here, we have kept disk scan limit as 15. Since we do not collect files modified after "till time", we only have
+    // Here, we have kept disk scan limit as 15. Since we do not collect files modified after "untilTime", we only have
     // 10 log files with meta and 10 log file without meta. So in worst case 10 + 4, 10 + 4, 10 + 2 we will need 3
     // iterations of cleanFilesWithoutMeta()
     for (int i = 0; i < 3; i++) {
