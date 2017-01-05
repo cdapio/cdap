@@ -29,7 +29,7 @@ const initialState = {
 };
 
 const modalState = (state = defaultModalState, action = defaultAction) => {
-  switch(action.type) {
+  switch (action.type) {
     case 'TOGGLE_PLUSBUTTON_MODAL':
       return action.payload.modalState;
     default:

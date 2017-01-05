@@ -25,17 +25,17 @@ const defaultAction = {
 
 const keyValues = (state = [], action=defaultAction) => {
   let stateCopy;
-  switch(action.type){
+  switch (action.type) {
     case KeyValueStoreActions.setKey:
       stateCopy = Object.assign({}, state);
-      if(action.payload.key === null || typeof action.payload.key === 'undefined') {
+      if (action.payload.key === null || typeof action.payload.key === 'undefined') {
         return stateCopy;
       }
       stateCopy.pairs[action.payload.index].key = action.payload.key;
       return stateCopy;
     case KeyValueStoreActions.setVal:
       stateCopy = Object.assign({}, state);
-      if(action.payload.value === null || typeof action.payload.value === 'undefined') {
+      if (action.payload.value === null || typeof action.payload.value === 'undefined') {
         return stateCopy;
       }
       stateCopy.pairs[action.payload.index].value = action.payload.value;
@@ -51,7 +51,7 @@ const keyValues = (state = [], action=defaultAction) => {
     case KeyValueStoreActions.deletePair:
       stateCopy = Object.assign({}, state);
       stateCopy.pairs.splice(action.payload.index, 1);
-      if(!stateCopy.pairs.length){
+      if (!stateCopy.pairs.length) {
         stateCopy.pairs.push({
           key : '',
           value : '',

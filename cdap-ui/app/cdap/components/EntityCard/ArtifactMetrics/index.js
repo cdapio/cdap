@@ -18,6 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import {MyAppApi} from '../../../api/app';
 import {MyArtifactApi} from '../../../api/artifact';
 import NamespaceStore from 'services/NamespaceStore';
+import T from 'i18n-react';
 
 export default class ArtifactMetrics extends Component {
   constructor(props) {
@@ -67,15 +68,15 @@ export default class ArtifactMetrics extends Component {
     return (
       <div className="metrics-container">
         <div className="metric-item">
-          <p className="metric-header">Extensions</p>
+          <p className="metric-header">{T.translate('commons.entity.artifact.extensions')}</p>
           <p>{this.state.loading ? loading : this.state.extensions}</p>
         </div>
         <div className="metric-item">
-          <p className="metric-header">Applications</p>
+          <p className="metric-header">{T.translate('commons.entity.artifact.applications')}</p>
           <p>{this.state.loading ? loading : this.state.apps}</p>
         </div>
         <div className="metric-item">
-          <p className="metric-header">Type</p>
+          <p className="metric-header">{T.translate('commons.entity.artifact.type')}</p>
           <p>{this.state.loading ? loading : this.state.type}</p>
         </div>
       </div>

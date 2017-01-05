@@ -50,7 +50,7 @@ export default class ConfirmationModal extends Component {
 
     let actionBtn;
 
-    if(this.props.disableAction){
+    if (this.props.disableAction) {
       actionBtn = (
         <button
           className="btn disabled-btn"
@@ -102,7 +102,7 @@ export default class ConfirmationModal extends Component {
       );
     }
 
-    return(
+    return (
       <Modal
         isOpen={this.props.isOpen}
         toggle={this.props.toggleModal}

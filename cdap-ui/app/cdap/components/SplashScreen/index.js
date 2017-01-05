@@ -51,7 +51,7 @@ import VersionActions from 'services/VersionStore/VersionActions';
             !window.CDAP_CONFIG.isEnterprise &&
             (
               typeof res === 'object' &&
-              typeof res.property === 'object' && 
+              typeof res.property === 'object' &&
               !res.property["user-choice-hide-welcome-message"]
             )
         });
@@ -68,7 +68,7 @@ import VersionActions from 'services/VersionStore/VersionActions';
     });
   }
 
-  //Handles the logic of whether or not to continue showing the splash screen to this user
+  // Handles the logic of whether or not to continue showing the splash screen to this user
   resetWelcomeMessage() {
     MyUserStoreApi
       .get()
@@ -87,13 +87,13 @@ import VersionActions from 'services/VersionStore/VersionActions';
     });
     this.resetWelcomeMessage();
   }
-  toggleVideo(){
+  toggleVideo() {
     this.setState({
       videoOpen : !this.state.videoOpen
     });
   }
-  closeVideo(){
-    if(this.state.videoOpen){
+  closeVideo() {
+    if (this.state.videoOpen) {
       this.setState({
         videoOpen: false
       });

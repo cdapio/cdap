@@ -1,1 +1,10 @@
-./app/styles/fonts.less
+app/styles/fonts.less
+app/cdap/styles/fonts.less
+app/cdap/styles/variables.less
+app/cdap/styles/mixins.less
+app/wrangler/styles/fonts.less
+app/wrangler/styles/variables.less
+app/wrangler/styles/mixins.less
+app/wrangler/components/Wrangler/Charts/c3.less
+app/login/styles/fonts.less
+

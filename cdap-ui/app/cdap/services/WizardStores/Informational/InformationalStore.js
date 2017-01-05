@@ -33,7 +33,7 @@ const defaultInitialState = {
 const information = (state = defaultState, action = defaultAction) => {
   let stateCopy;
 
-  switch(action.type) {
+  switch (action.type) {
     case InformationalActions.setSteps:
       stateCopy = Object.assign({}, state, {
         steps: action.payload

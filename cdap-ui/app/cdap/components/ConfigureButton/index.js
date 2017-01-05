@@ -24,7 +24,7 @@ const propTypes  = {
   iconClass: PropTypes.string
 };
 
-function ConfigureButton({label, onClick, iconClass}){
+function ConfigureButton({label, onClick, iconClass}) {
   return (
     <div
       className="configure-button"

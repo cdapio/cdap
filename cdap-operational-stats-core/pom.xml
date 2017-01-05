@@ -21,7 +21,7 @@
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>4.0.0</version>
+    <version>4.1.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -138,22 +138,6 @@
                 <configuration combine.self="override">
                   <outputDirectory>${project.build.directory}</outputDirectory>
                   <finalName>${project.groupId}.${project.build.finalName}</finalName>
-                </configuration>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-              </execution>
-              <execution>
-                <id>jar-sdk</id>
-                <phase>prepare-package</phase>
-                <configuration combine.self="override">
-                  <outputDirectory>${project.build.directory}</outputDirectory>
-                  <finalName>${project.groupId}.${project.build.finalName}.sdk</finalName>
-                  <excludes>
-                    <exclude>**/hbase/*.class</exclude>
-                    <exclude>**/hdfs/*.class</exclude>
-                    <exclude>**/yarn/*.class</exclude>
-                  </excludes>
                 </configuration>
                 <goals>
                   <goal>jar</goal>

@@ -23,7 +23,7 @@ import T from 'i18n-react';
 import {MyServiceProviderApi} from 'api/serviceproviders';
 export default class ServiceStatus extends Component {
 
-  constructor(props){
+  constructor(props) {
     super(props);
     this.state = {
       isDropdownOpen : false,
@@ -48,13 +48,13 @@ export default class ServiceStatus extends Component {
     this.toggleDropdown = this.toggleDropdown.bind(this);
   }
 
-  toggleDropdown(){
+  toggleDropdown() {
     this.setState({
       isDropdownOpen : !this.state.isDropdownOpen
     });
   }
 
-  updateProvision(){
+  updateProvision() {
     this.setState({
       provisionsLoading : true
     });
@@ -77,15 +77,15 @@ export default class ServiceStatus extends Component {
     });
   }
 
-  onProvisionChange(e){
+  onProvisionChange(e) {
     this.setState({
       enteredProvisionValue : e.target.value
     });
   }
-  //If the user presses enter, we set the state to reflect the entered value and close the dropdown
-  keyDown(e){
-    if(e.keyCode !== undefined && e.keyCode === 13){
-      //If there is no entered value do not set entered value
+  // If the user presses enter, we set the state to reflect the entered value and close the dropdown
+  keyDown(e) {
+    if (e.keyCode !== undefined && e.keyCode === 13) {
+      // If there is no entered value do not set entered value
       this.setState({
         enteredProvisionValue : e.target.value
       }, () => {
@@ -94,58 +94,58 @@ export default class ServiceStatus extends Component {
     }
   }
 
-  setProvisionNumber(){
+  setProvisionNumber() {
     this.updateProvision();
   }
 
-  //IF there is an error message, toggle depending on the event type
-  toggleErrorMessage(e){
-    if(this.state.serviceWarning){
-      if(e.type === 'mouseover'){
+  // IF there is an error message, toggle depending on the event type
+  toggleErrorMessage(e) {
+    if (this.state.serviceWarning) {
+      if (e.type === 'mouseover') {
         this.setState({
           showError : true
         });
-      } else if(e.type === 'mouseout'){
+      } else if (e.type === 'mouseout') {
         this.setState({
           showError : false
         });
       }
     }
   }
-  //IF there is an error message, toggle depending on the event type
-  toggleErrorInBtn(e){
-    if(this.state.serviceWarning){
-      if(e.type === 'mouseover'){
+  // IF there is an error message, toggle depending on the event type
+  toggleErrorInBtn(e) {
+    if (this.state.serviceWarning) {
+      if (e.type === 'mouseover') {
         this.setState({
           showBtnError : true
         });
-      } else if(e.type === 'mouseout'){
+      } else if (e.type === 'mouseout') {
         this.setState({
           showBtnError : false
         });
       }
     }
   }
-  provisionRowClickHandler(e){
+  provisionRowClickHandler(e) {
     e.stopPropagation();
   }
-  render(){
+  render() {
 
     let statusCircle;
     let circleContent;
 
-    //Corresponds to circle fill colors based on service status
+    // Corresponds to circle fill colors based on service status
     let green = this.props.status === 'OK' && !this.props.isLoading;
     let red = this.props.status !== 'OK' && !this.props.isLoading;
     let grey = this.props.isLoading;
 
     let circleClass = classNames({'status-circle-green' : green, 'status-circle-red' : red, "status-circle-grey" : grey, 'circle-dropdown-active' : this.state.isDropdownOpen});
 
-    if(this.state.provisionsLoading){
+    if (this.state.provisionsLoading) {
       circleContent = <span className="fa fa-spinner fa-spin fa-fw" />;
     }
 
-    if(this.props.status === 'OK'){
+    if (this.props.status === 'OK') {
       circleContent = this.state.provisioned;
     }
 

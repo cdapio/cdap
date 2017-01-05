@@ -99,7 +99,7 @@ export default class EntityListHeader extends Component {
           <DropdownToggle tag='div'>
             {this.state.isSortExpanded ?
               <span>{T.translate('features.EntityListView.Header.sort')}</span> :
-              <span>{this.state.activeSort.displayName}</span>
+              <span>{T.translate('features.EntityListView.Header.sortLabel')}{this.state.activeSort.displayName}</span>
             }
             <span className="fa fa-caret-down pull-right"></span>
           </DropdownToggle>

@@ -48,7 +48,7 @@ const pipelineMetadataStepRequiredFields = head(
 
 const pipelinemetadata = (state = defaultMetadata, action = defaultAction) => {
   let stateCopy;
-  switch(action.type) {
+  switch (action.type) {
     case PublishPipelineAction.setPipelineName:
       stateCopy = Object.assign({}, state, {
         name: action.payload.name
