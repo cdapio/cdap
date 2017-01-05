@@ -24,8 +24,8 @@ import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Class to match the request path to corresponding service like app-fabric, or metrics service.
@@ -46,8 +46,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   public static final RouteDestination STREAMS_SERVICE = new RouteDestination(Constants.Service.STREAMS);
   public static final RouteDestination PREVIEW_HTTP = new RouteDestination(Constants.Service.PREVIEW_HTTP);
 
-  private final Map<MultiKey, RouteDestination> routeDestinationCache = Collections.synchronizedMap(
-    new HashMap<MultiKey, RouteDestination>());
+  private final ConcurrentMap<MultiKey, RouteDestination> routeDestinationCache = new ConcurrentHashMap<>();
 
   /**
    * Returns the CDAP service which will handle the HttpRequest
@@ -93,10 +92,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       String version = uriParts[6];
       MultiKey cacheKey = new MultiKey(serviceName, version);
 
-      if (!routeDestinationCache.containsKey(cacheKey)) {
-        routeDestinationCache.put(cacheKey, new RouteDestination(serviceName, version));
-      }
-      return routeDestinationCache.get(cacheKey);
+      return routeDestinationCache.putIfAbsent(cacheKey, new RouteDestination(serviceName, version));;
     } else if ((uriParts.length >= 9) && "services".equals(uriParts[5]) && "methods".equals(uriParts[7])) {
       //User defined services handle methods on them:
       //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
