@@ -151,7 +151,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
           LOG.info("Could not get KafkaConsumerMetaTable, seems like we are being shut down");
           return false;
         }
-        offset = metaTable.get(new TopicPartition(topic, partition));
+        offset = metaTable.get(new TopicPartition(topic, partition)).getNextOffset();
         LOG.info("Offset for topic: {}, partition: {} is {}", topic, partition, offset);
       } catch (Exception e) {
         LOG.info("Failed to get KafkaConsumerMetaTable, shutting down");

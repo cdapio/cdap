@@ -24,11 +24,15 @@ import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.internal.io.DatumReader;
+import co.cask.cdap.logging.save.Checkpoint;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.apache.twill.kafka.client.KafkaConsumer;
+import org.apache.twill.kafka.client.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +42,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
 /**
@@ -52,6 +57,10 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
   private final Schema recordSchema;
   private final MetricStore metricStore;
   private final Map<String, String> metricsContext;
+  private final KafkaConsumerMetaTable metaTable;
+  private final int persistThreshold;
+  private final Map<TopicPartition, Checkpoint> checkpointMap;
+  private final AtomicInteger messageCount;
 
   private long lastLoggedMillis;
   private long recordsProcessed;
@@ -59,21 +68,36 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
   public MetricsMessageCallback(DatumReader<MetricValues> recordReader,
                                 Schema recordSchema,
                                 MetricStore metricStore,
-                                @Nullable MetricsContext metricsContext) {
+                                @Nullable MetricsContext metricsContext,
+                                KafkaConsumerMetaTable metaTable,
+                                int persistThreshold) {
     this.recordReader = recordReader;
     this.recordSchema = recordSchema;
     this.metricStore = metricStore;
     this.metricsContext = metricsContext == null ? Collections.<String, String>emptyMap() : metricsContext.getTags();
+    this.metaTable = metaTable;
+    this.persistThreshold = persistThreshold;
+    this.checkpointMap = Maps.newConcurrentMap();
+    this.messageCount = new AtomicInteger();
   }
 
   @Override
   public void onReceived(Iterator<FetchedMessage> messages) {
+    TopicPartition lastTopicPartition;
+    long lastOffset = -1;
+    long lastTimestamp = -2;
     // Decode the metrics records.
     ByteBufferInputStream is = new ByteBufferInputStream(null);
     List<MetricValues> records = Lists.newArrayList();
 
     while (messages.hasNext()) {
       FetchedMessage input = messages.next();
+      lastTopicPartition = input.getTopicPartition();
+      lastOffset = input.getNextOffset();
+      messageCount.incrementAndGet();
+      if (lastOffset >= 0) {
+        checkpointMap.put(lastTopicPartition, new Checkpoint(lastOffset, lastTimestamp));
+      }
       try {
         MetricValues metricValues = recordReader.read(new BinaryDecoder(is.reset(input.getPayload())), recordSchema);
         records.add(metricValues);
@@ -102,6 +126,10 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
       LOG.info("{} metrics records processed. Last record time: {}.",
                recordsProcessed, records.get(records.size() - 1).getTimestamp());
     }
+    if (messageCount.get() >= persistThreshold) {
+      messageCount.set(0);
+      persistOffsets();
+    }
   }
 
   private void addProcessingStats(List<MetricValues> records) {
@@ -121,5 +149,15 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
   public void finished() {
     // Just log
     LOG.info("Metrics MessageCallback completed.");
+    persistOffsets();
+  }
+
+  private void persistOffsets() {
+    try {
+      metaTable.save(ImmutableMap.copyOf(checkpointMap));
+    } catch (Exception e) {
+      // Simple log and ignore the error.
+      LOG.error("Failed to persist consumed message offset. {}", e.getMessage(), e);
+    }
   }
 }
