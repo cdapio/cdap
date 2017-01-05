@@ -46,7 +46,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   public static final RouteDestination STREAMS_SERVICE = new RouteDestination(Constants.Service.STREAMS);
   public static final RouteDestination PREVIEW_HTTP = new RouteDestination(Constants.Service.PREVIEW_HTTP);
 
-  private Map<MultiKey, RouteDestination> routeDestinationCache = Collections.synchronizedMap(
+  private final Map<MultiKey, RouteDestination> routeDestinationCache = Collections.synchronizedMap(
     new HashMap<MultiKey, RouteDestination>());
 
   /**
