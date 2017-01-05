@@ -445,7 +445,7 @@ public class StandaloneMain {
 
     cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
-    // configure all services except for router and auth to bind to 127.0.0.1
+    // configure all services except for router to bind to 127.0.0.1
     String localhost = InetAddress.getLoopbackAddress().getHostAddress();
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, localhost);
     cConf.set(Constants.Transaction.Container.ADDRESS, localhost);
@@ -455,6 +455,7 @@ public class StandaloneMain {
     cConf.set(Constants.Metrics.SERVER_ADDRESS, localhost);
     cConf.set(Constants.MetricsProcessor.ADDRESS, localhost);
     cConf.set(Constants.LogSaver.ADDRESS, localhost);
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, localhost);
     cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
     cConf.set(Constants.Preview.ADDRESS, localhost);

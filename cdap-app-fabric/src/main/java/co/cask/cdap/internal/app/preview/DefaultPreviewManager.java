@@ -245,7 +245,7 @@ public class DefaultPreviewManager implements PreviewManager {
 
   private ProgramId getProgramIdFromRequest(ApplicationId preview, AppRequest request) throws BadRequestException {
     if (request.getPreview() == null) {
-      throw new BadRequestException("Preview config cannot be null");
+      throw new BadRequestException("preview config cannot be null");
     }
 
     String programName = request.getPreview().getProgramName();

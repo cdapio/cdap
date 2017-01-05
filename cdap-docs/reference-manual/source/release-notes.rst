@@ -36,107 +36,122 @@ Cask Data Application Platform Release Notes
 New Features
 ------------
 
-- Cask Market
+#. Cask Market
 
-  - :cask-issue:`CDAP-7203` - Adds Cask Market: Cask's *Big Data* app store, providing an
-    ecosystem of pre-built Hadoop solutions, re-usable templates, and plugins. Within CDAP,
-    users can access the market and create Hadoop solutions or *Big Data* applications with
-    easy-to-use guided wizards.
+   - :cask-issue:`CDAP-7203` - Adds Cask Market: Cask's *Big Data* app store, providing an
+     ecosystem of pre-built Hadoop solutions, re-usable templates, and plugins. Within CDAP,
+     users can access the market and create Hadoop solutions or *Big Data* applications with
+     easy-to-use guided wizards.
 
-- Cask Wrangler
+#. Cask Wrangler
 
-  - :cask-issue:`WRANGLER-2` - Added Cask Wrangler: a new CDAP extension for interactive
-    data preparation.
+   - :cask-issue:`WRANGLER-2` - Added Cask Wrangler: a new CDAP extension for interactive
+     data preparation.
 
-- CDAP Transactional Messaging System
+#. CDAP Transactional Messaging System
 
-  - :cask-issue:`CDAP-7211` - Adds a transactional messaging system that is used for
-    reliable communication of messages between components. In CDAP 4.0.0, the transactional
-    messaging system replaces Kafka for publishing and subscribing audit logs that is used
-    within CDAP for computing data lineage.
+   - :cask-issue:`CDAP-7211` - Adds a transactional messaging system that is used for
+     reliable communication of messages between components. In CDAP 4.0.0, the transactional
+     messaging system replaces Kafka for publishing and subscribing audit logs that is used
+     within CDAP for computing data lineage.
 
-- Operational Statistics
+#. Operational Statistics
 
-  - :cask-issue:`CDAP-7670` - Added a pluggable extension to retrieve operational statistics
-    in CDAP. Provided extensions for operational stats from YARN, HDFS, HBase, and CDAP.
+   - :cask-issue:`CDAP-7670` - Added a pluggable extension to retrieve operational statistics
+     in CDAP. Provided extensions for operational stats from YARN, HDFS, HBase, and CDAP.
+ 
+   - :cask-issue:`CDAP-7703` - Added reporting operational statistics for YARN. They can be
+     retrieved using JMX with the domain name ``co.cask.cdap.operations`` and the property
+     ``name`` set to ``yarn``.
+ 
+   - :cask-issue:`CDAP-7704` - Added reporting operational statistics for HBase. They can be
+     retrieved using JMX with the domain name ``co.cask.cdap.operations`` and the property
+     ``name`` set to ``hbase`` as well as through the CDAP UI Administration page.
 
-  - :cask-issue:`CDAP-7703` - Added reporting operational statistics for YARN. They can be
-    retrieved using JMX with the domain name ``co.cask.cdap.operations`` and the property
-    ``name`` set to ``yarn``.
+#. Dynamic Log Level
 
-  - :cask-issue:`CDAP-7704` - Added reporting operational statistics for HBase. They can be
-    retrieved using JMX with the domain name ``co.cask.cdap.operations`` and the property
-    ``name`` set to ``hbase`` as well as through the CDAP UI Administration page.
+   - :cask-issue:`CDAP-5479` - Allow updating or resetting of log levels for program types
+     worker, flow, and service dynamically using REST endpoints.
+ 
+   - :cask-issue:`CDAP-7214` - Allow setting the log levels for all program types through
+     runtime arguments or preferences.
 
-- Dynamic Log Level
+#. New Versions of Distributions Supported
 
-  - :cask-issue:`CDAP-5479` - Allow updating or resetting of log levels for program types
-    worker, flow, and service dynamically using REST endpoints.
+   - :cask-issue:`CDAP-6938` - Added support for Amazon EMR 4.6.0+ installation of CDAP via a
+     bootstrap action script.
+ 
+   - :cask-issue:`CDAP-7249` - Added support for HDInsights 3.5.
 
-  - :cask-issue:`CDAP-7214` - Allow setting the log levels for all program types through
-    runtime arguments or preferences.
+   - :cask-issue:`CDAP-7291` - Added support for CDH 5.9.
 
-- New Versions of Distributions Supported
+   - :cask-issue:`CDAP-7901` - Added support for HDP 2.5.
 
-  - :cask-issue:`CDAP-6938` - Added support for Amazon EMR 4.6.0+ installation of CDAP via a
-    bootstrap action script.
+#. New Hydrator Plugins Added
 
-  - :cask-issue:`CDAP-7249` - Added support for HDInsights 3.5.
+   - :cask-issue:`HYDRATOR-504` - Added to the Hydrator plugins a Tokenizer Spark compute
+     plugin.
+ 
+   - :cask-issue:`HYDRATOR-512` - Added to the Hydrator plugins a Sink plugin to write to
+     Solr search.
+ 
+   - :cask-issue:`HYDRATOR-517` - Added to the Hydrator plugins a Logistic Regression Spark
+     Machine Learning plugin.
+ 
+   - :cask-issue:`HYDRATOR-668` - Added to the Hydrator plugins a Decision Tree Regression
+     Spark Machine Learning plugin.
+ 
+   - :cask-issue:`HYDRATOR-909` - Added to the Hydrator plugins a SparkCompute Hydrator
+     plugin to compute N-Grams of any given String.
+ 
+   - :cask-issue:`HYDRATOR-935` - Added to the Hydrator plugins a Windows share copy Action
+     plugin.
+ 
+   - :cask-issue:`HYDRATOR-971` - Added to the Hydrator plugins a Hydrator plugin that
+     watches a directory and streams file content when new files are added.
+ 
+   - :cask-issue:`HYDRATOR-973` - Added to the Hydrator plugins an HTTP Poller source plugin
+     for streaming pipelines.
+ 
+   - :cask-issue:`HYDRATOR-977` - Added to the Hydrator plugins an XML parser plugin that can
+     parse out multiple records from a single XML document.
+ 
+   - :cask-issue:`HYDRATOR-981` - Added to the Hydrator plugins an Action plugin to run any
+     executable binary.
+ 
+   - :cask-issue:`HYDRATOR-1029` - Added to the Hydrator plugins an Action plugin to export
+     data in an Oracle database.
+ 
+   - :cask-issue:`HYDRATOR-1091` - Added the ability to run a Hydrator pipeline in a preview
+     mode without publishing. It allows users to view the data in each stage of the preview
+     run.
+ 
+   - :cask-issue:`HYDRATOR-1111` - Added to the Hydrator plugins a plugin for transforming
+     data according to commands provided by the Cask Wrangler tool.
+ 
+   - :cask-issue:`HYDRATOR-1146` - Added to the Hydrator plugins a Sink plugin to write to
+     Amazon Kinesis from Batch pipelines.
 
-  - :cask-issue:`CDAP-7291` - Added support for CDH 5.9.
+#. Cask Tracker
 
-  - :cask-issue:`CDAP-7901` - Added support for HDP 2.5.
+   - :cask-issue:`TRACKER-233` - Added a data dictionary to Cask Tracker for users to define
+     columns for datasets, enforce a common naming convention, and apply masking to PII
+     (personally identifiable information).
 
-- New Hydrator Plugins Added
+#. Additional New Features
 
-  - :cask-issue:`HYDRATOR-504` - Added to the Hydrator plugins a Tokenizer Spark compute
-    plugin.
+   - :cask-issue:`CDAP-5632` - New menu option in Cloudera Manager when running the CDAP CSD
+     enables running utilities such as the HBaseQueueDebugger.
+ 
+   - :cask-issue:`CDAP-6577` - Improved the UpgradeTool to upgrade tables in namespaces with
+     impersonation configured.
 
-  - :cask-issue:`HYDRATOR-512` - Added to the Hydrator plugins a Sink plugin to write to
-    Solr search.
+   - :cask-issue:`CDAP-6587` - Added support for impersonation with CDAP Explore (Hive)
+     operations, including enabling exploring of a dataset or running queries against it.
+ 
+   - :cask-issue:`CDAP-7287` - Added support for enabling client certificate-based
+     authentication to the CDAP Authentication server.
 
-  - :cask-issue:`HYDRATOR-517` - Added to the Hydrator plugins a Logistic Regression Spark
-    Machine Learning plugin.
-
-  - :cask-issue:`HYDRATOR-668` - Added to the Hydrator plugins a Decision Tree Regression
-    Spark Machine Learning plugin.
-
-  - :cask-issue:`HYDRATOR-909` - Added to the Hydrator plugins a SparkCompute Hydrator
-    plugin to compute N-Grams of any given String.
-
-  - :cask-issue:`HYDRATOR-935` - Added to the Hydrator plugins a Windows share copy Action
-    plugin.
-
-  - :cask-issue:`HYDRATOR-971` - Added to the Hydrator plugins a Hydrator plugin that
-    watches a directory and streams file content when new files are added.
-
-  - :cask-issue:`HYDRATOR-973` - Added to the Hydrator plugins an HTTP Poller source plugin
-    for streaming pipelines.
-
-  - :cask-issue:`HYDRATOR-977` - Added to the Hydrator plugins an XML parser plugin that can
-    parse out multiple records from a single XML document.
-
-  - :cask-issue:`HYDRATOR-981` - Added to the Hydrator plugins an Action plugin to run any
-    executable binary.
-
-  - :cask-issue:`HYDRATOR-1029` - Added to the Hydrator plugins an Action plugin to export
-    data in an Oracle database.
-
-  - :cask-issue:`HYDRATOR-1091` - Added the ability to run a Hydrator pipeline in a preview
-    mode without publishing. It allows users to view the data in each stage of the preview
-    run.
-
-  - :cask-issue:`HYDRATOR-1111` - Added to the Hydrator plugins a plugin for transforming
-    data according to commands provided by the Cask Wrangler tool.
-
-  - :cask-issue:`HYDRATOR-1146` - Added to the Hydrator plugins a Sink plugin to write to
-    Amazon Kinesis from Batch pipelines.
-
-- Cask Tracker
-
-  - :cask-issue:`TRACKER-233` - Added a data dictionary to Cask Tracker for users to define
-    columns for datasets, enforce a common naming convention, and apply masking to PII
-    (personally identifiable information).
 
 Improvements
 ------------
@@ -162,9 +177,6 @@ Improvements
   achieved via ``{{offset}}``, ``{{limit}}```, ``{{numCursors}}``, and ``{{cursor}}``
   parameters in the RESTful API.
 
-- :cask-issue:`CDAP-5632` - New menu option in Cloudera Manager when running the CDAP CSD
-  enables running utilities such as the HBaseQueueDebugger.
-
 - :cask-issue:`CDAP-6183` - Added the property ``program.container.dist.jars`` to set
   extra jars to be localized to every program container and to be added to classpaths of
   CDAP programs.
@@ -174,12 +186,6 @@ Improvements
 
 - :cask-issue:`CDAP-6572` - The namespace that integration test cases run against by
   default has been made configurable.
-
-- :cask-issue:`CDAP-6577` - Improved the UpgradeTool to upgrade tables in namespaces with
-  impersonation configured.
-
-- :cask-issue:`CDAP-6587` - Added support for impersonation with CDAP Explore (Hive)
-  operations, including enabling exploring of a dataset or running queries against it.
 
 - :cask-issue:`CDAP-6635` - Added a feature that implements caching of user credentials in
   CDAP system services.
@@ -226,9 +232,6 @@ Improvements
   connection.
 
 - :cask-issue:`CDAP-7284` - Upgraded the Apache Tephra version to 0.10-incubating.
-
-- :cask-issue:`CDAP-7287` - Added support for enabling client certificate-based
-  authentication to the CDAP Authentication server.
 
 - :cask-issue:`CDAP-7291` - Added support for CDH 5.9.
 
@@ -547,15 +550,6 @@ Known Issues
 
 API Changes
 -----------
-
-- :cask-issue:`CDAP-1696` - **Updated the default CDAP Router port to 11015** to avoid
-  conflicting with HiveServer2's default port. **Note that this change may cause
-  incompatibilities with previous releases if hardcoded in scripts or other programs.**
-
-- :cask-issue:`CDAP-5897` - **Updated the default CDAP UI port to 11011** to avoid
-  conflicting with Accumulo and Cloudera Manager's Activity Monitor. **Note that this change
-  may cause incompatibilities with previous releases if hardcoded in scripts or other
-  programs.**
 
 .. _release-notes-cdap-6837:
 
