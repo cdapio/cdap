@@ -12,9 +12,6 @@ commons:
     artifact:
       plural: Artifacts
       singular: Artifact
-      extensions: Extensions
-      applications: Applications
-      type: Type
     cdap-data-pipeline:
       plural: Data Pipelines
       singular: Data Pipeline
@@ -24,28 +21,18 @@ commons:
     dataset:
       plural: Datasets
       singular: Dataset
-      programs: Programs
-      operations: Operations
-      writes: Writes
     datasetinstance:
       plural: Datasets
       singular: Dataset
     flow:
       plural: Flows
       singular: Flow
-    metrics:
-      programs: Programs
-      running: Running
-      failed: Failed
     mapreduce:
       plural: MapReduce
       singular: MapReduce
     program:
       plural: Programs
       singular: Program
-      status: Status
-      runs: Runs
-      application: Application
     service:
       plural: Services
       singular: Service
@@ -55,9 +42,6 @@ commons:
     stream:
       plural: Streams
       singular: Stream
-      programs: Programs
-      events: Events
-      bytes: Bytes
     worker:
       plural: Workers
       singular: Worker
@@ -106,7 +90,6 @@ features:
       sortdropdown-tooltip: Clear Search to enable Sort
       search-disabled-placeholder: Sort by Relevance to Search
       sort: Sort
-      sortLabel: "Sort by "
       sortOptions:
         none: Relevance
         entityNameAsc:

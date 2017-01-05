@@ -65,18 +65,14 @@ function objectQuery(obj) {
   return obj;
 }
 export const HUMANREADABLESTORAGE = 'STORAGE';
-export const HUMANREADABLESTORAGE_NODECIMAL = "NODECIMAL";
-
 function humanReadableNumber(num, type) {
   if (typeof num !== 'number') {
     return num;
   }
 
-  switch (type) {
+  switch(type) {
     case HUMANREADABLESTORAGE:
       return convertBytesToHumanReadable(num);
-    case HUMANREADABLESTORAGE_NODECIMAL:
-      return convertBytesToHumanReadable(num, HUMANREADABLESTORAGE_NODECIMAL);
     default:
       return numeral(num).format('0,0');
   }
@@ -102,12 +98,9 @@ function contructUrl ({path}) {
 }
 
 
-function convertBytesToHumanReadable(bytes, type) {
+function convertBytesToHumanReadable(bytes) {
   if (!bytes || typeof bytes !== 'number') {
     return bytes;
-  }
-  if (type === HUMANREADABLESTORAGE_NODECIMAL) {
-    return numeral(bytes).format('0b');
   }
   return numeral(bytes).format('0.00b');
 }
@@ -149,7 +142,7 @@ function removeAt(arr, index) {
 }
 
 function getIcon(entity) {
-  switch (entity) {
+  switch(entity) {
     case 'application':
     case 'app':
       return 'icon-fist';

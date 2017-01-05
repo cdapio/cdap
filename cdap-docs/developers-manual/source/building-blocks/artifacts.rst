@@ -144,7 +144,7 @@ Our development team writes code such as::
     }
   }
   
-  public class MyFlow implements AbstractFlow {
+  public class MyFlow implements Flow {
     private String stream;
     private String table;
   

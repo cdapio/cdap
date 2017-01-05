@@ -139,7 +139,7 @@ public class DataPipelineTest extends HydratorTestBase {
       AppRequest<co.cask.cdap.etl.proto.v2.ETLBatchConfig> appRequest =
         new AppRequest<>(APP_ARTIFACT, etlConfig);
       ApplicationId appId = NamespaceId.DEFAULT.app("macroActionTest");
-      ApplicationManager appManager = deployApplication(appId, appRequest);
+      ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
       WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
       manager.setRuntimeArgs(runtimeArguments);
       manager.start(ImmutableMap.of("logical.start.time", "0"));

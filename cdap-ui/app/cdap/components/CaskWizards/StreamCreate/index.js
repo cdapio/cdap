@@ -39,7 +39,7 @@ export default class StreamCreateWizard extends Component {
     const args = this.props.input.action.arguments;
 
     args.forEach((arg) => {
-      switch (arg.name) {
+      switch(arg.name) {
         case 'name':
           CreateStreamStore.dispatch({
             type: CreateStreamActions.setName,
@@ -105,7 +105,7 @@ export default class StreamCreateWizard extends Component {
   render() {
     let input = this.props.input || {};
     let pkg = input.package || {};
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.StreamCreate.headerlabel');
+    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.StreamCreate.headerlabel') ;
     return (
       <div>
         {

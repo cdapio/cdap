@@ -75,7 +75,7 @@ export default class MarketActionsContainer extends Component {
           this.props
             .actions
             .map((action, index) => {
-              let isCompletedAction = this.state.completedActions.indexOf(index) !== -1;
+              let isCompletedAction = this.state.completedActions.indexOf(index) !== -1 ;
               let actionName = T.translate('features.Market.action-types.' + action.type + '.name');
               let actionIcon = getIcon(action.type);
               return (

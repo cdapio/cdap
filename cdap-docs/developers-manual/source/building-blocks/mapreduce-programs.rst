@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2017 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _mapreduce:
 
@@ -28,12 +28,12 @@ or specify ``addWorkflow()`` in your application and specify your MapReduce in t
     // Run a MapReduce on the acquired data using a workflow
     addWorkflow(new PurchaseHistoryWorkflow());
     
-It is recommended to implement the ``MapReduce`` interface by extending the ``AbstractMapReduce``
-class, which allows the overriding of these three methods:
+You must implement the ``MapReduce`` interface, which requires the
+implementation of three methods:
 
 - ``configure()``
 - ``initialize()``
-- ``destroy()``
+- ``onFinish()``
 
 ::
 
@@ -69,20 +69,16 @@ the mapper and reducer classes as well as the intermediate data format::
     job.setReducerClass(PerUserReducer.class);
   }
 
-The ``destroy()`` method is invoked after the MapReduce has
+The ``onFinish()`` method is invoked after the MapReduce has
 finished. You could perform cleanup or send a notification of job
-completion, if that was required. Through the ``MapReduceContext``,
-you can determine whether the MapReduce succeeded::
+completion, if that was required. Because many MapReduce programs do not
+need this method, the ``AbstractMapReduce`` class provides a default
+implementation that does nothing::
 
   @Override
-  public void destroy() {
-    ProgramState state = getContext().getState();
-    // do something depending on the state
+  public void onFinish(boolean succeeded, MapReduceContext context) {
+    // do nothing
   }
-
-Because many MapReduce programs do not
-need this method, the ``AbstractMapReduce`` class provides a default
-implementation that does nothing.
 
 CDAP ``Mapper`` and ``Reducer`` implement `the standard Hadoop APIs
 <http://hadoop.apache.org/docs/r2.3.0/api/org/apache/hadoop/mapreduce/package-summary.html>`__
@@ -295,10 +291,10 @@ parameters of the Reducer.
 
 To write to multiple output datasets from a MapReduce program, begin by adding the datasets as outputs::
 
-  public void initialize() throws Exception {
+  public void beforeSubmit(MapReduceContext context) throws Exception {
     ...
-    getContext().addOutput(Output.ofDataset("productCounts"));
-    getContext().addOutput(Output.ofDataset("catalog"));
+    context.addOutput(Input.ofDataset("productCounts"));
+    context.addOutput(Input.ofDataset("catalog"));
   }
 
 Then, have the ``Mapper`` and/or ``Reducer`` implement ``ProgramLifeCycle<MapReduceTaskContext>``.

@@ -18,8 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import {MyMetricApi} from '../../../api/metric';
 import {MyStreamApi} from '../../../api/stream';
 import NamespaceStore from 'services/NamespaceStore';
-import {humanReadableNumber, HUMANREADABLESTORAGE_NODECIMAL} from 'services/helpers';
-import T from 'i18n-react';
+import {humanReadableNumber, HUMANREADABLESTORAGE} from 'services/helpers';
 
 export default class StreamMetrics extends Component {
   constructor(props) {
@@ -55,7 +54,7 @@ export default class StreamMetrics extends Component {
             if (metric.metricName === 'system.collect.events') {
               events = humanReadableNumber(metric.data[0].value);
             } else if (metric.metricName === 'system.collect.bytes') {
-              bytes = humanReadableNumber(metric.data[0].value, HUMANREADABLESTORAGE_NODECIMAL);
+              bytes = humanReadableNumber(metric.data[0].value, HUMANREADABLESTORAGE);
             }
           });
         }
@@ -75,15 +74,15 @@ export default class StreamMetrics extends Component {
     return (
       <div className="metrics-container">
         <div className="metric-item">
-          <p className="metric-header">{T.translate('commons.entity.stream.programs')}</p>
+          <p className="metric-header">Programs</p>
           <p>{this.state.loading ? loading : this.state.programs}</p>
         </div>
         <div className="metric-item">
-          <p className="metric-header">{T.translate('commons.entity.stream.events')}</p>
+          <p className="metric-header">Events</p>
           <p>{this.state.loading ? loading : this.state.events}</p>
         </div>
         <div className="metric-item">
-          <p className="metric-header">{T.translate('commons.entity.stream.bytes')}</p>
+          <p className="metric-header">Bytes</p>
           <p>{this.state.loading ? loading : this.state.bytes}</p>
         </div>
       </div>

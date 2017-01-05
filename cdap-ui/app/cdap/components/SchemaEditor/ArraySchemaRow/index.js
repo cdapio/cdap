@@ -24,7 +24,7 @@ import cloneDeep from 'lodash/cloneDeep';
 
 require('./ArraySchemaRow.less');
 
-export default class ArraySchemaRow extends Component {
+export default class ArraySchemaRow extends Component{
   constructor(props) {
     super(props);
     if (typeof props.row === 'object') {

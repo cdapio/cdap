@@ -25,7 +25,7 @@ const propTypes = {
 };
 
 export default class ServiceStatusPanel extends Component {
-  constructor(props) {
+  constructor(props){
     super(props);
     this.state = {
       services : []
@@ -53,7 +53,7 @@ export default class ServiceStatusPanel extends Component {
     return (
       <div className="service-status-panel">
         {
-          this.state.services.map(function(service) {
+          this.state.services.map(function(service){
             return (
               <ServiceStatus
                 key={shortid.generate()}

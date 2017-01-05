@@ -54,7 +54,7 @@ const uploadData = ({url, fileContents, headers}) => {
   xhr.send(fileContents);
   xhr.onreadystatechange = function () {
     if (xhr.readyState === 4) {
-      if (xhr.status > 200) {
+      if (xhr.status > 200){
         subject.onError(xhr.response);
       } else {
         subject.onNext(true);

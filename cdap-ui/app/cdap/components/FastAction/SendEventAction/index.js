@@ -127,14 +127,14 @@ export default class SendEventAction extends Component {
       });
   }
 
-  handleTextInput(e) {
+  handleTextInput(e){
     this.setState({
       textInput : e.target.value
     });
   }
 
-  toggleTextareaOff(e) {
-    if (this.state.loading) { return; }
+  toggleTextareaOff(e){
+    if(this.state.loading) { return; }
     e.preventDefault();
     this.setState({
       textarea : false
@@ -154,8 +154,8 @@ export default class SendEventAction extends Component {
     });
   }
 
-  renderStreamEventCopyPaste() {
-    if (!this.state.textarea) {
+  renderStreamEventCopyPaste(){
+    if(!this.state.textarea){
       return (
         <div
           className={classnames("dropzone-container", {

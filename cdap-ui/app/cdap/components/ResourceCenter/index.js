@@ -131,7 +131,7 @@ export default class ResourceCenter extends Component {
       );
     }
   }
-  render() {
+  render(){
     return (
       <div>
         <div className="cask-resource-center">

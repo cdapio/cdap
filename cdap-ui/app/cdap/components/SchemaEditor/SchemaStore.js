@@ -33,7 +33,7 @@ const defaultState = {
 };
 
 const schema = (state = defaultState, action = defaultAction) => {
-  switch (action.type) {
+  switch(action.type) {
     case 'FIELD_UPDATE': {
       return Object.assign({}, state, {fields: action.payload.schema.fields});
     }

@@ -21,7 +21,7 @@ import {Provider, connect} from 'react-redux';
 import InputWithValidations from 'components/InputWithValidations';
 import T from 'i18n-react';
 
-// Namespace Name
+//Namespace Name
 const mapStateToNamespaceNameProps = (state) => {
   return {
     value: state.general.name,
@@ -41,7 +41,7 @@ const mapDispatchToNamespaceNameProps = (dispatch) => {
   };
 };
 
-// Namespace description
+//Namespace description
 const mapStateToNamespaceDescriptionProps = (state) => {
   return {
     value: state.general.description,
@@ -72,7 +72,7 @@ const InputNamespaceDescription = connect(
 )(InputWithValidations);
 
 export default function GeneralInfoStep() {
-  return (
+  return(
     <Provider store={AddNamespaceStore}>
       <Form
         className="form-horizontal general-info-step"

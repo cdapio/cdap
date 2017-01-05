@@ -27,7 +27,7 @@ require('./AbstractSchemaRow.less');
 
 export default function AbstractSchemaRow({row, onChange}) {
   const renderSchemaRow = (row) => {
-    switch (row.displayType) {
+    switch(row.displayType) {
       case 'array':
         return (
           <ArraySchemaRow

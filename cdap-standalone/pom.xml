@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>4.1.0-SNAPSHOT</version>
+    <version>4.0.0</version>
   </parent>
 
   <artifactId>cdap-standalone</artifactId>
@@ -220,6 +220,13 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
+        <!-- Add dependencies on cdap-operational-stats to make sure it is built before standalone -->
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-operational-stats-core</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
       </dependencies>
 
       <build>
@@ -390,6 +397,14 @@
                       <targetPath>ext/runtimes/spark</targetPath>
                       <includes>
                         <include>*.jar</include>
+                      </includes>
+                    </resource>
+                    <!-- copy operational stats extensions -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-operational-stats-core/target</directory>
+                      <targetPath>ext/operations/core</targetPath>
+                      <includes>
+                        <include>*.sdk.jar</include>
                       </includes>
                     </resource>
                   </resources>

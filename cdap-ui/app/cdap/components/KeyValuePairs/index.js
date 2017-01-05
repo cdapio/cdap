@@ -20,7 +20,7 @@ import {createKeyValueStore} from './KeyValueStore';
 import KeyValueStoreActions from './KeyValueStoreActions';
 import KeyValuePair from './KeyValuePair';
 
-// Prop Name is used in place of the reserved prop 'key'
+//Prop Name is used in place of the reserved prop 'key'
 const mapStateToFieldNameProps = (state, ownProps) => {
   return {
     name: state.keyValues.pairs[ownProps.index].key,
@@ -65,7 +65,7 @@ let KeyValuePairCopy = connect(
 )(KeyValuePair);
 
 export default class KeyValuePairs extends Component {
-  constructor(props) {
+  constructor(props){
     super(props);
     var { keyValues, onKeyValueChange } = props;
     this.state = {

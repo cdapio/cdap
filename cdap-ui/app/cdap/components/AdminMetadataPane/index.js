@@ -21,22 +21,22 @@ import shortid from 'shortid';
 import T from 'i18n-react';
 import {humanReadableDate} from 'services/helpers';
 
-function AdminMetadataPane({ statObject }) {
+function AdminMetadataPane({ statObject }){
 
-  if (!statObject || !statObject.stats) { return; }
+  if(!statObject || !statObject.stats) { return; }
 
   let containers = [];
 
-  // Construct array of stats from those passed in as props - these stats are being passed in successfully
+  //Construct array of stats from those passed in as props - these stats are being passed in successfully
   let statsList = [];
 
   statObject.stats.forEach((stat) => {
 
-    // Ignore Stats Associated with WritePointer, ReadPointer, and VisibilityUpperBound
-    if (!(stat.statName === 'WritePointer' || stat.statName === 'ReadPointer' || stat.statName === 'VisibilityUpperBound')) {
+    //Ignore Stats Associated with WritePointer, ReadPointer, and VisibilityUpperBound
+    if(!(stat.statName === 'WritePointer' || stat.statName === 'ReadPointer' || stat.statName === 'VisibilityUpperBound')) {
 
-      // Convert snapshot time to human readable number
-      if (stat.statName === 'SnapshotTime') {
+      //Convert snapshot time to human readable number
+      if(stat.statName === 'SnapshotTime'){
         stat.statNum = humanReadableDate(Math.floor(stat.statNum.split(',').join('')), true);
 
         statsList.push (
@@ -59,11 +59,11 @@ function AdminMetadataPane({ statObject }) {
     }
   });
 
-  // Construct Columns of Statistics
-  for (let j = 0; statsList && j < statsList.length; j+=2) {
+  //Construct Columns of Statistics
+  for(let j = 0 ; statsList && j < statsList.length; j+=2){
     let temp;
 
-    if (j+1 < statsList.length) {
+    if(j+1 < statsList.length){
       temp = <div><span>{statsList[j]}</span><br/><span>{statsList[j+1]}</span></div>;
     } else {
       temp = statsList[j];
@@ -78,7 +78,7 @@ function AdminMetadataPane({ statObject }) {
 
   let headerText = statObject.statsHeader ? T.translate(`features.Management.DetailPanel.headers.${statObject.statsHeader}`) : <span className="fa fa-spinner" />;
 
-  // Return the rendered content
+  //Return the rendered content
   return (
     <div className="metadata-pane">
       <div className="pane-header">

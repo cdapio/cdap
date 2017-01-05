@@ -21,7 +21,7 @@ import InputWithValidations from 'components/InputWithValidations';
 import {Provider, connect} from 'react-redux';
 import T from 'i18n-react';
 
-// Principal
+//Principal
 const mapStateToPrincipalProps = (state) => {
   return {
     value: state.security.principal,
@@ -41,7 +41,7 @@ const mapDispatchToPrincipalProps = (dispatch) => {
   };
 };
 
-// KeytabURI
+//KeytabURI
 const mapStateTokeytabURIProps = (state) => {
   return {
     value: state.security.keyTab,
@@ -72,36 +72,36 @@ const InputKeytabURI = connect(
 )(InputWithValidations);
 
 export default function PreferencesStep() {
-  return (
-    <Provider store={AddNamespaceStore}>
-      <Form
-        className="form-horizontal"
-        onSubmit={(e) => {
-          e.preventDefault();
-          return false;
-        }}
-      >
-        <FormGroup>
-          <Col xs="3">
-            <Label className="control-label">
-              {T.translate('features.Wizard.Add-Namespace.Step3.principal-label')}
-            </Label>
-          </Col>
-          <Col xs="7">
-            <InputPrincipal />
-          </Col>
-        </FormGroup>
-        <FormGroup>
-          <Col xs="3">
-            <Label className="control-label">
-              {T.translate('features.Wizard.Add-Namespace.Step3.keytab-uri-label')}
-            </Label>
-          </Col>
-          <Col xs="7">
-            <InputKeytabURI />
-          </Col>
-        </FormGroup>
-      </Form>
-    </Provider>
+  return(
+      <Provider store={AddNamespaceStore}>
+        <Form
+          className="form-horizontal"
+          onSubmit={(e) => {
+            e.preventDefault();
+            return false;
+          }}
+        >
+          <FormGroup>
+            <Col xs="3">
+              <Label className="control-label">
+                {T.translate('features.Wizard.Add-Namespace.Step3.principal-label')}
+              </Label>
+            </Col>
+            <Col xs="7">
+              <InputPrincipal />
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col xs="3">
+              <Label className="control-label">
+                {T.translate('features.Wizard.Add-Namespace.Step3.keytab-uri-label')}
+              </Label>
+            </Col>
+            <Col xs="7">
+              <InputKeytabURI />
+            </Col>
+          </FormGroup>
+        </Form>
+      </Provider>
   );
 }

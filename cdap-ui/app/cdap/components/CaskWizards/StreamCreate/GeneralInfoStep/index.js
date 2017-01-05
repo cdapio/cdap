@@ -88,7 +88,7 @@ const InputStreamTTL = connect(
 )(Input);
 
 export default function GeneralInfoStep() {
-  return (
+  return(
     <Provider store={CreateStreamStore}>
       <Form
         className="form-horizontal general-info-step"

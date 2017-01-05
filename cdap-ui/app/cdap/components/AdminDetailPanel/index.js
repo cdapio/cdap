@@ -33,7 +33,7 @@ const propTypes = {
 
 class AdminDetailPanel extends Component {
 
-  constructor(props) {
+  constructor(props){
     super(props);
   }
 
@@ -41,18 +41,18 @@ class AdminDetailPanel extends Component {
 
     let panelData = [];
 
-    // Process the data so it can be easily consumed by child components
-    for (let key in this.props.serviceData) {
-      if (this.props.serviceData.hasOwnProperty(key)) {
+    //Process the data so it can be easily consumed by child components
+    for(let key in this.props.serviceData){
+      if(this.props.serviceData.hasOwnProperty(key)){
         let category = key;
 
-        // Construct Array from Object Category
-        // Convert number into human readable text
+        //Construct Array from Object Category
+        //Convert number into human readable text
         let pairs = [];
         Object.keys(this.props.serviceData[key]).map((item) => {
           let humanReadableNum;
 
-          if (key === 'storage' || key === 'memory') {
+          if(key === 'storage' || key === 'memory'){
             humanReadableNum = humanReadableNumber(this.props.serviceData[key][item], 'STORAGE');
           } else {
             humanReadableNum = humanReadableNumber(this.props.serviceData[key][item]);
@@ -72,7 +72,7 @@ class AdminDetailPanel extends Component {
     }
 
     let panes = panelData.map((panel) => {
-      if (panel.stats.length) {
+      if(panel.stats.length){
         return (
           <AdminMetadataPane
             statObject={panel}
@@ -82,9 +82,9 @@ class AdminDetailPanel extends Component {
       }
     });
 
-    // Place vertical lines between panes
-    for (let i = panes.length; i >= 0; i--) {
-      if (i !== 0 && i != panes.length) {
+    //Place vertical lines between panes
+    for(let i = panes.length ; i >= 0 ; i--){
+      if(i !== 0 && i != panes.length){
         panes.splice(i, 0, <div className="vertical-line" key={shortid.generate()}/>);
       }
     }
@@ -96,7 +96,7 @@ class AdminDetailPanel extends Component {
 
     let updateLabel;
 
-    switch (this.props.timeFromUpdate) {
+    switch(this.props.timeFromUpdate) {
       case 0:
         updateLabel = 'moments ago';
         break;

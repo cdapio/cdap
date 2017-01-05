@@ -33,7 +33,7 @@ const UploadFile = ({url, fileContents, headers}) => {
     xhr.send(fileContents);
     xhr.onreadystatechange = function () {
       if (xhr.readyState === 4) {
-        if (xhr.status > 399) {
+        if (xhr.status > 399){
           observer.onError(xhr.response);
         } else {
           observer.onNext(true);
