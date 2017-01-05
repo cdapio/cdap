@@ -438,8 +438,8 @@ in those files into words, and then counts how many times each word appears. The
   public static class WordCount extends AbstractMapReduce {
 
     @Override
-    public void initialize() throws Exception {
-      Job job = getContext().getHadoopJob();
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      Job job = context.getHadoopJob();
       job.setMapperClass(WordCountMapper.class);
       job.setReducerClass(WordCountReducer.class);
       // setup input and output

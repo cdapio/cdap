@@ -15,16 +15,15 @@
  */
 
 @import '../../WizardModal/WizardModal.less';
-
-// Specific hack for hydrator.
-body {
-  .modal {
-    .wizard-modal.create-stream-wizard {
-      &.create-stream-wizard {
-        &.modal-dialog {
-          margin-top: @wizard-modal-margin-top;
-        }
-      }
-    }
-  }
-}
+ // Specific hack for hydrator.
+ body {
+   .modal {
+     .wizard-modal.create-stream-wizard {
+       &.create-stream-wizard {
+         &.modal-dialog {
+           margin-top: @wizard-modal-margin-top;
+         }
+       }
+     }
+   }
+ }

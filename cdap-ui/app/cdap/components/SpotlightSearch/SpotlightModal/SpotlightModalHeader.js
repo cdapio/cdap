@@ -24,7 +24,7 @@ import {
 require('./SpotlightModal.less');
 
  export default class SpotlightModalHeader extends Component {
-   constructor(props) {
+   constructor(props){
      super(props);
      this.state = {
        isDropdownExpanded : false
@@ -39,7 +39,8 @@ require('./SpotlightModal.less');
    }
 
    render() {
-     return (
+
+     return(
        <ModalHeader>
          <span className="pull-left">
            {

@@ -64,7 +64,7 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
           [fieldProp]: (fieldProp === 'isNullable') ? e.target.checked : e.target.value
         }
       });
-      if (fieldProp !== 'isNullable') {
+      if (fieldProp !== 'isNullable'){
         e.preventDefault();
         e.stopPropagation();
       }

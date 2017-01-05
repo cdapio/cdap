@@ -49,7 +49,7 @@ export default class ApplicationUploadWizard extends Component {
   render() {
     let input = this.props.input;
     let headerLabel = input.headerLabel;
-    let wizardModalTitle = (headerLabel ? headerLabel : T.translate('features.Resource-Center.Application.modalheadertitle'));
+    let wizardModalTitle = (headerLabel ? headerLabel : T.translate('features.Resource-Center.Application.modalheadertitle')) ;
     return (
       <WizardModal
         title={wizardModalTitle}

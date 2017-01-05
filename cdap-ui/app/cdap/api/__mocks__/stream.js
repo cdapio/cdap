@@ -17,7 +17,7 @@
 const MyStreamApi = {};
 
 MyStreamApi.list = function() {
-
+  
 };
 MyStreamApi.get  = function() {
 

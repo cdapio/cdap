@@ -29,7 +29,7 @@ const defaultInitialState = {
 };
 
 const username = (state = '', action = defaultAction) => {
-  switch (action.type) {
+  switch(action.type) {
     case NamespaceActions.updateUsername:
         return action.payload.username;
     default:
@@ -38,7 +38,7 @@ const username = (state = '', action = defaultAction) => {
 };
 
 const selectedNamespace = (state = '', action = defaultAction) => {
-  switch (action.type) {
+  switch(action.type) {
     case NamespaceActions.selectNamespace:
       return action.payload.selectedNamespace;
     default:
@@ -47,7 +47,7 @@ const selectedNamespace = (state = '', action = defaultAction) => {
 };
 
 const namespaces = (state = [], action) => {
-    switch (action.type) {
+    switch(action.type) {
       case NamespaceActions.updateNamespaces:
         return action.payload.namespaces;
       default:

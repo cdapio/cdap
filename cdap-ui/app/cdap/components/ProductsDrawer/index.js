@@ -59,13 +59,13 @@ export default class ProductsDrawer extends Component {
 
     this.toggle = this.toggle.bind(this);
   }
-  componentWillMount() {
+  componentWillMount(){
     this.updateNSLinks();
     NamespaceStore.subscribe(() => {
       this.updateNSLinks();
     });
   }
-  updateNSLinks() {
+  updateNSLinks(){
     let NamespaceState = NamespaceStore.getState();
     this.namespace = NamespaceState.selectedNamespace || localStorage.getItem('DefaultNamespace');
 
@@ -76,7 +76,7 @@ export default class ProductsDrawer extends Component {
     let defaultUI = cookie.load('DEFAULT_UI');
     let products = this.state.products.map((product) => {
 
-      switch (product.name) {
+      switch(product.name) {
         case 'cdap' :
           product.link = `${defaultUI === 'OLD' ? '/old' : '/'}cdap/ns/${this.namespace}`;
           break;
@@ -118,8 +118,8 @@ export default class ProductsDrawer extends Component {
     );
 
     // If the products drawer is opened and if the current product that the user is in is not CDAP then make CDAP clickable.
-    if (this.state.productsDropdown) {
-      if (this.state.topProduct.name !== this.state.products[0].name) {
+    if(this.state.productsDropdown){
+      if(this.state.topProduct.name !== this.state.products[0].name){
         topItem = (
           <a className="top-product-link"
             href={this.state.products[0].link}
@@ -129,7 +129,7 @@ export default class ProductsDrawer extends Component {
         );
       }
     } else {
-      // else the product drawer is closed so just show the current product the user is in
+      //else the product drawer is closed so just show the current product the user is in
       topItem = (
         <div
           className={classnames("top-product", this.state.topProduct.name, {'open': this.state.productsDropdown})}
@@ -154,7 +154,7 @@ export default class ProductsDrawer extends Component {
               .slice(1) // Just skip CDAP and show everything else in order as CDAP will always be the top item when the product drawer is open
               .map(product => {
 
-                if (product.name === this.props.currentChoice) {
+                if(product.name === this.props.currentChoice){
                   return (
                     <div
                       className="dropdown-item"

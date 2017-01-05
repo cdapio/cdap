@@ -62,7 +62,7 @@ const selectDestinationStepRequiredFields = head(
   ).requiredFields;
 
 const viewdata = (state = defaultViewData, action = defaultAction) => {
-  switch (action.type) {
+  switch(action.type) {
     case UploadDataAction.setDefaultData:
       return Object.assign({}, state, {
         data: action.payload.data,
@@ -89,7 +89,7 @@ const viewdata = (state = defaultViewData, action = defaultAction) => {
 };
 const selectdestination = (state = defaultSelectDestination, action = defaultAction) => {
   let stateCopy;
-  switch (action.type) {
+  switch(action.type) {
     case UploadDataAction.setDestinationType:
       stateCopy = Object.assign({}, state, {
         type: action.payload.type

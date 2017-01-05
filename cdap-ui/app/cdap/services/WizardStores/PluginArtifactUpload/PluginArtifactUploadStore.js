@@ -76,7 +76,7 @@ const upload = (state = defaultUploadState, action = defaultAction) => {
       artifactJson = action.payload.json;
       try {
         artifactJson = JSON.parse(artifactJson);
-      } catch (e) {
+      } catch(e) {
         return Object.assign({}, state, {
           json: Object.assign({}, defaultJsonState, {
             __error: T.translate('features.Wizard.PluginArtifact.Step2.errorMessage')

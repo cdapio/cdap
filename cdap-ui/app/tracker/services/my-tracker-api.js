@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -16,7 +16,7 @@
 
 function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, CDAP_UI_CONFIG) {
   var url = myCdapUrl.constructUrl,
-      searchPath = '/namespaces/:namespace/metadata/search?limit=25&target=stream&target=dataset&target=view',
+      searchPath = '/namespaces/:namespace/metadata/search?target=stream&target=dataset&target=view',
       basePath = '/namespaces/:namespace/:entityType/:entityId',
       programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/runs/:runId',
       auditPath = '/namespaces/:namespace/apps/' + CDAP_UI_CONFIG.tracker.appId + '/services/' + CDAP_UI_CONFIG.tracker.serviceId + '/methods/v1/auditlog/:entityType/:entityId',

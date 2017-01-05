@@ -33,12 +33,12 @@ require('./styles/main.less');
 require('../ui-utils/url-generator');
 
 class WranglerParent extends Component {
-  componentWillMount() {
+  componentWillMount(){
     // Polls for namespace data
     MyNamespaceApi.pollList()
       .subscribe(
         (res) => {
-          if (res.length > 0) {
+          if (res.length > 0){
             NamespaceStore.dispatch({
               type: NamespaceActions.updateNamespaces,
               payload: {
@@ -46,7 +46,7 @@ class WranglerParent extends Component {
               }
             });
           } else {
-            // To-Do: No namespaces returned ; throw error / redirect
+            //To-Do: No namespaces returned ; throw error / redirect
           }
         }
       );

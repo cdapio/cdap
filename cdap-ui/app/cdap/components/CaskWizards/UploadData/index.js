@@ -39,7 +39,7 @@ export default class UploadDataWizard extends Component {
     const args = this.props.input.action.arguments;
 
     args.forEach((arg) => {
-      switch (arg.name) {
+      switch(arg.name) {
         case 'name':
           UploadDataStore.dispatch({
             type: UploadDataActions.setDestinationName,
@@ -104,7 +104,7 @@ export default class UploadDataWizard extends Component {
     let input = this.props.input;
     let pkg = input.package || {};
 
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.UploadData.headerlabel');
+    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.UploadData.headerlabel') ;
     return (
       <WizardModal
         title={wizardModalTitle}

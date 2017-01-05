@@ -40,7 +40,7 @@ Data Storage
 MapReduce over Multiple Inputs
 ------------------------------
 ``ClicksAndViewsMapReduce`` is a MapReduce that reads from the *clicks* and *views* streams and writes to
-the *joined* ``PartitionedFileSet``. The ``initialize()`` method prepares the MapReduce program. It sets up the
+the *joined* ``PartitionedFileSet``. The ``beforeSubmit`` method prepares the MapReduce program. It sets up the
 two streams as input and sets up the ``PartitionedFileSet`` as output, with the appropriate ``PartitionKey``:
 
 .. literalinclude:: /../../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java

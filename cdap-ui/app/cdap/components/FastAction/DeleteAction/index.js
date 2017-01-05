@@ -51,7 +51,7 @@ export default class DeleteAction extends Component {
     }
   }
 
-  toggleTooltip() {
+  toggleTooltip(){
     this.setState({ tooltipOpen : !this.state.tooltipOpen});
   }
 

@@ -16,13 +16,13 @@
 
 @import "../../styles/variables.less";
 
-/* Animation - Slide in direction of Next */
+ /* Animation - Slide in direction of Next */
 .entity-animation--next-enter {
   &:not(h3) {
-    transform: translate(500%, 0);
+    transform: translate(500%,0);
     opacity: 0.1;
     &.entity-animation--next-enter-active {
-      transform: translate(0, 0);
+      transform: translate(0,0);
       opacity: 1;
       transition: transform 1000ms, opacity 1000ms;
     }
@@ -45,13 +45,13 @@
   }
 }
 
-/* Animation - Slide in direction of Prev */
+ /* Animation - Slide in direction of Prev */
 .entity-animation--prev-enter {
   &:not(h3) {
-    transform: translate(-500%, 0);
+    transform: translate(-500%,0);
     opacity: 0.1;
     &.entity-animation--prev-enter-active {
-      transform: translate(0, 0);
+      transform: translate(0,0);
       transition: transform 1000ms, opacity 1000ms;
       opacity: 1;
     }
@@ -180,12 +180,12 @@
     color: gray;
   }
   .empty-message {
-    position: absolute;
-    top: 40%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 20px;
-    font-weight: 500;
+     position: absolute;
+     top: 40%;
+     left: 50%;
+     transform: translate(-50%, -50%);
+     font-size: 20px;
+     font-weight: 500;
 
     &.text-danger {
       .fa-exclamation-triangle {

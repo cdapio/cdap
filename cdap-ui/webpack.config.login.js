@@ -15,7 +15,6 @@
  */
 var webpack = require('webpack');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
-var StyleLintPlugin = require('stylelint-webpack-plugin');
 var plugins = [
   new webpack.optimize.CommonsChunkPlugin("common", "common.js", Infinity),
   new webpack.optimize.DedupePlugin(),
@@ -32,11 +31,7 @@ var plugins = [
       from: './styles/img',
       to: './img/'
     }
-  ]),
-  new StyleLintPlugin({
-    syntax: 'less',
-    files: ['**/*.less']
-  })
+  ])
 ];
 var mode = process.env.NODE_ENV;
 if (mode === 'production' || mode === 'build') {

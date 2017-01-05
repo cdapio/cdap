@@ -84,7 +84,7 @@ export default class StreamCreateWithUploadWizard extends Component {
   render() {
     let input = this.props.input || {};
     let pkg = input.package || {};
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.StreamCreate.headerlabel');
+    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.StreamCreate.headerlabel') ;
     return (
       <div>
         {

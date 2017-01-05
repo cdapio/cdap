@@ -19,12 +19,12 @@ import T from 'i18n-react';
 
 class KeyValuePair extends Component {
 
-  constructor(props) {
+  constructor(props){
     super(props);
     this.keyDown = this.keyDown.bind(this);
   }
   keyDown(e) {
-    if (e.keyCode === 13) {
+    if(e.keyCode === 13){
       this.props.addRow();
     }
   }

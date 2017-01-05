@@ -62,7 +62,7 @@ export default class ArtifactUploadWizard extends Component {
     let pkg = input.package || {};
     let headerLabel = input.headerLabel;
 
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + (headerLabel ? headerLabel : T.translate('features.Wizard.ArtifactUpload.headerlabel'));
+    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + (headerLabel ? headerLabel : T.translate('features.Wizard.ArtifactUpload.headerlabel')) ;
     return (
       <WizardModal
         title={wizardModalTitle}

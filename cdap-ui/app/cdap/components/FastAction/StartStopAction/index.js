@@ -49,10 +49,10 @@ export default class StartStopAction extends Component {
     this.toggleModal = this.toggleModal.bind(this);
   }
 
-  toggleTooltip() {
+  toggleTooltip(){
     this.setState({ tooltipOpen : !this.state.tooltipOpen });
   }
-  toggleModal() {
+  toggleModal(){
     this.setState({
       modal: !this.state.modal,
       errorMessage: '',
@@ -64,8 +64,8 @@ export default class StartStopAction extends Component {
     this.statusPoll$ = MyProgramApi.pollStatus(this.params)
       .subscribe((res) => {
 
-        // If the fast action has stopped loading and the modal is open, and we do not have an error message, close the modal
-        if (this.state.status === 'loading' && this.state.status !== res.status && this.state.modal && !this.state.errorMessage) {
+        //If the fast action has stopped loading and the modal is open, and we do not have an error message, close the modal
+        if(this.state.status === 'loading' && this.state.status !== res.status && this.state.modal && !this.state.errorMessage){
           this.setState({
             status: res.status,
             modal: false

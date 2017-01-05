@@ -406,9 +406,9 @@ Examples
 In this code sample, we show how to update the WorkflowToken in a MapReduce program::
 
   @Override
-  public void initialize() throws Exception {
+  public void beforeSubmit(MapReduceContext context) throws Exception {
     ...
-    WorkflowToken workflowToken = getContext().getWorkflowToken();
+    WorkflowToken workflowToken = context.getWorkflowToken();
     if (workflowToken != null) {
       // Put the action type in the WorkflowToken
       workflowToken.put("action.type", "MAPREDUCE");
@@ -419,9 +419,9 @@ In this code sample, we show how to update the WorkflowToken in a MapReduce prog
   }
  
   @Override
-  public void destroy() {
+  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
     ...
-    WorkflowToken workflowToken = getContext().getWorkflowToken();
+    WorkflowToken workflowToken = context.getWorkflowToken();
     if (workflowToken != null) {
       // Put the end time for the action
       workflowToken.put("end.time", String.valueOf(System.currentTimeMillis()));
@@ -431,7 +431,7 @@ In this code sample, we show how to update the WorkflowToken in a MapReduce prog
 
 **A token can only be updated** in:
 
-- ``initialize`` and ``destroy`` methods of a MapReduce program;
+- ``beforeSubmit`` and ``onFinish`` methods of a MapReduce program;
 - Driver of a Spark program;
 - custom action; and
 - predicates of condition nodes.
@@ -596,8 +596,8 @@ Hadoop context, the ``WorkflowContext`` is not available::
     }
 
     @Override
-    public void initialize() throws Exception {
-      Job job = getContext().getHadoopJob();
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      Job job = context.getHadoopJob();
       job.setMapperClass(ValueParser.class);
       // Set up the MapReduce job here
       ...

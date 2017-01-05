@@ -155,7 +155,9 @@ a partition with that league as the only key::
     Map<String, String> outputArgs = Maps.newHashMap();
     outputKey = PartitionKey.builder().addStringField("league", league).build();
     PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
-    context.addOutput(Output.ofDataset("totals", outputArgs));
+    outputFileSet = context.getDataset("totals", outputArgs);
+    outputPath = FileSetArguments.getOutputPath(outputFileSet.getEmbeddedFileSet().getRuntimeArguments());
+    context.setOutput("totals", outputFileSet);
   }
 
 Here, the ``initialize`` method of the MapReduce generates the runtime arguments for the
@@ -244,8 +246,7 @@ To save the state of partition processing, call the returned PartitionCommitter'
 This ensures that the next time the MapReduce job runs, it processes only the newly committed partitions::
 
   @Override
-  public void destroy() {
-    boolean succeeded = getContext().getState().getStatus() == ProgramStatus.COMPLETED;
+  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
     partitionCommitter.onFinish(succeeded);
   }
 

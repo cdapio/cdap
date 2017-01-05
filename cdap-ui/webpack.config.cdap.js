@@ -20,7 +20,6 @@ var path = require('path');
 var LiveReloadPlugin = require('webpack-livereload-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 var autoprefixer = require('autoprefixer');
-var StyleLintPlugin = require('stylelint-webpack-plugin');
 
 var plugins = [
   new webpack.optimize.CommonsChunkPlugin("common", "common.js", Infinity),
@@ -44,11 +43,7 @@ var plugins = [
       from: './styles/img',
       to: './img/'
     }
-  ]),
-  new StyleLintPlugin({
-    syntax: 'less',
-    files: ['**/*.less']
-  })
+  ])
 ];
 var mode = process.env.NODE_ENV;
 

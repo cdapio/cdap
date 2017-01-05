@@ -63,7 +63,7 @@ public class PurchaseAppTest extends TestBase {
     streamManager.send("cat bought 2 pops for $14");
 
     try {
-      // Wait for the last Flowlet processing 5 events, or at most 15 seconds
+      // Wait for the last Flowlet processing 5 events, or at most 5 seconds
       RuntimeMetrics metrics = flowManager.getFlowletMetrics("collector");
       metrics.waitForProcessed(5, 15, TimeUnit.SECONDS);
     } finally {

@@ -33,9 +33,9 @@ require('./EntityListView.less');
 
 const defaultFilter = ['app', 'dataset', 'stream'];
 
-// 312 = cardWith (300) + (5 x 2 side margins) + ( 1 x 2 border widths)
+//312 = cardWith (300) + (5 x 2 side margins) + ( 1 x 2 border widths)
 const cardWidthWithMarginAndBorder = 312;
-// 140 = cardHeight (128) + (5 x 2 top bottom margins) + (1 x 2 border widths)
+//140 = cardHeight (128) + (5 x 2 top bottom margins) + (1 x 2 border widths)
 const cardHeightWithMarginAndBorder = 140;
 
 class EntityListView extends Component {
@@ -64,7 +64,7 @@ class EntityListView extends Component {
       }
     ];
 
-    // Accepted filter ids to be compared against incoming query parameters
+    //Accepted filter ids to be compared against incoming query parameters
     this.acceptedFilterIds = this.filterOptions.map( (item) => {
       return item.id;
     });
@@ -117,7 +117,7 @@ class EntityListView extends Component {
       userStoreObj : ''
     };
 
-    // By default, expect a single page -- update when search is performed and we can parse it
+    //By default, expect a single page -- update when search is performed and we can parse it
     this.pageSize = 1;
     this.dismissSplash = this.dismissSplash.bind(this);
     this.calculatePageSize = this.calculatePageSize.bind(this);
@@ -153,7 +153,7 @@ class EntityListView extends Component {
     }
   }
 
-  // Update Store and State to correspond to query parameters before component renders
+  //Update Store and State to correspond to query parameters before component renders
   componentWillMount() {
     MyUserStoreApi.get().subscribe((res) => {
       let userProperty = typeof res.property === 'object' ? res.property : {};
@@ -169,7 +169,7 @@ class EntityListView extends Component {
       fetchTables(this.props.params.namespace)
     );
 
-    // Process and return valid query parameters
+    //Process and return valid query parameters
     let queryObject = this.getQueryObject(this.props.location.query);
 
     this.setState({
@@ -197,24 +197,24 @@ class EntityListView extends Component {
     let numColumns = Math.floor(containerWidth / cardWidthWithMarginAndBorder);
     let numRows = Math.floor(containerHeight / cardHeightWithMarginAndBorder);
 
-    // We must have one column and one row at the very least
-    if (numColumns === 0) {
+    //We must have one column and one row at the very least
+    if(numColumns === 0) {
       numColumns = 1;
     }
 
-    if (numRows === 0) {
+    if(numRows === 0){
       numRows = 1;
     }
 
     this.pageSize = numColumns * numRows;
   }
-  // Retrieve entities for rendering
-  componentDidMount() {
+  //Retrieve entities for rendering
+  componentDidMount(){
     this.calculatePageSize();
     this.updateData();
   }
 
-  // Construct and return query object from query parameters
+  //Construct and return query object from query parameters
   getQueryObject(query) {
     let sortBy = '';
     let orderBy = '';
@@ -225,8 +225,8 @@ class EntityListView extends Component {
     let verifiedFilters = null;
     let invalidFilter = false;
 
-    // Get filters, order, sort, search from query
-    if (query) {
+    //Get filters, order, sort, search from query
+    if(query){
       if (typeof query.q === 'undefined') {
         sortBy = typeof query.sort === 'string' ? query.sort : '';
         orderBy = typeof query.order === 'string' ? query.order : '';
@@ -234,26 +234,26 @@ class EntityListView extends Component {
       searchTerm = typeof query.q === 'string' ? query.q : '';
       page = isNaN(query.page) ? this.state.currentPage : Number(query.page);
 
-      if (page <= 0) {
+      if(page <= 0){
         page = 1;
       }
 
-      if (typeof query.filter === 'string') {
+      if(typeof query.filter === 'string'){
         filters = [query.filter];
-      } else if (Array.isArray(query.filter)) {
+      } else if(Array.isArray(query.filter)){
         filters = query.filter;
       }
     }
 
-    // Ensure sort parameters are valid
+    //Ensure sort parameters are valid
     sortOption = this.sortOptions.filter((option) => {
       return ( sortBy === option.sort && orderBy === option.order);
     });
 
-    // Ensure filter parameters are valid
-    if (filters.length > 0) {
+    //Ensure filter parameters are valid
+    if(filters.length > 0){
       verifiedFilters = filters.filter( (filterOption) => {
-        if (this.acceptedFilterIds.indexOf(filterOption) !== -1) {
+        if(this.acceptedFilterIds.indexOf(filterOption) !== -1){
           return true;
         } else {
           invalidFilter = true;
@@ -262,10 +262,10 @@ class EntityListView extends Component {
       });
     }
 
-    // Ensure all defaults are applied if an invalid parameter is passed
-    if (invalidFilter) {
+    //Ensure all defaults are applied if an invalid parameter is passed
+    if(invalidFilter){
       defaultFilter.forEach(( option ) => {
-        if (verifiedFilters.indexOf(option) === -1) {
+        if(verifiedFilters.indexOf(option) === -1){
           verifiedFilters.push(option);
         }
       });
@@ -276,7 +276,7 @@ class EntityListView extends Component {
     } else {
       sort = this.sortOptions[0];
     }
-    // Return valid query parameters or return current state values if query params are invalid
+    //Return valid query parameters or return current state values if query params are invalid
     return ({
       'query' : searchTerm ? searchTerm : this.state.query,
       'sort': sort,
@@ -335,7 +335,7 @@ class EntityListView extends Component {
           numPages: Math.ceil(total / this.pageSize)
         });
       }, (err) => {
-        // On Error: render page as if there are no results found
+        //On Error: render page as if there are no results found
         this.setState({
           isSortDisabled,
           isSearchDisabled,
@@ -372,7 +372,7 @@ class EntityListView extends Component {
   }
 
   handlePageChange(pageNumber) {
-    if (pageNumber < 1 || pageNumber > this.state.numPages) {
+    if(pageNumber < 1 || pageNumber > this.state.numPages){
       return;
     }
 
@@ -409,8 +409,8 @@ class EntityListView extends Component {
     this.setState({selectedEntity: uniqueId});
   }
 
-  // Set query string using current application state
-  updateQueryString() {
+  //Set query string using current application state
+  updateQueryString(){
     let queryString = '';
     let sort = '';
     let filter = '';
@@ -418,33 +418,33 @@ class EntityListView extends Component {
     let page = '';
     let queryParams = [];
 
-    // Generate sort params
-    if (this.state.sortObj.sort !== 'none') {
+    //Generate sort params
+    if(this.state.sortObj.sort !== 'none'){
       sort = 'sort=' + this.state.sortObj.sort + '&order=' + this.state.sortObj.order;
     }
 
-    // Generate filter params
-    if (this.state.filter.length === 1) {
+    //Generate filter params
+    if(this.state.filter.length === 1){
       filter = 'filter=' + this.state.filter[0];
-    } else if (this.state.filter.length > 1) {
+    } else if (this.state.filter.length > 1){
       filter = 'filter=' + this.state.filter.join('&filter=');
     }
 
-    // Generate search param
-    if (this.state.query.length > 0) {
+    //Generate search param
+    if(this.state.query.length > 0){
       query = 'q=' + this.state.query;
     }
 
-    // Generate page param
+    //Generate page param
     page = 'page=' + this.state.currentPage;
 
-    // Combine query parameters into query string
+    //Combine query parameters into query string
     queryParams = [query, sort, filter, page].filter((element) => {
       return element.length > 0;
     });
     queryString = queryParams.join('&');
 
-    if (queryString.length > 0) {
+    if(queryString.length > 0){
       queryString = '?' + queryString;
     }
 
@@ -453,7 +453,7 @@ class EntityListView extends Component {
       url: location.pathname + queryString
     };
 
-    // Modify URL to match application state
+    //Modify URL to match application state
     history.pushState(obj, obj.title, obj.url);
   }
 
@@ -484,7 +484,7 @@ class EntityListView extends Component {
 
   render() {
 
-    if (!this.state.showSplash) {
+    if(!this.state.showSplash){
       return (
         <div className="splash-screen-container">
           <div className="splash-screen-first-time">
@@ -549,9 +549,9 @@ class EntityListView extends Component {
     let entitiesToBeRendered;
     let bodyContent;
 
-    if (this.state.loading) {
+    if(this.state.loading){
       bodyContent = loading;
-    } else if (this.state.entities.length === 0) {
+    } else if(this.state.entities.length === 0) {
       entitiesToBeRendered = this.state.entityErr ? errorContainer : empty;
 
       bodyContent = (

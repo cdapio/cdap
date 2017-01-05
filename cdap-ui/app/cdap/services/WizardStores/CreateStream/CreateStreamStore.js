@@ -89,7 +89,7 @@ const onSuccessHandler = (reducerId, stateCopy, action) => {
 // Reducers
 const general = (state = defaultGeneralState, action = defaultAction) => {
   let stateCopy;
-  switch (action.type) {
+  switch(action.type) {
     case CreateStreamActions.setName:
       stateCopy = Object.assign({}, state, {
         name: action.payload.name
@@ -121,7 +121,7 @@ const general = (state = defaultGeneralState, action = defaultAction) => {
 };
 const threshold = (state = defaultThresholdState, action = defaultAction) => {
   let stateCopy;
-  switch (action.type) {
+  switch(action.type) {
     case CreateStreamActions.setThreshold:
       stateCopy = Object.assign({}, state, {
         value: action.payload.threshold
@@ -143,7 +143,7 @@ const threshold = (state = defaultThresholdState, action = defaultAction) => {
 };
 const schema = (state = defaultSchemaState, action = defaultAction) => {
   let stateCopy;
-  switch (action.type) {
+  switch(action.type) {
     case CreateStreamActions.setSchemaFormat:
       stateCopy = Object.assign({}, state, {
         format: action.payload.format

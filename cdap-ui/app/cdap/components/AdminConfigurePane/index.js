@@ -24,11 +24,12 @@ var configButtons = [
   T.translate('features.Management.Configure.buttons.add-ns')
 ];
 
-export default function AdminConfigurePane({ openNamespaceWizard }) {
+export default function AdminConfigurePane({ openNamespaceWizard }){
 
   var buttons = [];
-  for (var i = 0; i < configButtons.length; i++) {
-    if (i === 0) {
+  for(var i = 0 ; i < configButtons.length; i++){
+
+    if(i === 0){
       buttons.push(
         <ConfigureButton
           key={shortid.generate()}

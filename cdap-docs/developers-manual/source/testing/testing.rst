@@ -76,8 +76,8 @@ then we’ll start the flow and the service::
       ApplicationManager appManager = deployApplication(WordCount.class);
 
       // Start the flow and the service
-      FlowManager flowManager = appManager.getFlowManager("WordCounter").start();
-      ServiceManager serviceManager = appManager.getServiceManager("RetrieveCounts").start();
+      FlowManager flowManager = appManager.startFlow("WordCounter");
+      ServiceManager serviceManager = appManager.startService("RetrieveCounts");
       serviceManager.waitForStatus(true);
       
 This flow counts the words in the events that it receives on the "wordStream". Before
@@ -101,17 +101,18 @@ will see an example for this below.
 Now that the flow and service are running, we can send some events to the stream::
 
       // Send a few events to the stream
-      StreamManager streamManager = getStreamManager("words");
-      streamManager.send("hello world");
-      streamManager.send("a wonderful world");
-      streamManager.send("the world says hello");
+      StreamWriter writer = appManager.getStreamWriter("wordStream");
+      writer.send("hello world");
+      writer.send("a wonderful world");
+      writer.send("the world says hello");
 
 To wait for all events to be processed, we can get a metrics observer
 for the last flowlet in the pipeline (the "word associator") and wait for
 its processed count to either reach 3 or time out after 5 seconds::
 
       // Wait for the events to be processed, or at most 5 seconds
-      RuntimeMetrics metrics = flowManager.getFlowletMetrics("associator");
+      RuntimeMetrics metrics = RuntimeStats.
+        getFlowletMetrics("WordCount", "WordCounter", "associator");
       metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
 Now we can start verifying that the processing was correct by reading the datasets
@@ -194,32 +195,26 @@ step, the data to the ``purchases`` should be populated by running
 the ``PurchaseFlow`` and sending the data to the ``purchaseStream``
 stream::
 
-      FlowManager flowManager = appManager.getFlowManager("PurchaseFlow").start();
+      FlowManager flowManager = appManager.startFlow("PurchaseFlow");
+      // Send data to the stream
+      sendData(appManager, now);
 
-      // Send stream events to the "purchaseStream" Stream
-      StreamManager streamManager = getStreamManager("purchaseStream");
-      streamManager.send("bob bought 3 apples for $30");
-      streamManager.send("joe bought 1 apple for $100");
-      streamManager.send("joe bought 10 pineapples for $20");
-      streamManager.send("cat bought 3 bottles for $12");
-      streamManager.send("cat bought 2 pops for $14");
-
-      // Wait for the last flowlet to process 5 events or at most 15 seconds
-      RuntimeMetrics metrics = flowManager.getFlowletMetrics("collector");
-      metrics.waitForProcessed(5, 15, TimeUnit.SECONDS);
+      // Wait for the last flowlet to process 3 events or at most 5 seconds
+      RuntimeMetrics metrics = RuntimeStats.
+          getFlowletMetrics("PurchaseApp", "PurchaseFlow", "collector");
+      metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
 Start the MapReduce and wait for a maximum of 60 seconds::
 
       // Start the MapReduce
-      MapReduceManager mrManager = appManager.getMapReduceManager("PurchaseHistoryBuilder").start();
+      MapReduceManager mrManager = appManager.startMapReduce("PurchaseHistoryBuilder");
       mrManager.waitForFinish(60, TimeUnit.SECONDS);
 
 We can start verifying that the MapReduce was run correctly by
 using the ``PurchaseHistoryService`` to retrieve a customer's purchase history::
 
     // Start PurchaseHistoryService
-    ServiceManager purchaseHistoryServiceManager =
-      appManager.getServiceManager(PurchaseHistoryService.SERVICE_NAME).start();
+    ServiceManager purchaseHistoryServiceManager = appManager.startService(PurchaseHistoryService.SERVICE_NAME);
 
     // Wait for service startup
     purchaseHistoryServiceManager.waitForStatus(true);
@@ -264,18 +259,19 @@ The Spark program reads from the ``backlinkURLs`` dataset. As a first
 step, data in the ``backlinkURLs`` should be populated by running
 the ``BackLinkFlow`` and sending the data to the stream ``backlinkURLStream``::
 
-  FlowManager flowManager = appManager.getFlowManager("BackLinkFlow").start();
+  FlowManager flowManager = appManager.startFlow("BackLinkFlow");
   // Send data to the stream
-  sendData();
+  sendData(appManager);
 
   // Wait for the last flowlet to process 4 events or at most 5 seconds
-  RuntimeMetrics metrics = flowManager.getFlowletMetrics("reader");
+  RuntimeMetrics metrics = RuntimeStats.
+      getFlowletMetrics("SparkPageRank", "BackLinkFlow", "reader");
   metrics.waitForProcessed(4, 5, TimeUnit.SECONDS);
 
 Start the Spark program and wait for a maximum of 60 seconds::
 
   // Start the Spark program.
-  SparkManager sparkManager = appManager.getSparkManager("SparkPageRankProgram").start();
+  SparkManager sparkManager = appManager.startSpark("SparkPageRankProgram");
   sparkManager.waitForFinish(60, TimeUnit.SECONDS);
 
 We verify that the Spark program ran correctly by
@@ -322,7 +318,7 @@ An application can then be deployed using that artifact::
   // Create application create request
   ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transformList);
   AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(new ArtifactSummary("etlbatch", "3.5.0"), etlConfig);
-  ApplicationId appId = NamespaceId.DEFAULT.app("KVToKV");
+  Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "KVToKV");
 
   // Deploy the application
   ApplicationManager appManager = deployApplication(appId, appRequest);
