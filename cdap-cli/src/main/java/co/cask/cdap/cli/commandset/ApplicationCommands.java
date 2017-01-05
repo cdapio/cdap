@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.app.CreateAppCommand;
 import co.cask.cdap.cli.command.app.DeleteAppCommand;
 import co.cask.cdap.cli.command.app.DeployAppCommand;
+import co.cask.cdap.cli.command.app.DeployAppWithConfigFileCommand;
 import co.cask.cdap.cli.command.app.DescribeAppCommand;
 import co.cask.cdap.cli.command.app.ListAppVersionsCommand;
 import co.cask.cdap.cli.command.app.ListAppsCommand;
@@ -46,6 +47,7 @@ public class ApplicationCommands extends CommandSet<Command> implements Categori
       ImmutableList.<Command>builder()
         .add(injector.getInstance(CreateAppCommand.class))
         .add(injector.getInstance(DeleteAppCommand.class))
+        .add(injector.getInstance(DeployAppWithConfigFileCommand.class))
         .add(injector.getInstance(DeployAppCommand.class))
         .add(injector.getInstance(DescribeAppCommand.class))
         .add(injector.getInstance(ListAppsCommand.class))
