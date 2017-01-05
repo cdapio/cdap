@@ -131,6 +131,7 @@ public class UpgradeTool {
   private final DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
   private final DefaultStore store;
   private final DatasetInstanceManager datasetInstanceManager;
+  private final MetricDatasetFactory metricDatasetFactory;
 
   /**
    * Set of Action available in this tool.
@@ -186,6 +187,7 @@ public class UpgradeTool {
     this.store = injector.getInstance(DefaultStore.class);
     this.datasetInstanceManager =
       injector.getInstance(Key.get(DatasetInstanceManager.class, Names.named("datasetInstanceManager")));
+    this.metricDatasetFactory = injector.getInstance(MetricDatasetFactory.class);
 
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -437,6 +439,9 @@ public class UpgradeTool {
 
     LOG.info("Upgrading time schedule store...");
     datasetBasedTimeScheduleStore.upgrade();
+
+    LOG.info("Upgrading KafkaConsumerMetaTable...");
+    metricDatasetFactory.createKafkaConsumerMeta().upgrade();
 
     // TODO: CDAP-7835: This should be moved out (probably to MetadataService) so it can be run after CDAP starts up.
     LOG.info("Writing system metadata to existing entities...");

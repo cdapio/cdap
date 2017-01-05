@@ -16,6 +16,8 @@
 package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.logging.save.Checkpoint;
 import com.google.common.collect.Maps;
@@ -65,6 +67,18 @@ public final class KafkaConsumerMetaTable {
     long offset = offsetBytes == null ? -1 : Bytes.toLong(offsetBytes);
     long time = timeBytes == null ? -2 : Bytes.toLong(timeBytes);
     return new Checkpoint(offset, time);
+  }
+
+  public synchronized void upgrade() {
+    Scanner scanner = metaTable.scan(null, null, null);
+    Row rowResult;
+    while ((rowResult = scanner.next()) != null) {
+      byte[] key = rowResult.getRow();
+      byte[] timeBytes = metaTable.get(key, TIMESTAMP_COLUMN);
+      if (timeBytes == null) {
+        metaTable.swap(key, TIMESTAMP_COLUMN, null, Bytes.toBytes(-2L));
+      }
+    }
   }
 
   private byte[] getKey(TopicPartition topicPartition) {
