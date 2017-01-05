@@ -84,7 +84,7 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
   @Override
   public void onReceived(Iterator<FetchedMessage> messages) {
     TopicPartition lastTopicPartition;
-    long lastOffset = -1;
+    long lastOffset;
     long lastTimestamp = -2;
     // Decode the metrics records.
     ByteBufferInputStream is = new ByteBufferInputStream(null);
@@ -92,17 +92,18 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
 
     while (messages.hasNext()) {
       FetchedMessage input = messages.next();
+      try {
+        MetricValues metricValues = recordReader.read(new BinaryDecoder(is.reset(input.getPayload())), recordSchema);
+        lastTimestamp = metricValues.getTimestamp();
+        records.add(metricValues);
+      } catch (IOException e) {
+        LOG.info("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
+      }
       lastTopicPartition = input.getTopicPartition();
       lastOffset = input.getNextOffset();
       messageCount.incrementAndGet();
       if (lastOffset >= 0) {
         checkpointMap.put(lastTopicPartition, new Checkpoint(lastOffset, lastTimestamp));
-      }
-      try {
-        MetricValues metricValues = recordReader.read(new BinaryDecoder(is.reset(input.getPayload())), recordSchema);
-        records.add(metricValues);
-      } catch (IOException e) {
-        LOG.info("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
       }
     }
 
