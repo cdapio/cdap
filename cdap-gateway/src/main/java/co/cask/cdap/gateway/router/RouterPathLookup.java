@@ -23,7 +23,6 @@ import org.apache.commons.collections.keyvalue.MultiKey;
 import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
-import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -92,7 +91,10 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       String version = uriParts[6];
       MultiKey cacheKey = new MultiKey(serviceName, version);
 
-      return routeDestinationCache.putIfAbsent(cacheKey, new RouteDestination(serviceName, version));;
+      if (!routeDestinationCache.containsKey(cacheKey)) {
+        routeDestinationCache.put(cacheKey, new RouteDestination(serviceName, version));
+      }
+      return routeDestinationCache.get(cacheKey);
     } else if ((uriParts.length >= 9) && "services".equals(uriParts[5]) && "methods".equals(uriParts[7])) {
       //User defined services handle methods on them:
       //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
