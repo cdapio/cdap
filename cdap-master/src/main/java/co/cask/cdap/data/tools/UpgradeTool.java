@@ -68,6 +68,7 @@ import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
+import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
@@ -131,6 +132,7 @@ public class UpgradeTool {
   private final DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
   private final DefaultStore store;
   private final DatasetInstanceManager datasetInstanceManager;
+  private final HBaseTableFactory tmsTableFactory;
 
   /**
    * Set of Action available in this tool.
@@ -200,6 +202,7 @@ public class UpgradeTool {
     });
     this.existingEntitySystemMetadataWriter = injector.getInstance(ExistingEntitySystemMetadataWriter.class);
     this.upgradeDatasetServiceManager = injector.getInstance(UpgradeDatasetServiceManager.class);
+    this.tmsTableFactory = injector.getInstance(HBaseTableFactory.class);
   }
 
   @VisibleForTesting
@@ -510,6 +513,9 @@ public class UpgradeTool {
 
     LOG.info("Upgrading QueueAdmin ...");
     queueAdmin.upgrade();
+
+    LOG.info("Upgrading TMS Message and Payload Tables ...");
+    tmsTableFactory.upgrade();
   }
 
   public static void main(String[] args) {
