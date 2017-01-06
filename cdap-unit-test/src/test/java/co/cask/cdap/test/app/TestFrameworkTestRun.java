@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -708,7 +708,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     runtimeArgs.putAll(additionalParams);
     wfManager.start(runtimeArgs);
 
-    // Wait till custom action in the Workflow is triggered.
+    // Wait until custom action in the Workflow is triggered.
     while (!waitFile.exists()) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
@@ -855,29 +855,29 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       }
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-    //check scheduled state
+    // Check scheduled state
     Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleName).status(200));
 
-    //check status of non-existent schedule
+    // Check status of non-existent schedule
     Assert.assertEquals("NOT_FOUND", wfmanager.getSchedule("doesnt exist").status(404));
 
-    //suspend the schedule
+    // Suspend the schedule
     wfmanager.getSchedule(scheduleName).suspend();
 
-    //Check that after suspend it goes to "SUSPENDED" state
+    // Check that after suspend it goes to "SUSPENDED" state
     waitForScheduleState(scheduleName, wfmanager, Scheduler.ScheduleState.SUSPENDED);
 
-    // test workflow token while suspended
+    // Test workflow token while suspended
     String pid = history.get(0).getPid();
     WorkflowTokenDetail workflowToken = wfmanager.getToken(pid, WorkflowToken.Scope.SYSTEM, null);
     Assert.assertEquals(0, workflowToken.getTokenData().size());
     workflowToken = wfmanager.getToken(pid, null, null);
     Assert.assertEquals(2, workflowToken.getTokenData().size());
 
-    // wait till workflow finishes execution
+    // Wait until workflow finishes execution
     waitForWorkflowStatus(wfmanager, ProgramRunStatus.COMPLETED);
 
-    // verify workflow token after workflow completion
+    // Verify workflow token after workflow completion
     WorkflowTokenNodeDetail workflowTokenAtNode =
       wfmanager.getTokenAtNode(pid, AppWithSchedule.DummyAction.class.getSimpleName(),
                                WorkflowToken.Scope.USER, "finished");
@@ -905,9 +905,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       out.write(String.format("%s\n", event5));
     }
 
-    // batch upload file containing 10 events
+    // Batch upload file containing 10 events
     batchStream.send(testData, "text/csv");
-    // verify upload
+    // Verify upload
     List<StreamEvent> uploadedEvents = batchStream.getEvents(0, System.currentTimeMillis(), 100);
     Assert.assertEquals(5, uploadedEvents.size());
     Assert.assertEquals(event1, Bytes.toString(uploadedEvents.get(0).getBody()));

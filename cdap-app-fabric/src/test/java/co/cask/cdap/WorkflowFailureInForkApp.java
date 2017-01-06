@@ -106,7 +106,7 @@ public class WorkflowFailureInForkApp extends AbstractApplication {
       //noinspection ResultOfMethodCallIgnored
       file.createNewFile();
 
-      // Wait till the SecondMapReduce program is ready to throw an exception
+      // Wait until the SecondMapReduce program is ready to throw an exception
       file = new File(args.get("wait.file"));
       while (!file.exists()) {
         TimeUnit.MILLISECONDS.sleep(50);

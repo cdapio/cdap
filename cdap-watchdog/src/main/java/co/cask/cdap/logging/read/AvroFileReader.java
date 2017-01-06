@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -215,7 +215,7 @@ public class AvroFileReader {
         skipLen = DEFAULT_SKIP_LEN;
       }
 
-      // For open file, endPosition sync marker is unknown so start from file length and read till the actual eof
+      // For open file, endPosition sync marker is unknown so start from file length and read up to the actual EOF
       dataFileReader.sync(length);
       long finalSync = dataFileReader.previousSync();
       logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, -1);
@@ -266,8 +266,8 @@ public class AvroFileReader {
     List<LogEvent> logSegment = new ArrayList<>();
     GenericRecord datum = null;
     long currentSyncPosition = dataFileReader.previousSync();
-    // Read till the end if endSyncPosition is not known (in case of open file)
-    // or read until endSyncPosition has reached
+    // Read up to the end if endSyncPosition is not known (in case of an open file)
+    // or read until endSyncPosition has been reached
     while (dataFileReader.hasNext() && (endSyncPosition == -1 || (currentSyncPosition < endSyncPosition))) {
       datum = dataFileReader.next(datum);
       ILoggingEvent loggingEvent = LoggingEvent.decode(datum);

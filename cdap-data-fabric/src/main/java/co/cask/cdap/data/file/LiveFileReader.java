@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -78,13 +78,14 @@ public abstract class LiveFileReader<T, P> implements FileReader<T, P> {
       }
 
       if (eventCount == 0) {
-        // Not yet EOF. Since next reader is already available, it could either be the reader doesn't see
+        // Not yet EOF. Since the next reader is already available, it could either be the reader doesn't see
         // the last flush from the writer in the read() above or the writer actually crashed.
-        // To handle these cases, an extra read is done when a new reader is available but current read
-        // gives no event, so that
+        // To handle these cases, an extra read is done when a new reader is available but the current read
+        // gives no event, so that:
         // 1. If the writer properly closed the file, by the time we see a new file here, an extra read should be
-        //    able to see events till the end of file, as writer won't create new file before old one is closed.
-        // 2. If the writer crashed, an extra read will still yield no event, but that's ok, as no more write will
+        //    able to see events up to the end of file, as the writer won't create a new file before the old one is
+        //    closed.
+        // 2. If the writer crashed, an extra read will still yield no event, but that's ok, as no more writes will
         //    be happening to the old file.
         eventCount = currentReader.read(events, maxEvents, getReadTimeoutNano(startTime, timeoutNano),
                                         TimeUnit.NANOSECONDS, readFilter);

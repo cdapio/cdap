@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -129,7 +129,7 @@ public class WorkflowDataset extends AbstractDataset {
    *
    * @param id The workflow id
    * @param startTime The start of the time range from where the user wants the statistics
-   * @param endTime The end of the time range till where the user wants the statistics
+   * @param endTime The end of the time range until where the user wants the statistics
    * @param percentiles The list of percentiles that the user wants information on
    * @return A statistics object that provides information about the workflow or null if there are no runs associated
    * with the workflow

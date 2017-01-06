@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class RunIds {
   private static final Random RANDOM = new Random();
 
-  // Number of 100ns intervals since 15 October 1582 00:00:000000000 till UNIX epoch
+  // Number of 100ns intervals since 15 October 1582 00:00:000000000 until UNIX epoch
   private static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
   // Multiplier to convert millisecond into 100ns
   private static final long HUNDRED_NANO_MULTIPLIER = 10000;

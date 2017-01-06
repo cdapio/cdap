@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -125,7 +125,7 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
         final ClassLoader programContextClassLoader = new CombineClassLoader(
           null, ImmutableList.of(contentProducer.getClass().getClassLoader(), getClass().getClassLoader()));
 
-        // Capture the context since we need to keep it till the end of the content producing.
+        // Capture the context since we need to keep it until the end of the content producing.
         // We don't need to worry about double capturing of the context when HttpContentConsumer is used.
         // This is because when HttpContentConsumer is used, the responder constructed here will get closed and this
         // BodyProducerFactory won't be used.
