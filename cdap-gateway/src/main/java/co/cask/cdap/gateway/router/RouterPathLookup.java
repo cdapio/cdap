@@ -19,8 +19,12 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.http.AbstractHttpHandler;
+import org.apache.commons.collections.keyvalue.MultiKey;
 import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Class to match the request path to corresponding service like app-fabric, or metrics service.
@@ -40,6 +44,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     Constants.Service.EXPLORE_HTTP_USER_SERVICE);
   public static final RouteDestination STREAMS_SERVICE = new RouteDestination(Constants.Service.STREAMS);
   public static final RouteDestination PREVIEW_HTTP = new RouteDestination(Constants.Service.PREVIEW_HTTP);
+
+  private final ConcurrentMap<MultiKey, RouteDestination> routeDestinationCache = new ConcurrentHashMap<>();
 
   /**
    * Returns the CDAP service which will handle the HttpRequest
@@ -83,8 +89,12 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       //       <user-defined-method-path>"
       String serviceName = ServiceDiscoverable.getName(uriParts[2], uriParts[4], uriParts[8]);
       String version = uriParts[6];
-      // TODO: Optimize this instead of creating new object every time
-      return new RouteDestination(serviceName, version);
+      MultiKey cacheKey = new MultiKey(serviceName, version);
+
+      if (!routeDestinationCache.containsKey(cacheKey)) {
+        routeDestinationCache.put(cacheKey, new RouteDestination(serviceName, version));
+      }
+      return routeDestinationCache.get(cacheKey);
     } else if ((uriParts.length >= 9) && "services".equals(uriParts[5]) && "methods".equals(uriParts[7])) {
       //User defined services handle methods on them:
       //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
