@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.save;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.logging.write.LogFileWriter;
 import com.google.common.collect.ArrayListMultimap;
@@ -124,6 +125,11 @@ public class LogWriter implements Runnable {
              it.hasNext(); ) {
           Entry<String, Collection<KafkaLogEvent>> mapEntry = it.next();
           List<KafkaLogEvent> list = (List<KafkaLogEvent>) mapEntry.getValue();
+          if (!list.isEmpty()) {
+            KafkaLogEvent kafkaLogEvent = list.get(0);
+            ILoggingEvent logEvent = kafkaLogEvent.getLogEvent();
+            LOG.info("Logger name: {}", logEvent.getLoggerName());
+          }
           Collections.sort(list);
           logFileWriter.append(list);
           // Remove successfully written message
