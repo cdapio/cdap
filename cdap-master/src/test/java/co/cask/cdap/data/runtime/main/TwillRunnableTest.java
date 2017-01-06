@@ -52,4 +52,9 @@ public class TwillRunnableTest {
   public void testHBaseTableExporterInjector() {
     HBaseTableExporter.createInjector(CConfiguration.create(), new Configuration());
   }
+
+  @Test
+  public void testMessagingServiceTwillRunnableInjector() {
+    MessagingServiceTwillRunnable.createInjector(CConfiguration.create(), new Configuration());
+  }
 }
