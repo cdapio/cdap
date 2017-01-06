@@ -30,7 +30,7 @@ export default class FastActions extends Component {
         fastActionTypes = ['delete'];
         break;
       case 'application':
-        fastActionTypes = ['delete'];
+        fastActionTypes = ['setPreferences', 'delete'];
         break;
       case 'stream':
         fastActionTypes = ['truncate', 'delete', 'explore', 'sendEvents'];
@@ -39,7 +39,7 @@ export default class FastActions extends Component {
         fastActionTypes = ['truncate', 'delete', 'explore'];
         break;
       case 'program':
-        fastActionTypes = ['startStop'];
+        fastActionTypes = ['setPreferences', 'startStop'];
         break;
     }
 

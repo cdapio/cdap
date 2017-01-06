@@ -20,6 +20,7 @@ import TruncateAction from 'components/FastAction/TruncateAction';
 import StartStopAction from 'components/FastAction/StartStopAction';
 import ExploreAction from 'components/FastAction/ExploreAction';
 import SendEventAction from 'components/FastAction/SendEventAction';
+import SetPreferenceAction from 'components/FastAction/SetPreferenceAction';
 
 export default class FastAction extends Component {
   constructor(props) {
@@ -65,6 +66,13 @@ export default class FastAction extends Component {
             onSuccess={this.props.onSuccess}
           />
         );
+      case 'setPreferences':
+        return (
+          <SetPreferenceAction
+            entity={this.props.entity}
+            onSuccess={this.props.onSuccess}
+          />
+        );
     }
   }
 
@@ -74,7 +82,7 @@ export default class FastAction extends Component {
 }
 
 FastAction.propTypes = {
-  type: PropTypes.oneOf(['delete', 'truncate', 'startStop', 'sendEvents', 'explore']),
+  type: PropTypes.oneOf(['delete', 'truncate', 'startStop', 'sendEvents', 'explore', 'setPreferences']),
   entity: PropTypes.object,
   onSuccess: PropTypes.func
 };

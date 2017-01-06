@@ -81,6 +81,7 @@ export default class KeyValuePairs extends Component {
   shouldComponentUpdate(nextProps) {
     return this.state.pairs.length !== nextProps.keyValues.pairs.length;
   }
+
   componentWillUnmount() {
     this.subscription();
     this.keyValueStore.dispatch({

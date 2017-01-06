@@ -31,8 +31,8 @@ class KeyValuePair extends Component {
   render() {
     return (
       <div className="key-value-pair-preference">
-        <input type="text" value={this.props.name} autoFocus={true} onKeyDown={this.keyDown} onChange={this.props.onChange.bind(null, 'key')} placeholder={T.translate('commons.keyValPairs.keyPlaceholder')} className="key-input" />
-        <input type="text" value={this.props.value} onKeyDown={this.keyDown} onChange={this.props.onChange.bind(null, 'value')} placeholder={T.translate('commons.keyValPairs.valuePlaceholder')} className="value-input" />
+        <input type="text" value={this.props.name} autoFocus={true} onKeyDown={this.keyDown} onChange={this.props.onChange.bind(null, 'key')} placeholder={T.translate('commons.keyValPairs.keyPlaceholder')} className="form-control key-input" />
+        <input type="text" value={this.props.value} onKeyDown={this.keyDown} onChange={this.props.onChange.bind(null, 'value')} placeholder={T.translate('commons.keyValPairs.valuePlaceholder')} className="form-control value-input" />
         <button type="submit" className="fa fa-plus add-row-btn" onClick={this.props.addRow} />
         <button type="submit" className="fa fa-trash remove-row-btn" onClick={this.props.removeRow} />
       </div>
