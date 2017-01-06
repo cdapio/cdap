@@ -716,6 +716,7 @@ public class ArtifactRepository {
    *
    * @param artifactId the artifact to delete
    * @throws IOException if there was some IO error deleting the artifact
+   * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws UnauthorizedException if the current user is not authorized to delete the artifact. To delete an artifact,
    *                               a user needs {@link Action#ADMIN} permission on the artifact.
    */

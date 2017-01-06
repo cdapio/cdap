@@ -713,7 +713,7 @@ public class ArtifactStore {
    * @param artifactId the id of the artifact to delete
    * @throws IOException if there was an IO error deleting the metadata or the actual artifact
    */
-  public void delete(final Id.Artifact artifactId) throws IOException {
+  public void delete(final Id.Artifact artifactId) throws ArtifactNotFoundException, IOException {
 
     // delete everything in a transaction
     try {
@@ -725,14 +725,13 @@ public class ArtifactStore {
           Table metaTable = getMetaTable(context);
           byte[] detailBytes = metaTable.get(artifactCell.rowkey, artifactCell.column);
           if (detailBytes == null) {
-            // ok there is nothing to delete, we're done
-            return;
+            throw new ArtifactNotFoundException(artifactId.toEntityId());
           }
           deleteMeta(metaTable, artifactId, detailBytes);
         }
       });
     } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e, IOException.class);
+      throw Transactions.propagate(e, IOException.class, ArtifactNotFoundException.class);
     }
   }
 

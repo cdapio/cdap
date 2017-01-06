@@ -306,6 +306,70 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("1.0.0", actualInfo.getVersion());
   }
 
+  /**
+   * Tests that system artifacts can be accessed in a user namespace only if appropriately scoped.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testSystemArtifactIsolation() throws Exception {
+    // add the app in the default namespace
+    File systemArtifact = buildAppArtifact(WordCountApp.class, "wordcount-1.0.0.jar");
+
+    Id.Artifact defaultId = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
+    // add a system artifact. currently can't do this through the rest api (by design)
+    // so bypass it and use the repository directly
+    Id.Artifact systemId = Id.Artifact.from(Id.Namespace.SYSTEM, "wordcount", "1.0.0");
+
+    artifactRepository.addArtifact(systemId, systemArtifact, new HashSet<ArtifactRange>());
+
+    // test get /artifacts
+    Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
+      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.SYSTEM)
+    );
+    Set<ArtifactSummary> actualArtifacts = getArtifacts(Id.Namespace.DEFAULT);
+    Assert.assertEquals(expectedArtifacts, actualArtifacts);
+
+    // test get /artifacts?scope=system
+    expectedArtifacts = Sets.newHashSet(
+      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.SYSTEM)
+    );
+    actualArtifacts = getArtifacts(Id.Namespace.DEFAULT, ArtifactScope.SYSTEM);
+    Assert.assertEquals(expectedArtifacts, actualArtifacts);
+
+    // test get /artifacts?scope=user
+    expectedArtifacts = Sets.newHashSet();
+    actualArtifacts = getArtifacts(Id.Namespace.DEFAULT, ArtifactScope.USER);
+    Assert.assertEquals(expectedArtifacts, actualArtifacts);
+
+    // test get /artifacts/wordcount?scope=user
+    expectedArtifacts = null;
+    actualArtifacts = getArtifacts(Id.Namespace.DEFAULT, "wordcount", ArtifactScope.USER);
+    Assert.assertEquals(expectedArtifacts, actualArtifacts);
+
+    // test get /artifacts/wordcount?scope=system
+    expectedArtifacts = Sets.newHashSet(
+      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.SYSTEM)
+    );
+    actualArtifacts = getArtifacts(Id.Namespace.DEFAULT, "wordcount", ArtifactScope.SYSTEM);
+    Assert.assertEquals(expectedArtifacts, actualArtifacts);
+
+    // test get /artifacts/wordcount/versions/1.0.0?scope=user
+    ArtifactInfo actualInfo = getArtifact(defaultId, ArtifactScope.USER);
+    Assert.assertEquals(null , actualInfo);
+
+    // test get /artifacts/wordcount/versions/1.0.0?scope=system
+    actualInfo = getArtifact(defaultId, ArtifactScope.SYSTEM);
+    Assert.assertEquals("wordcount", actualInfo.getName());
+    Assert.assertEquals("1.0.0", actualInfo.getVersion());
+
+    // test delete /default/artifacts/wordcount/versions/1.0.0
+    deleteArtifact(defaultId, 404);
+
+    // test delete /system/artifacts/wordcount/versions/1.0.0
+    deleteArtifact(systemId, 200);
+  }
+
   @Test
   public void testPluginNamespaceIsolation() throws Exception {
     // add a system artifact. currently can't do this through the rest api (by design)
