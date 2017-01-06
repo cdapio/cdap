@@ -399,8 +399,8 @@ public abstract class AppFabricTestBase {
     return deploy(application, null, null);
   }
 
-  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace)
-    throws Exception {
+  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion,
+                                @Nullable String namespace) throws Exception {
     return deploy(application, apiVersion, namespace, null, null);
   }
 
@@ -489,8 +489,7 @@ public abstract class AppFabricTestBase {
     return readResponse(response, typeToken);
   }
 
-  protected HttpResponse getAppResponse(String namespace, String appName)
-    throws Exception {
+  protected HttpResponse getAppResponse(String namespace, String appName) throws Exception {
     return doGet(getVersionedAPIPath(String.format("apps/%s", appName),
                                                       Constants.Gateway.API_VERSION_3_TOKEN, namespace));
   }
@@ -611,22 +610,27 @@ public abstract class AppFabricTestBase {
                                 program.getApplicationId(),
                                 program.getType().getCategoryName(),
                                 program.getId());
-    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()), GSON.toJson(args));
-    Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
+    startProgram(path, program.getNamespaceId(), args, expectedStatusCode);
   }
 
   /**
    * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
    */
-  protected void startProgram(ProgramId program, int expectedStatusCode)
-    throws Exception {
+  protected void startProgram(ProgramId program, int expectedStatusCode) throws Exception {
     String path = String.format("apps/%s/versions/%s/%s/%s/start",
                                 program.getApplication(),
                                 program.getVersion(),
                                 program.getType().getCategoryName(),
                                 program.getProgram());
-    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespace()),
-                                   GSON.toJson(ImmutableMap.<String, String>of()));
+    startProgram(path, program.getNamespace(), ImmutableMap.<String, String>of(), expectedStatusCode);
+  }
+
+  /**
+   * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
+   */
+  protected void startProgram(String path, String namespaceId, Map<String, String> args,
+                              int expectedStatusCode) throws Exception {
+    HttpResponse response = doPost(getVersionedAPIPath(path, namespaceId), GSON.toJson(args));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
   }
 
@@ -661,8 +665,8 @@ public abstract class AppFabricTestBase {
     stopProgram(program, runId, expectedStatusCode, null);
   }
 
-  protected void stopProgram(Id.Program program, String runId, int expectedStatusCode, String expectedMessage)
-    throws Exception {
+  protected void stopProgram(Id.Program program, String runId, int expectedStatusCode,
+                             String expectedMessage) throws Exception {
     String path;
     if (runId == null) {
       path = String.format("apps/%s/%s/%s/stop", program.getApplicationId(), program.getType().getCategoryName(),
@@ -671,15 +675,11 @@ public abstract class AppFabricTestBase {
       path = String.format("apps/%s/%s/%s/runs/%s/stop", program.getApplicationId(),
                            program.getType().getCategoryName(), program.getId(), runId);
     }
-    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()));
-    Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
-    if (expectedMessage != null) {
-      Assert.assertEquals(expectedMessage, EntityUtils.toString(response.getEntity()));
-    }
+    stopProgram(path, program.getNamespaceId(), runId, expectedStatusCode, expectedMessage);
   }
 
-  protected void stopProgram(ProgramId program, String runId, int expectedStatusCode, String expectedMessage)
-    throws Exception {
+  protected void stopProgram(ProgramId program, String runId, int expectedStatusCode,
+                             String expectedMessage) throws Exception {
     String path;
     if (runId == null) {
       path = String.format("apps/%s/versions/%s/%s/%s/stop", program.getApplication(), program.getVersion(),
@@ -688,7 +688,13 @@ public abstract class AppFabricTestBase {
       // TODO: HTTP endpoint for stopping a program run of an app version not implemented
       path = null;
     }
-    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespace()));
+    stopProgram(path, program.getNamespace(), runId, expectedStatusCode, expectedMessage);
+  }
+
+  protected void stopProgram(String path, String namespaceId, String runId, int expectedStatusCode,
+                             String expectedMessage) throws Exception {
+
+    HttpResponse response = doPost(getVersionedAPIPath(path, namespaceId));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
     if (expectedMessage != null) {
       Assert.assertEquals(expectedMessage, EntityUtils.toString(response.getEntity()));
@@ -810,8 +816,8 @@ public abstract class AppFabricTestBase {
     return response.getStatusLine().getStatusCode();
   }
 
-  protected List<ScheduleSpecification> getSchedules(String namespace, String appName, String workflowName)
-    throws Exception {
+  protected List<ScheduleSpecification> getSchedules(String namespace, String appName,
+                                                     String workflowName) throws Exception {
     String schedulesUrl = String.format("apps/%s/workflows/%s/schedules", appName, workflowName);
     String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     HttpResponse response = doGet(versionedUrl);
@@ -820,8 +826,7 @@ public abstract class AppFabricTestBase {
   }
 
   protected List<ScheduleSpecification> getSchedules(String namespace, String appName, String appVersion,
-                                                     String workflowName)
-    throws Exception {
+                                                     String workflowName) throws Exception {
     String schedulesUrl = String.format("apps/%s/versions/%s/workflows/%s/schedules", appName, appVersion,
                                         workflowName);
     String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
@@ -843,8 +848,7 @@ public abstract class AppFabricTestBase {
     verifyProgramRuns(program, status, 0);
   }
 
-  protected void verifyProgramRuns(final Id.Program program, final String status, final int expected)
-    throws Exception {
+  protected void verifyProgramRuns(final Id.Program program, final String status, final int expected) throws Exception {
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
