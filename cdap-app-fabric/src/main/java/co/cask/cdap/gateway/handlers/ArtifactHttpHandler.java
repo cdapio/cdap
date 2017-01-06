@@ -183,8 +183,6 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     try {
       responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifacts(namespace, artifactName));
-    } catch (ArtifactNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifacts named " + artifactName + " not found.");
     } catch (IOException e) {
       LOG.error("Exception reading artifacts named {} for namespace {} from the store.", artifactName, namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");
@@ -210,8 +208,6 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       ArtifactInfo info = new ArtifactInfo(descriptor.getArtifactId(),
                                            detail.getMeta().getClasses(), detail.getMeta().getProperties());
       responder.sendJson(HttpResponseStatus.OK, info, ArtifactInfo.class, GSON);
-    } catch (ArtifactNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
     } catch (IOException e) {
       LOG.error("Exception reading artifacts named {} for namespace {} from the store.", artifactName, namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");
@@ -245,8 +241,6 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         result = properties;
       }
       responder.sendJson(HttpResponseStatus.OK, result);
-    } catch (ArtifactNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
     } catch (IOException e) {
       LOG.error("Exception reading artifacts named {} for namespace {} from the store.", artifactName, namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
@@ -277,8 +271,6 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     try {
       artifactRepository.writeArtifactProperties(artifactId, properties);
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (ArtifactNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
     } catch (IOException e) {
       LOG.error("Exception writing properties for artifact {}.", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error adding properties to artifact.");
@@ -305,8 +297,6 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     try {
       artifactRepository.writeArtifactProperty(artifactId, key, value);
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (ArtifactNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
     } catch (IOException e) {
       LOG.error("Exception writing properties for artifact {}.", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error writing property to artifact.");
@@ -329,8 +319,6 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     try {
       ArtifactDetail detail = artifactRepository.getArtifact(artifactId);
       responder.sendString(HttpResponseStatus.OK, detail.getMeta().getProperties().get(key));
-    } catch (ArtifactNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
     } catch (IOException e) {
       LOG.error("Exception reading property for artifact {}.", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading properties for artifact.");
@@ -351,8 +339,6 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     try {
       artifactRepository.deleteArtifactProperties(artifactId);
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (ArtifactNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
     } catch (IOException e) {
       LOG.error("Exception deleting properties for artifact {}.", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error deleting properties for artifact.");
@@ -374,8 +360,6 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     try {
       artifactRepository.deleteArtifactProperty(artifactId, key);
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (ArtifactNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
     } catch (IOException e) {
       LOG.error("Exception updating properties for artifact {}.", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error deleting property for artifact.");
