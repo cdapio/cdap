@@ -83,7 +83,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       //       <user-defined-method-path>"
       String serviceName = ServiceDiscoverable.getName(uriParts[2], uriParts[4], uriParts[8]);
       String version = uriParts[6];
-      // TODO: Optimize this instead of creating new object every time
       return new RouteDestination(serviceName, version);
     } else if ((uriParts.length >= 9) && "services".equals(uriParts[5]) && "methods".equals(uriParts[7])) {
       //User defined services handle methods on them:
