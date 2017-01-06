@@ -1,11 +1,11 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: CDAP Virtual Machine
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
-============================================
+=====================
 Virtual Machine Image
-============================================
+=====================
 
 .. index:: VM, Virtual, Machine
 
@@ -56,7 +56,7 @@ remove software, the admin user and password are both ``cdap``.
    :start-line: 30
 
 Starting and Stopping Standalone CDAP
-============================================
+=====================================
 
 Use the ``cdap`` script (located in ``/opt/cdap/sdk/bin``) to start and stop the Standalone CDAP:
 
