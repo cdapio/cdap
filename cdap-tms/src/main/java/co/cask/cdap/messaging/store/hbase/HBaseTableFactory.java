@@ -62,8 +62,6 @@ import java.util.concurrent.TimeUnit;
  */
 public final class HBaseTableFactory implements TableFactory {
 
-  public static final String SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE = "cdap.force.hbase.upgrade";
-
   public static final byte[] COLUMN_FAMILY = MessagingUtils.Constants.COLUMN_FAMILY;
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableFactory.class);
 
