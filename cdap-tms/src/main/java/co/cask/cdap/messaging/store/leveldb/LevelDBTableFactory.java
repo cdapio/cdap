@@ -107,7 +107,12 @@ public final class LevelDBTableFactory implements TableFactory {
   }
 
   @Override
-  public void upgradeTables(String messageTableName, String payloadTableName) throws IOException {
+  public void upgradeMessageTable(String tableName) throws IOException {
+    // no-op
+  }
+
+  @Override
+  public void upgradePayloadTable(String tableName) throws IOException {
     // no-op
   }
 
