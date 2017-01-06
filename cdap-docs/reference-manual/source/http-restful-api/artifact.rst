@@ -6,7 +6,7 @@
 .. _http-restful-api-artifact:
 
 =========================
-Artifact HTTP RESTful API 
+Artifact HTTP RESTful API
 =========================
 
 .. highlight:: console
@@ -58,7 +58,7 @@ Several optional headers may also be specified:
      - ``1.0.0``
    * - **Artifact-Extends**
      - If the artifact contains plugins, describes which parent artifacts should have access to those plugins.
-       Multiple parents can be given by separating them with a ``/`` 
+       Multiple parents can be given by separating them with a ``/``
      - ``cdap-data-pipeline[3.2.0,4.0.0)/cdap-etl-realtime[3.2.0,4.0.0)``
    * - **Artifact-Plugins**
      - JSON Array of plugins contained in the artifact that are not annotated as a plugin.
@@ -68,7 +68,7 @@ Several optional headers may also be specified:
 
 .. _http-restful-api-artifact-available:
 
-List Available Artifacts 
+List Available Artifacts
 ========================
 To retrieve a list of available artifacts, submit an HTTP GET request::
 
@@ -118,7 +118,7 @@ List Artifact Versions
 To list all versions of a specific artifact, submit an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/artifact/<artifact-name>[?scope=<scope>]
-  
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -154,7 +154,7 @@ Retrieve Artifact Details
 To retrieve details about a specific version of an artifact, submit an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>[?scope=<scope>]
-  
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -233,7 +233,7 @@ defined, they will be overwritten.
 .. container:: highlight
 
   .. parsed-literal::
-    |$| PUT /v3/namespaces/default/artifact/WordCount/versions/|release|/properties -d 
+    |$| PUT /v3/namespaces/default/artifact/WordCount/versions/|release|/properties -d
     {
         "author": "samuel",
         "company": "cask"
@@ -246,7 +246,7 @@ Set an Artifact Property
 To set a specific property for a specific version of an artifact, submit an HTTP PUT request::
 
   PUT /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
-  
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -278,7 +278,7 @@ Retrieve Artifact Properties
 To retrieve properties for a specific version of an artifact, submit an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties[?scope=<scope>&keys=<keys>]
-  
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -294,7 +294,7 @@ To retrieve properties for a specific version of an artifact, submit an HTTP GET
    * - ``scope``
      - Optional scope filter. If not specified, defaults to 'user'.
    * - ``keys``
-     - Optional comma-separated list of property keys to return. If not specified, all keys are returned. 
+     - Optional comma-separated list of property keys to return. If not specified, all keys are returned.
 
 This will return a JSON object that contains the properties of the artifact.
 
@@ -311,7 +311,7 @@ Retrieve an Artifact Property
 To retrieve a specific property for a specific version of an artifact, submit an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
-  
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -339,8 +339,8 @@ Delete Artifact Properties
 ==========================
 To delete all properties for a specific version of an artifact, submit an HTTP DELETE request::
 
-  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties
-  
+  DELETE /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -365,8 +365,8 @@ Delete an Artifact Property
 ===========================
 To delete a specific property for a specific version of an artifact, submit an HTTP DELETE request::
 
-  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
-  
+  DELETE /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -395,7 +395,7 @@ To list the extensions (plugin types) available to an artifact, submit
 an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/extensions[?scope=<scope>]
-  
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -410,7 +410,7 @@ an HTTP GET request::
      - Version of the artifact
    * - ``scope``
      - Optional scope filter. If not specified, defaults to 'user'.
-  
+
 This will return a JSON array that lists the extensions (plugin types) available to the artifact.
 Example output for version |literal-release| of the ``cdap-data-pipeline`` artifact:
 
@@ -428,7 +428,7 @@ To list plugins of a specific type available to an artifact, submit
 an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/extensions/<plugin-type>[?scope=<scope>]
-  
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -448,7 +448,7 @@ an HTTP GET request::
 
 This will return a JSON array that lists the plugins of the specified type
 available to the artifact. Each element in the array is a JSON object containing
-the artifact that the plugin originated from, and the plugin's class name, description, 
+the artifact that the plugin originated from, and the plugin's class name, description,
 name, and type. Note that the details provided are a summary compared to those provided by
 the endpoint :ref:`http-restful-api-artifact-plugin-detail`.
 
@@ -464,7 +464,7 @@ of the ``cdap-data-pipeline`` artifact (pretty-printed and reformatted to fit):
         {
             "name": "LogParser",
             "type": "transform",
-            "description": "Parses logs from any input source for relevant information such as 
+            "description": "Parses logs from any input source for relevant information such as
                 URI, IP, browser, device, HTTP status code, and timestamp.",
             "className": "co.cask.hydrator.plugin.transform.LogParserTransform",
             "artifact": {
@@ -489,7 +489,7 @@ To retrieve details about a specific plugin available to an artifact, submit
 an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/extensions/<plugin-type>/plugins/<plugin-name>[?scope=<scope>]
-  
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -563,9 +563,9 @@ of the ``cdap-data-pipeline`` artifact (pretty-printed and reformatted to fit):
                     context) {\n  if(context.getLookup('blacklist').lookup(input.id) !=
                     null) {\n     emitter.emitError({\"errorCode\":31,
                     \"errorMsg\":\"blacklisted id\", \"invalidRecord\": input}); \n  }
-                    else {\n     if(input.count < 0) {\n      
-                    context.getMetrics().count(\"negative.count\", 1);\n      
-                    context.getLogger().debug(\"Received record with negative count\");\n 
+                    else {\n     if(input.count < 0) {\n
+                    context.getMetrics().count(\"negative.count\", 1);\n
+                    context.getLogger().debug(\"Received record with negative count\");\n
                        }\n  input.count = input.count * 1024;\n  emitter.emit(input);   }
                     \n}'\nwill emit an error if the input id is present in blacklist
                     table, else scale the 'count' field by 1024",
@@ -605,7 +605,7 @@ To delete an artifact, submit an HTTP DELETE request::
 
 Deleting an artifact is an advanced feature. If there are programs that use the artifact, those
 programs will not be able to start unless the artifact is added again, or the program application
-is updated to use a different artifact. 
+is updated to use a different artifact.
 
 .. _http-restful-api-artifact-system-load:
 
@@ -639,7 +639,7 @@ To delete a system artifact, submit an HTTP DELETE request::
 
 Deleting an artifact is an advanced feature. If there are programs that use the artifact, those
 programs will not be able to start unless the artifact is added again, or the program application
-is updated to use a different artifact. 
+is updated to use a different artifact.
 
 .. _http-restful-api-artifact-app-classes:
 
@@ -729,7 +729,7 @@ Example output for the ``WordCount`` application (pretty-printed and reformatted
 
   .. parsed-literal::
     |$| GET /v3/namespaces/default/classes/apps/co.cask.cdap.examples.wordcount.WordCount
-    
+
     [
       {
         "artifact": {
