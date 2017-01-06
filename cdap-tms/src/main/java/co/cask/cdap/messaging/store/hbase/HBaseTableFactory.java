@@ -18,6 +18,7 @@ package co.cask.cdap.messaging.store.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
@@ -37,6 +38,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableNotEnabledException;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.twill.common.Threads;
@@ -47,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.SynchronousQueue;
@@ -57,6 +61,8 @@ import java.util.concurrent.TimeUnit;
  * A {@link TableFactory} for creating messaging tables backed by HBase.
  */
 public final class HBaseTableFactory implements TableFactory {
+
+  public static final String SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE = "cdap.force.hbase.upgrade";
 
   public static final byte[] COLUMN_FAMILY = MessagingUtils.Constants.COLUMN_FAMILY;
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableFactory.class);
@@ -134,6 +140,74 @@ public final class HBaseTableFactory implements TableFactory {
       new RowKeyDistributorByHashPrefix(new OneByteSimpleHash(getKeyDistributorBuckets(hTable, tableId))),
       scanExecutor, cConf.getInt(Constants.MessagingSystem.HBASE_SCAN_CACHE_ROWS)
     );
+  }
+
+  public void upgrade() throws IOException {
+    boolean force = Boolean.valueOf(System.getProperty(SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE));
+    String tableName = cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME);
+    try {
+      upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
+                         tableUtil.getMessageTableRegionObserverClassForVersion(), force);
+    } catch (TableNotFoundException ex) {
+      LOG.info("TMS Message Table was not found. Skipping upgrade.");
+    }
+
+    tableName = cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME);
+    try {
+      upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
+                         tableUtil.getPayloadTableRegionObserverClassForVersion(), force);
+    } catch (TableNotFoundException ex) {
+      LOG.info("TMS Payload Table was not found. Skipping upgrade.");
+    }
+  }
+
+  private void upgradeCoProcessor(TableId tableId, Class<? extends Coprocessor> coprocessor,
+                                  boolean force) throws IOException {
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);
+
+      // Get cdap version from the table
+      ProjectInfo.Version version = HBaseTableUtil.getVersion(tableDescriptor);
+
+      if (!force && version.compareTo(ProjectInfo.getVersion()) >= 0) {
+        // If cdap has version has not changed or is greater, no need to update
+        LOG.info("Table '{}' has not changed and its version '{}' is same or greater than current CDAP version '{}'",
+                 tableId, version, ProjectInfo.getVersion());
+        return;
+      }
+
+      // create a new descriptor for the table update
+      HTableDescriptorBuilder newDescriptor = tableUtil.buildHTableDescriptor(tableDescriptor);
+
+      // Remove old coprocessor
+      Map<String, HBaseTableUtil.CoprocessorInfo> coprocessorInfo = HBaseTableUtil.getCoprocessorInfo(tableDescriptor);
+      for (Map.Entry<String, HBaseTableUtil.CoprocessorInfo> coprocessorEntry : coprocessorInfo.entrySet()) {
+        newDescriptor.removeCoprocessor(coprocessorEntry.getValue().getClassName());
+      }
+
+      // Add new coprocessor
+      addCoprocessor(coprocessor, newDescriptor);
+
+      // Update CDAP version, table prefix
+      HBaseTableUtil.setVersion(newDescriptor);
+      HBaseTableUtil.setTablePrefix(newDescriptor, cConf);
+
+      boolean enableTable = false;
+      try {
+        tableUtil.disableTable(admin, tableId);
+        enableTable = true;
+      } catch (TableNotEnabledException ex) {
+        LOG.debug("Table '{}' was not enabled before update and will not be enabled after update.", tableId);
+      }
+
+      tableUtil.modifyTable(admin, newDescriptor.build());
+      if (enableTable) {
+        LOG.debug("Enabling table '{}'...", tableId);
+        tableUtil.enableTable(admin, tableId);
+      }
+    }
+
+    LOG.info("Table '{}' update completed.", tableId);
   }
 
   /**
