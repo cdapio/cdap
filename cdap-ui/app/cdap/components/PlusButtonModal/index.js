@@ -32,6 +32,8 @@ export default class PlusButtonModal extends Component {
     this.state = {
       viewMode: 'marketplace'
     };
+
+    this.closeHandler = this.closeHandler.bind(this);
   }
   toggleView(tab) {
     if (this.state.viewMode === tab) {
@@ -100,6 +102,12 @@ export default class PlusButtonModal extends Component {
                   {resourceCenter}
                 </span>
               </button>
+            </div>
+            <div
+              className="modal-close-btn"
+              onClick={this.closeHandler}
+            >
+              <span className="fa fa-times" />
             </div>
           </div>
         </ModalHeader>
