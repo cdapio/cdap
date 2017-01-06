@@ -142,34 +142,31 @@ public final class HBaseTableFactory implements TableFactory {
     );
   }
 
-  public void upgrade() throws IOException {
-    boolean force = Boolean.valueOf(System.getProperty(SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE));
-    String tableName = cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME);
+  @Override
+  public void upgradeTables(String messageTableName, String payloadTableName) throws IOException {
     try {
-      upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
-                         tableUtil.getMessageTableRegionObserverClassForVersion(), force);
+      upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, messageTableName),
+                         tableUtil.getMessageTableRegionObserverClassForVersion());
     } catch (TableNotFoundException ex) {
       LOG.info("TMS Message Table was not found. Skipping upgrade.");
     }
 
-    tableName = cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME);
     try {
-      upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
-                         tableUtil.getPayloadTableRegionObserverClassForVersion(), force);
+      upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, payloadTableName),
+                         tableUtil.getPayloadTableRegionObserverClassForVersion());
     } catch (TableNotFoundException ex) {
       LOG.info("TMS Payload Table was not found. Skipping upgrade.");
     }
   }
 
-  private void upgradeCoProcessor(TableId tableId, Class<? extends Coprocessor> coprocessor,
-                                  boolean force) throws IOException {
+  private void upgradeCoProcessor(TableId tableId, Class<? extends Coprocessor> coprocessor) throws IOException {
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);
 
       // Get cdap version from the table
       ProjectInfo.Version version = HBaseTableUtil.getVersion(tableDescriptor);
 
-      if (!force && version.compareTo(ProjectInfo.getVersion()) >= 0) {
+      if (version.compareTo(ProjectInfo.getVersion()) >= 0) {
         // If cdap has version has not changed or is greater, no need to update
         LOG.info("Table '{}' has not changed and its version '{}' is same or greater than current CDAP version '{}'",
                  tableId, version, ProjectInfo.getVersion());

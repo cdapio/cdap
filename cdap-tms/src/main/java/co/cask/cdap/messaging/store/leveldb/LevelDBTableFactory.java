@@ -106,6 +106,11 @@ public final class LevelDBTableFactory implements TableFactory {
     return payloadTable;
   }
 
+  @Override
+  public void upgradeTables(String messageTableName, String payloadTableName) throws IOException {
+    // no-op
+  }
+
   private File ensureDirExists(File dir) throws IOException {
     if (!DirUtils.mkdirs(dir)) {
       throw new IOException("Failed to create local directory " + dir + " for the messaging system.");
