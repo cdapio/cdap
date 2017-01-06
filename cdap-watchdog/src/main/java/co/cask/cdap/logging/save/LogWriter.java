@@ -125,6 +125,7 @@ public class LogWriter implements Runnable {
              it.hasNext(); ) {
           Entry<String, Collection<KafkaLogEvent>> mapEntry = it.next();
           List<KafkaLogEvent> list = (List<KafkaLogEvent>) mapEntry.getValue();
+
           if (!list.isEmpty()) {
             KafkaLogEvent kafkaLogEvent = list.get(0);
             ILoggingEvent logEvent = kafkaLogEvent.getLogEvent();
