@@ -141,16 +141,19 @@ public final class HBaseTableFactory implements TableFactory {
   }
 
   @Override
-  public void upgradeTables(String messageTableName, String payloadTableName) throws IOException {
+  public void upgradeMessageTable(String tableName) throws IOException {
     try {
-      upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, messageTableName),
+      upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
                          tableUtil.getMessageTableRegionObserverClassForVersion());
     } catch (TableNotFoundException ex) {
       LOG.info("TMS Message Table was not found. Skipping upgrade.");
     }
+  }
 
+  @Override
+  public void upgradePayloadTable(String tableName) throws IOException {
     try {
-      upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, payloadTableName),
+      upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
                          tableUtil.getPayloadTableRegionObserverClassForVersion());
     } catch (TableNotFoundException ex) {
       LOG.info("TMS Payload Table was not found. Skipping upgrade.");

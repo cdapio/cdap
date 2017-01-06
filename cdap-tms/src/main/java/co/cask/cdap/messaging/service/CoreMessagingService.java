@@ -219,8 +219,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   protected void startUp() throws Exception {
     // Upgrade the TMS Message and Payload Tables
-    tableFactory.upgradeTables(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME),
-                               cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
+    tableFactory.upgradeMessageTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
+    tableFactory.upgradePayloadTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
+
     Queue<TopicId> asyncCreationTopics = new LinkedList<>();
 
     for (String topic : new HashSet<>(cConf.getTrimmedStringCollection(Constants.MessagingSystem.SYSTEM_TOPICS))) {
