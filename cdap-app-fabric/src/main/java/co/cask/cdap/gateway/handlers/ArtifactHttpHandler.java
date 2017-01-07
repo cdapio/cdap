@@ -309,11 +309,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                           @PathParam("namespace-id") String namespaceId,
                           @PathParam("artifact-name") String artifactName,
                           @PathParam("artifact-version") String artifactVersion,
-                          @PathParam("property") String key)
+                          @PathParam("property") String key,
+                          @QueryParam("scope") @DefaultValue("user") String scope)
     throws Exception {
 
-    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
-      NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
+    NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {

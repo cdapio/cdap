@@ -310,7 +310,7 @@ Retrieve an Artifact Property
 =============================
 To retrieve a specific property for a specific version of an artifact, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>[?scope=<scope>]
 
 .. list-table::
    :widths: 20 80
@@ -326,11 +326,13 @@ To retrieve a specific property for a specific version of an artifact, submit an
      - Version of the artifact
    * - ``property``
      - Property to retrieve
+   * - ``scope``
+     - Optional scope filter. If not specified, defaults to 'user'.
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET /v3/namespaces/default/artifact/WordCount/versions/|release|/properties/author
+    |$| GET /v3/namespaces/default/artifact/WordCount/versions/|release|/properties/author?scope=user
     samuel
 
 .. _http-restful-api-artifact-delete-properties:
