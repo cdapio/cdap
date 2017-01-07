@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,6 +43,7 @@ import co.cask.cdap.metrics.guice.MetricsProcessorStatusServiceModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.metrics.process.KafkaMetricsProcessorServiceFactory;
 import co.cask.cdap.metrics.process.MessageCallbackFactory;
+import co.cask.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import co.cask.cdap.metrics.process.MetricsMessageCallbackFactory;
 import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
@@ -83,7 +84,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
                     Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
 
   private Injector injector;
-  private MetricsProcessorService metricsProcessorService;
+  private KafkaMetricsProcessorRuntimeService kafkaMetricsProcessorRuntimeService;
+  private MessagingMetricsProcessorRuntimeService messagingMetricsProcessorRuntimeService;
   private MetricsCollectionService metricsCollectionService;
 
   public MetricsProcessorTwillRunnable(String name, String cConfName, String hConfName) {
@@ -106,8 +108,12 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       MetricsContext metricsContext = metricsCollectionService.getContext(METRICS_PROCESSOR_CONTEXT);
 
-      metricsProcessorService = injector.getInstance(MetricsProcessorService.class);
-      metricsProcessorService.setMetricsContext(metricsContext);
+      kafkaMetricsProcessorRuntimeService = injector.getInstance(
+        KafkaMetricsProcessorRuntimeService.class);
+      kafkaMetricsProcessorRuntimeService.setMetricsContext(metricsContext);
+      messagingMetricsProcessorRuntimeService = injector.getInstance(
+        MessagingMetricsProcessorRuntimeService.class);
+      messagingMetricsProcessorRuntimeService.setMetricsContext(metricsContext);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
       throw Throwables.propagate(t);
@@ -120,7 +126,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(AuthorizationEnforcementService.class));
     services.add(metricsCollectionService);
-    services.add(metricsProcessorService);
+    services.add(kafkaMetricsProcessorRuntimeService);
+    services.add(messagingMetricsProcessorRuntimeService);
     services.add(injector.getInstance(MetricsProcessorStatusService.class));
   }
 
@@ -140,7 +147,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
-      new KafkaMetricsProcessorModule(),
+      new MetricsProcessorModule(),
       new MetricsProcessorStatusServiceModule(),
       new AuditModule().getDistributedModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
@@ -155,15 +162,21 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     );
   }
 
-  static final class KafkaMetricsProcessorModule extends PrivateModule {
-   @Override
+  static final class MetricsProcessorModule extends PrivateModule {
+    @Override
     protected void configure() {
+      // Single MetricDatasetFactory used by both KafkaMetricsProcessorService and MessagingMetricsProcessorService
       bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
       bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
       install(new FactoryModuleBuilder()
                 .build(KafkaMetricsProcessorServiceFactory.class));
 
       expose(KafkaMetricsProcessorServiceFactory.class);
+
+      install(new FactoryModuleBuilder()
+                .build(MessagingMetricsProcessorServiceFactory.class));
+
+      expose(MessagingMetricsProcessorServiceFactory.class);
     }
 
     @SuppressWarnings("unused")
@@ -178,8 +191,28 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     @Provides
     @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX)
     public String providesKafkaTopicPrefix(CConfiguration cConf) {
-      return cConf.get(Constants.Metrics.KAFKA_TOPIC_PREFIX,
-                       Constants.Metrics.DEFAULT_KAFKA_TOPIC_PREFIX);
+      return cConf.get(Constants.Metrics.KAFKA_TOPIC_PREFIX);
+    }
+
+    @SuppressWarnings("unused")
+    @Provides
+    @Named(Constants.Metrics.TOPIC_PREFIX)
+    public String providesTopicPrefix(CConfiguration cConf) {
+      return cConf.get(Constants.Metrics.TOPIC_PREFIX);
+    }
+
+    @SuppressWarnings("unused")
+    @Provides
+    @Named(Constants.Metrics.MESSAGING_TOPIC_NUM)
+    public int providesMessagingTopicPartition(CConfiguration cConf) {
+      return cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM);
+    }
+
+    @SuppressWarnings("unused")
+    @Provides
+    @Named(Constants.Metrics.MESSAGING_FETCHER_LIMIT)
+    public int providesFetcherPersistThreshold(CConfiguration cConf) {
+      return cConf.getInt(Constants.Metrics.MESSAGING_FETCHER_LIMIT);
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,16 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.api.metrics.MetricsContext;
-import org.apache.twill.kafka.client.KafkaConsumer;
-
 /**
- * Factory to create MessageCallback for the Metrics Processing Service. This factory interface
- * exists for simplifying object injections by guice only.
+ * A wrapper class to provide byte array format of keys for {@link MetricsConsumerMetaTable}.
  */
-public interface MessageCallbackFactory {
+public interface MetricsMetaKey {
 
-  KafkaConsumer.MessageCallback create(MetricsConsumerMetaTable metaTable, MetricsContext metricsContext);
+  /**
+   * @return A byte array format of this object to be stored in the metrics meta table as a key
+   */
+  byte[] getKey();
 }

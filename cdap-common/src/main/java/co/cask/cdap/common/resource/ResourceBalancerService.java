@@ -48,7 +48,7 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * A services that automatically balances resource assignments between its instances.
+ * A service that automatically balances resource assignments between its instances.
  */
 public abstract class ResourceBalancerService extends AbstractIdleService {
 

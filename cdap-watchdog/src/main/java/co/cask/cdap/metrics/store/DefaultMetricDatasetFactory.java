@@ -29,7 +29,7 @@ import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
+import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
 import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
 import co.cask.cdap.metrics.store.upgrade.MetricsDataMigrator;
 import co.cask.cdap.proto.id.DatasetId;
@@ -83,7 +83,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   public FactTable getOrCreateFactTable(int resolution) {
     String tableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
                                  Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
-    int ttl =  cConf.getInt(Constants.Metrics.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
+    int ttl = cConf.getInt(Constants.Metrics.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
     TableProperties.Builder props = TableProperties.builder();
     // don't add TTL for MAX_RESOLUTION table. CDAP-1626
@@ -102,15 +102,14 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   @Override
-  public KafkaConsumerMetaTable createKafkaConsumerMeta() {
+  public MetricsConsumerMetaTable createConsumerMeta() {
+    String tableName = cConf.get(Constants.Metrics.KAFKA_META_TABLE);
     try {
-      String tableName = cConf.get(Constants.Metrics.KAFKA_META_TABLE,
-                                   Constants.Metrics.DEFAULT_KAFKA_META_TABLE);
       MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
-      LOG.info("KafkaConsumerMetaTable created: {}", tableName);
-      return new KafkaConsumerMetaTable(table);
+      LOG.info("MetricsConsumerMetaTable created: {}", tableName);
+      return new MetricsConsumerMetaTable(table);
     } catch (Exception e) {
-      LOG.error("Exception in creating KafkaConsumerMetaTable.", e);
+      LOG.error("Exception in creating MetricsConsumerMetaTable.", e);
       throw Throwables.propagate(e);
     }
   }
@@ -158,7 +157,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     factory.getOrCreateFactTable(Integer.MAX_VALUE);
 
     // adding kafka consumer meta
-    factory.createKafkaConsumerMeta();
+    factory.createConsumerMeta();
   }
 
   /**

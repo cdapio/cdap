@@ -32,7 +32,7 @@ import org.apache.twill.kafka.client.KafkaConsumer;
 
 /**
  * A {@link MessageCallbackFactory} that creates MessageCallback for processing
- * {@link co.cask.cdap.api.metrics.MetricValues} with offset persists to {@link KafkaConsumerMetaTable}.
+ * {@link co.cask.cdap.api.metrics.MetricValues} with offset persists to {@link MetricsConsumerMetaTable}.
  */
 public final class MetricsMessageCallbackFactory implements MessageCallbackFactory {
 
@@ -58,7 +58,7 @@ public final class MetricsMessageCallbackFactory implements MessageCallbackFacto
   }
 
   @Override
-  public KafkaConsumer.MessageCallback create(KafkaConsumerMetaTable metaTable, MetricsContext metricsContext) {
+  public KafkaConsumer.MessageCallback create(MetricsConsumerMetaTable metaTable, MetricsContext metricsContext) {
     metricStore.setMetricsContext(metricsContext);
     return new PersistedMessageCallback(
       new MetricsMessageCallback(datumReader, recordSchema, metricStore, metricsContext), metaTable, persistThreshold);

@@ -961,7 +961,7 @@
       the Kafka service used by CDAP. If the same Kafka service ZooKeeper quorum
       and namespace are shared by multiple CDAP instances, each CDAP instance
       needs to distinguish its Kafka topics from those of other CDAP instances
-      with unique values for ${log.kafka.topic} and ${metrics.kafka.topic.prefix}.
+      with unique values for ${log.kafka.topic} and ${metrics.topic.prefix}.
     </description>
   </property>
 
@@ -1304,9 +1304,13 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${notification.topic}</value>
+    <value>${audit.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic}</value>
     <description>
-      A comma-separated list of topics that is always available in the system namespace
+      A comma-separated list of topics that is always available in the system namespace.
+      Multiple topics sharing the same prefix and distinguished by different numerical suffices
+      can be specified with the syntax &lt;common.prefix&gt;:&lt;total.topic.number&gt;,
+      where the &lt;total.topic.number&gt; is the total number of topics sharing the &lt;common.prefix&gt;,
+      and the numerical suffices will range from 0 to (&lt;total.topic.number&gt; - 1)
     </description>
   </property>
 
@@ -1471,10 +1475,26 @@
   </property>
 
   <property>
+    <name>metrics.kafka.meta.table</name>
+    <value>metrics.kafka.meta</value>
+    <description>
+      Name of the Kafka metrics meta table
+    </description>
+  </property>
+
+  <property>
     <name>metrics.kafka.partition.size</name>
     <value>10</value>
     <description>
-      Number of partitions for metrics topic
+      Number of partitions for Kafka metrics topic
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.kafka.topic.prefix</name>
+    <value>metrics</value>
+    <description>
+      Topic prefix used to publish metrics in Kafka
     </description>
   </property>
 
@@ -1491,6 +1511,35 @@
     <value>${master.service.memory.mb}</value>
     <description>
       Memory in megabytes for each metrics service instance
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.messaging.fetcher.limit</name>
+    <value>200</value>
+    <description>
+      Maximum limit on number of metrics messages to be fetched from messaging fetcher at once.
+      It's also the maximum number of MetricValues to be persisted in metrics store after the
+      number of fetched messages reaches the limit
+    </description>
+  </property>
+  
+  <property>
+    <name>metrics.messaging.meta.table</name>
+    <value>metrics.messaging.meta</value>
+    <description>
+      Name of the messaging metrics meta table
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.messaging.topic.num</name>
+    <value>10</value>
+    <description>
+      Number of topics for metrics in messaging. This number controls how many topics in messaging
+      which metrics are sent to, and the number of threads fetching from messaging service
+      and processing metrics in parallel. With the default value 10, 10 topics will be created for metrics
+      with names: ${metrics.topic.prefix}0, ${metrics.topic.prefix}1, ... ${metrics.topic.prefix}9
     </description>
   </property>
 
@@ -1566,6 +1615,14 @@
     <value>45005</value>
     <description>
       Metrics Query service bind port
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.topic.prefix</name>
+    <value>metrics</value>
+    <description>
+      Topic prefix used to publish metrics in messaging
     </description>
   </property>
 
