@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
 /**
  * Process metrics by consuming metrics being published to kafka.
  */
-public final class KafkaMetricsProcessorService extends AbstractExecutionThreadService {
+public final class KafkaMetricsProcessorService extends AbstractMetricsProcessorService {
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsProcessorService.class);
 
@@ -50,9 +50,6 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
 
   @Nullable
   private MetricsContext metricsContext;
-
-  private volatile boolean stopping = false;
-
   private KafkaConsumerMetaTable metaTable;
 
   @Inject
@@ -61,6 +58,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
                                       MessageCallbackFactory callbackFactory,
                                       @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX) String topicPrefix,
                                       @Assisted Set<Integer> partitions) {
+    super(metricDatasetFactory);
     this.kafkaClient = kafkaClient;
     this.callbackFactory = callbackFactory;
     this.topicPrefix = topicPrefix;
@@ -114,28 +112,6 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
     LOG.info("Metrics Processing Service stopped.");
   }
 
-  private KafkaConsumerMetaTable getMetaTable() {
-    while (metaTable == null) {
-      if (stopping) {
-        LOG.info("We are shutting down, giving up on acquiring KafkaConsumerMetaTable.");
-        break;
-      }
-      try {
-        metaTable = metricDatasetFactory.createKafkaConsumerMeta();
-      } catch (Exception e) {
-        LOG.warn("Cannot access kafka consumer metaTable, will retry in 1 sec.");
-        try {
-          TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-          break;
-        }
-      }
-    }
-
-    return metaTable;
-  }
-
   private boolean subscribe() {
     // Assuming there is only one process that pulling in all metrics.
     KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
@@ -146,7 +122,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
       long offset;
       try {
         LOG.info("Retrieve offset for topic: {}, partition: {}", topic, partition);
-        KafkaConsumerMetaTable metaTable = getMetaTable();
+        KafkaConsumerMetaTable metaTable = (KafkaConsumerMetaTable) getMetaTable(this.getClass());
         if (metaTable == null) {
           LOG.info("Could not get KafkaConsumerMetaTable, seems like we are being shut down");
           return false;
@@ -165,7 +141,8 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
       }
     }
 
-    unsubscribe = preparer.consume(callbackFactory.create(getMetaTable(), metricsContext));
+    unsubscribe = preparer.consume(callbackFactory.create((KafkaConsumerMetaTable) getMetaTable(this.getClass()),
+                                                          metricsContext));
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitions);
     return true;
   }

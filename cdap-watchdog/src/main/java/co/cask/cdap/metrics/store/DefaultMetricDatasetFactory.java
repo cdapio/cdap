@@ -29,7 +29,11 @@ import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.metrics.process.AbstractConsumerMetaTable;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
+import co.cask.cdap.metrics.process.KafkaMetricsProcessorService;
+import co.cask.cdap.metrics.process.MessagingConsumerMetaTable;
+import co.cask.cdap.metrics.process.MessagingMetricsProcessorService;
 import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
 import co.cask.cdap.metrics.store.upgrade.MetricsDataMigrator;
 import co.cask.cdap.proto.id.DatasetId;
@@ -83,7 +87,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   public FactTable getOrCreateFactTable(int resolution) {
     String tableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
                                  Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
-    int ttl =  cConf.getInt(Constants.Metrics.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
+    int ttl = cConf.getInt(Constants.Metrics.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
     DatasetProperties.Builder props = DatasetProperties.builder();
     // don't add TTL for MAX_RESOLUTION table. CDAP-1626
@@ -102,13 +106,28 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   @Override
-  public KafkaConsumerMetaTable createKafkaConsumerMeta() {
+  public AbstractConsumerMetaTable createKafkaConsumerMeta(Class<?> metricsProcessorServiceClass) {
+    String tableName;
+    if (metricsProcessorServiceClass.equals(KafkaMetricsProcessorService.class)) {
+      tableName = cConf.get(Constants.Metrics.KAFKA_META_TABLE,
+                            Constants.Metrics.DEFAULT_KAFKA_META_TABLE);
+    } else if (metricsProcessorServiceClass.equals(MessagingMetricsProcessorService.class)) {
+      tableName = cConf.get(Constants.Metrics.MESSAGING_META_TABLE,
+                            Constants.Metrics.DEFAULT_MESSAGING_META_TABLE);
+    } else {
+      String errorMessage = "No AbstractConsumerMetaTable class for " + metricsProcessorServiceClass.getCanonicalName();
+      LOG.error(errorMessage);
+      throw Throwables.propagate(new Exception(errorMessage));
+    }
     try {
-      String tableName = cConf.get(Constants.Metrics.KAFKA_META_TABLE,
-                                   Constants.Metrics.DEFAULT_KAFKA_META_TABLE);
       MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
-      LOG.info("KafkaConsumerMetaTable created: {}", tableName);
-      return new KafkaConsumerMetaTable(table);
+      if (metricsProcessorServiceClass.equals(KafkaMetricsProcessorService.class)) {
+        LOG.info("KafkaConsumerMetaTable created: {}", tableName);
+        return new KafkaConsumerMetaTable(table);
+      }
+      LOG.info("MessagingConsumerMetaTable created: {}", tableName);
+      return new MessagingConsumerMetaTable(table);
+
     } catch (Exception e) {
       LOG.error("Exception in creating KafkaConsumerMetaTable.", e);
       throw Throwables.propagate(e);
@@ -158,7 +177,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     factory.getOrCreateFactTable(Integer.MAX_VALUE);
 
     // adding kafka consumer meta
-    factory.createKafkaConsumerMeta();
+    factory.createKafkaConsumerMeta(KafkaMetricsProcessorService.class);
   }
 
   /**
