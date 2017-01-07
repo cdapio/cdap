@@ -29,10 +29,17 @@ import java.util.TreeMap;
  */
 public final class Updates {
 
-  public static final Function<Long, Update> LONG_TO_PUTS = new Function<Long, Update>() {
+  public static final Function<Long, Update> LONG_TO_UPDATE = new Function<Long, Update>() {
     @Override
     public Update apply(Long input) {
       return new PutValue(Bytes.toBytes(input));
+    }
+  };
+
+  public static final Function<byte[], Update> BYTES_TO_UPDATE = new Function<byte[], Update>() {
+    @Override
+    public Update apply(byte[] input) {
+      return new PutValue(input);
     }
   };
 

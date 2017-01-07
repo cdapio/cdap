@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,16 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.api.metrics.MetricsContext;
-import org.apache.twill.kafka.client.KafkaConsumer;
+import co.cask.cdap.api.common.Bytes;
+import org.apache.twill.kafka.client.TopicPartition;
 
 /**
- * Factory to create MessageCallback for the Metrics Processing Service. This factory interface
- * exists for simplifying object injections by guice only.
+ * A wrapper class of {@link org.apache.twill.kafka.client.TopicPartition}to to be used as keys
+ * in {@link MetricsConsumerMetaTable}.
  */
-public interface MessageCallbackFactory {
+public class TopicPartitionMetaKey implements MetricsMetaKey {
+  private byte[] key;
 
-  KafkaConsumer.MessageCallback create(MetricsConsumerMetaTable metaTable, MetricsContext metricsContext);
+  public TopicPartitionMetaKey(TopicPartition topicPartition) {
+    this.key = Bytes.toBytes(String.format("%s.%02d", topicPartition.getTopic(), topicPartition.getPartition()));
+  }
+
+  @Override
+  public byte[] getKey() {
+    return key;
+  }
 }

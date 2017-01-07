@@ -108,6 +108,24 @@ public class HBaseMetricsTable implements MetricsTable {
   }
 
   @Override
+  public void putBytes(SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> updates) {
+    List<Put> puts = Lists.newArrayList();
+    for (Map.Entry<byte[], ? extends SortedMap<byte[], byte[]>> row : updates.entrySet()) {
+      PutBuilder put = tableUtil.buildPut(row.getKey());
+      for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
+        put.add(columnFamily, column.getKey(), column.getValue());
+      }
+      puts.add(put.build());
+    }
+    try {
+      hTable.put(puts);
+      hTable.flushCommits();
+    } catch (IOException e) {
+      throw new DataSetException("Put failed on table " + tableId, e);
+    }
+  }
+
+  @Override
   public boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) {
     try {
       if (newValue == null) {

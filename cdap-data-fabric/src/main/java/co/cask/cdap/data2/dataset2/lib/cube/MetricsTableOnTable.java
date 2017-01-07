@@ -58,6 +58,17 @@ class MetricsTableOnTable implements MetricsTable {
   }
 
   @Override
+  public void putBytes(SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> updates) {
+    for (Map.Entry<byte[], ? extends SortedMap<byte[], byte[]>> rowUpdate : updates.entrySet()) {
+      Put put = new Put(rowUpdate.getKey());
+      for (Map.Entry<byte[], byte[]> columnUpdate : rowUpdate.getValue().entrySet()) {
+        put.add(columnUpdate.getKey(), columnUpdate.getValue());
+      }
+      table.put(put);
+    }
+  }
+
+  @Override
   public boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) {
     return table.compareAndSwap(row, column, oldValue, newValue);
   }

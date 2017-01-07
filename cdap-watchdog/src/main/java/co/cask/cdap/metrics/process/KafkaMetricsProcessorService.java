@@ -51,9 +51,9 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   @Nullable
   private MetricsContext metricsContext;
 
-  private volatile boolean stopping = false;
+  private volatile boolean stopping;
 
-  private KafkaConsumerMetaTable metaTable;
+  private MetricsConsumerMetaTable metaTable;
 
   @Inject
   public KafkaMetricsProcessorService(KafkaClientService kafkaClient,
@@ -70,11 +70,6 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
 
   public void setMetricsContext(MetricsContext metricsContext) {
     this.metricsContext = metricsContext;
-  }
-
-  @Override
-  protected String getServiceName() {
-    return this.getClass().getSimpleName();
   }
 
   @Override
@@ -100,7 +95,6 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   protected void triggerShutdown() {
     LOG.info("Shutdown is triggered.");
     stopping = true;
-    super.triggerShutdown();
   }
 
   @Override
@@ -114,16 +108,17 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
     LOG.info("Metrics Processing Service stopped.");
   }
 
-  private KafkaConsumerMetaTable getMetaTable() {
+  private MetricsConsumerMetaTable getMetaTable() {
+
     while (metaTable == null) {
       if (stopping) {
-        LOG.info("We are shutting down, giving up on acquiring KafkaConsumerMetaTable.");
+        LOG.info("We are shutting down, giving up on acquiring consumer metaTable.");
         break;
       }
       try {
-        metaTable = metricDatasetFactory.createKafkaConsumerMeta();
+        metaTable = metricDatasetFactory.createConsumerMeta();
       } catch (Exception e) {
-        LOG.warn("Cannot access kafka consumer metaTable, will retry in 1 sec.");
+        LOG.warn("Cannot access consumer metaTable, will retry in 1 sec.");
         try {
           TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException ie) {
@@ -146,15 +141,15 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
       long offset;
       try {
         LOG.info("Retrieve offset for topic: {}, partition: {}", topic, partition);
-        KafkaConsumerMetaTable metaTable = getMetaTable();
+        MetricsConsumerMetaTable metaTable = getMetaTable();
         if (metaTable == null) {
-          LOG.info("Could not get KafkaConsumerMetaTable, seems like we are being shut down");
+          LOG.info("Could not get MetricsConsumerMetaTable, seems like we are being shut down");
           return false;
         }
-        offset = metaTable.get(new TopicPartition(topic, partition));
+        offset = metaTable.get(new TopicPartitionMetaKey(new TopicPartition(topic, partition)));
         LOG.info("Offset for topic: {}, partition: {} is {}", topic, partition, offset);
       } catch (Exception e) {
-        LOG.info("Failed to get KafkaConsumerMetaTable, shutting down");
+        LOG.info("Failed to get MetricsConsumerMetaTable, shutting down");
         return false;
       }
 

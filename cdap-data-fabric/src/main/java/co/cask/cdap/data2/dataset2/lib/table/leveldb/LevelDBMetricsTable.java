@@ -88,6 +88,15 @@ public class LevelDBMetricsTable implements MetricsTable {
   }
 
   @Override
+  public void putBytes(SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> updates) {
+    try {
+      core.persist(updates, System.currentTimeMillis());
+    } catch (IOException e) {
+      throw new DataSetException("Put failed on table " + tableName, e);
+    }
+  }
+
+  @Override
   public synchronized boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) {
     try {
       return core.swap(row, column, oldValue, newValue);

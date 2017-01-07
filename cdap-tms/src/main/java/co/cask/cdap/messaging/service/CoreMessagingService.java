@@ -221,22 +221,42 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     Queue<TopicId> asyncCreationTopics = new LinkedList<>();
 
     for (String topic : new HashSet<>(cConf.getTrimmedStringCollection(Constants.MessagingSystem.SYSTEM_TOPICS))) {
-      TopicId topicId;
-      try {
-        topicId = NamespaceId.SYSTEM.topic(topic);
-      } catch (IllegalArgumentException e) {
-        // Ignore invalid topic
-        LOG.warn("Ignore creation of invalid topic '{}'.", topic);
-        continue;
-      }
+      // Create topics with topic prefix and top partition
+      if (topic.contains(":")) {
+        String[] topicParts = topic.split(":");
+        int totalTopicNum;
+        if (topicParts.length != 2) {
+          LOG.warn("Ignore creation of invalid topic '{}'. Expecting topic in the format topicPrefix:numPartitions.",
+                   topic);
+          continue;
+        }
+        String topicPrefix = topicParts[0];
+        try {
+          NamespaceId.SYSTEM.topic(topicPrefix);
+        } catch (IllegalArgumentException e) {
+          // Ignore invalid topicPrefix
+          LOG.warn(String.format("Ignore creation of invalid topics with prefix '%s'", topicPrefix), e);
+          return;
+        }
+        try {
+          totalTopicNum = Integer.parseInt(topicParts[1]);
+          if (totalTopicNum <= 0) {
+            LOG.warn("Ignore creation of invalid topic '{}' because " +
+                       "the partition number {} in it is not positive integer.", topic, topicParts[1]);
+            continue;
+          }
+        } catch (NumberFormatException e) {
+          // Ignore invalid topic
+          LOG.warn(String.format(
+            "Ignore creation of invalid topic '%s' because of the invalid partition number in it.", topic), e);
+          continue;
+        }
 
-      try {
-        createTopicIfNotExists(topicId);
-      } catch (Exception e) {
-        // If failed, add it to a list so that the retry will happen asynchronously
-        LOG.warn("Topic {} creation failed with exception {}. Will retry.", topicId, e.getMessage());
-        LOG.debug("Topic {} creation failure stacktrace", topicId, e);
-        asyncCreationTopics.add(topicId);
+        for (int i = 0; i < totalTopicNum; i++) {
+          createSystemTopic(topicPrefix + i, asyncCreationTopics);
+        }
+      } else {
+        createSystemTopic(topic, asyncCreationTopics);
       }
     }
 
@@ -245,6 +265,29 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     }
 
     LOG.info("Core Messaging Service started");
+  }
+
+  /**
+   * Creates the given topic if it is not yet created. Adds a topic to the creationFailureTopics if creation fails.
+   */
+  private void createSystemTopic(String topicName,  Queue<TopicId> creationFailureTopics) {
+    TopicId topicId;
+    try {
+      topicId = NamespaceId.SYSTEM.topic(topicName);
+    } catch (IllegalArgumentException e) {
+      // Ignore invalid topic
+      LOG.warn(String.format("Ignore creation of invalid topic '%s'", topicName), e);
+      return;
+    }
+
+    try {
+      createTopicIfNotExists(topicId);
+    } catch (Exception e) {
+      // If failed, add it to a list so that the retry will happen asynchronously
+      LOG.warn("Topic {} creation failed with exception {}. Will retry.", topicId, e.getMessage());
+      LOG.debug("Topic {} creation failure stacktrace", topicId, e);
+      creationFailureTopics.add(topicId);
+    }
   }
 
   @Override
