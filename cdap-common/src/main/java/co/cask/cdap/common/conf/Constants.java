@@ -517,8 +517,10 @@ public final class Constants {
     public static final String KAFKA_CONSUMER_PERSIST_THRESHOLD = "metrics.kafka.consumer.persist.threshold";
     public static final String KAFKA_META_TABLE = "metrics.kafka.meta.table";
 
+    public static final String MESSAGING_TOPIC_PREFIX = "metrics.messaging.topic.prefix";
+
     public static final String DEFAULT_KAFKA_META_TABLE = "metrics.kafka.meta";
-    public static final String DEFAULT_KAFKA_TOPIC_PREFIX = "metrics";
+    public static final String DEFAULT_TOPIC_PREFIX = "metrics";
 
     // NOTE: "v2" to avoid conflict with data of older metrics system
     public static final String DEFAULT_ENTITY_TABLE_NAME = "metrics.v2.entity";

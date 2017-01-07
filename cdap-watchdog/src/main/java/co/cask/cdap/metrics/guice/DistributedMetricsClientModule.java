@@ -24,6 +24,7 @@ import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.internal.io.DatumWriterFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.metrics.collect.KafkaMetricsCollectionService;
+import co.cask.cdap.metrics.collect.MessagingMetricsCollectionService;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.PrivateModule;
@@ -42,14 +43,20 @@ final class DistributedMetricsClientModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    bind(MetricsCollectionService.class).to(KafkaMetricsCollectionService.class).in(Scopes.SINGLETON);
+    bind(MetricsCollectionService.class).to(MessagingMetricsCollectionService.class).in(Scopes.SINGLETON);
     expose(MetricsCollectionService.class);
   }
 
   @Provides
   @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX)
   public String providesKafkaTopicPrefix(CConfiguration cConf) {
-    return cConf.get(Constants.Metrics.KAFKA_TOPIC_PREFIX, Constants.Metrics.DEFAULT_KAFKA_TOPIC_PREFIX);
+    return cConf.get(Constants.Metrics.KAFKA_TOPIC_PREFIX, Constants.Metrics.DEFAULT_TOPIC_PREFIX);
+  }
+
+  @Provides
+  @Named(Constants.Metrics.MESSAGING_TOPIC_PREFIX)
+  public String providesMessagingTopicPrefix(CConfiguration cConf) {
+    return cConf.get(Constants.Metrics.MESSAGING_TOPIC_PREFIX, Constants.Metrics.DEFAULT_TOPIC_PREFIX);
   }
 
   @Provides
