@@ -166,10 +166,24 @@ angular.module(PKG.name + '.feature.tracker')
             let topOffset = y(index) + margin.top + (y.rangeBand()/2);
 
             if (scope.type === 'applications') {
-              scope.programsPath = 'apps.detail.overview.programs({ appId: "' + result.entityName + '" })';
+              scope.programsPath = window.getOldCDAPUrl({
+                stateName: 'apps.detail.overview.programs',
+                stateParams: {
+                  namespace: $state.params.namespace,
+                  appId: result.entityName
+                }
+              });
             } else if (scope.type === 'programs') {
               let programType = myLineageService.parseProgramType(result.programType);
-              scope.programsPath = programType + '.detail({ appId: "' + result.application + '", programId: "' + result.entityName + '" })';
+
+              scope.programsPath = window.getOldCDAPUrl({
+                stateName: programType + '.detail',
+                stateParams: {
+                  namespace: $state.params.namespace,
+                  appId: result.application,
+                  programId: result.entityName
+                }
+              });
 
               tooltipContent = tooltipContent + ': ' + result.application;
 
@@ -184,7 +198,7 @@ angular.module(PKG.name + '.feature.tracker')
 
             let link = angular.element('<a></a>')
               .attr('class', 'entity-link')
-              .attr('ui-sref', scope.programsPath)
+              .attr('href', scope.programsPath)
               .attr('uib-tooltip', tooltipContent)
               .attr('tooltip-ellipsis', result.entityName)
               .attr('tooltip-append-to-body', 'true')

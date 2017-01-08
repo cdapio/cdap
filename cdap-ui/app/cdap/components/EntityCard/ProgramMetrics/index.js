@@ -18,6 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import {MyProgramApi} from 'api/program';
 import NamespaceStore from 'services/NamespaceStore';
 import {convertProgramToApi} from 'services/program-api-converter';
+import T from 'i18n-react';
 
 export default class ProgramMetrics extends Component {
   constructor(props) {
@@ -66,15 +67,15 @@ export default class ProgramMetrics extends Component {
     return (
       <div className="metrics-container">
         <div className="metric-item">
-          <p className="metric-header">Status</p>
+          <p className="metric-header">{T.translate('commons.entity.program.status')}</p>
           <p>{this.state.loading ? loading : this.state.status}</p>
         </div>
         <div className="metric-item">
-          <p className="metric-header">Runs</p>
+          <p className="metric-header">{T.translate('commons.entity.program.runs')}</p>
           <p>{this.state.loading ? loading : this.state.numRuns}</p>
         </div>
         <div className="metric-item">
-          <p className="metric-header">Application</p>
+          <p className="metric-header">{T.translate('commons.entity.program.application')}</p>
           <p>{this.state.loading ? loading : this.state.appName}</p>
         </div>
       </div>

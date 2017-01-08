@@ -137,6 +137,13 @@ class TrackerResultsController {
       scope: this.$scope
     };
 
+    if (params.query === '*') {
+      params.sort = 'creation-time desc';
+      params.numCursors = 10;
+    } else {
+      params.query = params.query + '*';
+    }
+
     this.myTrackerApi.search(params)
       .$promise
       .then( (res) => {

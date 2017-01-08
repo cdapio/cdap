@@ -55,7 +55,7 @@ class CDAP extends Component {
     };
   }
 
-  componentWillMount(){
+  componentWillMount() {
     cookie.save('DEFAULT_UI', 'NEW', {path: '/'});
     if (window.CDAP_CONFIG.securityEnabled) {
       NamespaceStore.dispatch({
@@ -69,7 +69,7 @@ class CDAP extends Component {
     MyNamespaceApi.pollList()
       .subscribe(
         (res) => {
-          if (res.length > 0){
+          if (res.length > 0) {
             NamespaceStore.dispatch({
               type: NamespaceActions.updateNamespaces,
               payload: {
@@ -77,12 +77,12 @@ class CDAP extends Component {
               }
             });
           } else {
-            //To-Do: No namespaces returned ; throw error / redirect
+            // To-Do: No namespaces returned ; throw error / redirect
           }
         }
       );
 
-      if(!VersionStore.getState().version){
+      if (!VersionStore.getState().version) {
         MyCDAPVersionApi.get().subscribe((res) => {
           this.setState({ version : res.version });
           VersionStore.dispatch({

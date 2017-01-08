@@ -32,8 +32,8 @@ and can be accessed through the ``getRuntimeArguments`` method of the context:
 
 - For flows, services, and workers: preferences are available to the ``initialize`` method in the context.
 
-- For MapReduce and Spark: preferences are available to the ``beforeSubmit`` and ``onFinish`` methods in the context.
-  The ``beforeSubmit`` method can pass them to the mappers and reducers through the job configuration.
+- For MapReduce and Spark: preferences are available to the ``initialize`` and ``destroy`` methods in the context.
+  The ``initialize`` method can pass them to the mappers and reducers through the job configuration.
 
 - When a workflow receives preferences, it passes them to each MapReduce in the workflow.
 

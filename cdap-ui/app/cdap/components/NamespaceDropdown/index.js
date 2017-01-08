@@ -39,7 +39,7 @@ export default class NamespaceDropdown extends Component {
     this.setState({
       namespaceList: NamespaceStore.getState().namespaces
     });
-    //Load updated data into the namespace dropdown
+    // Load updated data into the namespace dropdown
     NamespaceStore.subscribe(() => {
       this.setState({
         currentNamespace : NamespaceStore.getState().selectedNamespace,
@@ -63,7 +63,7 @@ export default class NamespaceDropdown extends Component {
       openWizard: false
     });
   }
-  selectNamespace(name){
+  selectNamespace(name) {
     NamespaceStore.dispatch({
       type: NamespaceActions.selectNamespace,
       payload: {

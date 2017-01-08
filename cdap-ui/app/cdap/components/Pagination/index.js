@@ -23,7 +23,7 @@ require('./Pagination.less');
 
 export default class Pagination extends Component {
 
-  constructor(props){
+  constructor(props) {
     super(props);
     this.state = {
       numResults : 0,
@@ -36,7 +36,7 @@ export default class Pagination extends Component {
     this.goToPrev = this.goToPrev.bind(this);
   }
 
-  componentWillMount(){
+  componentWillMount() {
     Mousetrap.bind('right', this.goToNext);
     Mousetrap.bind('left', this.goToPrev);
   }
@@ -47,7 +47,7 @@ export default class Pagination extends Component {
       totalPages: nextProps.totalPages
     });
   }
-  componentWillUnmount(){
+  componentWillUnmount() {
     Mousetrap.unbind('left');
     Mousetrap.unbind('right');
   }
@@ -56,7 +56,7 @@ export default class Pagination extends Component {
     if (this.state.currentPage - 1 === 0) {
       return;
     }
-    //Highlight the side that is pressed
+    // Highlight the side that is pressed
     this.setState({
       leftPressed: true
     });
@@ -67,17 +67,17 @@ export default class Pagination extends Component {
       });
     }, 250);
 
-    if(this.props.setDirection){
+    if (this.props.setDirection) {
       this.props.setDirection('prev');
     }
     this.props.setCurrentPage(this.state.currentPage-1);
   }
 
-  goToNext(){
+  goToNext() {
     if (this.state.currentPage + 1 > this.state.totalPages) {
       return;
     }
-    //Highlight the side that is pressed
+    // Highlight the side that is pressed
     this.setState({
       rightPressed: true
     });
@@ -88,7 +88,7 @@ export default class Pagination extends Component {
       });
     }, 250);
 
-    if(this.props.setDirection){
+    if (this.props.setDirection) {
       this.props.setDirection('next');
     }
     this.props.setCurrentPage(this.state.currentPage+1);

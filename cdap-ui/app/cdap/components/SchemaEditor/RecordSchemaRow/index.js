@@ -26,7 +26,7 @@ import T from 'i18n-react';
 import classnames from 'classnames';
 import cloneDeep from 'lodash/cloneDeep';
 
-export default class RecordSchemaRow extends Component{
+export default class RecordSchemaRow extends Component {
   constructor(props) {
     super(props);
     if (typeof props.row === 'object') {
@@ -234,7 +234,7 @@ export default class RecordSchemaRow extends Component{
   }
   render() {
     const showArrow = (row, index) => {
-      if(row.showAbstractSchemaRow) {
+      if (row.showAbstractSchemaRow) {
         return (
           <span
             className="fa fa-caret-down"

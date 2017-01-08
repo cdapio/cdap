@@ -27,7 +27,7 @@ const mapStateToProps = (state) => {
   };
 };
 
-function HeaderNavbarList({list, store, showOldUI}){
+function HeaderNavbarList({list, store, showOldUI}) {
   const oldUILink = (
     <a className="old-ui-link"
        href={`/oldcdap/ns/${store.getState().selectedNamespace}`}>

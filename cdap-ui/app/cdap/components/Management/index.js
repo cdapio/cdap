@@ -61,10 +61,10 @@ class Management extends Component {
         (res) => {
           let apps = [];
           let services = [];
-          for(let key in res){
-            if(res.hasOwnProperty(key)){
+          for (let key in res) {
+            if (res.hasOwnProperty(key)) {
               apps.push(key);
-              if(key !== 'cdap'){
+              if (key !== 'cdap') {
                 services.push({
                   name: T.translate(`features.Management.Component-Overview.headers.${key}`),
                   version: res[key].Version,
@@ -72,7 +72,7 @@ class Management extends Component {
                   logs: res[key].LogsURL
                 });
               } else {
-                //Uptime is attached to cdap response object
+                // Uptime is attached to cdap response object
                 let uptime = res[key].Uptime;
                 let tempTime = moment.duration(uptime);
                 let days = tempTime.days() < 10 ? '0' + tempTime.days() : tempTime.days();
@@ -87,7 +87,7 @@ class Management extends Component {
             }
           }
           this.getServices(apps);
-          if(!this.state.application){
+          if (!this.state.application) {
             this.setState({
               application : apps[0],
               applications : apps,
@@ -112,7 +112,7 @@ class Management extends Component {
     this.openNamespaceWizard = this.openNamespaceWizard.bind(this, 0, 'add_namespace');
   }
 
-  //Retrieve the data for each service
+  // Retrieve the data for each service
   getServices(names) {
     let serviceData = {};
     names.forEach((name) => {
@@ -140,8 +140,8 @@ class Management extends Component {
     });
   }
 
-  componentDidMount(){
-    if(!VersionStore.getState().version){
+  componentDidMount() {
+    if (!VersionStore.getState().version) {
       MyCDAPVersionApi.get().subscribe((res) => {
         this.setState({ version : res.version });
         VersionStore.dispatch({
@@ -160,13 +160,13 @@ class Management extends Component {
     Mousetrap.bind('left', this.clickLeft);
     Mousetrap.bind('right', this.clickRight);
   }
-  componentWillUnmount(){
+  componentWillUnmount() {
     document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
     clearInterval(this.updatingInterval);
   }
   clickLeft() {
     var index = this.state.applications.indexOf(this.state.application);
-    if(index === -1 || index === 0){
+    if (index === -1 || index === 0) {
       return;
     }
     this.setToContext(this.state.applications[index-1]);
@@ -174,14 +174,14 @@ class Management extends Component {
 
   clickRight() {
     var index = this.state.applications.indexOf(this.state.application);
-    if(index === -1 || index === this.state.applications.length-1){
+    if (index === -1 || index === this.state.applications.length-1) {
       return;
     }
     this.setToContext(this.state.applications[index+1]);
   }
 
   setToContext(contextName) {
-    if(this.state.application !== contextName){
+    if (this.state.application !== contextName) {
 
       this.setState({
         application: contextName
@@ -209,7 +209,7 @@ class Management extends Component {
   }
 
   render () {
-    //Constructs the Services Navigation
+    // Constructs the Services Navigation
     var navItems = this.state.applications.map( (item) => {
       return (
         <li

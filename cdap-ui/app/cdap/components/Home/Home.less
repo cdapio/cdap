@@ -14,13 +14,13 @@
  * the License.
  */
 
- /* Animation - Slide in direction of Next */
+/* Animation - Slide in direction of Next */
 .entity-animation--next-enter {
   &:not(h3) {
-    transform: translate(500%,0);
+    transform: translate(500%, 0);
     opacity: 0.1;
     &.entity-animation--next-enter-active {
-      transform: translate(0,0);
+      transform: translate(0, 0);
       opacity: 1;
       transition: transform 1000ms, opacity 1000ms;
     }
@@ -43,13 +43,13 @@
   }
 }
 
- /* Animation - Slide in direction of Prev */
+/* Animation - Slide in direction of Prev */
 .entity-animation--prev-enter {
   &:not(h3) {
-    transform: translate(-500%,0);
+    transform: translate(-500%, 0);
     opacity: 0.1;
     &.entity-animation--prev-enter-active {
-      transform: translate(0,0);
+      transform: translate(0, 0);
       transition: transform 1000ms, opacity 1000ms;
       opacity: 1;
     }
@@ -73,7 +73,6 @@
   }
 }
 
-
 .home-content {
   height: ~"calc(100vh - 132px)";
   height: ~"-moz-calc(100vh - 132px)";
@@ -92,15 +91,15 @@
     }
     .entity-card-container {
       margin: 5px;
-      -webkit-box-shadow: 0px 1px 10px 0 rgba(0,0,0,0.3);
-      -moz-box-shadow: 0px 1px 10px 0 rgba(0,0,0,0.3);
-      box-shadow: 0px 1px 10px 0 rgba(0,0,0,0.3);
+      -webkit-box-shadow: 0px 1px 10px 0 rgba(0, 0, 0, 0.3);
+      -moz-box-shadow: 0px 1px 10px 0 rgba(0, 0, 0, 0.3);
+      box-shadow: 0px 1px 10px 0 rgba(0, 0, 0, 0.3);
       width: 300px;
 
       &.active {
-        -webkit-box-shadow: 0px 0px 8px 0 rgba(255,102,0,1);
-        -moz-box-shadow: 0px 0px 8px 0 rgba(255,102,0,1);
-        box-shadow: 0px 0px 8px 0 rgba(255,102,0,1);
+        -webkit-box-shadow: 0px 0px 8px 0 rgba(255, 102, 0, 1);
+        -moz-box-shadow: 0px 0px 8px 0 rgba(255, 102, 0, 1);
+        box-shadow: 0px 0px 8px 0 rgba(255, 102, 0, 1);
       }
     }
 
@@ -109,15 +108,15 @@
     position: absolute;
     top: 40%;
     left: 50%;
-    transform: translate(-50%, -50%);  color: gray;
+    transform: translate(-50%, -50%);
+    color: gray;
   }
   .empty-message {
-     position: absolute;
-     top: 40%;
-     left: 50%;
-     transform: translate(-50%, -50%);
-     font-size: 20px;
-     font-weight: 500;
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    font-weight: 500;
   }
-
 }

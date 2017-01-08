@@ -24,7 +24,7 @@ export default function FastActionLink({icon, link}) {
   );
 }
 
-FastActionButton.propTypes = {
+FastActionLink.propTypes = {
   icon: PropTypes.string,
   link: PropTypes.string
 };

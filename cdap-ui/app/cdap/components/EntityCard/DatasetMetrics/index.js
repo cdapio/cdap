@@ -19,6 +19,7 @@ import {MyMetricApi} from '../../../api/metric';
 import {MyDatasetApi} from '../../../api/dataset';
 import NamespaceStore from 'services/NamespaceStore';
 import {humanReadableNumber} from 'services/helpers';
+import T from 'i18n-react';
 
 export default class DatasetMetrics extends Component {
   constructor(props) {
@@ -74,15 +75,15 @@ export default class DatasetMetrics extends Component {
     return (
       <div className="metrics-container">
         <div className="metric-item">
-          <p className="metric-header">Programs</p>
+          <p className="metric-header">{T.translate('commons.entity.dataset.programs')}</p>
           <p>{this.state.loading ? loading : humanReadableNumber(this.state.programs)}</p>
         </div>
         <div className="metric-item">
-          <p className="metric-header">Operations</p>
+          <p className="metric-header">{T.translate('commons.entity.dataset.operations')}</p>
           <p>{this.state.loading ? loading : humanReadableNumber(this.state.ops)}</p>
         </div>
         <div className="metric-item">
-          <p className="metric-header">Writes</p>
+          <p className="metric-header">{T.translate('commons.entity.dataset.writes')}</p>
           <p>{this.state.loading ? loading : humanReadableNumber(this.state.writes)}</p>
         </div>
       </div>
