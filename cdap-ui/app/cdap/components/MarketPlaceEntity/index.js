@@ -158,6 +158,9 @@ export default class MarketPlaceEntity extends Component {
     };
 
     const getRightCard = () => {
+
+      let beta = classnames('package-icon-container', {'beta' : this.props.entity.beta});
+
       return !this.state.expandedMode ?
         (
           <Card
@@ -171,7 +174,7 @@ export default class MarketPlaceEntity extends Component {
               :
                 null
             }
-            <div className="package-icon-container">
+            <div className={beta}>
               <img src={MyMarketApi.getIcon(this.props.entity)} />
             </div>
             <div className="package-metadata-container">
@@ -196,7 +199,7 @@ export default class MarketPlaceEntity extends Component {
             }
             <div className="text-center">
               <div
-                className="package-icon-container">
+                className={beta}>
                 <img src={MyMarketApi.getIcon(this.props.entity)} />
               </div>
 
