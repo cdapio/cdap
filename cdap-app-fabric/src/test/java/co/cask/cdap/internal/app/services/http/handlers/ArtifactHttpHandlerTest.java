@@ -710,19 +710,17 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   }
 
   private Set<ArtifactSummary> getArtifacts(Id.Namespace namespace) throws URISyntaxException, IOException {
-    URL endpoint = getEndPoint(String.format(
-      "%s/namespaces/%s/artifacts", Constants.Gateway.API_VERSION_3, namespace.getId())).toURL();
-    return getResults(endpoint, ARTIFACTS_TYPE);
+    return getArtifacts(namespace, (ArtifactScope) null);
   }
 
   private Set<ArtifactSummary> getArtifacts(Id.Namespace namespace, ArtifactScope scope)
     throws URISyntaxException, IOException {
 
-    if (scope == null) {
-      return getArtifacts(namespace);
-    }
-    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts?scope=%s",
-                                             Constants.Gateway.API_VERSION_3, namespace.getId(), scope.name())).toURL();
+    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts%s",
+                                             Constants.Gateway.API_VERSION_3,
+                                             namespace.getId(),
+                                             getScopeQuery(scope)))
+      .toURL();
     return getResults(endpoint, ARTIFACTS_TYPE);
   }
 
@@ -737,36 +735,31 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
 
   private Set<ArtifactSummary> getArtifacts(Id.Namespace namespace, String name)
     throws URISyntaxException, IOException {
-
-    URL endpoint = getEndPoint(String.format(
-      "%s/namespaces/%s/artifacts/%s", Constants.Gateway.API_VERSION_3, namespace.getId(), name)).toURL();
-    return getResults(endpoint, ARTIFACTS_TYPE);
+    return getArtifacts(namespace, name, null);
   }
 
   private Set<ArtifactSummary> getArtifacts(Id.Namespace namespace, String name, ArtifactScope scope)
     throws URISyntaxException, IOException {
 
-    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s?scope=%s",
+    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s%s",
                                              Constants.Gateway.API_VERSION_3,
-                                             namespace.getId(), name, scope.name())).toURL();
+                                             namespace.getId(), name,
+                                             getScopeQuery(scope)))
+      .toURL();
     return getResults(endpoint, ARTIFACTS_TYPE);
   }
 
   // get /artifacts/{name}/versions/{version}
   private ArtifactInfo getArtifact(Id.Artifact artifactId) throws URISyntaxException, IOException {
-    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s",
-                                             Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(),
-                                             artifactId.getName(), artifactId.getVersion().getVersion()))
-      .toURL();
-
-    return getResults(endpoint, ArtifactInfo.class);
+    return getArtifact(artifactId, null);
   }
 
   // get /artifacts/{name}/versions/{version}?scope={scope}
   private ArtifactInfo getArtifact(Id.Artifact artifactId, ArtifactScope scope) throws URISyntaxException, IOException {
-    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s?scope=%s",
+    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s%s",
                                              Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(),
-                                             artifactId.getName(), artifactId.getVersion().getVersion(), scope.name()))
+                                             artifactId.getName(), artifactId.getVersion().getVersion(),
+                                             getScopeQuery(scope)))
       .toURL();
 
     return getResults(endpoint, ArtifactInfo.class);
@@ -774,25 +767,19 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
 
   // get /artifacts/{name}/versions/{version}/extensions
   private Set<String> getPluginTypes(Id.Artifact artifactId) throws URISyntaxException, IOException {
-    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions",
-                                             Constants.Gateway.API_VERSION_3,
-                                             artifactId.getNamespace().getId(),
-                                             artifactId.getName(),
-                                             artifactId.getVersion().getVersion()))
-      .toURL();
-
-    return getResults(endpoint, PLUGIN_TYPES_TYPE);
+    return getPluginTypes(artifactId, null);
   }
 
   // get /artifacts/{name}/versions/{version}/extensions?scope={scope}
   private Set<String> getPluginTypes(Id.Artifact artifactId,
                                      ArtifactScope scope) throws URISyntaxException, IOException {
-    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions?scope=%s",
+    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions%s",
                                              Constants.Gateway.API_VERSION_3,
                                              artifactId.getNamespace().getId(),
                                              artifactId.getName(),
                                              artifactId.getVersion().getVersion(),
-                                             scope.name())).toURL();
+                                             getScopeQuery(scope))
+    ).toURL();
 
     return getResults(endpoint, PLUGIN_TYPES_TYPE);
   }
@@ -800,28 +787,20 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   // get /artifacts/{name}/versions/{version}/extensions/{plugin-type}
   private Set<PluginSummary> getPluginSummaries(Id.Artifact artifactId,
                                                 String pluginType) throws URISyntaxException, IOException {
-    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions/%s",
-                                             Constants.Gateway.API_VERSION_3,
-                                             artifactId.getNamespace().getId(),
-                                             artifactId.getName(),
-                                             artifactId.getVersion().getVersion(),
-                                             pluginType))
-      .toURL();
-
-    return getResults(endpoint, PLUGIN_SUMMARIES_TYPE);
+    return getPluginSummaries(artifactId, pluginType, null);
   }
 
   // get /artifacts/{name}/versions/{version}/extensions/{plugin-type}?scope={scope}
   private Set<PluginSummary> getPluginSummaries(Id.Artifact artifactId,
                                                 String pluginType,
                                                 ArtifactScope scope) throws URISyntaxException, IOException {
-    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions/%s?scope=%s",
+    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions/%s%s",
                                              Constants.Gateway.API_VERSION_3,
                                              artifactId.getNamespace().getId(),
                                              artifactId.getName(),
                                              artifactId.getVersion().getVersion(),
                                              pluginType,
-                                             scope.name()))
+                                             getScopeQuery(scope)))
       .toURL();
 
     return getResults(endpoint, PLUGIN_SUMMARIES_TYPE);
@@ -830,13 +809,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   // get /artifacts/{name}/versions/{version}/extensions/{plugin-type}/plugins/{plugin-name}
   private Set<PluginInfo> getPluginInfos(Id.Artifact artifactId,
                                          String pluginType, String pluginName) throws URISyntaxException, IOException {
-    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions/%s/plugins/%s",
-                                             Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(),
-                                             artifactId.getName(),
-                                             artifactId.getVersion().getVersion(), pluginType, pluginName))
-      .toURL();
-
-    return getResults(endpoint, PLUGIN_INFOS_TYPE);
+    return getPluginInfos(artifactId, pluginType, pluginName, null);
   }
 
   // get /artifacts/{name}/versions/{version}/extensions/{plugin-type}/plugins/{plugin-name}?scope={scope}
@@ -845,19 +818,22 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
                                          String pluginName,
                                          ArtifactScope scope) throws URISyntaxException, IOException {
     URL endpoint = getEndPoint(
-      String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions/%s/plugins/%s?scope=%s",
+      String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions/%s/plugins/%s%s",
                     Constants.Gateway.API_VERSION_3,
                     artifactId.getNamespace().getId(),
                     artifactId.getName(),
                     artifactId.getVersion().getVersion(),
                     pluginType,
                     pluginName,
-                    scope.name()))
+                    getScopeQuery(scope)))
       .toURL();
 
     return getResults(endpoint, PLUGIN_INFOS_TYPE);
   }
 
+  private String getScopeQuery(ArtifactScope scope) {
+    return (scope == null) ? ("") : ("?scope=" + scope.name());
+  }
 
   private co.cask.common.http.HttpResponse callPluginMethod(
     Id.Artifact plugins3Id, String pluginType, String pluginName, String pluginMethod,
