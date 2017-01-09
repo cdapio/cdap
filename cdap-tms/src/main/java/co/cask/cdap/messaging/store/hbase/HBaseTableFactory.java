@@ -160,6 +160,35 @@ public final class HBaseTableFactory implements TableFactory {
     }
   }
 
+  // Disables Message and Payload Table, used in Upgrade Tool
+  public void disableTables() throws IOException {
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      TableId tableId;
+      tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
+      try {
+        disableTable(admin, tableId);
+      } catch (TableNotFoundException ex) {
+        LOG.debug("TMS Message Table was not found. Skip disabling table.");
+      }
+
+      tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
+      try {
+        disableTable(admin, tableId);
+      } catch (TableNotFoundException ex) {
+        LOG.debug("TMS Payload Table was not found. Skip disabling table.");
+      }
+    }
+  }
+
+  private void disableTable(HBaseAdmin admin, TableId tableId) throws IOException {
+    try {
+      tableUtil.disableTable(admin, tableId);
+      LOG.debug("TMS Table {} has been disabled", tableId);
+    } catch (TableNotEnabledException ex) {
+      LOG.debug("TMS Table {} was in disabled state.", tableId, ex);
+    }
+  }
+
   private void upgradeCoProcessor(TableId tableId, Class<? extends Coprocessor> coprocessor) throws IOException {
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);
@@ -190,19 +219,12 @@ public final class HBaseTableFactory implements TableFactory {
       HBaseTableUtil.setVersion(newDescriptor);
       HBaseTableUtil.setTablePrefix(newDescriptor, cConf);
 
-      boolean enableTable = false;
-      try {
-        tableUtil.disableTable(admin, tableId);
-        enableTable = true;
-      } catch (TableNotEnabledException ex) {
-        LOG.debug("Table '{}' was not enabled before update and will not be enabled after update.", tableId);
-      }
+      // Disable Table
+      disableTable(admin, tableId);
 
       tableUtil.modifyTable(admin, newDescriptor.build());
-      if (enableTable) {
-        LOG.debug("Enabling table '{}'...", tableId);
-        tableUtil.enableTable(admin, tableId);
-      }
+      LOG.debug("Enabling table '{}'...", tableId);
+      tableUtil.enableTable(admin, tableId);
     }
 
     LOG.info("Table '{}' update completed.", tableId);
@@ -216,6 +238,11 @@ public final class HBaseTableFactory implements TableFactory {
                                         Class<? extends Coprocessor> coprocessor) throws IOException {
     // Create the table if the table doesn't exist
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      // If table exists, then skip creating coprocessor etc
+      if (tableUtil.tableExists(admin, tableId)) {
+        return tableUtil.createHTable(hConf, tableId);
+      }
+
       // Set the key distributor size the same as the initial number of splits, essentially one bucket per split.
       AbstractRowKeyDistributor keyDistributor = new RowKeyDistributorByHashPrefix(new OneByteSimpleHash(splits));
 
