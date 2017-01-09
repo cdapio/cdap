@@ -42,7 +42,6 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
 
   private final MessagingService messagingService;
   private final TopicId metricsTopic;
-  private final String topicPrefix;
   private final DatumWriter<MetricValues> recordWriter;
   private final ByteArrayOutputStream encoderOutputStream;
   private final Encoder encoder;
@@ -51,7 +50,6 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
   public MessagingMetricsCollectionService(@Named(Constants.Metrics.MESSAGING_TOPIC_PREFIX) String topicPrefix,
                                            MessagingService messagingService, DatumWriter<MetricValues> recordWriter) {
     super();
-    this.topicPrefix = topicPrefix;
     this.messagingService = messagingService;
 
     this.recordWriter = recordWriter;

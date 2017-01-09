@@ -179,7 +179,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX)
     public String providesKafkaTopicPrefix(CConfiguration cConf) {
       return cConf.get(Constants.Metrics.KAFKA_TOPIC_PREFIX,
-                       Constants.Metrics.DEFAULT_KAFKA_TOPIC_PREFIX);
+                       Constants.Metrics.DEFAULT_TOPIC_PREFIX);
     }
   }
 }

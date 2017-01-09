@@ -46,11 +46,9 @@ public final class KafkaMetricsProcessorService extends AbstractMetricsProcessor
   private final String topicPrefix;
   private final Set<Integer> partitions;
   private Cancellable unsubscribe;
-  private final MetricDatasetFactory metricDatasetFactory;
 
   @Nullable
   private MetricsContext metricsContext;
-  private KafkaConsumerMetaTable metaTable;
 
   @Inject
   public KafkaMetricsProcessorService(KafkaClientService kafkaClient,
@@ -63,16 +61,10 @@ public final class KafkaMetricsProcessorService extends AbstractMetricsProcessor
     this.callbackFactory = callbackFactory;
     this.topicPrefix = topicPrefix;
     this.partitions = partitions;
-    this.metricDatasetFactory = metricDatasetFactory;
   }
 
   public void setMetricsContext(MetricsContext metricsContext) {
     this.metricsContext = metricsContext;
-  }
-
-  @Override
-  protected String getServiceName() {
-    return this.getClass().getSimpleName();
   }
 
   @Override
@@ -92,13 +84,6 @@ public final class KafkaMetricsProcessorService extends AbstractMetricsProcessor
         continue;
       }
     }
-  }
-
-  @Override
-  protected void triggerShutdown() {
-    LOG.info("Shutdown is triggered.");
-    stopping = true;
-    super.triggerShutdown();
   }
 
   @Override

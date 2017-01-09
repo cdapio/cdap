@@ -36,10 +36,9 @@ public abstract class AbstractConsumerMetaTable {
     this.metaTable = metaTable;
   }
 
-  public synchronized void save(Map<Class<?>, Long> offsets) throws Exception {
-
+  public synchronized <T> void save(Map<T, Long> offsets) throws Exception {
     SortedMap<byte[], SortedMap<byte[], Long>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for (Map.Entry<Class<?>, Long> entry : offsets.entrySet()) {
+    for (Map.Entry<T, Long> entry : offsets.entrySet()) {
       SortedMap<byte[], Long> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
       map.put(VALUE_COLUMN, entry.getValue());
       updates.put(getKey(entry.getKey()), map);
@@ -47,8 +46,17 @@ public abstract class AbstractConsumerMetaTable {
     metaTable.put(updates);
   }
 
+  public synchronized <T> void save(T key, long value) throws Exception {
+    SortedMap<byte[], SortedMap<byte[], Long>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    SortedMap<byte[], Long> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
+    map.put(VALUE_COLUMN, value);
+    updates.put(getKey(key), map);
+    metaTable.put(updates);
+  }
+
   /**
-   * Gets the value in the {@link MetricsTable} of a given key.
+   * Gets the value as long in the {@link MetricsTable} of a given key.
+   *
    * @param objectKey Object form of the key to get value with.
    * @return The value or {@code -1} if the value is not found.
    * @throws Exception If there is an error when fetching.

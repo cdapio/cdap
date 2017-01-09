@@ -38,6 +38,11 @@ public abstract class AbstractMetricsProcessorService extends AbstractExecutionT
     this.metricDatasetFactory = metricDatasetFactory;
   }
 
+  @Override
+  protected String getServiceName() {
+    return this.getClass().getSimpleName();
+  }
+
   protected AbstractConsumerMetaTable getMetaTable(Class<?> metricsProcessorServiceClass) {
     while (metaTable == null) {
       if (stopping) {
@@ -58,5 +63,12 @@ public abstract class AbstractMetricsProcessorService extends AbstractExecutionT
     }
 
     return metaTable;
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    LOG.info("Shutdown is triggered.");
+    stopping = true;
+    super.triggerShutdown();
   }
 }
