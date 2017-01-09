@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -243,6 +243,25 @@ public class CLIMainTest extends CLITestBase {
     if (!appJarFile.delete()) {
       LOG.warn("Failed to delete temporary app jar file: {}", appJarFile.getAbsolutePath());
     }
+    testCommandOutputContains(cli, "list streams", streamId);
+    testCommandOutputContains(cli, "list dataset instances", datasetId);
+    testCommandOutputContains(cli, "delete app " + ConfigTestApp.NAME, "Successfully");
+  }
+
+  @Test
+  public void testDeployAppWithConfigFile() throws Exception {
+    String streamId = "testStream";
+    String datasetId = "testTable";
+
+    File appJarFile = createAppJarFile(ConfigTestApp.class);
+    File configFile = new File(TMP_FOLDER.newFolder(), "testConfigFile.txt");
+    try (BufferedWriter writer = Files.newWriter(configFile, Charsets.UTF_8)) {
+      writer.write(String.format("{\n\"streamName\":\"%s\",\n\"tableName\":\"%s\"\n}", streamId, datasetId));
+      writer.close();
+    }
+
+    testCommandOutputContains(cli, String.format("deploy app %s with config %s", appJarFile.getAbsolutePath(),
+                                                 configFile.getAbsolutePath()), "Successfully deployed application");
     testCommandOutputContains(cli, "list streams", streamId);
     testCommandOutputContains(cli, "list dataset instances", datasetId);
     testCommandOutputContains(cli, "delete app " + ConfigTestApp.NAME, "Successfully");
