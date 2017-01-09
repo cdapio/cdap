@@ -96,7 +96,11 @@ Using the Create Cluster Wizard
 #. In *Step 3: General Cluster Settings*, add a *Bootstrap Action:*
 
    - Type: *Run If*
-   - Optional arguments: ``instance.isMaster=true "curl http://downloads.cask.co/emr/install-4.0.0.sh | sudo bash -s"``
+   - Optional arguments:
+   
+     .. parsed-literal::
+   
+       instance.isMaster=true "curl \http://downloads.cask.co/emr/install-|release|.sh | sudo bash -s"
 
    .. figure:: ../_images/emr/emr-step3b-bootstrap-action-run-if.png
       :figwidth: 100%
