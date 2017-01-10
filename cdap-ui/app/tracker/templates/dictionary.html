@@ -38,12 +38,24 @@
             | myPaginate:DictionaryController.currentPreferredPage" 
             ng-include="DictionaryController.getTemplate(data)">
           </tr>
-          <tr ng-show="DictionaryController.addNewColumn">
+          <tr ng-show="DictionaryController.loading">
+            <td colspan="7">
+              <div class="loading-search">
+                <div class="container-fluid">
+                  <span class="fa fa-spinner fa-spin"></span>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr ng-show="!DictionaryController.loading">
             <td>
-              <input type="text" ng-model="DictionaryController.selectedDictColumn.columnName" >
+              <input type="text"
+                     ng-model="DictionaryController.newDictColumn.columnName"
+                     id="newDictColumnId"
+                     ng-keypress="$event.keyCode === 13 && DictionaryController.addColumn()">
             </td>
             <td>
-              <select ng-model="DictionaryController.selectedDictColumn.columnType">
+              <select ng-model="DictionaryController.newDictColumn.columnType">
                 <option value='boolean'>boolean</option>
                 <option value='bytes'>bytes</option>
                 <option value='double'>double</option>
@@ -54,28 +66,18 @@
               </select>
             </td>
             <td>
-              <input type="checkbox" ng-model="DictionaryController.selectedDictColumn.isNullable">
+              <input type="checkbox" ng-model="DictionaryController.newDictColumn.isNullable">
             </td>
             <td>
-              <input type="checkbox" ng-model="DictionaryController.selectedDictColumn.isPII">
+              <input type="checkbox" ng-model="DictionaryController.newDictColumn.isPII">
             </td>
             <td></td>
-            <td><input type="text" ng-model="DictionaryController.selectedDictColumn.description" /></td>
             <td>
-              <div class="action-buttons">
-                <span class="fa icon-savedraft"
-                  ng-click="DictionaryController.addColumn()"
-                  ng-class = "{'disabled': !DictionaryController.selectedDictColumn.columnName
-                  || !DictionaryController.selectedDictColumn.columnType
-                  || !DictionaryController.selectedDictColumn.description}">
-                </span>
-                <span class="fa fa-times" ng-click="DictionaryController.reset()">
-                </span>
-              </div>
+              <input type="text"
+                     ng-model="DictionaryController.newDictColumn.description"
+                     ng-keypress="$event.keyCode === 13 && DictionaryController.addColumn()">
             </td>
-          </tr>
-          <tr ng-click="DictionaryController.displayNewRow()" ng-show="!DictionaryController.addNewColumn || !DictionaryController.dictionaryData">
-            <td colspan="8">&nbsp;</td>
+            <td></td>
           </tr>
         </tbody>
       </table>

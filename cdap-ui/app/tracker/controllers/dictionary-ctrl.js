@@ -26,13 +26,16 @@ class TrackerDictionaryController {
     this.dictionaryData = [];
     this.piiTitle = 'PII (Personally Identifiable Information) is any information that is sensitive and needs to be handled with extra care and security.';
     this.operation = true;
-    this.fetchDictionary();
-    this.selectedDictColumn = {
-      'columnType': '',
+    this.loading = false;
+    this.defaultColumn = {
+      'columnType': 'string',
       'isNullable': true,
       'isPII': true,
       'description': ''
     };
+    this.selectedDictColumn = angular.copy(this.defaultColumn);
+    this.newDictColumn = angular.copy(this.defaultColumn);
+    this.fetchDictionary();
   }
 
   fetchDictionary() {
@@ -59,40 +62,47 @@ class TrackerDictionaryController {
   }
 
   editColumnData(data) {
-    this.reset();
     this.selectedDictColumn = data;
   }
 
   reset() {
-    this.addNewColumn = false;
-    this.selectedDictColumn = {};
-  }
-
-  displayNewRow() {
-    this.reset();
-    this.selectedDictColumn.columnType = 'string';
-    this.addNewColumn = true;
+    this.selectedDictColumn = angular.copy(this.newDictColumn);
   }
 
   addColumn() {
-    if(this.selectedDictColumn.columnName && this.selectedDictColumn.columnType && this.selectedDictColumn.description){
+    if(this.newDictColumn.columnName && this.newDictColumn.columnType && this.newDictColumn.description){
+      this.loading = true;
       let addParams = {
         namespace: this.$state.params.namespace,
         scope: this.$scope,
-        columnName: this.selectedDictColumn.columnName
+        columnName: this.newDictColumn.columnName
       };
-      this.myTrackerApi.addColumn(addParams, this.selectedDictColumn)
+
+      this.myTrackerApi.addColumn(addParams, this.newDictColumn)
         .$promise
         .then(() => {
+          let colName = angular.copy(this.newDictColumn.columnName);
           this.addNewColumn = false;
-          this.reset();
           this.fetchDictionary();
+          this.newDictColumn = angular.copy(this.defaultColumn);
+          this.loading = false;
+          this.myAlertOnValium.show({
+            type: 'success',
+            content: 'Column ' + colName + ' added successfully'
+          });
+          document.getElementById('newDictColumnId').focus();
         }, (err) => {
           this.myAlertOnValium.show({
             type: 'danger',
             content: err.data
           });
+          this.loading = false;
           console.log('Error', err);
+      });
+    } else {
+      this.myAlertOnValium.show({
+        type: 'danger',
+        content: 'Column name and description are mandatory fields'
       });
     }
   }
@@ -131,6 +141,9 @@ class TrackerDictionaryController {
     modal.result
       .then((message) => {
         if (message === 'success') {
+          if (this.dictionaryData.length === 11){
+            this.currentPreferredPage = 1;
+          }
           this.fetchDictionary();
         }
       });
