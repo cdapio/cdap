@@ -43,16 +43,18 @@ public abstract class AbstractMetricsProcessorService extends AbstractExecutionT
     return this.getClass().getSimpleName();
   }
 
-  protected AbstractConsumerMetaTable getMetaTable(Class<?> metricsProcessorServiceClass) {
+  protected AbstractConsumerMetaTable getMetaTable(
+    Class<? extends AbstractMetricsProcessorService> metricsProcessorServiceClass) {
+
     while (metaTable == null) {
       if (stopping) {
-        LOG.info("We are shutting down, giving up on acquiring KafkaConsumerMetaTable.");
+        LOG.info("We are shutting down, giving up on acquiring consumer metaTable.");
         break;
       }
       try {
         metaTable = metricDatasetFactory.createKafkaConsumerMeta(metricsProcessorServiceClass);
       } catch (Exception e) {
-        LOG.warn("Cannot access kafka consumer metaTable, will retry in 1 sec.");
+        LOG.warn("Cannot access consumer metaTable, will retry in 1 sec.");
         try {
           TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException ie) {

@@ -108,21 +108,12 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
       } else {
         fetcher.setStartMessage(Bytes.toBytes(messageId), false);
       }
-      // TODO is this while loop and sleep necessary?
       while (isRunning()) {
-        try {
-          TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
-          // It's triggered by stop
-          Thread.currentThread().interrupt();
-          continue;
-        }
         processMetricsRecords(fetcher);
       }
     } catch (Exception e) {
       LOG.error("Failed to process metrics records", e);
     }
-
   }
 
   private void processMetricsRecords(MessageFetcher fetcher) {

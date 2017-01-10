@@ -23,4 +23,5 @@ import java.util.Set;
 public interface KafkaMetricsProcessorServiceFactory {
 
   KafkaMetricsProcessorService create(Set<Integer> partitions);
+  MessagingMetricsProcessorService create();
 }

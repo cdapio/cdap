@@ -18,6 +18,7 @@ package co.cask.cdap.metrics.store;
 
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 import co.cask.cdap.metrics.process.AbstractConsumerMetaTable;
+import co.cask.cdap.metrics.process.AbstractMetricsProcessorService;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 
 /**
@@ -34,5 +35,6 @@ public interface MetricDatasetFactory {
   /**
    * @return A new instance of {@link AbstractConsumerMetaTable}.
    */
-  AbstractConsumerMetaTable createKafkaConsumerMeta(Class<?> metricsProcessorServiceClass);
+  AbstractConsumerMetaTable createKafkaConsumerMeta(
+    Class<? extends AbstractMetricsProcessorService> metricsProcessorServiceClass);
 }

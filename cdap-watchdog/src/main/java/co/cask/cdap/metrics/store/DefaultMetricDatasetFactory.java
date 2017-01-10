@@ -30,6 +30,7 @@ import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.metrics.process.AbstractConsumerMetaTable;
+import co.cask.cdap.metrics.process.AbstractMetricsProcessorService;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.process.KafkaMetricsProcessorService;
 import co.cask.cdap.metrics.process.MessagingConsumerMetaTable;
@@ -106,7 +107,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   @Override
-  public AbstractConsumerMetaTable createKafkaConsumerMeta(Class<?> metricsProcessorServiceClass) {
+  public AbstractConsumerMetaTable createKafkaConsumerMeta(
+    Class<? extends AbstractMetricsProcessorService> metricsProcessorServiceClass) {
     String tableName;
     if (metricsProcessorServiceClass.equals(KafkaMetricsProcessorService.class)) {
       tableName = cConf.get(Constants.Metrics.KAFKA_META_TABLE,

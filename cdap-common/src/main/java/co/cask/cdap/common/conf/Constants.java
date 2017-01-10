@@ -519,11 +519,6 @@ public final class Constants {
 
     public static final String DEFAULT_KAFKA_META_TABLE = "metrics.kafka.meta";
 
-    public static final String MESSAGING_TOPIC_PREFIX = "metrics.messaging.topic.prefix";
-    public static final String MESSAGING_META_TABLE = "metrics.messaging.meta.table";
-
-    public static final String DEFAULT_MESSAGING_META_TABLE = "metrics.messaging.meta";
-
     public static final String DEFAULT_TOPIC_PREFIX = "metrics";
 
     // NOTE: "v2" to avoid conflict with data of older metrics system
@@ -534,6 +529,13 @@ public final class Constants {
 
     public static final int DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD = 100;
     public static final int DEFAULT_KAFKA_PARTITION_SIZE = 1;
+
+    public static final String MESSAGING_TOPIC_PREFIX = "metrics.messaging.topic.prefix";
+    public static final String MESSAGING_CONSUMER_PERSIST_THRESHOLD = "metrics.messaging.consumer.persist.threshold";
+    public static final String MESSAGING_META_TABLE = "metrics.messaging.meta.table";
+
+    public static final String DEFAULT_MESSAGING_META_TABLE = "metrics.messaging.meta";
+    public static final int DEFAULT_MESSAGING_CONSUMER_PERSIST_THRESHOLD = 100;
 
     /**
      * Metric's dataset related constants.
