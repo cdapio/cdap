@@ -57,23 +57,22 @@ public class TopicMetadataCache {
 
   private final RegionCoprocessorEnvironment env;
   private final CConfigurationReader cConfReader;
-  private final HTableNameConverter nameConverter;
   private final String hbaseNamespacePrefix;
   private final String metadataTableNamespace;
   private final ScanBuilder scanBuilder;
 
   private Thread refreshThread;
   private long lastUpdated;
+
   private volatile Map<ByteBuffer, Map<String, String>> metadataCache = new HashMap<>();
   private long metadataCacheUpdateFreqInMillis = TimeUnit.SECONDS.toMillis(
     MessagingUtils.Constants.METADATA_CACHE_UPDATE_FREQUENCY_SECS);
+  private volatile CConfiguration cConf;
 
   public TopicMetadataCache(RegionCoprocessorEnvironment env, CConfigurationReader cConfReader,
-                            HTableNameConverter nameConverter, String hbaseNamespacePrefix,
-                            String metadataTableNamespace, ScanBuilder scanBuilder) {
+                            String hbaseNamespacePrefix, String metadataTableNamespace, ScanBuilder scanBuilder) {
     this.env = env;
     this.cConfReader = cConfReader;
-    this.nameConverter = nameConverter;
     this.hbaseNamespacePrefix = hbaseNamespacePrefix;
     this.metadataTableNamespace = metadataTableNamespace;
     this.scanBuilder = scanBuilder;
@@ -95,6 +94,11 @@ public class TopicMetadataCache {
     return metadataCache.get(topicId);
   }
 
+  @Nullable
+  public CConfiguration getCConfiguration() {
+    return cConf;
+  }
+
   /**
    * Called in unit tests and since the refresh thread might invoke cache update at the same time, we make this method
    * synchronized. Aside from unit tests, synchronization is not required.
@@ -107,7 +111,7 @@ public class TopicMetadataCache {
     try {
       CConfiguration cConf = cConfReader.read();
       if (cConf != null) {
-
+        this.cConf = cConf;
         int metadataScanSize = cConf.getInt(Constants.MessagingSystem.HBASE_SCAN_CACHE_ROWS);
         metadataCacheUpdateFreqInMillis = TimeUnit.SECONDS.toMillis(cConf.getLong(
           Constants.MessagingSystem.COPROCESSOR_METADATA_CACHE_UPDATE_FREQUENCY_SECONDS,
@@ -152,8 +156,8 @@ public class TopicMetadataCache {
 
   private HTableInterface getMetadataTable(CConfiguration cConf) throws IOException {
     String tableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
-    return env.getTable(nameConverter.toTableName(hbaseNamespacePrefix,
-                                                  TableId.from(metadataTableNamespace, tableName)));
+    return env.getTable(HTableNameConverter.toTableName(hbaseNamespacePrefix,
+                                                        TableId.from(metadataTableNamespace, tableName)));
   }
 
   private void startRefreshThread() {

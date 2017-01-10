@@ -141,7 +141,7 @@ public class ConfigurationTable {
                  Bytes.toString(table.getTableName()) + ", row = " + type.name());
     } catch (TableNotFoundException e) {
       // it's expected that this may occur when tables are created before MasterServiceMain has started
-      LOG.warn("Configuration table " + tableName + " does not yet exist.");
+      LOG.warn("Configuration table " + tableName + " does not yet exist.", e);
     } finally {
       if (table != null) {
         try {

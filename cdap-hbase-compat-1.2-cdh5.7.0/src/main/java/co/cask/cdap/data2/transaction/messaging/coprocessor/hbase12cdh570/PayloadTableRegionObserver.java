@@ -123,7 +123,7 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
   }
 
   private TopicMetadataCache createTopicMetadataCache(RegionCoprocessorEnvironment env) {
-    return new TopicMetadataCache(env, cConfReader, nameConverter, hbaseNamespacePrefix, metadataTableNamespace,
+    return new TopicMetadataCache(env, cConfReader, hbaseNamespacePrefix, metadataTableNamespace,
                                   new HBase12CDH570ScanBuilder());
   }
 

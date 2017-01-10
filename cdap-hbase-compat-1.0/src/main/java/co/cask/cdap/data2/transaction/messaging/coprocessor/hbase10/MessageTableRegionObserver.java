@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.transaction.messaging.coprocessor.hbase10;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
@@ -31,6 +32,7 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
@@ -40,10 +42,13 @@ import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.KeyValueScanner;
 import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.regionserver.Store;
+import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.regionserver.StoreScanner;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.tephra.TxConstants;
 import org.apache.tephra.coprocessor.TransactionStateCache;
+import org.apache.tephra.hbase.txprune.CompactionState;
 import org.apache.tephra.persist.TransactionVisibilityState;
 
 import java.io.IOException;
@@ -52,6 +57,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -71,11 +77,12 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
   private int prefixLength;
   private TransactionStateCache txStateCache;
 
-  private HTableNameConverter nameConverter;
   private String metadataTableNamespace;
   private String hbaseNamespacePrefix;
   private CConfigurationReader cConfReader;
   private TopicMetadataCache topicMetadataCache;
+  private CompactionState compactionState;
+  private Boolean pruneEnable;
 
   @Override
   public void start(CoprocessorEnvironment env) throws IOException {
@@ -127,12 +134,45 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
     TopicMetadataCache metadataCache = getTopicMetadataCache(c.getEnvironment());
     LOG.info("preCompact, filter using MessageDataFilter");
     TransactionVisibilityState txVisibilityState = txStateCache.getLatestState();
+
+    if (pruneEnable == null) {
+      CConfiguration cConf = metadataCache.getCConfiguration();
+      if (cConf != null) {
+        pruneEnable = cConf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE,
+                                       TxConstants.TransactionPruning.DEFAULT_PRUNE_ENABLE);
+        if (Boolean.TRUE.equals(pruneEnable)) {
+          String pruneTable = cConf.get(TxConstants.TransactionPruning.PRUNE_STATE_TABLE,
+                                        TxConstants.TransactionPruning.DEFAULT_PRUNE_STATE_TABLE);
+          long pruneFlushInterval = TimeUnit.SECONDS.toMillis(
+            cConf.getLong(TxConstants.TransactionPruning.PRUNE_FLUSH_INTERVAL,
+                          TxConstants.TransactionPruning.DEFAULT_PRUNE_FLUSH_INTERVAL));
+          compactionState = new CompactionState(c.getEnvironment(), TableName.valueOf(pruneTable), pruneFlushInterval);
+          LOG.debug("Automatic invalid list pruning is enabled. Compaction state will be recorded in table " +
+                      pruneTable);
+        }
+      }
+    }
+
+    if (Boolean.TRUE.equals(pruneEnable)) {
+      // Record tx state before the compaction
+      compactionState.record(request, txVisibilityState);
+    }
+
     Scan scan = new Scan();
     scan.setFilter(new MessageDataFilter(c.getEnvironment(), System.currentTimeMillis(),
                                          prefixLength, metadataCache, txVisibilityState));
     return new LoggingInternalScanner("MessageDataFilter", "preCompact",
                                       new StoreScanner(store, store.getScanInfo(), scan, scanners, scanType,
                                                        store.getSmallestReadPoint(), earliestPutTs), txVisibilityState);
+  }
+
+  @Override
+  public void postCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store, StoreFile resultFile,
+                          CompactionRequest request) throws IOException {
+    // Persist the compaction state after a successful compaction
+    if (compactionState != null) {
+      compactionState.persist();
+    }
   }
 
   private TopicMetadataCache getTopicMetadataCache(RegionCoprocessorEnvironment env) {
@@ -143,12 +183,12 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
   }
 
   private TopicMetadataCache createTopicMetadataCache(RegionCoprocessorEnvironment env) {
-    return new TopicMetadataCache(env, cConfReader, nameConverter, hbaseNamespacePrefix, metadataTableNamespace,
+    return new TopicMetadataCache(env, cConfReader, hbaseNamespacePrefix, metadataTableNamespace,
                                   new HBase10ScanBuilder());
   }
 
   private Supplier<TransactionStateCache> getTransactionStateCacheSupplier(String tablePrefix, Configuration conf) {
-    String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(tablePrefix);
+    String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(tablePrefix);
     return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
   }
 
@@ -174,8 +214,8 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
     }
 
     @Override
-    public boolean next(List<Cell> result, int limit) throws IOException {
-      return delegate.next(result, limit);
+    public boolean next(List<Cell> list, int limit) throws IOException {
+      return delegate.next(list, limit);
     }
 
     @Override

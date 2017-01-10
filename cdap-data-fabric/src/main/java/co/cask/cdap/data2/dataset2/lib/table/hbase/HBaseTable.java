@@ -68,6 +68,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -81,6 +82,7 @@ public class HBaseTable extends BufferingTable {
 
   public static final String DELTA_WRITE = "d";
   public static final String WRITE_POINTER = "wp";
+  public static final String TX_MAX_LIFETIME_MILLIS_KEY = "cdap.tx.max.lifetime.millis";
 
   public static final String SAFE_INCREMENTS = "dataset.table.safe.readless.increments";
 
@@ -92,6 +94,9 @@ public class HBaseTable extends BufferingTable {
   // name length + name of the table: handy to have one cached
   private final byte[] nameAsTxChangePrefix;
   private final boolean safeReadlessIncrements;
+  // tx max lifetime property comes usually from cConf in DefaultTransactionProcessor but if it is not available
+  // briefly during startup, the coprocessor gets it from the operation's attribute.
+  private final byte[] txMaxLifetimeMillis;
 
 
   public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> args,
@@ -112,6 +117,8 @@ public class HBaseTable extends BufferingTable {
     // table name is not the same as the dataset name anymore
     this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) this.hTableName.length()}, Bytes.toBytes(this.hTableName));
     this.safeReadlessIncrements = args.containsKey(SAFE_INCREMENTS) && Boolean.valueOf(args.get(SAFE_INCREMENTS));
+    this.txMaxLifetimeMillis = Bytes.toBytes(TimeUnit.SECONDS.toMillis(
+      cConf.getInt(TxConstants.Manager.CFG_TX_MAX_LIFETIME, TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME)));
   }
 
   @Override
@@ -260,7 +267,8 @@ public class HBaseTable extends BufferingTable {
     if (existing != null) {
       return existing;
     }
-    return tableUtil.buildPut(row);
+    return tableUtil.buildPut(row)
+      .setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis);
   }
 
   private PutBuilder getPutForIncrement(PutBuilder existing, byte[] row) {
@@ -268,7 +276,8 @@ public class HBaseTable extends BufferingTable {
       return existing;
     }
     return tableUtil.buildPut(row)
-      .setAttribute(DELTA_WRITE, Bytes.toBytes(true));
+      .setAttribute(DELTA_WRITE, Bytes.toBytes(true))
+      .setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis);
   }
 
   private IncrementBuilder getIncrement(IncrementBuilder existing, byte[] row, boolean transactional)
@@ -277,6 +286,7 @@ public class HBaseTable extends BufferingTable {
       return existing;
     }
     IncrementBuilder builder = tableUtil.buildIncrement(row).setAttribute(DELTA_WRITE, Bytes.toBytes(true));
+    builder.setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis);
     if (transactional) {
       builder.setAttribute(WRITE_POINTER, Bytes.toBytes(tx.getWritePointer()));
       builder.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
@@ -294,6 +304,7 @@ public class HBaseTable extends BufferingTable {
     List<Delete> deletes = Lists.newArrayList();
     for (Map.Entry<byte[], NavigableMap<byte[], Update>> row : persisted.entrySet()) {
       DeleteBuilder delete = tableUtil.buildDelete(row.getKey());
+      delete.setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis);
       for (Map.Entry<byte[], Update> column : row.getValue().entrySet()) {
         // we want support tx and non-tx modes
         if (tx != null) {
