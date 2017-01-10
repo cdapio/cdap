@@ -153,10 +153,11 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   app.get('/downloadLogs', function(req, res) {
     var url = decodeURIComponent(req.query.backendUrl);
+    var method = (req.query.method || 'GET');
     log.info('Download Logs Start: ', url);
     var customHeaders;
     var requestObject = {
-      method: 'GET',
+      method: method,
       url: url,
       rejectUnauthorized: false,
       requestCert: true,
