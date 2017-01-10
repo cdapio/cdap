@@ -296,7 +296,10 @@ if version:
 """ % {'version': version}
 
 if short_version:
-    previous_short_version = float(short_version) -0.1
+    if git_build_vars.has_key('GIT_PREVIOUS_SHORT_VERSION'):
+        previous_short_version = git_build_vars['GIT_PREVIOUS_SHORT_VERSION']
+    else:
+        previous_short_version = float(short_version) -0.1
     rst_epilog += """
 .. |short-version| replace:: %(short_version)s
 .. |short-version-x| replace:: %(short_version)s.x
