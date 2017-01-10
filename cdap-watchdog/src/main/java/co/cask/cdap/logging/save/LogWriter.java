@@ -128,7 +128,7 @@ public class LogWriter implements Runnable {
           Entry<String, Collection<KafkaLogEvent>> mapEntry = it.next();
           List<KafkaLogEvent> list = (List<KafkaLogEvent>) mapEntry.getValue();
 
-          LoggerContext context = (LoggerContext)LoggerFactory.getILoggerFactory();
+          LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
           List<ch.qos.logback.classic.Logger> loggerList = context.getLoggerList();
           for (ch.qos.logback.classic.Logger logger : loggerList) {
             if (logger.getName().equalsIgnoreCase("co.cask.cdap")) {
