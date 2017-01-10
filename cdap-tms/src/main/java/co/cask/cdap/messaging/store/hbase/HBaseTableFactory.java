@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -142,40 +143,25 @@ public final class HBaseTableFactory implements TableFactory {
 
   @Override
   public void upgradeMessageTable(String tableName) throws IOException {
-    try {
-      upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
-                         tableUtil.getMessageTableRegionObserverClassForVersion());
-    } catch (TableNotFoundException ex) {
-      LOG.info("TMS Message Table was not found. Skipping upgrade.");
-    }
+    upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
+                       tableUtil.getMessageTableRegionObserverClassForVersion());
   }
 
   @Override
   public void upgradePayloadTable(String tableName) throws IOException {
-    try {
-      upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
-                         tableUtil.getPayloadTableRegionObserverClassForVersion());
-    } catch (TableNotFoundException ex) {
-      LOG.info("TMS Payload Table was not found. Skipping upgrade.");
-    }
+    upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
+                       tableUtil.getPayloadTableRegionObserverClassForVersion());
   }
 
   // Disables Message and Payload Table, used in Upgrade Tool
   public void disableTables() throws IOException {
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      TableId tableId;
-      tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
-      try {
-        disableTable(admin, tableId);
-      } catch (TableNotFoundException ex) {
-        LOG.debug("TMS Message Table was not found. Skip disabling table.");
-      }
+    List<TableId> tableIds = Arrays.asList(
+      tableUtil.createHTableId(NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME)),
+      tableUtil.createHTableId(NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME)));
 
-      tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
-      try {
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      for (TableId tableId : tableIds) {
         disableTable(admin, tableId);
-      } catch (TableNotFoundException ex) {
-        LOG.debug("TMS Payload Table was not found. Skip disabling table.");
       }
     }
   }
@@ -184,13 +170,20 @@ public final class HBaseTableFactory implements TableFactory {
     try {
       tableUtil.disableTable(admin, tableId);
       LOG.debug("TMS Table {} has been disabled", tableId);
+    } catch (TableNotFoundException ex) {
+      LOG.debug("TMS Table {} was not found. Skipping disable.", tableId, ex);
     } catch (TableNotEnabledException ex) {
-      LOG.debug("TMS Table {} was in disabled state.", tableId, ex);
+      LOG.debug("TMS Table {} was already in disabled state.", tableId, ex);
     }
   }
 
   private void upgradeCoProcessor(TableId tableId, Class<? extends Coprocessor> coprocessor) throws IOException {
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      // If table doesn't exist, then skip upgrading coprocessor
+      if (!tableUtil.tableExists(admin, tableId)) {
+        LOG.debug("TMS Table {} was not found. Skip upgrading coprocessor.", tableId);
+      }
+
       HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);
 
       // Get cdap version from the table
