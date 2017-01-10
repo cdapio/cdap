@@ -158,7 +158,7 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
   public InternalScanner preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
                                              KeyValueScanner memstoreScanner, InternalScanner s) throws IOException {
     if (!c.getEnvironment().getRegion().isAvailable()) {
-      return s;
+      return super.preFlushScannerOpen(c, store, memstoreScanner, s);
     }
 
     LoadingCache<ByteBuffer, Map<String, String>> cache;
@@ -188,7 +188,7 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
                                                long earliestPutTs, InternalScanner s,
                                                CompactionRequest request) throws IOException {
     if (!c.getEnvironment().getRegion().isAvailable()) {
-      return s;
+      return super.preCompactScannerOpen(c, store, scanners, scanType, earliestPutTs, s, request);
     }
 
     LoadingCache<ByteBuffer, Map<String, String>> cache;
