@@ -41,15 +41,17 @@
       }
       .plus-button {
         color: @plus-button-color;
+        position: relative;
         &:after {
           content: 'NEW';
           position: absolute;
           background: #ff6600;
-          font-size: 9px;
+          font-size: 8px;
           color: white;
           border-radius: 4px;
-          top: 11px;
-          padding: 2px;
+          top: -4px;
+          left: 10px;
+          padding: 1px 2px 2px 2px;
           font-weight: bold;
           font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
         }
