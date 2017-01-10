@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.save;
 
+import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.logging.write.LogFileWriter;
@@ -121,10 +122,19 @@ public class LogWriter implements Runnable {
           LOG.trace("Waiting for events, sleeping for {} ns", sleepTimeNanos);
         }
 
+
         for (Iterator<Entry<String, Collection<KafkaLogEvent>>> it = writeListMap.asMap().entrySet().iterator();
              it.hasNext(); ) {
           Entry<String, Collection<KafkaLogEvent>> mapEntry = it.next();
           List<KafkaLogEvent> list = (List<KafkaLogEvent>) mapEntry.getValue();
+
+          LoggerContext context = (LoggerContext)LoggerFactory.getILoggerFactory();
+          List<ch.qos.logback.classic.Logger> loggerList = context.getLoggerList();
+          for (ch.qos.logback.classic.Logger logger : loggerList) {
+            if (logger.getName().equalsIgnoreCase("co.cask.cdap")) {
+              logger.callAppenders(list.get(0).getLogEvent());
+            }
+          }
 
           if (!list.isEmpty()) {
             KafkaLogEvent kafkaLogEvent = list.get(0);
