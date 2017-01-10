@@ -56,24 +56,20 @@ public class DeployAppWithConfigFileCommand extends AbstractAuthCommand {
     Preconditions.checkArgument(file.canRead(), "File " + file.getAbsolutePath() + " is not readable");
 
     String configPath = arguments.getOptional(ArgumentName.APP_CONFIG_FILE.toString());
-    if (configPath != null) {
-      StringBuilder configString = new StringBuilder();
-      File configFile = resolver.resolvePathToFile(configPath);
-      List<String> lines = Files.readAllLines(configFile.getAbsoluteFile().toPath(), StandardCharsets.UTF_8);
-      for (String line: lines) {
-        configString.append(line);
-      }
-      applicationClient.deploy(cliConfig.getCurrentNamespace(), file, configString.toString());
-    } else {
-      applicationClient.deploy(cliConfig.getCurrentNamespace(), file);
+    StringBuilder configString = new StringBuilder();
+    File configFile = resolver.resolvePathToFile(configPath);
+    List<String> lines = Files.readAllLines(configFile.getAbsoluteFile().toPath(), StandardCharsets.UTF_8);
+    for (String line: lines) {
+      configString.append(line);
     }
+    applicationClient.deploy(cliConfig.getCurrentNamespace(), file, configString.toString());
 
     output.println("Successfully deployed application");
   }
 
   @Override
   public String getPattern() {
-    return String.format("deploy app <%s> [with config <%s>]", ArgumentName.APP_JAR_FILE, ArgumentName.APP_CONFIG_FILE);
+    return String.format("deploy app <%s> with config <%s>", ArgumentName.APP_JAR_FILE, ArgumentName.APP_CONFIG_FILE);
   }
 
   @Override
