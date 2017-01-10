@@ -63,6 +63,8 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
       protected void configure() {
         bind(HBaseTableUtil.class).toProvider(HBaseTableUtilProvider.class);
         bind(TableFactory.class).to(HBaseTableFactory.class);
+        expose(TableFactory.class);
+
         bind(MessagingService.class).to(CoreMessagingService.class).in(Scopes.SINGLETON);
         expose(MessagingService.class);
 

@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -141,23 +142,22 @@ public final class HBaseTableFactory implements TableFactory {
     );
   }
 
-  @Override
   public void upgradeMessageTable(String tableName) throws IOException {
     upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
                        tableUtil.getMessageTableRegionObserverClassForVersion());
   }
 
-  @Override
   public void upgradePayloadTable(String tableName) throws IOException {
     upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
                        tableUtil.getPayloadTableRegionObserverClassForVersion());
   }
 
   // Disables Message and Payload Table, used in Upgrade Tool
-  public void disableTables() throws IOException {
-    List<TableId> tableIds = Arrays.asList(
-      tableUtil.createHTableId(NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME)),
-      tableUtil.createHTableId(NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME)));
+  public void disableTables(List<String> tableNames) throws IOException {
+    List<TableId> tableIds = new ArrayList<>();
+    for (String tableName : tableNames) {
+      tableIds.add(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName));
+    }
 
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       for (TableId tableId : tableIds) {
@@ -182,6 +182,7 @@ public final class HBaseTableFactory implements TableFactory {
       // If table doesn't exist, then skip upgrading coprocessor
       if (!tableUtil.tableExists(admin, tableId)) {
         LOG.debug("TMS Table {} was not found. Skip upgrading coprocessor.", tableId);
+        return;
       }
 
       HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);

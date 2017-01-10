@@ -28,8 +28,4 @@ public interface TableFactory {
   MessageTable createMessageTable(String tableName) throws IOException;
 
   PayloadTable createPayloadTable(String tableName) throws IOException;
-
-  void upgradeMessageTable(String tableName) throws IOException;
-
-  void upgradePayloadTable(String tableName) throws IOException;
 }
