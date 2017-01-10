@@ -289,7 +289,7 @@ angular.module(PKG.name + '.feature.hydrator')
         })
 
         .state('hydrator.list', {
-          url: '?page',
+          url: '?page&sortBy&reverse',
           title: 'Published Pipelines',
           onEnter: function() {
             document.title = 'Published Pipelines';
