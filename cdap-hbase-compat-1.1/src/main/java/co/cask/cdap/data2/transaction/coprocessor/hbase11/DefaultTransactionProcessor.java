@@ -19,7 +19,7 @@ package co.cask.cdap.data2.transaction.coprocessor.hbase11;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.increment.hbase11.IncrementTxFilter;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
-import co.cask.cdap.data2.util.hbase.HTable11NameConverter;
+import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import com.google.common.base.Supplier;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
@@ -40,7 +40,7 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
   protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(RegionCoprocessorEnvironment env) {
     HTableDescriptor htd = env.getRegion().getTableDesc();
     String tablePrefix = htd.getValue(Constants.Dataset.TABLE_PREFIX);
-    String sysConfigTablePrefix = new HTable11NameConverter().getSysConfigTablePrefix(tablePrefix);
+    String sysConfigTablePrefix = new HTableNameConverter().getSysConfigTablePrefix(tablePrefix);
     return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, env.getConfiguration());
   }
 

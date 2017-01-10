@@ -44,7 +44,7 @@ import java.util.List;
  */
 public class HBase98TableUtil extends HBaseTableUtil {
 
-  private final HTable98NameConverter nameConverter = new HTable98NameConverter();
+  private final HTableNameConverter nameConverter = new HTableNameConverter();
 
   @Override
   public HTable createHTable(Configuration conf, TableId tableId) throws IOException {

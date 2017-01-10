@@ -29,7 +29,7 @@ import java.net.URLEncoder;
 /**
  * Common utility methods for dealing with HBase table name conversions.
  */
-public abstract class HTableNameConverter {
+public class HTableNameConverter {
 
   /**
    * Encode a HBase entity name to ASCII encoding using {@link URLEncoder}.
@@ -89,12 +89,17 @@ public abstract class HTableNameConverter {
   /**
    * Returns {@link TableId} for the table represented by the given {@link HTableDescriptor}.
    */
-  public abstract TableId from(HTableDescriptor htd);
+  public TableId from(HTableDescriptor htd) {
+    TableName tableName = htd.getTableName();
+    return fromHBaseTableName(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
+  }
 
   /**
    * Construct and return the HBase tableName from {@link TableId} and tablePrefix.
    */
-  public abstract TableName toTableName(String tablePrefix, TableId tableId);
+  public TableName toTableName(String tablePrefix, TableId tableId) {
+    return TableName.valueOf(tableId.getNamespace(), toHBaseTableName(tablePrefix, tableId));
+  }
 
   protected TableId fromHBaseTableName(String namespace, String qualifier) {
     Preconditions.checkArgument(namespace != null, "Table namespace should not be null.");
