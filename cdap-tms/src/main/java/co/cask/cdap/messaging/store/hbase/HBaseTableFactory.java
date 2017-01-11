@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -207,7 +206,7 @@ public final class HBaseTableFactory implements TableFactory {
       }
 
       // Add new coprocessor
-      addCoprocessor(coprocessor, newDescriptor);
+      //addCoprocessor(coprocessor, newDescriptor);
 
       // Update CDAP version, table prefix
       HBaseTableUtil.setVersion(newDescriptor);
