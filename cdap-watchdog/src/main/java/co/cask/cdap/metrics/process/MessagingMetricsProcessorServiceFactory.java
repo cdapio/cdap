@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,9 +18,9 @@ package co.cask.cdap.metrics.process;
 import java.util.Set;
 
 /**
- * Factory for creating {@link KafkaMetricsProcessorService}.
+ * Factory for creating {@link MessagingMetricsProcessorService}.
  */
-public interface KafkaMetricsProcessorServiceFactory {
+public interface MessagingMetricsProcessorServiceFactory {
 
-  KafkaMetricsProcessorService create(Set<Integer> partitions);
+  MessagingMetricsProcessorService create(Set<Integer> partitions);
 }

@@ -35,6 +35,6 @@ public interface MetricDatasetFactory {
   /**
    * @return A new instance of {@link AbstractConsumerMetaTable}.
    */
-  AbstractConsumerMetaTable createKafkaConsumerMeta(
+  AbstractConsumerMetaTable createConsumerMeta(
     Class<? extends AbstractMetricsProcessorService> metricsProcessorServiceClass);
 }

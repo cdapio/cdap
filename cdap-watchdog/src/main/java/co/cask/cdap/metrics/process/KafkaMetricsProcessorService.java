@@ -46,9 +46,6 @@ public final class KafkaMetricsProcessorService extends AbstractMetricsProcessor
   private final Set<Integer> partitions;
   private Cancellable unsubscribe;
 
-  @Nullable
-  private MetricsContext metricsContext;
-
   @Inject
   public KafkaMetricsProcessorService(KafkaClientService kafkaClient,
                                       MetricDatasetFactory metricDatasetFactory,
@@ -60,10 +57,6 @@ public final class KafkaMetricsProcessorService extends AbstractMetricsProcessor
     this.callbackFactory = callbackFactory;
     this.topicPrefix = topicPrefix;
     this.partitions = partitions;
-  }
-
-  public void setMetricsContext(MetricsContext metricsContext) {
-    this.metricsContext = metricsContext;
   }
 
   @Override

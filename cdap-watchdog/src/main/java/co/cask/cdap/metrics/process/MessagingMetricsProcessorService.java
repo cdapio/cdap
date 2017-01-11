@@ -18,6 +18,7 @@ package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metrics.MetricStore;
@@ -28,6 +29,8 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.internal.io.DatumReader;
+import co.cask.cdap.internal.io.DatumReaderFactory;
+import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.messaging.MessageFetcher;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.data.RawMessage;
@@ -35,8 +38,12 @@ import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.common.io.ByteBufferInputStream;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,10 +53,10 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.annotation.Nullable;
 
 /**
  * Process metrics by consuming metrics being published to TMS.
@@ -60,11 +67,13 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
   private static final long INITIAL_LAST_MESSAGE_ID = -1L;
 
   private final TopicId metricsTopic;
+  // TODO unused partitions
+  private final Set<Integer> partitions;
   private final MessagingService messagingService;
   private final DatumReader<MetricValues> recordReader;
   private final Schema recordSchema;
   private final MetricStore metricStore;
-  private final Map<String, String> metricsContext;
+  private Map<String, String> metricsContextMap;
   private final int persistThreshold;
   private final AtomicInteger messageCount;
 
@@ -72,24 +81,37 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
   private long recordsProcessed;
   private AtomicLong lastMessageId;
 
+  @Inject
   public MessagingMetricsProcessorService(MetricDatasetFactory metricDatasetFactory,
                                           @Named(Constants.Metrics.MESSAGING_TOPIC_PREFIX) String topicPrefix,
+                                          @Assisted Set<Integer> partitions,
                                           MessagingService messagingService,
-                                          DatumReader<MetricValues> recordReader,
-                                          Schema recordSchema,
+                                          SchemaGenerator schemaGenerator,
+                                          DatumReaderFactory readerFactory,
                                           MetricStore metricStore,
-                                          @Nullable MetricsContext metricsContext,
+                                          @Named(Constants.Metrics.MESSAGING_FETCHER_PERSIST_THRESHOLD)
                                           int persistThreshold) {
     super(metricDatasetFactory);
     this.metricsTopic = NamespaceId.SYSTEM.topic(topicPrefix);
+    this.partitions = partitions;
     this.messagingService = messagingService;
-    this.recordReader = recordReader;
-    this.recordSchema = recordSchema;
+    try {
+      this.recordSchema = schemaGenerator.generate(MetricValues.class);
+      this.recordReader = readerFactory.create(TypeToken.of(MetricValues.class), recordSchema);
+    } catch (UnsupportedTypeException e) {
+      throw Throwables.propagate(e);
+    }
     this.metricStore = metricStore;
-    this.metricsContext = metricsContext == null ? Collections.<String, String>emptyMap() : metricsContext.getTags();
     this.persistThreshold = persistThreshold;
     this.messageCount = new AtomicInteger();
     this.lastMessageId = new AtomicLong(INITIAL_LAST_MESSAGE_ID);
+    this.metricsContextMap = Collections.<String, String>emptyMap();
+  }
+
+  @Override
+  public void setMetricsContext(MetricsContext metricsContext) {
+    this.metricsContext = metricsContext;
+    this.metricsContextMap = metricsContext == null ? Collections.<String, String>emptyMap() : metricsContext.getTags();
   }
 
   @Override
@@ -181,7 +203,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
     long now = System.currentTimeMillis();
     long delay = now - TimeUnit.SECONDS.toMillis(records.get(records.size() - 1).getTimestamp());
     records.add(
-      new MetricValues(metricsContext, TimeUnit.MILLISECONDS.toSeconds(now),
+      new MetricValues(metricsContextMap, TimeUnit.MILLISECONDS.toSeconds(now),
                        ImmutableList.of(new MetricValue("metrics.process.count", MetricType.COUNTER, count),
                                         new MetricValue("metrics.process.delay.ms", MetricType.GAUGE, delay))));
   }

@@ -16,12 +16,14 @@
 
 package co.cask.cdap.metrics.process;
 
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Process metrics by consuming metrics being published.
@@ -34,8 +36,15 @@ public abstract class AbstractMetricsProcessorService extends AbstractExecutionT
   protected AbstractConsumerMetaTable metaTable;
   protected volatile boolean stopping = false;
 
+  @Nullable
+  protected MetricsContext metricsContext;
+
   public AbstractMetricsProcessorService(MetricDatasetFactory metricDatasetFactory) {
     this.metricDatasetFactory = metricDatasetFactory;
+  }
+
+  public void setMetricsContext(MetricsContext metricsContext) {
+    this.metricsContext = metricsContext;
   }
 
   @Override
@@ -52,7 +61,7 @@ public abstract class AbstractMetricsProcessorService extends AbstractExecutionT
         break;
       }
       try {
-        metaTable = metricDatasetFactory.createKafkaConsumerMeta(metricsProcessorServiceClass);
+        metaTable = metricDatasetFactory.createConsumerMeta(metricsProcessorServiceClass);
       } catch (Exception e) {
         LOG.warn("Cannot access consumer metaTable, will retry in 1 sec.");
         try {

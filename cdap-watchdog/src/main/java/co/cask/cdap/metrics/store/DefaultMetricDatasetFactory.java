@@ -107,7 +107,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   @Override
-  public AbstractConsumerMetaTable createKafkaConsumerMeta(
+  public AbstractConsumerMetaTable createConsumerMeta(
     Class<? extends AbstractMetricsProcessorService> metricsProcessorServiceClass) {
     String tableName;
     if (metricsProcessorServiceClass.equals(KafkaMetricsProcessorService.class)) {
@@ -179,7 +179,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     factory.getOrCreateFactTable(Integer.MAX_VALUE);
 
     // adding kafka consumer meta
-    factory.createKafkaConsumerMeta(KafkaMetricsProcessorService.class);
+    factory.createConsumerMeta(KafkaMetricsProcessorService.class);
   }
 
   /**
