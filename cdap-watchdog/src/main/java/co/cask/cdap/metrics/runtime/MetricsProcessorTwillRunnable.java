@@ -108,9 +108,11 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       MetricsContext metricsContext = metricsCollectionService.getContext(METRICS_PROCESSOR_CONTEXT);
 
-      kafkaMetricsProcessorRuntimeService = injector.getInstance(KafkaAbstractMetricsRuntimeProcessorRuntimeService.class);
+      kafkaMetricsProcessorRuntimeService = injector.getInstance(
+        KafkaAbstractMetricsRuntimeProcessorRuntimeService.class);
       kafkaMetricsProcessorRuntimeService.setMetricsContext(metricsContext);
-      messagingMetricsProcessorRuntimeService = injector.getInstance(MessagingAbstractMetricsRuntimeProcessorRuntimeService.class);
+      messagingMetricsProcessorRuntimeService = injector.getInstance(
+        MessagingAbstractMetricsRuntimeProcessorRuntimeService.class);
       messagingMetricsProcessorRuntimeService.setMetricsContext(metricsContext);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);

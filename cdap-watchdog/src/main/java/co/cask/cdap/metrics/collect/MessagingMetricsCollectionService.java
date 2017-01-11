@@ -38,7 +38,7 @@ import java.util.Iterator;
  * A {@link AggregatedMetricsCollectionService} that uses TMS to publish {@link co.cask.cdap.api.metrics.MetricValues}.
  */
 @Singleton
-public class MessagingMetricsCollectionService extends AggregatedMetricsCollectionService{
+public class MessagingMetricsCollectionService extends AggregatedMetricsCollectionService {
 
   private final MessagingService messagingService;
   private final TopicId metricsTopic;

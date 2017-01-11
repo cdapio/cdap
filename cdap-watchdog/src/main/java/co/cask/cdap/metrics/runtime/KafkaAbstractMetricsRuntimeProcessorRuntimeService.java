@@ -40,7 +40,8 @@ public final class KafkaAbstractMetricsRuntimeProcessorRuntimeService extends Ab
                                                             ZKClientService zkClient,
                                                             DiscoveryService discoveryService,
                                                             DiscoveryServiceClient discoveryServiceClient,
-                                                            KafkaMetricsProcessorServiceFactory metricsProcessorFactory) {
+                                                            KafkaMetricsProcessorServiceFactory
+                                                                metricsProcessorFactory) {
     super(SERVICE_NAME,
           conf.getInt(Constants.Metrics.MESSAGING_PARTITION_SIZE, Constants.Metrics.DEFAULT_MESSAGING_PARTITION_SIZE),
           zkClient, discoveryService, discoveryServiceClient);
