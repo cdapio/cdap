@@ -172,7 +172,6 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
         persistMessageId();
       }
     } catch (Exception e) {
-      // SimpleKafkaConsumer will log the error, and continue on past these messages
       throw new RuntimeException("Failed to add metrics data to a store", e);
     }
 

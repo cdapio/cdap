@@ -539,7 +539,6 @@ public final class Constants {
     public static final int DEFAULT_MESSAGING_FETCHER_PERSIST_THRESHOLD = 100;
     public static final int DEFAULT_MESSAGING_PARTITION_SIZE = 1;
 
-
     /**
      * Metric's dataset related constants.
      */

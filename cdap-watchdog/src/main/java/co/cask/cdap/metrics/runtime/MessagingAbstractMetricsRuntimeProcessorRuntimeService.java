@@ -30,8 +30,10 @@ import java.util.Set;
 /**
  * Metrics processor service that processes events from Messaging.
  */
-public final class MessagingAbstractMetricsRuntimeProcessorRuntimeService extends AbstractMetricsRuntimeProcessorService {
-  private static final String SERVICE_NAME = "metrics.processor.kafka.consumer";
+public final class MessagingAbstractMetricsRuntimeProcessorRuntimeService
+  extends AbstractMetricsRuntimeProcessorService {
+
+  private static final String SERVICE_NAME = "metrics.processor.messaging.fetcher";
 
   private final MessagingMetricsProcessorServiceFactory factory;
 
@@ -40,7 +42,8 @@ public final class MessagingAbstractMetricsRuntimeProcessorRuntimeService extend
                                                                 ZKClientService zkClient,
                                                                 DiscoveryService discoveryService,
                                                                 DiscoveryServiceClient discoveryServiceClient,
-                                                                MessagingMetricsProcessorServiceFactory metricsProcessorFactory) {
+                                                                MessagingMetricsProcessorServiceFactory
+                                                                    metricsProcessorFactory) {
     super(SERVICE_NAME,
           conf.getInt(Constants.Metrics.MESSAGING_PARTITION_SIZE, Constants.Metrics.DEFAULT_KAFKA_PARTITION_SIZE),
           zkClient, discoveryService, discoveryServiceClient);

@@ -64,7 +64,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
   protected void publish(Iterator<MetricValues> metrics) throws Exception {
     encoderOutputStream.reset();
     while (metrics.hasNext()) {
-      // Encode each MetricRecord into bytes and make it an individual kafka message in a message set.
+      // Encode each MetricRecord into bytes and make it an individual message in a message set.
       MetricValues value = metrics.next();
       publishMetric(value);
     }
