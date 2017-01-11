@@ -251,7 +251,7 @@ public final class HBaseTableFactory implements TableFactory {
         .setValue(Constants.MessagingSystem.KEY_DISTRIBUTOR_BUCKETS_ATTR, Integer.toString(splits))
         .setValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE, metadataTableId.getNamespace());
 
-      addCoprocessor(coprocessor, htdBuilder);
+      //addCoprocessor(coprocessor, htdBuilder);
       HTableDescriptor htd = htdBuilder.build();
       byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits, splits, keyDistributor);
       tableUtil.createTableIfNotExists(admin, tableId, htd, splitKeys);
