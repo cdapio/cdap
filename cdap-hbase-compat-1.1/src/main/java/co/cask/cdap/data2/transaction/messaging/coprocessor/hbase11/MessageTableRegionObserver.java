@@ -16,17 +16,13 @@
 
 package co.cask.cdap.data2.transaction.messaging.coprocessor.hbase11;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
-import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HTable11NameConverter;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.messaging.MessagingUtils;
 import com.google.common.base.Supplier;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -37,9 +33,6 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
@@ -64,7 +57,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -116,43 +108,44 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
   @Nullable
   private synchronized LoadingCache<ByteBuffer, Map<String, String>> getTopicCache(RegionCoprocessorEnvironment env)
     throws IOException {
-    if (topicCache != null) {
-      return topicCache;
-    }
-
-    CConfiguration cConf = cConfReader.read();
-    if (cConf == null) {
-      throw new IOException("cConf was null.");
-    }
-
-    String metadataTableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
-    HTableNameConverter nameConverter = new HTable11NameConverter();
-    final HTableInterface metadataTable = env.getTable(nameConverter.toTableName(
-      hbaseNamespacePrefix, TableId.from(metadataTableNamespace, metadataTableName)));
-
-    final long metadataCacheExpiry = cConf.getLong(
-      Constants.MessagingSystem.COPROCESSOR_METADATA_CACHE_EXPIRATION_SECONDS);
-
-    topicCache = CacheBuilder.newBuilder()
-      .expireAfterWrite(metadataCacheExpiry, TimeUnit.SECONDS)
-      .maximumSize(1000)
-      .build(new CacheLoader<ByteBuffer, Map<String, String>>() {
-
-        @Override
-        public Map<String, String> load(ByteBuffer topicBytes) throws Exception {
-          byte[] getBytes = topicBytes.array().length == topicBytes.remaining() ?
-            topicBytes.array() : Bytes.toBytes(topicBytes);
-          Get get = new Get(getBytes);
-          Result result = metadataTable.get(get);
-          byte[] properties = result.getValue(COL_FAMILY, COL);
-          Map<String, String> propertyMap = GSON.fromJson(Bytes.toString(properties), MAP_TYPE);
-          String ttl = propertyMap.get(MessagingUtils.Constants.TTL_KEY);
-          long ttlInMs = TimeUnit.SECONDS.toMillis(Long.parseLong(ttl));
-          propertyMap.put(MessagingUtils.Constants.TTL_KEY, Long.toString(ttlInMs));
-          return propertyMap;
-        }
-      });
-    return topicCache;
+    throw new IOException("Intentionally not returning a topic cache");
+//    if (topicCache != null) {
+//      return topicCache;
+//    }
+//
+//    CConfiguration cConf = cConfReader.read();
+//    if (cConf == null) {
+//      throw new IOException("cConf was null.");
+//    }
+//
+//    String metadataTableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
+//    HTableNameConverter nameConverter = new HTable11NameConverter();
+//    final HTableInterface metadataTable = env.getTable(nameConverter.toTableName(
+//      hbaseNamespacePrefix, TableId.from(metadataTableNamespace, metadataTableName)));
+//
+//    final long metadataCacheExpiry = cConf.getLong(
+//      Constants.MessagingSystem.COPROCESSOR_METADATA_CACHE_EXPIRATION_SECONDS);
+//
+//    topicCache = CacheBuilder.newBuilder()
+//      .expireAfterWrite(metadataCacheExpiry, TimeUnit.SECONDS)
+//      .maximumSize(1000)
+//      .build(new CacheLoader<ByteBuffer, Map<String, String>>() {
+//
+//        @Override
+//        public Map<String, String> load(ByteBuffer topicBytes) throws Exception {
+//          byte[] getBytes = topicBytes.array().length == topicBytes.remaining() ?
+//            topicBytes.array() : Bytes.toBytes(topicBytes);
+//          Get get = new Get(getBytes);
+//          Result result = metadataTable.get(get);
+//          byte[] properties = result.getValue(COL_FAMILY, COL);
+//          Map<String, String> propertyMap = GSON.fromJson(Bytes.toString(properties), MAP_TYPE);
+//          String ttl = propertyMap.get(MessagingUtils.Constants.TTL_KEY);
+//          long ttlInMs = TimeUnit.SECONDS.toMillis(Long.parseLong(ttl));
+//          propertyMap.put(MessagingUtils.Constants.TTL_KEY, Long.toString(ttlInMs));
+//          return propertyMap;
+//        }
+//      });
+//    return topicCache;
   }
 
   @Override
