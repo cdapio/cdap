@@ -105,8 +105,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
@@ -511,10 +509,8 @@ public class UpgradeTool {
 
   private void performCoprocessorUpgrade() throws Exception {
     LOG.info("Disabling TMS Tables...");
-    List<String> tmsTableNames = new ArrayList<>();
-    tmsTableNames.add(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
-    tmsTableNames.add(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
-    tmsTableFactory.disableTables(tmsTableNames);
+    tmsTableFactory.disableMessageTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
+    tmsTableFactory.disablePayloadTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
 
     LOG.info("Upgrading User and System HBase Tables ...");
     dsUpgrade.upgrade();

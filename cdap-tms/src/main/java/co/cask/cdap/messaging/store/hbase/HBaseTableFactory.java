@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -152,17 +151,17 @@ public final class HBaseTableFactory implements TableFactory {
                        tableUtil.getPayloadTableRegionObserverClassForVersion());
   }
 
-  // Disables Message and Payload Table, used in Upgrade Tool
-  public void disableTables(List<String> tableNames) throws IOException {
-    List<TableId> tableIds = new ArrayList<>();
-    for (String tableName : tableNames) {
-      tableIds.add(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName));
-    }
-
+  public void disableMessageTable(String tableName) throws IOException {
+    TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, tableName);
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      for (TableId tableId : tableIds) {
-        disableTable(admin, tableId);
-      }
+      disableTable(admin, tableId);
+    }
+  }
+
+  public void disablePayloadTable(String tableName) throws IOException {
+    TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, tableName);
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      disableTable(admin, tableId);
     }
   }
 
