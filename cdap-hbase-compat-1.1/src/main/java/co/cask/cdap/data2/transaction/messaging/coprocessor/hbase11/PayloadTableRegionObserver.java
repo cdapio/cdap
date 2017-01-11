@@ -147,7 +147,7 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
   public InternalScanner preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
                                              KeyValueScanner memstoreScanner, InternalScanner s) throws IOException {
     if (!c.getEnvironment().getRegion().isAvailable()) {
-      return super.preFlushScannerOpen(c, store, memstoreScanner, s);
+      return s;
     }
 
     LoadingCache<ByteBuffer, Map<String, String>> cache;
@@ -156,7 +156,7 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
     } catch (IOException ex) {
       LOG.warn("preFlush, could not create topicCache. using default scanner. " + ex.getMessage());
       LOG.debug("StackTrace: ", ex);
-      return super.preFlushScannerOpen(c, store, memstoreScanner, s);
+      return s;
     }
 
     LOG.info("preFlush, filter using PayloadDataFilter");
@@ -172,7 +172,7 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
                                                long earliestPutTs, InternalScanner s,
                                                CompactionRequest request) throws IOException {
     if (!c.getEnvironment().getRegion().isAvailable()) {
-      return super.preCompactScannerOpen(c, store, scanners, scanType, earliestPutTs, s, request);
+      return s;
     }
 
     LoadingCache<ByteBuffer, Map<String, String>> cache;
@@ -181,7 +181,7 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
     } catch (IOException ex) {
       LOG.warn("preCompact, could not create topicCache. using default scanner. " + ex.getMessage());
       LOG.debug("StackTrace: ", ex);
-      return super.preCompactScannerOpen(c, store, scanners, scanType, earliestPutTs, s, request);
+      return s;
     }
 
     LOG.info("preCompact, filter using PayloadDataFilter");
