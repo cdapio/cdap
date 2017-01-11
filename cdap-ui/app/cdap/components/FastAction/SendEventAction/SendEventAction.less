@@ -29,54 +29,27 @@
 .modal {
   .confirmation-modal {
     &.stream-send-events {
-      textarea {
-        resize: none;
-      }
       .events-drop-container {
         height: 300px;
         padding: 10px;
 
-        textarea.form-control {
-          border: 1px solid #cccccc;
+        .file-data-upload-container {
+          height: ~"calc(100% - 40px)";
+
+          .file-data-metadata-container {
+            border: 1px dashed #cccccc;
+          }
+
+          textarea.form-control {
+            border: 1px solid #cccccc;
+          }
         }
 
-        .dropzone-container,
-        textarea {
-          height: ~"calc(100% - 42px)";
-          height: ~"-moz-calc(100% - 42px)";
-          height: ~"-webkit-calc(100% - 42px)";
-          display: flex;
-          -webkit-box-orient: vertical;
-          -webkit-box-direction: normal;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 10px;
+        .send-event-button {
+          margin-top: 10px;
 
-          &.file-drag-container {
-            background-color: lightblue;
-            opacity: 0.7;
-          }
-          .fa-spinner.fa-spin {
-            margin-right: 5px;
-          }
-          .fa-plus-circle {
-            position: absolute;
-            top: 60px;
-            cursor: pointer;
-          }
-          .fa-upload {
-            display: none;
-          }
-          &.file-dropped {
-            .fa-plus-circle {
-              display: none;
-            }
-          }
-          .upload-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+          .fa-spinner {
+            margin-right: 10px;
           }
         }
       }

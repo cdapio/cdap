@@ -54,34 +54,6 @@
     padding: 5px 35px;
   }
 
-  .dropzone-container {
-    position: absolute;
-    top: 15px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-  }
-
-  .plus-button-helper-text {
-    position: absolute;
-    right: 0;
-    left: 0;
-    top: 80px;
-
-    h4 { margin: 0; }
-  }
-
-  .wrangler-file-drop-container {
-    height: 60px;
-    width: 60px;
-    margin: 0 auto;
-
-    .fa.fa-plus-circle {
-      font-size: 60px;
-      color: #cccccc;
-    }
-  }
-
   .wrangler-copy-paste {
     border: 2px solid #dedede;
     border-radius: 4px;
@@ -89,33 +61,15 @@
     margin: 0 auto;
     position: relative;
 
-    &.with-error {
-      border-bottom-right-radius: 0;
-      border-bottom-left-radius: 0;
-    }
-
-    .wrangler-plus-button {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 100px;
-      cursor: pointer;
-
-      .fa.fa-plus-circle {
-        color: #cccccc;
-      }
-
-      h4 { font-weight: 500; }
-    }
-
     textarea {
-      max-width: 100%;
-      min-height: calc(~"100% - 100px");
-      max-height: calc(~"100% - 100px");
       border: 0;
 
       &:focus { box-shadow: none; }
+    }
+
+    &.with-error {
+      border-bottom-right-radius: 0;
+      border-bottom-left-radius: 0;
     }
 
     .parse-options {

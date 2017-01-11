@@ -20,11 +20,11 @@ import WrangleData from 'wrangler/components/Wrangler/WrangleData';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
 import classnames from 'classnames';
-import Dropzone from 'react-dropzone';
 import {convertHistoryToDml} from 'wrangler/components/Wrangler/dml-converter';
 import Explore from 'wrangler/components/Explore';
 import T from 'i18n-react';
 import CardActionFeedback from 'components/CardActionFeedback';
+import FileDataUpload from 'components/FileDataUpload';
 
 require('./Wrangler.less');
 
@@ -60,6 +60,7 @@ export default class Wrangler extends Component {
     this.onWrangleClick = this.onWrangleClick.bind(this);
     this.getWranglerOutput = this.getWranglerOutput.bind(this);
     this.onTextInputBlur = this.onTextInputBlur.bind(this);
+    this.handleDataUpload = this.handleDataUpload.bind(this);
   }
 
   getChildContext() {
@@ -209,8 +210,8 @@ export default class Wrangler extends Component {
   handleSetSkipEmptyLines() {
     this.setState({skipEmptyLines: !this.state.skipEmptyLines});
   }
-  handleTextInput(e) {
-    this.setState({wranglerInput: e.target.value});
+  handleTextInput(input) {
+    this.setState({wranglerInput: input});
   }
 
   renderErrors() {
@@ -240,71 +241,14 @@ export default class Wrangler extends Component {
     e.nativeEvent.stopImmediatePropagation();
   }
 
-  renderWranglerCopyPaste() {
-    if (!this.state.textarea || this.state.file.name) {
-      return (
-        <div
-          className="wrangler-plus-button text-center"
-          onClick={this.onPlusButtonClick}
-        >
-          <div
-            className="dropzone-container"
-            onClick={(e) => this.preventPropagation(e)}
-          >
-            <Dropzone
-              activeClassName="wrangler-file-drag-container"
-              className="wrangler-file-drop-container"
-              onDrop={(e) => this.setState({file: e[0], textarea: false})}
-            >
-              {
-                this.state.file.name && this.state.file.name.length ?
-                  null
-                :
-                  (
-                    <div className="plus-button">
-                      <i className="fa fa-plus-circle"></i>
-                    </div>
-                  )
-              }
-            </Dropzone>
-          </div>
-
-          <div className="plus-button-helper-text">
-            {
-              this.state.file.name && this.state.file.name.length ?
-              (<h4>{this.state.file.name}</h4>)
-                :
-              (
-                <div>
-                  <h4>
-                    {T.translate('features.Wrangler.InputScreen.HelperText.click')}
-                    <span className="fa fa-plus-circle" />
-                    {T.translate('features.Wrangler.InputScreen.HelperText.upload')}
-                  </h4>
-                  <h5>{T.translate('features.Wrangler.InputScreen.HelperText.or')}</h5>
-                  <h4>{T.translate('features.Wrangler.InputScreen.HelperText.paste')}</h4>
-                </div>
-              )
-            }
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <textarea
-        className="form-control"
-        onChange={this.handleTextInput}
-        autoFocus={true}
-        onBlur={this.onTextInputBlur}
-      />
-    );
-  }
-
   onTextInputBlur() {
     if (this.state.wranglerInput) { return; }
 
     this.setState({textarea: false});
+  }
+
+  handleDataUpload(file) {
+    this.setState({file: file, textarea: false});
   }
 
   getWranglerOutput() {
@@ -375,7 +319,8 @@ export default class Wrangler extends Component {
             'with-error': this.state.error
           })}
         >
-          {this.renderWranglerCopyPaste()}
+
+          <FileDataUpload onDataUpload={this.handleDataUpload} onTextInput={this.handleTextInput}/>
 
           <div className="parse-options">
             <form className="form-inline">
