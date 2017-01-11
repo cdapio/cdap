@@ -26,6 +26,8 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.hbase.ddl.ColumnFamilyDescriptor;
+import co.cask.cdap.hbase.ddl.TableDescriptor;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Predicate;
@@ -431,9 +433,10 @@ public abstract class AbstractHBaseTableUtilTest {
   private void create(TableId tableId) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
     TableId htableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
-    HTableDescriptorBuilder desc = tableUtil.buildHTableDescriptor(htableId);
-    desc.addFamily(new HColumnDescriptor("d"));
-    tableUtil.createTableIfNotExists(hAdmin, htableId, desc.build());
+    TableDescriptor.Builder tbdBuilder = new TableDescriptor.Builder(cConf, htableId);
+    ColumnFamilyDescriptor.Builder cfdBuilder = new ColumnFamilyDescriptor.Builder(hAdmin.getConfiguration(), "d");
+    tbdBuilder.addColumnFamily(cfdBuilder.build());
+    tableUtil.createTableIfNotExists(hAdmin, htableId, tbdBuilder.build());
   }
 
   private ListenableFuture<TableId> createAsync(final TableId tableId) {

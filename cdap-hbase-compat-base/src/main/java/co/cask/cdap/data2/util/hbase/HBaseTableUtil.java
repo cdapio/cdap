@@ -18,11 +18,14 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.hbase.ddl.DefaultHBaseDDLExecutor;
+import co.cask.cdap.hbase.ddl.TableDescriptor;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -30,7 +33,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -40,16 +42,13 @@ import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
 import com.google.common.io.OutputSupplier;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.RegionLoad;
 import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -57,7 +56,6 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.utils.Dependencies;
@@ -76,7 +74,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
-import java.util.regex.Matcher;
 import javax.annotation.Nullable;
 
 /**
@@ -86,18 +83,54 @@ public abstract class HBaseTableUtil {
 
   public static final String CDAP_VERSION = "cdap.version";
 
-  /**
-   * Represents the compression types supported for HBase tables.
-   */
-  public enum CompressionType {
-    LZO, SNAPPY, GZIP, NONE
-  }
-
+  // TODO Move the BloomType and its setting to the ColumnDescriptor
   /**
    * Represents the bloom filter types supported for HBase tables.
    */
   public enum BloomType {
     ROW, ROWCOL, NONE
+  }
+
+  public void setBloomFilter(HColumnDescriptor columnDescriptor, BloomType type) {
+    switch (type) {
+      case ROW:
+        columnDescriptor.setBloomFilterType(org.apache.hadoop.hbase.regionserver.BloomType.ROW);
+        break;
+      case ROWCOL:
+        columnDescriptor.setBloomFilterType(org.apache.hadoop.hbase.regionserver.BloomType.ROWCOL);
+        break;
+      case NONE:
+        columnDescriptor.setBloomFilterType(org.apache.hadoop.hbase.regionserver.BloomType.NONE);
+        break;
+      default:
+        throw new IllegalArgumentException("Unsupported bloom filter type: " + type);
+    }
+  }
+
+  public BloomType getBloomFilter(HColumnDescriptor columnDescriptor) {
+    org.apache.hadoop.hbase.regionserver.BloomType type = columnDescriptor.getBloomFilterType();
+    switch (type) {
+      case ROW:
+        return BloomType.ROW;
+      case ROWCOL:
+        return BloomType.ROWCOL;
+      case NONE:
+        return BloomType.NONE;
+      default:
+        throw new IllegalArgumentException("Unsupported bloom filter type: " + type);
+    }
+  }
+
+  public HTableDescriptor setVersion(HTableDescriptor tableDescriptor) {
+    HTableDescriptorBuilder builder = buildHTableDescriptor(tableDescriptor);
+    setVersion(builder);
+    return builder.build();
+  }
+
+  public HTableDescriptor setTablePrefix(HTableDescriptor tableDescriptor) {
+    HTableDescriptorBuilder builder = buildHTableDescriptor(tableDescriptor);
+    builder.setValue(Constants.Dataset.TABLE_PREFIX, tablePrefix);
+    return builder.build();
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableUtil.class);
@@ -108,9 +141,6 @@ public abstract class HBaseTableUtil {
   public static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
   private static final int COPY_BUFFER_SIZE = 0x1000;    // 4K
-  private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
-  public static final String CFG_HBASE_TABLE_COMPRESSION = "hbase.table.compression.default";
-
 
   protected String tablePrefix;
   protected NamespaceQueryAdmin namespaceQueryAdmin;
@@ -208,17 +238,17 @@ public abstract class HBaseTableUtil {
    * @param tableDescriptor hbase table descriptor for the new table
    */
   public void createTableIfNotExists(HBaseAdmin admin, TableId tableId,
-                                     HTableDescriptor tableDescriptor) throws IOException {
+                                     TableDescriptor tableDescriptor) throws IOException {
     createTableIfNotExists(admin, tableId, tableDescriptor, null);
   }
 
   /**
    * Creates a hbase table if it does not exists. Same as calling
-   * {@link #createTableIfNotExists(HBaseAdmin, TableId, HTableDescriptor, byte[][], long, TimeUnit)}
+   * {@link #createTableIfNotExists(HBaseAdmin, TableId, TableDescriptor, byte[][], long, TimeUnit)}
    * with timeout = {@link #MAX_CREATE_TABLE_WAIT} milliseconds.
    */
   public void createTableIfNotExists(HBaseAdmin admin, TableId tableId,
-                                     HTableDescriptor tableDescriptor,
+                                     TableDescriptor tableDescriptor,
                                      @Nullable byte[][] splitKeys) throws IOException {
     createTableIfNotExists(admin, tableId, tableDescriptor, splitKeys,
                            MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
@@ -233,69 +263,10 @@ public abstract class HBaseTableUtil {
    * @param timeout Maximum time to wait for table creation.
    * @param timeoutUnit The TimeUnit for timeout.
    */
-  public void createTableIfNotExists(HBaseAdmin admin, TableId tableId, HTableDescriptor tableDescriptor,
+  public void createTableIfNotExists(HBaseAdmin admin, TableId tableId, TableDescriptor tableDescriptor,
                                      @Nullable byte[][] splitKeys,
                                      long timeout, TimeUnit timeoutUnit) throws IOException {
-    if (tableExists(admin, tableId)) {
-      return;
-    }
-    setDefaultConfiguration(tableDescriptor, admin.getConfiguration());
-    tableDescriptor = setVersion(tableDescriptor);
-    tableDescriptor = setTablePrefix(tableDescriptor);
-    try {
-      LOG.debug("Attempting to create table '{}' if it does not exist", tableId);
-      // HBaseAdmin.createTable can handle null splitKeys.
-      admin.createTable(tableDescriptor, splitKeys);
-      LOG.info("Table created '{}'", tableId);
-      return;
-    } catch (TableExistsException e) {
-      // table may exist because someone else is creating it at the same
-      // time. But it may not be available yet, and opening it might fail.
-      LOG.debug("Table '{}' already exists.", tableId, e);
-    }
-
-    // Wait for table to materialize
-    try {
-      Stopwatch stopwatch = new Stopwatch();
-      stopwatch.start();
-      long sleepTime = timeoutUnit.toNanos(timeout) / 10;
-      sleepTime = sleepTime <= 0 ? 1 : sleepTime;
-      do {
-        if (tableExists(admin, tableId)) {
-          LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.", tableId);
-          return;
-        } else {
-          TimeUnit.NANOSECONDS.sleep(sleepTime);
-        }
-      } while (stopwatch.elapsedTime(timeoutUnit) < timeout);
-    } catch (InterruptedException e) {
-      LOG.warn("Sleeping thread interrupted.");
-    }
-    LOG.error("Table '{}' does not exist after waiting {} ms. Giving up.", tableId, MAX_CREATE_TABLE_WAIT);
-  }
-
-  // This is a workaround for unit-tests which should run even if compression is not supported
-  // todo: this should be addressed on a general level: CDAP may use HBase cluster (or multiple at a time some of)
-  //       which doesn't support certain compression type
-  private void setDefaultConfiguration(HTableDescriptor tableDescriptor, Configuration conf) {
-    String compression = conf.get(CFG_HBASE_TABLE_COMPRESSION, DEFAULT_COMPRESSION_TYPE.name());
-    CompressionType compressionAlgo = CompressionType.valueOf(compression);
-    for (HColumnDescriptor hcd : tableDescriptor.getColumnFamilies()) {
-      setCompression(hcd, compressionAlgo);
-      setBloomFilter(hcd, BloomType.ROW);
-    }
-  }
-
-  public HTableDescriptor setVersion(HTableDescriptor tableDescriptor) {
-    HTableDescriptorBuilder builder = buildHTableDescriptor(tableDescriptor);
-    setVersion(builder);
-    return builder.build();
-  }
-
-  public HTableDescriptor setTablePrefix(HTableDescriptor tableDescriptor) {
-    HTableDescriptorBuilder builder = buildHTableDescriptor(tableDescriptor);
-    builder.setValue(Constants.Dataset.TABLE_PREFIX, tablePrefix);
-    return builder.build();
+    new DefaultHBaseDDLExecutor(admin.getConfiguration()).createTableIfNotExists(tableDescriptor, splitKeys);
   }
 
   // For simplicity we allow max 255 splits per bucket for now
@@ -446,58 +417,6 @@ public abstract class HBaseTableUtil {
   }
 
 
-  /**
-   * Returns information for all coprocessor configured for the table.
-   *
-   * @return a Map from coprocessor class name to CoprocessorInfo
-   */
-  public static Map<String, CoprocessorInfo> getCoprocessorInfo(HTableDescriptor tableDescriptor) {
-    Map<String, CoprocessorInfo> info = Maps.newHashMap();
-
-    // Extract information about existing data janitor coprocessor
-    // The following logic is copied from RegionCoprocessorHost in HBase
-    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> entry: tableDescriptor.getValues().entrySet()) {
-      String key = Bytes.toString(entry.getKey().get()).trim();
-      String spec = Bytes.toString(entry.getValue().get()).trim();
-
-      if (!HConstants.CP_HTD_ATTR_KEY_PATTERN.matcher(key).matches()) {
-        continue;
-      }
-
-      try {
-        Matcher matcher = HConstants.CP_HTD_ATTR_VALUE_PATTERN.matcher(spec);
-        if (!matcher.matches()) {
-          continue;
-        }
-
-        String className = matcher.group(2).trim();
-        Path path = matcher.group(1).trim().isEmpty() ? null : new Path(matcher.group(1).trim());
-        int priority = matcher.group(3).trim().isEmpty() ? Coprocessor.PRIORITY_USER
-          : Integer.valueOf(matcher.group(3));
-        String cfgSpec = null;
-        try {
-          cfgSpec = matcher.group(4);
-        } catch (IndexOutOfBoundsException ex) {
-          // ignore
-        }
-
-        Map<String, String> properties = Maps.newHashMap();
-        if (cfgSpec != null) {
-          cfgSpec = cfgSpec.substring(cfgSpec.indexOf('|') + 1);
-          // do an explicit deep copy of the passed configuration
-          Matcher m = HConstants.CP_HTD_ATTR_VALUE_PARAM_PATTERN.matcher(cfgSpec);
-          while (m.find()) {
-            properties.put(m.group(1), m.group(2));
-          }
-        }
-        info.put(className, new CoprocessorInfo(className, path, priority, properties));
-      } catch (Exception ex) {
-        LOG.warn("Coprocessor attribute '{}' has invalid coprocessor specification '{}'", key, spec, ex);
-      }
-    }
-
-    return info;
-  }
 
   /**
    * Creates a new {@link HTable} which may contain an HBase namespace depending on the HBase version
@@ -551,7 +470,9 @@ public abstract class HBaseTableUtil {
    * @param namespace the namespace to create
    * @throws IOException if an I/O error occurs during the operation
    */
-  public abstract void createNamespaceIfNotExists(HBaseAdmin admin, String namespace) throws IOException;
+  public void createNamespaceIfNotExists(HBaseAdmin admin, String namespace) throws IOException {
+    new DefaultHBaseDDLExecutor(admin.getConfiguration()).createNamespaceIfNotExists(namespace);
+  }
 
   /**
    * Creates an HBase namespace, if it exists
@@ -560,7 +481,9 @@ public abstract class HBaseTableUtil {
    * @param namespace the namespace to delete
    * @throws IOException if an I/O error occurs during the operation
    */
-  public abstract void  deleteNamespaceIfExists(HBaseAdmin admin, String namespace) throws IOException;
+  public void deleteNamespaceIfExists(HBaseAdmin admin, String namespace) throws IOException {
+    new DefaultHBaseDDLExecutor(admin.getConfiguration()).deleteNamespaceIfExists(namespace);
+  }
 
   /**
    * Disable an HBase table
@@ -569,7 +492,16 @@ public abstract class HBaseTableUtil {
    * @param tableId {@link TableId} for the specified table
    * @throws IOException
    */
-  public abstract void disableTable(HBaseAdmin admin, TableId tableId) throws IOException;
+  public void disableTable(HBaseAdmin admin, TableId tableId) throws IOException {
+    try {
+      TableName tableName = getHTableNameConverter().toTableName(tablePrefix, tableId);
+      new DefaultHBaseDDLExecutor(admin.getConfiguration()).disableTableIfEnabled(tableName.getNamespaceAsString(),
+                                                                                  tableName.getQualifierAsString());
+    } catch (NotFoundException e) {
+      throw new IOException(String.format("Table '%s' does not exists in the namespace '%s'.",
+                                          tableId.getTableName(), tableId.getNamespace()), e);
+    }
+  }
 
   /**
    * Enable an HBase table
@@ -578,7 +510,16 @@ public abstract class HBaseTableUtil {
    * @param tableId {@link TableId} for the specified table
    * @throws IOException
    */
-  public abstract void enableTable(HBaseAdmin admin, TableId tableId) throws IOException;
+  public void enableTable(HBaseAdmin admin, TableId tableId) throws IOException {
+    try {
+      TableName tableName = getHTableNameConverter().toTableName(tablePrefix, tableId);
+      new DefaultHBaseDDLExecutor(admin.getConfiguration()).enableTableIfDisabled(tableName.getNamespaceAsString(),
+                                                                                  tableName.getQualifierAsString());
+    } catch (NotFoundException e) {
+      throw new IOException(String.format("Table '%s' does not exists in the namespace '%s'.",
+                                          tableId.getTableName(), tableId.getNamespace()), e);
+    }
+  }
 
   /**
    * Check if an HBase table exists
@@ -587,7 +528,11 @@ public abstract class HBaseTableUtil {
    * @param tableId {@link TableId} for the specified table
    * @throws IOException
    */
-  public abstract boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException;
+  public boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException {
+    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
+    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
+    return admin.tableExists(getHTableNameConverter().toTableName(tablePrefix, tableId));
+  }
 
   /**
    * Delete an HBase table
@@ -596,16 +541,37 @@ public abstract class HBaseTableUtil {
    * @param tableId {@link TableId} for the specified table
    * @throws IOException
    */
-  public abstract void deleteTable(HBaseAdmin admin, TableId tableId) throws IOException;
+  public void deleteTable(HBaseAdmin admin, TableId tableId) throws IOException {
+    try {
+      TableName tableName = getHTableNameConverter().toTableName(tablePrefix, tableId);
+      new DefaultHBaseDDLExecutor(admin.getConfiguration()).deleteTableIfExists(tableName.getNamespaceAsString(),
+                                                                                tableName.getQualifierAsString());
+    } catch (NotFoundException e) {
+      throw new IOException(String.format("Table '%s' does not exists in the namespace '%s'.",
+                                          tableId.getTableName(), tableId.getNamespace()), e);
+    }
+  }
 
   /**
    * Modify an HBase table
    *
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
-   * @param tableDescriptor the modified {@link HTableDescriptor}
+   * @param tableDescriptor the modified {@link TableDescriptor}
    * @throws IOException
    */
-  public abstract void modifyTable(HBaseAdmin admin, HTableDescriptor tableDescriptor) throws IOException;
+  public void modifyTable(HBaseAdmin admin, HTableDescriptor tableDescriptor) throws IOException {
+    // TODO Update the method signature to accept the TableDescriptor.
+    TableDescriptor tbd = TableDescriptor.fromHTableDescriptor(tableDescriptor);
+    TableName tableName = TableName.valueOf(tbd.getNamespace(), tbd.getName());
+    try {
+      new DefaultHBaseDDLExecutor(admin.getConfiguration()).modifyTable(tableName.getNamespaceAsString(),
+                                                                        tableName.getQualifierAsString(),
+                                                                        tbd);
+    } catch (NotFoundException e) {
+      throw new IOException(String.format("Table '%s' does not exists in the namespace '%s'.",
+                                          tableName.getQualifierAsString(), tableName.getNamespaceAsString()), e);
+    }
+  }
 
   /**
    * Returns a list of {@link HRegionInfo} for the specified {@link TableId}
@@ -677,9 +643,14 @@ public abstract class HBaseTableUtil {
    * @throws IOException
    */
   public void truncateTable(HBaseAdmin admin, TableId tableId) throws IOException {
-    HTableDescriptor tableDescriptor = getHTableDescriptor(admin, tableId);
-    dropTable(admin, tableId);
-    createTableIfNotExists(admin, tableId, tableDescriptor);
+    TableName tableName = getHTableNameConverter().toTableName(tablePrefix, tableId);
+    try {
+      new DefaultHBaseDDLExecutor(admin.getConfiguration()).truncateTable(tableName.getNamespaceAsString(),
+                                                                          tableName.getQualifierAsString());
+    } catch (NotFoundException e) {
+      throw new IOException(String.format("Table '%s' does not exists in the namespace '%s'.",
+                                          tableName.getQualifierAsString(), tableName.getNamespaceAsString()), e);
+    }
   }
 
   /**
@@ -744,14 +715,6 @@ public abstract class HBaseTableUtil {
   public DeleteBuilder buildDelete(Delete delete) {
     return new DefaultDeleteBuilder(delete);
   }
-
-  public abstract void setCompression(HColumnDescriptor columnDescriptor, CompressionType type);
-
-  public abstract void setBloomFilter(HColumnDescriptor columnDescriptor, BloomType type);
-
-  public abstract CompressionType getCompression(HColumnDescriptor columnDescriptor);
-
-  public abstract BloomType getBloomFilter(HColumnDescriptor columnDescriptor);
 
   public abstract Class<? extends Coprocessor> getTransactionDataJanitorClassForVersion();
   public abstract Class<? extends Coprocessor> getQueueRegionObserverClassForVersion();
@@ -831,39 +794,6 @@ public abstract class HBaseTableUtil {
       // both memstore and size on fs contribute to size of the dataset, otherwise user will be confused with zeroes
       // in dataset size even after something was written...
       return storeFileSizeMB + memStoreSizeMB;
-    }
-  }
-
-  /**
-   * Carries information about coprocessor information.
-   */
-  public static final class CoprocessorInfo {
-    private final String className;
-    private final Path path;
-    private final int priority;
-    private final Map<String, String> properties;
-
-    private CoprocessorInfo(String className, Path path, int priority, Map<String, String> properties) {
-      this.className = className;
-      this.path = path;
-      this.priority = priority;
-      this.properties = ImmutableMap.copyOf(properties);
-    }
-
-    public String getClassName() {
-      return className;
-    }
-
-    public Path getPath() {
-      return path;
-    }
-
-    public int getPriority() {
-      return priority;
-    }
-
-    public Map<String, String> getProperties() {
-      return properties;
     }
   }
 }

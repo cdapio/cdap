@@ -19,11 +19,12 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.hbase.ddl.ColumnFamilyDescriptor;
+import co.cask.cdap.hbase.ddl.TableDescriptor;
 import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -75,9 +76,10 @@ public class ConfigurationTable {
     try {
       HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
       TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, TABLE_NAME);
-      HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
-      htd.addFamily(new HColumnDescriptor(FAMILY));
-      tableUtil.createTableIfNotExists(admin, tableId, htd.build());
+      TableDescriptor.Builder tbdBuilder = new TableDescriptor.Builder(cConf, tableId);
+      ColumnFamilyDescriptor.Builder cfdBuilder = new ColumnFamilyDescriptor.Builder(hbaseConf, Bytes.toString(FAMILY));
+      tbdBuilder.addColumnFamily(cfdBuilder.build());
+      tableUtil.createTableIfNotExists(admin, tableId, tbdBuilder.build());
 
       long now = System.currentTimeMillis();
       long previous = now - 1;

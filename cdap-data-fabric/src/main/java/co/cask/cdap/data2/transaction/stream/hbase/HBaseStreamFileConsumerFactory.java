@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.stream.hbase;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.file.FileReader;
@@ -34,6 +35,8 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.hbase.ddl.ColumnFamilyDescriptor;
+import co.cask.cdap.hbase.ddl.TableDescriptor;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -80,16 +83,15 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
     byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits, splits, distributor);
 
     TableId hBaseTableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
-    HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(hBaseTableId);
+    TableDescriptor.Builder tbdBuilder = new TableDescriptor.Builder(cConf, hBaseTableId);
+    ColumnFamilyDescriptor.Builder cfdBuilder
+      = new ColumnFamilyDescriptor.Builder(hConf, Bytes.toString(QueueEntryRow.COLUMN_FAMILY)).setMaxVersions(1);
 
-    HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
-    hcd.setMaxVersions(1);
-
-    htd.addFamily(hcd);
-    htd.setValue(QueueConstants.DISTRIBUTOR_BUCKETS, Integer.toString(splits));
+    tbdBuilder.addColumnFamily(cfdBuilder.build());
+    tbdBuilder.addProperty(QueueConstants.DISTRIBUTOR_BUCKETS, Integer.toString(splits));
 
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      tableUtil.createTableIfNotExists(admin, hBaseTableId, htd.build(), splitKeys,
+      tableUtil.createTableIfNotExists(admin, hBaseTableId, tbdBuilder.build(), splitKeys,
                                        QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
     }
 

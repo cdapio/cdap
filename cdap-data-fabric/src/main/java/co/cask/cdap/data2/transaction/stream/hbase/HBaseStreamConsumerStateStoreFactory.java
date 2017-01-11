@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.stream.hbase;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
@@ -25,12 +26,15 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.hbase.ddl.ColumnFamilyDescriptor;
+import co.cask.cdap.hbase.ddl.TableDescriptor;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -40,11 +44,13 @@ import java.util.concurrent.TimeUnit;
  */
 public final class HBaseStreamConsumerStateStoreFactory implements StreamConsumerStateStoreFactory {
   private final Configuration hConf;
+  private final CConfiguration cConf;
   private final HBaseTableUtil tableUtil;
 
   @Inject
-  HBaseStreamConsumerStateStoreFactory(Configuration hConf, HBaseTableUtil tableUtil) {
+  HBaseStreamConsumerStateStoreFactory(Configuration hConf, CConfiguration cConf, HBaseTableUtil tableUtil) {
     this.hConf = hConf;
+    this.cConf = cConf;
     this.tableUtil = tableUtil;
   }
 
@@ -57,13 +63,12 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       if (!tableUtil.tableExists(admin, hbaseTableId)) {
 
-        HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(hbaseTableId);
+        TableDescriptor.Builder tbdBuilder = new TableDescriptor.Builder(cConf, hbaseTableId);
+        ColumnFamilyDescriptor.Builder cfdBuilder
+          = new ColumnFamilyDescriptor.Builder(hConf, Bytes.toString(QueueEntryRow.COLUMN_FAMILY)).setMaxVersions(1);
 
-        HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
-        htd.addFamily(hcd);
-        hcd.setMaxVersions(1);
-
-        tableUtil.createTableIfNotExists(admin, hbaseTableId, htd.build(), null,
+        tbdBuilder.addColumnFamily(cfdBuilder.build());
+        tableUtil.createTableIfNotExists(admin, hbaseTableId, tbdBuilder.build(), null,
                                          QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
       }
     }

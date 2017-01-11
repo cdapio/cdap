@@ -26,6 +26,7 @@ import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.TableProperties;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.hbase.ddl.TableDescriptor;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -126,7 +127,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     }
 
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor.build(), splits);
+      TableDescriptor tbd = TableDescriptor.fromHTableDescriptor(tableDescriptor.build());
+      tableUtil.createTableIfNotExists(admin, tableId, tbd, splits);
     }
   }
 

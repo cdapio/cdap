@@ -39,6 +39,8 @@ import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.hbase.ddl.ColumnFamilyDescriptor;
+import co.cask.cdap.hbase.ddl.TableDescriptor;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -520,19 +522,22 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     @Override
     public void create() throws IOException {
       // Create the queue table
-      HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
+      TableDescriptor.Builder tbdBuilder = new TableDescriptor.Builder(cConf, tableId);
+
       for (String key : properties.stringPropertyNames()) {
-        htd.setValue(key, properties.getProperty(key));
+        tbdBuilder.addProperty(key, properties.getProperty(key));
       }
 
-      HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
-      hcd.setMaxVersions(1);
-      htd.addFamily(hcd);
+      ColumnFamilyDescriptor.Builder cfdBuilder
+        = new ColumnFamilyDescriptor.Builder(hConf, Bytes.toString(QueueEntryRow.COLUMN_FAMILY)).setMaxVersions(1);
+
+      tbdBuilder.addColumnFamily(cfdBuilder.build());
 
       // Add coprocessors
       CoprocessorJar coprocessorJar = createCoprocessorJar();
       for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-        addCoprocessor(htd, coprocessor, coprocessorJar.getJarLocation(), coprocessorJar.getPriority(coprocessor));
+        tbdBuilder.addCoprocessor(addCoprocessor(coprocessor, coprocessorJar.getJarLocation(),
+                                                 coprocessorJar.getPriority(coprocessor)));
       }
 
       // Create queue table with splits. The distributor bucket size is the same as splits.
@@ -541,19 +546,19 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
         new RowKeyDistributorByHashPrefix.OneByteSimpleHash(splits));
 
       byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits, splits, distributor);
-      htd.setValue(QueueConstants.DISTRIBUTOR_BUCKETS, Integer.toString(splits));
-      createQueueTable(tableId, htd, splitKeys);
+      tbdBuilder.addProperty(QueueConstants.DISTRIBUTOR_BUCKETS, Integer.toString(splits));
+      createQueueTable(tableId, tbdBuilder, splitKeys);
     }
 
-    private void createQueueTable(TableId tableId, HTableDescriptorBuilder htd, byte[][] splitKeys)
+    private void createQueueTable(TableId tableId, TableDescriptor.Builder tbdBuilder, byte[][] splitKeys)
       throws IOException {
       int prefixBytes = (type == QueueConstants.QueueType.SHARDED_QUEUE) ? ShardedHBaseQueueStrategy.PREFIX_BYTES
                                                                          : SaltedHBaseQueueStrategy.SALT_BYTES;
-      htd.setValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES, Integer.toString(prefixBytes));
-      LOG.info("Create queue table with prefix bytes {}", htd.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES));
+      tbdBuilder.addProperty(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES, Integer.toString(prefixBytes));
+      LOG.info("Create queue table with prefix bytes {}", prefixBytes);
 
       try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-        tableUtil.createTableIfNotExists(admin, tableId, htd.build(), splitKeys);
+        tableUtil.createTableIfNotExists(admin, tableId, tbdBuilder.build(), splitKeys);
       }
     }
   }

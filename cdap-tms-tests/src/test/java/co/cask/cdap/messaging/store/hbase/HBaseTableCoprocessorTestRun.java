@@ -29,6 +29,7 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.hbase.ddl.ColumnFamilyDescriptor;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.store.DataCleanupTest;
 import co.cask.cdap.messaging.store.MessageTable;
@@ -110,8 +111,8 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
     cConf.set(Constants.MessagingSystem.COPROCESSOR_METADATA_CACHE_EXPIRATION_SECONDS, Long.toString(CACHE_EXPIRY));
 
     hBaseAdmin = HBASE_TEST_BASE.getHBaseAdmin();
-    hBaseAdmin.getConfiguration().set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION,
-                                      HBaseTableUtil.CompressionType.NONE.name());
+    hBaseAdmin.getConfiguration().set(ColumnFamilyDescriptor.CFG_HBASE_TABLE_COMPRESSION,
+                                      ColumnFamilyDescriptor.CompressionType.NONE.name());
     tableUtil = new HBaseTableUtilFactory(cConf).get();
     tableUtil.createNamespaceIfNotExists(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
 
