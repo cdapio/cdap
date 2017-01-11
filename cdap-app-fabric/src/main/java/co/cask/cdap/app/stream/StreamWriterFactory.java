@@ -17,6 +17,7 @@
 package co.cask.cdap.app.stream;
 
 import co.cask.cdap.api.data.stream.StreamWriter;
+import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.EntityId;
 import com.google.inject.assistedinject.Assisted;
@@ -28,8 +29,11 @@ public interface StreamWriterFactory {
   /**
    * @param owners the owners of the {@link StreamWriter}
    * @param run run information
+   * @param retryStrategy the retry strategy to use if writes fail in a retryable fashion
    * @return a {@link StreamWriter} for the specified namespaceId
    */
-  StreamWriter create(@Assisted("run") Id.Run run, @Assisted("owners") Iterable<? extends EntityId> owners);
+  StreamWriter create(@Assisted("run") Id.Run run,
+                      @Assisted("owners") Iterable<? extends EntityId> owners,
+                      @Assisted("retryStrategy") RetryStrategy retryStrategy);
 }
 
