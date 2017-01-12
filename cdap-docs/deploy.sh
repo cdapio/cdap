@@ -193,6 +193,7 @@ function deploy () {
   if [ "${BRANCH}" == '' ]; then
     _remote_dir=${_remote_dir}/${_version}
   fi
+  copy_zip_file ${_zip_file} ${_local_dir} ${_version}
   make_remote_dir ${_user} ${_host} ${_remote_dir}
   sync_local_dir_to_remote_dir ${_user} ${_host} ${_remote_dir} ${_zip_file} ${_local_dir} ${_version}
   decho "branch=${_branch}"

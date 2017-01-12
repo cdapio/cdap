@@ -348,13 +348,6 @@ function build_docs_package() {
       echo "Could not create zipped doc set ${TARGET_PATH}/${PROJECT_VERSION}"
       return ${errors}   
   fi
-  echo "Moving zip ${zip_dir_name}"
-  mv ${zip_dir_name}.zip ${TARGET_PATH}/${PROJECT_VERSION}
-  errors=$?
-  if [[ ${errors} -ne 0 ]]; then
-      echo "Could not moved zipped doc set into ${TARGET_PATH}/${PROJECT_VERSION}"
-      return ${errors}   
-  fi
   echo "Creating GitHub version of release notes"
   python "${SCRIPT_PATH}/tools/github-release-notes.py" --version ${PROJECT_VERSION}
   errors=$?
