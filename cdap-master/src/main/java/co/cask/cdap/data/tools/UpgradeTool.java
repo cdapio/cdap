@@ -111,7 +111,6 @@ public class UpgradeTool {
   private final StreamStateStoreUpgrader streamStateStoreUpgrader;
   private final DatasetUpgrader dsUpgrade;
   private final QueueAdmin queueAdmin;
-  private final DatasetSpecificationUpgrader dsSpecUpgrader;
   private final MetadataStore metadataStore;
   private final ExistingEntitySystemMetadataWriter existingEntitySystemMetadataWriter;
   private final UpgradeDatasetServiceManager upgradeDatasetServiceManager;
@@ -163,7 +162,6 @@ public class UpgradeTool {
     this.metadataStore = injector.getInstance(MetadataStore.class);
     this.streamStateStoreUpgrader = injector.getInstance(StreamStateStoreUpgrader.class);
     this.dsUpgrade = injector.getInstance(DatasetUpgrader.class);
-    this.dsSpecUpgrader = injector.getInstance(DatasetSpecificationUpgrader.class);
     this.queueAdmin = injector.getInstance(QueueAdmin.class);
     this.nsStore = injector.getInstance(NamespaceStore.class);
     this.authorizationService = injector.getInstance(AuthorizationEnforcementService.class);
@@ -388,9 +386,6 @@ public class UpgradeTool {
 
   private void performUpgrade() throws Exception {
     performCoprocessorUpgrade();
-
-    LOG.info("Upgrading Dataset Specification...");
-    dsSpecUpgrader.upgrade();
 
     LOG.info("Upgrading stream state store table...");
     streamStateStoreUpgrader.upgrade();
