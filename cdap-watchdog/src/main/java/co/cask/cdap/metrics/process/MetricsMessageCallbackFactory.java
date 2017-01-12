@@ -60,7 +60,7 @@ public final class MetricsMessageCallbackFactory implements MessageCallbackFacto
   @Override
   public KafkaConsumer.MessageCallback create(KafkaConsumerMetaTable metaTable, MetricsContext metricsContext) {
     metricStore.setMetricsContext(metricsContext);
-    return new PersistedMessageCallback(
-      new MetricsMessageCallback(datumReader, recordSchema, metricStore, metricsContext), metaTable, persistThreshold);
+    return new MetricsMessageCallback(datumReader, recordSchema, metricStore, metricsContext,
+                                      metaTable, persistThreshold);
   }
 }
