@@ -107,6 +107,10 @@ changes.
 Downloading and Distributing Packages
 =====================================
 
+**Note:** Both the :ref:`Custom Service Descriptor (CSD) <cloudera-installation-download>`
+and the :ref:`CDAP Parcel <cloudera-installation-download-distribute-parcel>` must be
+downloaded and installed in order to successfully install CDAP.
+
 .. _cloudera-installation-download:
 
 Downloading and Installing CSD
