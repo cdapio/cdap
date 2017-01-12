@@ -23,7 +23,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.internal.io.DatumWriterFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
-import co.cask.cdap.metrics.collect.KafkaMetricsCollectionService;
 import co.cask.cdap.metrics.collect.MessagingMetricsCollectionService;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
