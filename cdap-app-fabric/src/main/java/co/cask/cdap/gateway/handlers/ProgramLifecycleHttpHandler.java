@@ -35,6 +35,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import co.cask.cdap.common.security.AuditDetail;
+import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -303,6 +305,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   @POST
   @Path("/apps/{app-id}/{program-type}/{program-id}/{action}")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void performAction(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("app-id") String appId,
@@ -314,6 +317,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   @POST
   @Path("/apps/{app-id}/versions/{app-version}/{program-type}/{program-id}/{action}")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void performAction(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("app-id") String appId,
@@ -498,6 +502,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @PUT
   @Path("/apps/{app-name}/{program-type}/{program-name}/runtimeargs")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void saveProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("app-name") String appName,
@@ -567,6 +572,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @PUT
   @Path("/apps/{app-name}/{program-type}/{program-name}/runs/{run-id}/loglevels")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void updateProgramLogLevels(HttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespace,
                                      @PathParam("app-name") String appName,
@@ -582,6 +588,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @PUT
   @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runs/{run-id}/loglevels")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void updateProgramLogLevels(HttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespace,
                                      @PathParam("app-name") String appName,
@@ -600,6 +607,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/apps/{app-name}/{program-type}/{program-name}/runs/{run-id}/resetloglevels")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void resetProgramLogLevels(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespace,
                                     @PathParam("app-name") String appName,
@@ -615,6 +623,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runs/{run-id}/resetloglevels")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void resetProgramLogLevels(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespace,
                                     @PathParam("app-name") String appName,
@@ -655,6 +664,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/status")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void getStatuses(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
 
@@ -705,6 +715,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/stop")
+  @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
   public void stopPrograms(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) throws Exception {
 
@@ -782,6 +793,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/start")
+  @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
   public void startPrograms(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) throws Exception {
 
@@ -845,6 +857,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/instances")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void getInstances(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) throws IOException, BadRequestException {
 
@@ -973,6 +986,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @PUT
   @Path("/apps/{app-id}/workers/{worker-id}/instances")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void setWorkerInstances(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("app-id") String appId,
@@ -1019,6 +1033,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @PUT
   @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public synchronized void setFlowletInstances(HttpRequest request, HttpResponder responder,
                                                @PathParam("namespace-id") String namespaceId,
                                                @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
@@ -1044,6 +1059,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @PUT
   @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/loglevels")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void updateFlowletLogLevels(HttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId,
                                      @PathParam("app-id") String appId,
@@ -1059,6 +1075,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @PUT
   @Path("/apps/{app-id}/versions/{app-version}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/loglevels")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void updateFlowletLogLevels(HttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId,
                                      @PathParam("app-id") String appId,
@@ -1076,6 +1093,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/resetloglevels")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void resetFlowletLogLevels(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("app-id") String appId,
@@ -1091,6 +1109,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/apps/{app-id}/versions/{app-version}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/resetloglevels")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void resetFlowletLogLevels(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("app-id") String appId,
@@ -1229,6 +1248,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @PUT
   @Path("/apps/{app-id}/services/{service-id}/instances")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void setServiceInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId,

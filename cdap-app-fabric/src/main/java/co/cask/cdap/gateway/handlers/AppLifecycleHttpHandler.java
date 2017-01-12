@@ -33,9 +33,12 @@ import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.security.AuditDetail;
+import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
+import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
@@ -129,6 +132,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @PUT
   @Path("/apps/{app-id}")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public BodyConsumer create(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId)
@@ -149,6 +153,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/apps")
+  @AuditPolicy({AuditDetail.RESPONSE_BODY, AuditDetail.HEADERS})
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
@@ -171,6 +176,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/apps/{app-id}/versions/{version-id}/create")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public BodyConsumer createAppVersion(HttpRequest request, HttpResponder responder,
                                          @PathParam("namespace-id") final String namespaceId,
                                          @PathParam("app-id") final String appId,
@@ -316,6 +322,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/apps/{app-id}/update")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void updateApp(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") final String namespaceId,
                         @PathParam("app-id") final String appName)
@@ -439,9 +446,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       protected void onFinish(HttpResponder responder, File uploadedFile) {
         try {
           // deploy app
-          applicationLifecycleService.deployAppAndArtifact(namespace, appId, artifactId, uploadedFile,
-                                                           configString, createProgramTerminator());
-          responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
+          ApplicationWithPrograms app =
+            applicationLifecycleService.deployAppAndArtifact(namespace, appId, artifactId, uploadedFile, configString,
+                                                             createProgramTerminator());
+          responder.sendString(HttpResponseStatus.OK, String.format("Successfully deployed app %s",
+                                                                    app.getApplicationId().getApplication()));
         } catch (InvalidArtifactException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (ArtifactAlreadyExistsException e) {

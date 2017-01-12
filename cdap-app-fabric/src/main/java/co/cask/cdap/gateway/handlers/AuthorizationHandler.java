@@ -23,6 +23,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.common.logging.AuditLogEntry;
+import co.cask.cdap.common.security.AuditDetail;
+import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
@@ -98,6 +100,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/privileges/grant")
   @POST
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void grant(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
     ensureSecurityEnabled();
 
@@ -115,6 +118,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/privileges/revoke")
   @POST
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void revoke(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
     ensureSecurityEnabled();
 

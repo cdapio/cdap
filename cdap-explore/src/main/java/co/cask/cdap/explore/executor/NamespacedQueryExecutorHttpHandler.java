@@ -17,6 +17,8 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.AuditDetail;
+import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
@@ -61,6 +63,7 @@ public class NamespacedQueryExecutorHttpHandler extends AbstractQueryExecutorHtt
 
   @POST
   @Path("data/explore/queries")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void query(HttpRequest request, HttpResponder responder,
                     @PathParam("namespace-id") final String namespaceId) throws Exception {
     try {

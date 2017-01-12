@@ -23,6 +23,7 @@ import java.net.InetAddress;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Represents an entry in an audit log.
@@ -35,6 +36,7 @@ public final class AuditLogEntry {
 
   /** Indicates whether this entry has already been logged. */
   private boolean logged;
+  private boolean logResponseBody;
 
   private InetAddress clientIP;
   private String userName;
@@ -44,21 +46,25 @@ public final class AuditLogEntry {
   private Integer responseCode;
   private Long responseContentLength;
   private String userIdentity;
+  private Map<String, String> headers;
+  private String responseBody;
 
   public AuditLogEntry() {
     this.date = new Date();
   }
 
   public String toString() {
-    return String.format("%s %s %s [%s] \"%s\" %s %s %s",
+    return String.format("%s %s %s [%s] \"%s\" %s %s %s %s %s",
                          clientIP != null ? clientIP.getHostAddress() : DEFAULT_VALUE,
                          fieldOrDefault(userIdentity),
                          fieldOrDefault(userName),
                          DEFAULT_DATE_FORMAT.format(date),
                          fieldOrDefault(requestLine),
+                         fieldOrDefault(headers),
                          fieldOrDefault(requestBody),
                          fieldOrDefault(responseCode),
-                         fieldOrDefault(responseContentLength));
+                         fieldOrDefault(responseContentLength),
+                         fieldOrDefault(responseBody));
   }
 
   public String getUserIdentity() {
@@ -135,6 +141,34 @@ public final class AuditLogEntry {
 
   public void setResponseContentLength(Long responseContentLength) {
     this.responseContentLength = responseContentLength;
+  }
+
+  public Map<String, String> getHeaders() {
+    return headers;
+  }
+
+  public void setHeaders(Map<String, String> headers) {
+    this.headers = headers;
+  }
+
+  public String getResponseBody() {
+    return responseBody;
+  }
+
+  public void setResponseBody(String responseBody) {
+     this.responseBody = responseBody;
+  }
+
+  public void appendResponseBody(String appendBody) {
+    this.responseBody += appendBody;
+  }
+
+  public boolean isLogResponseBody() {
+    return logResponseBody;
+  }
+
+  public void setLogResponseBody(boolean logResponseBody) {
+    this.logResponseBody = logResponseBody;
   }
 
   private String fieldOrDefault(Object field) {
