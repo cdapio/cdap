@@ -35,7 +35,7 @@ import sys
 
 SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_INPUT_RELEASE_NOTES_FILE = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, '../reference-manual/source/release-notes.rst'))
-DEFAULT_OUTPUT_RELEASE_NOTES_FILE = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, '../target/github-release-notes.md'))
+DEFAULT_OUTPUT_RELEASE_NOTES_FILE = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, '../target/github-release-notes.txt'))
 
 NOTES = 'notes.txt'
 NOTES_PATH = os.path.join(SCRIPT_DIR_PATH, NOTES)
