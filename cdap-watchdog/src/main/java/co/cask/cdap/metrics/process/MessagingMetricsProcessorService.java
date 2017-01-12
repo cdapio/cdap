@@ -33,6 +33,7 @@ import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.messaging.MessageFetcher;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -67,6 +68,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
   private static final long INITIAL_LAST_MESSAGE_ID = -1L;
 
   private final TopicId metricsTopic;
+  private final TopicIdMetaKey metricsTopicMetaKey;
   // TODO unused partitions
   private final Set<Integer> partitions;
   private final MessagingService messagingService;
@@ -93,6 +95,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
                                           int persistThreshold) {
     super(metricDatasetFactory);
     this.metricsTopic = NamespaceId.SYSTEM.topic(topicPrefix);
+    this.metricsTopicMetaKey = new TopicIdMetaKey(this.metricsTopic);
     this.partitions = partitions;
     this.messagingService = messagingService;
     try {
@@ -116,13 +119,13 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
 
   @Override
   protected void run() {
-    MessagingConsumerMetaTable metaTable = (MessagingConsumerMetaTable) getMetaTable(this.getClass());
+    MetricsConsumerMetaTable metaTable = getMetaTable(this.getClass());
     if (metaTable == null) {
-      LOG.info("Could not get MessagingConsumerMetaTable, seems like we are being shut down");
+      LOG.info("Could not get MetricsConsumerMetaTable, seems like we are being shut down");
       return;
     }
     try {
-      long messageId = metaTable.get(metricsTopic);
+      long messageId = metaTable.get(metricsTopicMetaKey);
       MessageFetcher fetcher = messagingService.prepareFetch(metricsTopic);
       if (messageId == -1L) {
         // If no messageId is found for the last processed message, start fetching from beginning
@@ -209,10 +212,23 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
 
   private void persistMessageId() {
     try {
-        metaTable.save(metricsTopic, lastMessageId.get());
+        metaTable.save(metricsTopicMetaKey, lastMessageId.get());
     } catch (Exception e) {
       // Simple log and ignore the error.
       LOG.error("Failed to persist consumed messageId. {}", e.getMessage(), e);
+    }
+  }
+
+  private class TopicIdMetaKey implements MetricsMetaKey{
+    TopicId metricsTopic;
+
+    TopicIdMetaKey(TopicId metricsTopic) {
+      this.metricsTopic = metricsTopic;
+    }
+
+    @Override
+    public byte[] getKey() {
+       return MessagingUtils.toMetadataRowKey(metricsTopic);
     }
   }
 }

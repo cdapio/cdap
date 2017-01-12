@@ -29,12 +29,10 @@ import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.metrics.process.AbstractConsumerMetaTable;
 import co.cask.cdap.metrics.process.AbstractMetricsProcessorService;
-import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.process.KafkaMetricsProcessorService;
-import co.cask.cdap.metrics.process.MessagingConsumerMetaTable;
 import co.cask.cdap.metrics.process.MessagingMetricsProcessorService;
+import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
 import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
 import co.cask.cdap.metrics.store.upgrade.MetricsDataMigrator;
 import co.cask.cdap.proto.id.DatasetId;
@@ -107,7 +105,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   @Override
-  public AbstractConsumerMetaTable createConsumerMeta(
+  public MetricsConsumerMetaTable createConsumerMeta(
     Class<? extends AbstractMetricsProcessorService> metricsProcessorServiceClass) {
     String tableName;
     if (metricsProcessorServiceClass.equals(KafkaMetricsProcessorService.class)) {
@@ -117,21 +115,18 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
       tableName = cConf.get(Constants.Metrics.MESSAGING_META_TABLE,
                             Constants.Metrics.DEFAULT_MESSAGING_META_TABLE);
     } else {
-      String errorMessage = "No AbstractConsumerMetaTable class for " + metricsProcessorServiceClass.getCanonicalName();
+      String errorMessage = "Cannot find MetricsConsumerMetaTable name for the class "
+        + metricsProcessorServiceClass.getCanonicalName();
       LOG.error(errorMessage);
       throw Throwables.propagate(new Exception(errorMessage));
     }
     try {
       MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
-      if (metricsProcessorServiceClass.equals(KafkaMetricsProcessorService.class)) {
-        LOG.info("KafkaConsumerMetaTable created: {}", tableName);
-        return new KafkaConsumerMetaTable(table);
-      }
-      LOG.info("MessagingConsumerMetaTable created: {}", tableName);
-      return new MessagingConsumerMetaTable(table);
+      LOG.info("MetricsConsumerMetaTable created: {}", tableName);
+      return new MetricsConsumerMetaTable(table);
 
     } catch (Exception e) {
-      LOG.error("Exception in creating KafkaConsumerMetaTable.", e);
+      LOG.error("Exception in creating MetricsConsumerMetaTable.", e);
       throw Throwables.propagate(e);
     }
   }

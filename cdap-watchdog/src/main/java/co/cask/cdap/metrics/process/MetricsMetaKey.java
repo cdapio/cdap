@@ -16,21 +16,13 @@
 
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.messaging.MessagingUtils;
-import co.cask.cdap.proto.id.TopicId;
-
 /**
- * An abstraction on persistent storage of TMS fetch information.
+ * A wrapper class to provide byte array format of keys for {@link MetricsConsumerMetaTable}.
  */
-public class MessagingConsumerMetaTable extends AbstractConsumerMetaTable {
+public interface MetricsMetaKey {
 
-  public MessagingConsumerMetaTable(MetricsTable metaTable) {
-    super(metaTable);
-  }
-
-  @Override
-  protected byte[] getKey(Object objectKey) {
-    return MessagingUtils.toMetadataRowKey(TopicId.class.cast(objectKey));
-  }
+  /**
+   * @return A byte array format of this object to be stored in the metrics meta table as a key
+   */
+  byte[] getKey();
 }

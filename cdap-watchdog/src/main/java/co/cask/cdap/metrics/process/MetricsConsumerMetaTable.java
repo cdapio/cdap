@@ -27,47 +27,45 @@ import java.util.TreeMap;
 /**
  * An abstraction on persistent storage of consumer information.
  */
-public abstract class AbstractConsumerMetaTable {
+public class MetricsConsumerMetaTable {
   private static final byte[] VALUE_COLUMN = Bytes.toBytes("o");
 
   private final MetricsTable metaTable;
 
-  public AbstractConsumerMetaTable(MetricsTable metaTable) {
+  public MetricsConsumerMetaTable(MetricsTable metaTable) {
     this.metaTable = metaTable;
   }
 
-  public synchronized <T> void save(Map<T, Long> offsets) throws Exception {
+  public synchronized <T extends MetricsMetaKey> void save(Map<T, Long> offsets) throws Exception {
     SortedMap<byte[], SortedMap<byte[], Long>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<T, Long> entry : offsets.entrySet()) {
       SortedMap<byte[], Long> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
       map.put(VALUE_COLUMN, entry.getValue());
-      updates.put(getKey(entry.getKey()), map);
+      updates.put(entry.getKey().getKey(), map);
     }
     metaTable.put(updates);
   }
 
-  public synchronized <T> void save(T key, long value) throws Exception {
+  public synchronized <T extends MetricsMetaKey> void save(T key, long value) throws Exception {
     SortedMap<byte[], SortedMap<byte[], Long>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     SortedMap<byte[], Long> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
     map.put(VALUE_COLUMN, value);
-    updates.put(getKey(key), map);
+    updates.put(key.getKey(), map);
     metaTable.put(updates);
   }
 
   /**
    * Gets the value as long in the {@link MetricsTable} of a given key.
    *
-   * @param objectKey Object form of the key to get value with.
+   * @param metaKey Object form of the key to get value with.
    * @return The value or {@code -1} if the value is not found.
    * @throws Exception If there is an error when fetching.
    */
-  public synchronized long get(Object objectKey) throws Exception {
-    byte[] result = metaTable.get(getKey(objectKey), VALUE_COLUMN);
+  public synchronized <T extends MetricsMetaKey> long get(T metaKey) throws Exception {
+    byte[] result = metaTable.get(metaKey.getKey(), VALUE_COLUMN);
     if (result == null) {
       return -1;
     }
     return Bytes.toLong(result);
   }
-
-  protected abstract byte[] getKey(Object objectKey);
 }

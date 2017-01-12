@@ -33,7 +33,7 @@ public abstract class AbstractMetricsProcessorService extends AbstractExecutionT
   private static final Logger LOG = LoggerFactory.getLogger(AbstractMetricsProcessorService.class);
 
   private final MetricDatasetFactory metricDatasetFactory;
-  protected AbstractConsumerMetaTable metaTable;
+  protected MetricsConsumerMetaTable metaTable;
   protected volatile boolean stopping = false;
 
   @Nullable
@@ -52,7 +52,7 @@ public abstract class AbstractMetricsProcessorService extends AbstractExecutionT
     return this.getClass().getSimpleName();
   }
 
-  protected AbstractConsumerMetaTable getMetaTable(
+  protected MetricsConsumerMetaTable getMetaTable(
     Class<? extends AbstractMetricsProcessorService> metricsProcessorServiceClass) {
 
     while (metaTable == null) {

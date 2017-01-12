@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.inject.Inject;
@@ -31,7 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * Process metrics by consuming metrics being published to kafka.
@@ -99,15 +97,15 @@ public final class KafkaMetricsProcessorService extends AbstractMetricsProcessor
       long offset;
       try {
         LOG.info("Retrieve offset for topic: {}, partition: {}", topic, partition);
-        KafkaConsumerMetaTable metaTable = (KafkaConsumerMetaTable) getMetaTable(this.getClass());
+        MetricsConsumerMetaTable metaTable = getMetaTable(this.getClass());
         if (metaTable == null) {
-          LOG.info("Could not get KafkaConsumerMetaTable, seems like we are being shut down");
+          LOG.info("Could not get MetricsConsumerMetaTable, seems like we are being shut down");
           return false;
         }
-        offset = metaTable.get(new TopicPartition(topic, partition));
+        offset = metaTable.get(new TopicPartitionMetaKey(new TopicPartition(topic, partition)));
         LOG.info("Offset for topic: {}, partition: {} is {}", topic, partition, offset);
       } catch (Exception e) {
-        LOG.info("Failed to get KafkaConsumerMetaTable, shutting down");
+        LOG.info("Failed to get MetricsConsumerMetaTable, shutting down");
         return false;
       }
 
@@ -118,7 +116,7 @@ public final class KafkaMetricsProcessorService extends AbstractMetricsProcessor
       }
     }
 
-    unsubscribe = preparer.consume(callbackFactory.create((KafkaConsumerMetaTable) getMetaTable(this.getClass()),
+    unsubscribe = preparer.consume(callbackFactory.create(getMetaTable(this.getClass()),
                                                           metricsContext));
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitions);
     return true;

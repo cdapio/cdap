@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,24 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import org.apache.twill.kafka.client.TopicPartition;
 
 /**
- * An abstraction on persistent storage of kafka consumer information.
+ * A wrapper class of {@link org.apache.twill.kafka.client.TopicPartition}to to be used as keys
+ * in {@link MetricsConsumerMetaTable}.
  */
-public final class KafkaConsumerMetaTable extends AbstractConsumerMetaTable {
+public class TopicPartitionMetaKey implements MetricsMetaKey {
+  private TopicPartition topicPartition;
 
-  public KafkaConsumerMetaTable(MetricsTable metaTable) {
-    super(metaTable);
+  public TopicPartitionMetaKey(TopicPartition topicPartition) {
+    this.topicPartition = topicPartition;
   }
 
   @Override
-  protected byte[] getKey(Object topicPartitionObject) {
-    TopicPartition topicPartition = TopicPartition.class.cast(topicPartitionObject);
+  public byte[] getKey() {
     return Bytes.toBytes(String.format("%s.%02d", topicPartition.getTopic(), topicPartition.getPartition()));
   }
 }
