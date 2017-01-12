@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.security;
 
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
@@ -65,13 +66,15 @@ public class DefaultImpersonator implements Impersonator {
   }
 
   @Override
-  public UserGroupInformation getUGI(NamespaceId namespaceId) throws IOException {
+  public UserGroupInformation getUGI(NamespaceId namespaceId) throws IOException, NamespaceNotFoundException {
     // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceId)) {
       return UserGroupInformation.getCurrentUser();
     }
     try {
       return getUGI(namespaceQueryAdmin.get(namespaceId));
+    } catch (NamespaceNotFoundException e) {
+      throw e;
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, IOException.class);
       throw Throwables.propagate(e);

@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.security.ImpersonationUtils;
 import co.cask.cdap.common.security.Impersonator;
@@ -144,7 +145,7 @@ class ExistingEntitySystemMetadataWriter {
   }
 
   private void writeSystemMetadataForDatasets(NamespaceId namespace, DatasetFramework dsFramework)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, NamespaceNotFoundException {
     SystemDatasetInstantiatorFactory systemDatasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
     try (SystemDatasetInstantiator systemDatasetInstantiator = systemDatasetInstantiatorFactory.create()) {

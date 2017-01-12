@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Processor;
 import co.cask.cdap.common.io.RootLocationFactory;
@@ -33,6 +34,7 @@ import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionAware;
@@ -247,14 +249,25 @@ public final class FileMetaDataManager {
           while ((row = scanner.next()) != null) {
             byte[] rowKey = row.getRow();
             final NamespaceId namespaceId = getNamespaceId(rowKey);
-            String namespacedLogDir = impersonator.doAs(namespaceId, new Callable<String>() {
-              @Override
-              public String call() throws Exception {
-                return LoggingContextHelper.getNamespacedBaseDirLocation(namespacedLocationFactory,
-                                                                         logBaseDir, namespaceId,
-                                                                         impersonator).toString();
+            String namespacedLogDir = null;
+            try {
+              namespacedLogDir = impersonator.doAs(namespaceId, new Callable<String>() {
+                @Override
+                public String call() throws Exception {
+                  return LoggingContextHelper.getNamespacedBaseDirLocation(namespacedLocationFactory,
+                                                                           logBaseDir, namespaceId,
+                                                                           impersonator).toString();
+                }
+              });
+            } catch (Exception e) {
+              if (e instanceof NamespaceNotFoundException) {
+                LOG.warn("Namespace {} does not exist. Only delete metadata for it", namespaceId.getEntityName(), e);
+              } else {
+                LOG.warn("Error while accessing namespace {} for log cleanup, skipping it",
+                         namespaceId.getEntityName(), e);
+                continue;
               }
-            });
+            }
 
             for (final Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
               try {
@@ -264,12 +277,21 @@ public final class FileMetaDataManager {
                   LOG.debug("Got file {} with start time {}", file, Bytes.toLong(colName));
                 }
 
+                if (Strings.isNullOrEmpty(namespacedLogDir)) {
+                  LOG.warn("File {} is not present and will be deleted from metadata because namespace {} " +
+                             "does not exist", Bytes.toString(entry.getValue()), namespaceId.getEntityName());
+                  table.delete(rowKey, colName);
+                  deletedColumns++;
+                  continue;
+                }
+
                 Location fileLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
                   @Override
                   public Location call() throws Exception {
                     return rootLocationFactory.create(new URI(Bytes.toString(entry.getValue())));
                   }
                 });
+
                 if (!fileLocation.exists()) {
                   LOG.warn("Log file {} does not exist, but metadata is present", file);
                   table.delete(rowKey, colName);
@@ -281,7 +303,12 @@ public final class FileMetaDataManager {
                   deletedColumns++;
                 }
               } catch (Exception e) {
-                LOG.error("Got exception deleting file {}", Bytes.toString(entry.getValue()), e);
+                if (e instanceof NamespaceNotFoundException) {
+                  LOG.warn("File {} is not present because namespace {} does not exist",
+                           Bytes.toString(entry.getValue()), namespaceId.getEntityName());
+                } else {
+                  LOG.error("Got exception deleting file {}", Bytes.toString(entry.getValue()), e);
+                }
               }
             }
           }
