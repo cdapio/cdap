@@ -28,8 +28,8 @@ The best way to start developing a CDAP application is by using the Maven archet
     $ mvn archetype:generate \
         -DarchetypeGroupId=co.cask.cdap \
         -DarchetypeArtifactId=cdap-app-archetype \
-        -DarchetypeRepository=https://oss.sonatype.org/content/repositories/snapshots/ \
-        -DarchetypeVersion=\ |release| \
+        |archetype-repository| \
+        |archetype-version| \
         -DartifactId=myExampleApp \
         -DgroupId=org.example.app
 
@@ -40,7 +40,7 @@ The best way to start developing a CDAP application is by using the Maven archet
     $ mvn archetype:generate \
         -DarchetypeGroupId=co.cask.cdap \
         -DarchetypeArtifactId=cdap-app-archetype \
-        -DarchetypeVersion=\ |release| \
+        |archetype-version| \
         -DartifactId=myExampleApp \
         -DgroupId=org.example.app
 

@@ -13,7 +13,7 @@ Binary Zip File
 
 The **zip file** is available on the Downloads section of the Cask Website at
 `<http://cask.co/downloads/#cdap>`__. Click the tab marked "SDK" for the *Software
-Development Kit (SDK).* There will be a button download the latest version.
+Development Kit (SDK).* There will be a button to download the latest version.
 
 The SDK includes the software required for development and a Standalone version of CDAP,
 suitable for running on a laptop.

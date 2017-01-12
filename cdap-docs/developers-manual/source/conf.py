@@ -21,16 +21,23 @@ def setup(app):
     app.add_config_value('snapshot_version', '', 'env')
 
 # Set the condition
+archetype_version = "-DarchetypeVersion=%s" % release
 if release.endswith('SNAPSHOT'):
     snapshot_version = True
-    archetype_repository_version = ('-DarchetypeRepository=https://oss.sonatype.org/content/repositories/snapshots/' 
-      + " -DarchetypeVersion=%s" % release)
+    archetype_repository = '-DarchetypeRepository=https://oss.sonatype.org/content/repositories/snapshots/'
+    archetype_repository_version = "%s %s" % (archetype_repository, archetype_version)
 else:
     snapshot_version = False
-    archetype_repository_version = "-DarchetypeVersion=%s" % release
-    
+    archetype_repository = '-DarchetypeRepository=https://oss.sonatype.org/service/local/staging/deploy/maven2'
+    archetype_repository_version = archetype_version
+
 rst_epilog += """
 
+.. |archetype-repository| replace:: %(archetype_repository)s
+.. |archetype-version| replace:: %(archetype_version)s
 .. |archetype-repository-version| replace:: %(archetype_repository_version)s
 
-""" % {'archetype_repository_version': archetype_repository_version}
+""" % {'archetype_repository': archetype_repository,
+       'archetype_version': archetype_version,
+       'archetype_repository_version': archetype_repository_version,
+       }
