@@ -38,7 +38,6 @@ import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
-import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -49,8 +48,8 @@ import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -143,15 +142,16 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
 
   private void processMetricsRecords(MessageFetcher fetcher) {
     // Decode the metrics records.
-    ByteBufferInputStream is = new ByteBufferInputStream(null);
+    PayloadInputStream is = new PayloadInputStream(null);
+    BinaryDecoder binaryDecoder = new BinaryDecoder(is);
     List<MetricValues> records = Lists.newArrayList();
 
     try (CloseableIterator<RawMessage> iterator = fetcher.fetch()) {
       while (iterator.hasNext()) {
         RawMessage input = iterator.next();
         try {
-          MetricValues metricValues = recordReader.read(
-            new BinaryDecoder(is.reset(ByteBuffer.wrap(input.getPayload()))), recordSchema);
+          is.reset(input.getPayload());
+          MetricValues metricValues = recordReader.read(binaryDecoder, recordSchema);
           records.add(metricValues);
           lastMessageId.set(Bytes.toLong(input.getId()));
         } catch (IOException e) {
@@ -229,6 +229,20 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
     @Override
     public byte[] getKey() {
        return MessagingUtils.toMetadataRowKey(metricsTopic);
+    }
+  }
+
+  private class PayloadInputStream extends ByteArrayInputStream {
+
+    PayloadInputStream(byte[] buf) {
+      super(buf);
+    }
+
+    void reset(byte[] buf) {
+      this.buf = buf;
+      this.pos = 0;
+      this.count = buf.length;
+      this.mark = 0;
     }
   }
 }
