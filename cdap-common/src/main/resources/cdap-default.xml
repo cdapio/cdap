@@ -1294,7 +1294,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${notification.topic}</value>
+    <value>${audit.topic},${metrics.messaging.topic.prefix},${notification.topic}</value>
     <description>
       A comma-separated list of topics that is always available in the system namespace
     </description>
@@ -1481,6 +1481,14 @@
     <value>${master.service.memory.mb}</value>
     <description>
       Memory in megabytes for each metrics service instance
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.messaging.topic.prefix</name>
+    <value>metrics</value>
+    <description>
+      Topic name used to publish metrics in messaging
     </description>
   </property>
 

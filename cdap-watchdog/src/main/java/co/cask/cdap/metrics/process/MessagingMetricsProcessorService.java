@@ -219,7 +219,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
     }
   }
 
-  private class TopicIdMetaKey implements MetricsMetaKey{
+  private class TopicIdMetaKey implements MetricsMetaKey {
     TopicId metricsTopic;
 
     TopicIdMetaKey(TopicId metricsTopic) {
