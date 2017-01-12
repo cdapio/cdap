@@ -114,7 +114,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
   @Override
   public void setMetricsContext(MetricsContext metricsContext) {
     this.metricsContext = metricsContext;
-    this.metricsContextMap = metricsContext == null ? Collections.<String, String>emptyMap() : metricsContext.getTags();
+    this.metricsContextMap = metricsContext.getTags();
   }
 
   @Override
