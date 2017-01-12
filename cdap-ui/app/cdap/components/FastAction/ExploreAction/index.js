@@ -49,7 +49,7 @@ export default class ExploreAction extends Component {
       let match = explorableTables.filter(db => db.table === `${type}_${entityId.toLowerCase()}`);
       if (match.length) {
         this.setState({
-          disabled: !this.state.disabled
+          disabled: false
         });
       }
     };
