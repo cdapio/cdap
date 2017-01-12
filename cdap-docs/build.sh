@@ -346,6 +346,13 @@ function build_docs_package() {
       echo "Could not create zipped doc set ${TARGET_PATH}/${PROJECT_VERSION}"
       return ${errors}   
   fi
+  echo "Copying zip ${zip_dir_name}"
+  cp ${zip_dir_name}.zip ${TARGET_PATH}/${PROJECT_VERSION}
+  errors=$?
+  if [[ ${errors} -ne 0 ]]; then
+      echo "Could not copy zipped doc set into ${TARGET_PATH}/${PROJECT_VERSION}"
+      return ${errors}   
+  fi
   display_end_title ${title}
 }
 
