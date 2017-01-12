@@ -70,9 +70,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
     }
   }
 
-  private void publishMetric(MetricValues value)
-    throws IOException, TopicNotFoundException {
-
+  private void publishMetric(MetricValues value) throws IOException, TopicNotFoundException {
     recordWriter.encode(value, encoder);
     // partitioning by the context
     messagingService.publish(StoreRequestBuilder.of(metricsTopic)

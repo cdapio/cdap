@@ -30,18 +30,17 @@ import java.util.Set;
 /**
  * Metrics processor service that processes events from Kafka.
  */
-public final class KafkaAbstractMetricsRuntimeProcessorRuntimeService extends AbstractMetricsRuntimeProcessorService {
+public final class KafkaMetricsRuntimeProcessorRuntimeService extends AbstractMetricsRuntimeProcessorService {
   private static final String SERVICE_NAME = "metrics.processor.kafka.consumer";
 
   private final KafkaMetricsProcessorServiceFactory factory;
 
   @Inject
-  public KafkaAbstractMetricsRuntimeProcessorRuntimeService(CConfiguration conf,
-                                                            ZKClientService zkClient,
-                                                            DiscoveryService discoveryService,
-                                                            DiscoveryServiceClient discoveryServiceClient,
-                                                            KafkaMetricsProcessorServiceFactory
-                                                                metricsProcessorFactory) {
+  public KafkaMetricsRuntimeProcessorRuntimeService(CConfiguration conf,
+                                                    ZKClientService zkClient,
+                                                    DiscoveryService discoveryService,
+                                                    DiscoveryServiceClient discoveryServiceClient,
+                                                    KafkaMetricsProcessorServiceFactory metricsProcessorFactory) {
     super(SERVICE_NAME,
           conf.getInt(Constants.Metrics.MESSAGING_PARTITION_SIZE, Constants.Metrics.DEFAULT_MESSAGING_PARTITION_SIZE),
           zkClient, discoveryService, discoveryServiceClient);

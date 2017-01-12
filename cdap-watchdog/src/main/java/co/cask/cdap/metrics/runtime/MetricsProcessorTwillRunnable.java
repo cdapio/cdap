@@ -84,8 +84,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
                     Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
 
   private Injector injector;
-  private KafkaAbstractMetricsRuntimeProcessorRuntimeService kafkaMetricsProcessorRuntimeService;
-  private MessagingAbstractMetricsRuntimeProcessorRuntimeService messagingMetricsProcessorRuntimeService;
+  private KafkaMetricsRuntimeProcessorRuntimeService kafkaMetricsProcessorRuntimeService;
+  private MessagingMetricsRuntimeProcessorRuntimeService messagingMetricsProcessorRuntimeService;
   private MetricsCollectionService metricsCollectionService;
 
   public MetricsProcessorTwillRunnable(String name, String cConfName, String hConfName) {
@@ -109,10 +109,10 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       MetricsContext metricsContext = metricsCollectionService.getContext(METRICS_PROCESSOR_CONTEXT);
 
       kafkaMetricsProcessorRuntimeService = injector.getInstance(
-        KafkaAbstractMetricsRuntimeProcessorRuntimeService.class);
+        KafkaMetricsRuntimeProcessorRuntimeService.class);
       kafkaMetricsProcessorRuntimeService.setMetricsContext(metricsContext);
       messagingMetricsProcessorRuntimeService = injector.getInstance(
-        MessagingAbstractMetricsRuntimeProcessorRuntimeService.class);
+        MessagingMetricsRuntimeProcessorRuntimeService.class);
       messagingMetricsProcessorRuntimeService.setMetricsContext(metricsContext);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
