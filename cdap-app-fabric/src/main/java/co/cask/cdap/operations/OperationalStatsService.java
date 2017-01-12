@@ -99,7 +99,7 @@ public class OperationalStatsService extends AbstractScheduledService {
   protected void runOneIteration() throws Exception {
     LOG.debug("Running operational stats extension service iteration");
     for (Map.Entry<OperationalExtensionId, OperationalStats> entry : operationalStatsLoader.getAll().entrySet()) {
-      LOG.debug("Collecting {] stats for service {}", entry.getValue().getStatType(),
+      LOG.debug("Collecting {} stats for service {}", entry.getValue().getStatType(),
                 entry.getValue().getServiceName());
       try {
         entry.getValue().collect();
