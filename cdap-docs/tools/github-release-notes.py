@@ -21,7 +21,7 @@
 # the top-most section in GitHub format (Markdown).
 #
 # Reads and writes using common-sense defaults that can be over-written if required.
-# Default output ends up as 'target/github-release-notes.md'.
+# Default output ends up as 'target/github-release-notes.txt'.
 #
 # It does not resolve references to the CDAP docs; these are flagged
 # 'LINK_TO_BE_CORRECTED' and must be resolved manually.
