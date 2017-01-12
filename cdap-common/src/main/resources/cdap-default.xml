@@ -951,7 +951,7 @@
       the Kafka service used by CDAP. If the same Kafka service ZooKeeper quorum
       and namespace are shared by multiple CDAP instances, each CDAP instance
       needs to distinguish its Kafka topics from those of other CDAP instances
-      with unique values for ${log.kafka.topic} and ${metrics.kafka.topic.prefix}.
+      with unique values for ${log.kafka.topic} and ${metrics.topic.prefix}.
     </description>
   </property>
 
@@ -1294,7 +1294,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${metrics.messaging.topic.prefix},${notification.topic}</value>
+    <value>${audit.topic},${metrics.topic.prefix},${notification.topic}</value>
     <description>
       A comma-separated list of topics that is always available in the system namespace
     </description>
@@ -1461,10 +1461,26 @@
   </property>
 
   <property>
+    <name>metrics.kafka.consumer.persist.threshold</name>
+    <value>100</value>
+    <description>
+      Threshold of persisting latest processed message's offset to Kafka metrics meta table
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.kafka.meta.table</name>
+    <value>metrics.kafka.meta</value>
+    <description>
+      Name of the Kafka metrics meta table
+    </description>
+  </property>
+
+  <property>
     <name>metrics.kafka.partition.size</name>
     <value>10</value>
     <description>
-      Number of partitions for metrics topic
+      Number of partitions for Kafka metrics topic
     </description>
   </property>
 
@@ -1485,10 +1501,26 @@
   </property>
 
   <property>
-    <name>metrics.messaging.topic.prefix</name>
-    <value>metrics</value>
+    <name>metrics.messaging.fetcher.persist.threshold</name>
+    <value>100</value>
     <description>
-      Topic name used to publish metrics in messaging
+      Threshold of persisting latest processed message's messageId to messaging metrics meta table
+    </description>
+  </property>
+  
+  <property>
+    <name>metrics.messaging.meta.table</name>
+    <value>metrics.messaging.meta</value>
+    <description>
+      Name of the messaging metrics meta table
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.kafka.partition.size</name>
+    <value>10</value>
+    <description>
+      Number of partitions for messaging metrics topic
     </description>
   </property>
 
@@ -1564,6 +1596,14 @@
     <value>45005</value>
     <description>
       Metrics Query service bind port
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.topic.prefix</name>
+    <value>metrics</value>
+    <description>
+      Topic prefix used to publish metrics in Kafka and messaging
     </description>
   </property>
 

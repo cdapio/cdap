@@ -47,7 +47,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
   private final Encoder encoder;
 
   @Inject
-  public MessagingMetricsCollectionService(@Named(Constants.Metrics.MESSAGING_TOPIC_PREFIX) String topicPrefix,
+  public MessagingMetricsCollectionService(@Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
                                            MessagingService messagingService, DatumWriter<MetricValues> recordWriter) {
     super();
     this.messagingService = messagingService;

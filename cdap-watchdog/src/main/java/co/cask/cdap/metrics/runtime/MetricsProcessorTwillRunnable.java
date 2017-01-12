@@ -183,32 +183,20 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     @Provides
     @Named(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD)
     public int providesConsumerPersistThreshold(CConfiguration cConf) {
-      return cConf.getInt(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD,
-                          Constants.Metrics.DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD);
+      return cConf.getInt(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD);
     }
 
-    @SuppressWarnings("unused")
     @Provides
-    @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX)
-    public String providesKafkaTopicPrefix(CConfiguration cConf) {
-      return cConf.get(Constants.Metrics.KAFKA_TOPIC_PREFIX,
-                       Constants.Metrics.DEFAULT_TOPIC_PREFIX);
+    @Named(Constants.Metrics.TOPIC_PREFIX)
+    public String providesTopicPrefix(CConfiguration cConf) {
+      return cConf.get(Constants.Metrics.TOPIC_PREFIX);
     }
 
     @SuppressWarnings("unused")
     @Provides
     @Named(Constants.Metrics.MESSAGING_FETCHER_PERSIST_THRESHOLD)
     public int providesFetcherPersistThreshold(CConfiguration cConf) {
-      return cConf.getInt(Constants.Metrics.MESSAGING_FETCHER_PERSIST_THRESHOLD,
-                          Constants.Metrics.DEFAULT_MESSAGING_FETCHER_PERSIST_THRESHOLD);
-    }
-
-    @SuppressWarnings("unused")
-    @Provides
-    @Named(Constants.Metrics.MESSAGING_TOPIC_PREFIX)
-    public String providesMessagingTopicPrefix(CConfiguration cConf) {
-      return cConf.get(Constants.Metrics.MESSAGING_TOPIC_PREFIX,
-                       Constants.Metrics.DEFAULT_TOPIC_PREFIX);
+      return cConf.getInt(Constants.Metrics.MESSAGING_FETCHER_PERSIST_THRESHOLD);
     }
   }
 }

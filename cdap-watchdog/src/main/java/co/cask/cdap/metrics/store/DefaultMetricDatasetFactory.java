@@ -109,11 +109,9 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     Class<? extends AbstractMetricsProcessorService> metricsProcessorServiceClass) {
     String tableName;
     if (metricsProcessorServiceClass.equals(KafkaMetricsProcessorService.class)) {
-      tableName = cConf.get(Constants.Metrics.KAFKA_META_TABLE,
-                            Constants.Metrics.DEFAULT_KAFKA_META_TABLE);
+      tableName = cConf.get(Constants.Metrics.KAFKA_META_TABLE);
     } else if (metricsProcessorServiceClass.equals(MessagingMetricsProcessorService.class)) {
-      tableName = cConf.get(Constants.Metrics.MESSAGING_META_TABLE,
-                            Constants.Metrics.DEFAULT_MESSAGING_META_TABLE);
+      tableName = cConf.get(Constants.Metrics.MESSAGING_META_TABLE);
     } else {
       String errorMessage = "Cannot find MetricsConsumerMetaTable name for the class "
         + metricsProcessorServiceClass.getCanonicalName();

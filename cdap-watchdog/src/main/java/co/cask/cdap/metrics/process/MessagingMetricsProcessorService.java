@@ -84,7 +84,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
 
   @Inject
   public MessagingMetricsProcessorService(MetricDatasetFactory metricDatasetFactory,
-                                          @Named(Constants.Metrics.MESSAGING_TOPIC_PREFIX) String topicPrefix,
+                                          @Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
                                           @Assisted Set<Integer> partitions,
                                           MessagingService messagingService,
                                           SchemaGenerator schemaGenerator,

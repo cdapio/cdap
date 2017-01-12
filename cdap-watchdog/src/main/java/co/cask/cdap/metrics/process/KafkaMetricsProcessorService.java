@@ -48,7 +48,7 @@ public final class KafkaMetricsProcessorService extends AbstractMetricsProcessor
   public KafkaMetricsProcessorService(KafkaClientService kafkaClient,
                                       MetricDatasetFactory metricDatasetFactory,
                                       MessageCallbackFactory callbackFactory,
-                                      @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX) String topicPrefix,
+                                      @Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
                                       @Assisted Set<Integer> partitions) {
     super(metricDatasetFactory);
     this.kafkaClient = kafkaClient;
