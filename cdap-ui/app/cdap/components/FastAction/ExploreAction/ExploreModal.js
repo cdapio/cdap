@@ -20,9 +20,7 @@ import myExploreApi from 'api/explore';
 import isObject from 'lodash/isObject';
 import shortid from 'shortid';
 import 'whatwg-fetch';
-import fileDownload from 'react-file-download';
 import {contructUrl, insertAt, removeAt, humanReadableDate} from 'services/helpers';
-import cookie from 'react-cookie';
 require('./ExploreModal.less');
 import NamespaceStore from 'services/NamespaceStore';
 
@@ -100,12 +98,22 @@ export default class ExploreModal extends Component {
         this.sessionQueryHandles.push(res.handle);
         return myExploreApi.fetchQueries({namespace});
       })
-      .subscribe((res) => {
-        this.updateState({
-          queries: this.getValidQueries(res),
-          loading: false
-        });
-      });
+      .subscribe(
+        (res) => {
+          this.updateState({
+            queries: this.getValidQueries(res),
+            loading: false,
+            error: null
+          });
+        },
+        (error) => {
+          this.updateState({
+            error: isObject(error) ? error.response : error,
+            loading: false
+          });
+        }
+      );
+
     this.subscriptions.push(queriesSubscription$);
   }
   fetchAndUpdateQueries() {
@@ -181,41 +189,46 @@ export default class ExploreModal extends Component {
       });
     this.subscriptions.push(previewSubscription$);
   }
-  downloadQuery(query) {
-    let authToken = cookie.load('CDAP_Auth_Token');
-    fetch('/downloadQuery', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        'backendUrl': contructUrl({path: '/data/explore/queries/' + query.query_handle + '/download'}),
-        'queryHandle': query.query_handle
-      })
-    })
-      .then(res => res.text())
-      .then(res => {
-        fileDownload(res, `${query.query_handle}.csv`);
-        this.fetchAndUpdateQueries();
-      });
+
+  getDownloadUrl(query) {
+    let path = `/data/explore/queries/${query.query_handle}/download`;
+    path = encodeURIComponent(contructUrl({path}));
+    let url = `/downloadLogs?backendUrl=${path}&type=download&method=POST&filename=${query.query_handle}.csv`;
+    return url;
   }
+
+  updateQueryState(currentQuery, event) {
+    if (currentQuery.is_active === false) {
+      event.preventDefault();
+    } else {
+      let queries = this.state.queries;
+      queries.forEach((query, index) => {
+        if (currentQuery == query) {
+          currentQuery.is_active = false;
+          queries[index] = currentQuery;
+          this.updateState(this.state.queries);
+        }
+      });
+    }
+  }
+
   render() {
     const renderQueryRow = (query) => {
       return (
         <tr key={shortid.generate()}>
           <td> {humanReadableDate(query.timestamp, true)} </td>
           <td> {query.status} </td>
-          <td> {query.statement}</td>
+          <td> {query.statement} </td>
           <td>
             <div className="btn-group">
-              <button
+              <a
+                href={this.getDownloadUrl(query)}
+                onClick={this.updateQueryState.bind(this, query)}
                 className="btn btn-default"
-                onClick={this.downloadQuery.bind(this, query)}
                 disabled={!query.is_active || query.status !== 'FINISHED' ? 'disabled' : null}
               >
                 <i className="fa fa-download"></i>
-              </button>
+              </a>
               <button
                 className="btn btn-default"
                 onClick={this.showPreview.bind(this, query)}
@@ -312,6 +325,12 @@ export default class ExploreModal extends Component {
             >
             </textarea>
             <div className="clearfix">
+              {
+                this.state.error ?
+                  <span className="pull-left text-danger">{this.state.error}</span>
+                :
+                  null
+              }
               <button
                 className="btn btn-primary pull-right"
                 onClick={this.submitQuery}
