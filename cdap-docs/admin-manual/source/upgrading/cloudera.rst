@@ -46,7 +46,7 @@ CDAP:
 
 #. Stop all CDAP services.
 
-#. Ensure your installed version of the CSD matches the target version of CDAP. For
+#. **Ensure your installed version of the CSD matches the target version of CDAP.** For
    example, CSD version 3.0.* is compatible with CDAP version 3.0.*.  Download `the latest
    version of the CSD <http://cask.co/downloads/#cloudera>`__.
 
