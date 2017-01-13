@@ -36,6 +36,7 @@ import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
+import co.cask.cdap.metrics.MessagingMetricsTestBase;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.common.io.ByteBufferInputStream;
@@ -63,56 +64,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * Testing the basic properties of the {@link MessagingMetricsCollectionService}.
  */
-public class MessagingMetricsCollectionServiceTest {
+public class MessagingMetricsCollectionServiceTest extends MessagingMetricsTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsCollectionServiceTest.class);
-  private static String topicPrefix;
-  private static int partitionSize;
-  private static TopicId[] metricsTopics;
-
-  private static MessagingService messagingService;
-
-  @BeforeClass
-  public static void init() throws IOException {
-    Injector injector = Guice.createInjector(
-      new ConfigModule(),
-      new DiscoveryRuntimeModule().getInMemoryModules(),
-      new MessagingServerRuntimeModule().getInMemoryModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetricsCollectionService.class).toInstance(new NoOpMetricsCollectionService());
-        }
-      }
-    );
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    topicPrefix = cConf.get(Constants.Metrics.TOPIC_PREFIX);
-    partitionSize = cConf.getInt(Constants.Metrics.KAFKA_PARTITION_SIZE);
-    metricsTopics = new TopicId[partitionSize];
-    for (int i = 0; i < partitionSize; i++) {
-      metricsTopics[i] = NamespaceId.SYSTEM.topic(topicPrefix + "_" + i);
-    }
-    messagingService = injector.getInstance(MessagingService.class);
-    if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
-    }
-  }
-
-  @AfterClass
-  public static void stop() throws Exception {
-    if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
-    }
-  }
 
   @Test
   public void testMessagingPublish()
     throws UnsupportedTypeException, InterruptedException, TopicNotFoundException, IOException {
 
-    final TypeToken<MetricValues> metricValueType = TypeToken.of(MetricValues.class);
-    final Schema schema = new ReflectionSchemaGenerator().generate(metricValueType.getType());
-    DatumWriter<MetricValues> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
-      .create(metricValueType, schema);
     MetricsCollectionService collectionService = new MessagingMetricsCollectionService(topicPrefix,
                                                                                        partitionSize,
                                                                                        messagingService,
@@ -139,7 +98,7 @@ public class MessagingMetricsCollectionServiceTest {
     assertMetricsFromMessaging(schema, recordReader, expected);
   }
 
-  private static void assertMetricsFromMessaging(final Schema schema,
+  private void assertMetricsFromMessaging(final Schema schema,
                                           ReflectionDatumReader recordReader,
                                           Table<String, String, Long> expected)
     throws InterruptedException, TopicNotFoundException, IOException {
@@ -176,17 +135,23 @@ public class MessagingMetricsCollectionServiceTest {
       MetricValues metricValues = metrics.get(expectedContext);
       Assert.assertNotNull("Missing expected value for " + expectedContext, metricValues);
 
-      for (Map.Entry<String, Long> entry : expected.column(expectedContext).entrySet()) {
+      for (Map.Entry<String, Long> entry : expected.row(expectedContext).entrySet()) {
         boolean found = false;
         for (MetricValue metricValue : metricValues.getMetrics()) {
-          found = true;
           if (entry.getKey().equals(metricValue.getName())) {
             Assert.assertEquals(entry.getValue().longValue(), metricValue.getValue());
+            found = true;
+            break;
           }
-          break;
+
         }
         Assert.assertTrue(found);
       }
     }
+  }
+
+  @Override
+  protected CConfiguration getCConf() {
+    return CConfiguration.create();
   }
 }
