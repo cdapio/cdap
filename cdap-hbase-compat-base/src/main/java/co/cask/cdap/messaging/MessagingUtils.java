@@ -20,6 +20,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Utility class for table operations.
  */
@@ -40,6 +42,7 @@ public final class MessagingUtils {
     public static final String TTL_KEY = "ttl";
     public static final byte[] TX_COL = Bytes.toBytes('t');
     public static final byte[] PAYLOAD_COL = Bytes.toBytes('p');
+    public static final long METADATA_CACHE_UPDATE_FREQUENCY_SECS = TimeUnit.MINUTES.toSeconds(5);
   }
 
   /**
