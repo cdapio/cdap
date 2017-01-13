@@ -100,85 +100,8 @@ public class MessagingMetricsProcessorServiceTest {
   }
 
   @Test
-  public void testMessagingPublish()
-    throws UnsupportedTypeException, InterruptedException, TopicNotFoundException, IOException {
-
-    final TypeToken<MetricValues> metricValueType = TypeToken.of(MetricValues.class);
-    final Schema schema = new ReflectionSchemaGenerator().generate(metricValueType.getType());
-    DatumWriter<MetricValues> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
-      .create(metricValueType, schema);
-    MetricsCollectionService collectionService = new MessagingMetricsCollectionService(topicPrefix,
-                                                                                       partitionSize,
-                                                                                       messagingService,
-                                                                                       metricRecordDatumWriter);
-    collectionService.startAndWait();
-
-    // publish metrics for different context
-    for (int i = 1; i <= 3; i++) {
-      collectionService.getContext(ImmutableMap.of("tag", "" + i)).increment("processed", i);
-    }
-
-    // Sleep to make sure metrics get published
-    TimeUnit.SECONDS.sleep(2);
-
-    collectionService.stopAndWait();
-
-    // <Context, metricName, value>
-    Table<String, String, Long> expected = HashBasedTable.create();
-    expected.put("tag.1", "processed", 1L);
-    expected.put("tag.2", "processed", 2L);
-    expected.put("tag.3", "processed", 3L);
-
-    ReflectionDatumReader<MetricValues> recordReader = new ReflectionDatumReader<>(schema, metricValueType);
-    assertMetricsFromMessaging(schema, recordReader, expected);
+  public void testMetricsProcessor() {
+    // TODO
   }
 
-  private static void assertMetricsFromMessaging(final Schema schema,
-                                                 ReflectionDatumReader recordReader,
-                                                 Table<String, String, Long> expected)
-    throws InterruptedException, TopicNotFoundException, IOException {
-
-    // Consume from kafka
-    final Map<String, MetricValues> metrics = Maps.newHashMap();
-    ByteBufferInputStream is = new ByteBufferInputStream(null);
-    try (CloseableIterator<RawMessage> iterator = messagingService.prepareFetch(metricsTopic).fetch()) {
-      while (iterator.hasNext()) {
-        RawMessage message = iterator.next();
-        MetricValues metricsRecord = (MetricValues) recordReader.read(
-          new BinaryDecoder(is.reset(ByteBuffer.wrap(message.getPayload()))), schema);
-        StringBuilder flattenContext = new StringBuilder();
-        // for verifying expected results, sorting tags
-        Map<String, String> tags = Maps.newTreeMap();
-        tags.putAll(metricsRecord.getTags());
-        for (Map.Entry<String, String> tag : tags.entrySet()) {
-          flattenContext.append(tag.getKey()).append(".").append(tag.getValue()).append(".");
-        }
-        // removing trailing "."
-        if (flattenContext.length() > 0) {
-          flattenContext.deleteCharAt(flattenContext.length() - 1);
-        }
-        metrics.put(flattenContext.toString(), metricsRecord);
-      }
-    } catch (IOException e) {
-      LOG.info("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
-    }
-    Assert.assertEquals(expected.rowKeySet().size(), metrics.size());
-
-    for (String expectedContext : expected.rowKeySet()) {
-      MetricValues metricValues = metrics.get(expectedContext);
-      Assert.assertNotNull("Missing expected value for " + expectedContext, metricValues);
-
-      for (Map.Entry<String, Long> entry : expected.column(expectedContext).entrySet()) {
-        boolean found = false;
-        for (MetricValue metricValue : metricValues.getMetrics()) {
-          found = true;
-          if (entry.getKey().equals(metricValue.getName())) {
-            Assert.assertEquals(entry.getValue().longValue(), metricValue.getValue());
-          }
-          break;
-        }
-        Assert.assertTrue(found);
-      }
-    }
-  }
 }

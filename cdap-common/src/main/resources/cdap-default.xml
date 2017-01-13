@@ -1294,9 +1294,10 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${metrics.topic.prefix},${notification.topic}</value>
+    <value>${audit.topic},${metrics.topic.prefix}:${metrics.messaging.partition.size},${notification.topic}</value>
     <description>
-      A comma-separated list of topics that is always available in the system namespace
+      A comma-separated list of topics that is always available in the system namespace.
+      Topic prefix and topic partition are seperated by ":".
     </description>
   </property>
 
@@ -1528,7 +1529,7 @@
   </property>
 
   <property>
-    <name>metrics.kafka.partition.size</name>
+    <name>metrics.messaging.partition.size</name>
     <value>10</value>
     <description>
       Number of partitions for messaging metrics topic

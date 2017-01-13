@@ -22,6 +22,8 @@ import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.io.BinaryDecoder;
@@ -64,9 +66,9 @@ import java.util.concurrent.TimeUnit;
 public class MessagingMetricsCollectionServiceTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsCollectionServiceTest.class);
-  private static final String topicPrefix = "metrics";
-  private static final int partitionSize = 10;
-  private static final TopicId metricsTopic = NamespaceId.SYSTEM.topic(topicPrefix);
+  private static String topicPrefix;
+  private static int partitionSize;
+  private static TopicId[] metricsTopics;
 
   private static MessagingService messagingService;
 
@@ -83,6 +85,13 @@ public class MessagingMetricsCollectionServiceTest {
         }
       }
     );
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    topicPrefix = cConf.get(Constants.Metrics.TOPIC_PREFIX);
+    partitionSize = cConf.getInt(Constants.Metrics.KAFKA_PARTITION_SIZE);
+    metricsTopics = new TopicId[partitionSize];
+    for (int i = 0; i < partitionSize; i++) {
+      metricsTopics[i] = NamespaceId.SYSTEM.topic(topicPrefix + "_" + i);
+    }
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
@@ -138,26 +147,28 @@ public class MessagingMetricsCollectionServiceTest {
     // Consume from kafka
     final Map<String, MetricValues> metrics = Maps.newHashMap();
     ByteBufferInputStream is = new ByteBufferInputStream(null);
-    try (CloseableIterator<RawMessage> iterator = messagingService.prepareFetch(metricsTopic).fetch()) {
-      while (iterator.hasNext()) {
-        RawMessage message = iterator.next();
-        MetricValues metricsRecord = (MetricValues) recordReader.read(
-          new BinaryDecoder(is.reset(ByteBuffer.wrap(message.getPayload()))), schema);
-        StringBuilder flattenContext = new StringBuilder();
-        // for verifying expected results, sorting tags
-        Map<String, String> tags = Maps.newTreeMap();
-        tags.putAll(metricsRecord.getTags());
-        for (Map.Entry<String, String> tag : tags.entrySet()) {
-          flattenContext.append(tag.getKey()).append(".").append(tag.getValue()).append(".");
+    for (TopicId topicId : metricsTopics) {
+      try (CloseableIterator<RawMessage> iterator = messagingService.prepareFetch(topicId).fetch()) {
+        while (iterator.hasNext()) {
+          RawMessage message = iterator.next();
+          MetricValues metricsRecord = (MetricValues) recordReader.read(
+            new BinaryDecoder(is.reset(ByteBuffer.wrap(message.getPayload()))), schema);
+          StringBuilder flattenContext = new StringBuilder();
+          // for verifying expected results, sorting tags
+          Map<String, String> tags = Maps.newTreeMap();
+          tags.putAll(metricsRecord.getTags());
+          for (Map.Entry<String, String> tag : tags.entrySet()) {
+            flattenContext.append(tag.getKey()).append(".").append(tag.getValue()).append(".");
+          }
+          // removing trailing "."
+          if (flattenContext.length() > 0) {
+            flattenContext.deleteCharAt(flattenContext.length() - 1);
+          }
+          metrics.put(flattenContext.toString(), metricsRecord);
         }
-        // removing trailing "."
-        if (flattenContext.length() > 0) {
-          flattenContext.deleteCharAt(flattenContext.length() - 1);
-        }
-        metrics.put(flattenContext.toString(), metricsRecord);
+      } catch (IOException e) {
+        LOG.info("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
       }
-    } catch (IOException e) {
-      LOG.info("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
     }
     Assert.assertEquals(expected.rowKeySet().size(), metrics.size());
 

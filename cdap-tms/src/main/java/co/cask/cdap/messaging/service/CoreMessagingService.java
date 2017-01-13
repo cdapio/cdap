@@ -221,22 +221,32 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     Queue<TopicId> asyncCreationTopics = new LinkedList<>();
 
     for (String topic : new HashSet<>(cConf.getTrimmedStringCollection(Constants.MessagingSystem.SYSTEM_TOPICS))) {
-      TopicId topicId;
-      try {
-        topicId = NamespaceId.SYSTEM.topic(topic);
-      } catch (IllegalArgumentException e) {
-        // Ignore invalid topic
-        LOG.warn("Ignore creation of invalid topic '{}'.", topic);
+      // Create topics with topic prefix and top partition
+      if (topic.contains(":")) {
+        String[] topicPrefixPartition = topic.split(":");
+        Integer partition;
+        if (topicPrefixPartition.length != 2) {
+          LOG.warn("Ignore creation of invalid topic '{}'.", topic);
+          continue;
+        }
+        String topicPrefix = topicPrefixPartition[0];
+        try {
+          partition = Integer.valueOf(topicPrefixPartition[1]);
+          if (partition < 0) {
+            throw new IllegalArgumentException();
+          }
+          NamespaceId.SYSTEM.topic(topicPrefix);
+        } catch (IllegalArgumentException e) {
+          // Ignore invalid topic
+          LOG.warn("Ignore creation of invalid topic '{}'.", topic);
+          continue;
+        }
+        for (int i = 0; i < partition; i++) {
+          createSystemTopic(topicPrefix + "_" + i, asyncCreationTopics);
+        }
         continue;
-      }
-
-      try {
-        createTopicIfNotExists(topicId);
-      } catch (Exception e) {
-        // If failed, add it to a list so that the retry will happen asynchronously
-        LOG.warn("Topic {} creation failed with exception {}. Will retry.", topicId, e.getMessage());
-        LOG.debug("Topic {} creation failure stacktrace", topicId, e);
-        asyncCreationTopics.add(topicId);
+      } else {
+        createSystemTopic(topic, asyncCreationTopics);
       }
     }
 
@@ -245,6 +255,26 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     }
 
     LOG.info("Core Messaging Service started");
+  }
+
+  private void createSystemTopic(String topicName,  Queue<TopicId> asyncCreationTopics) {
+    TopicId topicId;
+    try {
+      topicId = NamespaceId.SYSTEM.topic(topicName);
+    } catch (IllegalArgumentException e) {
+      // Ignore invalid topic
+      LOG.warn("Ignore creation of invalid topic '{}'.", topicName);
+      return;
+    }
+
+    try {
+      createTopicIfNotExists(topicId);
+    } catch (Exception e) {
+      // If failed, add it to a list so that the retry will happen asynchronously
+      LOG.warn("Topic {} creation failed with exception {}. Will retry.", topicId, e.getMessage());
+      LOG.debug("Topic {} creation failure stacktrace", topicId, e);
+      asyncCreationTopics.add(topicId);
+    }
   }
 
   @Override
