@@ -90,48 +90,22 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
   private LoadingCache<ByteBuffer, Map<String, String>> topicCache;
   private TransactionStateCache txStateCache;
 
-  private HTableInterface metadataTable;
+  private String metadataTableNamespace;
+  private String hbaseNamespacePrefix;
   private CConfigurationReader cConfReader;
 
   @Override
   public void start(CoprocessorEnvironment env) throws IOException {
     if (env instanceof RegionCoprocessorEnvironment) {
       HTableDescriptor tableDesc = ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc();
-      String metadataTableNamespace = tableDesc.getValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE);
-      String hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
+      metadataTableNamespace = tableDesc.getValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE);
+      hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
+      prefixLength = Integer.valueOf(tableDesc.getValue(
+        Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES));
 
       HTableNameConverter nameConverter = new HTable11NameConverter();
       String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
       cConfReader = new CConfigurationReader(env.getConfiguration(), sysConfigTablePrefix);
-      CConfiguration cConf = cConfReader.read();
-      String metadataTableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
-
-      prefixLength = Integer.valueOf(tableDesc.getValue(
-        Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES));
-
-      metadataTable = env.getTable(nameConverter.toTableName(hbaseNamespacePrefix,
-                                                             TableId.from(metadataTableNamespace, metadataTableName)));
-      final long metadataCacheExpiry = cConf.getLong(
-        Constants.MessagingSystem.COPROCESSOR_METADATA_CACHE_EXPIRATION_SECONDS);
-      topicCache = CacheBuilder.newBuilder()
-        .expireAfterWrite(metadataCacheExpiry, TimeUnit.SECONDS)
-        .maximumSize(1000)
-        .build(new CacheLoader<ByteBuffer, Map<String, String>>() {
-
-          @Override
-          public Map<String, String> load(ByteBuffer topicBytes) throws Exception {
-            byte[] getBytes = topicBytes.array().length == topicBytes.remaining() ?
-              topicBytes.array() : Bytes.toBytes(topicBytes);
-            Get get = new Get(getBytes);
-            Result result = metadataTable.get(get);
-            byte[] properties = result.getValue(COL_FAMILY, COL);
-            Map<String, String> propertyMap = GSON.fromJson(Bytes.toString(properties), MAP_TYPE);
-            String ttl = propertyMap.get(MessagingUtils.Constants.TTL_KEY);
-            long ttlInMs = TimeUnit.SECONDS.toMillis(Long.parseLong(ttl));
-            propertyMap.put(MessagingUtils.Constants.TTL_KEY, Long.toString(ttlInMs));
-            return propertyMap;
-          }
-        });
 
       Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(hbaseNamespacePrefix,
                                                                                        env.getConfiguration());
@@ -139,14 +113,65 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
     }
   }
 
+  @Nullable
+  private synchronized LoadingCache<ByteBuffer, Map<String, String>> getTopicCache(RegionCoprocessorEnvironment env)
+    throws IOException {
+    if (topicCache != null) {
+      return topicCache;
+    }
+
+    CConfiguration cConf = cConfReader.read();
+    if (cConf == null) {
+      throw new IOException("cConf was null.");
+    }
+
+    String metadataTableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
+    HTableNameConverter nameConverter = new HTable11NameConverter();
+    final HTableInterface metadataTable = env.getTable(nameConverter.toTableName(
+      hbaseNamespacePrefix, TableId.from(metadataTableNamespace, metadataTableName)));
+
+    final long metadataCacheExpiry = cConf.getLong(
+      Constants.MessagingSystem.COPROCESSOR_METADATA_CACHE_EXPIRATION_SECONDS);
+
+    topicCache = CacheBuilder.newBuilder()
+      .expireAfterWrite(metadataCacheExpiry, TimeUnit.SECONDS)
+      .maximumSize(1000)
+      .build(new CacheLoader<ByteBuffer, Map<String, String>>() {
+
+        @Override
+        public Map<String, String> load(ByteBuffer topicBytes) throws Exception {
+          byte[] getBytes = topicBytes.array().length == topicBytes.remaining() ?
+            topicBytes.array() : Bytes.toBytes(topicBytes);
+          Get get = new Get(getBytes);
+          Result result = metadataTable.get(get);
+          byte[] properties = result.getValue(COL_FAMILY, COL);
+          Map<String, String> propertyMap = GSON.fromJson(Bytes.toString(properties), MAP_TYPE);
+          String ttl = propertyMap.get(MessagingUtils.Constants.TTL_KEY);
+          long ttlInMs = TimeUnit.SECONDS.toMillis(Long.parseLong(ttl));
+          propertyMap.put(MessagingUtils.Constants.TTL_KEY, Long.toString(ttlInMs));
+          return propertyMap;
+        }
+      });
+    return topicCache;
+  }
+
   @Override
   public InternalScanner preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
                                              KeyValueScanner memstoreScanner, InternalScanner s) throws IOException {
+    LoadingCache<ByteBuffer, Map<String, String>> cache;
+    try {
+      cache = getTopicCache(c.getEnvironment());
+    } catch (IOException ex) {
+      LOG.warn("preFlush, could not create topicCache. using default scanner. " + ex.getMessage());
+      LOG.debug("StackTrace: ", ex);
+      return super.preFlushScannerOpen(c, store, memstoreScanner, s);
+    }
+
     LOG.info("preFlush, filter using MessageDataFilter");
     TransactionVisibilityState txVisibilityState = txStateCache.getLatestState();
     Scan scan = new Scan();
     scan.setFilter(new MessageDataFilter(c.getEnvironment(), System.currentTimeMillis(),
-                                         prefixLength, topicCache, txVisibilityState));
+                                         prefixLength, cache, txVisibilityState));
     return new LoggingInternalScanner("MessageDataFilter", "preFlush",
                                       new StoreScanner(store, store.getScanInfo(), scan,
                                                        Collections.singletonList(memstoreScanner),
@@ -159,11 +184,20 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
                                                List<? extends KeyValueScanner> scanners, ScanType scanType,
                                                long earliestPutTs, InternalScanner s,
                                                CompactionRequest request) throws IOException {
+    LoadingCache<ByteBuffer, Map<String, String>> cache;
+    try {
+      cache = getTopicCache(c.getEnvironment());
+    } catch (IOException ex) {
+      LOG.warn("preCompact, could not create topicCache. using default scanner. " + ex.getMessage());
+      LOG.debug("StackTrace: ", ex);
+      return super.preCompactScannerOpen(c, store, scanners, scanType, earliestPutTs, s, request);
+    }
+
     LOG.info("preCompact, filter using MessageDataFilter");
     TransactionVisibilityState txVisibilityState = txStateCache.getLatestState();
     Scan scan = new Scan();
     scan.setFilter(new MessageDataFilter(c.getEnvironment(), System.currentTimeMillis(),
-                   prefixLength, topicCache, txVisibilityState));
+                   prefixLength, cache, txVisibilityState));
     return new LoggingInternalScanner("MessageDataFilter", "preCompact",
                                       new StoreScanner(store, store.getScanInfo(), scan, scanners, scanType,
                                                        store.getSmallestReadPoint(), earliestPutTs), txVisibilityState);

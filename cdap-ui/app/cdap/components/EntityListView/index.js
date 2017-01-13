@@ -137,6 +137,7 @@ class EntityListView extends Component {
 
     let queryObject = this.getQueryObject(nextProps.location.query);
     if (
+      (nextProps.params.namespace !== this.props.params.namespace) ||
       queryObject.filter !== this.state.filter &&
       queryObject.sort.fullSort !== this.state.sortObj.fullSort &&
       queryObject.query !== this.state.query &&

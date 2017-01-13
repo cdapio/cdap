@@ -47,8 +47,8 @@ For example, to create a DataSet named *myCounters* of type
 `KeyValueTable <../../../reference-manual/javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable.html>`__, write::
 
   public void configure() {
-      createDataset("myCounters", KeyValueTable.class);
-      ...
+    createDataset("myCounters", KeyValueTable.class);
+    ...
 
 Names (*myCounters*) that start with an underscore (``_``) will not be visible in the home
 page of the :ref:`CDAP UI <cdap-ui>`, though they will be visible elsewhere in the CDAP UI.
@@ -200,16 +200,18 @@ in an instance variable and makes it available through ``getContext()``:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 63-68
+    :lines: 65-71
     :dedent: 2
+    :append: ...
+             }
 
 The handler defines several endpoints for dataset management, one of which can be used to create a new file set,
 either by cloning an existing file set's dataset properties, or by using the properties submitted in the request body:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 167-196
-    :dedent: 2
+    :lines: 161-201
+    :dedent: 4
 
 For more details, see the :ref:`examples-fileset`.
 
@@ -227,10 +229,10 @@ maximum age (in seconds) that data should be retained.
 When you create a dataset, you can configure its TTL as part of the creation::
 
   public void configure() {
-      createDataset("myCounters", Table.class, 
-                    DatasetProperties.builder().add(Table.PROPERTY_TTL, 
-                                                    "<age in seconds>").build());
-      ...
+    createDataset("myCounters", Table.class, 
+                  DatasetProperties.builder().add(Table.PROPERTY_TTL, 
+                                                  "<age in seconds>").build());
+    ...
   }
 
 The default TTL for all datasets is infinite, meaning that data will never expire. The TTL
