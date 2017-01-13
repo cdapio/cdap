@@ -291,6 +291,7 @@ cdap_set_hive_classpath() {
 
 # Get SPARK_HOME
 cdap_set_spark() {
+  local readonly __saved_stty=$(stty -g 2>/dev/null)
   # First, see if we're set to something sane
   if [ -n "${SPARK_HOME}" -a -d "${SPARK_HOME}" ]; then
     export SPARK_HOME
@@ -300,6 +301,8 @@ cdap_set_spark() {
       ERR_FILE=$(mktemp)
       SPARK_VAR_OUT=$(echo 'for ((key, value) <- sys.env) println (key + "=" + value); exit' | spark-shell --master local 2>${ERR_FILE})
       __ret=$?
+      # spark-shell invocation above does not properly restore the stty.
+      stty ${__saved_stty}
       SPARK_ERR_MSG=$(< ${ERR_FILE})
       rm ${ERR_FILE}
       if [ ${__ret} -ne 0 ]; then
