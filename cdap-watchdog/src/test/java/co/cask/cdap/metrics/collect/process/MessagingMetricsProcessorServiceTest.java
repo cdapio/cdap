@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.collect;
+
+package co.cask.cdap.metrics.collect.process;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
@@ -34,6 +35,8 @@ import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
+import co.cask.cdap.metrics.collect.MessagingMetricsCollectionService;
+import co.cask.cdap.metrics.process.MessagingMetricsProcessorService;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.common.io.ByteBufferInputStream;
@@ -59,11 +62,11 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Testing the basic properties of the {@link MessagingMetricsCollectionService}.
+ * Testing the basic properties of the {@link MessagingMetricsProcessorService}.
  */
-public class MessagingMetricsCollectionServiceTest {
+public class MessagingMetricsProcessorServiceTest {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsCollectionServiceTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsProcessorService.class);
   private static final String topicPrefix = "metrics";
   private static final int partitionSize = 10;
   private static final TopicId metricsTopic = NamespaceId.SYSTEM.topic(topicPrefix);
@@ -131,8 +134,8 @@ public class MessagingMetricsCollectionServiceTest {
   }
 
   private static void assertMetricsFromMessaging(final Schema schema,
-                                          ReflectionDatumReader recordReader,
-                                          Table<String, String, Long> expected)
+                                                 ReflectionDatumReader recordReader,
+                                                 Table<String, String, Long> expected)
     throws InterruptedException, TopicNotFoundException, IOException {
 
     // Consume from kafka
