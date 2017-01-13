@@ -22,42 +22,28 @@ import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.internal.io.ASMDatumWriterFactory;
-import co.cask.cdap.internal.io.ASMFieldAccessorFactory;
-import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.data.RawMessage;
-import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metrics.MessagingMetricsTestBase;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
-import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.junit.AfterClass;
+import com.google.inject.Module;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -143,7 +129,6 @@ public class MessagingMetricsCollectionServiceTest extends MessagingMetricsTestB
             found = true;
             break;
           }
-
         }
         Assert.assertTrue(found);
       }
@@ -151,7 +136,7 @@ public class MessagingMetricsCollectionServiceTest extends MessagingMetricsTestB
   }
 
   @Override
-  protected CConfiguration getCConf() {
-    return CConfiguration.create();
+  protected List<Module> getAdditionalModules() {
+    return new ArrayList<>();
   }
 }

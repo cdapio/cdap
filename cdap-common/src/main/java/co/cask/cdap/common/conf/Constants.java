@@ -526,7 +526,6 @@ public final class Constants {
     public static final String MESSAGING_PARTITION_SIZE = "metrics.messaging.partition.size";
     public static final String MESSAGING_META_PERSIST_THRESHOLD = "metrics.messaging.meta.persist.threshold";
     public static final String MESSAGING_FETCHER_PERSIST_THRESHOLD = "metrics.messaging.fetcher.persist.threshold";
-    public static final String MESSAGING_META_TABLE = "metrics.messaging.meta.table";
 
     /**
      * Metric's dataset related constants.

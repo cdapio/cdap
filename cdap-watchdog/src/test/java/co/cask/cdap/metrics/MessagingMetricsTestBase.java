@@ -18,6 +18,7 @@ package co.cask.cdap.metrics;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -31,6 +32,9 @@ import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
+import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.DefaultMetricStore;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.reflect.TypeToken;
@@ -38,17 +42,22 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.Scopes;
 import org.junit.After;
 import org.junit.Before;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * TestBase for testing {@link co.cask.cdap.metrics.collect.MessagingMetricsCollectionService} 
  * and {@link co.cask.cdap.metrics.process.MessagingMetricsProcessorService}
  */
 public abstract class MessagingMetricsTestBase {
-  
+
+  protected Injector injector;
   protected String topicPrefix;
   protected int partitionSize;
   protected TopicId[] metricsTopics;
@@ -60,17 +69,7 @@ public abstract class MessagingMetricsTestBase {
 
   @Before
   public void init() throws IOException, UnsupportedTypeException {
-    Injector injector = Guice.createInjector(
-      new ConfigModule(getCConf()),
-      new DiscoveryRuntimeModule().getInMemoryModules(),
-      new MessagingServerRuntimeModule().getInMemoryModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetricsCollectionService.class).toInstance(new NoOpMetricsCollectionService());
-        }
-      }
-    );
+    injector = Guice.createInjector(getModules());
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     topicPrefix = cConf.get(Constants.Metrics.TOPIC_PREFIX);
     partitionSize = cConf.getInt(Constants.Metrics.KAFKA_PARTITION_SIZE);
@@ -94,6 +93,23 @@ public abstract class MessagingMetricsTestBase {
       ((Service) messagingService).stopAndWait();
     }
   }
-  
-  protected abstract CConfiguration getCConf();
+
+  private List<Module> getModules() {
+    List<Module> modules = new ArrayList<>();
+    modules.add(new ConfigModule());
+    modules.add(new DiscoveryRuntimeModule().getInMemoryModules());
+    modules.add(new MessagingServerRuntimeModule().getInMemoryModules());
+    modules.add(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(MetricsCollectionService.class).toInstance(new NoOpMetricsCollectionService());
+        bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
+        bind(MetricStore.class).to(DefaultMetricStore.class);
+      }
+    });
+    modules.addAll(getAdditionalModules());
+    return modules;
+  }
+
+  protected abstract List<Module> getAdditionalModules();
 }
