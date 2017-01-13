@@ -35,7 +35,7 @@ import sys
 
 SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_INPUT_RELEASE_NOTES_FILE = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, '../reference-manual/source/release-notes.rst'))
-DEFAULT_OUTPUT_RELEASE_NOTES_FILE = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, '../target/github-release-notes.txt'))
+DEFAULT_OUTPUT_RELEASE_NOTES_FILE = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, '../reference-manual/target/html/github-release-notes.txt'))
 
 NOTES = 'notes.txt'
 NOTES_PATH = os.path.join(SCRIPT_DIR_PATH, NOTES)
@@ -94,19 +94,21 @@ reformats it, and writes it to the terminal.
 
     return options, args
 
-def replace_refs(line, version):
+def replace_refs(line, version, references=0):
     # If any errors, just returns the line unchanged
     REF_RST = ':ref:`'
     ref_index = line.find(REF_RST)
     if ref_index == -1:
-        return line
+        return line, references
+    else:
+        references += 1
     ref_index_close = line.find('>`', ref_index + len(REF_RST))
     if ref_index_close == -1:
-        return line
+        return line, references
     ref = line[ref_index:ref_index_close]
     link_index = ref.find(' <')
     if link_index == -1:
-        return line
+        return line, references
     label = ref[ref.find('`')+1:link_index]
     ref = ref[link_index+2:]
     line = "%(line_start)s[%(label)s](%(doc_ref)s %(ref)s LINK_TO_BE_CORRECTED)%(line_end)s" % {
@@ -116,7 +118,8 @@ def replace_refs(line, version):
             'ref': ref, 
             'line_end': line[ref_index_close+2:],
             }
-    return replace_refs(line, version)
+    line, references = replace_refs(line, version, references)
+    return line, references
 
 def extract_issues(line, start, end):
     new_line = line[:start] + line[end + len(CASK_ISSUE_END):].rstrip()
@@ -153,7 +156,7 @@ def read_lines(input, output, version):
                 # Check if version matches:
                 version_trimmed = version.replace('-SNAPSHOT','')
                 if not line.startswith("`Release %s" % version_trimmed):
-                    new_lines.append("Error: expected 'Release %s' but found '%s'\n" % (version_trimmed, line.strip()))
+                    new_lines.append("Warning: expected 'Release %s' but found '%s'\n" % (version_trimmed, line.strip()))
             continue
         if line.startswith('`'):
             if in_first_section:
@@ -232,10 +235,19 @@ def read_lines(input, output, version):
     
     f = open(output, 'w')
     print "Writing to output file: %s" % output
-    for line in new_lines:
-        line = replace_refs(line, version)
-        line = line.replace(' |---| ', '—')
-        f.write("%s\n" % line)
+    if new_lines:
+        errors = 0
+        for index in range(len(new_lines)):
+            line = new_lines[index].replace(' |---| ', '—')
+            line, references = replace_refs(line, version)
+            errors += references
+            new_lines[index] = line
+        if errors:
+            f.write("Warning: %d reference error(s) in notes for 'Release %s'.\n" % (errors, version_trimmed))
+        for line in new_lines:
+            f.write("%s\n" % line)
+    else:
+        f.write("Warning: expected notes for 'Release %s' but found nothing.\n" % version_trimmed)
     f.close()
 
 #

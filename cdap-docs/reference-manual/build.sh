@@ -85,6 +85,17 @@ function build_extras() {
     set_message "${m}"
     return ${warnings}
   fi
+
+  python "${PROJECT_PATH}/cdap-docs/tools/github-release-notes.py" --version ${PROJECT_VERSION} 
+  warnings=$?
+  if [[ ${warnings} -eq 0 ]]; then
+    echo "Created GitHub version of release notes."
+  else
+    local m="Error ${warnings} creating GitHub version of release notes."
+    echo_red_bold "${m}"
+    set_message "${m}"
+    return ${warnings}
+  fi
 }
 
 run_command ${1}

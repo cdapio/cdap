@@ -355,13 +355,6 @@ function build_docs_package() {
       echo "Could not copy zipped doc set into ${TARGET_PATH}/${PROJECT_VERSION}"
       return ${errors}   
   fi
-  echo "Creating GitHub version of release notes"
-  python "${SCRIPT_PATH}/tools/github-release-notes.py" --version ${PROJECT_VERSION}
-  errors=$?
-  if [[ ${errors} -ne 0 ]]; then
-      echo "Could not create GitHub version of release notes"
-      return ${errors}   
-  fi
   display_end_title ${title}
 }
 
