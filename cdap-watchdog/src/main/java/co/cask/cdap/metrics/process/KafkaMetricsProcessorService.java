@@ -97,7 +97,7 @@ public final class KafkaMetricsProcessorService extends AbstractMetricsProcessor
       long offset;
       try {
         LOG.info("Retrieve offset for topic: {}, partition: {}", topic, partition);
-        MetricsConsumerMetaTable metaTable = getMetaTable(this.getClass());
+        MetricsConsumerMetaTable metaTable = getMetaTable();
         if (metaTable == null) {
           LOG.info("Could not get MetricsConsumerMetaTable, seems like we are being shut down");
           return false;
@@ -116,8 +116,7 @@ public final class KafkaMetricsProcessorService extends AbstractMetricsProcessor
       }
     }
 
-    unsubscribe = preparer.consume(callbackFactory.create(getMetaTable(this.getClass()),
-                                                          metricsContext));
+    unsubscribe = preparer.consume(callbackFactory.create(getMetaTable(), metricsContext));
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitions);
     return true;
   }

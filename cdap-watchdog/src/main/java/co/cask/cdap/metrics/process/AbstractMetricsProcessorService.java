@@ -52,8 +52,7 @@ public abstract class AbstractMetricsProcessorService extends AbstractExecutionT
     return this.getClass().getSimpleName();
   }
 
-  protected MetricsConsumerMetaTable getMetaTable(
-    Class<? extends AbstractMetricsProcessorService> metricsProcessorServiceClass) {
+  final MetricsConsumerMetaTable getMetaTable() {
 
     while (metaTable == null) {
       if (stopping) {
@@ -61,7 +60,7 @@ public abstract class AbstractMetricsProcessorService extends AbstractExecutionT
         break;
       }
       try {
-        metaTable = metricDatasetFactory.createConsumerMeta(metricsProcessorServiceClass);
+        metaTable = metricDatasetFactory.createConsumerMeta();
       } catch (Exception e) {
         LOG.warn("Cannot access consumer metaTable, will retry in 1 sec.");
         try {

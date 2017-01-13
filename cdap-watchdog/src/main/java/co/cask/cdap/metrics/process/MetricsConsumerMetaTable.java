@@ -28,7 +28,8 @@ import java.util.TreeMap;
  * An abstraction on persistent storage of consumer information.
  */
 public class MetricsConsumerMetaTable {
-  private static final byte[] VALUE_COLUMN = Bytes.toBytes("o");
+  private static final byte[] OFFSET_COLUMN = Bytes.toBytes("o");
+  private static final byte[] MESSAGE_ID_COLUMN = Bytes.toBytes("m");
 
   private final MetricsTable metaTable;
 
@@ -40,7 +41,7 @@ public class MetricsConsumerMetaTable {
     SortedMap<byte[], SortedMap<byte[], Long>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<T, Long> entry : offsets.entrySet()) {
       SortedMap<byte[], Long> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-      map.put(VALUE_COLUMN, entry.getValue());
+      map.put(OFFSET_COLUMN, entry.getValue());
       updates.put(entry.getKey().getKey(), map);
     }
     metaTable.put(updates);
@@ -49,7 +50,7 @@ public class MetricsConsumerMetaTable {
   public synchronized <T extends MetricsMetaKey> void save(T key, long value) throws Exception {
     SortedMap<byte[], SortedMap<byte[], Long>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     SortedMap<byte[], Long> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-    map.put(VALUE_COLUMN, value);
+    map.put(MESSAGE_ID_COLUMN, value);
     updates.put(key.getKey(), map);
     metaTable.put(updates);
   }
@@ -62,10 +63,21 @@ public class MetricsConsumerMetaTable {
    * @throws Exception If there is an error when fetching.
    */
   public synchronized <T extends MetricsMetaKey> long get(T metaKey) throws Exception {
-    byte[] result = metaTable.get(metaKey.getKey(), VALUE_COLUMN);
+    byte[] result = metaTable.get(metaKey.getKey(), OFFSET_COLUMN);
     if (result == null) {
       return -1;
     }
     return Bytes.toLong(result);
+  }
+
+  /**
+   * Gets the value as byte array in the {@link MetricsTable} of a given key.
+   *
+   * @param metaKey Object form of the key to get value with.
+   * @return The value or {@code null} if the value is not found.
+   * @throws Exception If there is an error when fetching.
+   */
+  public synchronized <T extends MetricsMetaKey> byte[] getBytes(T metaKey) throws Exception {
+    return metaTable.get(metaKey.getKey(), MESSAGE_ID_COLUMN);
   }
 }

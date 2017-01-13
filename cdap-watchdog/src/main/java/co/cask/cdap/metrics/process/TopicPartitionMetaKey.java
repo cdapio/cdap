@@ -24,14 +24,14 @@ import org.apache.twill.kafka.client.TopicPartition;
  * in {@link MetricsConsumerMetaTable}.
  */
 public class TopicPartitionMetaKey implements MetricsMetaKey {
-  private TopicPartition topicPartition;
+  private byte[] key;
 
   public TopicPartitionMetaKey(TopicPartition topicPartition) {
-    this.topicPartition = topicPartition;
+    this.key = Bytes.toBytes(String.format("%s.%02d", topicPartition.getTopic(), topicPartition.getPartition()));
   }
 
   @Override
   public byte[] getKey() {
-    return Bytes.toBytes(String.format("%s.%02d", topicPartition.getTopic(), topicPartition.getPartition()));
+    return key;
   }
 }

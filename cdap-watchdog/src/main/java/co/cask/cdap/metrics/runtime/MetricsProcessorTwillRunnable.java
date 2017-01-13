@@ -181,15 +181,28 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
 
     @SuppressWarnings("unused")
     @Provides
-    @Named(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD)
+    @Named(Constants.Metrics.KAFKA_META_PERSIST_THRESHOLD)
     public int providesConsumerPersistThreshold(CConfiguration cConf) {
-      return cConf.getInt(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD);
+      return cConf.getInt(Constants.Metrics.KAFKA_META_PERSIST_THRESHOLD);
     }
 
     @Provides
     @Named(Constants.Metrics.TOPIC_PREFIX)
     public String providesTopicPrefix(CConfiguration cConf) {
       return cConf.get(Constants.Metrics.TOPIC_PREFIX);
+    }
+
+    @Provides
+    @Named(Constants.Metrics.MESSAGING_PARTITION_SIZE)
+    public int providesMessagingTopicPartition(CConfiguration cConf) {
+      return cConf.getInt(Constants.Metrics.MESSAGING_PARTITION_SIZE);
+    }
+
+    @SuppressWarnings("unused")
+    @Provides
+    @Named(Constants.Metrics.MESSAGING_META_PERSIST_THRESHOLD)
+    public int providesMetaPersistThreshold(CConfiguration cConf) {
+      return cConf.getInt(Constants.Metrics.MESSAGING_META_PERSIST_THRESHOLD);
     }
 
     @SuppressWarnings("unused")

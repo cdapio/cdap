@@ -29,9 +29,6 @@ import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.metrics.process.AbstractMetricsProcessorService;
-import co.cask.cdap.metrics.process.KafkaMetricsProcessorService;
-import co.cask.cdap.metrics.process.MessagingMetricsProcessorService;
 import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
 import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
 import co.cask.cdap.metrics.store.upgrade.MetricsDataMigrator;
@@ -105,19 +102,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   @Override
-  public MetricsConsumerMetaTable createConsumerMeta(
-    Class<? extends AbstractMetricsProcessorService> metricsProcessorServiceClass) {
-    String tableName;
-    if (metricsProcessorServiceClass.equals(KafkaMetricsProcessorService.class)) {
-      tableName = cConf.get(Constants.Metrics.KAFKA_META_TABLE);
-    } else if (metricsProcessorServiceClass.equals(MessagingMetricsProcessorService.class)) {
-      tableName = cConf.get(Constants.Metrics.MESSAGING_META_TABLE);
-    } else {
-      String errorMessage = "Cannot find MetricsConsumerMetaTable name for the class "
-        + metricsProcessorServiceClass.getCanonicalName();
-      LOG.error(errorMessage);
-      throw Throwables.propagate(new Exception(errorMessage));
-    }
+  public MetricsConsumerMetaTable createConsumerMeta() {
+    String tableName = cConf.get(Constants.Metrics.KAFKA_META_TABLE);
     try {
       MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
       LOG.info("MetricsConsumerMetaTable created: {}", tableName);
@@ -172,7 +158,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     factory.getOrCreateFactTable(Integer.MAX_VALUE);
 
     // adding kafka consumer meta
-    factory.createConsumerMeta(KafkaMetricsProcessorService.class);
+    factory.createConsumerMeta();
   }
 
   /**

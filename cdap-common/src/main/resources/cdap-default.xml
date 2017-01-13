@@ -1461,10 +1461,11 @@
   </property>
 
   <property>
-    <name>metrics.kafka.consumer.persist.threshold</name>
+    <name>metrics.kafka.meta.persist.threshold</name>
     <value>100</value>
     <description>
-      Threshold of persisting latest processed message's offset to Kafka metrics meta table
+      Threshold of processing metrics messages before persisting the latest
+      processed message's offset to Kafka metrics meta table
     </description>
   </property>
 
@@ -1502,9 +1503,19 @@
 
   <property>
     <name>metrics.messaging.fetcher.persist.threshold</name>
+    <value>500</value>
+    <description>
+      Threshold of fetching messages from messaging fetcher and processing
+      metrics messages before persisting the processed metrics to metrics table
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.messaging.meta.persist.threshold</name>
     <value>100</value>
     <description>
-      Threshold of persisting latest processed message's messageId to messaging metrics meta table
+      Threshold of processing metrics messages before persisting the latest
+      processed message's offset to messaging metrics meta table
     </description>
   </property>
   

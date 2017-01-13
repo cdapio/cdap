@@ -53,6 +53,12 @@ final class DistributedMetricsClientModule extends PrivateModule {
   }
 
   @Provides
+  @Named(Constants.Metrics.MESSAGING_PARTITION_SIZE)
+  public int providesMessagingTopicPartition(CConfiguration cConf) {
+    return cConf.getInt(Constants.Metrics.MESSAGING_PARTITION_SIZE);
+  }
+
+  @Provides
   public DatumWriter<MetricValues> providesDatumWriter(SchemaGenerator schemaGenerator,
                                                         DatumWriterFactory datumWriterFactory) {
     try {

@@ -65,6 +65,7 @@ public class MessagingMetricsCollectionServiceTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsCollectionServiceTest.class);
   private static final String topicPrefix = "metrics";
+  private static final int partitionSize = 10;
   private static final TopicId metricsTopic = NamespaceId.SYSTEM.topic(topicPrefix);
 
   private static MessagingService messagingService;
@@ -104,6 +105,7 @@ public class MessagingMetricsCollectionServiceTest {
     DatumWriter<MetricValues> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
       .create(metricValueType, schema);
     MetricsCollectionService collectionService = new MessagingMetricsCollectionService(topicPrefix,
+                                                                                       partitionSize,
                                                                                        messagingService,
                                                                                        metricRecordDatumWriter);
     collectionService.startAndWait();

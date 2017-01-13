@@ -41,13 +41,15 @@ import java.util.Iterator;
 public class MessagingMetricsCollectionService extends AggregatedMetricsCollectionService {
 
   private final MessagingService messagingService;
-  private final TopicId metricsTopic;
+  private final TopicId[] metricsTopics;
+  private final int partitionSize;
   private final DatumWriter<MetricValues> recordWriter;
   private final ByteArrayOutputStream encoderOutputStream;
   private final Encoder encoder;
 
   @Inject
   public MessagingMetricsCollectionService(@Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
+                                           @Named(Constants.Metrics.MESSAGING_PARTITION_SIZE) int partitionSize,
                                            MessagingService messagingService, DatumWriter<MetricValues> recordWriter) {
     super();
     this.messagingService = messagingService;
@@ -57,7 +59,11 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
     // Parent guarantees the publish method would not get called concurrently, hence safe to reuse the same instances.
     this.encoderOutputStream = new ByteArrayOutputStream(1024);
     this.encoder = new BinaryEncoder(encoderOutputStream);
-    this.metricsTopic = NamespaceId.SYSTEM.topic(topicPrefix);
+    this.metricsTopics = new TopicId[partitionSize];
+    for (int i = 0; i < partitionSize; i++) {
+      this.metricsTopics[i] = NamespaceId.SYSTEM.topic(topicPrefix + "_" + i);
+    }
+    this.partitionSize = partitionSize;
   }
 
   @Override
@@ -72,8 +78,9 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
 
   private void publishMetric(MetricValues value) throws IOException, TopicNotFoundException {
     recordWriter.encode(value, encoder);
-    // partitioning by the context
-    messagingService.publish(StoreRequestBuilder.of(metricsTopic)
+    // TODO better partitioning
+    int partition = value.hashCode() % this.partitionSize;
+    messagingService.publish(StoreRequestBuilder.of(metricsTopics[partition])
                                .addPayloads(encoderOutputStream.toByteArray()).build());
     encoderOutputStream.reset();
   }

@@ -50,13 +50,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Process metrics by consuming metrics being published to TMS.
@@ -66,21 +66,19 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
 
   private static final long INITIAL_LAST_MESSAGE_ID = -1L;
 
-  private final TopicId metricsTopic;
-  private final TopicIdMetaKey metricsTopicMetaKey;
-  // TODO unused partitions
-  private final Set<Integer> partitions;
+  private final TopicId[] metricsTopics;
+  private final TopicIdMetaKey[] metricsTopicMetaKeys;
   private final MessagingService messagingService;
   private final DatumReader<MetricValues> recordReader;
   private final Schema recordSchema;
   private final MetricStore metricStore;
   private Map<String, String> metricsContextMap;
-  private final int persistThreshold;
-  private final AtomicInteger messageCount;
+  private List<ProcessMetricsThread> processMetricsThreadList;
+  private final int metaPersistThreshold;
+  private final int fetcherPersistThreshold;
 
   private long lastLoggedMillis;
   private long recordsProcessed;
-  private AtomicLong lastMessageId;
 
   @Inject
   public MessagingMetricsProcessorService(MetricDatasetFactory metricDatasetFactory,
@@ -90,12 +88,17 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
                                           SchemaGenerator schemaGenerator,
                                           DatumReaderFactory readerFactory,
                                           MetricStore metricStore,
+                                          @Named(Constants.Metrics.MESSAGING_META_PERSIST_THRESHOLD)
+                                            int metaPersistThreshold,
                                           @Named(Constants.Metrics.MESSAGING_FETCHER_PERSIST_THRESHOLD)
-                                          int persistThreshold) {
+                                            int fetcherPersistThreshold) {
     super(metricDatasetFactory);
-    this.metricsTopic = NamespaceId.SYSTEM.topic(topicPrefix);
-    this.metricsTopicMetaKey = new TopicIdMetaKey(this.metricsTopic);
-    this.partitions = partitions;
+    this.metricsTopics = new TopicId[partitions.size()];
+    this.metricsTopicMetaKeys = new TopicIdMetaKey[partitions.size()];
+    for (int i = 0; i < partitions.size(); i++) {
+      this.metricsTopics[i] = NamespaceId.SYSTEM.topic(topicPrefix + "_" + i);
+      this.metricsTopicMetaKeys[i] = new TopicIdMetaKey(this.metricsTopics[i]);
+    }
     this.messagingService = messagingService;
     try {
       this.recordSchema = schemaGenerator.generate(MetricValues.class);
@@ -104,10 +107,10 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
       throw Throwables.propagate(e);
     }
     this.metricStore = metricStore;
-    this.persistThreshold = persistThreshold;
-    this.messageCount = new AtomicInteger();
-    this.lastMessageId = new AtomicLong(INITIAL_LAST_MESSAGE_ID);
+    this.metaPersistThreshold = metaPersistThreshold;
+    this.fetcherPersistThreshold = fetcherPersistThreshold;
     this.metricsContextMap = Collections.<String, String>emptyMap();
+    processMetricsThreadList = new ArrayList<>();
   }
 
   @Override
@@ -118,117 +121,167 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
 
   @Override
   protected void run() {
-    MetricsConsumerMetaTable metaTable = getMetaTable(this.getClass());
+    MetricsConsumerMetaTable metaTable = getMetaTable();
     if (metaTable == null) {
       LOG.info("Could not get MetricsConsumerMetaTable, seems like we are being shut down");
       return;
     }
-    try {
-      long messageId = metaTable.get(metricsTopicMetaKey);
-      MessageFetcher fetcher = messagingService.prepareFetch(metricsTopic);
-      if (messageId == -1L) {
+
+    for (int i = 0; i < metricsTopics.length; i++) {
+      byte[] messageId = null;
+      try {
+        messageId = metaTable.get(metricsTopicMetaKeys[i]);
+        LOG.info("Last processed MessageId for topic: {} is {}", metricsTopics[i], messageId);
+      } catch (Exception e) {
+        LOG.info(String.format("No stored last processed MessageId for topic: %s", metricsTopics[i]), e);
+      }
+
+      MessageFetcher fetcher;
+      try {
+        fetcher = messagingService.prepareFetch(metricsTopics[i]).setLimit(fetcherPersistThreshold);
+      } catch (Exception e) {
+        LOG.error(String.format("Failed to create fetcher for topic: %s", metricsTopics[i]), e);
+        return;
+      }
+      if (messageId == null) {
         // If no messageId is found for the last processed message, start fetching from beginning
         fetcher.setStartTime(0L);
       } else {
         fetcher.setStartMessage(Bytes.toBytes(messageId), false);
       }
-      while (isRunning()) {
-        processMetricsRecords(fetcher);
+      ProcessMetricsThread processMetricsThread = new ProcessMetricsThread(fetcher, metricsTopics[i],
+                                                                           metricsTopicMetaKeys[i]);
+      processMetricsThread.setDaemon(true);
+      processMetricsThread.start();
+      processMetricsThreadList.add(processMetricsThread);
+    }
+    for (ProcessMetricsThread thread : processMetricsThreadList) {
+      try {
+        thread.join();
+      } catch (InterruptedException e) {
+        LOG.info("Thread {} is being terminated while waiting for it to finish.", thread.getName());
       }
-    } catch (Exception e) {
-      LOG.error("Failed to process metrics records", e);
-    }
-  }
-
-  private void processMetricsRecords(MessageFetcher fetcher) {
-    // Decode the metrics records.
-    PayloadInputStream is = new PayloadInputStream(null);
-    BinaryDecoder binaryDecoder = new BinaryDecoder(is);
-    List<MetricValues> records = Lists.newArrayList();
-
-    try (CloseableIterator<RawMessage> iterator = fetcher.fetch()) {
-      while (iterator.hasNext()) {
-        RawMessage input = iterator.next();
-        try {
-          is.reset(input.getPayload());
-          MetricValues metricValues = recordReader.read(binaryDecoder, recordSchema);
-          records.add(metricValues);
-          lastMessageId.set(Bytes.toLong(input.getId()));
-        } catch (IOException e) {
-          LOG.info("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
-        }
-      }
-    } catch (TopicNotFoundException | IOException e) {
-      LOG.error("Failed to fetch metrics records", e);
-    }
-
-    if (records.isEmpty()) {
-      LOG.info("No records to process.");
-      return;
-    }
-
-    try {
-      addProcessingStats(records);
-      metricStore.add(records);
-      if (messageCount.incrementAndGet() >= persistThreshold) {
-        messageCount.set(0);
-        persistMessageId();
-      }
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to add metrics data to a store", e);
-    }
-
-    recordsProcessed += records.size();
-    // avoid logging more than once a minute
-    if (System.currentTimeMillis() > lastLoggedMillis + TimeUnit.MINUTES.toMillis(1)) {
-      lastLoggedMillis = System.currentTimeMillis();
-      LOG.info("{} metrics records processed. Last record time: {}.",
-               recordsProcessed, records.get(records.size() - 1).getTimestamp());
     }
   }
 
   @Override
   protected void shutDown() {
     LOG.info("Stopping Metrics Processing Service.");
-    // Only save lastMessageId when it differs from its initial value
-    if (lastMessageId.get() != INITIAL_LAST_MESSAGE_ID) {
-      persistMessageId();
+    for (ProcessMetricsThread thread : processMetricsThreadList) {
+      thread.terminate();
     }
     LOG.info("Metrics Processing Service stopped.");
   }
 
-  private void addProcessingStats(List<MetricValues> records) {
-    if (records.isEmpty()) {
-      return;
-    }
-    int count = records.size();
-    long now = System.currentTimeMillis();
-    long delay = now - TimeUnit.SECONDS.toMillis(records.get(records.size() - 1).getTimestamp());
-    records.add(
-      new MetricValues(metricsContextMap, TimeUnit.MILLISECONDS.toSeconds(now),
-                       ImmutableList.of(new MetricValue("metrics.process.count", MetricType.COUNTER, count),
-                                        new MetricValue("metrics.process.delay.ms", MetricType.GAUGE, delay))));
-  }
+  private class ProcessMetricsThread extends Thread {
+    MessageFetcher fetcher;
+    byte[] lastMessageId;
+    TopicIdMetaKey topicIdMetaKey;
+    List<MetricValues> records;
 
-  private void persistMessageId() {
-    try {
-        metaTable.save(metricsTopicMetaKey, lastMessageId.get());
-    } catch (Exception e) {
-      // Simple log and ignore the error.
-      LOG.error("Failed to persist consumed messageId. {}", e.getMessage(), e);
+    ProcessMetricsThread(MessageFetcher fetcher, TopicId topicId, TopicIdMetaKey topicIdMetaKey) {
+      super(String.format("ProcessMetricsThread-%s", topicId.getTopic()));
+      this.fetcher = fetcher;
+      this.lastMessageId = INITIAL_LAST_MESSAGE_ID;
+      this.topicIdMetaKey = topicIdMetaKey;
+      records = Lists.newArrayList();
+    }
+
+    @Override
+    public void run() {
+      // Decode the metrics records.
+      PayloadInputStream is = new PayloadInputStream(null);
+      BinaryDecoder binaryDecoder = new BinaryDecoder(is);
+      try (CloseableIterator<RawMessage> iterator = fetcher.fetch()) {
+        while (iterator.hasNext()) {
+          RawMessage input = iterator.next();
+          try {
+            is.reset(input.getPayload());
+            MetricValues metricValues = recordReader.read(binaryDecoder, recordSchema);
+            records.add(metricValues);
+            lastMessageId = input.getId();
+          } catch (IOException e) {
+            LOG.info("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
+          }
+        }
+      } catch (TopicNotFoundException | IOException e) {
+        LOG.error("Failed to fetch metrics records", e);
+      }
+
+      if (records.isEmpty()) {
+        LOG.info("No records to process.");
+        return;
+      }
+      if (records.size() > fetcherPersistThreshold) {
+        persistRecords(false);
+      }
+    }
+
+    public void terminate() {
+      LOG.info("Terminate requested {}", getName());
+      if (!records.isEmpty()) {
+        persistRecords(true);
+      }
+      interrupt();
+    }
+
+    private void persistRecords(boolean terminating) {
+      try {
+        addProcessingStats(records);
+        metricStore.add(records);
+        // Persist lastMessageId when the threshold is reached,
+        // or during terminating and lastMessageId differs from INITIAL_LAST_MESSAGE_ID
+        if (records.size() >= metaPersistThreshold ||
+          (terminating && !Arrays.equals(lastMessageId, INITIAL_LAST_MESSAGE_ID))) {
+          persistMessageId();
+        }
+      } catch (Exception e) {
+        throw new RuntimeException("Failed to add metrics data to a store", e);
+      }
+
+      recordsProcessed += records.size();
+      // avoid logging more than once a minute
+      if (System.currentTimeMillis() > lastLoggedMillis + TimeUnit.MINUTES.toMillis(1)) {
+        lastLoggedMillis = System.currentTimeMillis();
+        LOG.info("{} metrics records processed. Last record time: {}.",
+                 recordsProcessed, records.get(records.size() - 1).getTimestamp());
+      }
+      records.clear();
+    }
+
+    private void addProcessingStats(List<MetricValues> records) {
+      if (records.isEmpty()) {
+        return;
+      }
+      int count = records.size();
+      long now = System.currentTimeMillis();
+      long delay = now - TimeUnit.SECONDS.toMillis(records.get(records.size() - 1).getTimestamp());
+      records.add(
+        new MetricValues(metricsContextMap, TimeUnit.MILLISECONDS.toSeconds(now),
+                         ImmutableList.of(new MetricValue("metrics.process.count", MetricType.COUNTER, count),
+                                          new MetricValue("metrics.process.delay.ms", MetricType.GAUGE, delay))));
+    }
+
+    private void persistMessageId() {
+      try {
+        metaTable.save(topicIdMetaKey, lastMessageId);
+      } catch (Exception e) {
+        // Simple log and ignore the error.
+        LOG.error("Failed to persist consumed messageId. {}", e.getMessage(), e);
+      }
     }
   }
 
   private class TopicIdMetaKey implements MetricsMetaKey {
-    TopicId metricsTopic;
+    byte[] key;
 
     TopicIdMetaKey(TopicId metricsTopic) {
-      this.metricsTopic = metricsTopic;
+      this.key = MessagingUtils.toMetadataRowKey(metricsTopic);
     }
 
     @Override
     public byte[] getKey() {
-       return MessagingUtils.toMetadataRowKey(metricsTopic);
+      return key;
     }
   }
 
