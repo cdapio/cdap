@@ -81,6 +81,7 @@ case ${1} in
   cli) shift; cdap_cli "${@}"; __ret=${?} ;;
   config-tool) shift; cdap_config_tool ${@}; __ret=${?} ;;
   upgrade) shift; cdap_upgrade_tool ${@}; __ret=${?} ;;
+  version) shift; cdap_version_command ${@}; __ret=${?} ;;
   run) shift; cdap_run_class ${@}; __ret=${?} ;;
   sdk) shift; cdap_sdk ${@}; __ret=${?} ;;
   setup) shift; cdap_setup ${@}; __ret=${?} ;;
@@ -112,6 +113,7 @@ case ${1} in
     echo "    apply-pack   - Installs a CDAP Pack specified as an argument"
     echo "    cli          - Starts an interactive CDAP CLI session"
     echo "    debug        - Runs CDAP debug functions"
+    echo "    version      - Displays versions of local CDAP components"
     echo
     echo " Get more help for each command by executing:"
     echo " ${0} <command> --help"

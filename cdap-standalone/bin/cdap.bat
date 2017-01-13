@@ -57,6 +57,7 @@ IF "%1" == "cli" GOTO CLI
 IF "%1" == "sdk" GOTO SDK
 IF "%1" == "tx-debugger" GOTO TX_DEBUGGER
 IF "%1" == "apply-pack" GOTO APPLY_PACK
+IF "%1" == "version" GOTO VERSION
 REM Process deprecated SDK arguments
 IF "%1" == "start" GOTO SDK_DEPRECATED
 IF "%1" == "stop" GOTO SDK_DEPRECATED
@@ -254,6 +255,11 @@ IF "%1" == "cli" for /f "usebackq tokens=1*" %%i in (`echo %*`) DO @ set params=
 "%JAVACMD%" -classpath "%CLASSPATH%" %class% %params%
 GOTO FINALLY
 
+:VERSION
+echo CDAP SDK version %CDAP_VERSION%
+echo:
+GOTO FINALLY
+
 :USAGE
 echo:
 echo Usage: %APP% ^<command^> [arguments]
@@ -264,6 +270,7 @@ echo     cli         - Starts a CDAP CLI session
 echo     sdk         - Sends the arguments to the SDK service
 echo     tx-debugger - Sends the arguments to the CDAP transaction debugger
 echo     apply-pack  - Installs a CDAP Pack specified as an argument
+echo     version     - Displays version of CDAP SDK
 echo:
 echo   Get help for a command by executing:
 echo:
