@@ -30,6 +30,7 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
+import co.cask.cdap.logging.framework.LogPathIdentifier;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
@@ -43,6 +44,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
@@ -56,7 +59,7 @@ import javax.annotation.Nullable;
  */
 public final class FileMetaDataManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileMetaDataManager.class);
-
+  private static final byte[] COLUMN_PREFIX_VERSION = new byte[] {1};
   private static final byte[] ROW_KEY_PREFIX = Bytes.toBytes(200);
   private static final byte[] ROW_KEY_PREFIX_END = Bytes.toBytes(201);
   private static final NavigableMap<?, ?> EMPTY_MAP = Maps.unmodifiableNavigableMap(new TreeMap());
@@ -95,6 +98,31 @@ public final class FileMetaDataManager {
                             final long startTimeMs,
                             final Location location) throws Exception {
     writeMetaData(loggingContext.getLogPartition(), startTimeMs, location);
+  }
+
+  /**
+   * Persists meta data associated with a log file.
+   *
+   * @param identifier logging context identifier.
+   * @param eventTimeMs start log time associated with the file.
+   * @param currentTimeMs current time during file creation.
+   * @param location log file location.
+   */
+  public void writeMetaData(final LogPathIdentifier identifier,
+                            final long eventTimeMs,
+                            final long currentTimeMs,
+                            final Location location) throws Exception {
+    LOG.debug("Writing meta data for logging context {} with startTimeMs {} sequence Id {} and location {}",
+               identifier.getRowKey(), eventTimeMs, currentTimeMs, location);
+
+    execute(new TransactionExecutor.Procedure<Table>() {
+      @Override
+      public void apply(Table table) throws Exception {
+        // add column version prefix for new format
+        byte[] columnKey = Bytes.add(COLUMN_PREFIX_VERSION, Bytes.toBytes(eventTimeMs), Bytes.toBytes(currentTimeMs));
+        table.put(getRowKey(identifier), columnKey, Bytes.toBytes(location.toURI().toString()));
+      }
+    });
   }
 
   /**
@@ -150,6 +178,51 @@ public final class FileMetaDataManager {
             return null;
           }
         });
+        return files;
+      }
+    });
+  }
+
+  /**
+   * // TODO refactor this with the above method after Log handler changes.
+   * Returns a list of log files for a logging context.
+   *
+   * @param logPathIdentifier logging context identifier.
+   * @return List of {@link LogLocation}
+   */
+  public List<LogLocation> listFiles(final LogPathIdentifier logPathIdentifier) throws Exception {
+    return execute(new TransactionExecutor.Function<Table, List<LogLocation>>() {
+      @Override
+      public List<LogLocation> apply(Table table) throws Exception {
+        final Row cols = table.get(getRowKey(logPathIdentifier));
+
+        if (cols.isEmpty()) {
+          //noinspection unchecked
+          return new ArrayList<>();
+        }
+
+        final List<LogLocation> files = new ArrayList<>();
+
+        for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
+          // the location can be any location from on the filesystem for custom mapped namespaces
+          if (entry.getKey().length == 8) {
+            // old format
+            files.add(new LogLocation(LogLocation.VERSION_0,
+                                      Bytes.toLong(entry.getKey()),
+                                      // use 0 as sequence id for the old format
+                                      0,
+                                      rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
+                                      logPathIdentifier.getNamespaceId(), impersonator));
+          } else if  (entry.getKey().length == 17) {
+            // new format
+            files.add(new LogLocation(LogLocation.VERSION_1,
+                                      // skip the first (version) byte
+                                      Bytes.toLong(entry.getKey(), 1, Bytes.SIZEOF_LONG),
+                                      Bytes.toLong(entry.getKey(), 9, Bytes.SIZEOF_LONG),
+                                      rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
+                                      logPathIdentifier.getNamespaceId(), impersonator));
+          }
+        }
         return files;
       }
     });
@@ -349,6 +422,10 @@ public final class FileMetaDataManager {
 
   private byte[] getRowKey(String logPartition) {
     return Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(logPartition));
+  }
+
+  private byte[] getRowKey(LogPathIdentifier logPathIdentifier) {
+    return Bytes.add(ROW_KEY_PREFIX, logPathIdentifier.getRowKey().getBytes());
   }
 
   private byte [] getMaxKey(Map<byte[], byte[]> map) {
