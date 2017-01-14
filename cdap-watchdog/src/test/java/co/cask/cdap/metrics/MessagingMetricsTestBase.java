@@ -65,7 +65,7 @@ public abstract class MessagingMetricsTestBase {
   protected MessagingService messagingService;
   protected TypeToken<MetricValues> metricValueType;
   protected Schema schema;
-  protected DatumWriter<MetricValues> metricRecordDatumWriter;
+  protected DatumWriter<MetricValues> recordWriter;
 
   @Before
   public void init() throws IOException, UnsupportedTypeException {
@@ -83,7 +83,7 @@ public abstract class MessagingMetricsTestBase {
     }
     metricValueType = TypeToken.of(MetricValues.class);
     schema = new ReflectionSchemaGenerator().generate(metricValueType.getType());
-    metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
+    recordWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
       .create(metricValueType, schema);
   }
 
@@ -104,7 +104,7 @@ public abstract class MessagingMetricsTestBase {
       protected void configure() {
         bind(MetricsCollectionService.class).toInstance(new NoOpMetricsCollectionService());
         bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
-        bind(MetricStore.class).to(DefaultMetricStore.class);
+        bind(MetricStore.class).to(DefaultMetricStore.class).in(Scopes.SINGLETON);
       }
     });
     modules.addAll(getAdditionalModules());

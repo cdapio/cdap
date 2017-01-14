@@ -23,7 +23,6 @@ import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.io.BinaryDecoder;
-import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.metrics.MessagingMetricsTestBase;
@@ -33,7 +32,6 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
-import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import org.junit.Assert;
 import org.junit.Test;
@@ -61,7 +59,7 @@ public class MessagingMetricsCollectionServiceTest extends MessagingMetricsTestB
     MetricsCollectionService collectionService = new MessagingMetricsCollectionService(topicPrefix,
                                                                                        partitionSize,
                                                                                        messagingService,
-                                                                                       metricRecordDatumWriter);
+                                                                                       recordWriter);
     collectionService.startAndWait();
 
     // publish metrics for different context
@@ -117,8 +115,12 @@ public class MessagingMetricsCollectionServiceTest extends MessagingMetricsTestB
     }
     Assert.assertEquals(expected.rowKeySet().size(), metrics.size());
 
+    checkReceivedMetrics(expected, metrics);
+  }
+
+  protected void checkReceivedMetrics(Table<String, String, Long> expected, Map<String, MetricValues> actual) {
     for (String expectedContext : expected.rowKeySet()) {
-      MetricValues metricValues = metrics.get(expectedContext);
+      MetricValues metricValues = actual.get(expectedContext);
       Assert.assertNotNull("Missing expected value for " + expectedContext, metricValues);
 
       for (Map.Entry<String, Long> entry : expected.row(expectedContext).entrySet()) {

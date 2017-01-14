@@ -244,7 +244,6 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
         for (int i = 0; i < partition; i++) {
           createSystemTopic(topicPrefix + "_" + i, asyncCreationTopics);
         }
-        continue;
       } else {
         createSystemTopic(topic, asyncCreationTopics);
       }
@@ -257,6 +256,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     LOG.info("Core Messaging Service started");
   }
 
+  /**
+   * Creates the given topic if it is not yet created. Adds a topic to the asyncCreationTopics if creation fails.
+   */
   private void createSystemTopic(String topicName,  Queue<TopicId> asyncCreationTopics) {
     TopicId topicId;
     try {

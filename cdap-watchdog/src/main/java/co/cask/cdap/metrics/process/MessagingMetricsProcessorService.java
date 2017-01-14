@@ -190,7 +190,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
     @Override
     public void run() {
       // Decode the metrics records.
-      PayloadInputStream is = new PayloadInputStream(null);
+      PayloadInputStream is = new PayloadInputStream(new byte[0]);
       BinaryDecoder binaryDecoder = new BinaryDecoder(is);
       try (CloseableIterator<RawMessage> iterator = fetcher.fetch()) {
         while (iterator.hasNext()) {
@@ -198,6 +198,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
           try {
             is.reset(input.getPayload());
             MetricValues metricValues = recordReader.read(binaryDecoder, recordSchema);
+            LOG.info("Received metrics: {}", metricValues);
             records.add(metricValues);
             lastMessageId = input.getId();
           } catch (IOException e) {
@@ -212,9 +213,8 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
         LOG.info("No records to process.");
         return;
       }
-      if (records.size() > fetcherPersistThreshold) {
+
         persistRecords(false);
-      }
     }
 
     public void terminate() {
@@ -226,9 +226,13 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
     }
 
     private void persistRecords(boolean terminating) {
+      if (!terminating && records.size() <= fetcherPersistThreshold) {
+        return;
+      }
       try {
         addProcessingStats(records);
         metricStore.add(records);
+        LOG.info("Persisted metrics in MetricStore in thread {}", this.getName());
         // Persist lastMessageId when the threshold is reached,
         // or during terminating and lastMessageId differs from INITIAL_LAST_MESSAGE_ID
         if (records.size() >= metaPersistThreshold ||
@@ -243,8 +247,8 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
       // avoid logging more than once a minute
       if (System.currentTimeMillis() > lastLoggedMillis + TimeUnit.MINUTES.toMillis(1)) {
         lastLoggedMillis = System.currentTimeMillis();
-        LOG.info("{} metrics records processed. Last record time: {}.",
-                 recordsProcessed, records.get(records.size() - 1).getTimestamp());
+        LOG.info("{} metrics records processed in thread {}. Last record time: {}.",
+                 recordsProcessed, this.getName(), records.get(records.size() - 1).getTimestamp());
       }
       records.clear();
     }
@@ -265,6 +269,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
     private void persistMessageId() {
       try {
         metaTable.save(topicIdMetaKey, lastMessageId);
+        LOG.info("Persisted last processed MessageId in thread {}", this.getName());
       } catch (Exception e) {
         // Simple log and ignore the error.
         LOG.error("Failed to persist consumed messageId. {}", e.getMessage(), e);
