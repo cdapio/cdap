@@ -78,6 +78,10 @@ public class MessagingMetricsProcessorServiceTest extends MessagingMetricsTestBa
   private static final int MESSAGING_FETCHER_PERSIST_THRESHOLD = 2;
   private static final long START_TIME = 1000L;
 
+  private ByteArrayOutputStream encoderOutputStream = new ByteArrayOutputStream(1024);
+  private Encoder encoder = new BinaryEncoder(encoderOutputStream);
+  private Table<String, String, Long> expected = HashBasedTable.create();
+
   @Test
   public void testMetricsProcessor() throws TopicNotFoundException, IOException, InterruptedException {
     injector.getInstance(TransactionManager.class).startAndWait();
@@ -99,19 +103,18 @@ public class MessagingMetricsProcessorServiceTest extends MessagingMetricsTestBa
                                            MESSAGING_FETCHER_PERSIST_THRESHOLD);
 
     metricsProcessorService.startAndWait();
-    ByteArrayOutputStream encoderOutputStream = new ByteArrayOutputStream(1024);
-    Encoder encoder = new BinaryEncoder(encoderOutputStream);
-    Table<String, String, Long> expected = HashBasedTable.create();
     // Publish metrics and record expected metrics
-    for (int i = 1; i <= 7; i++) {
-      MetricValues metric =
-        new MetricValues(ImmutableMap.of("tag", String.valueOf(i)), "processed", START_TIME + i, i, MetricType.GAUGE);
-      recordWriter.encode(metric, encoder);
-      messagingService.publish(StoreRequestBuilder.of(metricsTopics[i % partitionSize])
-                                 .addPayloads(encoderOutputStream.toByteArray()).build());
-      LOG.info("Published metric: {}", metric);
-      encoderOutputStream.reset();
-      expected.put("tag." + i, "processed", (long) i);
+    // Publish metrics and record expected metrics
+    for (int i = 1; i <= 5; i++) {
+      publishMetrics(i);
+    }
+
+    // Stop and restart metricsProcessorService
+    metricsProcessorService.shutDown();
+    metricsProcessorService.startAndWait();
+
+    for (int i = 6; i <= 10; i++) {
+      publishMetrics(i);
     }
 
     Thread.sleep(8000);
@@ -123,6 +126,20 @@ public class MessagingMetricsProcessorServiceTest extends MessagingMetricsTestBa
     MetricTimeSeries timeSeries = Iterables.getOnlyElement(query);
     List<TimeValue> timeValues = timeSeries.getTimeValues();
     TimeValue timeValue = Iterables.getOnlyElement(timeValues);
+
+    // Stop services
+    metricsProcessorService.stopAndWait();
+  }
+
+  private void publishMetrics(int i) throws IOException, TopicNotFoundException {
+    MetricValues metric =
+      new MetricValues(ImmutableMap.of("tag", String.valueOf(i)), "new", START_TIME + i, i, MetricType.GAUGE);
+    recordWriter.encode(metric, encoder);
+    messagingService.publish(StoreRequestBuilder.of(metricsTopics[i % partitionSize])
+                               .addPayloads(encoderOutputStream.toByteArray()).build());
+    LOG.info("Published metric: {}", metric);
+    encoderOutputStream.reset();
+    expected.put("tag." + i, "processed", (long) i);
   }
 
   @Override

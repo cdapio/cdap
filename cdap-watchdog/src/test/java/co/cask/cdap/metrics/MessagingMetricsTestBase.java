@@ -46,6 +46,8 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,20 +59,25 @@ import java.util.List;
  */
 public abstract class MessagingMetricsTestBase {
 
-  protected Injector injector;
-  protected String topicPrefix;
-  protected int partitionSize;
-  protected TopicId[] metricsTopics;
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  protected MessagingService messagingService;
-  protected TypeToken<MetricValues> metricValueType;
-  protected Schema schema;
-  protected DatumWriter<MetricValues> recordWriter;
+  protected static Injector injector;
+  protected static String topicPrefix;
+  protected static int partitionSize;
+  protected static TopicId[] metricsTopics;
+
+  protected static CConfiguration cConf;
+  protected static MessagingService messagingService;
+  protected static TypeToken<MetricValues> metricValueType;
+  protected static Schema schema;
+  protected static DatumWriter<MetricValues> recordWriter;
 
   @Before
   public void init() throws IOException, UnsupportedTypeException {
+    cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     injector = Guice.createInjector(getModules());
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
     topicPrefix = cConf.get(Constants.Metrics.TOPIC_PREFIX);
     partitionSize = cConf.getInt(Constants.Metrics.KAFKA_PARTITION_SIZE);
     metricsTopics = new TopicId[partitionSize];
@@ -96,7 +103,7 @@ public abstract class MessagingMetricsTestBase {
 
   private List<Module> getModules() {
     List<Module> modules = new ArrayList<>();
-    modules.add(new ConfigModule());
+    modules.add(new ConfigModule(cConf));
     modules.add(new DiscoveryRuntimeModule().getInMemoryModules());
     modules.add(new MessagingServerRuntimeModule().getInMemoryModules());
     modules.add(new AbstractModule() {
