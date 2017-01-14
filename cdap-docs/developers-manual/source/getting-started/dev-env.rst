@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _dev-env:
 
@@ -8,7 +8,7 @@
 Development Environment Setup
 =============================
 
-.. this file is included in others; titles need to be +
+.. this file is included in others; titles need to be "-" rather than "="
 
 .. highlight:: console
 
@@ -21,24 +21,42 @@ interface methods.
 
 The best way to start developing a CDAP application is by using the Maven archetype:
 
-.. tabbed-parsed-literal::
+.. ifconfig:: snapshot_version
+
+  .. tabbed-parsed-literal::
   
-  $ mvn archetype:generate \
-      -DarchetypeGroupId=co.cask.cdap \
-      -DarchetypeArtifactId=cdap-app-archetype \
-      -DarchetypeVersion=\ |release| \
-      -DgroupId=org.example.app
+    $ mvn archetype:generate \
+        -DarchetypeGroupId=co.cask.cdap \
+        -DarchetypeArtifactId=cdap-app-archetype \
+        |archetype-repository| \
+        |archetype-version| \
+        -DartifactId=myExampleApp \
+        -DgroupId=org.example.app
+
+.. ifconfig:: not snapshot_version
+
+  .. tabbed-parsed-literal::
+  
+    $ mvn archetype:generate \
+        -DarchetypeGroupId=co.cask.cdap \
+        -DarchetypeArtifactId=cdap-app-archetype \
+        |archetype-version| \
+        -DartifactId=myExampleApp \
+        -DgroupId=org.example.app
 
 This creates a Maven project with all required dependencies, Maven plugins, and a simple
-application template for the development of your application. You can import this Maven project
-into your preferred IDE |---| such as `IntelliJ <https://www.jetbrains.com/idea/>`__ or 
-`Eclipse <https://www.eclipse.org/>`__ |---| and start developing your first CDAP application.
+application template for the development of your application (``myExampleApp``). You can
+import this Maven project into your preferred IDE |---| such as `IntelliJ
+<https://www.jetbrains.com/idea/>`__ or `Eclipse <https://www.eclipse.org/>`__ |---| and
+start developing your first CDAP application.
 
 For an application that contains a MapReduce program, set the ``archetypeArtifactId`` to
 ``cdap-mapreduce-archetype``; for Spark, use either ``cdap-spark-java-archetype`` or
 ``cdap-spark-scala-archetype``.
 
-**Note:** Replace the *groupId* parameter (``org.example.app``) with your own organization, but it must not be replaced with ``co.cask.cdap``.
+**Note:** Replace the *artifactId* (``myExampleApp``) and *groupId* parameters
+(``org.example.app``) with your own app name and organization, but the *groupId* must not
+be replaced with ``co.cask.cdap``.
 
 Complete examples for each archetype:
 
@@ -48,29 +66,36 @@ Complete examples for each archetype:
 
   .. CDAP Application
 
-  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-app-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.app
+  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-app-archetype |archetype-repository-version|
 
   .. MapReduce Program
 
-  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-mapreduce-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.app
+  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-mapreduce-archetype |archetype-repository-version|
   
   .. Spark Program (Java)
 
-  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-spark-java-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.app
+  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-spark-java-archetype |archetype-repository-version|
   
   .. Spark Program (Scala)
   
-  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-spark-scala-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.app
+  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-spark-scala-archetype |archetype-repository-version|
+
+When prompted, complete the values for *groupId* and *artifactId* parameters. Enter for the *groupId* parameter your
+own organization; it must not be replaced with ``co.cask.cdap``. (The *version* and *package* parameters can be either
+specified or you can use the Maven defaults.)
 
 Maven supplies a guide to the naming convention used above at https://maven.apache.org/guides/mini/guide-naming-conventions.html.
 
 Using IntelliJ
 --------------
-1. Open `IntelliJ <https://www.jetbrains.com/idea/>`__ and import the Maven project.
-#. Go to menu *File -> Import Project*...
-#. Select the ``pom.xml`` in the Maven project's directory.
-#. Select the *Import Maven projects automatically* and *Automatically download: Sources, Documentation*
-   boxes in the *Import Project from Maven* dialog.
+1. Open `IntelliJ <https://www.jetbrains.com/idea/>`__ and import the Maven project by:
+
+   - If at the starting IntelliJ dialog, click on *Import Project*; or
+   - If an existing project is open, go to the menu item *File -> Open...*
+   
+#. Navigate to and select the ``pom.xml`` in the Maven project's directory.
+#. In the *Import Project from Maven* dialog, select the *Import Maven projects automatically* and *Automatically
+   download: Sources, Documentation* boxes.
 #. Click *Next*, complete the remaining dialogs, and the new CDAP project will be created and opened.
 
 Using Eclipse
