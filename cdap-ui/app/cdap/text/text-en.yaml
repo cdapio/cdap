@@ -661,4 +661,12 @@ features:
       undo: Undo
 
     parsing: "Parsing..."
+  LoadingIndicator:
+    defaultMessage: 'Loading...'
+    # backendDown: 'CDAP Services are not available',
+    backendDown: 'Unable to connect to CDAP Router'
+    backendDownSubtitle: 'Attempting to connect...'
+    nodeserverDown: 'User interface service is down'
+  StatusAlertMessage:
+    message: 'Services are back online'
 ...
