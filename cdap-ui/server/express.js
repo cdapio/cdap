@@ -151,6 +151,41 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   });
 
+  // This is used for single click deploy app from Cask Market
+  app.get('/streamApp', function(req, res) {
+    var contentLink = req.query.content;
+    var streamTo = req.query.stream;
+    var jarName = req.query.name;
+
+    var headers = {
+      'Content-Type': 'application/octet-stream',
+      'X-Archive-Name': jarName
+    };
+
+    if (req.cookies['CDAP_Auth_Token']) {
+      headers = {
+        authorization: 'Bearer ' + req.cookies['CDAP_Auth_Token']
+      };
+    }
+
+    request({
+      url: contentLink,
+      method: 'GET'
+    })
+    .on('error', function (e) {
+      log.error('Error', e);
+    })
+    .pipe(request({
+      url: streamTo,
+      method: 'POST',
+      headers: headers
+    }))
+    .on('error', function (e) {
+      log.error('Error', e);
+    })
+    .pipe(res);
+  });
+
   app.get('/downloadLogs', function(req, res) {
     var url = decodeURIComponent(req.query.backendUrl);
     var method = (req.query.method || 'GET');
