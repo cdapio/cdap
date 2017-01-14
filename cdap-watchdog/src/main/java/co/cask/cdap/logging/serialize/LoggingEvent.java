@@ -201,6 +201,41 @@ public final class LoggingEvent implements ILoggingEvent {
     return datum;
   }
 
+  // TODO : the above "encode" method with logging context can be removed once we have log framework in place
+  public static GenericRecord encode(Schema schema, ILoggingEvent event) {
+    event.prepareForDeferredProcessing();
+
+    LoggingEvent loggingEvent = new LoggingEvent(event);
+    GenericRecord datum = new GenericData.Record(schema);
+    datum.put("threadName", loggingEvent.threadName);
+    datum.put("level", loggingEvent.level);
+    datum.put("message", loggingEvent.message);
+
+    if (loggingEvent.argumentArray != null) {
+      GenericArray<String> argArray =
+        new GenericData.Array<>(loggingEvent.argumentArray.length,
+                                schema.getField("argumentArray").schema().getTypes().get(1));
+      Collections.addAll(argArray, loggingEvent.argumentArray);
+      datum.put("argumentArray", argArray);
+    }
+
+    datum.put("formattedMessage", loggingEvent.formattedMessage);
+    datum.put("loggerName", loggingEvent.loggerName);
+    datum.put("loggerContextVO", LoggerContextSerializer.encode(schema.getField("loggerContextVO").schema(),
+                                                                loggingEvent.loggerContextVO));
+    datum.put("throwableProxy", ThrowableProxySerializer.encode(schema.getField("throwableProxy").schema(),
+                                                                loggingEvent.throwableProxy));
+    if (loggingEvent.hasCallerData) {
+      datum.put("callerData", CallerDataSerializer.encode(schema.getField("callerData").schema(),
+                                                          loggingEvent.callerData));
+    }
+    datum.put("hasCallerData", loggingEvent.hasCallerData);
+    //datum.put("marker", marker);
+    datum.put("mdc", loggingEvent.getMDCPropertyMap());
+    datum.put("timestamp", loggingEvent.timestamp);
+    return datum;
+  }
+
   static Map<String, String> generateContextMdc(LoggingContext loggingContext, Map<String, String> mdc) {
     if (loggingContext == null) {
       throw new IllegalStateException(String.format("Logging context not setup correctly for MDC %s", mdc));
