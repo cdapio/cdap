@@ -53,7 +53,7 @@ RELEASE_NOTE_DASH = ' - '
 CASK_ISSUE_START = ':cask-issue:`'
 CASK_ISSUE_END = '` - '
 
-DOCS_LINK = "http://docs.cask.co/cdap/%s/en/"
+LITERAL_INDENT = 8
 
 def parse_options():
     """ Parses args options.
@@ -86,40 +86,68 @@ reformats it, and writes it to the terminal.
     parser.add_option(
         '-v', '--version',
         dest='version',
-        help="The CDAP version to be used for documentation links, if not 'current'",
+        help="The CDAP version to be used for documentation links; if supplied, first section of doc done; if no version, entire file is used",
         metavar='cdap-version',
-        default='current')
+        default='')
 
     (options, args) = parser.parse_args()
 
     return options, args
 
-def replace_refs(line, version, references=0):
+def replace_refs(line):
     # If any errors, just returns the line unchanged
     REF_RST = ':ref:`'
     ref_index = line.find(REF_RST)
     if ref_index == -1:
-        return line, references
-    else:
-        references += 1
+        return line
     ref_index_close = line.find('>`', ref_index + len(REF_RST))
     if ref_index_close == -1:
-        return line, references
+        return line
     ref = line[ref_index:ref_index_close]
     link_index = ref.find(' <')
     if link_index == -1:
-        return line, references
+        return line
     label = ref[ref.find('`')+1:link_index]
     ref = ref[link_index+2:]
-    line = "%(line_start)s[%(label)s](%(doc_ref)s %(ref)s LINK_TO_BE_CORRECTED)%(line_end)s" % {
+    line = "%(line_start)s[%(label)s](#%(ref)s)%(line_end)s" % {
             'line_start': line[:ref_index],
-            'doc_ref': DOCS_LINK % version,
             'label': label, 
             'ref': ref, 
             'line_end': line[ref_index_close+2:],
             }
-    line, references = replace_refs(line, version, references)
-    return line, references
+    return replace_refs(line)
+
+def rewrite_links(line, closing_ref):
+    # If any errors, just returns the line unchanged
+    close_index = line.find(closing_ref)
+    if close_index == -1:
+        return line
+    open_index = line[:close_index].rfind('`')
+    if open_index == -1:
+        # Error, but return the line
+        return line
+    link = line[open_index+1:close_index]
+    link_index = link.find(' <')
+    if link_index == -1:
+        # Error, but return the line
+        return line
+    label = link[:link_index]
+    link = link[link_index+2:]
+    line = "%(line_start)s[%(label)s](%(link)s)%(line_end)s" % {
+            'line_start': line[:open_index],
+            'label': label, 
+            'link': link, 
+            'line_end': line[close_index+len(closing_ref):],
+            }
+    return rewrite_links(line, closing_ref)
+
+def rewrite_anchor(line):
+    # If any errors, just returns the line unchanged
+    # rst anchor format:
+    # .. _release-notes-cdap-6837:
+    if not (line.startswith('.. _') and line.endswith(':') and line[4:-1]):
+        return line
+    return "<a name=\"%s\"></a>" % line[4:-1]
 
 def extract_issues(line, start, end):
     new_line = line[:start] + line[end + len(CASK_ISSUE_END):].rstrip()
@@ -136,7 +164,6 @@ def build_new_line(line, issues):
         return "%s (%s))\n" % (line, ','.join(issue_links))
     
 def read_lines(input, output, version):
-    output_format = 'github'
     print "Reading input file: %s" % input
     f = open(input, 'r')
     in_cask_issue = False
@@ -146,21 +173,30 @@ def read_lines(input, output, version):
     in_first_section = False
     in_lines = False
     issues = []
-    indent = ''
+#     indent = ''
+    indent = 0
     new_lines = []
     new_line = ''
     for line in f:
+        line_stripped = line.strip()
         if not in_first_section:
             if line.startswith('`'):
                 in_first_section = True
-                # Check if version matches:
-                version_trimmed = version.replace('-SNAPSHOT','')
-                if not line.startswith("`Release %s" % version_trimmed):
-                    new_lines.append("Warning: expected 'Release %s' but found '%s'\n" % (version_trimmed, line.strip()))
+                if version:
+                    # Check if version matches:
+                    version_trimmed = version.replace('-SNAPSHOT','')
+                    if not line.startswith("`Release %s" % version_trimmed):
+                        new_lines.append("Warning: expected 'Release %s' but found '%s'\n" % (version_trimmed, line.strip()))
             continue
         if line.startswith('`'):
             if in_first_section:
-                break
+                if version:
+                    break
+                else:
+                    continue
+        if line_stripped.startswith('.. _'):
+            new_lines.append(rewrite_anchor(line_stripped))
+            continue
         if line.startswith('.. ') or line.startswith('==') :
             continue
         line = line.rstrip()
@@ -175,11 +211,14 @@ def read_lines(input, output, version):
                 continue
             if line.startswith(' '):
                 line_strip = line.lstrip()
-                indent = ' ' * (len(line) - len(line_strip))
+                line_indent = len(line) - len(line_strip)
                 if not in_literal_indent:
-                    in_literal_indent = indent
-                if indent >= in_literal_indent:
-                    new_lines.append(line)
+                    if line_indent < LITERAL_INDENT:
+                        in_literal_indent = LITERAL_INDENT - line_indent
+                    else:        
+                        in_literal_indent = line_indent
+                if line_indent > indent:
+                    new_lines.append(' ' * in_literal_indent + line)
                     continue
                 else:
                     in_literal = False
@@ -193,17 +232,17 @@ def read_lines(input, output, version):
         if not in_cask_issue and cask_issue_start != -1 and cask_issue_end != -1 :
             in_cask_issue = True
             new_line, issues = extract_issues(line, cask_issue_start, cask_issue_end)
-            indent = ' ' * cask_issue_start
+            indent = cask_issue_start
         elif in_cask_issue and issues:
             line_strip = line.strip()
             if line_strip:
                 new_line = "%s %s" % (new_line, line_strip)
             else:
+                if new_line.endswith('::\n'):
+                    in_literal = True # Start of literal block
                 new_line = build_new_line(new_line, issues)
                 new_lines.append(new_line)
                 in_cask_issue = False
-                if new_line.endswith('::\n'):
-                    in_literal = True # Start of literal block
                 issues = []
                 new_line = ''
         elif not in_cask_issue and line.startswith(' ') and not in_para:
@@ -212,7 +251,10 @@ def read_lines(input, output, version):
         elif in_para:
             line_strip = line.strip()
             if line_strip:
-                new_line = "%s %s" % (new_line, line_strip)
+                if line.startswith(' '):
+                    new_line = "%s %s" % (new_line, line_strip)
+                else:
+                    new_line = "%s\n\n%s" % (new_line, line_strip)
             else:
                 new_line += '\n'
                 new_lines.append(new_line)
@@ -220,6 +262,10 @@ def read_lines(input, output, version):
                 if new_line.endswith('::\n'):
                     in_literal = True # Start of literal block
                 new_line = ''
+        elif line.startswith('- ') and not in_para:
+            in_para = True
+            indent = 2
+            new_line = line.rstrip()
         else:
             new_line = line
             new_lines.append(new_line)
@@ -236,18 +282,22 @@ def read_lines(input, output, version):
     f = open(output, 'w')
     print "Writing to output file: %s" % output
     if new_lines:
-        errors = 0
-        for index in range(len(new_lines)):
-            line = new_lines[index].replace(' |---| ', '—')
-            line, references = replace_refs(line, version)
-            errors += references
-            new_lines[index] = line
-        if errors:
-            f.write("Warning: %d reference error(s) in notes for 'Release %s'.\n" % (errors, version_trimmed))
         for line in new_lines:
+            line = line.replace(' |---| ', '—')
+            if line.endswith('::\n'):
+                line = line.replace('::', ':')
+            line = line.replace('``\\', '``')
+            line = replace_refs(line)
+            line = rewrite_links(line, '>`__')
+            line = rewrite_links(line, '>`_')
+            line = line.replace('\\ ', '')
             f.write("%s\n" % line)
     else:
-        f.write("Warning: expected notes for 'Release %s' but found nothing.\n" % version_trimmed)
+        if version:
+            message = "for 'Release %s' " % version_trimmed
+        else:
+            message = ""
+        f.write("Warning: expected notes %sbut found nothing.\n" % message)
     f.close()
 
 #
