@@ -79,10 +79,14 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
     String credentialsURI = executeRequest(impersonationInfo).getResponseBodyAsString();
     LOG.debug("Received response: {}", credentialsURI);
 
+    LOG.warn("nsquare: using tgt for user " + impersonationInfo.getPrincipal());
     Location location = locationFactory.create(URI.create(credentialsURI));
     try {
-      UserGroupInformation impersonatedUGI = UserGroupInformation.createRemoteUser(impersonationInfo.getPrincipal());
-      impersonatedUGI.addCredentials(readCredentials(location));
+      UserGroupInformation impersonatedUGI = UserGroupInformation
+        .getUGIFromTicketCache("/tmp/krb_tgt", impersonationInfo.getPrincipal());
+      LOG.warn("nsquare: created the ticket " + impersonatedUGI.hasKerberosCredentials());
+//      UserGroupInformation impersonatedUGI = UserGroupInformation.createRemoteUser(impersonationInfo.getPrincipal());
+//      impersonatedUGI.addCredentials(readCredentials(location));
       return impersonatedUGI;
     } finally {
       try {
