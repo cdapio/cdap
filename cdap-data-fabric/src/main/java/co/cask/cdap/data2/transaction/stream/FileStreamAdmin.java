@@ -295,9 +295,9 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamConfig getConfig(final StreamId streamId) throws IOException {
-    // No Authorization check performed in this method. If required, it should be added before this method is invoked
-    UserGroupInformation ugi = impersonator.getUGI(streamId.getParent());
     try {
+      // No Authorization check performed in this method. If required, it should be added before this method is invoked
+      UserGroupInformation ugi = impersonator.getUGI(streamId.getParent());
       return ImpersonationUtils.doAs(ugi, new Callable<StreamConfig>() {
         @Override
         public StreamConfig call() throws IOException {
@@ -406,7 +406,7 @@ public class FileStreamAdmin implements StreamAdmin {
     // User should have write access to the namespace
     NamespaceId streamNamespace = streamId.getParent();
     ensureAccess(streamNamespace, Action.WRITE);
-    // revoke privleges to make sure there is no orphaned privleges
+    // revoke privileges to make sure there is no orphaned privileges
     privilegesManager.revoke(streamId);
     try {
       // Grant All access to the stream created to the User
