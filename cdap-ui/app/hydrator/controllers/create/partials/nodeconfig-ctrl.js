@@ -276,7 +276,7 @@ class HydratorPlusPlusNodeConfigCtrl {
   importSchema() {
     this.$timeout.cancel(this.importSchemaTimeout);
     this.importSchemaTimeout = this.$timeout(() => {
-      document.getElementById('schema-import-link').click();
+      angular.element(document.getElementById('schema-import-link')).triggerHandler('click');
     });
   }
   importFiles(files) {
