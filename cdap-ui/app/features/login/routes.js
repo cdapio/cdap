@@ -109,31 +109,4 @@ angular.module(PKG.name+'.feature.login')
       myAuth.logout();
     });
 
-    if(MY_CONFIG.securityEnabled) {
-      angular.forEach([
-          {
-            event: MYAUTH_EVENT.loginFailed,
-            eventType: 'danger',
-            title: 'Login Failed',
-            message: 'User Authentication failed. Please check username and password'
-          },
-          {
-            event: MYAUTH_EVENT.notAuthenticated,
-            eventType: 'danger',
-            title: 'Authentication required',
-            message: 'This page needs user to be authenticated. Please login to this page.'
-          }
-        ],
-        function (v) {
-          $rootScope.$on(v.event, function () {
-            myAlertOnValium.show({
-              title: v.title,
-              content: v.message,
-              type: v.eventType
-            });
-          });
-        }
-      );
-    }
-
   });
