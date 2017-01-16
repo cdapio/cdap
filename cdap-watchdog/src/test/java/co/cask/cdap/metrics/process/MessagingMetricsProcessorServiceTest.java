@@ -72,11 +72,11 @@ import java.util.Set;
 public class MessagingMetricsProcessorServiceTest extends MessagingMetricsTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsProcessorServiceTest.class);
 
-  // Intentionally set meta and fetcher persist threshold to small values, so that MessagingMetricsProcessorService
+  // Intentionally set fetcher persist threshold to small values, so that MessagingMetricsProcessorService
   // internally can exhaust message iterator and complete the loop.
-  private static final int MESSAGING_META_PERSIST_THRESHOLD = 3;
-  private static final int MESSAGING_FETCHER_PERSIST_THRESHOLD = 2;
-  private static final long START_TIME = 1000L;
+  private static final int MESSAGING_FETCHER_PERSIST_THRESHOLD = 1;
+  private static final int PARTITION_SIZE = 2;
+  private static final long START_TIME = System.currentTimeMillis() / 1000;
 
   private ByteArrayOutputStream encoderOutputStream = new ByteArrayOutputStream(1024);
   private Encoder encoder = new BinaryEncoder(encoderOutputStream);
@@ -89,7 +89,7 @@ public class MessagingMetricsProcessorServiceTest extends MessagingMetricsTestBa
     injector.getInstance(DatasetService.class).startAndWait();
 
     Set<Integer> partitions = new HashSet<>();
-    for (int i = 0; i < partitionSize; i++) {
+    for (int i = 0; i < PARTITION_SIZE; i++) {
       partitions.add(i);
     }
 
@@ -99,7 +99,6 @@ public class MessagingMetricsProcessorServiceTest extends MessagingMetricsTestBa
                                            partitions, messagingService, injector.getInstance(SchemaGenerator.class),
                                            injector.getInstance(DatumReaderFactory.class),
                                            metricStore,
-                                           MESSAGING_META_PERSIST_THRESHOLD,
                                            MESSAGING_FETCHER_PERSIST_THRESHOLD);
 
     metricsProcessorService.startAndWait();
@@ -109,8 +108,15 @@ public class MessagingMetricsProcessorServiceTest extends MessagingMetricsTestBa
       publishMetrics(i);
     }
 
+    Thread.sleep(8000);
     // Stop and restart metricsProcessorService
-    metricsProcessorService.shutDown();
+    metricsProcessorService.stopAndWait();
+    metricsProcessorService =
+      new MessagingMetricsProcessorService(injector.getInstance(MetricDatasetFactory.class), topicPrefix,
+                                           partitions, messagingService, injector.getInstance(SchemaGenerator.class),
+                                           injector.getInstance(DatumReaderFactory.class),
+                                           metricStore,
+                                           MESSAGING_FETCHER_PERSIST_THRESHOLD);
     metricsProcessorService.startAndWait();
 
     for (int i = 6; i <= 10; i++) {
@@ -121,7 +127,8 @@ public class MessagingMetricsProcessorServiceTest extends MessagingMetricsTestBa
 
     MetricDataQuery metricDataQuery =
       new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, "processed",
-                          AggregationFunction.SUM, ImmutableMap.of("tag", String.valueOf(1)), ImmutableList.<String>of());
+                          AggregationFunction.SUM, ImmutableMap.of("tag", String.valueOf(1)),
+                          ImmutableList.<String>of());
     Collection<MetricTimeSeries> query = metricStore.query(metricDataQuery);
     MetricTimeSeries timeSeries = Iterables.getOnlyElement(query);
     List<TimeValue> timeValues = timeSeries.getTimeValues();
@@ -135,7 +142,7 @@ public class MessagingMetricsProcessorServiceTest extends MessagingMetricsTestBa
     MetricValues metric =
       new MetricValues(ImmutableMap.of("tag", String.valueOf(i)), "new", START_TIME + i, i, MetricType.GAUGE);
     recordWriter.encode(metric, encoder);
-    messagingService.publish(StoreRequestBuilder.of(metricsTopics[i % partitionSize])
+    messagingService.publish(StoreRequestBuilder.of(metricsTopics[i % PARTITION_SIZE])
                                .addPayloads(encoderOutputStream.toByteArray()).build());
     LOG.info("Published metric: {}", metric);
     encoderOutputStream.reset();

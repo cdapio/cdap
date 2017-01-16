@@ -1510,15 +1510,6 @@
       metrics messages before persisting the processed metrics to metrics table
     </description>
   </property>
-
-  <property>
-    <name>metrics.messaging.meta.persist.threshold</name>
-    <value>100</value>
-    <description>
-      Threshold of processing metrics messages before persisting the latest
-      processed message's offset to messaging metrics meta table
-    </description>
-  </property>
   
   <property>
     <name>metrics.messaging.meta.table</name>

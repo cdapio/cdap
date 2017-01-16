@@ -198,12 +198,6 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       return cConf.getInt(Constants.Metrics.MESSAGING_PARTITION_SIZE);
     }
 
-    @SuppressWarnings("unused")
-    @Provides
-    @Named(Constants.Metrics.MESSAGING_META_PERSIST_THRESHOLD)
-    public int providesMetaPersistThreshold(CConfiguration cConf) {
-      return cConf.getInt(Constants.Metrics.MESSAGING_META_PERSIST_THRESHOLD);
-    }
 
     @SuppressWarnings("unused")
     @Provides

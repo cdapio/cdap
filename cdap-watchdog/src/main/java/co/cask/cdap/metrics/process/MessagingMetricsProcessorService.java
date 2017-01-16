@@ -74,7 +74,6 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
   private final MetricStore metricStore;
   private Map<String, String> metricsContextMap;
   private List<ProcessMetricsThread> processMetricsThreadList;
-  private final int metaPersistThreshold;
   private final int fetcherPersistThreshold;
 
   private long lastLoggedMillis;
@@ -88,8 +87,6 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
                                           SchemaGenerator schemaGenerator,
                                           DatumReaderFactory readerFactory,
                                           MetricStore metricStore,
-                                          @Named(Constants.Metrics.MESSAGING_META_PERSIST_THRESHOLD)
-                                            int metaPersistThreshold,
                                           @Named(Constants.Metrics.MESSAGING_FETCHER_PERSIST_THRESHOLD)
                                             int fetcherPersistThreshold) {
     super(metricDatasetFactory);
@@ -107,7 +104,6 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
       throw Throwables.propagate(e);
     }
     this.metricStore = metricStore;
-    this.metaPersistThreshold = metaPersistThreshold;
     this.fetcherPersistThreshold = fetcherPersistThreshold;
     this.metricsContextMap = Collections.<String, String>emptyMap();
     processMetricsThreadList = new ArrayList<>();
@@ -121,24 +117,26 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
 
   @Override
   protected void run() {
+    LOG.info("Start running MessagingMetricsProcessorService");
     MetricsConsumerMetaTable metaTable = getMetaTable();
     if (metaTable == null) {
       LOG.info("Could not get MetricsConsumerMetaTable, seems like we are being shut down");
       return;
     }
 
-    for (int i = 0; i < metricsTopics.length; i++) {
+    int i = 0;
+    while (i < metricsTopics.length && isRunning()) {
       byte[] messageId = null;
       try {
         messageId = metaTable.get(metricsTopicMetaKeys[i]);
         LOG.info("Last processed MessageId for topic: {} is {}", metricsTopics[i], messageId);
       } catch (Exception e) {
-        LOG.info(String.format("No stored last processed MessageId for topic: %s", metricsTopics[i]), e);
+        LOG.info(String.format("Cannot retrieve last processed MessageId for topic: %s", metricsTopics[i]), e);
       }
 
       MessageFetcher fetcher;
       try {
-        fetcher = messagingService.prepareFetch(metricsTopics[i]).setLimit(fetcherPersistThreshold);
+        fetcher = messagingService.prepareFetch(metricsTopics[i]);
       } catch (Exception e) {
         LOG.error(String.format("Failed to create fetcher for topic: %s", metricsTopics[i]), e);
         return;
@@ -154,7 +152,9 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
       processMetricsThread.setDaemon(true);
       processMetricsThread.start();
       processMetricsThreadList.add(processMetricsThread);
+      i++;
     }
+
     for (ProcessMetricsThread thread : processMetricsThreadList) {
       try {
         thread.join();
@@ -193,14 +193,17 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
       PayloadInputStream is = new PayloadInputStream(new byte[0]);
       BinaryDecoder binaryDecoder = new BinaryDecoder(is);
       try (CloseableIterator<RawMessage> iterator = fetcher.fetch()) {
-        while (iterator.hasNext()) {
+        while (iterator.hasNext() && isRunning()) {
           RawMessage input = iterator.next();
           try {
             is.reset(input.getPayload());
             MetricValues metricValues = recordReader.read(binaryDecoder, recordSchema);
-            LOG.info("Received metrics: {}", metricValues);
             records.add(metricValues);
             lastMessageId = input.getId();
+            LOG.info("Received message {} with metrics: {}", lastMessageId, metricValues);
+            // persistRecords method persists records and the last messageId if the number of processed records exceeds
+            // the persist threshold
+            persistRecords(false);
           } catch (IOException e) {
             LOG.info("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
           }
@@ -213,8 +216,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
         LOG.info("No records to process.");
         return;
       }
-
-        persistRecords(false);
+      persistRecords(false);
     }
 
     public void terminate() {
@@ -226,17 +228,15 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
     }
 
     private void persistRecords(boolean terminating) {
-      if (!terminating && records.size() <= fetcherPersistThreshold) {
+      if (records.size() <= fetcherPersistThreshold && !terminating) {
         return;
       }
       try {
         addProcessingStats(records);
         metricStore.add(records);
-        LOG.info("Persisted metrics in MetricStore in thread {}", this.getName());
-        // Persist lastMessageId when the threshold is reached,
-        // or during terminating and lastMessageId differs from INITIAL_LAST_MESSAGE_ID
-        if (records.size() >= metaPersistThreshold ||
-          (terminating && !Arrays.equals(lastMessageId, INITIAL_LAST_MESSAGE_ID))) {
+        LOG.info("Persisted {} metrics in MetricStore in thread {}", records.size(), this.getName());
+        // Persist lastMessageId when its content differs from INITIAL_LAST_MESSAGE_ID
+        if (!Arrays.equals(lastMessageId, INITIAL_LAST_MESSAGE_ID)) {
           persistMessageId();
         }
       } catch (Exception e) {
@@ -269,7 +269,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
     private void persistMessageId() {
       try {
         metaTable.save(topicIdMetaKey, lastMessageId);
-        LOG.info("Persisted last processed MessageId in thread {}", this.getName());
+        LOG.info("Persisted last processed MessageId: {} in thread {}", lastMessageId, this.getName());
       } catch (Exception e) {
         // Simple log and ignore the error.
         LOG.error("Failed to persist consumed messageId. {}", e.getMessage(), e);
