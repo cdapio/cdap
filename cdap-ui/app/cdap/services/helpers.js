@@ -113,7 +113,7 @@ function convertBytesToHumanReadable(bytes, type) {
 }
 
 function isDescendant(parent, child) {
-  var node = child.parentNode;
+  var node = child;
   while (node != null) {
     if (node == parent) {
       return true;

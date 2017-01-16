@@ -132,6 +132,19 @@ features:
     truncateLabel: Truncate
     truncateFailed: Failed to truncate {entityId}.
     sendEventsLabel: Send Events
+    setPreferencesModalLabel: Preferences
+    setPreferencesActionLabel: Set Preferences
+    setPreferencesAppDescriptionLabel: Specify new or override existing system or namespace preferences. These preferences will be accessible in all programs within this application.
+    setPreferencesProgramDescriptionLabel: Specify new or override existing system, namespace, or application preferences. These preferences will only be accessible within this program.
+    setPreferencesButtonLabel: Done
+    setPreferencesInheritedPrefsLabel: Inherited Preferences
+    setPreferencesColumnLabel:
+      key: KEY
+      value: VALUE
+      origin: ORIGIN
+      status: STATUS
+
+    setPreferencesFailed: Error - Set Preferences Failed.
     start: Start
     stop: Stop
     sendEventsButtonLabel: Send
