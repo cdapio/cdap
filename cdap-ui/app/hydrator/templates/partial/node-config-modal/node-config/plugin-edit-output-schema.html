@@ -35,7 +35,7 @@
 
       <ul class="output-schema-actions" uib-dropdown-menu>
         <li ng-if="(!HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema && !isDisabled)">
-          <a href="" ng-click="HydratorPlusPlusNodeConfigCtrl.importSchema()">Import</a>
+          <a href="#" onclick="document.getElementById('schema-import-link').click()">Import</a>
         </li>
         <li>
           <a href="" ng-click="HydratorPlusPlusNodeConfigCtrl.exportSchema()">Export</a>
