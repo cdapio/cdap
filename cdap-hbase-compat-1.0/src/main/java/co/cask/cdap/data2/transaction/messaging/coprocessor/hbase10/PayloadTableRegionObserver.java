@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.HTable10NameConverter;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.messaging.MessagingUtils;
 import com.google.common.cache.CacheBuilder;
@@ -90,7 +89,7 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
       String metadataTableNamespace = tableDesc.getValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE);
       String hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
 
-      HTableNameConverter nameConverter = new HTable10NameConverter();
+      HTableNameConverter nameConverter = new HTableNameConverter();
       String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
       cConfReader = new CConfigurationReader(env.getConfiguration(), sysConfigTablePrefix);
       CConfiguration cConf = cConfReader.read();
