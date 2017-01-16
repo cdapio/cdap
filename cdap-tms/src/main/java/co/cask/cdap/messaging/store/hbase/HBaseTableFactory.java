@@ -18,6 +18,7 @@ package co.cask.cdap.messaging.store.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
@@ -37,6 +38,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableNotEnabledException;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.twill.common.Threads;
@@ -46,7 +49,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.SynchronousQueue;
@@ -136,6 +141,88 @@ public final class HBaseTableFactory implements TableFactory {
     );
   }
 
+  public void upgradeMessageTable(String tableName) throws IOException {
+    upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
+                       tableUtil.getMessageTableRegionObserverClassForVersion());
+  }
+
+  public void upgradePayloadTable(String tableName) throws IOException {
+    upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
+                       tableUtil.getPayloadTableRegionObserverClassForVersion());
+  }
+
+  public void disableMessageTable(String tableName) throws IOException {
+    TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, tableName);
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      disableTable(admin, tableId);
+    }
+  }
+
+  public void disablePayloadTable(String tableName) throws IOException {
+    TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, tableName);
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      disableTable(admin, tableId);
+    }
+  }
+
+  private void disableTable(HBaseAdmin admin, TableId tableId) throws IOException {
+    try {
+      tableUtil.disableTable(admin, tableId);
+      LOG.debug("TMS Table {} has been disabled", tableId);
+    } catch (TableNotFoundException ex) {
+      LOG.debug("TMS Table {} was not found. Skipping disable.", tableId, ex);
+    } catch (TableNotEnabledException ex) {
+      LOG.debug("TMS Table {} was already in disabled state.", tableId, ex);
+    }
+  }
+
+  private void upgradeCoProcessor(TableId tableId, Class<? extends Coprocessor> coprocessor) throws IOException {
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      // If table doesn't exist, then skip upgrading coprocessor
+      if (!tableUtil.tableExists(admin, tableId)) {
+        LOG.debug("TMS Table {} was not found. Skip upgrading coprocessor.", tableId);
+        return;
+      }
+
+      HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);
+
+      // Get cdap version from the table
+      ProjectInfo.Version version = HBaseTableUtil.getVersion(tableDescriptor);
+
+      if (version.compareTo(ProjectInfo.getVersion()) >= 0) {
+        // If cdap has version has not changed or is greater, no need to update
+        LOG.info("Table '{}' has not changed and its version '{}' is same or greater than current CDAP version '{}'",
+                 tableId, version, ProjectInfo.getVersion());
+        return;
+      }
+
+      // create a new descriptor for the table update
+      HTableDescriptorBuilder newDescriptor = tableUtil.buildHTableDescriptor(tableDescriptor);
+
+      // Remove old coprocessor
+      Map<String, HBaseTableUtil.CoprocessorInfo> coprocessorInfo = HBaseTableUtil.getCoprocessorInfo(tableDescriptor);
+      for (Map.Entry<String, HBaseTableUtil.CoprocessorInfo> coprocessorEntry : coprocessorInfo.entrySet()) {
+        newDescriptor.removeCoprocessor(coprocessorEntry.getValue().getClassName());
+      }
+
+      // Add new coprocessor
+      addCoprocessor(coprocessor, newDescriptor);
+
+      // Update CDAP version, table prefix
+      HBaseTableUtil.setVersion(newDescriptor);
+      HBaseTableUtil.setTablePrefix(newDescriptor, cConf);
+
+      // Disable Table
+      disableTable(admin, tableId);
+
+      tableUtil.modifyTable(admin, newDescriptor.build());
+      LOG.debug("Enabling table '{}'...", tableId);
+      tableUtil.enableTable(admin, tableId);
+    }
+
+    LOG.info("Table '{}' update completed.", tableId);
+  }
+
   /**
    * Creates a new instance of {@link HTable} for the given {@link TableId}. If the hbase table doesn't
    * exist, a new one will be created with the given number of splits.
@@ -144,6 +231,11 @@ public final class HBaseTableFactory implements TableFactory {
                                         Class<? extends Coprocessor> coprocessor) throws IOException {
     // Create the table if the table doesn't exist
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      // If table exists, then skip creating coprocessor etc
+      if (tableUtil.tableExists(admin, tableId)) {
+        return tableUtil.createHTable(hConf, tableId);
+      }
+
       // Set the key distributor size the same as the initial number of splits, essentially one bucket per split.
       AbstractRowKeyDistributor keyDistributor = new RowKeyDistributorByHashPrefix(new OneByteSimpleHash(splits));
 
