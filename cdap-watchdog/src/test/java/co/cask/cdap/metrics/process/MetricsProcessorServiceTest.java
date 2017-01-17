@@ -131,17 +131,6 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
     metricsContext.put(Constants.Metrics.Tag.FLOW, "FLOW_1");
     MetricsContext context = new NoopMetricsContext(metricsContext);
 
-    // TODO cannot receive metrics if kafkaMetricsProcessorService starts after publishing
-    KafkaMetricsProcessorService kafkaMetricsProcessorService =
-      new KafkaMetricsProcessorService(kafkaClient,
-                                       injector.getInstance(MetricDatasetFactory.class),
-                                       new MetricsMessageCallbackFactory(injector.getInstance(SchemaGenerator.class),
-                                                                         injector.getInstance(DatumReaderFactory.class),
-                                                                         metricStore, 4), topicPrefix, partitions);
-
-    kafkaMetricsProcessorService.setMetricsContext(context);
-    kafkaMetricsProcessorService.startAndWait();
-
     KafkaPublisher publisher = kafkaClient.getPublisher(KafkaPublisher.Ack.FIRE_AND_FORGET, Compression.SNAPPY);
     KafkaPublisher.Preparer preparer = publisher.prepare(topicPrefix);
 
@@ -152,7 +141,19 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
     }
     preparer.send();
 
+    // Sleep to make sure metrics get published
+    Thread.sleep(2000);
 
+    // Consume and process metrics after they are published to Kafka
+    KafkaMetricsProcessorService kafkaMetricsProcessorService =
+      new KafkaMetricsProcessorService(kafkaClient,
+                                       injector.getInstance(MetricDatasetFactory.class),
+                                       new MetricsMessageCallbackFactory(injector.getInstance(SchemaGenerator.class),
+                                                                         injector.getInstance(DatumReaderFactory.class),
+                                                                         metricStore, 4), topicPrefix, partitions);
+
+    kafkaMetricsProcessorService.setMetricsContext(context);
+    kafkaMetricsProcessorService.startAndWait();
 
     // Intentionally set fetcher persist threshold to a small value, so that MessagingMetricsProcessorService
     // internally can persist metrics when more messages are to be fetched
