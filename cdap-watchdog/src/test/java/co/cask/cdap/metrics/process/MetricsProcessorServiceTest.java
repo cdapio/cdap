@@ -85,8 +85,8 @@ import java.util.Set;
 /**
  * Testing the basic properties of the {@link MessagingMetricsProcessorService}.
  */
-public class MessagingMetricsProcessorServiceTest extends MessagingMetricsTestBase {
-  private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsProcessorServiceTest.class);
+public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorServiceTest.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder1 = new TemporaryFolder();
@@ -131,6 +131,7 @@ public class MessagingMetricsProcessorServiceTest extends MessagingMetricsTestBa
     metricsContext.put(Constants.Metrics.Tag.FLOW, "FLOW_1");
     MetricsContext context = new NoopMetricsContext(metricsContext);
 
+    // TODO cannot receive metrics if kafkaMetricsProcessorService starts after publishing
     KafkaMetricsProcessorService kafkaMetricsProcessorService =
       new KafkaMetricsProcessorService(kafkaClient,
                                        injector.getInstance(MetricDatasetFactory.class),
