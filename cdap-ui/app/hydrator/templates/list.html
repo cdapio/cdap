@@ -56,8 +56,7 @@
 </div>
 
 <div class="my-pipelines">
-  <div ng-if="ListController.pipelineList.length > 0">
-
+  <div ng-if="ListController.pipelineList.length > 0 && ListController.pipelineListLoaded">
     <div class="table-responsive">
       <table class="table" cask-sortable>
         <thead>
@@ -143,9 +142,17 @@
 
   </div>
 
-  <div ng-if="ListController.pipelineList.length === 0">
+  <div ng-if="ListController.pipelineList.length === 0 && ListController.pipelineListLoaded">
     <div class="well well-lg text-center">
       <h4>You haven't published any pipelines yet - start by adding one.</h4>
+    </div>
+  </div>
+
+  <div ng-if="!ListController.pipelineListLoaded">
+    <div class="well well-lg text-center">
+      <h3>
+        <span class="fa fa-spinner fa-spin fa-2x"></span>
+      </h3>
     </div>
   </div>
 </div>
