@@ -22,6 +22,7 @@ class TrackerTagsController{
     this.$uibModal = $uibModal;
     this.currentPreferredPage = 1;
     this.currentUserPage = 1;
+    this.loadingTags = true;
     this.tags = {
       preferredTags: [],
       userTags: []
@@ -64,7 +65,9 @@ class TrackerTagsController{
             numPages: Math.ceil(this.tags.userTags.length / 10)
           };
         }
+        this.loadingTags = false;
       }, (err) => {
+        this.loadingTags = false;
         console.log('Error', err);
       });
   }
