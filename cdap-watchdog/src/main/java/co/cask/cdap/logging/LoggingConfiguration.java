@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,6 +47,7 @@ public final class LoggingConfiguration {
   public static final String KAFKA_PRODUCER_TYPE = "kafka.producer.type";
   public static final String KAFKA_PROCUDER_BUFFER_MS = "kafka.producer.buffer.ms";
   public static final String LOG_CLEANUP_RUN_INTERVAL_MINS = "log.cleanup.run.interval.mins";
+  public static final String LOG_CLEANUP_MAX_NUM_FILES = "log.cleanup.max.num.files";
 
   // Constants
   // Table used to store log metadata
