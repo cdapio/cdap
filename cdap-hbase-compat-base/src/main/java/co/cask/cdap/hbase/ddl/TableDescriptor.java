@@ -65,7 +65,6 @@ public final class TableDescriptor {
     }
 
     this.properties = ImmutableMap.copyOf(properties);
-    this.properties.put(CDAP_VERSION, ProjectInfo.getVersion().toString());
   }
 
   public String getNamespace() {
@@ -151,16 +150,18 @@ public final class TableDescriptor {
   public static class Builder {
     private Set<ColumnFamilyDescriptor> families = new HashSet<>();
     private Set<CoprocessorDescriptor> coprocessors = new HashSet<>();
-    private Map<String, String> properties;
+    private final Map<String, String> properties;
 
-    private final CConfiguration cConf;
     private final TableId tableId;
+    private final String tablePrefix;
     private final HTableNameConverter nameConverter = new HTableNameConverter();
 
     public Builder(CConfiguration cConf, TableId tableId) {
-      this.cConf = cConf;
       this.tableId = tableId;
-
+      this.properties = new HashMap<>();
+      properties.put(CDAP_VERSION, ProjectInfo.getVersion().toString());
+      this.tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+      properties.put(Constants.Dataset.TABLE_PREFIX, tablePrefix);
     }
 
     public Builder addCoprocessor(CoprocessorDescriptor coprocessor) {
@@ -179,8 +180,6 @@ public final class TableDescriptor {
     }
 
     public TableDescriptor build() {
-      String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
-      properties.put(Constants.Dataset.TABLE_PREFIX, tablePrefix);
       TableName tableName = nameConverter.toTableName(tablePrefix, tableId);
       return new TableDescriptor(tableName.getNamespaceAsString(), tableName.getQualifierAsString(), families,
                                  coprocessors, properties);

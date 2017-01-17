@@ -23,6 +23,8 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,6 +34,7 @@ import java.util.Map;
  */
 public final class ColumnFamilyDescriptor {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ColumnFamilyDescriptor.class);
   public static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   public static final String CFG_HBASE_TABLE_COMPRESSION = "hbase.table.compression.default";
 
@@ -88,8 +91,11 @@ public final class ColumnFamilyDescriptor {
     String name = family.getNameAsString();
     int maxVersions = family.getMaxVersions();
     // TODO check this
-    CompressionType compressionType = CompressionType.valueOf(family.getCompressionType().getName());
-    BloomType bloomType = BloomType.valueOf(family.getBloomFilterType().name());
+
+    LOG.info("SAGAR--------- compression {}, {}, {}", family.getCompression().getName(),
+             family.getCompressionType().getName(), family.getCompressionType().getName().toUpperCase());
+    CompressionType compressionType = CompressionType.valueOf(family.getCompressionType().getName().toUpperCase());
+    BloomType bloomType = BloomType.valueOf(family.getBloomFilterType().name().toUpperCase());
 
     Map<String, String> properties = new HashMap<>();
     for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> value : family.getValues().entrySet()) {
@@ -117,7 +123,7 @@ public final class ColumnFamilyDescriptor {
     private int maxVersions;
     private CompressionType compressionType;
     private BloomType bloomType;
-    private Map<String, String> properties;
+    private final Map<String, String> properties;
 
     public Builder(Configuration hConf, String name) {
       this.name = name;
@@ -125,6 +131,7 @@ public final class ColumnFamilyDescriptor {
       this.compressionType = CompressionType.valueOf(compression);
       this.bloomType = BloomType.ROW;
       this.maxVersions = 1;
+      this.properties = new HashMap<>();
     }
 
     public Builder setMaxVersions(int n) {

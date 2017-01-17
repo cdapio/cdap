@@ -38,6 +38,8 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -50,7 +52,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
   public static final String PROPERTY_SPLITS = "hbase.splits";
 
   private static final Gson GSON = new Gson();
-
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseTableAdmin.class);
   private final DatasetSpecification spec;
   // todo: datasets should not depend on cdap configuration!
   private final CConfiguration conf;
@@ -116,6 +118,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     CoprocessorJar coprocessorJar = createCoprocessorJar();
 
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
+      LOG.info("SAGAR ----- {}, {}, {}, {}.", tableDescriptor, coprocessor, coprocessorJar.getJarLocation(),
+               coprocessorJar.getPriority(coprocessor));
       addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation(),
                      coprocessorJar.getPriority(coprocessor));
     }
