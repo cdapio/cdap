@@ -137,6 +137,7 @@ class HydratorPlusPlusTopPanelCtrl{
   }
   onSaveDraft() {
     this.HydratorPlusPlusConfigActions.saveAsDraft();
+    this.checkNameError();
   }
   checkNameError() {
     let messages = this.consoleStore.getMessages() || [];
