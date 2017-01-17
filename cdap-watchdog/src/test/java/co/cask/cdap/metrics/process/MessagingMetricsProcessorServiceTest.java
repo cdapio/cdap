@@ -20,10 +20,14 @@ import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
+import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.io.BinaryEncoder;
@@ -45,15 +49,13 @@ import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Table;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,8 +64,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -80,10 +85,9 @@ public class MessagingMetricsProcessorServiceTest extends MessagingMetricsTestBa
 
   private ByteArrayOutputStream encoderOutputStream = new ByteArrayOutputStream(1024);
   private Encoder encoder = new BinaryEncoder(encoderOutputStream);
-  private Table<String, String, Long> expected = HashBasedTable.create();
 
   @Test
-  public void testMetricsProcessor() throws TopicNotFoundException, IOException, InterruptedException {
+  public void testMetricsProcessor() throws Exception {
     injector.getInstance(TransactionManager.class).startAndWait();
     injector.getInstance(DatasetOpExecutor.class).startAndWait();
     injector.getInstance(DatasetService.class).startAndWait();
@@ -101,14 +105,20 @@ public class MessagingMetricsProcessorServiceTest extends MessagingMetricsTestBa
                                            metricStore,
                                            MESSAGING_FETCHER_PERSIST_THRESHOLD);
 
+    final Map<String, String> metricsContext = new HashMap<>();
+    metricsContext.put(Constants.Metrics.Tag.NAMESPACE, "NS_1");
+    metricsContext.put(Constants.Metrics.Tag.APP, "APP_1");
+    metricsContext.put(Constants.Metrics.Tag.FLOW, "FLOW_1");
+
+    metricsProcessorService.setMetricsContext(new NoopMetricsContext(metricsContext));
     metricsProcessorService.startAndWait();
-    // Publish metrics and record expected metrics
+    Map<String, Long> expected = new HashMap<>();
     // Publish metrics and record expected metrics
     for (int i = 1; i <= 5; i++) {
-      publishMetrics(i);
+      publishMetrics(i, metricsContext, expected);
     }
 
-    Thread.sleep(8000);
+    Thread.sleep(5000);
     // Stop and restart metricsProcessorService
     metricsProcessorService.stopAndWait();
     metricsProcessorService =
@@ -120,33 +130,44 @@ public class MessagingMetricsProcessorServiceTest extends MessagingMetricsTestBa
     metricsProcessorService.startAndWait();
 
     for (int i = 6; i <= 10; i++) {
-      publishMetrics(i);
+      publishMetrics(i, metricsContext, expected);
     }
 
-    Thread.sleep(8000);
+    Thread.sleep(5000);
 
-    MetricDataQuery metricDataQuery =
-      new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, "processed",
-                          AggregationFunction.SUM, ImmutableMap.of("tag", String.valueOf(1)),
-                          ImmutableList.<String>of());
-    Collection<MetricTimeSeries> query = metricStore.query(metricDataQuery);
-    MetricTimeSeries timeSeries = Iterables.getOnlyElement(query);
-    List<TimeValue> timeValues = timeSeries.getTimeValues();
-    TimeValue timeValue = Iterables.getOnlyElement(timeValues);
+    // Query metrics from the metricStore and compare them with the expected ones
+    assertMetricsResult(metricStore, metricsContext, expected);
 
-    // Stop services
     metricsProcessorService.stopAndWait();
   }
 
-  private void publishMetrics(int i) throws IOException, TopicNotFoundException {
+  private void publishMetrics(int i, Map<String, String> metricsContext, Map<String, Long> expected) throws IOException, TopicNotFoundException {
+    String metricName = "processed" + "_" + i;
     MetricValues metric =
-      new MetricValues(ImmutableMap.of("tag", String.valueOf(i)), "new", START_TIME + i, i, MetricType.GAUGE);
+      new MetricValues(metricsContext, metricName, START_TIME + i * 100, i, MetricType.GAUGE);
     recordWriter.encode(metric, encoder);
     messagingService.publish(StoreRequestBuilder.of(metricsTopics[i % PARTITION_SIZE])
                                .addPayloads(encoderOutputStream.toByteArray()).build());
     LOG.info("Published metric: {}", metric);
     encoderOutputStream.reset();
-    expected.put("tag." + i, "processed", (long) i);
+    // TODO correct context format
+    expected.put("system." + metricName, (long) i);
+  }
+
+  private void assertMetricsResult(MetricStore metricStore, Map<String, String> metricsContext,
+                                   Map<String, Long> expected) {
+    for (Map.Entry<String, Long> metric : expected.entrySet()) {
+      MetricDataQuery metricDataQuery =
+        new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, metric.getKey(),
+                            AggregationFunction.SUM,
+                            metricsContext,
+                            ImmutableList.<String>of());
+      Collection<MetricTimeSeries> query = metricStore.query(metricDataQuery);
+      MetricTimeSeries timeSeries = Iterables.getOnlyElement(query);
+      List<TimeValue> timeValues = timeSeries.getTimeValues();
+      TimeValue timeValue = Iterables.getOnlyElement(timeValues);
+      Assert.assertEquals(metric.getValue().longValue(), timeValue.getValue());
+    }
   }
 
   @Override
