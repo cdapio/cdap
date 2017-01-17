@@ -151,35 +151,51 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   });
 
-  // This is used for single click deploy app from Cask Market
-  app.get('/streamApp', function(req, res) {
-    var contentLink = req.query.content;
-    var streamTo = req.query.stream;
-    var jarName = req.query.name;
+  /**
+   * This is used to stream content from Market directly to CDAP
+   * ie. download app from market, and publish to CDAP
+   *
+   * Query parameters:
+   *    source: Link to the content to forward
+   *    sourceMethod: HTTP method to obtain content (default to GET)
+   *    target: CDAP API
+   *    targetMethod: HTTP method for the CDAP API (default to POST)
+   *    headers: JSON of custom headers for CDAP
+   **/
+  app.get('/forwardMarketToCdap', function(req, res) {
+    var sourceLink = req.query.content,
+        targetLink = req.query.stream,
+        sourceMethod = req.query.sourceMethod || 'GET',
+        targetMethod = req.query.targetMethod || 'POST'
+        headers;
 
-    var headers = {
-      'Content-Type': 'application/octet-stream',
-      'X-Archive-Name': jarName
+    if (req.query.headers) {
+      try {
+        headers = JSON.parse(req.query.headers);
+      } catch (e) {
+        res.status(500).send(e);
+        log.error('/forwardMarketToCDAP failed to parse headers');
+        return;
+      }
+    }
+
+    var forwardRequestObject = {
+      url: targetLink,
+      method: targetMethod
     };
 
-    if (req.cookies['CDAP_Auth_Token']) {
-      headers = {
-        authorization: 'Bearer ' + req.cookies['CDAP_Auth_Token']
-      };
+    if (headers) {
+      forwardRequestObject.headers = headers;
     }
 
     request({
-      url: contentLink,
-      method: 'GET'
+      url: sourceLink,
+      method: sourceMethod
     })
     .on('error', function (e) {
       log.error('Error', e);
     })
-    .pipe(request({
-      url: streamTo,
-      method: 'POST',
-      headers: headers
-    }))
+    .pipe(request(forwardRequestObject))
     .on('error', function (e) {
       log.error('Error', e);
     })
