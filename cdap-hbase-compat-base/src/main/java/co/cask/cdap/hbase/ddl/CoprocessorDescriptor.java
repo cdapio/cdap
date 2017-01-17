@@ -45,7 +45,7 @@ public final class CoprocessorDescriptor {
     this.className = className;
     this.path = path;
     this.priority = priority;
-    this.properties = ImmutableMap.copyOf(properties);
+    this.properties = properties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(properties);
   }
 
   public String getClassName() {
