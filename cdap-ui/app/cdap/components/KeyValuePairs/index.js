@@ -92,7 +92,14 @@ export default class KeyValuePairs extends Component {
     this.setState({
       pairs: [...nextProps.keyValues.pairs]
     });
+    if (nextProps.fieldsResetted) {
+      this.keyValueStore.dispatch({
+        type: KeyValueStoreActions.onUpdate,
+        payload: {pairs: nextProps.keyValues.pairs}
+      });
+    }
   }
+
   render() {
     return (
       <div>
