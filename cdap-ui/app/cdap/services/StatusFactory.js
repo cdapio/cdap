@@ -18,12 +18,21 @@ import LoadingIndicatorStore, {BACKENDSTATUS} from 'components/LoadingIndicator/
 import StatusAlertMessageStore from 'components/StatusAlertMessage/StatusAlertMessageStore';
 import debounce from 'lodash/debounce';
 import T from 'i18n-react';
-
+import cookie from 'react-cookie';
 let isPollingEnabled = true;
 let pollCycleInProgress = false;
 let errorStateCount = 0;
 const poll = () => {
-  fetch('/backendstatus')
+  let headers = {};
+  let fetchPromise;
+  if (window.CDAP_CONFIG.securityEnabled) {
+    let token = cookie.load('CDAP_Auth_Token');
+    headers.Authorization = 'Bearer ' +  token;
+    fetchPromise = fetch('/backendstatus', { headers });
+  } else {
+    fetchPromise = fetch('/backendstatus');
+  }
+  fetchPromise
     .then(response => {
       /*
         We handle,
