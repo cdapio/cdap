@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -67,13 +67,14 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
   }
 
   @Override
-  public void onReceived(Iterator<FetchedMessage> messages) {
+  public long onReceived(Iterator<FetchedMessage> messages) {
     // Decode the metrics records.
     ByteBufferInputStream is = new ByteBufferInputStream(null);
     List<MetricValues> records = Lists.newArrayList();
-
+    long nextOffset = -1L;
     while (messages.hasNext()) {
       FetchedMessage input = messages.next();
+      nextOffset = input.getNextOffset();
       try {
         MetricValues metricValues = recordReader.read(new BinaryDecoder(is.reset(input.getPayload())), recordSchema);
         records.add(metricValues);
@@ -84,7 +85,6 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
 
     if (records.isEmpty()) {
       LOG.info("No records to process.");
-      return;
     }
 
     try {
@@ -102,6 +102,7 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
       LOG.info("{} metrics records processed. Last record time: {}.",
                recordsProcessed, records.get(records.size() - 1).getTimestamp());
     }
+    return nextOffset;
   }
 
   private void addProcessingStats(List<MetricValues> records) {

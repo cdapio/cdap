@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,12 +58,13 @@ public final class PersistedMessageCallback implements KafkaConsumer.MessageCall
   }
 
   @Override
-  public void onReceived(Iterator<FetchedMessage> messages) {
-    delegate.onReceived(new OffsetTrackingIterator(messages));
+  public long onReceived(Iterator<FetchedMessage> messages) {
+    long nextOffset = delegate.onReceived(new OffsetTrackingIterator(messages));
     if (messageCount.get() >= persistThreshold) {
       messageCount.set(0);
       persistOffsets();
     }
+    return nextOffset;
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,24 +61,26 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
   }
 
   @Override
-  public void onReceived(Iterator<FetchedMessage> messages) {
+  public long onReceived(Iterator<FetchedMessage> messages) {
 
     try {
       if (stopLatch.await(1, TimeUnit.NANOSECONDS)) {
         // if count down occurred return
         LOG.debug("Returning since callback is cancelled.");
-        return;
+        return -1L;
       }
     } catch (InterruptedException e) {
       LOG.error("Exception: ", e);
       Thread.currentThread().interrupt();
-      return;
+      return -1L;
     }
 
     long oldestProcessed = Long.MAX_VALUE;
+    long nextOffset = -1L;
     List<KafkaLogEvent> events = Lists.newArrayList();
     while (messages.hasNext()) {
       FetchedMessage message = messages.next();
+      nextOffset = message.getNextOffset();
       try {
         GenericRecord genericRecord = serializer.toGenericRecord(message.getPayload());
         ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
@@ -117,6 +119,7 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
     }
 
     LOG.trace("Got {} messages from kafka", count);
+    return nextOffset;
   }
 
   @Override
