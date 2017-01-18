@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
 public class MessagingMetricsProcessorService extends AbstractMetricsProcessorService {
   private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsProcessorService.class);
 
-  private static final long INITIAL_LAST_MESSAGE_ID = -1L;
+  private static final byte[] INITIAL_LAST_MESSAGE_ID = Bytes.toBytes(-1L);
 
   private final TopicId[] metricsTopics;
   private final TopicIdMetaKey[] metricsTopicMetaKeys;
@@ -129,7 +129,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
     while (i < metricsTopics.length && isRunning()) {
       byte[] messageId = null;
       try {
-        messageId = metaTable.get(metricsTopicMetaKeys[i]);
+        messageId = metaTable.getBytes(metricsTopicMetaKeys[i]);
         LOG.info("Last processed MessageId for topic: {} is {}", metricsTopics[i], messageId);
       } catch (Exception e) {
         LOG.info(String.format("Cannot retrieve last processed MessageId for topic: %s", metricsTopics[i]), e);
@@ -146,7 +146,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
         // If no messageId is found for the last processed message, start fetching from beginning
         fetcher.setStartTime(0L);
       } else {
-        fetcher.setStartMessage(Bytes.toBytes(messageId), false);
+        fetcher.setStartMessage(messageId, false);
       }
       ProcessMetricsThread processMetricsThread = new ProcessMetricsThread(fetcher, metricsTopics[i],
                                                                            metricsTopicMetaKeys[i]);

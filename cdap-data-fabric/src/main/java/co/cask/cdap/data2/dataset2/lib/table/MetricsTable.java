@@ -41,6 +41,11 @@ public interface MetricsTable extends Dataset {
   void put(SortedMap<byte[], ? extends SortedMap<byte[], Long>> updates);
 
   /**
+   * Write multiple rows, each with multiple individual columns of byte array type to write.
+   */
+  void putBytes(SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> updates);
+
+  /**
    * Atomically compare a single column of a row with a expected value, and if it matches, replace it with a new value.
    * @param oldValue the expected value of the column. If null, this means that the column must not exist.
    * @param newValue the new value of the column. If null, the effect to delete the column if the comparison succeeds.

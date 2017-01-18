@@ -77,6 +77,15 @@ public class InMemoryMetricsTable implements MetricsTable {
   }
 
   @Override
+  public void putBytes(SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> updates) {
+    SortedMap<byte[], SortedMap<byte[], Update>> convertedUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (NavigableMap.Entry<byte[], ? extends SortedMap<byte[], byte[]>> entry : updates.entrySet()) {
+      convertedUpdates.put(entry.getKey(), Maps.transformValues(entry.getValue(), Updates.BYTES_TO_PUTS));
+    }
+    InMemoryTableService.merge(tableName, convertedUpdates, System.currentTimeMillis());
+  }
+
+  @Override
   public boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) {
     return InMemoryTableService.swap(tableName, row, column, oldValue, newValue);
   }

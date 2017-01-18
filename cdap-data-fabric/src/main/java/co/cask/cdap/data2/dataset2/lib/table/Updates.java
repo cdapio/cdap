@@ -36,6 +36,13 @@ public final class Updates {
     }
   };
 
+  public static final Function<byte[], Update> BYTES_TO_PUTS = new Function<byte[], Update>() {
+    @Override
+    public Update apply(byte[] input) {
+      return new PutValue(input);
+    }
+  };
+
   /**
    * Returns a new {@code NavigableMap} with the underlying updates represented as {@code byte[]}.
    *

@@ -47,12 +47,12 @@ public class MetricsConsumerMetaTable {
     metaTable.put(updates);
   }
 
-  public synchronized <T extends MetricsMetaKey> void save(T key, long value) throws Exception {
-    SortedMap<byte[], SortedMap<byte[], Long>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    SortedMap<byte[], Long> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
+  public synchronized <T extends MetricsMetaKey> void save(T key, byte[] value) throws Exception {
+    SortedMap<byte[], SortedMap<byte[], byte[]>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    SortedMap<byte[], byte[]> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
     map.put(MESSAGE_ID_COLUMN, value);
     updates.put(key.getKey(), map);
-    metaTable.put(updates);
+    metaTable.putBytes(updates);
   }
 
   /**
