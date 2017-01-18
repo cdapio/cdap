@@ -28,6 +28,8 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.AuditDetail;
+import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
@@ -100,6 +102,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("streams/{stream}/tables/{table}/enable")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void enableStream(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespace,
                            @PathParam("stream") String streamName,
@@ -223,6 +226,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    */
   @POST
   @Path("datasets/{dataset}/update")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void updateDataset(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName)
     throws BadRequestException {

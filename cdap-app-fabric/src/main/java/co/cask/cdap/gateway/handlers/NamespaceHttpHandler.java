@@ -21,6 +21,8 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.security.AuditDetail;
+import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -73,6 +75,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @PUT
   @Path("/namespaces/{namespace-id}/properties")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void updateNamespaceProperties(HttpRequest request, HttpResponder responder,
                                         @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceMeta meta = parseBody(request, NamespaceMeta.class);
@@ -82,6 +85,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @PUT
   @Path("/namespaces/{namespace-id}")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void create(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId) throws Exception {
     Id.Namespace namespace;

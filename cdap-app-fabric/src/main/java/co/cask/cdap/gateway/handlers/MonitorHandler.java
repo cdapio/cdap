@@ -18,6 +18,8 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.AuditDetail;
+import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
@@ -68,6 +70,7 @@ public class MonitorHandler extends AbstractMonitorHandler {
    */
   @Path("/system/services/{service-name}/instances")
   @PUT
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void setServiceInstance(HttpRequest request, HttpResponder responder,
                                  @PathParam("service-name") final String serviceName) {
     super.setServiceInstance(request, responder, serviceName);

@@ -17,6 +17,8 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.AuditDetail;
+import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
@@ -69,6 +71,7 @@ public class NotificationFeedHttpHandler extends AbstractHttpHandler {
 
   @PUT
   @Path("/feeds/categories/{feed-category}/names/{feed-name}")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void createFeed(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("feed-category") String category,
