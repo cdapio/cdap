@@ -17,6 +17,7 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.common.kerberos.OwnerStore;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -35,6 +36,7 @@ import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
 import co.cask.cdap.data2.registry.DefaultUsageRegistry;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.store.DefaultOwnerStore;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
@@ -80,48 +82,25 @@ public class DataSetsModules extends RuntimeModule {
 
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
+
+        bind(DefaultOwnerStore.class).in(Scopes.SINGLETON);
+        bind(OwnerStore.class).to(DefaultOwnerStore.class);
+        expose(OwnerStore.class);
       }
     };
   }
 
   @Override
   public Module getStandaloneModules() {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        install(new FactoryModuleBuilder()
-                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                  .build(DatasetDefinitionRegistryFactory.class));
-
-        bind(MetadataStore.class).to(DefaultMetadataStore.class);
-        expose(MetadataStore.class);
-
-        bind(DatasetFramework.class)
-          .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
-          .to(RemoteDatasetFramework.class);
-
-        bind(LineageStoreReader.class).to(LineageStore.class);
-        bind(LineageStoreWriter.class).to(LineageStore.class);
-        // Need to expose LineageStoreReader as it's being used by the LineageHandler (through LineageAdmin)
-        expose(LineageStoreReader.class);
-
-        bind(LineageWriter.class).to(BasicLineageWriter.class);
-        expose(LineageWriter.class);
-
-        bind(UsageRegistry.class).to(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
-        expose(UsageRegistry.class);
-        bind(RuntimeUsageRegistry.class).to(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
-        expose(RuntimeUsageRegistry.class);
-        bind(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
-
-        bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
-        expose(DatasetFramework.class);
-      }
-    };
+    return getModule();
   }
 
   @Override
   public Module getDistributedModules() {
+    return getModule();
+  }
+
+  private Module getModule() {
     return new PrivateModule() {
       @Override
       protected void configure() {
@@ -152,6 +131,10 @@ public class DataSetsModules extends RuntimeModule {
 
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
+
+        bind(DefaultOwnerStore.class).in(Scopes.SINGLETON);
+        bind(OwnerStore.class).to(DefaultOwnerStore.class);
+        expose(OwnerStore.class);
       }
     };
   }

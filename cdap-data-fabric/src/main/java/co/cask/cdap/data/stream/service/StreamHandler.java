@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
@@ -41,6 +42,7 @@ import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
@@ -244,6 +246,10 @@ public final class StreamHandler extends AbstractHttpHandler {
       if (streamProperties.getFormat() != null) {
         props.put(Constants.Stream.FORMAT_SPECIFICATION, GSON.toJson(streamProperties.getFormat()));
       }
+
+      if (streamProperties.getOwnerPrincipal() != null) {
+        props.put(Constants.Security.OWNER_PRINCIPAL, GSON.toJson(streamProperties.getOwnerPrincipal()));
+      }
     }
 
     streamAdmin.create(streamId, props);
@@ -441,7 +447,13 @@ public final class StreamHandler extends AbstractHttpHandler {
       return null;
     }
 
-    return new StreamProperties(ttl, formatSpec, threshold, properties.getDescription());
+    // validate owner principal if one is provided
+    if (properties.getOwnerPrincipal() != null) {
+      SecurityUtil.validateKerberosPrincipal(properties.getOwnerPrincipal());
+    }
+
+    return new StreamProperties(ttl, formatSpec, threshold, properties.getDescription(),
+                                properties.getOwnerPrincipal());
   }
 
   private RejectedExecutionHandler createAsyncRejectedExecutionHandler() {
@@ -514,6 +526,10 @@ public final class StreamHandler extends AbstractHttpHandler {
       if (src.getDescription() != null) {
         json.addProperty("description", src.getDescription());
       }
+      if (src.getOwnerPrincipal() != null) {
+        json.add(Constants.Security.OWNER_PRINCIPAL, context.serialize(src.getOwnerPrincipal(),
+                                                                       KerberosPrincipalId.class));
+      }
       return json;
     }
 
@@ -532,7 +548,12 @@ public final class StreamHandler extends AbstractHttpHandler {
         jsonObj.get("notification.threshold.mb").getAsInt() : null;
 
       String description = jsonObj.has("description") ? jsonObj.get("description").getAsString() : null;
-      return new StreamProperties(ttl, format, threshold, description);
+      KerberosPrincipalId ownerPrincipal = null;
+      if (jsonObj.has(Constants.Security.OWNER_PRINCIPAL)) {
+        ownerPrincipal = context.deserialize(jsonObj.get(Constants.Security.OWNER_PRINCIPAL),
+                                             KerberosPrincipalId.class);
+      }
+      return new StreamProperties(ttl, format, threshold, description, ownerPrincipal);
     }
   }
 

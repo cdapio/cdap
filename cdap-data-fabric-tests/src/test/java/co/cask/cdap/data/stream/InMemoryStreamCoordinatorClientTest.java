@@ -19,6 +19,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerStore;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.security.UGIProvider;
@@ -36,9 +39,11 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.store.InMemoryOwnerStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -59,7 +64,14 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
       new ConfigModule(cConf),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new DataSetsModules().getInMemoryModules(),
+      Modules.override(new DataSetsModules().getInMemoryModules()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          // bind to an in mem implementation for this test since the DefaultOwnerStore uses transaction and in this
+          // test we are not starting a transaction service
+          bind(OwnerStore.class).to(InMemoryOwnerStore.class).in(Scopes.SINGLETON);
+        }
+      }),
       new DataFabricModules().getInMemoryModules(),
       new NonCustomLocationUnitTestModule().getModule(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
@@ -76,6 +88,7 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
           protected void configure() {
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
             bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           }
         })
     );

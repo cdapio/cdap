@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,7 @@ import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.http.HttpRequest;
@@ -63,6 +64,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Test stream handler. This is not part of GatewayFastTestsSuite because it needs to start the gateway multiple times.
@@ -120,7 +122,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     Schema schema = Schema.recordOf("event", Schema.Field.of("purchase", Schema.of(Schema.Type.STRING)));
     FormatSpecification formatSpecification = new FormatSpecification(
       TextRecordFormat.class.getCanonicalName(), schema, ImmutableMap.of(TextRecordFormat.CHARSET, "utf8"));
-    StreamProperties properties = new StreamProperties(1L, formatSpecification, 128, desc);
+    StreamProperties properties = new StreamProperties(1L, formatSpecification, 128, desc, null);
     urlConn.getOutputStream().write(GSON.toJson(properties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -134,7 +136,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     Assert.assertEquals(properties, actual);
 
     // Update desc and ttl and check whether the changes were persisted
-    StreamProperties newProps = new StreamProperties(2L, null, null, "small stream");
+    StreamProperties newProps = new StreamProperties(2L, null, null, "small stream", null);
     urlConn = openURL(createPropertiesURL("stream1"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     urlConn.getOutputStream().write(GSON.toJson(newProps).getBytes(Charsets.UTF_8));
@@ -148,8 +150,44 @@ public class StreamHandlerTest extends GatewayTestBase {
     urlConn.disconnect();
     StreamProperties expected = new StreamProperties(newProps.getTTL(), properties.getFormat(),
                                                      properties.getNotificationThresholdMB(),
-                                                     newProps.getDescription());
+                                                     newProps.getDescription(), properties.getOwnerPrincipal());
     Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testOwner() throws Exception {
+    // Should not be able to create a stream with invalid principal format
+    createStreamWithOwner("streams/ownedStream", HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                          new KerberosPrincipalId("alice/bob/somehost@SOMEKDC.NET"));
+    // The above failure to store the owner must have failed the stream creation and stream meta should not exists
+    HttpURLConnection urlConn = openURL(createStreamInfoURL("ownedStream"), HttpMethod.GET);
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), urlConn.getResponseCode());
+    urlConn.disconnect();
+
+    // Should be able to create a stream with valid principal format
+    KerberosPrincipalId alicePrincipal = new KerberosPrincipalId("alice/somehost@SOMEKDC.NET");
+    createStreamWithOwner("streams/ownedStream", HttpResponseStatus.OK,
+                          alicePrincipal);
+
+    // Check whether owner information was saved
+    Assert.assertEquals(alicePrincipal, getOwner("ownedStream"));
+
+    // Updating owner information should fail
+    verifyUpdateOwnerFailure("ownedStream", new KerberosPrincipalId("bob@SOMEKDC.NET"));
+
+    // Trying to set owner to null should fail too
+    verifyUpdateOwnerFailure("ownedStream", null);
+
+    // Should be able create a stream without owner info
+    urlConn = openURL(createURL("streams/noOwner"), HttpMethod.PUT);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    urlConn.disconnect();
+
+    // There should be no owner information present for this stream
+    Assert.assertNull(getOwner("noOwner"));
+
+    // although updating owner for a stream which have no previous owner should fail too
+    verifyUpdateOwnerFailure("noOwner", new KerberosPrincipalId("bob@SOMEKDC.NET"));
   }
 
   @Test
@@ -490,5 +528,34 @@ public class StreamHandlerTest extends GatewayTestBase {
       return 0;
     }
     return series[0].getData()[0].getValue();
+  }
+
+  private KerberosPrincipalId getOwner(String streamName) throws IOException, URISyntaxException {
+    HttpURLConnection urlConn = openURL(createStreamInfoURL(streamName), HttpMethod.GET);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    StreamProperties properties = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
+                                                           Charsets.UTF_8), StreamProperties.class);
+    urlConn.disconnect();
+    return properties.getOwnerPrincipal();
+  }
+
+  private void createStreamWithOwner(String streamUrl, HttpResponseStatus responseStatus,
+                                     @Nullable KerberosPrincipalId owner) throws IOException, URISyntaxException {
+    HttpURLConnection urlConn = openURL(createURL(streamUrl), HttpMethod.PUT);
+    urlConn.setDoOutput(true);
+    StreamProperties properties = new StreamProperties(1L, null, 128, null, owner);
+    urlConn.getOutputStream().write(GSON.toJson(properties).getBytes(Charsets.UTF_8));
+    Assert.assertEquals(responseStatus.getCode(), urlConn.getResponseCode());
+    urlConn.disconnect();
+  }
+
+  private void verifyUpdateOwnerFailure(String streamName, @Nullable KerberosPrincipalId ownerPrincipal)
+    throws IOException, URISyntaxException {
+    StreamProperties newProps = new StreamProperties(1L, null, null, null, ownerPrincipal);
+    HttpURLConnection urlConn = openURL(createPropertiesURL(streamName), HttpMethod.PUT);
+    urlConn.setDoOutput(true);
+    urlConn.getOutputStream().write(GSON.toJson(newProps).getBytes(Charsets.UTF_8));
+    Assert.assertEquals(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(), urlConn.getResponseCode());
+    urlConn.disconnect();
   }
 }

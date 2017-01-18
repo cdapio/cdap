@@ -28,6 +28,8 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.security.CurrentUGIProvider;
 import co.cask.cdap.common.security.UGIProvider;
@@ -122,6 +124,8 @@ public class DistributedProgramRunnableModule {
 
           // bind PrivilegesManager to a remote implementation, so it does not need to instantiate the authorizer
           bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
+
+          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
       }
     );

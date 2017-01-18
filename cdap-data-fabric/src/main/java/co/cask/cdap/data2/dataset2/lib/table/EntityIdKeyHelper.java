@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.dataset;
+package co.cask.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -33,12 +33,14 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- * Helper methods for keys of {@link MetadataDataset}.
+ * Helper methods to create keys for {@link co.cask.cdap.proto.id.EntityId}.
+ * This should be used in place of {@link EntityId#toString()} while persisting {@link EntityId} to avoid
+ * incompatibility issues across CDAP upgrades.
  */
 // Note: these methods were refactored from MetadataDataset class. Once CDAP-3657 is fixed, these methods will need
 // to be cleaned up CDAP-4291
-final class KeyHelper {
-  static final Map<Class<? extends NamespacedEntityId>, String> TYPE_MAP =
+public final class EntityIdKeyHelper {
+  public static final Map<Class<? extends NamespacedEntityId>, String> TYPE_MAP =
     ImmutableMap.<Class<? extends NamespacedEntityId>, String>builder()
     .put(ArtifactId.class, MetadataSearchTargetType.ARTIFACT.getSerializedForm())
     .put(ApplicationId.class, MetadataSearchTargetType.APP.getSerializedForm())
@@ -51,7 +53,7 @@ final class KeyHelper {
     .put(StreamViewId.class, MetadataSearchTargetType.VIEW.getSerializedForm())
     .build();
 
-  static void addTargetIdToKey(MDSKey.Builder builder, NamespacedEntityId namespacedEntityId) {
+  public static void addTargetIdToKey(MDSKey.Builder builder, NamespacedEntityId namespacedEntityId) {
     String type = getTargetType(namespacedEntityId);
     if (type.equals(TYPE_MAP.get(ProgramId.class))) {
       ProgramId program = (ProgramId) namespacedEntityId;
@@ -102,7 +104,7 @@ final class KeyHelper {
     }
   }
 
-  static NamespacedEntityId getTargetIdIdFromKey(MDSKey.Splitter keySplitter, String type) {
+  public static NamespacedEntityId getTargetIdIdFromKey(MDSKey.Splitter keySplitter, String type) {
     if (type.equals(TYPE_MAP.get(ProgramId.class))) {
       String namespaceId = keySplitter.getString();
       String appId = keySplitter.getString();
@@ -135,10 +137,10 @@ final class KeyHelper {
     throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
   }
 
-  static String getTargetType(NamespacedEntityId namespacedEntityId) {
+  public static String getTargetType(NamespacedEntityId namespacedEntityId) {
     return TYPE_MAP.get(namespacedEntityId.getClass());
   }
 
-  private KeyHelper() {
+  private EntityIdKeyHelper() {
   }
 }
