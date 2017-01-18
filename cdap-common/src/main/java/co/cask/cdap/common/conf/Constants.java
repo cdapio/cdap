@@ -513,8 +513,9 @@ public final class Constants {
     public static final String SERVER_PORT = "metrics.query.bind.port";
 
     public static final String TOPIC_PREFIX = "metrics.topic.prefix";
+    public static final String KAFKA_TOPIC_PREFIX = "metrics.kafka.topic.prefix";
     public static final String KAFKA_PARTITION_SIZE = "metrics.kafka.partition.size";
-    public static final String KAFKA_META_PERSIST_THRESHOLD = "metrics.kafka.meta.persist.threshold";
+    public static final String KAFKA_CONSUMER_PERSIST_THRESHOLD = "metrics.kafka.consumer.persist.threshold";
     public static final String KAFKA_META_TABLE = "metrics.kafka.meta.table";
 
     // NOTE: "v2" to avoid conflict with data of older metrics system
@@ -523,7 +524,7 @@ public final class Constants {
     public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
     public static final long DEFAULT_RETENTION_HOURS = 2;
 
-    public static final String MESSAGING_PARTITION_SIZE = "metrics.messaging.partition.size";
+    public static final String MESSAGING_PARTITION_NUM = "metrics.messaging.partition.num";
     public static final String MESSAGING_FETCHER_PERSIST_THRESHOLD = "metrics.messaging.fetcher.persist.threshold";
 
     /**

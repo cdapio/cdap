@@ -44,7 +44,7 @@ public final class MetricsMessageCallbackFactory implements MessageCallbackFacto
   @Inject
   public MetricsMessageCallbackFactory(SchemaGenerator schemaGenerator, DatumReaderFactory readerFactory,
                                        MetricStore metricStore,
-                                       @Named(Constants.Metrics.KAFKA_META_PERSIST_THRESHOLD)
+                                       @Named(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD)
                                        int persistThreshold) {
     try {
       this.recordSchema = schemaGenerator.generate(MetricValues.class);

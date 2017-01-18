@@ -224,23 +224,26 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       // Create topics with topic prefix and top partition
       if (topic.contains(":")) {
         String[] topicPrefixPartition = topic.split(":");
-        Integer partition;
+        int partition;
         if (topicPrefixPartition.length != 2) {
-          LOG.warn("Ignore creation of invalid topic '{}'.", topic);
+          LOG.warn("Ignore creation of invalid topic '{}'. Expecting topic in the format topicPrefix:numPartitions.",
+                   topic);
           continue;
         }
         String topicPrefix = topicPrefixPartition[0];
         try {
-          partition = Integer.valueOf(topicPrefixPartition[1]);
-          if (partition < 0) {
-            throw new IllegalArgumentException();
+          partition = Integer.parseInt(topicPrefixPartition[1]);
+          if (partition <= 0) {
+            throw new NumberFormatException("metrics.messaging.partition.num must be set to a positive integer.");
           }
           NamespaceId.SYSTEM.topic(topicPrefix);
-        } catch (IllegalArgumentException e) {
+        } catch (NumberFormatException e) {
           // Ignore invalid topic
-          LOG.warn("Ignore creation of invalid topic '{}'.", topic);
+          LOG.error(String.format(
+            "Ignore creation of invalid topic '%s' because of the invalid partition number in it.", topic), e);
           continue;
         }
+
         for (int i = 0; i < partition; i++) {
           createSystemTopic(topicPrefix + "_" + i, asyncCreationTopics);
         }
@@ -265,7 +268,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       topicId = NamespaceId.SYSTEM.topic(topicName);
     } catch (IllegalArgumentException e) {
       // Ignore invalid topic
-      LOG.warn("Ignore creation of invalid topic '{}'.", topicName);
+      LOG.error(String.format("Ignore creation of invalid topic '%s'", topicName), e);
       return;
     }
 

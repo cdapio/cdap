@@ -43,7 +43,7 @@ public final class MessagingMetricsRuntimeProcessorRuntimeService extends Abstra
                                                         DiscoveryServiceClient discoveryServiceClient,
                                                         MessagingMetricsProcessorServiceFactory
                                                             metricsProcessorFactory) {
-    super(SERVICE_NAME, conf.getInt(Constants.Metrics.MESSAGING_PARTITION_SIZE),
+    super(SERVICE_NAME, conf.getInt(Constants.Metrics.MESSAGING_PARTITION_NUM),
           zkClient, discoveryService, discoveryServiceClient);
     this.factory = metricsProcessorFactory;
   }

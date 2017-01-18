@@ -49,7 +49,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
 
   @Inject
   public MessagingMetricsCollectionService(@Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
-                                           @Named(Constants.Metrics.MESSAGING_PARTITION_SIZE) int partitionSize,
+                                           @Named(Constants.Metrics.MESSAGING_PARTITION_NUM) int partitionSize,
                                            MessagingService messagingService, DatumWriter<MetricValues> recordWriter) {
     super();
     this.messagingService = messagingService;
@@ -71,8 +71,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
     encoderOutputStream.reset();
     while (metrics.hasNext()) {
       // Encode each MetricRecord into bytes and make it an individual message in a message set.
-      MetricValues value = metrics.next();
-      publishMetric(value);
+      publishMetric(metrics.next());
     }
   }
 

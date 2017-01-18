@@ -1294,7 +1294,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${metrics.topic.prefix}:${metrics.messaging.partition.size},${notification.topic}</value>
+    <value>${audit.topic},${metrics.topic.prefix}:${metrics.messaging.partition.num},${notification.topic}</value>
     <description>
       A comma-separated list of topics that is always available in the system namespace.
       Topic prefix and topic partition are seperated by ":".
@@ -1462,7 +1462,7 @@
   </property>
 
   <property>
-    <name>metrics.kafka.meta.persist.threshold</name>
+    <name>metrics.kafka.consumer.persist.threshold</name>
     <value>100</value>
     <description>
       Threshold of processing metrics messages before persisting the latest
@@ -1483,6 +1483,14 @@
     <value>10</value>
     <description>
       Number of partitions for Kafka metrics topic
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.kafka.topic.prefix</name>
+    <value>metrics</value>
+    <description>
+      Topic prefix used to publish metrics in Kafka
     </description>
   </property>
 
@@ -1520,10 +1528,12 @@
   </property>
 
   <property>
-    <name>metrics.messaging.partition.size</name>
+    <name>metrics.messaging.partition.num</name>
     <value>10</value>
     <description>
-      Number of partitions for messaging metrics topic
+      Number of partitions for metrics topic in messaging. This number controls
+      how many topic partitions in messaging which metrics are sent to,
+      and the number of threads fetching from messaging service and processing metrics in parallel.
     </description>
   </property>
 
@@ -1606,7 +1616,7 @@
     <name>metrics.topic.prefix</name>
     <value>metrics</value>
     <description>
-      Topic prefix used to publish metrics in Kafka and messaging
+      Topic prefix used to publish metrics in messaging
     </description>
   </property>
 
