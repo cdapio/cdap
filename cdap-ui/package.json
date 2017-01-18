@@ -41,7 +41,7 @@
     "eslint-plugin-babel": "3.3.0",
     "eslint-plugin-react": "6.1.2",
     "file-loader": "0.9.0",
-    "font-awesome-webpack": "0.0.4",
+    "font-awesome-sass-loader": "1.0.3",
     "gulp": "3.9.0",
     "gulp-angular-templatecache": "1.8.0",
     "gulp-babel": "6.1.1",
@@ -64,12 +64,13 @@
     "gulp-wrapper": "1.0.0",
     "jest-cli": "16.0.2",
     "jshint": "2.9.2",
-    "less-loader": "2.2.3",
     "lodash-webpack-plugin": "0.10.0",
     "main-bower-files": "2.11.1",
     "merge-stream": "1.0.0",
+    "node-sass": "4.3.0",
     "postcss-loader": "1.1.1",
     "react-addons-test-utils": "15.3.2",
+    "sass-loader": "4.1.1",
     "style-loader": "0.13.1",
     "stylelint-webpack-plugin": "0.4.2",
     "url-loader": "0.5.7",
@@ -78,7 +79,8 @@
   "dependencies": {
     "angular": "1.5.8",
     "body-parser": "1.14.2",
-    "bootstrap": "3.3.7",
+    "bootstrap": "4.0.0-alpha.5",
+    "cdap-avsc": "4.1.12",
     "chart.js": "2.3.0",
     "classnames": "2.2.5",
     "compression": "1.6.1",
@@ -130,8 +132,7 @@
     "table-resolver": "2.0.3",
     "webpack": "1.13.2",
     "whatwg-fetch": "https://registry.npmjs.org/whatwg-fetch/-/whatwg-fetch-1.0.0.tgz",
-    "yml-loader": "1.1.0",
-    "cdap-avsc": "4.1.12"
+    "yml-loader": "1.1.0"
   },
   "engines": {
     "node": ">= 4.5.0"

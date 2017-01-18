@@ -1,0 +1,112 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+@import '../../styles/variables.scss';
+$grey-theme-color:  #e3e3e3;
+$active-text-color: #000000;
+
+.management {
+  width: 96%;
+  height: 100%;
+  border: 2px solid $grey-theme-color;
+  margin: auto;
+  margin-top: 20px;
+  margin-bottom: 70px;
+  background-color: #ffffff;
+  padding: 20px;
+
+  .primary-label {
+    display: inline-flex;
+    justify-content: space-around;
+  }
+
+  .cdap-version-label {
+    text-align: right;
+    position: absolute;
+    right: 75px;
+    font-style: italic;
+  }
+
+  .top-panel {
+    margin-bottom: 20px;
+  }
+
+  .admin-horizontal-line {
+    border: none;
+    height: 2px;
+    color: $grey-theme-color;
+    background-color: $grey-theme-color;
+    margin-top: 0;
+    margin-bottom: 0;
+    width: calc(100% + 40px);
+    margin-left: -20px;
+  }
+
+  .fa.fa-spinner {
+    color: gray;
+  }
+  .admin-bottom-panel {
+    display: flex;
+  }
+  .nav-buffer {
+    width: 40px;
+    height: 100%;
+  }
+
+  .admin-row {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .centering-container {
+    display: flex;
+    justify-content: center;
+    > li {
+      cursor: pointer;
+    }
+  }
+
+  .container {
+
+    margin-top: 20px;
+
+    ul {
+      li {
+        width: 80px;
+        font-size: 22px;
+        font-weight: bold;
+        color: #999999;
+        margin-left: 30px;
+        margin-right: 30px;
+        text-align: center;
+      }
+
+      li.active {
+        border-bottom: solid 4px $cdap-orange;
+        background-color: transparent;
+        color: $active-text-color;
+      }
+
+      li:hover {
+        color: $active-text-color;
+      }
+    }
+  }
+}

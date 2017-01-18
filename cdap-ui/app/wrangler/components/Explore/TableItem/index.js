@@ -23,7 +23,7 @@ import shortid from 'shortid';
 import Papa from 'papaparse';
 import T from 'i18n-react';
 
-require('./TableItem.less');
+require('./TableItem.scss');
 
 export default class TableItem extends Component {
   constructor(props) {
@@ -167,7 +167,7 @@ export default class TableItem extends Component {
 
     const noData = (
       <div>
-        <h4 className="text-center">
+        <h4 className="text-xs-center">
           {T.translate('features.Wrangler.Explore.noData')}
         </h4>
       </div>
@@ -218,7 +218,7 @@ export default class TableItem extends Component {
           </form>
         </div>
 
-        <div className="wrangle-button text-center">
+        <div className="wrangle-button text-xs-center">
           <button
             className="btn btn-wrangler"
             onClick={this.onWrangleClick}
@@ -233,7 +233,7 @@ export default class TableItem extends Component {
   render() {
     const loading = (
       <div>
-        <h3 className="text-center">
+        <h3 className="text-xs-center">
           <span className="fa fa-spinner fa-spin" />
         </h3>
       </div>
@@ -243,7 +243,7 @@ export default class TableItem extends Component {
 
     return (
       <div
-        className="explore-table-item text-center"
+        className="explore-table-item text-xs-center"
         onClick={this.onTableClick}
       >
         <div className="explore-table-item-icon">
@@ -278,7 +278,7 @@ export default class TableItem extends Component {
             <span>{this.props.table.name}</span>
 
             <div
-              className="close-section pull-right"
+              className="close-section float-xs-right"
               onClick={this.toggleModal}
             >
               <span className="fa fa-times" />

@@ -23,7 +23,7 @@
     />
 */
 import React, {Component, PropTypes} from 'react';
-require('./CardActionFeedback.less');
+require('./CardActionFeedback.scss');
 import isObject from 'lodash/isObject';
 
 var classNames = require('classnames');
@@ -74,7 +74,7 @@ export default class CardActionFeedback extends Component {
       if (this.state.isExpanded) {
         angleIcon = (
           <span
-            className='expand-icon pull-right text-center'
+            className='expand-icon float-xs-right text-xs-center'
             onClick={this.handleToggleExtendedMessage.bind(this)}
           >
             <span className='fa fa-angle-double-up'></span>
@@ -84,7 +84,7 @@ export default class CardActionFeedback extends Component {
       } else {
         angleIcon = (
           <span
-            className='expand-icon pull-right text-center'
+            className='expand-icon float-xs-right text-xs-center'
             onClick={this.handleToggleExtendedMessage.bind(this)}
           >
             <span className='fa fa-angle-double-down'></span>

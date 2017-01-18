@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-require('./AdminVirtualCoresMetadataPane.less');
+require('./AdminVirtualCoresMetadataPane.scss');
 import StatContainer from '../StatContainer/index.js';
 var classNames = require('classnames');
 

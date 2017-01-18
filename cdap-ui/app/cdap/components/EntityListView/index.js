@@ -29,7 +29,7 @@ import {fetchTables} from 'services/ExploreTables/ActionCreator';
 import MyUserStoreApi from 'api/userstore';
 import PlusButtonStore from 'services/PlusButtonStore';
 
-require('./EntityListView.less');
+require('./EntityListView.scss');
 
 const defaultFilter = ['app', 'dataset', 'stream'];
 
@@ -528,20 +528,20 @@ class EntityListView extends Component {
 
 
     const empty = (
-      <h3 className="text-center empty-message">
+      <h3 className="text-xs-center empty-message">
         {T.translate('features.EntityListView.emptyMessage')}
       </h3>
     );
 
     const errorContainer = (
-      <h3 className="text-center empty-message text-danger">
+      <h3 className="text-xs-center empty-message text-danger">
         <span className="fa fa-exclamation-triangle"></span>
         <span>{this.state.entityErr}</span>
       </h3>
     );
 
     const loading = (
-      <h3 className="text-center">
+      <h3 className="text-xs-center">
         <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
       </h3>
     );

@@ -22,8 +22,8 @@ import NamespaceStore from 'services/NamespaceStore';
 import HeaderNavbarList from 'components/HeaderNavbarList';
 import T from 'i18n-react';
 
-require('components/Header/Header.less');
-require('./WranglerHeader.less');
+require('components/Header/Header.scss');
+require('./WranglerHeader.scss');
 
 export default function WranglerHeader() {
   const list = [

@@ -15,7 +15,7 @@
  */
 
 import React, {PropTypes} from 'react';
-require('./AdminMetadataPane.less');
+require('./AdminMetadataPane.scss');
 import StatContainer from '../StatContainer/index.js';
 import shortid from 'shortid';
 import T from 'i18n-react';

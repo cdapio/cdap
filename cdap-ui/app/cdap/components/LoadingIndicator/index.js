@@ -20,7 +20,7 @@ import LoadingIndicatorStore, {BACKENDSTATUS, LOADINGSTATUS} from 'components/Lo
 import T from 'i18n-react';
 import {Modal} from 'reactstrap';
 
-require('./LoadingIndicator.less');
+require('./LoadingIndicator.scss');
 
 export default class LoadingIndicator extends Component {
   constructor(props) {
@@ -60,7 +60,7 @@ export default class LoadingIndicator extends Component {
           toggle={() =>{}}
           className="loading-indicator"
         >
-          <div className="text-center">
+          <div className="text-xs-center">
             <div className={classnames('fa', this.props.icon)}></div>
             <h2> {this.state.message} </h2>
             <h4>{this.state.subtitle}</h4>

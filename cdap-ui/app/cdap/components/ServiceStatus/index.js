@@ -15,7 +15,7 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-require('./ServiceStatus.less');
+require('./ServiceStatus.scss');
 var classNames = require('classnames');
 import Datasource from 'services/datasource';
 import {Dropdown, DropdownMenu} from 'reactstrap';
@@ -159,7 +159,7 @@ export default class ServiceStatus extends Component {
 
     logUrl = `/downloadLogs?type=raw&backendUrl=${encodeURIComponent(logUrl)}`;
 
-    let provisionBtnClasses = classNames('btn btn-default btn-primary set-provision-btn', {'provision-btn-with-warning' : this.state.serviceWarning});
+    let provisionBtnClasses = classNames('btn btn-primary set-provision-btn', {'provision-btn-with-warning' : this.state.serviceWarning});
 
     return (
       <div
@@ -190,7 +190,7 @@ export default class ServiceStatus extends Component {
               null
           }
         </div>
-        <div className="service-dropdown-container pull-right">
+        <div className="service-dropdown-container float-xs-right">
           <Dropdown
             isOpen={this.state.isDropdownOpen}
             toggle={this.toggleDropdown}

@@ -17,7 +17,7 @@
 import React, {Component, PropTypes} from 'react';
 import EntityCard from 'components/EntityCard';
 import {parseMetadata} from 'services/metadata-parser';
-require('./DatasetsTab.less');
+require('./DatasetsTab.scss');
 
 export default class DatasetsTab extends Component {
   constructor(props) {

@@ -56,7 +56,7 @@ export default class FastActions extends Component {
     const fastActions = this.listOfFastActions();
 
     return (
-      <h4 className="text-center">
+      <h4 className="text-xs-center">
         <span>
           {
             fastActions.map((action) => {

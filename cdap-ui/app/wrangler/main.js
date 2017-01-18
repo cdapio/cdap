@@ -26,10 +26,10 @@ import Match from 'react-router/Match';
 import Router from 'react-router/BrowserRouter';
 import Home from 'wrangler/components/Home';
 
-require('font-awesome-webpack!./styles/font-awesome.config.js');
-require('./styles/lib-styles.less');
-require('./styles/common.less');
-require('./styles/main.less');
+require('font-awesome-sass-loader!./styles/font-awesome.config.js');
+require('./styles/lib-styles.scss');
+require('./styles/common.scss');
+require('./styles/main.scss');
 require('../ui-utils/url-generator');
 
 class WranglerParent extends Component {

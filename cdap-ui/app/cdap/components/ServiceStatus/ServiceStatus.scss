@@ -1,0 +1,220 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+@import '../../styles/variables.scss';
+$circle-dimension: 15px;
+$circle-margin: 4px;
+$circle-top-offset: 2px;
+
+.service-status {
+  padding-top: 5px;
+  margin-left: 15px;
+  width: 209px;
+  display: inline-block;
+  cursor: pointer;
+  position: relative;
+
+  .fa-exclamation-triangle {
+    color: yellow;
+    margin-left: 5px;
+  }
+
+  .service-error-message,
+  .service-error-message-inline {
+    border-radius: 4px;
+    position: absolute;
+    text-align: center;
+    padding: 4px 4px;
+    color: black;
+    border: solid 1px #000000;
+    z-index: 2000;
+    min-width: 270px;
+  }
+
+  .service-error-message-inline {
+    color: white;
+    background-color: black;
+    border-radius: 4px;
+    padding: 8px;
+    margin-top: 4px;
+  }
+
+  .fa-caret-up {
+    position: absolute;
+    top: -8px;
+    left: 7px;
+    color: black;
+  }
+
+  .service-error-message {
+    top: -10px;
+    background-color: yellow;
+  }
+
+  .service-dropdown-container {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    right: 0;
+    width: 15px;
+    height: 100%;
+
+    .dropdown-menu {
+      outline: none;
+      color: #333333;
+      position: absolute;
+      left: -202.5px;
+      top: -8px;
+      border: none;
+      margin: 0;
+      width: 200px;
+      padding-top: 0;
+      padding-bottom: 0;
+
+      a {
+        text-decoration: inherit;
+        color: inherit;
+        cursor: auto;
+        padding-right: 0;
+      }
+      .provision-dropdown-item {
+        cursor: pointer;
+
+        .provision-input {
+          display: inline-block;
+          width: 50px;
+          height: 20px;
+          margin-left: 5px;
+          padding-left: 5px;
+        }
+
+        .set-provision-btn {
+          line-height: 6px;
+          margin-left: 5px;
+          margin-bottom: 3px;
+          height: 20px;
+          color: white;
+          outline: none;
+        }
+
+        .provision-btn-with-warning {
+          padding-top: 3px;
+        }
+      }
+    }
+
+    span.service-dropdown-caret {
+      color: #ffffff;
+    }
+
+    .dropdown-menu {
+      outline: 0;
+    }
+    .service-dropdown-item {
+      height: 30px;
+      width: 100%;
+      outline: 0;
+      cursor: auto;
+      line-height: 30px;
+      padding-left: 5px;
+
+      &.dropdown-service-name {
+        border-bottom: 1px solid black;
+      }
+      &.dropdown-service-name:hover {
+        background-color: transparent;
+      }
+
+      .status-label {
+        color: #000000;
+        font-weight: bold;
+        margin-left: 19px;
+      }
+
+      .fa-file-text {
+        padding-right: 10px;
+      }
+
+      &:hover {
+        background-color: #cccccc;
+      }
+    }
+  }
+
+  .circle-dropdown-active {
+    z-index: 1500;
+  }
+
+  .status-circle-green {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    padding-left: 5px;
+    padding-right: 5px;
+    margin-top: $circle-margin;
+    width: $circle-dimension;
+    height: $circle-dimension;
+    background-color: #47b834;
+    position: relative;
+    color: white;
+
+    .fa-spinner {
+      color: white;
+    }
+  }
+
+  .status-circle-yellow {
+    display: inline-block;
+    border-radius: 50%;
+    margin-top: $circle-margin;
+    width: $circle-dimension;
+    height: $circle-dimension;
+    background-color: #ffff00;
+    position: relative;
+    top: $circle-top-offset;
+  }
+
+  .status-circle-red {
+    display: inline-block;
+    border-radius: 50%;
+    margin-top: $circle-margin;
+    width: $circle-dimension;
+    height: $circle-dimension;
+    background-color: #ff0000;
+    position: relative;
+    top: $circle-top-offset;
+  }
+
+  .status-circle-grey {
+    display: inline-block;
+    border-radius: 50%;
+    margin-top: $circle-margin;
+    width: $circle-dimension;
+    height: $circle-dimension;
+    background-color: #cccccc;
+    position: relative;
+    top: $circle-top-offset;
+  }
+
+  .status-label {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #ffffff;
+  }
+}

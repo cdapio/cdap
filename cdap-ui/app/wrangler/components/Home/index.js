@@ -18,7 +18,7 @@ import React, { Component, PropTypes } from 'react';
 import Wrangler from 'wrangler/components/Wrangler';
 import NamespaceStore from 'services/NamespaceStore';
 
-require('./Home.less');
+require('./Home.scss');
 
 export default class Home extends Component {
   componentWillMount() {

@@ -16,7 +16,7 @@
 
 import React, {PropTypes, Component} from 'react';
 var classnames = require('classnames');
-require('./TabHead.less');
+require('./TabHead.scss');
 export default class TabHead extends Component {
   constructor(props) {
     super(props);

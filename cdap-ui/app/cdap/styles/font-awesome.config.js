@@ -16,19 +16,20 @@
 
 module.exports = {
     // Default for the style loading
-  styleLoader: 'style-loader!css-loader!less-loader',
+  // styleLoader: 'style-loader!css-loader!sass-loader',
+  fontAwesomeCustomizations: './font-awesome.config.scss',
 
-    styles: {
-        'mixins': true,
-        'bordered-pulled': true,
-        'core': true,
-        'fixed-width': true,
-        'icons': true,
-        'larger': true,
-        'list': true,
-        'path': true,
-        'rotated-flipped': true,
-        'animated': true,
-        'stacked': true
-    }
+  styles: {
+    'mixins': true,
+    'bordered-pulled': true,
+    'core': true,
+    'fixed-width': true,
+    'icons': true,
+    'larger': true,
+    'list': true,
+    'path': true,
+    'rotated-flipped': true,
+    'animated': true,
+    'stacked': true
+  }
 };

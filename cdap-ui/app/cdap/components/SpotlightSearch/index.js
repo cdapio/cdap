@@ -26,7 +26,7 @@ import Mousetrap from 'mousetrap';
 import T from 'i18n-react';
 import shortid from 'shortid';
 
-require('./SpotlightSearch.less');
+require('./SpotlightSearch.scss');
 
 const keyMap = {
   enter: 13,
@@ -157,7 +157,7 @@ export default class SpotlightSearch extends Component {
             <DropdownItem
               tag="a"
               onClick={this.handleToggleModal}
-              className={classnames('text-center', {hover: this.state.focusIndex === VIEW_RESULT_LIMIT})}
+              className={classnames('text-xs-center', {hover: this.state.focusIndex === VIEW_RESULT_LIMIT})}
             >
               {T.translate('features.SpotlightSearch.showAll', {num: this.state.searchResults.total})}
             </DropdownItem>
@@ -223,7 +223,7 @@ export default class SpotlightSearch extends Component {
     } else {
       spotlightSearch = (
         <div
-          className="form-group has-feedback"
+          className="form-group input-group"
         >
           <input
             type="text"
@@ -232,7 +232,10 @@ export default class SpotlightSearch extends Component {
             onChange={this.debounceSearch}
             onKeyDown={this.handleKeyPress}
           />
-          <span className="fa fa-search form-control-feedback"></span>
+
+          <span className="input-feedback">
+            <span className="fa fa-search"></span>
+          </span>
         </div>
       );
     }

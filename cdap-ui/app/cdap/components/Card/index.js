@@ -34,7 +34,7 @@
 */
 
 import React, {Component, PropTypes} from 'react';
-require('./Card.less');
+require('./Card.scss');
 
 var classNames = require('classnames');
 

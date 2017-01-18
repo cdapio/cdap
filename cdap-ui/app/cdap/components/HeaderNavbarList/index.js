@@ -19,7 +19,7 @@ import {Link} from 'react-router';
 import shortid from 'shortid';
 import T from 'i18n-react';
 
-require('./HeaderNavbarList.less');
+require('./HeaderNavbarList.scss');
 
 const mapStateToProps = (state) => {
   return {

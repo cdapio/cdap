@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-require('./HeaderBrand.less');
+require('./HeaderBrand.scss');
 
 export default function HeaderBrand () {
   return (

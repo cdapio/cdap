@@ -1,0 +1,128 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.scss';
+
+.plus-button-modal {
+  overflow-x: hidden;
+
+  &.modal-dialog {
+    height: 75vh;
+    width: 70vw;
+    max-width: 1200px;
+    margin-top: 120px;
+
+    .modal-content {
+      border-radius: 0;
+      height: 100%;
+      border: 0;
+      overflow: hidden;
+      background: transparent;
+
+      .modal-body {
+        padding: 0;
+        height: calc(100% - 51px); // 100% - 51px for modal header
+        background: #ffffff;
+      }
+      .modal-header {
+        height: 52px;
+        padding: 10px 8px;
+        background: $cdap-orange;
+        color: white;
+        border-bottom: 0;
+
+        .modal-header-icon {
+          font-size: 26px;
+          height: 30px;
+          vertical-align: top;
+          margin-right: 2px;
+        }
+
+        .modal-close-btn {
+          display: inline-flex;
+          cursor: pointer;
+          padding: 0 2px 0 10px;
+        }
+
+        .button-icon {
+          font-size: 17px;
+          margin-right: 5px;
+          height: 25px;
+          vertical-align: middle;
+        }
+
+        .plus-button-modal-toggle-text {
+          vertical-align: middle;
+        }
+
+        h4 {
+          font-weight: normal;
+          span {
+            line-height: 30px;
+          }
+        }
+        .navigation-button {
+          font-weight: 500;
+          padding: 0 10px 0 5px;
+          background: white;
+          color: #ff6600;
+          box-shadow: 0px 1px 10px 0 rgba(0, 0, 0, 0.3);
+          border: 0;
+
+          &.active {
+            margin: 0;
+            box-shadow: 1px 5px 11px rgba(0, 0, 0, 0.25) inset;
+            border: 0;
+          }
+          &.resource-center {
+            color: #5a84e4;
+          }
+          &:focus {
+            outline: 0;
+          }
+        }
+      }
+    }
+  }
+}
+
+.plus-button-modal {
+  .plus-modal-header-text {
+    vertical-align: top;
+  }
+}
+
+.plus-button-modal {
+  position: relative;
+  .plus-button-modal-content-enter {
+    opacity: 0.01;
+    position: absolute;
+  }
+  .plus-button-modal-content-enter-active {
+    opacity: 1;
+    transition: opacity 500ms ease-in;
+  }
+
+  .plus-button-modal-content-leave {
+    opacity: 1;
+    position: absolute;
+  }
+
+  .plus-button-modal-content-leave-active {
+    opacity: 0.01;
+    transition: opacity 300ms ease-in;
+  }
+}

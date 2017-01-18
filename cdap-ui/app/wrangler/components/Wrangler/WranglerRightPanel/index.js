@@ -20,7 +20,7 @@ import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions'
 import ChartPanel from 'wrangler/components/Wrangler/WranglerRightPanel/ChartPanel';
 import shortid from 'shortid';
 
-require('./WranglerRightPanel.less');
+require('./WranglerRightPanel.scss');
 
 export default class WranglerRightPanel extends Component {
   constructor() {
@@ -68,7 +68,7 @@ export default class WranglerRightPanel extends Component {
     return (
       <div className="wrangler-right-panel">
         <div className="graph-selector clearfix">
-          <div className="graph-dropdown pull-left">
+          <div className="graph-dropdown float-xs-left">
             <select
               className="form-control"
               value={this.state.graphTypeSelected}
@@ -81,7 +81,7 @@ export default class WranglerRightPanel extends Component {
             </select>
           </div>
 
-          <div className="graph-add-button text-center">
+          <div className="graph-add-button text-xs-center">
             <span
               className="fa fa-plus-circle"
               onClick={this.addGraph}
@@ -89,7 +89,7 @@ export default class WranglerRightPanel extends Component {
           </div>
 
           <div
-            className="hide-button text-center pull-right"
+            className="hide-button text-xs-center float-xs-right"
             onClick={this.props.toggle}
           >
             <span className="fa fa-times" />

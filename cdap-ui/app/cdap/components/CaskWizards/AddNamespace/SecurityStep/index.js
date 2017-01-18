@@ -81,7 +81,7 @@ export default function PreferencesStep() {
           return false;
         }}
       >
-        <FormGroup>
+        <FormGroup row>
           <Col xs="3">
             <Label className="control-label">
               {T.translate('features.Wizard.Add-Namespace.Step3.principal-label')}
@@ -91,7 +91,7 @@ export default function PreferencesStep() {
             <InputPrincipal />
           </Col>
         </FormGroup>
-        <FormGroup>
+        <FormGroup row>
           <Col xs="3">
             <Label className="control-label">
               {T.translate('features.Wizard.Add-Namespace.Step3.keytab-uri-label')}

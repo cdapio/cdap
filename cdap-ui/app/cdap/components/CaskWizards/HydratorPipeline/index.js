@@ -15,7 +15,7 @@
  */
 import React, {Component, PropTypes} from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
-require('./HydratorPipeline.less');
+require('./HydratorPipeline.scss');
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import NamespaceStore from 'services/NamespaceStore';
 
@@ -62,10 +62,10 @@ export default class HydratorPipeline extends Component {
         size="lg"
       >
         <ModalHeader>
-          <span className="pull-left">
+          <span className="float-xs-left">
             {T.translate('features.Wizard.HydratorPipeline.title')}
           </span>
-          <div className="close-section pull-right">
+          <div className="close-section float-xs-right">
             <span
               className="fa fa-times"
               onClick={this.closeHandler.bind(this)}
@@ -86,14 +86,14 @@ export default class HydratorPipeline extends Component {
               <div className="action-buttons">
                 <a
                   href={this.state.batchPipelineUrl}
-                  className="btn btn-default"
+                  className="btn btn-secondary"
                 >
                   <i className="fa icon-ETLBatch"/>
                   <span>{T.translate('features.Wizard.HydratorPipeline.batchLinkLabel')}</span>
                 </a>
                 <a
                   href={this.state.realtimePipelineUrl}
-                  className="btn btn-default"
+                  className="btn btn-secondary"
                 >
                   <i className="fa icon-sparkstreaming"/>
                   <span>{T.translate('features.Wizard.HydratorPipeline.realtimeLinkLabel')}</span>

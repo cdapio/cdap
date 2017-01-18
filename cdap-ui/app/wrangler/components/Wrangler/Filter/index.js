@@ -87,10 +87,11 @@ export default class Filter extends Component {
           />
         </div>
 
-        <div className="checkbox">
-          <label className="control-label">
+        <div className="checkbox form-check">
+          <label className="control-label form-check-label">
             <input
               type="checkbox"
+              className="form-check-input"
               checked={this.state.filterIgnoreCase}
               onChange={() => this.setState({filterIgnoreCase: !this.state.filterIgnoreCase})}
             />
@@ -98,7 +99,7 @@ export default class Filter extends Component {
           </label>
         </div>
         <br/>
-        <div className="text-right">
+        <div className="text-xs-right">
           <button
             className="btn btn-wrangler"
             onClick={this.onFilter}

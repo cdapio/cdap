@@ -21,7 +21,7 @@ import debounce from 'lodash/debounce';
 import PaginationDropdown from 'components/Pagination/PaginationDropdown';
 import {Tooltip} from 'reactstrap';
 
-require('./EntityListHeader.less');
+require('./EntityListHeader.scss');
 
 export default class EntityListHeader extends Component {
   constructor(props) {
@@ -101,7 +101,7 @@ export default class EntityListHeader extends Component {
               <span>{T.translate('features.EntityListView.Header.sort')}</span> :
               <span>{T.translate('features.EntityListView.Header.sortLabel')}{this.state.activeSort.displayName}</span>
             }
-            <span className="fa fa-caret-down pull-right"></span>
+            <span className="fa fa-caret-down float-xs-right"></span>
           </DropdownToggle>
           <DropdownMenu>
             {
@@ -114,7 +114,7 @@ export default class EntityListHeader extends Component {
                     {option.displayName}
                     {
                       this.state.activeSort.fullSort === option.fullSort ?
-                        <span className="fa fa-check pull-right"></span>
+                        <span className="fa fa-check float-xs-right"></span>
                       :
                         null
                     }
@@ -133,7 +133,7 @@ export default class EntityListHeader extends Component {
       >
         <DropdownToggle tag='div'>
           <span>{T.translate('features.EntityListView.Header.filters')}</span>
-          <span className="fa fa-filter pull-right"></span>
+          <span className="fa fa-filter float-xs-right"></span>
         </DropdownToggle>
         <DropdownMenu onClick={e => e.stopPropagation()}>
           {
@@ -142,10 +142,14 @@ export default class EntityListHeader extends Component {
                 <DropdownItem
                   key={option.id}
                 >
-                  <div className="checkbox">
-                    <label onClick={e => e.stopPropagation()}>
+                  <div className="form-check">
+                    <label
+                      className="form-check-label"
+                      onClick={e => e.stopPropagation()}
+                    >
                       <input
                         type="checkbox"
+                        className="form-check-input"
                         checked={this.state.activeFilter.indexOf(option.id) !== -1}
                         onChange={this.props.onFilterClick.bind(this, option)}
                       />
@@ -163,7 +167,7 @@ export default class EntityListHeader extends Component {
     return (
       <div className="entity-list-header">
         <div className="search-box">
-          <div className="form-group has-feedback">
+          <div className="form-group input-group">
             <label className="control-label sr-only">
               {T.translate('features.EntityListView.Header.search-placeholder')}
             </label>
@@ -175,7 +179,9 @@ export default class EntityListHeader extends Component {
               value={this.state.searchText}
               onChange={this.onSearchChange.bind(this)}
             />
-            <span className="fa fa-search form-control-feedback"></span>
+            <span className="input-feedback">
+              <span className="fa fa-search"></span>
+            </span>
           </div>
         </div>
         <div className="filter">
@@ -190,7 +196,7 @@ export default class EntityListHeader extends Component {
             {T.translate(`features.EntityListView.Header.sortdropdown-tooltip`)}
           </Tooltip>
         </div>
-        <div className="view-selector pull-right">
+        <div className="view-selector float-xs-right">
           <div className="sort">
             {sortDropdown}
           </div>

@@ -15,7 +15,7 @@
  */
 
 import React, {PropTypes} from 'react';
-require('./AdminConfigurePane.less');
+require('./AdminConfigurePane.scss');
 import ConfigureButton from '../ConfigureButton/index.js';
 var shortid = require('shortid');
 import T from 'i18n-react';

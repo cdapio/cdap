@@ -16,7 +16,7 @@
 
 import React, {PropTypes} from 'react';
 import { Input, Label } from 'reactstrap';
-require('./TimeToLive.less');
+require('./TimeToLive.scss');
 import shortid from 'shortid';
 
 export default function TimeToLive({value, onChange}) {

@@ -20,7 +20,7 @@ import {Input} from 'reactstrap';
 import {insertAt, removeAt} from 'services/helpers';
 import uuid from 'node-uuid';
 import T from 'i18n-react';
-require('./EnumSchemaRow.less');
+require('./EnumSchemaRow.scss');
 
 export default class EnumSchemaRow extends Component {
   constructor(props) {

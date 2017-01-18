@@ -153,7 +153,7 @@ export default class WranglerTable extends Component {
                 {head}
               </span>
 
-              <span className="pull-right action-icon text-right">
+              <span className="float-xs-right action-icon text-xs-right">
                 {errors[head] && errors[head].count ? errorCircle : null}
                 <ColumnActionsDropdown column={head} />
               </span>
@@ -183,7 +183,7 @@ export default class WranglerTable extends Component {
                     // this works because right now the error is only on null
                     // Need a more scalable way
                     !value ?
-                      <span className="pull-right">{errorCircle}</span> : null
+                      <span className="float-xs-right">{errorCircle}</span> : null
                   }
                 </span>
               );
@@ -224,7 +224,7 @@ export default class WranglerTable extends Component {
         ]
       },
       props: {
-        className: 'index-column text-center'
+        className: 'index-column text-xs-center'
       },
       width: 50
     });

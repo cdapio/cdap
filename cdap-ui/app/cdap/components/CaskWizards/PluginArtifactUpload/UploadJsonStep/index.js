@@ -22,7 +22,7 @@ import FileDnD from 'components/FileDnD';
 import T from 'i18n-react';
 import Rx from 'rx';
 
-require('./UploadJsonStep.less');
+require('./UploadJsonStep.scss');
 
 const mapStateWithDNDFileProps = (state) => {
   return {

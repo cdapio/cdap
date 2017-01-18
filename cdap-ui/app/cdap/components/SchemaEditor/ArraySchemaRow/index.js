@@ -18,11 +18,11 @@ import React, {PropTypes, Component} from 'react';
   import {parseType, SCHEMA_TYPES, checkComplexType, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
 import SelectWithOptions from 'components/SelectWithOptions';
 import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
-import {Input} from 'reactstrap';
+// import {Input} from 'reactstrap';
 import classnames from 'classnames';
 import cloneDeep from 'lodash/cloneDeep';
 
-require('./ArraySchemaRow.less');
+require('./ArraySchemaRow.scss');
 
 export default class ArraySchemaRow extends Component {
   constructor(props) {
@@ -164,7 +164,7 @@ export default class ArraySchemaRow extends Component {
           <div className="field-type"></div>
           <div className="field-isnull">
             <div className="btn btn-link">
-              <Input
+              <input
                 type="checkbox"
                 checked={this.state.displayType.nullable}
                 onChange={this.onNullableChange.bind(this)}

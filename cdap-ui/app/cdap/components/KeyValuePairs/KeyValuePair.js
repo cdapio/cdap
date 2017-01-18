@@ -14,7 +14,7 @@
  * the License.
 */
 import React, { Component, PropTypes } from 'react';
-require('./KeyValuePairs.less');
+require('./KeyValuePairs.scss');
 import T from 'i18n-react';
 
 class KeyValuePair extends Component {
@@ -33,8 +33,20 @@ class KeyValuePair extends Component {
       <div className="key-value-pair-preference">
         <input type="text" value={this.props.name} autoFocus={true} onKeyDown={this.keyDown} onChange={this.props.onChange.bind(null, 'key')} placeholder={T.translate('commons.keyValPairs.keyPlaceholder')} className="form-control key-input" />
         <input type="text" value={this.props.value} onKeyDown={this.keyDown} onChange={this.props.onChange.bind(null, 'value')} placeholder={T.translate('commons.keyValPairs.valuePlaceholder')} className="form-control value-input" />
-        <button type="submit" className="fa fa-plus add-row-btn" onClick={this.props.addRow} />
-        <button type="submit" className="fa fa-trash remove-row-btn" onClick={this.props.removeRow} />
+        <button
+          type="submit"
+          className="btn add-row-btn btn-link"
+          onClick={this.props.addRow}
+        >
+          <i className="fa fa-plus" />
+        </button>
+        <button
+          type="submit"
+          className="btn remove-row-btn btn-link"
+          onClick={this.props.removeRow}
+        >
+          <i className="fa fa-trash" />
+        </button>
       </div>
     );
   }
