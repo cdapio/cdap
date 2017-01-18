@@ -25,10 +25,11 @@
         <thead>
           <tr>
             <th class="column-cell"><span>&nbsp;</span>Column</th>
-            <th clas="type-cell">Type</th>
+            <th class="type-cell">Type</th>
             <th class="null-cell">Null</th>
             <th class="pii-cell"><span uib-tooltip="{{::DictionaryController.piiTitle}}" class="marginb-0">PII</span></th>
             <th class="entities-cell">Entities</th>
+            <th class="datasets-cell">Datasets</th>
             <th class="description-cell">Description</th>
             <th class="actions-cell">Actions</th>
           </tr>
@@ -71,6 +72,7 @@
             <td>
               <input type="checkbox" ng-model="DictionaryController.newDictColumn.isPII">
             </td>
+            <td></td>
             <td></td>
             <td>
               <input type="text"

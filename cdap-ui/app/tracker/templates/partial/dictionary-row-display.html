@@ -19,6 +19,7 @@
 <td class="null-cell"><input type="checkbox" ng-checked="data.isNullable" ng-disabled="true"></td>
 <td class="pii-cell"><input type="checkbox" ng-checked="data.isPII" ng-disabled="true"></td>
 <td class="entities-cell">{{ data.entities }}</td>
+<td class="datasets-cell">{{ data.datasets.join(', ')}}</td>
 <td class="description-cell" ng-click="DictionaryController.editColumnData(data)">
   <span uib-tooltip="{{::data.description}}"
     tooltip-enable="data.description.length > 100"
