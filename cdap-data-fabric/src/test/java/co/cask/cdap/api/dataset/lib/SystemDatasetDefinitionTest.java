@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
@@ -100,13 +100,13 @@ public class SystemDatasetDefinitionTest {
       .add(TimeseriesDataset.ATTR_TIME_INTERVAL_TO_STORE_PER_ROW,
            String.valueOf(TimeUnit.HOURS.toMillis(1)))
       .build();
-    DatasetProperties compatProps = DatasetProperties.builder()
+    DatasetProperties compatProps = TableProperties.builder()
+      .setTTL(TimeUnit.DAYS.toSeconds(1))
       .add(TimeseriesDataset.ATTR_TIME_INTERVAL_TO_STORE_PER_ROW, String.valueOf(TimeUnit.HOURS.toMillis(1)))
-      .add(Table.PROPERTY_TTL, String.valueOf(TimeUnit.DAYS.toMillis(1)))
       .build();
-    DatasetProperties incompatProps = DatasetProperties.builder()
+    DatasetProperties incompatProps = TableProperties.builder()
+      .setTTL(TimeUnit.DAYS.toSeconds(1))
       .add(TimeseriesDataset.ATTR_TIME_INTERVAL_TO_STORE_PER_ROW, String.valueOf(TimeUnit.HOURS.toMillis(2)))
-      .add(Table.PROPERTY_TTL, String.valueOf(TimeUnit.DAYS.toMillis(1)))
       .build();
     DatasetSpecification spec = def.configure("tt", props);
     Assert.assertTrue(def instanceof Reconfigurable);
@@ -234,21 +234,21 @@ public class SystemDatasetDefinitionTest {
     DatasetDefinition indexedTableDef = registry.get(IndexedTable.class.getName());
     Assert.assertTrue(indexedTableDef instanceof Reconfigurable);
 
-    DatasetProperties props = DatasetProperties.builder()
+    DatasetProperties props = TableProperties.builder()
+      .setReadlessIncrementSupport(false)
       .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, "a,b,c")
-      .add(Table.PROPERTY_READLESS_INCREMENT, "false")
       .build();
     DatasetSpecification spec = indexedTableDef.configure("idxtb", props);
 
-    DatasetProperties compat = DatasetProperties.builder()
+    DatasetProperties compat = TableProperties.builder()
+      .setReadlessIncrementSupport(true) // turning on is ok
       .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, "c,b,a")
-      .add(Table.PROPERTY_READLESS_INCREMENT, "true") // turning on is ok
       .build();
     spec = ((Reconfigurable) indexedTableDef).reconfigure("idxtb", compat, spec);
 
-    DatasetProperties incompat = DatasetProperties.builder()
+    DatasetProperties incompat = TableProperties.builder()
+      .setReadlessIncrementSupport(true)
       .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, "a,d")
-      .add(Table.PROPERTY_READLESS_INCREMENT, "true")
       .build();
     try {
       ((Reconfigurable) indexedTableDef).reconfigure("idxtb", incompat, spec);
@@ -257,9 +257,9 @@ public class SystemDatasetDefinitionTest {
       // expected
     }
 
-    incompat = DatasetProperties.builder()
+    incompat = TableProperties.builder()
+      .setReadlessIncrementSupport(false) // turning off is not ok
       .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, "a,b,c")
-      .add(Table.PROPERTY_READLESS_INCREMENT, "false") // tirning off is not ok
       .build();
     try {
       ((Reconfigurable) indexedTableDef).reconfigure("idxtb", incompat, spec);

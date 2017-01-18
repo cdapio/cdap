@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -449,7 +449,7 @@ public class DatasetInstanceService {
   private void dropDataset(DatasetId instance, DatasetSpecification spec) throws Exception {
     LOG.info("Deleting dataset {}.{}", instance.getNamespace(), instance.getEntityName());
 
-    disableExplore(instance);
+    disableExplore(instance, spec);
 
     if (!instanceManager.delete(instance)) {
       throw new DatasetNotFoundException(instance);
@@ -470,13 +470,13 @@ public class DatasetInstanceService {
     privilegesManager.revoke(instance);
   }
 
-  private void disableExplore(DatasetId datasetInstance) {
+  private void disableExplore(DatasetId datasetInstance, DatasetSpecification spec) {
     // Disable ad-hoc exploration of dataset
-    // Note: today explore enable is not transactional with dataset create - CDAP-8
+    // Note: today explore enable is not transactional with dataset create - CDAP-1393
     try {
-      exploreFacade.disableExploreDataset(datasetInstance);
+      exploreFacade.disableExploreDataset(datasetInstance, spec);
     } catch (Exception e) {
-      LOG.error("Cannot disable explore for dataset instance {}", datasetInstance, e);
+      LOG.error("Cannot disable Explore for dataset instance {}", datasetInstance, e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
     }
   }
@@ -484,11 +484,11 @@ public class DatasetInstanceService {
   private void enableExplore(DatasetId datasetInstance, DatasetSpecification spec,
                              DatasetInstanceConfiguration creationProperties) {
     // Enable ad-hoc exploration of dataset
-    // Note: today explore enable is not transactional with dataset create - CDAP-8
+    // Note: today explore enable is not transactional with dataset create - CDAP-13933
     try {
       exploreFacade.enableExploreDataset(datasetInstance, spec);
     } catch (Exception e) {
-      LOG.error("Cannot enable explore for dataset instance {} of type {} with properties {}",
+      LOG.error("Cannot enable Explore for dataset instance {} of type {} with properties {}",
                 datasetInstance, creationProperties.getTypeName(), creationProperties.getProperties(), e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
     }
@@ -497,11 +497,11 @@ public class DatasetInstanceService {
   private void updateExplore(DatasetId datasetInstance, DatasetInstanceConfiguration creationProperties,
                              DatasetSpecification oldSpec, DatasetSpecification newSpec) {
     // Enable ad-hoc exploration of dataset
-    // Note: today explore enable is not transactional with dataset create - CDAP-8
+    // Note: today explore enable is not transactional with dataset create - CDAP-1393
     try {
       exploreFacade.updateExploreDataset(datasetInstance, oldSpec, newSpec);
     } catch (Exception e) {
-      LOG.error("Cannot update explore for dataset instance {} with old properties {} and new properties {}",
+      LOG.error("Cannot update Explore for dataset instance {} with old properties {} and new properties {}",
                 datasetInstance, oldSpec.getOriginalProperties(), creationProperties.getProperties(), e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
     }

@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform WordCount Application
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _examples-sport-results:
 
@@ -165,7 +165,7 @@ To run the ``ScoreCounter`` over all seasons of the NFL:
 
 .. tabbed-parsed-literal::
 
-  $ cdap cli start mapreduce SportResults.ScoreCounter "league='nfl'"
+  $ cdap cli start mapreduce SportResults.ScoreCounter league=nfl
   
 Note that the MapReduce can only be run once for each league. A subsequent run would fail because the output already exists.
 
@@ -177,40 +177,40 @@ see the existing partitions of a dataset, use the ``show partitions`` query:
 
 .. tabbed-parsed-literal::
 
-  $ cdap cli execute "\"show partitions dataset_results\""
+  $ cdap cli execute "\"show partitions results\""
 
 For example, to find the three games with the highest point difference in the 2012 NFL season, over all
 seasons (that have been uploaded), and for all seasons of all sport leagues:
 
 .. tabbed-parsed-literal::
 
-  $ cdap cli execute "\"select * from dataset_results where league='nfl' and season=2012 order by winnerpoints-loserpoints desc limit 3\""
+  $ cdap cli execute "\"select * from results where league='nfl' and season=2012 order by winnerpoints-loserpoints desc limit 3\""
 
-  $ cdap cli execute "\"select * from dataset_results where league='nfl' order by winnerpoints-loserpoints desc limit 3\""
+  $ cdap cli execute "\"select * from results where league='nfl' order by winnerpoints-loserpoints desc limit 3\""
 
-  $ cdap cli execute "\"select * from dataset_results order by winnerpoints-loserpoints desc limit 3\""
+  $ cdap cli execute "\"select * from results order by winnerpoints-loserpoints desc limit 3\""
 
 You can also explore the *totals* dataset. For example, to find the NFL teams team that, over their history,
 have scored the least points compared to the points they conceded:
 
 .. tabbed-parsed-literal::
 
-  $ cdap cli execute "\"select * from dataset_totals where league = 'nfl' order by conceded - scored desc limit 3"\"
+  $ cdap cli execute "\"select * from totals where league = 'nfl' order by conceded - scored desc limit 3"\"
   
 The last command would produce results (your results may vary, depending on the datasets you load) such as::
 
   Successfully connected CDAP instance at http://localhost:11015/default
-  +=====================================================================================================================================+
-  | dataset_totals.t | dataset_totals.w | dataset_totals.t | dataset_totals.l | dataset_totals.s | dataset_totals.c | dataset_totals.le |
-  | eam: STRING      | ins: INT         | ies: INT         | osses: INT       | cored: INT       | onceded: INT     | ague: STRING      |
-  +=====================================================================================================================================+
-  | Jacksonville Jag | 6                | 0                | 26               | 502              | 893              | nfl               |
-  | uars             |                  |                  |                  |                  |                  |                   |
-  |-------------------------------------------------------------------------------------------------------------------------------------|
-  | Oakland Raiders  | 8                | 0                | 24               | 612              | 896              | nfl               |
-  |-------------------------------------------------------------------------------------------------------------------------------------|
-  | New York Jets    | 14               | 0                | 18               | 571              | 762              | nfl               |
-  +=====================================================================================================================================+
+  +===============================================================================================================================+
+  | totals.team: ST | totals.wins: IN | totals.ties: IN | totals.losses:  | totals.scored:  | totals.conceded | totals.league: ST |
+  | RING            | T               | T               | INT             | INT             | : INT           | RING              |
+  +===============================================================================================================================+
+  | Jacksonville Ja | 6               | 0               | 26              | 502             | 893             | nfl               |
+  | guars           |                 |                 |                 |                 |                 |                   |
+  |-------------------------------------------------------------------------------------------------------------------------------|
+  | Oakland Raiders | 8               | 0               | 24              | 612             | 896             | nfl               |
+  |-------------------------------------------------------------------------------------------------------------------------------|
+  | New York Jets   | 14              | 0               | 18              | 571             | 762             | nfl               |
+  +===============================================================================================================================+
   Fetched 3 rows
 
 

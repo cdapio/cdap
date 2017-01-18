@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.explore.client;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.ExploreProperties;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.common.ServiceUnavailableException;
@@ -148,11 +149,19 @@ abstract class ExploreHttpClient implements Explore {
                                              stream.getEntityName(), tableName, response));
   }
 
-  protected QueryHandle doAddPartition(DatasetId datasetInstance,
+  protected QueryHandle doAddPartition(DatasetId datasetInstance, DatasetSpecification spec,
                                        PartitionKey key, String path) throws ExploreException {
     Map<String, String> args = new HashMap<>();
     PartitionedFileSetArguments.setOutputPartitionKey(args, key);
     args.put("path", path);
+    String tableName = ExploreProperties.getExploreTableName(spec.getProperties());
+    String databaseName = ExploreProperties.getExploreDatabaseName(spec.getProperties());
+    if (tableName != null) {
+      args.put(ExploreProperties.PROPERTY_EXPLORE_TABLE_NAME, tableName);
+    }
+    if (databaseName != null) {
+      args.put(ExploreProperties.PROPERTY_EXPLORE_DATABASE_NAME, databaseName);
+    }
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/partitions",
                                                  datasetInstance.getNamespace(), datasetInstance.getDataset()),
                                    GSON.toJson(args), null);
@@ -163,9 +172,19 @@ abstract class ExploreHttpClient implements Explore {
                                              key, datasetInstance.toString(), response));
   }
 
-  protected QueryHandle doDropPartition(DatasetId datasetInstance, PartitionKey key) throws ExploreException {
+  protected QueryHandle doDropPartition(DatasetId datasetInstance, DatasetSpecification spec, PartitionKey key)
+    throws ExploreException {
+
     Map<String, String> args = new HashMap<>();
     PartitionedFileSetArguments.setOutputPartitionKey(args, key);
+    String tableName = ExploreProperties.getExploreTableName(spec.getProperties());
+    String databaseName = ExploreProperties.getExploreDatabaseName(spec.getProperties());
+    if (tableName != null) {
+      args.put(ExploreProperties.PROPERTY_EXPLORE_TABLE_NAME, tableName);
+    }
+    if (databaseName != null) {
+      args.put(ExploreProperties.PROPERTY_EXPLORE_DATABASE_NAME, databaseName);
+    }
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/deletePartition",
                                                  datasetInstance.getNamespace(), datasetInstance.getEntityName()),
                                    GSON.toJson(args), null);
@@ -204,10 +223,13 @@ abstract class ExploreHttpClient implements Explore {
                                              datasetInstance.toString(), response));
   }
 
-  protected QueryHandle doDisableExploreDataset(DatasetId datasetInstance) throws ExploreException {
-    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/disable",
-                                                 datasetInstance.getNamespace(), datasetInstance.getEntityName()),
-                                   null, null);
+  protected QueryHandle doDisableExploreDataset(DatasetId datasetInstance,
+                                                DatasetSpecification spec) throws ExploreException {
+    String body = spec == null ? null : GSON.toJson(new DisableExploreParameters(spec));
+    String endpoint = spec == null ? "disable" : "disable-internal";
+    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/%s",
+                                                 datasetInstance.getNamespace(),
+                                                 datasetInstance.getEntityName(), endpoint), body, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -397,7 +419,17 @@ abstract class ExploreHttpClient implements Explore {
   @Override
   public TableInfo getTableInfo(String namespace, String table)
     throws ExploreException, TableNotFoundException {
-    HttpResponse response = doGet(String.format("namespaces/%s/data/explore/tables/%s/info", namespace, table));
+    return getTableInfo(namespace, null, table);
+  }
+
+  @Override
+  public TableInfo getTableInfo(String namespace, @Nullable String databaseName, String table)
+    throws ExploreException, TableNotFoundException {
+    String url = String.format("namespaces/%s/data/explore/tables/%s/info", namespace, table);
+    if (databaseName != null) {
+      url += "?database=" + databaseName;
+    }
+    HttpResponse response = doGet(url);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return parseJson(response, TableInfo.class);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

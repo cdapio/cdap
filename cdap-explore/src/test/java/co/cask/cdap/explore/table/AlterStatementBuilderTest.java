@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,10 +35,10 @@ public class AlterStatementBuilderTest {
   @Test
   public void testWithLocation() throws Exception {
     Location location = locationFactory.create("/some/path");
-    String expected = "ALTER TABLE dataset_xyz " +
+    String expected = "ALTER TABLE abc.dataset_xyz " +
       "SET LOCATION '" + location.toURI().toString() + "'";
 
-    String actual = new AlterStatementBuilder("xyz", "dataset_xyz", true)
+    String actual = new AlterStatementBuilder("xyz", "abc", "dataset_xyz", true)
       .buildWithLocation(location);
     Assert.assertEquals(expected, actual);
   }
@@ -49,7 +49,7 @@ public class AlterStatementBuilderTest {
       "SET TBLPROPERTIES ('somekey'='someval', 'cdap.name'='xyz', " +
       "'cdap.version'='" + ProjectInfo.getVersion().toString() + "')";
 
-    String actual = new AlterStatementBuilder("xyz", "dataset_xyz", true)
+    String actual = new AlterStatementBuilder("xyz", null, "dataset_xyz", true)
       .buildWithTableProperties(ImmutableMap.of("somekey", "someval"));
     Assert.assertEquals(expected, actual);
   }
@@ -68,21 +68,21 @@ public class AlterStatementBuilderTest {
     // escape = false
     String expected = "ALTER TABLE dataset_xyz " +
       "REPLACE COLUMNS (f1 string, f2 int, f3 double, f4 boolean, f5 float, f6 binary)";
-    String actual = new AlterStatementBuilder("xyz", "dataset_xyz", false)
+    String actual = new AlterStatementBuilder("xyz", null, "dataset_xyz", false)
       .buildWithSchema(schema);
     Assert.assertEquals(expected, actual);
 
     // escape true
     expected = "ALTER TABLE dataset_xyz " +
       "REPLACE COLUMNS (`f1` string, `f2` int, `f3` double, `f4` boolean, `f5` float, `f6` binary)";
-    actual = new AlterStatementBuilder("xyz", "dataset_xyz", true)
+    actual = new AlterStatementBuilder("xyz", null, "dataset_xyz", true)
       .buildWithSchema(schema);
     Assert.assertEquals(expected, actual);
 
     // escape true, schema given as string
     expected = "ALTER TABLE dataset_xyz " +
       "REPLACE COLUMNS (f1 string, f2 int, f3 double)";
-    actual = new AlterStatementBuilder("xyz", "dataset_xyz", true)
+    actual = new AlterStatementBuilder("xyz", null, "dataset_xyz", true)
       .buildWithSchema("f1 string, f2 int, f3 double");
     Assert.assertEquals(expected, actual);
   }
@@ -90,7 +90,7 @@ public class AlterStatementBuilderTest {
   @Test
   public void testWithFileFormat() throws Exception {
     String expected = "ALTER TABLE dataset_xyz SET FILEFORMAT TEXTFILE";
-    String actual = new AlterStatementBuilder("xyz", "dataset_xyz", true)
+    String actual = new AlterStatementBuilder("xyz", null, "dataset_xyz", true)
       .buildWithFileFormat("TEXTFILE");
     Assert.assertEquals(expected, actual);
   }
@@ -98,12 +98,12 @@ public class AlterStatementBuilderTest {
   @Test
   public void testWithDelimiter() throws Exception {
     String expected = "ALTER TABLE dataset_xyz SET SERDEPROPERTIES ('field.delim'='|')";
-    String actual = new AlterStatementBuilder("xyz", "dataset_xyz", true)
+    String actual = new AlterStatementBuilder("xyz", null, "dataset_xyz", true)
       .buildWithDelimiter("|");
     Assert.assertEquals(expected, actual);
 
     expected = "ALTER TABLE dataset_xyz SET SERDEPROPERTIES ('field.delim'='\\001')";
-    actual = new AlterStatementBuilder("xyz", "dataset_xyz", true)
+    actual = new AlterStatementBuilder("xyz", null, "dataset_xyz", true)
       .buildWithDelimiter(null);
     Assert.assertEquals(expected, actual);
   }
@@ -114,7 +114,7 @@ public class AlterStatementBuilderTest {
       "INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat' " +
       "OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat' " +
       "SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'";
-    String actual = new AlterStatementBuilder("xyz", "dataset_xyz", true)
+    String actual = new AlterStatementBuilder("xyz", null, "dataset_xyz", true)
       .buildWithFormats("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat",
                         "org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat",
                         "org.apache.hadoop.hive.serde2.avro.AvroSerDe");

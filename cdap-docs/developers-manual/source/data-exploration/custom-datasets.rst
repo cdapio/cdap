@@ -351,6 +351,8 @@ When creating your queries, keep these limitations in mind:
   table name. For example, if your dataset is named ``my-table.name``, the corresponding Hive table
   name will be ``dataset_my_table_name``. Beware of name collisions. For example, ``my.table`` will
   use the same Hive table name as ``my_table``.
+- You can also configure the table name by setting the dataset property ``explore.table.name``
+  (see :ref:`Data Exploration <data-exploration>`).
 
 For more examples of queries, please refer to the `Hive language manual
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML#LanguageManualDML-InsertingdataintoHiveTablesfromqueries>`__.

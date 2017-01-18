@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,9 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.ExploreProperties;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.datasets.EmailTableDefinition;
 import co.cask.cdap.explore.service.datasets.TableWrapperDefinition;
@@ -40,7 +42,9 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
+import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Tests exploration of record scannables that are scannables of StructuredRecord.
@@ -84,6 +88,52 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
     datasetFramework.deleteInstance(MY_TABLE);
     datasetFramework.deleteModule(NAMESPACE_ID.datasetModule("TableWrapper"));
   }
+
+  @Test
+  public void testCreateDropCustomDBAndTable() throws Exception {
+    testCreateDropCustomDBAndTable("databasex", null);
+    testCreateDropCustomDBAndTable(null, "tablex");
+    testCreateDropCustomDBAndTable("databasey", "tabley");
+  }
+
+  private void testCreateDropCustomDBAndTable(@Nullable String database, @Nullable String tableName) throws Exception {
+    String datasetName = "cdccat";
+    DatasetId datasetId = NAMESPACE_ID.dataset(datasetName);
+    ExploreProperties.Builder props = ExploreProperties.builder();
+    if (tableName != null) {
+      props.setExploreTableName(tableName);
+    } else {
+      tableName = getDatasetHiveName(datasetId);
+    }
+    if (database != null) {
+      runCommand(NAMESPACE_ID, "create database if not exists " + database, false, null, null);
+      props.setExploreDatabaseName(database);
+    }
+    try {
+      datasetFramework.addInstance("email", datasetId, props.build());
+      if (database == null) {
+        runCommand(NAMESPACE_ID, "show tables", true, null,
+                   Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(MY_TABLE_NAME)),
+                                      new QueryResult(Lists.<Object>newArrayList(tableName))));
+      } else {
+        runCommand(NAMESPACE_ID, "show tables in " + database, true, null,
+                   Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
+      }
+      datasetFramework.deleteInstance(datasetId);
+      if (database == null) {
+        runCommand(NAMESPACE_ID, "show tables", true, null,
+                   Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(MY_TABLE_NAME))));
+      } else {
+        runCommand(NAMESPACE_ID, "show tables in " + database, false, null,
+                   Collections.<QueryResult>emptyList());
+      }
+    } finally {
+      if (database != null) {
+        runCommand(NAMESPACE_ID, "drop database if exists " + database + "cascade", false, null, null);
+      }
+    }
+  }
+
 
   @Test(expected = IllegalArgumentException.class)
   public void testMissingSchemaFails() throws Exception {
@@ -177,9 +227,9 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
   @Test
   public void testInsert() throws Exception {
     DatasetId copyTable = NAMESPACE_ID.dataset("emailCopy");
-    datasetFramework.addInstance(Table.class.getName(), copyTable, DatasetProperties.builder()
-      .add(Table.PROPERTY_SCHEMA, EmailTableDefinition.SCHEMA.toString())
-      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "id")
+    datasetFramework.addInstance(Table.class.getName(), copyTable, TableProperties.builder()
+      .setSchema(EmailTableDefinition.SCHEMA)
+      .setRowFieldName("id")
       .build());
     try {
       String command = String.format("insert into %s select * from %s",

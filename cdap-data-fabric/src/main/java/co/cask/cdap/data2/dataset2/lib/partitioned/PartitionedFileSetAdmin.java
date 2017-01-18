@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,8 +58,8 @@ public class PartitionedFileSetAdmin extends CompositeDatasetAdmin {
       if (exploreFacade != null) {
         DatasetId instanceId = new DatasetId(context.getNamespaceId(), spec.getName());
         try {
-          exploreFacade.disableExploreDataset(instanceId);
-          exploreFacade.enableExploreDataset(instanceId);
+          exploreFacade.disableExploreDataset(instanceId, spec);
+          exploreFacade.enableExploreDataset(instanceId, spec);
         } catch (Exception e) {
           throw new DataSetException(String.format(
               "Unable to reset explore on dataset %s", instanceId), e);

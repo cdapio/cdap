@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -71,7 +71,7 @@ public final class DatasetProperties {
   public String toString() {
     return "DatasetProperties{" +
       "description=" + description +
-      "properties=" + properties +
+      ", properties=" + properties +
       '}';
   }
 
@@ -114,6 +114,17 @@ public final class DatasetProperties {
      * @return this builder object to allow chaining
      */
     public Builder add(String key, int value) {
+      this.properties.put(key, String.valueOf(value));
+      return this;
+    }
+
+    /**
+     * Adds a property.
+     * @param key the name of the property
+     * @param value the value of the property
+     * @return this builder object to allow chaining
+     */
+    public Builder add(String key, long value) {
       this.properties.put(key, String.valueOf(value));
       return this;
     }

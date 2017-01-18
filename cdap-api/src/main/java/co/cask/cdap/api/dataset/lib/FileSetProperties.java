@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 package co.cask.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.ExploreProperties;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -221,7 +221,7 @@ public class FileSetProperties {
   /**
    * A Builder to construct properties for FileSet datasets.
    */
-  public static class Builder extends DatasetProperties.Builder {
+  public static class Builder extends ExploreProperties.AbstractBuilder<Builder> {
 
     private String format = null;
 
@@ -392,13 +392,6 @@ public class FileSetProperties {
     public Builder setTableProperty(String name, String value) {
       add(PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX + name, value);
       return this;
-    }
-
-    /**
-     * Create a DatasetProperties from this builder.
-     */
-    public DatasetProperties build() {
-      return super.build();
     }
   }
 }

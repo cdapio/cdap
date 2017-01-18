@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,7 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -58,10 +59,10 @@ public class EmailTableDefinition extends AbstractDatasetDefinition<EmailTableDe
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    DatasetProperties propertiesWithSchema = DatasetProperties.builder()
+    DatasetProperties propertiesWithSchema = TableProperties.builder()
+      .setSchema(SCHEMA)
+      .setRowFieldName("id")
       .addAll(properties.getProperties())
-      .add(DatasetProperties.SCHEMA, SCHEMA.toString())
-      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "id")
       .build();
     return DatasetSpecification.builder(instanceName, getName())
       .properties(propertiesWithSchema.getProperties())

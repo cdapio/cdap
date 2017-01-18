@@ -83,3 +83,7 @@ Examples:
   will all be converted to ``dataset_my_dataset``
 
 Names should be carefully constructed to avoid any collisions as a result of conversion.
+
+Note that if you configure the Hive table name using the ``explore.table.name`` property
+(see :ref:`Data Exploration <data-exploration>`), then the value of that property is
+used literally; that is, no prefix is added and no character conversion takes place.

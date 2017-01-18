@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.twill.filesystem.Location;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Builds alter table statements for Hive. Table DDL we support is of the form:
@@ -39,12 +40,14 @@ import java.util.Map;
  */
 public class AlterStatementBuilder {
   private final String name;
-  private final String hiveTableName;
+  private final String databaseName;
+  private final String tableName;
   private boolean escapeColumns;
 
-  public AlterStatementBuilder(String name, String hiveTableName, boolean escapeColumns) {
+  public AlterStatementBuilder(String name, @Nullable String databaseName, String tableName, boolean escapeColumns) {
     this.name = name;
-    this.hiveTableName = hiveTableName;
+    this.databaseName = databaseName;
+    this.tableName = tableName;
     this.escapeColumns = escapeColumns;
   }
 
@@ -146,10 +149,11 @@ public class AlterStatementBuilder {
    * Start the create statement: ALTER TABLE tableName ...
    */
   private StringBuilder startBuild() {
-    return new StringBuilder()
-      .append("ALTER TABLE ")
-      .append(hiveTableName)
-      .append(' ');
+    if (databaseName == null) {
+      return new StringBuilder().append("ALTER TABLE ").append(tableName).append(' ');
+    } else {
+      return new StringBuilder().append("ALTER TABLE ").append(databaseName).append('.').append(tableName).append(' ');
+    }
   }
 
   // appends the contents of the map as ('key'='val', ...). Also escapes any single quotes in the map.

@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -22,7 +22,35 @@ Data Exploration
 
 
 This section covers how you can explore data in CDAP through the use of ad-hoc SQL-like queries.
-Queries can be run over streams and certain types of datasets.
+Queries can be run over streams and certain types of datasets. We refer to this as *CDAP Explore*,
+or *Explore* for short.
+
+Enabling exploration for a dataset results in the creation of a SQL table in the Explore system. The
+name of this table is, by default, the same as the name of the dataset, prefixed with ``dataset_``.
+For example, after creating a Table named ``results``, it can be explored with the SQL query::
+
+  SELECT * FROM dataset_results LIMIT 5
+
+Note that the table is only explorable if it has a schema.
+
+The name of the Explore table can be configured by setting the dataset property ``explore.table.name``
+when creating the dataset. It is recommended to use a dataset properties builder::
+
+    // Create the "results" partitioned file set, configure it to work with MapReduce and with Explore
+    createDataset("results", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
+      ...
+      .setEnableExploreOnCreate(true)
+      .setExploreTableName("results")
+      .setExploreFormat("csv")
+      .setExploreSchema("`date` STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
+      .build());
+
+This dataset can be queried with the configured table name; that is, without the ``dataset_`` prefix::
+
+  SELECT * FROM results LIMIT 5
+
+Similarly, you can configure the Explore database name by setting the dataset property ``explore.table.name``
+(or calling the ``setExploreDatabaseName()`` method of the dataset properties builder).
 
 Note that if you are running a secure cluster, additional :ref:`configuration for a secure
 cluster <packages-configuration-enabling-kerberos>` is required.
@@ -38,7 +66,6 @@ enabled for exploration by using the :ref:`Query RESTful API <http-restful-api-q
 You can use the same Query RESTful API to disable exploration of a specific dataset or
 stream. The dataset or stream will still be accessible programmatically; it just won't
 respond to queries through the HTTP RESTful API or be available for exploration using the CDAP UI.
-
 
 .. |stream-exploration| replace:: **Stream Exploration:**
 .. _stream-exploration: streams.html

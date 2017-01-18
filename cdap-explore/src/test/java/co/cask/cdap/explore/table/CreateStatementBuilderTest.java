@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,7 +53,7 @@ public class CreateStatementBuilderTest {
       Constants.Explore.STREAM_NAME, "purchases",
       Constants.Explore.STREAM_NAMESPACE, "default");
 
-    String actual = new CreateStatementBuilder("purchases", "stream_purchases", false)
+    String actual = new CreateStatementBuilder("purchases", null, "stream_purchases", false)
       .setSchema(schema)
       .setLocation("hdfs://namenode/my/path")
       .setTableProperties(ImmutableMap.of("somekey", "someval"))
@@ -64,7 +64,7 @@ public class CreateStatementBuilderTest {
 
   @Test
   public void testRowDelimitedCreate() throws Exception {
-    String expected = "CREATE EXTERNAL TABLE IF NOT EXISTS dataset_myfiles " +
+    String expected = "CREATE EXTERNAL TABLE IF NOT EXISTS abc.dataset_myfiles " +
       "(f1 string, f2 int, f3 double, f4 binary, f5 array<int>) COMMENT 'CDAP Dataset' " +
       "PARTITIONED BY (f1 STRING, f2 INT) " +
       "ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' " +
@@ -76,7 +76,7 @@ public class CreateStatementBuilderTest {
       .addIntField("f2")
       .build();
 
-    String actual = new CreateStatementBuilder("myfiles", "dataset_myfiles", false)
+    String actual = new CreateStatementBuilder("myfiles", "abc", "dataset_myfiles", false)
       .setSchema(hiveSchema)
       .setLocation("hdfs://namenode/my/path")
       .setTableComment("CDAP Dataset")
@@ -101,7 +101,7 @@ public class CreateStatementBuilderTest {
       .addIntField("f2")
       .build();
 
-    String actual = new CreateStatementBuilder("myfiles", "dataset_myfiles", false)
+    String actual = new CreateStatementBuilder("myfiles", null, "dataset_myfiles", false)
       .setSchema(hiveSchema)
       .setLocation("hdfs://namenode/my/path")
       .setTableComment("CDAP Dataset")
@@ -133,7 +133,7 @@ public class CreateStatementBuilderTest {
       .addIntField("f2")
       .build();
 
-    String actual = new CreateStatementBuilder("myfiles", "dataset_myfiles", false)
+    String actual = new CreateStatementBuilder("myfiles", null, "dataset_myfiles", false)
       .setSchema(schema)
       .setTableProperties(ImmutableMap.of("avro.schema.literal", schema.toString()))
       .setLocation("hdfs://namenode/my/path")

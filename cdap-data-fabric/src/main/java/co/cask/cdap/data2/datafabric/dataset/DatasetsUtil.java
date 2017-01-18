@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,7 @@ import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
@@ -164,5 +165,15 @@ public final class DatasetsUtil {
       !datasetInstanceId.getEntityName().startsWith("system.sharded.queue") &&
       !datasetInstanceId.getEntityName().startsWith("system.queue") &&
       !datasetInstanceId.getEntityName().startsWith("system.stream");
+  }
+
+  /**
+   * Returns whether or not the dataset defined in the given specification is transactional.
+   * Defaults to true. Note that this should be in TableProperties, but because we do not expose
+   * this setting through the API currently, keeping it here for now. See
+   * https://issues.cask.co/browse/CDAP-1193 for additional information.
+   */
+  public static boolean isTransactional(Map<String, String> props) {
+    return !"true".equalsIgnoreCase(props.get(Constants.Dataset.TABLE_TX_DISABLED));
   }
 }

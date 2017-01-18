@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.lib.CompositeDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.internal.io.TypeRepresentation;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -108,10 +109,10 @@ public class ObjectMappedTableDefinition extends CompositeDatasetDefinition<Obje
       String keyName = ObjectMappedTableProperties.getRowKeyExploreName(props);
       Schema.Type keyType = ObjectMappedTableProperties.getRowKeyExploreType(props);
       Schema fullSchema = addKeyToSchema(objectSchema, keyName, keyType);
-      return DatasetProperties.builder()
+      return TableProperties.builder()
+        .setSchema(fullSchema)
+        .setRowFieldName(keyName)
         .addAll(properties.getProperties())
-        .add(Table.PROPERTY_SCHEMA, fullSchema.toString())
-        .add(Table.PROPERTY_SCHEMA_ROW_FIELD, keyName)
         .build();
     } catch (IOException e) {
       throw new IllegalArgumentException("Could not parse schema.", e);

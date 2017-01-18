@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,8 +21,10 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.ExploreProperties;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
@@ -33,9 +35,7 @@ import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.Lists;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -44,6 +44,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Tests exploration of Tables.
@@ -69,12 +70,39 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
                     Schema.Field.of("string_field", Schema.of(Schema.Type.STRING))
   );
 
-  @Before
-  public void before() throws Exception {
-    datasetFramework.addInstance(Table.class.getName(), MY_TABLE, DatasetProperties.builder()
-      .add(Table.PROPERTY_SCHEMA, SCHEMA.toString())
-      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "string_field")
-      .build());
+  private static final Schema NEW_SCHEMA =
+    Schema.recordOf("record",
+                    Schema.Field.of("int_field", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+                    Schema.Field.of("long_field", Schema.nullableOf(Schema.of(Schema.Type.LONG))),
+                    Schema.Field.of("float_field", Schema.nullableOf(Schema.of(Schema.Type.FLOAT))),
+                    Schema.Field.of("double_field", Schema.nullableOf(Schema.of(Schema.Type.BYTES))),
+                    Schema.Field.of("bytes_field", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                    Schema.Field.of("new_field", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                    Schema.Field.of("string_field", Schema.of(Schema.Type.STRING))
+    );
+
+  private DatasetProperties setupTableProperties(@Nullable String dbName, @Nullable String tableName,
+                                                 @Nullable Schema schema) {
+    TableProperties.Builder props = TableProperties.builder();
+    if (schema != null) {
+      TableProperties.setSchema(props, schema);
+      TableProperties.setRowFieldName(props, "string_field");
+    }
+    if (dbName != null) {
+      ExploreProperties.setExploreDatabaseName(props, dbName);
+    }
+    if (tableName != null) {
+      ExploreProperties.setExploreTableName(props, tableName);
+    }
+    return props.build();
+  }
+
+  private void setupTable(@Nullable String dbName, @Nullable String tableName) throws Exception {
+
+    if (dbName != null) {
+      runCommand(NAMESPACE_ID, "create database if not exists " + dbName, false, null, null);
+    }
+    datasetFramework.addInstance(Table.class.getName(), MY_TABLE, setupTableProperties(dbName, tableName, SCHEMA));
 
     // Accessing dataset instance to perform data operations
     Table table = datasetFramework.getDataset(MY_TABLE, DatasetDefinition.NO_ARGUMENTS, null);
@@ -104,11 +132,6 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
     txTable.startTx(tx2);
   }
 
-  @After
-  public void after() throws Exception {
-    datasetFramework.deleteInstance(MY_TABLE);
-  }
-
   @Test
   public void testNoOpOnMissingSchema() throws Exception {
     DatasetId datasetId = NAMESPACE_ID.dataset("noschema");
@@ -121,16 +144,16 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
     }
   }
 
-  @Test
-  public void testSchema() throws Exception {
-    runCommand(NAMESPACE_ID, "describe " + MY_TABLE_NAME,
+  private void testSchema(String tableToQuery, Schema schema) throws Exception {
+
+    runCommand(NAMESPACE_ID, "describe " + tableToQuery,
                true,
                Lists.newArrayList(
                  new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
                  new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
                  new ColumnDesc("comment", "STRING", 3, "from deserializer")
                ),
-               Lists.newArrayList(
+               schema.equals(SCHEMA) ? Lists.newArrayList(
                  new QueryResult(Lists.<Object>newArrayList("bool_field", "boolean", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("int_field", "int", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("long_field", "bigint", "from deserializer")),
@@ -138,99 +161,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
                  new QueryResult(Lists.<Object>newArrayList("double_field", "double", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("bytes_field", "binary", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("string_field", "string", "from deserializer"))
-               )
-    );
-  }
-
-  @Test
-  public void testSelectStar() throws Exception {
-    List<ColumnDesc> expectedSchema = Lists.newArrayList(
-      new ColumnDesc(MY_TABLE_NAME + ".bool_field", "BOOLEAN", 1, null),
-      new ColumnDesc(MY_TABLE_NAME + ".int_field", "INT", 2, null),
-      new ColumnDesc(MY_TABLE_NAME + ".long_field", "BIGINT", 3, null),
-      new ColumnDesc(MY_TABLE_NAME + ".float_field", "FLOAT", 4, null),
-      new ColumnDesc(MY_TABLE_NAME + ".double_field", "DOUBLE", 5, null),
-      new ColumnDesc(MY_TABLE_NAME + ".bytes_field", "BINARY", 6, null),
-      new ColumnDesc(MY_TABLE_NAME + ".string_field", "STRING", 7, null)
-    );
-    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
-    // check SCHEMA
-    Assert.assertEquals(expectedSchema, results.getResultSchema());
-    List<Object> columns = results.next().getColumns();
-    // check record1
-    Assert.assertFalse((Boolean) columns.get(0));
-    Assert.assertEquals(Integer.MAX_VALUE, columns.get(1));
-    Assert.assertEquals(Long.MAX_VALUE, columns.get(2));
-    // why does this come back as a double when it's a float???
-    Assert.assertTrue(Math.abs(3.14f - (Double) columns.get(3)) < 0.000001);
-    Assert.assertTrue(Math.abs(3.14 - (Double) columns.get(4)) < 0.000001);
-    Assert.assertArrayEquals(new byte[]{'A', 'B', 'C'}, (byte[]) columns.get(5));
-    Assert.assertEquals("row1", columns.get(6));
-    // should not be any more
-    Assert.assertFalse(results.hasNext());
-  }
-
-  @Test
-  public void testSelect() throws Exception {
-    String command = String.format("select int_field, double_field from %s where string_field='row1'", MY_TABLE_NAME);
-    runCommand(NAMESPACE_ID, command,
-               true,
-               Lists.newArrayList(new ColumnDesc("int_field", "INT", 1, null),
-                                  new ColumnDesc("double_field", "DOUBLE", 2, null)),
-               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(Integer.MAX_VALUE, 3.14)))
-    );
-  }
-
-  @Test
-  public void testUpdateNoSchemaThenWithSchema() throws Exception {
-    // make sure we can get the table info
-    exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), MY_TABLE_NAME);
-    // update the properties to be not explorable
-    datasetFramework.updateInstance(MY_TABLE, DatasetProperties.EMPTY);
-    // validate the new table SCHEMA
-    try {
-      exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), MY_TABLE_NAME);
-      Assert.fail("Expected TableNotFoundException");
-    } catch (TableNotFoundException e) {
-      // expected
-    }
-
-    // update the properties again, to be explorable with the same schema as before
-    datasetFramework.updateInstance(MY_TABLE, DatasetProperties.builder()
-      .add(Table.PROPERTY_SCHEMA, SCHEMA.toString())
-      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "string_field")
-      .build());
-    // validate explore works after update
-    testSchema();
-    testSelectStar();
-  }
-
-  @Test
-  public void testUpdateSchema() throws Exception {
-    Schema newSchema = Schema.recordOf(
-      "record",
-      Schema.Field.of("int_field", Schema.nullableOf(Schema.of(Schema.Type.INT))),
-      Schema.Field.of("long_field", Schema.nullableOf(Schema.of(Schema.Type.LONG))),
-      Schema.Field.of("float_field", Schema.nullableOf(Schema.of(Schema.Type.FLOAT))),
-      Schema.Field.of("double_field", Schema.nullableOf(Schema.of(Schema.Type.BYTES))),
-      Schema.Field.of("bytes_field", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-      Schema.Field.of("new_field", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-      Schema.Field.of("string_field", Schema.of(Schema.Type.STRING))
-    );
-    datasetFramework.updateInstance(MY_TABLE, DatasetProperties.builder()
-      .add(Table.PROPERTY_SCHEMA, newSchema.toString())
-      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "string_field")
-      .build());
-
-    // validate the new table SCHEMA
-    runCommand(NAMESPACE_ID, "describe " + MY_TABLE_NAME,
-               true,
-               Lists.newArrayList(
-                 new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
-                 new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
-                 new ColumnDesc("comment", "STRING", 3, "from deserializer")
-               ),
-               Lists.newArrayList(
+               ) : Lists.newArrayList(
                  new QueryResult(Lists.<Object>newArrayList("int_field", "int", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("long_field", "bigint", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("float_field", "float", "from deserializer")),
@@ -238,38 +169,177 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
                  new QueryResult(Lists.<Object>newArrayList("bytes_field", "string", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("new_field", "string", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("string_field", "string", "from deserializer"))
-               )
-    );
+               ));
+  }
 
-    // validate that select * returns the new SCHEMA
-    List<ColumnDesc> expectedSchema = Lists.newArrayList(
-      new ColumnDesc(MY_TABLE_NAME + ".int_field", "INT", 1, null),
-      new ColumnDesc(MY_TABLE_NAME + ".long_field", "BIGINT", 2, null),
-      new ColumnDesc(MY_TABLE_NAME + ".float_field", "FLOAT", 3, null),
-      new ColumnDesc(MY_TABLE_NAME + ".double_field", "BINARY", 4, null),
-      new ColumnDesc(MY_TABLE_NAME + ".bytes_field", "STRING", 5, null),
-      new ColumnDesc(MY_TABLE_NAME + ".new_field", "STRING", 6, null),
-      new ColumnDesc(MY_TABLE_NAME + ".string_field", "STRING", 7, null)
-    );
-    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
+  private void testSelectStar(String tableToQuery, String tableInSchema, Schema schema) throws Exception {
+
+    List<ColumnDesc> expectedSchema = schema.equals(SCHEMA)
+      ? Lists.newArrayList(new ColumnDesc(tableInSchema + ".bool_field", "BOOLEAN", 1, null),
+                           new ColumnDesc(tableInSchema + ".int_field", "INT", 2, null),
+                           new ColumnDesc(tableInSchema + ".long_field", "BIGINT", 3, null),
+                           new ColumnDesc(tableInSchema + ".float_field", "FLOAT", 4, null),
+                           new ColumnDesc(tableInSchema + ".double_field", "DOUBLE", 5, null),
+                           new ColumnDesc(tableInSchema + ".bytes_field", "BINARY", 6, null),
+                           new ColumnDesc(tableInSchema + ".string_field", "STRING", 7, null))
+      : Lists.newArrayList(new ColumnDesc(tableInSchema + ".int_field", "INT", 1, null),
+                           new ColumnDesc(tableInSchema + ".long_field", "BIGINT", 2, null),
+                           new ColumnDesc(tableInSchema + ".float_field", "FLOAT", 3, null),
+                           new ColumnDesc(tableInSchema + ".double_field", "BINARY", 4, null),
+                           new ColumnDesc(tableInSchema + ".bytes_field", "STRING", 5, null),
+                           new ColumnDesc(tableInSchema + ".new_field", "STRING", 6, null),
+                           new ColumnDesc(tableInSchema + ".string_field", "STRING", 7, null));
+
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + tableToQuery).get();
     // check SCHEMA
     Assert.assertEquals(expectedSchema, results.getResultSchema());
     List<Object> columns = results.next().getColumns();
-    // check record1
-    Assert.assertEquals(Integer.MAX_VALUE, columns.get(0));
-    Assert.assertEquals(Long.MAX_VALUE, columns.get(1));
+    // check record1, account for the variability between SCHEMA and NEW_SCHEMA
+    int index = 0;
+    if (schema.equals(SCHEMA)) {
+      Assert.assertFalse((Boolean) columns.get(index++));
+    }
+    Assert.assertEquals(Integer.MAX_VALUE, columns.get(index++));
+    Assert.assertEquals(Long.MAX_VALUE, columns.get(index++));
     // why does this come back as a double when it's a float???
-    Assert.assertTrue(Math.abs(3.14f - (Double) columns.get(2)) < 0.000001);
-    Assert.assertArrayEquals(Bytes.toBytes(3.14D), (byte[]) columns.get(3));
-    Assert.assertEquals("ABC", columns.get(4));
-    Assert.assertNull(columns.get(5));
-    Assert.assertEquals("row1", columns.get(6));
+    Assert.assertTrue(Math.abs(3.14f - (Double) columns.get(index++)) < 0.000001);
+    if (schema.equals(SCHEMA)) {
+      Assert.assertTrue(Math.abs(3.14 - (Double) columns.get(index++)) < 0.000001);
+      Assert.assertArrayEquals(new byte[]{'A', 'B', 'C'}, (byte[]) columns.get(index++));
+    } else {
+      Assert.assertArrayEquals(Bytes.toBytes(3.14D), (byte[]) columns.get(index++));
+      Assert.assertEquals("ABC", columns.get(index++));
+      Assert.assertNull(columns.get(index++));
+    }
+    Assert.assertEquals("row1", columns.get(index));
+
     // should not be any more
     Assert.assertFalse(results.hasNext());
   }
 
+  private void testSelect(String tableToQuery, Schema schema) throws Exception {
+
+    String command = String.format("select int_field, double_field from %s where string_field='row1'", tableToQuery);
+    runCommand(NAMESPACE_ID, command,
+               true,
+               Lists.newArrayList(new ColumnDesc("int_field", "INT", 1, null),
+                                  new ColumnDesc("double_field", schema.equals(SCHEMA) ? "DOUBLE" : "BINARY", 2, null)),
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(
+                 Integer.MAX_VALUE,
+                 schema.equals(SCHEMA) ? 3.14 : Bytes.toBytes(3.14D))))
+    );
+  }
+
+  @Test
+  public void testUpdateNoSchemaThenWithSchemaThenOtherSchema() throws Exception {
+    testUpdateNoSchemaThenWithSchemaThenOtherSchema(null, null);
+    testUpdateNoSchemaThenWithSchemaThenOtherSchema(null, "mytt");
+    testUpdateNoSchemaThenWithSchemaThenOtherSchema("yourdb", null);
+    testUpdateNoSchemaThenWithSchemaThenOtherSchema("mydb", "yourtt");
+  }
+
+  private void testUpdateNoSchemaThenWithSchemaThenOtherSchema(@Nullable String dbName,
+                                                               @Nullable String tableName) throws Exception {
+    // create a table with SCHEMA and populate it with some data
+    setupTable(dbName, tableName);
+
+    if (tableName == null) {
+      tableName = MY_TABLE_NAME;
+    }
+    String tableToQuery = tableName;
+    if (dbName != null) {
+      tableToQuery = dbName + "." + tableToQuery;
+    }
+
+    try {
+      // validate the schema in explore, run sand validate some queries
+      testSchema(tableToQuery, SCHEMA);
+      testSelect(tableToQuery, SCHEMA);
+      testSelectStar(tableToQuery, tableName, SCHEMA);
+
+      if (tableName == null) {
+        tableName = MY_TABLE_NAME;
+      }
+      // make sure we can get the table info
+      exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), dbName, tableName);
+      // update the properties to be not explorable
+      datasetFramework.updateInstance(MY_TABLE, setupTableProperties(dbName, tableName, null));
+      // validate the table is not explorable
+      try {
+        exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), dbName, tableName);
+        Assert.fail("Expected TableNotFoundException");
+      } catch (TableNotFoundException e) {
+        // expected
+      }
+
+      // update the properties again, to be explorable with the same schema as before
+      datasetFramework.updateInstance(MY_TABLE, setupTableProperties(dbName, tableName, SCHEMA));
+      // validate explore works after update
+      testSchema(tableToQuery, SCHEMA);
+      testSelect(tableToQuery, SCHEMA);
+      testSelectStar(tableToQuery, tableName, SCHEMA);
+
+      // update the properties again, this time with a different schema
+      datasetFramework.updateInstance(MY_TABLE, setupTableProperties(dbName, tableName, NEW_SCHEMA));
+      // validate explore reflects the update
+      testSchema(tableToQuery, NEW_SCHEMA);
+      testSelect(tableToQuery, NEW_SCHEMA);
+      testSelectStar(tableToQuery, tableName, NEW_SCHEMA);
+
+    } finally {
+      datasetFramework.deleteInstance(MY_TABLE);
+      if (dbName != null) {
+        runCommand(NAMESPACE_ID, "drop database if exists " + dbName + "cascade", false, null, null);
+      }
+    }
+  }
+
+  @Test
+  public void testUpdateWithDifferentDBOrTableName() throws Exception {
+    setupTable(null, null);
+    try {
+      datasetFramework.updateInstance(MY_TABLE, setupTableProperties(null, "xxtab", SCHEMA));
+      validateDBOrTableChange(null, null, null, "xxtab");
+
+      runCommand(NAMESPACE_ID, "create database if not exists yydb", false, null, null);
+      datasetFramework.updateInstance(MY_TABLE, setupTableProperties("yydb", null, SCHEMA));
+      validateDBOrTableChange(null, "xxtab", "yydb", null);
+
+      runCommand(NAMESPACE_ID, "create database if not exists xxdb", false, null, null);
+      datasetFramework.updateInstance(MY_TABLE, setupTableProperties("xxdb", null, SCHEMA));
+      validateDBOrTableChange("yydb", null, "xxdb", null);
+
+      datasetFramework.updateInstance(MY_TABLE, setupTableProperties("xxdb", "yytab", SCHEMA));
+      validateDBOrTableChange("xxdb", null, "xxdb", "yytab");
+
+      datasetFramework.updateInstance(MY_TABLE, setupTableProperties(null, null, SCHEMA));
+      validateDBOrTableChange("xxdb", "yytab", null, null);
+    } finally {
+      datasetFramework.deleteInstance(MY_TABLE);
+      runCommand(NAMESPACE_ID, "drop database if exists xxdb cascade", false, null, null);
+      runCommand(NAMESPACE_ID, "drop database if exists yydb cascade", false, null, null);
+    }
+  }
+
+  private void validateDBOrTableChange(@Nullable String oldDatabase, @Nullable String oldTable,
+                                       @Nullable String newDatabase, @Nullable String newTable)
+    throws ExploreException, TableNotFoundException {
+
+    oldTable = oldTable != null ? oldTable : MY_TABLE_NAME;
+    newTable = newTable != null ? newTable : MY_TABLE_NAME;
+    try {
+      exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), oldDatabase, oldTable);
+      Assert.fail("table should not exist: " + oldDatabase + "." + oldTable);
+    } catch (TableNotFoundException e) {
+      // expected - the old table should not exist
+    }
+    exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), newDatabase, newTable);
+  }
+
+
   @Test
   public void testInsert() throws Exception {
+    setupTable(null, null);
     DatasetId otherTable = NAMESPACE_ID.dataset("othertable");
 
     Schema schema = Schema.recordOf(
@@ -277,9 +347,9 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
       Schema.Field.of("value", Schema.of(Schema.Type.INT)),
       Schema.Field.of("id", Schema.of(Schema.Type.STRING))
     );
-    datasetFramework.addInstance(Table.class.getName(), otherTable, DatasetProperties.builder()
-      .add(Table.PROPERTY_SCHEMA, schema.toString())
-      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "id")
+    datasetFramework.addInstance(Table.class.getName(), otherTable, TableProperties.builder()
+      .setSchema(schema)
+      .setRowFieldName("id")
       .build());
     try {
       String command = String.format("insert into %s select int_field, string_field from %s",
@@ -295,6 +365,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
         Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("row1", Integer.MAX_VALUE)))
       );
     } finally {
+      datasetFramework.deleteInstance(MY_TABLE);
       datasetFramework.deleteInstance(otherTable);
     }
   }
@@ -330,17 +401,17 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
       Schema.Field.of("email", Schema.of(Schema.Type.STRING))
     );
 
-    datasetFramework.addInstance(Table.class.getName(), userTableID, DatasetProperties.builder()
-      .add(Table.PROPERTY_SCHEMA, userSchema.toString())
-      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "id")
+    datasetFramework.addInstance(Table.class.getName(), userTableID, TableProperties.builder()
+      .setSchema(userSchema)
+      .setRowFieldName("id")
       .build());
-    datasetFramework.addInstance(Table.class.getName(), purchaseTableID, DatasetProperties.builder()
-      .add(Table.PROPERTY_SCHEMA, purchaseSchema.toString())
-      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "purchaseid")
+    datasetFramework.addInstance(Table.class.getName(), purchaseTableID,  TableProperties.builder()
+      .setSchema(purchaseSchema)
+      .setRowFieldName("purchaseid")
       .build());
-    datasetFramework.addInstance(Table.class.getName(), expandedTableID, DatasetProperties.builder()
-      .add(Table.PROPERTY_SCHEMA, expandedSchema.toString())
-      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "purchaseid")
+    datasetFramework.addInstance(Table.class.getName(), expandedTableID, TableProperties.builder()
+      .setSchema(expandedSchema)
+      .setRowFieldName("purchaseid")
       .build());
 
     Table userTable = datasetFramework.getDataset(userTableID, DatasetDefinition.NO_ARGUMENTS, null);
