@@ -25,6 +25,7 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.ddl.DefaultHBaseDDLExecutor;
+import co.cask.cdap.hbase.ddl.HBaseDDLExecutor;
 import co.cask.cdap.hbase.ddl.TableDescriptor;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.proto.Id;
@@ -266,7 +267,7 @@ public abstract class HBaseTableUtil {
   public void createTableIfNotExists(HBaseAdmin admin, TableId tableId, TableDescriptor tableDescriptor,
                                      @Nullable byte[][] splitKeys,
                                      long timeout, TimeUnit timeoutUnit) throws IOException {
-    new DefaultHBaseDDLExecutor(admin.getConfiguration()).createTableIfNotExists(tableDescriptor, splitKeys);
+    getHBaseDDLExecutor(admin.getConfiguration()).createTableIfNotExists(tableDescriptor, splitKeys);
   }
 
   // For simplicity we allow max 255 splits per bucket for now
@@ -416,7 +417,10 @@ public abstract class HBaseTableUtil {
     return null;
   }
 
-
+  /**
+   * Get the HBase DDL executor.
+   */
+  public abstract HBaseDDLExecutor getHBaseDDLExecutor(Configuration hConf);
 
   /**
    * Creates a new {@link HTable} which may contain an HBase namespace depending on the HBase version
@@ -471,7 +475,7 @@ public abstract class HBaseTableUtil {
    * @throws IOException if an I/O error occurs during the operation
    */
   public void createNamespaceIfNotExists(HBaseAdmin admin, String namespace) throws IOException {
-    new DefaultHBaseDDLExecutor(admin.getConfiguration()).createNamespaceIfNotExists(namespace);
+    getHBaseDDLExecutor(admin.getConfiguration()).createNamespaceIfNotExists(namespace);
   }
 
   /**
@@ -482,7 +486,7 @@ public abstract class HBaseTableUtil {
    * @throws IOException if an I/O error occurs during the operation
    */
   public void deleteNamespaceIfExists(HBaseAdmin admin, String namespace) throws IOException {
-    new DefaultHBaseDDLExecutor(admin.getConfiguration()).deleteNamespaceIfExists(namespace);
+    getHBaseDDLExecutor(admin.getConfiguration()).deleteNamespaceIfExists(namespace);
   }
 
   /**
@@ -495,8 +499,8 @@ public abstract class HBaseTableUtil {
   public void disableTable(HBaseAdmin admin, TableId tableId) throws IOException {
     try {
       TableName tableName = getHTableNameConverter().toTableName(tablePrefix, tableId);
-      new DefaultHBaseDDLExecutor(admin.getConfiguration()).disableTableIfEnabled(tableName.getNamespaceAsString(),
-                                                                                  tableName.getQualifierAsString());
+      getHBaseDDLExecutor(admin.getConfiguration()).disableTableIfEnabled(tableName.getNamespaceAsString(),
+                                                                          tableName.getQualifierAsString());
     } catch (NotFoundException e) {
       throw new IOException(String.format("Table '%s' does not exists in the namespace '%s'.",
                                           tableId.getTableName(), tableId.getNamespace()), e);
@@ -513,8 +517,8 @@ public abstract class HBaseTableUtil {
   public void enableTable(HBaseAdmin admin, TableId tableId) throws IOException {
     try {
       TableName tableName = getHTableNameConverter().toTableName(tablePrefix, tableId);
-      new DefaultHBaseDDLExecutor(admin.getConfiguration()).enableTableIfDisabled(tableName.getNamespaceAsString(),
-                                                                                  tableName.getQualifierAsString());
+      getHBaseDDLExecutor(admin.getConfiguration()).enableTableIfDisabled(tableName.getNamespaceAsString(),
+                                                                          tableName.getQualifierAsString());
     } catch (NotFoundException e) {
       throw new IOException(String.format("Table '%s' does not exists in the namespace '%s'.",
                                           tableId.getTableName(), tableId.getNamespace()), e);
@@ -544,8 +548,8 @@ public abstract class HBaseTableUtil {
   public void deleteTable(HBaseAdmin admin, TableId tableId) throws IOException {
     try {
       TableName tableName = getHTableNameConverter().toTableName(tablePrefix, tableId);
-      new DefaultHBaseDDLExecutor(admin.getConfiguration()).deleteTableIfExists(tableName.getNamespaceAsString(),
-                                                                                tableName.getQualifierAsString());
+      getHBaseDDLExecutor(admin.getConfiguration()).deleteTableIfExists(tableName.getNamespaceAsString(),
+                                                                        tableName.getQualifierAsString());
     } catch (NotFoundException e) {
       throw new IOException(String.format("Table '%s' does not exists in the namespace '%s'.",
                                           tableId.getTableName(), tableId.getNamespace()), e);
@@ -556,17 +560,18 @@ public abstract class HBaseTableUtil {
    * Modify an HBase table
    *
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
-   * @param tableDescriptor the modified {@link TableDescriptor}
+   * @param hTableDescriptor the modified {@link HTableDescriptor}
    * @throws IOException
    */
-  public void modifyTable(HBaseAdmin admin, HTableDescriptor tableDescriptor) throws IOException {
+  public void modifyTable(HBaseAdmin admin, HTableDescriptor hTableDescriptor) throws IOException {
     // TODO Update the method signature to accept the TableDescriptor.
-    TableDescriptor tbd = TableDescriptor.fromHTableDescriptor(tableDescriptor);
-    TableName tableName = TableName.valueOf(tbd.getNamespace(), tbd.getName());
+    DefaultHBaseDDLExecutor defaultHBaseDDLExecutor
+      = (DefaultHBaseDDLExecutor) getHBaseDDLExecutor(admin.getConfiguration());
+    TableDescriptor tableDescriptor = defaultHBaseDDLExecutor.getTableDescriptor(hTableDescriptor);
+    TableName tableName = TableName.valueOf(tableDescriptor.getNamespace(), tableDescriptor.getName());
     try {
-      new DefaultHBaseDDLExecutor(admin.getConfiguration()).modifyTable(tableName.getNamespaceAsString(),
-                                                                        tableName.getQualifierAsString(),
-                                                                        tbd);
+      defaultHBaseDDLExecutor.modifyTable(tableName.getNamespaceAsString(), tableName.getQualifierAsString(),
+                                          tableDescriptor);
     } catch (NotFoundException e) {
       throw new IOException(String.format("Table '%s' does not exists in the namespace '%s'.",
                                           tableName.getQualifierAsString(), tableName.getNamespaceAsString()), e);
@@ -645,8 +650,8 @@ public abstract class HBaseTableUtil {
   public void truncateTable(HBaseAdmin admin, TableId tableId) throws IOException {
     TableName tableName = getHTableNameConverter().toTableName(tablePrefix, tableId);
     try {
-      new DefaultHBaseDDLExecutor(admin.getConfiguration()).truncateTable(tableName.getNamespaceAsString(),
-                                                                          tableName.getQualifierAsString());
+      getHBaseDDLExecutor(admin.getConfiguration()).truncateTable(tableName.getNamespaceAsString(),
+                                                                  tableName.getQualifierAsString());
     } catch (NotFoundException e) {
       throw new IOException(String.format("Table '%s' does not exists in the namespace '%s'.",
                                           tableName.getQualifierAsString(), tableName.getNamespaceAsString()), e);

@@ -58,7 +58,7 @@ public final class ColumnFamilyDescriptor {
     ROW, ROWCOL, NONE
   }
 
-  private ColumnFamilyDescriptor(String name, int maxVersions, CompressionType compressionType,
+  public ColumnFamilyDescriptor(String name, int maxVersions, CompressionType compressionType,
                                  BloomType bloomType, Map<String, String> properties) {
     this.name = name;
     this.maxVersions = maxVersions;
@@ -85,34 +85,6 @@ public final class ColumnFamilyDescriptor {
 
   public Map<String, String> getProperties() {
     return properties;
-  }
-
-  public static ColumnFamilyDescriptor fromHColumnDescriptor(HColumnDescriptor family) {
-    String name = family.getNameAsString();
-    int maxVersions = family.getMaxVersions();
-    // TODO check this
-
-    LOG.info("SAGAR--------- compression {}, {}, {}", family.getCompression().getName(),
-             family.getCompressionType().getName(), family.getCompressionType().getName().toUpperCase());
-    CompressionType compressionType = CompressionType.valueOf(family.getCompressionType().getName().toUpperCase());
-    BloomType bloomType = BloomType.valueOf(family.getBloomFilterType().name().toUpperCase());
-
-    Map<String, String> properties = new HashMap<>();
-    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> value : family.getValues().entrySet()) {
-      properties.put(Bytes.toString(value.getKey().get()), Bytes.toString(value.getValue().get()));
-    }
-    return new ColumnFamilyDescriptor(name, maxVersions, compressionType, bloomType, properties);
-  }
-
-  public static HColumnDescriptor toHColumnDescriptor(ColumnFamilyDescriptor family) {
-    HColumnDescriptor hFamily = new HColumnDescriptor(family.getName());
-    hFamily.setMaxVersions(family.getMaxVersions());
-    hFamily.setCompressionType(Compression.Algorithm.valueOf(family.getCompressionType().name()));
-    hFamily.setBloomFilterType(org.apache.hadoop.hbase.regionserver.BloomType.valueOf(family.getBloomType().name()));
-    for (Map.Entry<String, String> property : family.getProperties().entrySet()) {
-      hFamily.setValue(property.getKey(), property.getValue());
-    }
-    return hFamily;
   }
 
   /**

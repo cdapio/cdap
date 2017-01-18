@@ -49,7 +49,7 @@ public final class TableDescriptor {
   private final Map<String, CoprocessorDescriptor> coprocessors;
   private final Map<String, String> properties;
 
-  private TableDescriptor(String namespace, String name, Set<ColumnFamilyDescriptor> families,
+  public TableDescriptor(String namespace, String name, Set<ColumnFamilyDescriptor> families,
                          Set<CoprocessorDescriptor> coprocessors, Map<String, String> properties) {
     this.namespace = namespace;
     this.name = name;
@@ -93,55 +93,6 @@ public final class TableDescriptor {
 
   public String getTablePrefix() {
     return properties.get(Constants.Dataset.TABLE_PREFIX);
-  }
-
-  /**
-   * // TODO Might required to make hbase version specifix
-   * @param htd
-   * @return
-   */
-  public static TableDescriptor fromHTableDescriptor(HTableDescriptor htd) {
-    Set<ColumnFamilyDescriptor> families = new HashSet<>();
-    for (HColumnDescriptor family : htd.getColumnFamilies()) {
-      families.add(ColumnFamilyDescriptor.fromHColumnDescriptor(family));
-    }
-
-    Set<CoprocessorDescriptor> coprocessors = new HashSet<>();
-    coprocessors.addAll(CoprocessorDescriptor.getCoprocessors(htd).values());
-
-    Map<String, String> properties = new HashMap<>();
-    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> value : htd.getValues().entrySet()) {
-      properties.put(Bytes.toString(value.getKey().get()), Bytes.toString(value.getValue().get()));
-    }
-
-    // TODO: should add configurations as well!
-
-    return new TableDescriptor(htd.getTableName().getNamespaceAsString(), htd.getTableName().getQualifierAsString(),
-                               families, coprocessors, properties);
-  }
-
-  public static HTableDescriptor toHTableDescriptor(TableDescriptor tbd) {
-    TableName tableName = TableName.valueOf(tbd.namespace, tbd.getName());
-    HTableDescriptor htd = new HTableDescriptor(tableName);
-    for (Map.Entry<String, ColumnFamilyDescriptor> family : tbd.getFamilies().entrySet()) {
-      htd.addFamily(ColumnFamilyDescriptor.toHColumnDescriptor(family.getValue()));
-    }
-
-    for (Map.Entry<String, CoprocessorDescriptor> coprocessor : tbd.getCoprocessors().entrySet()) {
-      CoprocessorDescriptor cpd = coprocessor.getValue();
-      try {
-        htd.addCoprocessor(cpd.getClassName(), cpd.getPath(), cpd.getPriority(), cpd.getProperties());
-      } catch (IOException e) {
-        LOG.error("Error adding coprocessor.", e);
-      }
-    }
-
-    for (Map.Entry<String, String> property : tbd.getProperties().entrySet()) {
-      // TODO: should not add coprocessor related properties since those were already be added
-      // using addCoprocessor call.
-      htd.setValue(property.getKey(), property.getValue());
-    }
-    return htd;
   }
 
   /**

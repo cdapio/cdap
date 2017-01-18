@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
 /**
  * Default implementation of the {@link HBaseDDLExecutor}.
  */
-public final class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
+public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
   public static final Logger LOG = LoggerFactory.getLogger(DefaultHBaseDDLExecutor.class);
   public static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
   private final Configuration hConf;
@@ -96,10 +96,14 @@ public final class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
     }
   }
 
+  public abstract HTableDescriptor getHTableDescriptor(TableDescriptor descriptor);
+
+  public abstract TableDescriptor getTableDescriptor(HTableDescriptor descriptor);
+
   @Override
   public void createTableIfNotExists(TableDescriptor descriptor, @Nullable byte[][] splitKeys)
     throws IOException {
-    HTableDescriptor htd = TableDescriptor.toHTableDescriptor(descriptor);
+    HTableDescriptor htd = getHTableDescriptor(descriptor);
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       if (admin.tableExists(htd.getName())) {
         return;
@@ -168,7 +172,7 @@ public final class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
     Preconditions.checkArgument(name != null, "Table name should not be null.");
     Preconditions.checkArgument(descriptor != null, "Descriptor should not be null.");
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      HTableDescriptor htd = TableDescriptor.toHTableDescriptor(descriptor);
+      HTableDescriptor htd = getHTableDescriptor(descriptor);
       admin.modifyTable(htd.getTableName(), htd);
     }
   }
@@ -179,7 +183,7 @@ public final class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
     Preconditions.checkArgument(name != null, "Table name should not be null.");
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       HTableDescriptor descriptor = admin.getTableDescriptor(TableName.valueOf(namespace, encodeHBaseEntity(name)));
-      TableDescriptor tbd = TableDescriptor.fromHTableDescriptor(descriptor);
+      TableDescriptor tbd = getTableDescriptor(descriptor);
       disableTableIfEnabled(namespace, name);
       deleteTableIfExists(namespace, name);
       createTableIfNotExists(tbd, null);
