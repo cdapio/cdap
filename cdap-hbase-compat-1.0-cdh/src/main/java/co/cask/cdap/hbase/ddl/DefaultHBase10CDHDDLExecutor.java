@@ -31,11 +31,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Implementation of the {@link HBaseDDLExecutor} for HBase 0.96
+ * Implementation of {@link HBaseDDLExecutor} for HBase version 1.0 CDH
  */
-public class DefaultHBase96DDLExecutor extends DefaultHBaseDDLExecutor {
+public class DefaultHBase10CDHDDLExecutor extends DefaultHBaseDDLExecutor {
 
-  public DefaultHBase96DDLExecutor(Configuration hConf) {
+  public DefaultHBase10CDHDDLExecutor(Configuration hConf) {
     super(hConf);
   }
 

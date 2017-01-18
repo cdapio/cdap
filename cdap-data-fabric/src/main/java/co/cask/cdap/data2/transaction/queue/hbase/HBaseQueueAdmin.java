@@ -536,8 +536,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
       // Add coprocessors
       CoprocessorJar coprocessorJar = createCoprocessorJar();
       for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-        tbdBuilder.addCoprocessor(addCoprocessor(coprocessor, coprocessorJar.getJarLocation(),
-                                                 coprocessorJar.getPriority(coprocessor)));
+        tbdBuilder.addCoprocessor(getCoprocessorDescriptor(coprocessor, coprocessorJar.getJarLocation(),
+                                                           coprocessorJar.getPriority(coprocessor)));
       }
 
       // Create queue table with splits. The distributor bucket size is the same as splits.

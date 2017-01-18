@@ -202,8 +202,8 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
                                                                  NamespaceId.SYSTEM.getNamespace()));
   }
 
-  protected CoprocessorDescriptor addCoprocessor(Class<? extends Coprocessor> coprocessor, Location jarFile,
-                                                 Integer priority) throws IOException {
+  protected CoprocessorDescriptor getCoprocessorDescriptor(Class<? extends Coprocessor> coprocessor, Location jarFile,
+                                                           Integer priority) throws IOException {
     if (priority == null) {
       priority = Coprocessor.PRIORITY_USER;
     }

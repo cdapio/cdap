@@ -31,11 +31,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Implementation of the {@link HBaseDDLExecutor} for HBase 0.96
+ * Implementation of the {@link HBaseDDLExecutor} for HBase version 1.2 CDH 5.7.0
  */
-public class DefaultHBase96DDLExecutor extends DefaultHBaseDDLExecutor {
+public class DefaultHBase12CDH570Executor extends DefaultHBaseDDLExecutor {
 
-  public DefaultHBase96DDLExecutor(Configuration hConf) {
+  public DefaultHBase12CDH570Executor(Configuration hConf) {
     super(hConf);
   }
 
@@ -117,3 +117,5 @@ public class DefaultHBase96DDLExecutor extends DefaultHBaseDDLExecutor {
     return new ColumnFamilyDescriptor(name, maxVersions, compressionType, bloomType, properties);
   }
 }
+
+

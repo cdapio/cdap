@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.Updatable;
@@ -26,6 +27,8 @@ import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.TableProperties;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.hbase.ddl.ColumnFamilyDescriptor;
+import co.cask.cdap.hbase.ddl.CoprocessorDescriptor;
 import co.cask.cdap.hbase.ddl.TableDescriptor;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableList;
@@ -74,18 +77,19 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
 
   @Override
   public void create() throws IOException {
-    HColumnDescriptor columnDescriptor = new HColumnDescriptor(TableProperties.getColumnFamily(spec.getProperties()));
+    String name = Bytes.toString(TableProperties.getColumnFamily(spec.getProperties()));
+    ColumnFamilyDescriptor.Builder cfdBuilder = new ColumnFamilyDescriptor.Builder(hConf, name);
 
     if (TableProperties.supportsReadlessIncrements(spec.getProperties())) {
-      columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
+      cfdBuilder.setMaxVersions(Integer.MAX_VALUE);
     } else if (TableProperties.isTransactional(spec.getProperties())) {
       // NOTE: we cannot limit number of versions as there's no hard limit on # of excluded from read txs
-      columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
+      cfdBuilder.setMaxVersions(Integer.MAX_VALUE);
     } else {
-      columnDescriptor.setMaxVersions(1);
+      cfdBuilder.setMaxVersions(1);
     }
 
-    tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
+    cfdBuilder.setBloomType(ColumnFamilyDescriptor.BloomType.ROW);
 
     String ttlProp = spec.getProperties().get(Table.PROPERTY_TTL);
     if (ttlProp != null) {
@@ -93,35 +97,32 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
       if (ttl > 0) {
         // convert ttl from seconds to milli-seconds
         ttl = TimeUnit.SECONDS.toMillis(ttl);
-        columnDescriptor.setValue(TxConstants.PROPERTY_TTL, String.valueOf(ttl));
+        cfdBuilder.addProperty(TxConstants.PROPERTY_TTL, String.valueOf(ttl));
       }
     }
 
-    final HTableDescriptorBuilder tableDescriptor = tableUtil.buildHTableDescriptor(tableId);
-    tableDescriptor.addFamily(columnDescriptor);
+    TableDescriptor.Builder builder = new TableDescriptor.Builder(cConf, tableId);
 
     // if the dataset is configured for readless increments, the set the table property to support upgrades
     boolean supportsReadlessIncrements = TableProperties.supportsReadlessIncrements(spec.getProperties());
     if (supportsReadlessIncrements) {
-      tableDescriptor.setValue(Table.PROPERTY_READLESS_INCREMENT, "true");
+      builder.addProperty(Table.PROPERTY_READLESS_INCREMENT, "true");
     }
 
     // if the dataset is configured to be non-transactional, the set the table property to support upgrades
     if (!TableProperties.isTransactional(spec.getProperties())) {
-      tableDescriptor.setValue(Constants.Dataset.TABLE_TX_DISABLED, "true");
+      builder.addProperty(Constants.Dataset.TABLE_TX_DISABLED, "true");
       if (supportsReadlessIncrements) {
         // readless increments CPs by default assume that table is transactional
-        columnDescriptor.setValue("dataset.table.readless.increment.transactional", "false");
+        cfdBuilder.addProperty("dataset.table.readless.increment.transactional", "false");
       }
     }
 
     CoprocessorJar coprocessorJar = createCoprocessorJar();
 
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-      LOG.info("SAGAR ----- {}, {}, {}, {}.", tableDescriptor, coprocessor, coprocessorJar.getJarLocation(),
-               coprocessorJar.getPriority(coprocessor));
-      addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation(),
-                     coprocessorJar.getPriority(coprocessor));
+      builder.addCoprocessor(getCoprocessorDescriptor(coprocessor, coprocessorJar.getJarLocation(),
+                                                      coprocessorJar.getPriority(coprocessor)));
     }
 
     byte[][] splits = null;
@@ -131,8 +132,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     }
 
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      TableDescriptor tbd = TableDescriptor.fromHTableDescriptor(tableDescriptor.build());
-      tableUtil.createTableIfNotExists(admin, tableId, tbd, splits);
+      builder.addColumnFamily(cfdBuilder.build());
+      tableUtil.createTableIfNotExists(admin, tableId, builder.build(), splits);
     }
   }
 

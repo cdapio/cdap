@@ -23,6 +23,8 @@ import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase12cdh570.Payloa
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase12cdh570.DequeueScanObserver;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase12cdh570.HBaseQueueRegionObserver;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.hbase.ddl.DefaultHBase12CDH570Executor;
+import co.cask.cdap.hbase.ddl.HBaseDDLExecutor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -49,6 +51,11 @@ import java.util.List;
 public class HBase12CDH570TableUtil extends HBaseTableUtil {
 
   private final HTableNameConverter nameConverter = new HTableNameConverter();
+
+  @Override
+  public HBaseDDLExecutor getHBaseDDLExecutor(Configuration hConf) {
+    return new DefaultHBase12CDH570Executor(hConf);
+  }
 
   @Override
   public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
