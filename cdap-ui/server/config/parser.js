@@ -123,6 +123,6 @@ function configRead (data) {
 function configReadFail (data) {
   var textChunk = decoder.write(data);
   if (textChunk) {
-    log.error('Failed to extract configuration');
+    log.error(textChunk);
   }
 }
