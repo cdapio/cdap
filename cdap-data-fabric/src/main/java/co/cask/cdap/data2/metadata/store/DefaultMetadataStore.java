@@ -424,7 +424,8 @@ public class DefaultMetadataStore implements MetadataStore {
         maxEndIndex = 0;
       } else {
         startIndex = offset;
-        maxEndIndex = offset + limit;
+        // account for overflow
+        maxEndIndex = (int) Math.min(Integer.MAX_VALUE, (long) offset + limit);
       }
     } else {
       // offset has already been applied, only apply limit, and update total count
