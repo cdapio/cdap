@@ -5,7 +5,7 @@
   "router.server.port": "11015",
   "dashboard.ssl.bind.port": "9443",
   "dashboard.ssl.disable.cert.check": "false",
-  "ssl.enabled": "false",
+  "ssl.external.enabled": "false",
   "router.server.address": "127.0.0.1",
   "dashboard.bind.port": "11011",
   "enable.preview": "true",
