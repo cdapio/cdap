@@ -16,7 +16,7 @@
 
 
 import React, {PropTypes} from 'react';
-require('./StatContainer.less');
+require('./StatContainer.scss');
 var classNames = require('classnames');
 
 const propTypes = {

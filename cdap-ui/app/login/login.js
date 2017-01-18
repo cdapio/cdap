@@ -24,8 +24,8 @@ import CardActionFeedback from './components/CardActionFeedback';
 import * as util from './utils';
 import Footer from './components/Footer';
 
-require('./styles/lib-styles.less');
-require('./login.less');
+require('./styles/lib-styles.scss');
+require('./login.scss');
 import T from 'i18n-react';
 T.setTexts(require('./text/text-en.yaml'));
 
@@ -129,11 +129,12 @@ class Login extends Component {
             </div>
             <div className="form-group">
               <div className="clearfix">
-                <div className="pull-left">
-                  <div className="checkbox">
-                    <label>
+                <div className="float-xs-left">
+                  <div className="checkbox form-check">
+                    <label className="form-check-label">
                       <input
                         type="checkbox"
+                        className="form-check-input"
                         value={this.state.rememberUser}
                         onClick={this.rememberUser.bind(this)}
                       />

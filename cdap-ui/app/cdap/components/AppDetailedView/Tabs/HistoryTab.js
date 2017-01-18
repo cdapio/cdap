@@ -22,7 +22,7 @@ import {humanReadableDate} from 'services/helpers';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
 
-require('./HistoryTab.less');
+require('./HistoryTab.scss');
 
 export default class HistoryTab extends Component {
   constructor(props) {
@@ -119,14 +119,14 @@ export default class HistoryTab extends Component {
           );
         } else {
           return (
-            <h3 className="text-center empty-message">
+            <h3 className="text-xs-center empty-message">
               {T.translate('features.AppDetailedView.History.emptyMessage')}
             </h3>
           );
         }
       }
       return (
-        <h3 className="text-center">
+        <h3 className="text-xs-center">
           <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
         </h3>
       );

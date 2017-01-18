@@ -15,7 +15,7 @@
  */
 
 import React, {PropTypes} from 'react';
-require('./InfoCard.less');
+require('./InfoCard.scss');
 var classNames = require('classnames');
 
 const propTypes = {

@@ -19,7 +19,7 @@ import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap
 import T from 'i18n-react';
 import shortid from 'shortid';
 
-require('./Pagination.less');
+require('./Pagination.scss');
 
 export default class PaginationDropdown extends Component {
   constructor(props) {
@@ -45,7 +45,7 @@ export default class PaginationDropdown extends Component {
           {i + 1}
           {
             this.props.currentPage === (i + 1) ?
-            <span className="fa fa-check pull-right"></span> :
+            <span className="fa fa-check float-xs-right"></span> :
             null
           }
         </div>
@@ -60,7 +60,7 @@ export default class PaginationDropdown extends Component {
         <DropdownToggle tag="div">
           <span>{T.translate('features.Pagination.dropdown-label')}</span>
           <span className="current-page">{this.props.currentPage}</span>
-          <span className="fa fa-caret-down pull-right"></span>
+          <span className="fa fa-caret-down float-xs-right"></span>
         </DropdownToggle>
         <DropdownMenu onClick={e => e.stopPropagation()}>
           {

@@ -17,7 +17,7 @@
 import React, {Component, PropTypes} from 'react';
 import EntityCard from 'components/EntityCard';
 import {parseMetadata} from 'services/metadata-parser';
-require('./DatasetsTab.less');
+require('./DatasetsTab.scss');
 
 export default class DatasetsTab extends Component {
   constructor(props) {
@@ -70,7 +70,7 @@ export default class DatasetsTab extends Component {
         }
         {
           !this.context.entity.datasets.length && !this.context.entity.streams.length ?
-            <h3 className="text-center">
+            <h3 className="text-xs-center">
               <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
             </h3>
           :

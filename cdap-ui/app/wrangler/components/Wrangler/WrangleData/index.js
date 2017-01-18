@@ -196,7 +196,7 @@ export default class WrangleData extends Component {
   render() {
     if (this.state.loading) {
       return (
-        <div className="loading text-center">
+        <div className="loading text-xs-center">
           <div>
             <span className="fa fa-spinner fa-spin"></span>
           </div>
@@ -220,7 +220,7 @@ export default class WrangleData extends Component {
     return (
       <div className="wrangler-data row">
         <div className="wrangle-transforms">
-          <div className="wrangle-filters text-center">
+          <div className="wrangle-filters text-xs-center">
             <span>
               <span
                 id={undoId}
@@ -292,7 +292,7 @@ export default class WrangleData extends Component {
               ) : null
             }
 
-            <span className="pull-right sort-indicator">
+            <span className="float-xs-right sort-indicator">
               <span className={classnames('fa', {
                 'fa-long-arrow-down': this.state.sortAscending,
                 'fa-long-arrow-up': !this.state.sortAscending
@@ -327,7 +327,7 @@ export default class WrangleData extends Component {
               <h5>{T.translate('features.Wrangler.MetricsBar.nulls')}</h5>
             </div>
 
-            <div className="pull-right action-button-container">
+            <div className="float-xs-right action-button-container">
 
               <div className="hydrator-button">
                 {this.renderHydratorButton()}
@@ -336,7 +336,7 @@ export default class WrangleData extends Component {
               {
                 !this.state.showVisualization ? (
                   <div
-                    className="action-button text-center"
+                    className="action-button text-xs-center"
                     onClick={this.onVisualizationDisplayClick}
                   >
                     <span className="fa fa-bar-chart" />

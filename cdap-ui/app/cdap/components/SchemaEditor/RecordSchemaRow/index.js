@@ -17,7 +17,7 @@
 import React, {PropTypes, Component} from 'react';
 import {SCHEMA_TYPES, checkComplexType, getParsedSchema, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
 import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
-require('./RecordSchemaRow.less');
+require('./RecordSchemaRow.scss');
 import uuid from 'node-uuid';
 import {Input} from 'reactstrap';
 import SelectWithOptions from 'components/SelectWithOptions';
@@ -305,7 +305,7 @@ export default class RecordSchemaRow extends Component {
                     </div>
                     <div className="field-isnull">
                       <div className="btn btn-link">
-                        <Input
+                        <input
                           type="checkbox"
                           checked={row.nullable}
                           onChange={this.onNullableChange.bind(this, index)}

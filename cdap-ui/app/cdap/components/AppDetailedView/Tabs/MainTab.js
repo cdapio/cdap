@@ -18,7 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import EntityCard from 'components/EntityCard';
 import {parseMetadata} from 'services/metadata-parser';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
-require('./MainTab.less');
+require('./MainTab.scss');
 
 export default class MainTab extends Component {
   constructor(props) {
@@ -73,7 +73,7 @@ export default class MainTab extends Component {
                     );
                   })
             :
-              <h3 className="text-center">
+              <h3 className="text-xs-center">
                 <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
               </h3>
           }

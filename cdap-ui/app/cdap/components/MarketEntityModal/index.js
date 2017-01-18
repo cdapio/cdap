@@ -24,7 +24,7 @@ import shortid from 'shortid';
 import moment from 'moment';
 import getIcon from 'services/market-action-icon-map';
 
-require('./MarketEntityModal.less');
+require('./MarketEntityModal.scss');
 
 export default class MarketEntityModal extends Component {
   constructor(props) {
@@ -104,7 +104,7 @@ export default class MarketEntityModal extends Component {
               let actionIcon = getIcon(action.type);
               return (
                 <div
-                  className="action-container text-center"
+                  className="action-container text-xs-center"
                   key={shortid.generate()}
                   onClick={this.openWizard.bind(this, index, action.type, action)}
                 >
@@ -112,7 +112,7 @@ export default class MarketEntityModal extends Component {
                     className="action"
                     key={index}
                   >
-                    <div className="step text-center">
+                    <div className="step text-xs-center">
                       <span className={classnames("badge", {'completed' : isCompletedAction})}>{index + 1}</span>
                     </div>
                     <div className="action-icon">
@@ -143,10 +143,10 @@ export default class MarketEntityModal extends Component {
         size="md"
       >
         <ModalHeader toggle={this.props.onCloseHandler.bind(this)}>
-          <span className="pull-left">
+          <span className="float-xs-left">
             { this.props.entity.label }
           </span>
-          <span className="version pull-right">
+          <span className="version float-xs-right">
             <span className="version-text">
               {T.translate('features.MarketEntityModal.version')}
             </span>

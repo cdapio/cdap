@@ -22,7 +22,7 @@ import sortBy from 'lodash/sortBy';
 import TableItem from 'wrangler/components/Explore/TableItem';
 import T from 'i18n-react';
 
-require('./Explore.less');
+require('./Explore.scss');
 
 export default class Explore extends Component {
   constructor(props) {
@@ -81,7 +81,7 @@ export default class Explore extends Component {
     }
 
     const showMoreLink = (
-      <div className="text-right">
+      <div className="text-xs-right">
         <a
           href="#"
           onClick={this.toggleExpanded}
@@ -94,10 +94,10 @@ export default class Explore extends Component {
 
     return (
       <div className="wrangler-explore-container">
-        <h4 className="text-center">
+        <h4 className="text-xs-center">
           {T.translate('features.Wrangler.Explore.browse', {count: this.state.list.length})}
         </h4>
-        <div className="text-center">
+        <div className="text-xs-center">
           {tableList.map(this.renderTable)}
         </div>
 

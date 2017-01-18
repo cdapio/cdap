@@ -1,0 +1,163 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../../styles/variables.scss";
+$entity-list-header-background-color: #efefef;
+$entity-list-header-border-color: darken($entity-list-header-background-color, 15%);
+$icon-inactive-color: #999999;
+$icon-active-color: $gray-dark;
+$entity-list-header-height: 30px;
+$sort-box-width: 100px;
+$filter-box-width: 150px;
+
+.entity-list-header {
+  background-color: $entity-list-header-background-color;
+  height: $entity-list-header-height;
+  border-bottom: 1px solid $entity-list-header-border-color;
+  z-index: 500;
+
+  .current-page {
+    margin-left: 5px;
+  }
+
+  .search-box,
+  .sort,
+  .filter,
+  .pagination-dropdown {
+    float: left;
+    border-right: 1px solid $entity-list-header-border-color;
+    height: $entity-list-header-height;
+    line-height: $entity-list-header-height;
+
+    span {
+      line-height: $entity-list-header-height;
+      vertical-align: middle;
+    }
+
+    .dropdown {
+      .dropdown-menu {
+        margin: 0;
+        top: $entity-list-header-height;
+        left: -16px; // aligning with border
+        border-radius: 0;
+        border: 1px solid $entity-list-header-border-color;
+        border-top: 0;
+        z-index: 1002;
+        max-height: 235px;
+        overflow-y: auto;
+        padding: 0;
+      }
+
+      .dropdown-item {
+        background-color: white;
+        border: 0;
+        display: block;
+        line-height: initial;
+        width: 100%;
+        text-align: left;
+        padding-left: 10px;
+        cursor: pointer;
+
+        span { line-height: initial; }
+        &:focus { outline: 0; }
+        &:hover {
+          background-color: #e6e6e6;
+        }
+      }
+    }
+  }
+
+  .search-box {
+    width: 300px;
+
+    .form-control,
+    .input-feedback {
+      height: calc(#{$entity-list-header-height} - 1px);
+      line-height: calc(#{$entity-list-header-height} - 1px);
+    }
+
+    .input-feedback {
+      position: absolute;
+      right: 5px;
+      top: 0;
+      z-index: 1000;
+
+      .fa {
+        vertical-align: top;
+        line-height: calc(#{$entity-list-header-height} - 1px);
+      }
+    }
+
+    .form-control {
+      border: 0;
+
+      &:focus { box-shadow: none; }
+    }
+  }
+
+  .sort,
+  .filter,
+  .pagination-dropdown {
+    padding: 0 15px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+
+    &.active { background-color: white; }
+  }
+
+  .sort,
+  .pagination-dropdown {
+    width: $sort-box-width;
+    .dropdown-menu { min-width: $sort-box-width + 2px; }
+  }
+
+  .filter {
+    width: $filter-box-width;
+    position: relative;
+
+    .dropdown {
+      input[type="checkbox"] {
+        margin: 2px 10px 0 -20px;
+      }
+
+      .dropdown-menu { min-width: $filter-box-width + 2px; }
+    }
+  }
+  .sort {
+    border-left: 1px solid $entity-list-header-border-color;
+    width: 200px;
+    .dropdown {
+      &.open {
+        .dropdown-menu {
+          width: 200px;
+        }
+      }
+    }
+  }
+  .view-selector {
+    > .fa {
+      font-size: 18px;
+      margin-right: 15px;
+      padding-left: 10px;
+      line-height: $entity-list-header-height;
+      cursor: pointer;
+      color: $icon-inactive-color;
+
+      &.active { color: $icon-active-color; }
+    }
+  }
+}

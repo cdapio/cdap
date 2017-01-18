@@ -1,0 +1,195 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../styles/variables.scss";
+
+/* Animation - Slide in direction of Next */
+.entity-animation--next-enter {
+  &:not(h3) {
+    transform: translate(500%, 0);
+    opacity: 0.1;
+    &.entity-animation--next-enter-active {
+      transform: translate(0, 0);
+      opacity: 1;
+      transition: transform 1000ms, opacity 1000ms;
+    }
+  }
+}
+
+.entity-animation--next-appear {
+  &:not(h3) {
+    &.animation--next-appear-active {
+      opacity: 1;
+      transition: opacity 1000ms ease-in;
+    }
+  }
+}
+
+.entity-animation--next-leave {
+  opacity: 0;
+  &.entity-animation--next-leave-active {
+    transition: opacity 1000ms ease-in;
+  }
+}
+
+/* Animation - Slide in direction of Prev */
+.entity-animation--prev-enter {
+  &:not(h3) {
+    transform: translate(-500%, 0);
+    opacity: 0.1;
+    &.entity-animation--prev-enter-active {
+      transform: translate(0, 0);
+      transition: transform 1000ms, opacity 1000ms;
+      opacity: 1;
+    }
+  }
+}
+
+.entity-animation--prev-appear {
+  &:not(h3) {
+    opacity: 0;
+    &.animation--prev-appear-active {
+      opacity: 1;
+      transition: opacity 1000ms ease-in;
+    }
+  }
+}
+
+.entity-animation--prev-leave {
+  opacity: 0;
+  &.entity-animation--prev-leave-active {
+    transition: opacity 1000ms ease-in;
+  }
+}
+
+.splash-screen-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: calc(100vh - 80px);
+
+  .splash-screen-first-time {
+    color: $cdap-orange;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    .app-store-bd {
+      font-size: 20px;
+    }
+    .welcome-message {
+      font-weight: bold;
+      font-size: 50px;
+    }
+    .beta-notice {
+      font-size: 40px;
+    }
+    .cdap-fist-icon {
+      margin-top: 20px;
+      margin-bottom: 20px;
+      span {
+        color: $cdap-orange;
+        font-size: 10rem;
+      }
+    }
+    .introducing {
+      font-size: 30px;
+    }
+    .go-to-cdap {
+      color: $cdap-orange;
+      cursor: pointer;
+      font-size: 16px;
+      text-decoration: underline;
+    }
+    .splash-screen-first-time-btn {
+      width: 50%;
+      height: 40px;
+      padding: 1px;
+      border-radius: 4px;
+      box-shadow: 0 0 2px black;
+      margin-top: 30px;
+      margin-bottom: 15px;
+      font-size: 15px;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: $cdap-orange;
+      cursor: pointer;
+
+      .icon-CaskMarket {
+        margin-right: 5px;
+      }
+
+      &:hover {
+        color: $cdap-orange;
+        background-color: white;
+        box-shadow: 0 0 2px $cdap-orange;
+      }
+    }
+
+    .splash-screen-disclaimer {
+      color: black;
+      margin-top: 15px;
+
+      p {
+        margin: 0;
+        text-align: center;
+      }
+    }
+  }
+}
+
+.entity-list-view {
+  height: calc(100vh - 132px);
+  align-items: flex-start;
+
+  .entities-container {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10px 30px;
+
+    > div {
+      display: flex;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+  }
+  .loading-spinner {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: gray;
+  }
+  .empty-message {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    font-weight: 500;
+
+    &.text-danger {
+      .fa-exclamation-triangle {
+        margin-right: 5px;
+      }
+    }
+  }
+
+}

@@ -18,7 +18,7 @@ import React, { Component, PropTypes } from 'react';
 import Dropzone from 'react-dropzone';
 import T from 'i18n-react';
 
-require('./FileDataUpload.less');
+require('./FileDataUpload.scss');
 
 export default class FileDataUpload extends Component {
   constructor(props) {
@@ -57,7 +57,7 @@ export default class FileDataUpload extends Component {
   render() {
     return (
       <div
-        className="file-data-upload-container text-center"
+        className="file-data-upload-container text-xs-center"
         onClick={this.onContainerClick}
       >
         {

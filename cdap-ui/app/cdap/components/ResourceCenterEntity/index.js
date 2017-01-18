@@ -16,7 +16,7 @@
 import React, {PropTypes} from 'react';
 import classnames from 'classnames';
 
-require('./ResourceCenterEntity.less');
+require('./ResourceCenterEntity.scss');
 
 export default function ResourceCenterEntity({className, iconClassName, title, description, actionLabel, onClick, disabled}) {
   return (
@@ -28,7 +28,7 @@ export default function ResourceCenterEntity({className, iconClassName, title, d
             <div className="entity-image empty"></div>
         }
         <button
-          className={classnames("btn btn-primary btn-sm")}
+          className={classnames("btn btn-primary")}
           onClick={onClick}
           disabled={disabled}
         >

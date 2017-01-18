@@ -18,7 +18,7 @@ import { connect, Provider } from 'react-redux';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
 import fileDownload from 'react-file-download';
-require('./ViewDataStep.less');
+require('./ViewDataStep.scss');
 
 const mapStateWithProps = (state) => {
   return {
@@ -38,7 +38,7 @@ let DataTextArea = ({value, isLoading}) => {
   return (
     <div className="datapack-container">
       <div className="view-data-step">
-        <div className="download-section text-right">
+        <div className="download-section text-xs-right">
           <button
             className="btn btn-link"
             onClick={handleDownload}
@@ -48,7 +48,7 @@ let DataTextArea = ({value, isLoading}) => {
         </div>
         {
           isLoading ?
-            <div className="loading text-center"><i className="fa fa-spinner fa-spin" /></div>
+            <div className="loading text-xs-center"><i className="fa fa-spinner fa-spin" /></div>
             :
             <pre>
               {value}

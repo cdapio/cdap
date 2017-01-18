@@ -24,7 +24,7 @@ import uuid from 'node-uuid';
 import classnames from 'classnames';
 import cloneDeep from 'lodash/cloneDeep';
 
-require('./UnionSchemaRow.less');
+require('./UnionSchemaRow.scss');
 
 export default class UnionSchemaRow extends Component {
   constructor(props) {

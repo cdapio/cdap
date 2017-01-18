@@ -16,7 +16,7 @@
 
 
 import React, {Component, PropTypes} from 'react';
-require('./AdminDetailPanel.less');
+require('./AdminDetailPanel.scss');
 import AdminMetadataPane from '../AdminMetadataPane/index.js';
 import shortid from 'shortid';
 import {humanReadableNumber} from 'services/helpers';

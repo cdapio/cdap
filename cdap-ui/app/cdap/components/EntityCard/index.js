@@ -27,7 +27,7 @@ import FastActions from 'components/EntityCard/FastActions';
 import JumpButton from 'components/JumpButton';
 import AppOverview from 'components/AppOverview';
 
-require('./EntityCard.less');
+require('./EntityCard.scss');
 
 export default class EntityCard extends Component {
   constructor(props) {
@@ -70,7 +70,7 @@ export default class EntityCard extends Component {
     }
 
     return (
-      <div className="jump-button-container text-center pull-right">
+      <div className="jump-button-container text-xs-center float-xs-right">
         <JumpButton
           entity={this.props.entity}
         />

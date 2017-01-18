@@ -83,7 +83,7 @@ export default class SplitAction extends Component {
     if (!this.state.isOpen) { return null; }
 
     const error = (
-      <p className="error-text pull-left">
+      <p className="error-text float-xs-left">
         {T.translate(`features.Wrangler.Errors.${this.state.error}`)}
       </p>
     );
@@ -103,7 +103,7 @@ export default class SplitAction extends Component {
           </span>
 
           <div
-            className="close-section pull-right"
+            className="close-section float-xs-right"
             onClick={this.toggle}
           >
             <span className="fa fa-times" />

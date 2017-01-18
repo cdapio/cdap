@@ -15,7 +15,7 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-require('./ServiceStatusPanel.less');
+require('./ServiceStatusPanel.scss');
 import ServiceStatus from '../ServiceStatus/index.js';
 import {MyServiceProviderApi} from 'api/serviceproviders';
 var shortid = require('shortid');

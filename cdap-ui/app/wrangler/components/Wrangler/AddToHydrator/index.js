@@ -19,7 +19,7 @@ import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import T from 'i18n-react';
 
-require('./AddToHydrator.less');
+require('./AddToHydrator.scss');
 
 export default class AddToHydrator extends Component {
   constructor(props) {
@@ -57,7 +57,7 @@ export default class AddToHydrator extends Component {
   render() {
     const loading = (
       <div className="loading">
-        <h3 className="text-center">
+        <h3 className="text-xs-center">
           <span className="fa fa-spinner fa-spin" />
         </h3>
       </div>
@@ -80,10 +80,10 @@ export default class AddToHydrator extends Component {
           size="lg"
         >
           <ModalHeader>
-            <span className="pull-left">
+            <span className="float-xs-left">
               {T.translate('features.Wizard.HydratorPipeline.title')}
             </span>
-            <div className="close-section pull-right">
+            <div className="close-section float-xs-right">
               <span
                 className="fa fa-times"
                 onClick={this.toggle}
@@ -109,14 +109,14 @@ export default class AddToHydrator extends Component {
                     <div className="action-buttons">
                       <a
                         href={this.state.batchUrl}
-                        className="btn btn-default"
+                        className="btn btn-secondary"
                       >
                         <i className="fa icon-ETLBatch"/>
                         <span>{T.translate('features.Wizard.HydratorPipeline.batchLinkLabel')}</span>
                       </a>
                       <a
                         href={this.state.realtimeUrl}
-                        className="btn btn-default"
+                        className="btn btn-secondary"
                       >
                         <i className="fa icon-sparkstreaming"/>
                         <span>{T.translate('features.Wizard.HydratorPipeline.realtimeLinkLabel')}</span>

@@ -20,7 +20,7 @@ import TabHeaders from '../TabHeaders';
 import {TabContent, TabPane} from 'reactstrap';
 
 import TabHead from '../TabHead';
-require('./ConfigurableTab.less');
+require('./ConfigurableTab.scss');
 
 export default class ConfigurableTab extends Component {
   constructor(props) {

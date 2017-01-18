@@ -16,7 +16,7 @@
 
 import React, {PropTypes} from 'react';
 import classnames from 'classnames';
-require('./WizardStepHeader.less');
+require('./WizardStepHeader.scss');
 
 export default function WizardStepHeader({id, className, label, onClick}, context) {
   return (

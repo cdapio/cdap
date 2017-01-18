@@ -1,0 +1,105 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.scss';
+$wizard-header-color: #464a57;
+$wizard-modal-margin-top: 180px;
+
+.wizard-modal {
+  overflow-x: hidden;
+  &.modal-dialog {
+    height: 65vh;
+    width: 60vw;
+    margin-top: $wizard-modal-margin-top;
+    max-width: 1050px;
+
+    .modal-content {
+      border-radius: 0;
+      height: 100%;
+      border: 0;
+      overflow: hidden;
+      background: transparent;
+      padding-bottom: 35px;
+
+      .modal-header {
+        h4.modal-title > span {
+          padding-left: 10px;
+        }
+      }
+
+      .modal-body {
+        padding: 0;
+        height: calc(100% - 51px); // 100% - 51px for modal header
+        max-height: 400px;
+        overflow: visible;
+
+        > div {
+          height: 100%;
+        }
+      }
+      .modal-header {
+        padding: 0;
+        background: $wizard-header-color;
+        color: white;
+        border: 0;
+
+        h4 {
+          font-weight: normal;
+          font-size: 14px;
+
+          span {
+            line-height: 30px;
+            padding: 5px 10px;
+          }
+          .close-section {
+            span { padding: 5px 20px; }
+            cursor: pointer;
+          }
+        }
+        .btn-resource-center {
+          background-color: $cdap-darkorange;
+          border-color: none;
+          color: lightgray;
+          &:focus {
+            outline: 0;
+          }
+        }
+      }
+    }
+  }
+}
+
+.wizard-modal {
+  position: relative;
+  .wizard-modal-content-enter {
+    opacity: 0.01;
+    position: absolute;
+  }
+  .wizard-modal-content-enter-active {
+    opacity: 1;
+    transition: opacity 500ms ease-in;
+  }
+
+  .wizard-modal-content-leave {
+    opacity: 1;
+    position: absolute;
+  }
+
+  .wizard-modal-content-leave-active {
+    opacity: 0.01;
+    transition: opacity 300ms ease-in;
+  }
+}

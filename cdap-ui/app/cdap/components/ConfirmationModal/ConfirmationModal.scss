@@ -1,0 +1,91 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+$button-border-color: #999999;
+$header-color: #464a57;
+
+.confirmation-modal.modal-dialog {
+  margin-top: 125px;
+  .modal-content {
+    border-radius: 0;
+    border: 0;
+  }
+
+  .modal-header {
+    padding: 0 10px;
+    background-color: $header-color;
+    border-bottom: 0;
+    height: 40px;
+
+    .modal-title {
+      font-weight: normal;
+      font-size: 14px;
+      color: white;
+      line-height: 40px;
+      .fa {
+        cursor: pointer;
+      }
+    }
+  }
+
+  .modal-body {
+    padding: 0;
+
+    &.loading {
+      padding: 25px;
+      h3 {
+        margin: 0;
+        font-size: 45px;
+      }
+    }
+
+    .confirmation {
+      margin: 25px;
+    }
+
+    .confirmation-button-options {
+      border-top: 1px solid $button-border-color;
+      height: 40px;
+
+      .btn {
+        width: 50%;
+        background-color: white;
+        border-radius: 0;
+        border: 0;
+        height: 100%;
+
+        &:not(:last-child) {
+          border-right: 1px solid $button-border-color;
+        }
+        &:focus { outline: none; }
+        &:hover {
+          color: white;
+          background-color: $button-border-color;
+        }
+      }
+
+      .disabled-btn:hover {
+        background-color: white;
+        color: inherit;
+      }
+    }
+  }
+
+  .modal-footer {
+    padding: 0;
+    text-align: left;
+  }
+}

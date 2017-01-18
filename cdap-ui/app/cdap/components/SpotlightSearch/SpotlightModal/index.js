@@ -31,7 +31,7 @@ import {
   Tag
 } from 'reactstrap';
 
-require('./SpotlightModal.less');
+require('./SpotlightModal.scss');
 
 const PAGE_SIZE = 10;
 
@@ -144,7 +144,7 @@ export default class SpotlightModal extends Component {
               </Col>
 
               <Col xs="6">
-                <div className="entity-tags-container text-right">
+                <div className="entity-tags-container text-xs-right">
                   {
                     entity.metadata.metadata.SYSTEM.tags.map((tag) => {
                       return (

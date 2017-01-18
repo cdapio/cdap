@@ -20,7 +20,7 @@ import MarketPlaceEntity from 'components/MarketPlaceEntity';
 import T from 'i18n-react';
 import MarketStore from 'components/Market/store/market-store.js';
 import Fuse from 'fuse.js';
-require('./AllTabContents.less');
+require('./AllTabContents.scss');
 import classnames from 'classnames';
 
 export default class AllTabContents extends Component {
@@ -120,7 +120,7 @@ export default class AllTabContents extends Component {
             onChange={this.onSearch.bind(this)}
           />
         */}
-        <div className={classnames("body-section text-center", {'empty-section': this.state.entities.length === 0 })}>
+        <div className={classnames("body-section text-xs-center", {'empty-section': this.state.entities.length === 0 })}>
           {error}
           {this.handleBodyRender()}
         </div>

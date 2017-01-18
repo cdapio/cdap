@@ -15,7 +15,7 @@
  */
 import React, {PropTypes} from 'react';
 
-require('./TabHeaders.less');
+require('./TabHeaders.scss');
 
 export default function TabHeaders({children}) {
   return (

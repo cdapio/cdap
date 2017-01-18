@@ -26,6 +26,7 @@ angular.module(PKG.name + '.feature.hydrator')
       );
     };
     vm.pipelineList = [];
+    vm.pipelineListLoaded = false;
     const setCurrentPage = () => {
       let pageNumber = parseInt($stateParams.page, 10);
       if (pageNumber&& checkForValidPage(pageNumber)) {
@@ -41,6 +42,7 @@ angular.module(PKG.name + '.feature.hydrator')
         return;
       }
       $stateParams.page = vm.currentPage;
+      vm.pipelineListLoaded = true;
       $state.go('hydrator.list', $stateParams, {notify: false});
     };
 
@@ -57,7 +59,6 @@ angular.module(PKG.name + '.feature.hydrator')
         batch = [];
 
     var statusMap = {};
-
 
     myPipelineApi.list({
       namespace: $stateParams.namespace
@@ -77,7 +78,6 @@ angular.module(PKG.name + '.feature.hydrator')
 
         fetchStatus();
       });
-
 
     function fetchRunsInfo(app) {
       var params = {

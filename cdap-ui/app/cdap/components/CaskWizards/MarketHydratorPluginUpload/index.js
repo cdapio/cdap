@@ -25,7 +25,7 @@ import T from 'i18n-react';
 import {MyMarketApi} from 'api/market';
 import find from 'lodash/find';
 
-require('./MarketHydratorPluginUpload.less');
+require('./MarketHydratorPluginUpload.scss');
 
 export default class MarketHydratorPluginUpload extends Component {
   constructor(props) {

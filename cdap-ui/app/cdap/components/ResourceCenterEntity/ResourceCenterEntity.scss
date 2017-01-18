@@ -1,0 +1,67 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import '../../styles/variables.scss';
+$height-of-image: 75px;
+
+.resourcecenter-entity-card {
+  width: 280px;
+  height: 130px;
+  padding: 10px;
+  padding-bottom: 0;
+  margin: 10px 5px;
+  display: inline-flex;
+  vertical-align: top;
+  box-shadow: 1px 2px 10px 0 rgba(0, 0, 0, 0.3);
+
+  .image-button-container {
+    display: inline-flex;
+    flex-direction: column;
+    .entity-image {
+      width: $height-of-image;
+      height: $height-of-image;
+      display: inline-block;
+      vertical-align: top;
+      font-size: $height-of-image;
+      &.empty {
+        background: gray;
+      }
+    }
+    .btn.btn-primary {
+      margin-top: 5px;
+    }
+  }
+  .content-container {
+    display: inline-block;
+    width: calc(100% - 85px);
+    margin-left: 10px;
+    .content-text {
+      h4 {
+        margin: 3px 0;
+        font-weight: 500;
+      }
+      p {
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+    }
+    .content-action-label {
+      color: $cdap-orange;
+      cursor: pointer;
+    }
+  }
+}
