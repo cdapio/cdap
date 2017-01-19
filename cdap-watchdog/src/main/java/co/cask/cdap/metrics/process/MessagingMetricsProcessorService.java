@@ -176,10 +176,10 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
   }
 
   private class ProcessMetricsThread extends Thread {
-    MessageFetcher fetcher;
+    private final MessageFetcher fetcher;
+    private final TopicIdMetaKey topicIdMetaKey;
+    private final List<MetricValues> records;
     byte[] lastMessageId;
-    TopicIdMetaKey topicIdMetaKey;
-    List<MetricValues> records;
 
     ProcessMetricsThread(MessageFetcher fetcher, TopicId topicId, TopicIdMetaKey topicIdMetaKey) {
       super(String.format("ProcessMetricsThread-%s", topicId.getTopic()));
