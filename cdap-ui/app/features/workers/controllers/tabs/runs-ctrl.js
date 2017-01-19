@@ -53,11 +53,11 @@ angular.module(PKG.name + '.feature.worker')
   this.tabs = [
     {
       title: 'Status',
-      template: '/assets/features/workers/templates/tabs/runs/tabs/status.html'
+      template: '/old_assets/features/workers/templates/tabs/runs/tabs/status.html'
     },
     {
       title: 'Logs',
-      template: '/assets/features/workers/templates/tabs/runs/tabs/log.html'
+      template: '/old_assets/features/workers/templates/tabs/runs/tabs/log.html'
     }
   ];
 
@@ -70,7 +70,7 @@ angular.module(PKG.name + '.feature.worker')
   this.openHistory = function() {
     this.$uibModal.open({
       size: 'lg',
-      templateUrl: '/assets/features/workers/templates/tabs/history.html',
+      templateUrl: '/old_assets/features/workers/templates/tabs/history.html',
       controller: ['runs', '$scope', function(runs, $scope) {
         $scope.runs = runs;
       }],

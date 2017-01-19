@@ -66,11 +66,11 @@ class WorkflowsRunsController {
     this.tabs = [
       {
         title: 'Status',
-        template: '/assets/features/workflows/templates/tabs/runs/tabs/status.html'
+        template: '/old_assets/features/workflows/templates/tabs/runs/tabs/status.html'
       },
       {
         title: 'Logs',
-        template: '/assets/features/workflows/templates/tabs/runs/tabs/log.html'
+        template: '/old_assets/features/workflows/templates/tabs/runs/tabs/log.html'
       }
     ];
 
@@ -142,7 +142,7 @@ class WorkflowsRunsController {
   openHistory() {
     this.$uibModal.open({
       size: 'lg',
-      templateUrl: '/assets/features/workflows/templates/tabs/history.html',
+      templateUrl: '/old_assets/features/workflows/templates/tabs/history.html',
       controller: ['runs', '$scope', function(runs, $scope) {
         $scope.runs = runs;
       }],
@@ -155,7 +155,7 @@ class WorkflowsRunsController {
   openSchedules() {
     this.$uibModal.open({
       size: 'lg',
-      templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
+      templateUrl: '/old_assets/features/workflows/templates/tabs/schedules.html',
       controller: 'WorkflowsSchedulesController',
       controllerAs: 'SchedulesController'
     });

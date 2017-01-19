@@ -23,7 +23,7 @@ angular.module(PKG.name + '.services')
 			scope.streamId = streamId;
       modalInstance = $uibModal.open({
         controller: 'FlowStreamDetailController',
-        templateUrl: '/assets/features/flows/templates/tabs/runs/streams/detail.html',
+        templateUrl: '/old_assets/features/flows/templates/tabs/runs/streams/detail.html',
         scope: scope
       });
       return modalInstance;
