@@ -26,10 +26,9 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.security.ImpersonationUtils;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
@@ -42,6 +41,9 @@ import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.impersonation.ImpersonationUtils;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -105,7 +107,7 @@ public class DatasetAdminService {
     try (DatasetClassLoaderProvider classLoaderProvider =
            new DirectoryClassLoaderProvider(cConf, locationFactory)) {
       final DatasetContext context = DatasetContext.from(datasetInstanceId.getNamespace());
-      UserGroupInformation ugi = impersonator.getUGI(datasetInstanceId.getParent());
+      UserGroupInformation ugi = getUgiForDataset(impersonator, datasetInstanceId);
 
       final DatasetType type = ImpersonationUtils.doAs(ugi, new Callable<DatasetType>() {
         @Override
@@ -200,8 +202,9 @@ public class DatasetAdminService {
     LOG.info("Dropping dataset with spec: {}, type meta: {}", spec, typeMeta);
     try (DatasetClassLoaderProvider classLoaderProvider =
            new DirectoryClassLoaderProvider(cConf, locationFactory)) {
+      UserGroupInformation ugi = getUgiForDataset(impersonator, datasetInstanceId);
 
-      impersonator.doAs(datasetInstanceId.getParent(), new Callable<Void>() {
+      ImpersonationUtils.doAs(ugi, new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
@@ -236,7 +239,7 @@ public class DatasetAdminService {
 
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       try {
-        return impersonator.doAs(datasetInstanceId.getParent(), new Callable<DatasetAdmin>() {
+        return impersonator.doAs(datasetInstanceId, new Callable<DatasetAdmin>() {
           @Override
           public DatasetAdmin call() throws Exception {
             DatasetAdmin admin = datasetInstantiator.getDatasetAdmin(datasetInstanceId);
@@ -244,7 +247,7 @@ public class DatasetAdminService {
               throw new NotFoundException("Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
             }
             // returns a DatasetAdmin that executes operations as a particular user, for a particular namespace
-            return new ImpersonatingDatasetAdmin(admin, impersonator, datasetInstanceId.getParent());
+            return new ImpersonatingDatasetAdmin(admin, impersonator, datasetInstanceId);
           }
         });
       } catch (Exception e) {
@@ -254,5 +257,20 @@ public class DatasetAdminService {
         throw Throwables.propagate(e);
       }
     }
+  }
+
+  private static UserGroupInformation getUgiForDataset(Impersonator impersonator, DatasetId datasetInstanceId)
+    throws IOException, NamespaceNotFoundException {
+    // for system dataset do not look up owner information in store as we know that it will be null.
+    // Also, this is required for CDAP to start, because initially we don't want to look up owner admin
+    // (causing its own lookup) as the SystemDatasetInitiator.getDataset is called when CDAP starts
+    UserGroupInformation ugi;
+    if (NamespaceId.SYSTEM.equals(datasetInstanceId.getParent())) {
+      ugi = UserGroupInformation.getCurrentUser();
+    } else {
+      ugi = impersonator.getUGI(datasetInstanceId);
+    }
+    LOG.debug("Using {} user for dataset {}", ugi.getUserName(), datasetInstanceId);
+    return ugi;
   }
 }

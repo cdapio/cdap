@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 
 package co.cask.cdap.data.stream.service.upload;
 
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.stream.service.ConcurrentStreamWriter;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
@@ -106,7 +106,7 @@ final class LengthBasedContentWriter implements ContentWriter {
     bodySize += length;
     if (bodySize >= bufferThreshold) {
       try {
-        fileContentWriter = impersonator.doAs(streamId.getParent(), new Callable<ContentWriter>() {
+        fileContentWriter = impersonator.doAs(streamId, new Callable<ContentWriter>() {
           @Override
           public ContentWriter call() throws Exception {
             return fileContentWriterFactory.create(ImmutableMap.<String, String>of());

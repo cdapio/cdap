@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,8 @@
 
 package co.cask.cdap.app.guice;
 
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.SecureStore;
@@ -180,7 +180,7 @@ final class ImpersonatedTwillPreparer implements TwillPreparer {
   @Override
   public TwillController start() {
     try {
-      return impersonator.doAs(programId.getNamespaceId(), new Callable<TwillController>() {
+      return impersonator.doAs(programId, new Callable<TwillController>() {
         @Override
         public TwillController call() throws Exception {
           return new ImpersonatedTwillController(delegate.start(), impersonator, programId);
@@ -194,7 +194,7 @@ final class ImpersonatedTwillPreparer implements TwillPreparer {
   @Override
   public TwillController start(final long timeout, final TimeUnit timeoutUnit) {
     try {
-      return impersonator.doAs(programId.getNamespaceId(), new Callable<TwillController>() {
+      return impersonator.doAs(programId, new Callable<TwillController>() {
         @Override
         public TwillController call() throws Exception {
           return new ImpersonatedTwillController(delegate.start(timeout, timeoutUnit), impersonator, programId);

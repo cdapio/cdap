@@ -26,10 +26,10 @@
 
   <div class="entity-detail"
        ng-class="{ 'offset': !$state.params.searchTerm }">
-    <h3 uib-tooltip="{{ $state.params.entityId }}"
-        tooltip-enable="$state.params.entityId.length > 50"
+    <h3 uib-tooltip="{{ $state.params.datasetId }}"
+        tooltip-enable="$state.params.datasetId.length > 50"
         tooltip-popup-delay="300">
-      {{ ::$state.params.entityId | myEllipsis: 50 }}
+      {{ ::$state.params.datasetId | myEllipsis: 50 }}
     </h3>
     <div class="entity-type">
       <span class="{{EntityController.entityInfo.icon}}"></span>
@@ -38,7 +38,7 @@
   </div>
 
   <div class="truth-meter-container">
-    <my-truth-meter score="EntityController.truthMeterMap[$state.params.entityType][$state.params.entityId]"
+    <my-truth-meter score="EntityController.truthMeterMap[$state.params.entityType][$state.params.datasetId]"
                     show-info-icon="true"
                     show-beta-text="true"
                     width="125"></my-truth-meter>
@@ -71,7 +71,7 @@
   <div class="action-button text-right">
     <my-jump-button
       entity-type="$state.params.entityType"
-      entity-id="$state.params.entityId"
+      entity-id="$state.params.datasetId"
       dataset-type="EntityController.datasetType"
       dataset-explorable="EntityController.datasetExplorable">
     </my-jump-button>

@@ -20,7 +20,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
@@ -32,6 +31,8 @@ import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.Stage;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.security.impersonation.EntityImpersonator;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.filesystem.Location;
@@ -87,8 +88,8 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     String appVersion = deploymentInfo.getApplicationVersion();
     String configString = deploymentInfo.getConfigString();
 
-    NamespacedImpersonator classLoaderImpersonator =
-      new NamespacedImpersonator(artifactId.getParent(), impersonator);
+    EntityImpersonator classLoaderImpersonator =
+      new EntityImpersonator(artifactId, impersonator);
     ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactLocation,
                                                                                    classLoaderImpersonator);
     getContext().setProperty(LocalApplicationManager.ARTIFACT_CLASSLOADER_KEY, artifactClassLoader);

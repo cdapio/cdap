@@ -58,13 +58,13 @@
               <tr ng-repeat="metric in ::MainController.topDatasets">
                 <td class="text-left">
 
-                  <a ng-if="metric.entityType === 'dataset'" ui-sref="tracker.detail.entity.metadata({entityType: 'datasets', entityId: metric.entityName})">
+                  <a ng-if="metric.entityType === 'dataset'" ui-sref="tracker.detail.entity.metadata({entityType: 'datasets', datasetId: metric.entityName})">
                     <span uib-tooltip="{{ ::metric.entityName }}" tooltip-ellipsis="{{ ::metric.entityName }}" tooltip-enable="metric.entityName.length > 15" tooltip-append-to-body="true" tooltip-class="tracker-tooltip" tooltip-placement="top">
                       <i class="icon-datasets"></i>
                       {{ ::metric.entityName }}
                     </span>
                   </a>
-                  <a ng-if="metric.entityType === 'stream'" ui-sref="tracker.detail.entity.metadata({entityType: 'streams', entityId: metric.entityName})">
+                  <a ng-if="metric.entityType === 'stream'" ui-sref="tracker.detail.entity.metadata({entityType: 'streams', datasetId: metric.entityName})">
                     <span uib-tooltip="{{ ::metric.entityName }}" tooltip-ellipsis="{{ ::metric.entityName }}" tooltip-enable="metric.entityName.length > 15" tooltip-append-to-body="true" tooltip-class="tracker-tooltip" tooltip-placement="top">
                       <i class="icon-streams"></i>
                       {{ ::metric.entityName }}

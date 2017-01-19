@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -108,14 +108,21 @@
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-guice</artifactId>
     </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.directory.jdbm</groupId>
+      <artifactId>apacheds-jdbm1</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-minicluster</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-minikdc</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>

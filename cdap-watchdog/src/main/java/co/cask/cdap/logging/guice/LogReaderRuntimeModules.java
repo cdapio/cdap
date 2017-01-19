@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,11 @@
 package co.cask.cdap.logging.guice;
 
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.common.security.RemoteUGIProvider;
-import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogReader;
+import co.cask.cdap.security.impersonation.RemoteUGIProvider;
+import co.cask.cdap.security.impersonation.UGIProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;

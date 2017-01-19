@@ -205,4 +205,16 @@ public final class SecurityUtil {
   public static void validateKerberosPrincipal(String principal) {
     validateKerberosPrincipal(new KerberosPrincipalId(principal));
   }
+
+  /**
+   * @param principal The principal whose KeytabURI is being looked up
+   * @param cConf To lookup the configured path for the keytabs
+   * @return The location of the keytab
+   * @throws IOException If the principal is not a valid kerberos principal
+   */
+  public static String getKeytabURIforPrincipal(String principal, CConfiguration cConf) throws IOException {
+    String confPath = cConf.getRaw(Constants.Security.KEYTAB_PATH);
+    String name = new KerberosName(principal).getShortName();
+    return confPath.replace(Constants.USER_NAME_SPECIFIER, name);
+  }
 }

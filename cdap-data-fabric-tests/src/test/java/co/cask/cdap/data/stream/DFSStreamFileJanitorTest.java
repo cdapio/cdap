@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,8 +31,6 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
-import co.cask.cdap.common.security.RemoteUGIProvider;
-import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -51,6 +49,8 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.impersonation.RemoteUGIProvider;
+import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.store.InMemoryNamespaceStore;
 import co.cask.cdap.store.InMemoryOwnerStore;
 import co.cask.cdap.store.NamespaceStore;
