@@ -21,10 +21,7 @@
 # the top-most section in GitHub format (Markdown).
 #
 # Reads and writes using common-sense defaults that can be over-written if required.
-# Default output ends up as 'target/github-release-notes.txt'.
-#
-# It does not resolve references to the CDAP docs; these are flagged
-# 'LINK_TO_BE_CORRECTED' and must be resolved manually.
+# Default output ends up as 'target/html/github-release-notes.txt'.
 #
 # version 0.1
 
@@ -34,21 +31,8 @@ import os
 import sys
 
 SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_INPUT_RELEASE_NOTES_FILE = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, '../reference-manual/source/release-notes.rst'))
-DEFAULT_OUTPUT_RELEASE_NOTES_FILE = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, '../reference-manual/target/html/github-release-notes.txt'))
-
-NOTES = 'notes.txt'
-NOTES_PATH = os.path.join(SCRIPT_DIR_PATH, NOTES)
-RST_INPUT_FORMAT = 'rst'
-WEB_INPUT_FORMAT = 'web'
-BUG = 'Bug'
-
-SECTION_STRING = '** '
-START_STRING = '    * [CDAP-'
-DESCRIPTION_STRING = '] - '
-
-RELEASE_NOTE = '- '
-RELEASE_NOTE_DASH = ' - '
+DEFAULT_INPUT_RELEASE_NOTES_RST_FILE = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, '../reference-manual/source/release-notes.rst'))
+DEFAULT_OUTPUT_RELEASE_NOTES_TXT_FILE = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, '../reference-manual/target/html/github-release-notes.txt'))
 
 CASK_ISSUE_START = ':cask-issue:`'
 CASK_ISSUE_END = '` - '
@@ -63,7 +47,7 @@ def parse_options():
 (%(default_release_notes_file)s)
 or an input file (if provided), determines the top-most section of releases notes,
 reformats it, and writes it to the terminal.
-""" % {'default_release_notes_file': DEFAULT_INPUT_RELEASE_NOTES_FILE}
+""" % {'default_release_notes_file': DEFAULT_INPUT_RELEASE_NOTES_RST_FILE}
 
     parser = OptionParser(
         usage="\n\n  %prog",
@@ -72,16 +56,16 @@ reformats it, and writes it to the terminal.
     parser.add_option(
         '-i', '--input',
         dest='input',
-        help="The release notes file to be loaded, if not the default '%s'" % DEFAULT_INPUT_RELEASE_NOTES_FILE,
+        help="The release notes file to be loaded, if not the default '%s'" % DEFAULT_INPUT_RELEASE_NOTES_RST_FILE,
         metavar='FILE',
-        default=DEFAULT_INPUT_RELEASE_NOTES_FILE)
+        default=DEFAULT_INPUT_RELEASE_NOTES_RST_FILE)
 
     parser.add_option(
         '-o', '--output',
         dest='output',
-        help="The release notes file to be written to, if not the default '%s'" % DEFAULT_OUTPUT_RELEASE_NOTES_FILE,
+        help="The release notes file to be written to, if not the default '%s'" % DEFAULT_OUTPUT_RELEASE_NOTES_TXT_FILE,
         metavar='FILE',
-        default=DEFAULT_OUTPUT_RELEASE_NOTES_FILE)
+        default=DEFAULT_OUTPUT_RELEASE_NOTES_TXT_FILE)
 
     parser.add_option(
         '-v', '--version',
@@ -173,7 +157,6 @@ def read_lines(input, output, version):
     in_first_section = False
     in_lines = False
     issues = []
-#     indent = ''
     indent = 0
     new_lines = []
     new_line = ''
