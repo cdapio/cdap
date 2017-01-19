@@ -16,6 +16,9 @@
 
 import {createStore} from 'redux';
 import shortid from 'shortid';
+import VersionRange from 'services/VersionRange';
+import Version from 'services/VersionRange/Version';
+import VersionStore from 'services/VersionStore';
 
 const initialState = {
   list: [],
@@ -29,7 +32,8 @@ const market = (state=initialState, action) => {
   switch (action.type) {
     case 'SET_ENTITIES':
       return Object.assign({}, state, {
-        list: action.payload.map(entity => Object.assign(entity, {id: shortid.generate()})),
+        list: filterEntities(action.payload)
+          .map(entity => Object.assign(entity, {id: shortid.generate()})),
         loading: false
       });
     case 'SET_ACTIVE_ENTITY':
@@ -46,6 +50,19 @@ const market = (state=initialState, action) => {
       return state;
   }
 };
+
+function filterEntities(list) {
+  const cdapVersion = new Version(VersionStore.getState().version);
+
+  let filteredList = list.filter((entity) => {
+    if (!entity.cdapVersion) { return true; }
+
+    const entityVersionRange = new VersionRange(entity.cdapVersion);
+    return entityVersionRange.versionIsInRange(cdapVersion);
+  });
+
+  return filteredList;
+}
 
 const createMarketStore = () => {
   return createStore(market);
