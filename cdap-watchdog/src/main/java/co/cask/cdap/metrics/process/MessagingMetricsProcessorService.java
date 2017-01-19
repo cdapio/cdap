@@ -162,6 +162,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
         thread.join();
       } catch (InterruptedException e) {
         LOG.info("Thread {} is being terminated while waiting for it to finish.", thread.getName());
+        Thread.currentThread().interrupt();
       }
     }
   }
@@ -202,7 +203,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
             MetricValues metricValues = recordReader.read(binaryDecoder, recordSchema);
             records.add(metricValues);
             lastMessageId = input.getId();
-            LOG.info("Received message {} with metrics: {}", lastMessageId, metricValues);
+            LOG.debug("Received message {} with metrics: {}", lastMessageId, metricValues);
             // persistRecords method persists records and the last messageId if the number of processed records exceeds
             // the persist threshold
             persistRecords(false);
