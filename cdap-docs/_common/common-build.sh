@@ -1,4 +1,4 @@
-# Copyright © 2014-2016 Cask Data, Inc.
+# Copyright © 2014-2017 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -128,6 +128,7 @@ function build_docs() {
   fi
   if [[ ${USE_SPHINX_BUILD} == ${FALSE} ]]; then
     echo "Not building using Sphinx."
+    mkdir -p ${TARGET}/${HTML}
   else
     echo "Building using Sphinx."
     ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_tag} ${SOURCE} ${TARGET}/${HTML}

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2016 Cask Data, Inc.
+# Copyright © 2016-2017 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -282,6 +282,7 @@ function build_docs_outer_level() {
   cp ${SCRIPT_PATH}/${COMMON_SOURCE}/*.rst  ${TARGET_PATH}/${SOURCE}/
   if [[ ${USE_SPHINX_BUILD} == ${FALSE} ]]; then
     echo "Not building using Sphinx."
+    mkdir -p ${TARGET_PATH}/${HTML}
   else
     echo "Building using Sphinx."
     ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_options} ${TARGET_PATH}/${SOURCE} ${TARGET_PATH}/${HTML}
@@ -307,11 +308,16 @@ function copy_docs_inner_level() {
   else
     project_dir=${PROJECT_VERSION}
   fi
-  local source_404="${TARGET_PATH}/${HTML}/404.html"
-  rewrite ${source_404} "src=\"_static"  "src=\"/cdap/${project_dir}/en/_static"
-  rewrite ${source_404} "src=\"_images"  "src=\"/cdap/${project_dir}/en/_images"
-  rewrite ${source_404} "/href=\"http/!s|href=\"|href=\"/cdap/${project_dir}/en/|g"
-  rewrite ${source_404} "action=\"search.html"  "action=\"/cdap/${project_dir}/en/search.html"
+  if [[ ${USE_SPHINX_BUILD} == ${FALSE} ]]; then
+    echo "Not building using Sphinx. Skipping re-writing 404 file."
+  else
+    echo "Rewriting 404 file."
+    local source_404="${TARGET_PATH}/${HTML}/404.html"
+    rewrite ${source_404} "src=\"_static"  "src=\"/cdap/${project_dir}/en/_static"
+    rewrite ${source_404} "src=\"_images"  "src=\"/cdap/${project_dir}/en/_images"
+    rewrite ${source_404} "/href=\"http/!s|href=\"|href=\"/cdap/${project_dir}/en/|g"
+    rewrite ${source_404} "action=\"search.html"  "action=\"/cdap/${project_dir}/en/search.html"
+  fi
   echo
 }
 
