@@ -19,7 +19,8 @@ const KeyValueStoreActions = {
   setVal: 'SET-VALUE',
   addPair: 'ADD-PAIR',
   deletePair: 'DELETE-PAIR',
-  onReset: 'ON-RESET'
+  onReset: 'ON-RESET',
+  onUpdate: 'ON-UPDATE'
 };
 
 export default KeyValueStoreActions;

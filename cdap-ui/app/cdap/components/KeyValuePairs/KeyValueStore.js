@@ -61,6 +61,10 @@ const keyValues = (state = [], action=defaultAction) => {
       return stateCopy;
     case KeyValueStoreActions.onReset:
       return [];
+    case KeyValueStoreActions.onUpdate:
+      stateCopy = Object.assign({}, state);
+      stateCopy.pairs = action.payload.pairs;
+      return stateCopy;
     default:
       return state;
   }

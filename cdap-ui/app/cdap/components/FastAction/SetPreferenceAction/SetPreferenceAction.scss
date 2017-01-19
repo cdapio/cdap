@@ -115,10 +115,26 @@ $cell-height: 2.5em;
             }
 
             .clearfix {
-              .text-success {
-                margin-left: 10px;
-                position: relative;
-                top: 6px;
+              .fa-spinner {
+                margin-right: 10px;
+              }
+
+              .reset {
+                a {
+                  position: relative;
+                  top: 0.5em;
+                  left: 2em;
+                  cursor: pointer;
+
+                  &:hover {
+                    text-decoration: none;
+                  }
+                }
+              }
+
+              .text-danger {
+                clear: left;
+                margin-top: 10px;
               }
             }
           }
@@ -134,25 +150,20 @@ $cell-height: 2.5em;
             table {
               border-collapse: separate;
               width: 100%;
+              table-layout: fixed;
 
               th,
               td {
                 height: $cell-height;
+                word-wrap: break-word;
+                word-break: break-all;
 
-                &:nth-child(1) {
-                  width: 38%;
-                }
-
-                &:nth-child(2) {
-                  width: 35%;
-                }
-
-                &:nth-child(3) {
-                  width: 20%;
+                &:first-child {
+                  width: 45%;
                 }
 
                 &:last-child {
-                  width: 7%;
+                  display: none;
                 }
               }
 

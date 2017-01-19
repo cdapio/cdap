@@ -18,7 +18,6 @@ import React, {Component, PropTypes} from 'react';
 import FastActionButton from '../FastActionButton';
 import isObject from 'lodash/isObject';
 import upperFirst from 'lodash/upperFirst';
-import debounce from 'lodash/debounce';
 import orderBy from 'lodash/orderBy';
 import T from 'i18n-react';
 import shortid from 'shortid';
@@ -35,7 +34,8 @@ export default class SetPreferenceAction extends Component {
 
     this.state = {
       modal: false,
-      savedMessage: null,
+      saving: false,
+      fieldsResetted: false,
       keyValues: {},
       inheritedPreferences: [],
       sortByAttribute: 'key',
@@ -53,7 +53,6 @@ export default class SetPreferenceAction extends Component {
       this.params.programType = convertProgramToApi(this.props.entity.programType);
     }
 
-    this.debouncedSetPreferences = debounce(this.debounceSetPreferences, 1000);
     this.eventText = '';
     this.toggleModal = this.toggleModal.bind(this);
     this.onKeyValueChange = this.onKeyValueChange.bind(this);
@@ -68,7 +67,7 @@ export default class SetPreferenceAction extends Component {
   toggleModal() {
     this.setState({
       modal: !this.state.modal,
-      savedMessage: null
+      saving: false
     });
   }
 
@@ -91,7 +90,10 @@ export default class SetPreferenceAction extends Component {
             }
           });
         } else {
-          this.setState({keyValues: {'pairs': this.getKeyValPair(res)}});
+          this.setState({
+            keyValues: {'pairs': this.getKeyValPair(res)},
+            fieldsResetted: true
+          });
         }
       },
       (error) => {
@@ -125,6 +127,7 @@ export default class SetPreferenceAction extends Component {
   }
 
   setPreferences() {
+    this.setState({saving: true});
     let setPreferencesApi = myPreferenceApi.setAppPreferences;
     if (this.props.entity.type === 'program') {
       setPreferencesApi = myPreferenceApi.setProgramPreferences;
@@ -132,10 +135,7 @@ export default class SetPreferenceAction extends Component {
     setPreferencesApi(this.params, this.getKeyValObject())
     .subscribe(
       () => {
-        this.setState({savedMessage: 'Saved'});
-        setTimeout(() => {
-          this.setState({savedMessage: null});
-        }, 3000);
+        this.toggleModal();
       },
       (error) => {
         this.setState({
@@ -186,9 +186,11 @@ export default class SetPreferenceAction extends Component {
   }
 
   onKeyValueChange(keyValues) {
-    this.setState({keyValues});
-    if (this.allFieldsFilled()) {
-      this.debouncedSetPreferences();
+    if (!this.state.fieldsResetted) {
+      this.setState({keyValues});
+    }
+    else {
+      this.setState({fieldsResetted: false});
     }
   }
 
@@ -198,9 +200,9 @@ export default class SetPreferenceAction extends Component {
     });
   }
 
-  debounceSetPreferences() {
-    this.setState({savedMessage: 'Saving...'});
-    this.setPreferences();
+  resetFields(event) {
+    event.preventDefault();
+    this.getSpecifiedPreferences();
   }
 
   preventPropagation(event) {
@@ -238,6 +240,7 @@ export default class SetPreferenceAction extends Component {
             <KeyValuePairs
               keyValues = {this.state.keyValues}
               onKeyValueChange = {this.onKeyValueChange}
+              fieldsResetted = {this.state.fieldsResetted}
             />
           </div>
         </div>
@@ -275,18 +278,19 @@ export default class SetPreferenceAction extends Component {
   }
 
   renderInheritedPreferences() {
+    const titleLabel = T.translate('features.FastAction.setPreferencesInheritedPrefsLabel');
     const keyLabel = T.translate('features.FastAction.setPreferencesColumnLabel.key');
     const valueLabel = T.translate('features.FastAction.setPreferencesColumnLabel.value');
     const originLabel = T.translate('features.FastAction.setPreferencesColumnLabel.origin');
-    const statusLabel = T.translate('features.FastAction.setPreferencesColumnLabel.status');
+    let numInheritedPreferences = this.state.inheritedPreferences.length;
     return (
       <div>
         <div className='inherited-preferences-label'>
-          <h4>{T.translate('features.FastAction.setPreferencesInheritedPrefsLabel')}</h4>
+          <h4>{titleLabel} ({numInheritedPreferences})</h4>
         </div>
         <div className='inherited-preferences-list'>
         {
-          this.state.inheritedPreferences.length ?
+           numInheritedPreferences ?
             <div>
               <table>
                 <thead>
@@ -294,7 +298,6 @@ export default class SetPreferenceAction extends Component {
                     {this.renderInheritedPreferencesColumnHeader(keyLabel)}
                     {this.renderInheritedPreferencesColumnHeader(valueLabel)}
                     <th>{originLabel}</th>
-                    <th>{statusLabel}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -307,7 +310,6 @@ export default class SetPreferenceAction extends Component {
                             <td>{inheritedPreference.key}</td>
                             <td>{inheritedPreference.value}</td>
                             <td>N/A</td>
-                            <td><i className='fa fa-check fa-lg'></i></td>
                           </tr>
                         );
                       })
@@ -326,6 +328,11 @@ export default class SetPreferenceAction extends Component {
   }
 
   render() {
+    const actionLabel = T.translate('features.FastAction.setPreferencesActionLabel');
+    const modalLabel = T.translate('features.FastAction.setPreferencesModalLabel');
+    const savingLabel = T.translate('features.FastAction.setPreferencesButtonLabel.saving');
+    const saveAndCloseLabel = T.translate('features.FastAction.setPreferencesButtonLabel.saveAndClose');
+    const resetLink = T.translate('features.FastAction.setPreferencesReset');
     let tooltipID = `${this.props.entity.uniqueId}-setpreferences`;
     return (
       <span>
@@ -341,7 +348,7 @@ export default class SetPreferenceAction extends Component {
           toggle={this.toggleTooltip}
           delay={0}
         >
-          {T.translate('features.FastAction.setPreferencesActionLabel')}
+          {actionLabel}
         </Tooltip>
 
         {
@@ -361,7 +368,7 @@ export default class SetPreferenceAction extends Component {
                     className={"button-icon fa fa-wrench"}
                   />
                   <span className={"button-icon title"}>
-                    {T.translate('features.FastAction.setPreferencesModalLabel')}
+                    {modalLabel}
                   </span>
                 </div>
                 <div className="float-xs-right">
@@ -382,21 +389,30 @@ export default class SetPreferenceAction extends Component {
                   <div className="specify-preferences-container">
                     {this.renderSpecifyPreferences()}
                     <div className="clearfix">
-                      <button
-                        className="btn btn-primary float-xs-left"
-                        onClick={() => {this.toggleModal(); this.setPreferences();}}
-                      >
-                        <span>{T.translate('features.FastAction.setPreferencesButtonLabel')}</span>
-                      </button>
+                      {
+                        this.state.saving ?
+                          <button
+                            className="btn btn-primary float-xs-left"
+                            disabled="disabled"
+                          >
+                            <span className="fa fa-spinner fa-spin"></span>
+                            <span>{savingLabel}</span>
+                          </button>
+                        :
+                          <button
+                            className="btn btn-primary float-xs-left"
+                            onClick={this.setPreferences.bind(this)}
+                            disabled={(!this.allFieldsFilled() || this.state.error) ? 'disabled' : null}
+                          >
+                            <span>{saveAndCloseLabel}</span>
+                          </button>
+                      }
+                      <span className="float-xs-left reset">
+                        <a onClick = {this.resetFields.bind(this)}>{resetLink}</a>
+                      </span>
                       {
                         this.state.error ?
-                          <span className="float-xs-left text-danger">{this.state.error}</span>
-                        :
-                          null
-                      }
-                      {
-                        this.state.savedMessage ?
-                          <span className="float-xs-left text-success">{this.state.savedMessage}</span>
+                          <div className="float-xs-left text-danger">{this.state.error}</div>
                         :
                           null
                       }
