@@ -350,7 +350,7 @@ method of enabling the ``cdap`` user as it is more precise and limited |---| the
 of ``min.user.id`` needs to be used instead.)
 
 A. If you are **adding CDAP** to an existing Kerberos cluster, in order to configure **CDAP for
-   Kerberos authentication**, you will need to:
+   Kerberos authentication**:
    
    #. The ``<cdap-principal>`` is shown in the commands that follow as ``cdap``;
       however, you are free to use a different appropriate name.
@@ -391,7 +391,7 @@ A. If you are **adding CDAP** to an existing Kerberos cluster, in order to confi
       With all these properties set, the CDAP Explore Service will run on secure Hadoop clusters.
 
 B. If you are **adding Kerberos** to an existing cluster, in order to configure **CDAP for
-   Kerberos authentication**, you will need to:
+   Kerberos authentication**:
    
    .. highlight:: console
 
@@ -401,23 +401,23 @@ B. If you are **adding Kerberos** to an existing cluster, in order to configure 
    
         $ su hdfs && hadoop fs -mkdir -p /cdap && hadoop fs -chown cdap /cdap
         
-  #. When converting an existing CDAP cluster to being Kerberos-enabled, you may
-     run into YARN usercache directory permission problems. A non-Kerberos cluster with
-     default settings will run CDAP containers as the user ``yarn``. A Kerberos cluster will
-     run them as the user ``cdap``. When converting, the usercache directory that YARN
-     creates will already exist and be owned by a different user. On all datanodes, run this
-     command, substituting in the correct value of the YARN parameter ``yarn.nodemanager.local-dirs``::
-   
-       $ rm -rf <YARN.NODEMANAGER.LOCAL-DIRS>/usercache/cdap
- 
-     (As ``yarn.nodemanager.local-dirs`` can be a comma-separated list of directories, you may
-     need to run this command multiple times, once for each entry.)
- 
-     If, for example, the setting for ``yarn.nodemanager.local-dirs`` is ``/yarn/nm``, you would use::
- 
-       $ rm -rf /yarn/nm/usercache/cdap
- 
-     Restart CDAP after removing the usercache(s).
+   #. When converting an existing CDAP cluster to being Kerberos-enabled, you may
+      run into YARN usercache directory permission problems. A non-Kerberos cluster with
+      default settings will run CDAP containers as the user ``yarn``. A Kerberos cluster will
+      run them as the user ``cdap``. When converting, the usercache directory that YARN
+      creates will already exist and be owned by a different user. On all datanodes, run this
+      command, substituting in the correct value of the YARN parameter ``yarn.nodemanager.local-dirs``::
+    
+        $ rm -rf <YARN.NODEMANAGER.LOCAL-DIRS>/usercache/cdap
+  
+      (As ``yarn.nodemanager.local-dirs`` can be a comma-separated list of directories, you may
+      need to run this command multiple times, once for each entry.)
+  
+      If, for example, the setting for ``yarn.nodemanager.local-dirs`` is ``/yarn/nm``, you would use::
+  
+        $ rm -rf /yarn/nm/usercache/cdap
+  
+      Restart CDAP after removing the usercache(s).
 
 
 .. _ambari-configuration-highly-available:
