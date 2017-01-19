@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -1128,5 +1128,12 @@ public final class Constants {
   public static final class OperationalStats {
     public static final String EXTENSIONS_DIR = "operational.stats.extensions.dir";
     public static final String REFRESH_INTERVAL_SECS = "operational.stats.refresh.interval.secs";
+  }
+
+  /**
+   * Constants for Replication
+   */
+  public static final class Replication {
+    public static final String CDAP_SHUTDOWN_TIME_FILENAME = "cdap_shutdown_time";
   }
 }
