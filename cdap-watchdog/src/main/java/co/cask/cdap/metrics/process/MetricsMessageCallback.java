@@ -99,7 +99,7 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
     // avoid logging more than once a minute
     if (System.currentTimeMillis() > lastLoggedMillis + TimeUnit.MINUTES.toMillis(1)) {
       lastLoggedMillis = System.currentTimeMillis();
-      LOG.info("{} metrics records processed. Last record time: {}.",
+      LOG.debug("{} metrics records processed. Last record time: {}.",
                recordsProcessed, records.get(records.size() - 1).getTimestamp());
     }
   }

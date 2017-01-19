@@ -101,6 +101,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
       this.recordSchema = schemaGenerator.generate(MetricValues.class);
       this.recordReader = readerFactory.create(TypeToken.of(MetricValues.class), recordSchema);
     } catch (UnsupportedTypeException e) {
+      // This should never happen
       throw Throwables.propagate(e);
     }
     this.metricStore = metricStore;
@@ -214,7 +215,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
       }
 
       if (records.isEmpty()) {
-        LOG.info("No records to process.");
+        LOG.debug("No records to process.");
         return;
       }
       persistRecords(false);
@@ -235,7 +236,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
       try {
         addProcessingStats(records);
         metricStore.add(records);
-        LOG.info("Persisted {} metrics in MetricStore in thread {}", records.size(), this.getName());
+        LOG.debug("Persisted {} metrics in MetricStore in thread {}", records.size(), this.getName());
         // Persist lastMessageId when its content differs from INITIAL_LAST_MESSAGE_ID
         if (!Arrays.equals(lastMessageId, INITIAL_LAST_MESSAGE_ID)) {
           persistMessageId();
@@ -248,7 +249,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
       // avoid logging more than once a minute
       if (System.currentTimeMillis() > lastLoggedMillis + TimeUnit.MINUTES.toMillis(1)) {
         lastLoggedMillis = System.currentTimeMillis();
-        LOG.info("{} metrics records processed in thread {}. Last record time: {}.",
+        LOG.debug("{} metrics records processed in thread {}. Last record time: {}.",
                  recordsProcessed, this.getName(), records.get(records.size() - 1).getTimestamp());
       }
       records.clear();
@@ -270,7 +271,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
     private void persistMessageId() {
       try {
         metaTable.save(topicIdMetaKey, lastMessageId);
-        LOG.info("Persisted last processed MessageId: {} in thread {}", lastMessageId, this.getName());
+        LOG.debug("Persisted last processed MessageId: {} in thread {}", lastMessageId, this.getName());
       } catch (Exception e) {
         // Simple log and ignore the error.
         LOG.error("Failed to persist consumed messageId. {}", e.getMessage(), e);
