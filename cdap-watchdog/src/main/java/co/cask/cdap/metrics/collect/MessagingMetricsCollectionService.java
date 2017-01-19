@@ -77,8 +77,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
 
   private void publishMetric(MetricValues value) throws IOException, TopicNotFoundException {
     recordWriter.encode(value, encoder);
-    // TODO better partitioning
-    int partition = value.hashCode() % this.partitionSize;
+    int partition = Math.abs(value.getTags().hashCode() % this.partitionSize);
     messagingService.publish(StoreRequestBuilder.of(metricsTopics[partition])
                                .addPayloads(encoderOutputStream.toByteArray()).build());
     encoderOutputStream.reset();
