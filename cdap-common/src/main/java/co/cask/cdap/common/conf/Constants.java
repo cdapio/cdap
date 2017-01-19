@@ -1083,8 +1083,8 @@ public final class Constants {
     public static final String SYSTEM_TOPICS = "messaging.system.topics";
     public static final String TABLE_CACHE_EXPIRATION_SECONDS = "messaging.table.expiration.seconds";
     public static final String TOPIC_DEFAULT_TTL_SECONDS = "messaging.topic.default.ttl.seconds";
-    public static final String COPROCESSOR_METADATA_CACHE_EXPIRATION_SECONDS =
-      "messaging.coprocessor.metadata.cache.expiration.seconds";
+    public static final String COPROCESSOR_METADATA_CACHE_UPDATE_FREQUENCY_SECONDS =
+      "messaging.coprocessor.metadata.cache.update.frequency.seconds";
 
     public static final String HTTP_SERVER_WORKER_THREADS = "messaging.http.server.worker.threads";
     public static final String HTTP_SERVER_EXECUTOR_THREADS = "messaging.http.server.executor.threads";

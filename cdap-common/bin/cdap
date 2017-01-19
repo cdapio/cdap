@@ -69,7 +69,7 @@ test -f "${CDAP_CONF}"/cdap-env.sh && source "${CDAP_CONF}"/cdap-env.sh
 case ${1} in
   auth-server|kafka-server|master|router|ui) CDAP_SERVICE=${1}; shift; cdap_service ${CDAP_SERVICE} ${@}; __ret=${?} ;;
   classpath) cdap_service master classpath; __ret=${?} ;;
-  cli) shift; cdap_cli ${@}; __ret=${?} ;;
+  cli) shift; cdap_cli "${@}"; __ret=${?} ;;
   config-tool) shift; cdap_config_tool ${@}; __ret=${?} ;;
   upgrade) shift; cdap_upgrade_tool ${@}; __ret=${?} ;;
   run) shift; cdap_run_class ${@}; __ret=${?} ;;

@@ -68,6 +68,7 @@ import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
+import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
@@ -130,6 +131,7 @@ public class UpgradeTool {
   private final DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
   private final DefaultStore store;
   private final DatasetInstanceManager datasetInstanceManager;
+  private final HBaseTableFactory tmsTableFactory;
 
   /**
    * Set of Action available in this tool.
@@ -184,6 +186,7 @@ public class UpgradeTool {
     this.store = injector.getInstance(DefaultStore.class);
     this.datasetInstanceManager =
       injector.getInstance(Key.get(DatasetInstanceManager.class, Names.named("datasetInstanceManager")));
+    this.tmsTableFactory = injector.getInstance(HBaseTableFactory.class);
 
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -500,6 +503,10 @@ public class UpgradeTool {
   }
 
   private void performCoprocessorUpgrade() throws Exception {
+    LOG.info("Disabling TMS Tables...");
+    tmsTableFactory.disableMessageTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
+    tmsTableFactory.disablePayloadTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
+
     LOG.info("Upgrading User and System HBase Tables ...");
     dsUpgrade.upgrade();
 

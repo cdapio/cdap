@@ -27,8 +27,6 @@ $namespace-dropdown-color: #333333;
       .navbar-list {
         .navbar-item {
           &.environment {
-            position: absolute;
-            right: 410px;
             color: rgba(117, 117, 117, 0.7);
             font-size: 13px;
             color: hsla(0, 0%, 46%, 0.7); // why are we using hsla??

@@ -27,9 +27,9 @@ import java.util.Map;
 /**
  * Implementation of {@link ScanBuilder} for CDH 5.7.0 version of HBase 1.2.x
  */
-class HBase12CDH570ScanBuilder extends DefaultScanBuilder {
+public class HBase12CDH570ScanBuilder extends DefaultScanBuilder {
 
-  HBase12CDH570ScanBuilder() {
+  public HBase12CDH570ScanBuilder() {
     super();
   }
 

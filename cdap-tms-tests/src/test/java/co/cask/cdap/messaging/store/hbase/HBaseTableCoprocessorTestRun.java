@@ -29,7 +29,9 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.TopicMetadata;
+import co.cask.cdap.messaging.TopicMetadataCache;
 import co.cask.cdap.messaging.store.DataCleanupTest;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.MetadataTable;
@@ -61,9 +63,11 @@ import org.junit.Test;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
@@ -107,7 +111,8 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.CFG_HDFS_NAMESPACE, cConf.get(Constants.CFG_LOCAL_DATA_DIR));
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
-    cConf.set(Constants.MessagingSystem.COPROCESSOR_METADATA_CACHE_EXPIRATION_SECONDS, Long.toString(CACHE_EXPIRY));
+    // Reduce the metadata cache refresh frequency for unit tests
+    cConf.set(Constants.MessagingSystem.COPROCESSOR_METADATA_CACHE_UPDATE_FREQUENCY_SECONDS, Long.toString(1L));
 
     hBaseAdmin = HBASE_TEST_BASE.getHBaseAdmin();
     hBaseAdmin.getConfiguration().set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION,
@@ -133,6 +138,18 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
     tmpStorage.startAndWait();
     tmpStorage.writeSnapshot(txSnapshot);
     tmpStorage.stopAndWait();
+  }
+
+  private void checkTopicMetadata(TopicMetadataCache cache, String topicPrefix, int maxIds, int expectedGenId) {
+    for (int i = 1; i <= maxIds; i++) {
+      String id = Integer.toString(i);
+      Map<String, String> props = cache.getTopicMetadata(ByteBuffer.wrap(
+        MessagingUtils.toMetadataRowKey(new TopicId(NamespaceId.DEFAULT.getNamespace(), topicPrefix + id))));
+      Assert.assertNotNull(props);
+      Assert.assertEquals(2, props.size());
+      Assert.assertEquals(Integer.parseInt(id) * 1000, Integer.parseInt(props.get(TopicMetadata.TTL_KEY)));
+      Assert.assertEquals(Integer.toString(expectedGenId), props.get(TopicMetadata.GENERATION_KEY));
+    }
   }
 
   @Test

@@ -67,10 +67,8 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     // Timeouts
     this.setStateTimeout = null;
-    this.importSchemaTimeout = null;
     this.$scope.$on('$destroy', () => {
       this.$timeout.cancel(this.setStateTimeout);
-      this.$timeout.cancel(this.importSchemaTimeout);
     });
 
   }
@@ -272,12 +270,6 @@ class HydratorPlusPlusNodeConfigCtrl {
   }
   schemaClear() {
     this.EventPipe.emit('schema.clear');
-  }
-  importSchema() {
-    this.$timeout.cancel(this.importSchemaTimeout);
-    this.importSchemaTimeout = this.$timeout(() => {
-      document.getElementById('schema-import-link').click();
-    });
   }
   importFiles(files) {
     let reader = new FileReader();
