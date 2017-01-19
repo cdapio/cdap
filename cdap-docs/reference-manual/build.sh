@@ -70,12 +70,19 @@ function build_extras() {
     echo "Not using Javadocs."
   fi
 
-  cp ${SCRIPT_PATH}/licenses-pdf/*.pdf ${TARGET_PATH}/html/licenses
-  warnings=$?
-  if [[ ${warnings} -eq 0 ]]; then
-    echo "Copied license PDFs."
+  if [ -d ${TARGET_PATH}/html/licenses ]; then
+    cp ${SCRIPT_PATH}/licenses-pdf/*.pdf ${TARGET_PATH}/html/licenses
+    warnings=$?
+    if [[ ${warnings} -eq 0 ]]; then
+      echo "Copied license PDFs."
+    else
+      local m="Error ${warnings} copying license PDFs."
+      echo_red_bold "${m}"
+      set_message "${m}"
+      return ${warnings}
+    fi
   else
-    local m="Error ${warnings} copying license PDFs."
+    local m="Error TARGET_PATH ${TARGET_PATH}/html/licenses does not exist."
     echo_red_bold "${m}"
     set_message "${m}"
     return ${warnings}
