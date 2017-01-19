@@ -1304,8 +1304,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // Hence it will not be automatically added by Hive, instead we have to add it ourselves.
       sessionConf.put(MRJobConfig.MAPREDUCE_JOB_CREDENTIALS_BINARY, credentialsFilePath);
 
-      sessionConf.put(HiveConf.ConfVars.SUBMITLOCALTASKVIACHILD.toString(), Boolean.FALSE.toString());
-      sessionConf.put(HiveConf.ConfVars.SUBMITVIACHILD.toString(), Boolean.FALSE.toString());
+      sessionConf.put("hive.exec.submit.local.task.via.child", Boolean.FALSE.toString());
+      sessionConf.put("hive.exec.submitviachild", Boolean.FALSE.toString());
       if (ExploreServiceUtils.isTezEngine(hiveConf, additionalSessionConf)) {
         // Add token file location property for tez if engine is tez
         sessionConf.put("tez.credentials.path", credentialsFilePath);
