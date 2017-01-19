@@ -16,8 +16,10 @@
 
 package co.cask.cdap.metrics.runtime;
 
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.resource.ResourceBalancerService;
 import co.cask.cdap.metrics.process.KafkaMetricsProcessorServiceFactory;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
@@ -26,11 +28,16 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Metrics processor service that processes events from Kafka.
  */
-public final class KafkaMetricsRuntimeProcessorRuntimeService extends AbstractMetricsRuntimeProcessorService {
+public final class KafkaMetricsRuntimeProcessorRuntimeService extends ResourceBalancerService {
+
+  @Nullable
+  private MetricsContext metricsContext;
+
   private static final String SERVICE_NAME = "metrics.processor.kafka.consumer";
 
   private final KafkaMetricsProcessorServiceFactory factory;
@@ -51,5 +58,9 @@ public final class KafkaMetricsRuntimeProcessorRuntimeService extends AbstractMe
     co.cask.cdap.metrics.process.KafkaMetricsProcessorService service = factory.create(partitions);
     service.setMetricsContext(metricsContext);
     return service;
+  }
+
+  public void setMetricsContext(MetricsContext metricsContext) {
+    this.metricsContext = metricsContext;
   }
 }

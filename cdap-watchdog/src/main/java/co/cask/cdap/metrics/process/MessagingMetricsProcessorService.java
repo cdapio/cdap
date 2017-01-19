@@ -72,29 +72,32 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
   private final DatumReader<MetricValues> recordReader;
   private final Schema recordSchema;
   private final MetricStore metricStore;
-  private Map<String, String> metricsContextMap;
-  private List<ProcessMetricsThread> processMetricsThreadList;
-  private final int fetcherPersistThreshold;
+  private final int fetcherLimit;
 
   private long lastLoggedMillis;
   private long recordsProcessed;
 
+  private Map<String, String> metricsContextMap;
+  private List<ProcessMetricsThread> processMetricsThreadList;
+
   @Inject
   public MessagingMetricsProcessorService(MetricDatasetFactory metricDatasetFactory,
                                           @Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
-                                          @Assisted Set<Integer> partitions,
+                                          @Assisted Set<Integer> topicNumbers,
                                           MessagingService messagingService,
                                           SchemaGenerator schemaGenerator,
                                           DatumReaderFactory readerFactory,
                                           MetricStore metricStore,
-                                          @Named(Constants.Metrics.MESSAGING_FETCHER_PERSIST_THRESHOLD)
-                                            int fetcherPersistThreshold) {
+                                          @Named(Constants.Metrics.MESSAGING_FETCHER_LIMIT)
+                                            int fetcherLimit) {
     super(metricDatasetFactory);
-    this.metricsTopics = new TopicId[partitions.size()];
-    this.metricsTopicMetaKeys = new TopicIdMetaKey[partitions.size()];
-    for (int i = 0; i < partitions.size(); i++) {
-      this.metricsTopics[i] = NamespaceId.SYSTEM.topic(topicPrefix + "_" + i);
+    this.metricsTopics = new TopicId[topicNumbers.size()];
+    this.metricsTopicMetaKeys = new TopicIdMetaKey[topicNumbers.size()];
+    int i = 0;
+    for (int topicNum : topicNumbers) {
+      this.metricsTopics[i] = NamespaceId.SYSTEM.topic(topicPrefix + topicNum);
       this.metricsTopicMetaKeys[i] = new TopicIdMetaKey(this.metricsTopics[i]);
+      i++;
     }
     this.messagingService = messagingService;
     try {
@@ -105,7 +108,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
       throw Throwables.propagate(e);
     }
     this.metricStore = metricStore;
-    this.fetcherPersistThreshold = fetcherPersistThreshold;
+    this.fetcherLimit = fetcherLimit;
     this.metricsContextMap = Collections.<String, String>emptyMap();
     processMetricsThreadList = new ArrayList<>();
   }
@@ -138,7 +141,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
 
       MessageFetcher fetcher;
       try {
-        fetcher = messagingService.prepareFetch(metricsTopics[i]);
+        fetcher = messagingService.prepareFetch(metricsTopics[i]).setLimit(fetcherLimit);
       } catch (Exception e) {
         LOG.error(String.format("Failed to create fetcher for topic: %s", metricsTopics[i]), e);
         return;
@@ -192,6 +195,27 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
 
     @Override
     public void run() {
+      while (isRunning()) {
+        try {
+          processMetrics();
+          TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+          // It's triggered by stop
+          Thread.currentThread().interrupt();
+          continue;
+        }
+      }
+    }
+
+    public void terminate() {
+      LOG.info("Terminate requested {}", getName());
+      if (!records.isEmpty()) {
+        persistRecords();
+      }
+      interrupt();
+    }
+
+    private void processMetrics() {
       // Decode the metrics records.
       PayloadInputStream is = new PayloadInputStream(new byte[0]);
       BinaryDecoder binaryDecoder = new BinaryDecoder(is);
@@ -203,15 +227,14 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
             MetricValues metricValues = recordReader.read(binaryDecoder, recordSchema);
             records.add(metricValues);
             lastMessageId = input.getId();
-            LOG.debug("Received message {} with metrics: {}", lastMessageId, metricValues);
+            LOG.trace("Received message {} with metrics: {}", lastMessageId, metricValues);
             // persistRecords method persists records and the last messageId if the number of processed records exceeds
             // the persist threshold
-            persistRecords(false);
           } catch (IOException e) {
             LOG.info("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
           }
         }
-      } catch (TopicNotFoundException | IOException e) {
+      } catch (Exception e) {
         LOG.error("Failed to fetch metrics records", e);
       }
 
@@ -219,21 +242,10 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
         LOG.debug("No records to process.");
         return;
       }
-      persistRecords(false);
+      persistRecords();
     }
 
-    public void terminate() {
-      LOG.info("Terminate requested {}", getName());
-      if (!records.isEmpty()) {
-        persistRecords(true);
-      }
-      interrupt();
-    }
-
-    private void persistRecords(boolean terminating) {
-      if (records.size() <= fetcherPersistThreshold && !terminating) {
-        return;
-      }
+    private void persistRecords() {
       try {
         addProcessingStats(records);
         metricStore.add(records);

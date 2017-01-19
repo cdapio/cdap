@@ -16,8 +16,10 @@
 
 package co.cask.cdap.metrics.runtime;
 
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.resource.ResourceBalancerService;
 import co.cask.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
@@ -26,11 +28,15 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Metrics processor service that processes events from Messaging.
  */
-public final class MessagingMetricsRuntimeProcessorRuntimeService extends AbstractMetricsRuntimeProcessorService {
+public final class MessagingMetricsRuntimeProcessorRuntimeService extends ResourceBalancerService {
+
+  @Nullable
+  private MetricsContext metricsContext;
 
   private static final String SERVICE_NAME = "metrics.processor.messaging.fetcher";
 
@@ -43,15 +49,19 @@ public final class MessagingMetricsRuntimeProcessorRuntimeService extends Abstra
                                                         DiscoveryServiceClient discoveryServiceClient,
                                                         MessagingMetricsProcessorServiceFactory
                                                             metricsProcessorFactory) {
-    super(SERVICE_NAME, conf.getInt(Constants.Metrics.MESSAGING_PARTITION_NUM),
+    super(SERVICE_NAME, conf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM),
           zkClient, discoveryService, discoveryServiceClient);
     this.factory = metricsProcessorFactory;
   }
 
   @Override
-  protected Service createService(Set<Integer> partitions) {
-    co.cask.cdap.metrics.process.MessagingMetricsProcessorService service = factory.create(partitions);
+  protected Service createService(Set<Integer> topicNumbers) {
+    co.cask.cdap.metrics.process.MessagingMetricsProcessorService service = factory.create(topicNumbers);
     service.setMetricsContext(metricsContext);
     return service;
+  }
+
+  public void setMetricsContext(MetricsContext metricsContext) {
+    this.metricsContext = metricsContext;
   }
 }

@@ -199,17 +199,17 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     }
 
     @Provides
-    @Named(Constants.Metrics.MESSAGING_PARTITION_NUM)
+    @Named(Constants.Metrics.MESSAGING_TOPIC_NUM)
     public int providesMessagingTopicPartition(CConfiguration cConf) {
-      return cConf.getInt(Constants.Metrics.MESSAGING_PARTITION_NUM);
+      return cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM);
     }
 
 
     @SuppressWarnings("unused")
     @Provides
-    @Named(Constants.Metrics.MESSAGING_FETCHER_PERSIST_THRESHOLD)
+    @Named(Constants.Metrics.MESSAGING_FETCHER_LIMIT)
     public int providesFetcherPersistThreshold(CConfiguration cConf) {
-      return cConf.getInt(Constants.Metrics.MESSAGING_FETCHER_PERSIST_THRESHOLD);
+      return cConf.getInt(Constants.Metrics.MESSAGING_FETCHER_LIMIT);
     }
   }
 }

@@ -45,6 +45,8 @@ import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.metrics.MessagingMetricsTestBase;
+import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -54,6 +56,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
@@ -233,7 +236,7 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
 
   private MetricValues getExpectedMetricValues(int i, Map<String, String> metricsContext, Map<String, Long> expected)
     throws TopicNotFoundException, IOException {
-    String metricName = "processed" + "_" + i;
+    String metricName = "processed" + i;
     MetricValues metric =
       new MetricValues(metricsContext, metricName, START_TIME + i * 100, i, MetricType.GAUGE);
     recordWriter.encode(metric, encoder);
@@ -288,6 +291,8 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
       @Override
       protected void configure() {
         bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+        bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
+        bind(MetricStore.class).to(DefaultMetricStore.class).in(Scopes.SINGLETON);
       }
     }));
     return list;

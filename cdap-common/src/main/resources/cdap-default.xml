@@ -1294,7 +1294,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${metrics.topic.prefix}:${metrics.messaging.partition.num},${notification.topic}</value>
+    <value>${audit.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic}</value>
     <description>
       A comma-separated list of topics that is always available in the system namespace.
       Topic prefix and topic partition are seperated by ":".
@@ -1511,11 +1511,12 @@
   </property>
 
   <property>
-    <name>metrics.messaging.fetcher.persist.threshold</name>
-    <value>500</value>
+    <name>metrics.messaging.fetcher.limit</name>
+    <value>200</value>
     <description>
-      Threshold of fetching messages from messaging fetcher and processing
-      metrics messages before persisting the processed metrics to metrics table
+      Maximum limit on number of metrics messages to be fetched from messaging fetcher at once.
+      It's also the maximum number of MetricValues to be persisted in metrics store after the
+      number of fetched messages reaches the limit
     </description>
   </property>
   
@@ -1528,12 +1529,13 @@
   </property>
 
   <property>
-    <name>metrics.messaging.partition.num</name>
+    <name>metrics.messaging.topic.num</name>
     <value>10</value>
     <description>
-      Number of partitions for metrics topic in messaging. This number controls
-      how many topic partitions in messaging which metrics are sent to,
-      and the number of threads fetching from messaging service and processing metrics in parallel.
+      Number of topics for metrics in messaging. This number controls how many topics in messaging
+      which metrics are sent to, and the number of threads fetching from messaging service
+      and processing metrics in parallel. With the default value 10, 10 topics will be created for metrics
+      with names: ${metrics.topic.prefix}0, ${metrics.topic.prefix}1, ... ${metrics.topic.prefix}10
     </description>
   </property>
 

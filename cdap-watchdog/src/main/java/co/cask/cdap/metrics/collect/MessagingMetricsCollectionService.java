@@ -26,13 +26,16 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * A {@link AggregatedMetricsCollectionService} that uses TMS to publish {@link co.cask.cdap.api.metrics.MetricValues}.
@@ -42,44 +45,56 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
 
   private final MessagingService messagingService;
   private final TopicId[] metricsTopics;
-  private final int partitionSize;
+  private final int totalTopicNum;
   private final DatumWriter<MetricValues> recordWriter;
   private final ByteArrayOutputStream encoderOutputStream;
   private final Encoder encoder;
 
   @Inject
   public MessagingMetricsCollectionService(@Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
-                                           @Named(Constants.Metrics.MESSAGING_PARTITION_NUM) int partitionSize,
+                                           @Named(Constants.Metrics.MESSAGING_TOPIC_NUM) int totalTopicNum,
                                            MessagingService messagingService, DatumWriter<MetricValues> recordWriter) {
-    super();
+    Preconditions.checkArgument(totalTopicNum > 0, "totalTopicNum must be a positive integer");
     this.messagingService = messagingService;
-
     this.recordWriter = recordWriter;
 
     // Parent guarantees the publish method would not get called concurrently, hence safe to reuse the same instances.
     this.encoderOutputStream = new ByteArrayOutputStream(1024);
     this.encoder = new BinaryEncoder(encoderOutputStream);
-    this.metricsTopics = new TopicId[partitionSize];
-    for (int i = 0; i < partitionSize; i++) {
-      this.metricsTopics[i] = NamespaceId.SYSTEM.topic(topicPrefix + "_" + i);
+    this.metricsTopics = new TopicId[totalTopicNum];
+    for (int i = 0; i < totalTopicNum; i++) {
+      this.metricsTopics[i] = NamespaceId.SYSTEM.topic(topicPrefix + i);
     }
-    this.partitionSize = partitionSize;
+    this.totalTopicNum = totalTopicNum;
   }
 
   @Override
   protected void publish(Iterator<MetricValues> metrics) throws Exception {
+    List<List<byte[]>> payloadsList = new ArrayList<>(totalTopicNum);
+    for (int i = 0; i < totalTopicNum; i++) {
+      payloadsList.add(new ArrayList<byte[]>());
+    }
     encoderOutputStream.reset();
     while (metrics.hasNext()) {
-      // Encode each MetricRecord into bytes and make it an individual message in a message set.
-      publishMetric(metrics.next());
+      MetricValues metricValues = metrics.next();
+      // Encode each MetricRecord into bytes
+      recordWriter.encode(metricValues, encoder);
+      // Calculate the topic number with the hashcode of MetricValues' tags and store the encoded payload in the
+      // corresponding list of the topic number
+      payloadsList.get(Math.abs(metricValues.getTags().hashCode() % this.totalTopicNum))
+        .add(encoderOutputStream.toByteArray());
+      encoderOutputStream.reset();
     }
+    publishMetric(payloadsList);
   }
 
-  private void publishMetric(MetricValues value) throws IOException, TopicNotFoundException {
-    recordWriter.encode(value, encoder);
-    int partition = Math.abs(value.getTags().hashCode() % this.partitionSize);
-    messagingService.publish(StoreRequestBuilder.of(metricsTopics[partition])
-                               .addPayloads(encoderOutputStream.toByteArray()).build());
-    encoderOutputStream.reset();
+  private void publishMetric(List<List<byte[]>> payloadsList) throws IOException, TopicNotFoundException {
+    for (int topicNum = 0; topicNum < totalTopicNum; topicNum++) {
+      List<byte[]> payload = payloadsList.get(topicNum);
+      if (payload.size() > 0) {
+        messagingService.publish(StoreRequestBuilder.of(metricsTopics[topicNum])
+                                   .addPayloads(payload.iterator()).build());
+      }
+    }
   }
 }

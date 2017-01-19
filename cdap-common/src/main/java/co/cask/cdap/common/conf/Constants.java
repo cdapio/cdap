@@ -524,8 +524,8 @@ public final class Constants {
     public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
     public static final long DEFAULT_RETENTION_HOURS = 2;
 
-    public static final String MESSAGING_PARTITION_NUM = "metrics.messaging.partition.num";
-    public static final String MESSAGING_FETCHER_PERSIST_THRESHOLD = "metrics.messaging.fetcher.persist.threshold";
+    public static final String MESSAGING_TOPIC_NUM = "metrics.messaging.topic.num";
+    public static final String MESSAGING_FETCHER_LIMIT = "metrics.messaging.fetcher.limit";
 
     /**
      * Metric's dataset related constants.

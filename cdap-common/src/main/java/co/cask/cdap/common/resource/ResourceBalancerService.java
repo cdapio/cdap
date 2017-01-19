@@ -23,6 +23,7 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinator;
 import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
 import co.cask.cdap.common.zookeeper.coordination.ResourceHandler;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;

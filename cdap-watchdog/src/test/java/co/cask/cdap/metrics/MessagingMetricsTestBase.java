@@ -18,7 +18,6 @@ package co.cask.cdap.metrics;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -32,9 +31,6 @@ import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
-import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
-import co.cask.cdap.metrics.store.DefaultMetricStore;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.reflect.TypeToken;
@@ -43,7 +39,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Scopes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -82,7 +77,7 @@ public abstract class MessagingMetricsTestBase {
     partitionSize = cConf.getInt(Constants.Metrics.KAFKA_PARTITION_SIZE);
     metricsTopics = new TopicId[partitionSize];
     for (int i = 0; i < partitionSize; i++) {
-      metricsTopics[i] = NamespaceId.SYSTEM.topic(topicPrefix + "_" + i);
+      metricsTopics[i] = NamespaceId.SYSTEM.topic(topicPrefix + i);
     }
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
@@ -110,8 +105,6 @@ public abstract class MessagingMetricsTestBase {
       @Override
       protected void configure() {
         bind(MetricsCollectionService.class).toInstance(new NoOpMetricsCollectionService());
-        bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
-        bind(MetricStore.class).to(DefaultMetricStore.class).in(Scopes.SINGLETON);
       }
     });
     modules.addAll(getAdditionalModules());

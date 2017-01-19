@@ -47,21 +47,15 @@ final class DistributedMetricsClientModule extends PrivateModule {
   }
 
   @Provides
-  @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX)
-  public String providesKafkaTopicPrefix(CConfiguration cConf) {
-    return cConf.get(Constants.Metrics.KAFKA_TOPIC_PREFIX);
-  }
-
-  @Provides
   @Named(Constants.Metrics.TOPIC_PREFIX)
   public String providesTopicPrefix(CConfiguration cConf) {
     return cConf.get(Constants.Metrics.TOPIC_PREFIX);
   }
 
   @Provides
-  @Named(Constants.Metrics.MESSAGING_PARTITION_NUM)
+  @Named(Constants.Metrics.MESSAGING_TOPIC_NUM)
   public int providesMessagingTopicPartition(CConfiguration cConf) {
-    return cConf.getInt(Constants.Metrics.MESSAGING_PARTITION_NUM);
+    return cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM);
   }
 
   @Provides

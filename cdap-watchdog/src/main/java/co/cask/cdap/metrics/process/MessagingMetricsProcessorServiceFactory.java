@@ -22,5 +22,5 @@ import java.util.Set;
  */
 public interface MessagingMetricsProcessorServiceFactory {
 
-  MessagingMetricsProcessorService create(Set<Integer> partitions);
+  MessagingMetricsProcessorService create(Set<Integer> topicNumbers);
 }
