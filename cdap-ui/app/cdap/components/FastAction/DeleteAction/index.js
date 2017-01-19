@@ -83,7 +83,13 @@ export default class DeleteAction extends Component {
     }
 
     api(params)
-      .subscribe(this.props.onSuccess, (err) => {
+      .subscribe((res) => {
+        this.props.onSuccess(res);
+        this.setState({
+          loading: false,
+          modal: false
+        });
+      }, (err) => {
         this.setState({
           loading: false,
           errorMessage: T.translate('features.FastAction.deleteFailed', {entityId: this.props.entity.id}),

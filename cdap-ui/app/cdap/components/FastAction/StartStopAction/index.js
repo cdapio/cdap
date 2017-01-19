@@ -129,13 +129,13 @@ export default class StartStopAction extends Component {
       this.startStop = 'stop';
       icon = 'fa fa-stop text-danger';
       confirmBtnText = "stopConfirmLabel";
-      headerText = T.translate('features.FastAction.startProgramHeader');
+      headerText = T.translate('features.FastAction.stopProgramHeader');
       confirmationText = T.translate('features.FastAction.stopConfirmation', {entityId: this.props.entity.id});
     } else {
       this.startStop = 'start';
       icon = 'fa fa-play text-success';
       confirmBtnText = "startConfirmLabel";
-      headerText = T.translate('features.FastAction.stopProgramHeader');
+      headerText = T.translate('features.FastAction.startProgramHeader');
       confirmationText = T.translate('features.FastAction.startConfirmation', {entityId: this.props.entity.id});
     }
 

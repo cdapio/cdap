@@ -49,7 +49,9 @@ export default class FastActions extends Component {
   onSuccess(action) {
     if (action === 'startStop') { return; }
 
-    this.props.onUpdate();
+    if (this.props.onUpdate) {
+      this.props.onUpdate();
+    }
   }
 
   render () {
