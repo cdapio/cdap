@@ -22,6 +22,8 @@ import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.hbase.ddl.CoprocessorDescriptor;
+import co.cask.cdap.hbase.ddl.TableDescriptor;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -142,10 +144,10 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       Location jarLocation = coprocessorJar.getJarLocation();
 
       // Check if coprocessor upgrade is needed
-      Map<String, HBaseTableUtil.CoprocessorInfo> coprocessorInfo = HBaseTableUtil.getCoprocessorInfo(tableDescriptor);
+      Map<String, CoprocessorDescriptor> coprocessorInfo = CoprocessorDescriptor.getCoprocessors(tableDescriptor);
       // For all required coprocessors, check if they've need to be upgraded.
       for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-        HBaseTableUtil.CoprocessorInfo info = coprocessorInfo.get(coprocessor.getName());
+        CoprocessorDescriptor info = coprocessorInfo.get(coprocessor.getName());
         if (info != null) {
           // The same coprocessor has been configured, check by the file name hash to see if they are the same.
           if (!jarLocation.getName().equals(info.getPath().getName())) {
@@ -198,6 +200,14 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   private boolean isSystemTable() {
     return tableId.getNamespace().equalsIgnoreCase(String.format("%s_%s", cConf.get(Constants.Dataset.TABLE_PREFIX),
                                                                  NamespaceId.SYSTEM.getNamespace()));
+  }
+
+  protected CoprocessorDescriptor addCoprocessor(Class<? extends Coprocessor> coprocessor, Location jarFile,
+                                                 Integer priority) throws IOException {
+    if (priority == null) {
+      priority = Coprocessor.PRIORITY_USER;
+    }
+    return new CoprocessorDescriptor(coprocessor.getName(), new Path(jarFile.toURI().getPath()), priority, null);
   }
 
   protected void addCoprocessor(HTableDescriptorBuilder tableDescriptor, Class<? extends Coprocessor> coprocessor,

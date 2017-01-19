@@ -32,6 +32,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.hbase.ddl.ColumnFamilyDescriptor;
+import co.cask.cdap.hbase.ddl.CoprocessorDescriptor;
+import co.cask.cdap.hbase.ddl.TableDescriptor;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
@@ -43,6 +46,9 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -84,7 +90,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    return new DatasetAdminImpl(datasetContext, spec.getName(), tableUtil, hConf);
+    return new DatasetAdminImpl(datasetContext, spec.getName(), tableUtil, cConf, hConf);
   }
 
   @Override
@@ -95,14 +101,16 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
 
   private static final class DatasetAdminImpl implements DatasetAdmin {
     private final Configuration hConf;
+    private final CConfiguration cConf;
     private final TableId tableId;
     protected final HBaseTableUtil tableUtil;
 
     private DatasetAdminImpl(DatasetContext datasetContext, String tableName, HBaseTableUtil tableUtil,
-                             Configuration hConf) throws IOException {
+                             CConfiguration cConf, Configuration hConf) throws IOException {
       this.hConf = hConf;
       this.tableUtil = tableUtil;
       this.tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), tableName);
+      this.cConf = cConf;
     }
 
     @Override
@@ -114,15 +122,12 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
 
     @Override
     public void create() throws IOException {
-      HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
-      columnDescriptor.setMaxVersions(1);
-      tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
-
-      HTableDescriptorBuilder tableDescriptor = tableUtil.buildHTableDescriptor(tableId);
-      tableDescriptor.addFamily(columnDescriptor);
-
+      ColumnFamilyDescriptor.Builder cfdBuilder
+        = new ColumnFamilyDescriptor.Builder(hConf, Bytes.toString(DATA_COLUMN_FAMILY));
+      TableDescriptor.Builder tblBuilder = new TableDescriptor.Builder(cConf, tableId);
+      tblBuilder.addColumnFamily(cfdBuilder.build());
       try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-        tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor.build());
+        tableUtil.createTableIfNotExists(admin, tableId, tblBuilder.build());
       }
     }
 

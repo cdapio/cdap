@@ -16,11 +16,14 @@
 
 package co.cask.cdap.messaging.store.hbase;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.hbase.ddl.ColumnFamilyDescriptor;
+import co.cask.cdap.hbase.ddl.CoprocessorDescriptor;
+import co.cask.cdap.hbase.ddl.TableDescriptor;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix.OneByteSimpleHash;
@@ -35,8 +38,6 @@ import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.twill.common.Threads;
@@ -99,12 +100,11 @@ public final class HBaseTableFactory implements TableFactory {
   public MetadataTable createMetadataTable(String tableName) throws IOException {
     TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, tableName);
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      HTableDescriptor htd = tableUtil
-        .buildHTableDescriptor(tableId)
-        // Only stores the latest version
-        .addFamily(new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(1))
-        .build();
-      tableUtil.createTableIfNotExists(admin, tableId, htd);
+      ColumnFamilyDescriptor.Builder cfdBuilder
+        = new ColumnFamilyDescriptor.Builder(hConf, Bytes.toString(COLUMN_FAMILY));
+      TableDescriptor.Builder builder = new TableDescriptor.Builder(cConf, tableId);
+      builder.addColumnFamily(cfdBuilder.build());
+      tableUtil.createTableIfNotExists(admin, tableId, builder.build());
     }
     return new HBaseMetadataTable(tableUtil, tableUtil.createHTable(hConf, tableId),
                                   COLUMN_FAMILY, cConf.getInt(Constants.MessagingSystem.HBASE_SCAN_CACHE_ROWS));
@@ -150,19 +150,20 @@ public final class HBaseTableFactory implements TableFactory {
       TableId metadataTableId = tableUtil.createHTableId(NamespaceId.SYSTEM, cConf.get(
         Constants.MessagingSystem.METADATA_TABLE_NAME));
 
-      HTableDescriptorBuilder htdBuilder = tableUtil
-        .buildHTableDescriptor(tableId)
-        // Only stores the latest version
-        .addFamily(new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(1))
-        // since we use 'OneByteSimpleHash', we set the number of prefix bytes attribute to 1
-        .setValue(Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES, Integer.toString(1))
-        .setValue(Constants.MessagingSystem.KEY_DISTRIBUTOR_BUCKETS_ATTR, Integer.toString(splits))
-        .setValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE, metadataTableId.getNamespace());
+      ColumnFamilyDescriptor.Builder cfdBuilder
+        = new ColumnFamilyDescriptor.Builder(hConf, Bytes.toString(COLUMN_FAMILY));
 
-      addCoprocessor(coprocessor, htdBuilder);
-      HTableDescriptor htd = htdBuilder.build();
+      TableDescriptor.Builder tbdBuilder = new TableDescriptor.Builder(cConf, metadataTableId)
+        .addColumnFamily(cfdBuilder.build())
+        .addProperty(Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES, Integer.toString(1))
+        .addProperty(Constants.MessagingSystem.KEY_DISTRIBUTOR_BUCKETS_ATTR, Integer.toString(splits))
+        .addProperty(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE, metadataTableId.getNamespace())
+        .addCoprocessor(getCoprocessor(coprocessor));
+
+      TableDescriptor tableDescriptor = tbdBuilder.build();
+
       byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits, splits, keyDistributor);
-      tableUtil.createTableIfNotExists(admin, tableId, htd, splitKeys);
+      tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor, splitKeys);
     }
 
     HTable hTable = tableUtil.createHTable(hConf, tableId);
@@ -189,12 +190,11 @@ public final class HBaseTableFactory implements TableFactory {
     }
   }
 
-  private void addCoprocessor(Class<? extends Coprocessor> coprocessor,
-                              HTableDescriptorBuilder tableDescriptor) throws IOException {
+  private CoprocessorDescriptor getCoprocessor(Class<? extends Coprocessor> coprocessor) throws IOException {
     List<? extends Class<? extends Coprocessor>> coprocessors = ImmutableList.of(coprocessor);
     Location jarDir = locationFactory.create(cConf.get(Constants.MessagingSystem.COPROCESSOR_DIR));
     Location jarFile = HBaseTableUtil.createCoProcessorJar(coprocessor.getSimpleName(), jarDir, coprocessors);
-    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI().getPath()),
-                                   Coprocessor.PRIORITY_USER, null);
+    return new CoprocessorDescriptor(coprocessor.getName(), new Path(jarFile.toURI().getPath()),
+                                     Coprocessor.PRIORITY_USER, null);
   }
 }

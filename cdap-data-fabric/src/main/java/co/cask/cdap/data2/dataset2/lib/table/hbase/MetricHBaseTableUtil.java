@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.hbase.ddl.CoprocessorDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 
 import java.util.Map;
@@ -62,7 +63,7 @@ public class MetricHBaseTableUtil {
       return Version.VERSION_2_8_OR_HIGHER;
     }
 
-    Map<String, HBaseTableUtil.CoprocessorInfo> cpsInfo = HBaseTableUtil.getCoprocessorInfo(tableDescriptor);
+    Map<String, CoprocessorDescriptor> cpsInfo = CoprocessorDescriptor.getCoprocessors(tableDescriptor);
     if (cpsInfo.containsKey(tableUtil.getIncrementHandlerClassForVersion().getName())) {
       // note: if the version is 2.8 or higher, it would have cdap.version property
       return Version.VERSION_2_7;

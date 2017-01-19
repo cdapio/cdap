@@ -88,61 +88,6 @@ public class HBase10TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public void createNamespaceIfNotExists(HBaseAdmin admin, String namespace) throws IOException {
-    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
-    Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
-    if (!hasNamespace(admin, namespace)) {
-      NamespaceDescriptor namespaceDescriptor =
-        NamespaceDescriptor.create(nameConverter.encodeHBaseEntity(namespace)).build();
-      admin.createNamespace(namespaceDescriptor);
-    }
-  }
-
-  @Override
-  public void deleteNamespaceIfExists(HBaseAdmin admin, String namespace) throws IOException {
-    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
-    Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
-    if (hasNamespace(admin, namespace)) {
-      admin.deleteNamespace(nameConverter.encodeHBaseEntity(namespace));
-    }
-  }
-
-  @Override
-  public void disableTable(HBaseAdmin admin, TableId tableId) throws IOException {
-    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
-    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.disableTable(nameConverter.toTableName(tablePrefix, tableId));
-  }
-
-  @Override
-  public void enableTable(HBaseAdmin admin, TableId tableId) throws IOException {
-    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
-    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.enableTable(nameConverter.toTableName(tablePrefix, tableId));
-  }
-
-  @Override
-  public boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException {
-    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
-    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.tableExists(nameConverter.toTableName(tablePrefix, tableId));
-  }
-
-  @Override
-  public void deleteTable(HBaseAdmin admin, TableId tableId) throws IOException {
-    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
-    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.deleteTable(nameConverter.toTableName(tablePrefix, tableId));
-  }
-
-  @Override
-  public void modifyTable(HBaseAdmin admin, HTableDescriptor tableDescriptor) throws IOException {
-    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
-    Preconditions.checkArgument(tableDescriptor != null, "Table descriptor should not be null.");
-    admin.modifyTable(tableDescriptor.getTableName(), tableDescriptor);
-  }
-
-  @Override
   public List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
@@ -172,75 +117,6 @@ public class HBase10TableUtil extends HBaseTableUtil {
       }
     }
     return tableIds;
-  }
-
-  @Override
-  public void setCompression(HColumnDescriptor columnDescriptor, CompressionType type) {
-    switch (type) {
-      case LZO:
-        columnDescriptor.setCompressionType(Compression.Algorithm.LZO);
-        break;
-      case SNAPPY:
-        columnDescriptor.setCompressionType(Compression.Algorithm.SNAPPY);
-        break;
-      case GZIP:
-        columnDescriptor.setCompressionType(Compression.Algorithm.GZ);
-        break;
-      case NONE:
-        columnDescriptor.setCompressionType(Compression.Algorithm.NONE);
-        break;
-      default:
-        throw new IllegalArgumentException("Unsupported compression type: " + type);
-    }
-  }
-
-  @Override
-  public void setBloomFilter(HColumnDescriptor columnDescriptor, BloomType type) {
-    switch (type) {
-      case ROW:
-        columnDescriptor.setBloomFilterType(org.apache.hadoop.hbase.regionserver.BloomType.ROW);
-        break;
-      case ROWCOL:
-        columnDescriptor.setBloomFilterType(org.apache.hadoop.hbase.regionserver.BloomType.ROWCOL);
-        break;
-      case NONE:
-        columnDescriptor.setBloomFilterType(org.apache.hadoop.hbase.regionserver.BloomType.NONE);
-        break;
-      default:
-        throw new IllegalArgumentException("Unsupported bloom filter type: " + type);
-    }
-  }
-
-  @Override
-  public CompressionType getCompression(HColumnDescriptor columnDescriptor) {
-    Compression.Algorithm type = columnDescriptor.getCompressionType();
-    switch (type) {
-      case LZO:
-        return CompressionType.LZO;
-      case SNAPPY:
-        return CompressionType.SNAPPY;
-      case GZ:
-        return CompressionType.GZIP;
-      case NONE:
-        return CompressionType.NONE;
-      default:
-        throw new IllegalArgumentException("Unsupported compression type: " + type);
-    }
-  }
-
-  @Override
-  public BloomType getBloomFilter(HColumnDescriptor columnDescriptor) {
-    org.apache.hadoop.hbase.regionserver.BloomType type = columnDescriptor.getBloomFilterType();
-    switch (type) {
-      case ROW:
-        return BloomType.ROW;
-      case ROWCOL:
-        return BloomType.ROWCOL;
-      case NONE:
-        return BloomType.NONE;
-      default:
-        throw new IllegalArgumentException("Unsupported bloom filter type: " + type);
-    }
   }
 
   @Override

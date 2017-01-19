@@ -23,6 +23,7 @@ import co.cask.cdap.common.guice.NamespaceClientUnitTestModule;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.hbase.ddl.ColumnFamilyDescriptor;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.MetadataTableTest;
 import co.cask.cdap.messaging.store.TableFactory;
@@ -57,8 +58,8 @@ public class HBaseMetadataTableTestRun extends MetadataTableTest {
   public static void setupBeforeClass() throws Exception {
     hConf = HBASE_TEST_BASE.getConfiguration();
     hBaseAdmin = HBASE_TEST_BASE.getHBaseAdmin();
-    hBaseAdmin.getConfiguration().set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION,
-                                      HBaseTableUtil.CompressionType.NONE.name());
+    hBaseAdmin.getConfiguration().set(ColumnFamilyDescriptor.CFG_HBASE_TABLE_COMPRESSION,
+                                      ColumnFamilyDescriptor.CompressionType.NONE.name());
     tableUtil = new HBaseTableUtilFactory(cConf).get();
     tableUtil.createNamespaceIfNotExists(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
 

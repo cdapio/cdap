@@ -27,6 +27,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.hbase.ddl.TableDescriptor;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -38,6 +39,8 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +52,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
   public static final String PROPERTY_SPLITS = "hbase.splits";
 
   private static final Gson GSON = new Gson();
-
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseTableAdmin.class);
   private final DatasetSpecification spec;
   // todo: datasets should not depend on cdap configuration!
   private final CConfiguration conf;
@@ -113,6 +116,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     CoprocessorJar coprocessorJar = createCoprocessorJar();
 
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
+      LOG.info("SAGAR ----- {}, {}, {}, {}.", tableDescriptor, coprocessor, coprocessorJar.getJarLocation(),
+               coprocessorJar.getPriority(coprocessor));
       addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation(),
                      coprocessorJar.getPriority(coprocessor));
     }
@@ -124,7 +129,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     }
 
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor.build(), splits);
+      TableDescriptor tbd = TableDescriptor.fromHTableDescriptor(tableDescriptor.build());
+      tableUtil.createTableIfNotExists(admin, tableId, tbd, splits);
     }
   }
 
