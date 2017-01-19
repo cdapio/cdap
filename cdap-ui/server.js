@@ -50,7 +50,7 @@ log.info("Starting CDAP UI ...");
 parser.extractConfig('cdap')
   .then(function (c) {
     cdapConfig = c;
-    if (cdapConfig['ssl.enabled'] === 'true') {
+    if (cdapConfig['ssl.external.enabled'] === 'true') {
       log.debug("CDAP Security has been enabled");
       return parser.extractConfig('security');
     }
@@ -63,10 +63,9 @@ parser.extractConfig('cdap')
 
   .then(function (app) {
     var port, server;
-
-    if (cdapConfig['ssl.enabled'] === 'true') {
-
+    if (cdapConfig['ssl.external.enabled'] === 'true') {
       if (cdapConfig['dashboard.ssl.disable.cert.check'] === 'true') {
+
         // For self signed certs: see https://github.com/mikeal/request/issues/418
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
       }
