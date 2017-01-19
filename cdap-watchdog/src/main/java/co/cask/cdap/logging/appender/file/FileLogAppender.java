@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -145,8 +145,7 @@ public class FileLogAppender extends LogAppender {
     try {
       logSchema = new LogSchema().getAvroSchema();
       FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil, txExecutorFactory,
-                                                                        rootLocationFactory, namespacedLocationFactory,
-                                                                        cConf, impersonator);
+                                                                        rootLocationFactory, impersonator);
 
       AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, namespacedLocationFactory, logBaseDir,
                                                          logSchema, maxLogFileSizeBytes, syncIntervalBytes,
@@ -154,7 +153,8 @@ public class FileLogAppender extends LogAppender {
       logFileWriter = new SimpleLogFileWriter(avroFileWriter, checkpointIntervalMs);
 
       LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
-                                             namespacedLocationFactory, logBaseDir, retentionDurationMs, impersonator);
+                                             namespacedLocationFactory, logBaseDir, retentionDurationMs, cConf,
+                                             impersonator);
       scheduledExecutor.scheduleAtFixedRate(logCleanup, 10, logCleanupIntervalMins, TimeUnit.MINUTES);
     } catch (Exception e) {
       close();
