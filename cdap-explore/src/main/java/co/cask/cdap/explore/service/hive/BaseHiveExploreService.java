@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -587,11 +587,17 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   @Override
   public TableInfo getTableInfo(String namespace, String table)
     throws ExploreException, TableNotFoundException {
+    return getTableInfo(namespace, null, table);
+  }
+
+  @Override
+  public TableInfo getTableInfo(String namespace, @Nullable String databaseName, String table)
+    throws ExploreException, TableNotFoundException {
     startAndWait();
 
     // TODO check if the database user is allowed to access if security is enabled
     try {
-      String db = getHiveDatabase(namespace);
+      String db = databaseName != null ? databaseName : getHiveDatabase(namespace);
 
       Table tableInfo = getMetaStoreClient().getTable(db, table);
       List<FieldSchema> tableFields = tableInfo.getSd().getCols();
@@ -1304,8 +1310,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // Hence it will not be automatically added by Hive, instead we have to add it ourselves.
       sessionConf.put(MRJobConfig.MAPREDUCE_JOB_CREDENTIALS_BINARY, credentialsFilePath);
 
-      sessionConf.put(HiveConf.ConfVars.SUBMITLOCALTASKVIACHILD.toString(), Boolean.FALSE.toString());
-      sessionConf.put(HiveConf.ConfVars.SUBMITVIACHILD.toString(), Boolean.FALSE.toString());
+      sessionConf.put("hive.exec.submit.local.task.via.child", Boolean.FALSE.toString());
+      sessionConf.put("hive.exec.submitviachild", Boolean.FALSE.toString());
       if (ExploreServiceUtils.isTezEngine(hiveConf, additionalSessionConf)) {
         // Add token file location property for tez if engine is tez
         sessionConf.put("tez.credentials.path", credentialsFilePath);

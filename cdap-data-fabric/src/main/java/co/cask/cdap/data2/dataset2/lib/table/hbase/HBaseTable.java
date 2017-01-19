@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,13 +24,13 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Filter;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
-import co.cask.cdap.data2.dataset2.lib.table.TableProperties;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import co.cask.cdap.data2.util.TableId;
@@ -97,7 +97,7 @@ public class HBaseTable extends BufferingTable {
   public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> args,
                     CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName()),
-          TableProperties.supportsReadlessIncrements(spec.getProperties()), spec.getProperties());
+          TableProperties.getReadlessIncrementSupport(spec.getProperties()), spec.getProperties());
     TableId hBaseTableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName());
     HTable hTable = tableUtil.createHTable(hConf, hBaseTableId);
     // todo: make configurable
@@ -106,7 +106,7 @@ public class HBaseTable extends BufferingTable {
     this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.hTableName = Bytes.toStringBinary(hTable.getTableName());
-    this.columnFamily = TableProperties.getColumnFamily(spec.getProperties());
+    this.columnFamily = TableProperties.getColumnFamilyBytes(spec.getProperties());
     this.txCodec = new TransactionCodec();
     // Overriding the hbase tx change prefix so it resembles the hbase table name more closely, since the HBase
     // table name is not the same as the dataset name anymore

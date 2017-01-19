@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.DatasetId;
@@ -95,8 +95,10 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
     if (dsType != null) {
       properties.put(TYPE, dsType);
     }
-    if (datasetProperties.containsKey(Table.PROPERTY_TTL)) {
-      properties.put(TTL_KEY, datasetProperties.get(Table.PROPERTY_TTL));
+    // use TableProperties to extract the TTL, because it handles the case of a negative TTL (== no TTL)
+    Long ttl = TableProperties.getTTL(datasetProperties);
+    if (ttl != null) {
+      properties.put(TTL_KEY, String.valueOf(ttl));
     }
     if (description != null) {
       properties.put(DESCRIPTION_KEY, description);

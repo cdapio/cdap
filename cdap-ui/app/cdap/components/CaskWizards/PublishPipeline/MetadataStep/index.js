@@ -19,7 +19,7 @@ import PublishPipelineAction from 'services/WizardStores/PublishPipeline/Publish
 import {connect, Provider} from 'react-redux';
 import {Input, Form, FormGroup, Col, Label} from 'reactstrap';
 import T from 'i18n-react';
-require('./MetadataStep.less');
+require('./MetadataStep.scss');
 
 const mapStateToPipelineNameProps = (state) => {
   return {
@@ -49,7 +49,7 @@ export default function MetadataStep() {
   return (
     <Provider store={PublishPipelineStore}>
       <Form className="form-horizontal pipeline-publish-metadata-step">
-        <FormGroup>
+        <FormGroup row>
           <Col xs="3">
             <Label className="control-label">
               {T.translate('features.Wizard.PublishPipeline.pipelinenameplaceholder')}

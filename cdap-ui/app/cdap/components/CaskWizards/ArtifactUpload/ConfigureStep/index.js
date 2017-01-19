@@ -172,47 +172,47 @@ export default function ConfigureStep({isMarket}) {
           return false;
         }}
       >
-        <FormGroup>
+        <FormGroup row>
           <Col xs="3">
             <Label className="control-label">{T.translate('features.Wizard.ArtifactUpload.Step2.parentArtifactLabel')}</Label>
           </Col>
           <Col xs="7">
             <ParentArtifactSelect />
           </Col>
-          <i className="fa fa-asterisk text-danger pull-left"/>
+          <i className="fa fa-asterisk text-danger float-xs-left"/>
         </FormGroup>
 
-        <FormGroup>
+        <FormGroup row>
           <Col xs="3">
             <Label className="control-label">{T.translate('features.Wizard.ArtifactUpload.Step2.nameLabel')}</Label>
           </Col>
           <Col xs="7">
             <InputArtifactName />
           </Col>
-          <i className="fa fa-asterisk text-danger pull-left"/>
+          <i className="fa fa-asterisk text-danger float-xs-left"/>
         </FormGroup>
 
-        <FormGroup>
+        <FormGroup row>
           <Col xs="3">
             <Label className="control-label">{T.translate('features.Wizard.ArtifactUpload.Step2.typeLabel')}</Label>
           </Col>
           <Col xs="7">
             {getTypeComponent()}
           </Col>
-          <i className="fa fa-asterisk text-danger pull-left"/>
+          <i className="fa fa-asterisk text-danger float-xs-left"/>
         </FormGroup>
 
-        <FormGroup>
+        <FormGroup row>
           <Col xs="3">
             <Label className="control-label">{T.translate('features.Wizard.ArtifactUpload.Step2.classnameLabel')}</Label>
           </Col>
           <Col xs="7">
             <InputArtifactClassname />
           </Col>
-          <i className="fa fa-asterisk text-danger pull-left"/>
+          <i className="fa fa-asterisk text-danger float-xs-left"/>
         </FormGroup>
 
-        <FormGroup>
+        <FormGroup row>
           <Col xs="3">
             <Label className="control-label">{T.translate('features.Wizard.ArtifactUpload.Step2.descriptionLabel')}</Label>
           </Col>

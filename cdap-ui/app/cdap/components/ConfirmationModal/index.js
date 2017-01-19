@@ -20,7 +20,7 @@ import CardActionFeedback from 'components/CardActionFeedback';
 import Mousetrap from 'mousetrap';
 import T from 'i18n-react';
 
-require('./ConfirmationModal.less');
+require('./ConfirmationModal.scss');
 
 export default class ConfirmationModal extends Component {
   constructor(props) {
@@ -39,7 +39,7 @@ export default class ConfirmationModal extends Component {
     if (this.props.isLoading) {
       return (
         <ModalBody className="loading">
-          <h3 className="text-center">
+          <h3 className="text-xs-center">
             <span className="fa fa-spinner fa-spin"></span>
           </h3>
         </ModalBody>

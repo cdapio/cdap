@@ -26,20 +26,19 @@ import org.apache.spark.api.java.function.Function;
  */
 public class LimitingFunction<T> implements Function<JavaRDD<T>, JavaRDD<T>> {
   private final int numOfRecordsLimited;
-  private int numOfRecordsEmitted;
 
   public LimitingFunction(int numOfRecordsLimited) {
     this.numOfRecordsLimited = numOfRecordsLimited;
-    this.numOfRecordsEmitted = 0;
   }
 
   @Override
   public JavaRDD<T> call(JavaRDD<T> v1) throws Exception {
-    numOfRecordsEmitted++;
     return v1.filter(new Function<T, Boolean>() {
+      int numOfRecordsEmitted = 0;
+
       @Override
       public Boolean call(T v1) throws Exception {
-        return numOfRecordsEmitted <= numOfRecordsLimited;
+        return numOfRecordsEmitted++ < numOfRecordsLimited;
       }
     });
   }

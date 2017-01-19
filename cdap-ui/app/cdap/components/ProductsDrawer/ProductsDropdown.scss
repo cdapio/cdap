@@ -1,0 +1,173 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../styles/variables.scss";
+$namespace-action-bg: #e7e7e7;
+$namespace-dropdown-color: #333333;
+
+.product-drawer-highlight,
+.top-product-highlight {
+  display: inline-block;
+  height: 50px;
+  width: 6px;
+
+  &.hydrator {
+    background-color: $hydrator-blue;
+  }
+  &.tracker {
+    background-color: $tracker-green;
+  }
+  &.wrangler {
+    background-color: $wrangler-yellow;
+  }
+  &.cdap {
+    background-color: $cdap-orange;
+  }
+}
+
+.navbar {
+  .products-dropdown {
+    width: 144px;
+    border-left: 1px solid #666666;
+    padding: 0;
+    font-size: 14px;
+    display: inline-block;
+    vertical-align: top;
+    line-height: 50px;
+
+    .dropdown {
+      .top-product {
+        display: flex;
+        align-items: center;
+        height: 50px;
+        cursor: pointer;
+        width: 100%;
+        border-bottom: solid 1px #676c7c;
+
+        &.open {
+          color: #a9a8a8;
+          &.current-selection {
+            color: white;
+          }
+        }
+        &.closed {
+          color: white;
+        }
+
+        &:hover {
+          background-color: #313237;
+        }
+        [class*="icon-"] {
+          vertical-align: middle;
+        }
+        .product-name {
+          margin-left: 8px;
+        }
+        .top-product-highlight {
+          margin-right: 8px;
+        }
+      }
+      &.open {
+        .dropdown-menu {
+          left: 0;
+          right: 0;
+        }
+      }
+      .top-product-link {
+        padding-right: 0;
+      }
+      .dropdown-menu {
+        border-radius: 0;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        height: calc(100vh - 50px);
+        display: block;
+        transition: 0.1s ease-in;
+        left: 100%;
+        outline: 0;
+        user-select: none;
+        background-color: $navbar-bg;
+
+        .dropdown-item {
+          border-bottom: 1px solid #676c7c;
+          height: 50px;
+          padding: 0;
+
+          .product-link {
+            height: 50px;
+            width: 100%;
+            color: #a9a8a8;
+            text-decoration: inherit;
+            cursor: pointer;
+            display: block;
+            font-size: 13px;
+            padding: 0;
+            line-height: 39px;
+
+            &:hover {
+              background-color: #313237;
+              color: #a9a8a8;
+            }
+
+            .fa {
+              padding-left: 8px;
+            }
+            .menu-item {
+              height: 100%;
+              display: inline-flex;
+              flex-direction: row;
+              align-items: center;
+
+              .product-drawer-label {
+                display: inline-flex;
+                align-items: center;
+                height: 100%;
+                color: #a9a8a8;
+
+                &.current-selection {
+                  color: white;
+                }
+              }
+            }
+          }
+          [class*="icon-"] {
+            vertical-align: middle;
+            margin-right: 8px;
+          }
+          //This is going to be changed a little bit
+          &:hover {
+            color: white;
+          }
+          .hydrator {
+            color: white;
+            &:hover {
+              color: white;
+            }
+          }
+        }
+      }
+      .products-backdrop {
+        position: fixed;
+        left: 0;
+        background-color: black;
+        width: 100vw;
+        height: 100vh;
+        opacity: 0.5;
+      }
+    }
+  }
+}

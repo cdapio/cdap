@@ -28,7 +28,7 @@ import RenameAction from 'wrangler/components/Wrangler/ColumnActions/RenameActio
 import T from 'i18n-react';
 import {Popover, PopoverContent, Tooltip} from 'reactstrap';
 
-require('./ColumnActionsDropdown.less');
+require('./ColumnActionsDropdown.scss');
 
 export default class ColumnActionsDropdown extends Component {
   constructor(props) {

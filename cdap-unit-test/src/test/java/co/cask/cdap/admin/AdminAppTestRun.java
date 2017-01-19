@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.test.ApplicationManager;
@@ -222,7 +223,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
       Assert.assertEquals("table", response.getResponseBodyAsString());
 
       // update xx's properties -> should get not-found
-      Map<String, String> nnProps = ImmutableMap.of(Table.PROPERTY_TTL, "1000");
+      Map<String, String> nnProps = TableProperties.builder().setTTL(1000L).build().getProperties();
       response = HttpRequests.execute(HttpRequest.put(serviceURI.resolve("update/xx").toURL())
                                         .withBody(GSON.toJson(nnProps)).build());
       Assert.assertEquals(404, response.getResponseCode());

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -24,10 +23,10 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import com.google.inject.Inject;
-
-import java.util.Arrays;
 
 /**
  * Common configuration and reconfiguration for all Table implementations.
@@ -70,23 +69,22 @@ public abstract class AbstractTableDefinition<D extends Dataset, A extends Datas
   private static void validateUpdate(DatasetProperties newProperties, DatasetSpecification currentSpec)
     throws IncompatibleUpdateException {
 
-    boolean wasTransactional = TableProperties.isTransactional(currentSpec.getProperties());
-    boolean isTransactional = TableProperties.isTransactional(newProperties.getProperties());
+    boolean wasTransactional = DatasetsUtil.isTransactional(currentSpec.getProperties());
+    boolean isTransactional = DatasetsUtil.isTransactional(newProperties.getProperties());
     if (wasTransactional != isTransactional) {
       throw new IncompatibleUpdateException(String.format(
-        "Attempt to change whether the table is transactional from %s to %s", wasTransactional, isTransactional));
+        "Attempt to change whether the table is transactional from %s to %s.", wasTransactional, isTransactional));
     }
-    boolean wasReadlessIncrement = TableProperties.supportsReadlessIncrements(currentSpec.getProperties());
-    boolean isReadlessIncrement = TableProperties.supportsReadlessIncrements(newProperties.getProperties());
+    boolean wasReadlessIncrement = TableProperties.getReadlessIncrementSupport(currentSpec.getProperties());
+    boolean isReadlessIncrement = TableProperties.getReadlessIncrementSupport(newProperties.getProperties());
     if (wasReadlessIncrement && !isReadlessIncrement) {
-      throw new IncompatibleUpdateException("Attempt to disable readless increments is not allowed");
+      throw new IncompatibleUpdateException("Attempt to disable read-less increments.");
     }
-    byte[] oldColumnFamily = TableProperties.getColumnFamily(currentSpec.getProperties());
-    byte[] newColumnFamily = TableProperties.getColumnFamily(newProperties.getProperties());
-    if (!Arrays.equals(oldColumnFamily, newColumnFamily)) {
+    String oldColumnFamily = TableProperties.getColumnFamily(currentSpec.getProperties());
+    String newColumnFamily = TableProperties.getColumnFamily(newProperties.getProperties());
+    if (!oldColumnFamily.equals(newColumnFamily)) {
       throw new IncompatibleUpdateException(
-        String.format("Attempt to change the column family from '%s' to '%s'",
-                      Bytes.toString(oldColumnFamily), Bytes.toString(newColumnFamily)));
+        String.format("Attempt to change the column family from '%s' to '%s'.", oldColumnFamily, newColumnFamily));
     }
   }
 }

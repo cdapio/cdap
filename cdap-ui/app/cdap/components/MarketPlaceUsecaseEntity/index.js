@@ -17,7 +17,7 @@ import React, {PropTypes, Component} from 'react';
 import {MyMarketApi} from '../../api/market';
 import Card from 'components/Card';
 import moment from 'moment';
-require('./MarketPlaceUsecaseEntity.less');
+require('./MarketPlaceUsecaseEntity.scss');
 import MarketActionsContainer from 'components/MarketActionsContainer';
 import MarketStore from 'components/Market/store/market-store.js';
 
@@ -101,8 +101,8 @@ export default class MarketPlaceUsecaseEntity extends Component {
           null
         }
         <div className="title clearfix">
-          <span className="pull-left">{this.props.entity.label}</span>
-          <span className="pull-right">Version: {this.props.entity.version}</span>
+          <span className="float-xs-left">{this.props.entity.label}</span>
+          <span className="float-xs-right">Version: {this.props.entity.version}</span>
         </div>
         <div className="entity-information">
           <div className="entity-modal-image">
@@ -138,7 +138,7 @@ export default class MarketPlaceUsecaseEntity extends Component {
         </div>
         <div className="actions-container">
           <div
-            className="arrow-container text-center"
+            className="arrow-container text-xs-center"
             onClick={this.fetchEntityDetail.bind(this)}
           >
             {

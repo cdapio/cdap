@@ -1,0 +1,77 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../styles/variables.scss";
+
+.card-action-feedback {
+  $feedback-height: 35px;
+
+  @mixin generate-color($color) {
+    color: $color;
+    background-color: transparent;
+
+    .expand-icon {
+      background-color: darken($color, 15%);
+    }
+  }
+
+  .feedback-icon {
+    margin: auto 10px;
+  }
+  .expand-icon {
+    width: 30px;
+  }
+
+  .feedback-icon,
+  .expand-icon {
+    text-align: center;
+  }
+
+  &.SUCCESS,
+  &.WARNING,
+  &.DANGER {
+    color: white;
+  }
+
+  &.SUCCESS {
+    @include generate-color($brand-success);
+  }
+
+  &.WARNING {
+    @include generate-color($brand-warning);
+  }
+
+  &.DANGER {
+    @include generate-color($brand-danger);
+  }
+
+  &.LOADING {
+    @include generate-color(#dddddd);
+  }
+
+  .stack-trace {
+    background-color: #2c3e50;
+    pre {
+      background-color: #2c3e50;
+      margin-bottom: 0;
+      white-space: pre-wrap;
+      padding: 10px 25px;
+      color: #cdcdcd;
+      border: 0;
+      border-radius: 0;
+    }
+  }
+}

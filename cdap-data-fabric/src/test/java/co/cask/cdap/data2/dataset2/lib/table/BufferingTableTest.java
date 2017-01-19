@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.data2.dataset2.TableAssert;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -197,8 +198,8 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
     // The test verifies that one can re-use byte arrays passed as parameters to write methods of a table without
     // affecting the stored data.
     // Also, one can re-use (modify) returned data from the table without affecting the stored data.
-    DatasetProperties props = DatasetProperties.builder().add(
-      Table.PROPERTY_READLESS_INCREMENT, String.valueOf(isReadlessIncrementSupported())).build();
+    DatasetProperties props =
+      TableProperties.builder().setReadlessIncrementSupport(isReadlessIncrementSupported()).build();
     DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE, props);
     admin.create();
     try {

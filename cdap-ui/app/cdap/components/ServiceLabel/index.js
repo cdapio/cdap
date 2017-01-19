@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-require('./ServiceLabel.less');
+require('./ServiceLabel.scss');
 import T from 'i18n-react';
 
 export default function ServiceLabel() {

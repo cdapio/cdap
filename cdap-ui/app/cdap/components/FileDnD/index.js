@@ -16,7 +16,7 @@
 
 import React, {PropTypes} from 'react';
 import Dropzone from 'react-dropzone';
-require('./FileDnD.less');
+require('./FileDnD.scss');
 import T from 'i18n-react';
 
 export default function FileDnD({file, onDropHandler, error, uploadLabel, clickLabel}) {
@@ -25,7 +25,7 @@ export default function FileDnD({file, onDropHandler, error, uploadLabel, clickL
       activeClassName="file-drag-container"
       className="file-drop-container"
       onDrop={onDropHandler}>
-      <div className="file-metadata-container text-center">
+      <div className="file-metadata-container text-xs-center">
         <i className="fa fa-upload fa-3x"></i>
         {
           file.name && file.name.length ? (<span>{file.name}</span>)

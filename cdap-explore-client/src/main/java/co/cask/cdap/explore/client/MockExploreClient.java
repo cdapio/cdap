@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -89,6 +89,11 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
+  public ListenableFuture<Void> disableExploreDataset(DatasetId datasetInstance, DatasetSpecification spec) {
+    return null;
+  }
+
+  @Override
   public ListenableFuture<Void> enableExploreStream(StreamId stream, String tableName, FormatSpecification format) {
     return null;
   }
@@ -99,12 +104,13 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
-  public ListenableFuture<Void> addPartition(DatasetId datasetInstance, PartitionKey key, String path) {
+  public ListenableFuture<Void> addPartition(DatasetId datasetInstance, DatasetSpecification spec,
+                                             PartitionKey key, String path) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> dropPartition(DatasetId datasetInstance, PartitionKey key) {
+  public ListenableFuture<Void> dropPartition(DatasetId datasetInstance, DatasetSpecification spec, PartitionKey key) {
     return null;
   }
 

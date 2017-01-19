@@ -322,8 +322,5 @@ angular
       $window.location.reload();
     });
 
-    // $rootScope.$on('$stateChangeError', function () {
-    //   $state.go('login');
-    // });
     console.timeEnd(PKG.name);
   });

@@ -30,7 +30,7 @@ import org.junit.experimental.categories.Category;
 @Category(XSlowTests.class)
 public class HBase10CDHTableUtilTest extends AbstractHBaseTableUtilTest {
 
-  private final HTableNameConverter nameConverter = new HTable10CDHNameConverter();
+  private final HTableNameConverter nameConverter = new HTableNameConverter();
 
   @Override
   protected HBaseTableUtil getTableUtil() {

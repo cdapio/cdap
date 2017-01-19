@@ -20,7 +20,7 @@ import PlusButton from '../PlusButton';
 import T from 'i18n-react';
 import NamespaceStore from 'services/NamespaceStore';
 import SpotlightSearch from 'components/SpotlightSearch';
-require('./HeaderActions.less');
+require('./HeaderActions.scss');
 var classNames = require('classnames');
 import NamespaceDropdown from 'components/NamespaceDropdown';
 import ProductsDrawer from 'components/ProductsDrawer';
@@ -83,7 +83,7 @@ export default class HeaderActions extends Component {
 
     return (
       <div className="header-actions">
-        <ul className="navbar-list pull-right">
+        <ul className="navbar-list float-xs-right">
           <div className="navbar-item environment">
             <span>
               {

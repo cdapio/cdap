@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.io.TypeRepresentation;
@@ -93,7 +94,7 @@ public class ObjectMappedTableProperties {
   /**
    * A Builder to construct properties for {@link ObjectMappedTable} datasets.
    */
-  public static class Builder extends DatasetProperties.Builder {
+  public static class Builder extends TableProperties.AbstractBuilder<Builder> {
 
     private final Gson gson = new Gson();
 

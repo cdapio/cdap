@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,6 +31,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
@@ -100,8 +101,8 @@ public abstract class TableTest<T extends Table> {
   protected static final DatasetContext CONTEXT1 = DatasetContext.from(NAMESPACE1.getEntityName());
   protected static final DatasetContext CONTEXT2 = DatasetContext.from(NAMESPACE2.getEntityName());
 
-  static final DatasetProperties PROPS_CONFLICT_LEVEL_ROW = DatasetProperties.builder()
-    .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.ROW.name()).build();
+  private static final DatasetProperties PROPS_CONFLICT_LEVEL_ROW =
+    TableProperties.builder().setConflictDetection(ConflictDetection.ROW).build();
 
   protected TransactionSystemClient txClient;
 
@@ -621,8 +622,7 @@ public abstract class TableTest<T extends Table> {
   }
 
   private void testBasicIncrementWithTx(boolean doIncrAndGet, boolean readless) throws Exception {
-    DatasetProperties props = DatasetProperties.builder().add(
-      Table.PROPERTY_READLESS_INCREMENT, String.valueOf(readless)).build();
+    DatasetProperties props = TableProperties.builder().setReadlessIncrementSupport(readless).build();
     DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE, props);
     admin.create();
     Table myTable1, myTable2, myTable3, myTable4;
@@ -764,8 +764,7 @@ public abstract class TableTest<T extends Table> {
   }
 
   private void testBasicIncrementWriteWithTxSmall(boolean readless) throws Exception {
-    DatasetProperties props = DatasetProperties.builder().add(
-      Table.PROPERTY_READLESS_INCREMENT, String.valueOf(readless)).build();
+    DatasetProperties props = TableProperties.builder().setReadlessIncrementSupport(readless).build();
     DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE, props);
     admin.create();
     Table myTable = getTable(CONTEXT1, MY_TABLE, props);
@@ -1509,7 +1508,7 @@ public abstract class TableTest<T extends Table> {
 
     String table1 = "table1";
     String table2 = "table2";
-    DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_CONFLICT_LEVEL, level.name()).build();
+    DatasetProperties props = TableProperties.builder().setConflictDetection(level).build();
     DatasetAdmin admin1 = getTableAdmin(CONTEXT1, table1, props);
     DatasetAdmin admin2 = getTableAdmin(CONTEXT1, table2, props);
     admin1.create();
@@ -1781,8 +1780,7 @@ public abstract class TableTest<T extends Table> {
 
   private void testMetrics(boolean readless) throws Exception {
     final String tableName = "survive";
-    DatasetProperties props = DatasetProperties.builder().add(
-      Table.PROPERTY_READLESS_INCREMENT, String.valueOf(readless)).build();
+    DatasetProperties props = TableProperties.builder().setReadlessIncrementSupport(readless).build();
     DatasetAdmin admin = getTableAdmin(CONTEXT1, tableName, props);
     admin.create();
     Table table = getTable(CONTEXT1, tableName, props);
@@ -1878,8 +1876,7 @@ public abstract class TableTest<T extends Table> {
 
   private void testMultiIncrementWithFlush(boolean readless) throws Exception {
     final String tableName = "incrFlush";
-    DatasetProperties props = DatasetProperties.builder()
-      .add(Table.PROPERTY_READLESS_INCREMENT, String.valueOf(readless)).build();
+    DatasetProperties props = TableProperties.builder().setReadlessIncrementSupport(readless).build();
     DatasetAdmin admin = getTableAdmin(CONTEXT1, tableName, props);
     admin.create();
     Map<String, String> args = new HashMap<>();

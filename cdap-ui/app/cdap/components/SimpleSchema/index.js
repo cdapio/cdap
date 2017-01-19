@@ -22,7 +22,7 @@ import SchemaStoreActions from './SchemaStoreActions';
 import { Table } from 'reactstrap';
 import shortid from 'shortid';
 import FieldRow from './FieldRow';
-require('./SimpleSchema.less');
+require('./SimpleSchema.scss');
 
 const mapStateToFieldNameProps = (state, ownProps) => {
   return {

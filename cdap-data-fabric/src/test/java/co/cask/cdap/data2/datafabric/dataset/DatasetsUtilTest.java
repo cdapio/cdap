@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,7 @@ import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetServiceTestBase;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.TestObject;
@@ -64,20 +64,20 @@ public class DatasetsUtilTest extends DatasetServiceTestBase {
     testFix("objectMappedTable",
             ObjectMappedTableProperties.builder().setType(TestObject.class)
               .setRowKeyExploreName("x").setRowKeyExploreType(Schema.Type.STRING)
-              .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.NONE.name()).build());
+              .setConflictDetection(ConflictDetection.NONE).build());
     testFix(ObjectMappedTable.class.getName(),
             ObjectMappedTableProperties.builder().setType(TestObject.class)
               .setRowKeyExploreName("x").setRowKeyExploreType(Schema.Type.STRING)
-              .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.NONE.name()).build());
+              .setConflictDetection(ConflictDetection.NONE).build());
 
     testFix("lineageDataset",
             DatasetProperties.EMPTY);
     testFix(LineageDataset.class.getName(),
-            DatasetProperties.builder().add(Table.PROPERTY_TTL, 1000).build());
+            TableProperties.builder().setTTL(1000).build());
     testFix(UsageDataset.class.getSimpleName(), DatasetProperties.EMPTY);
 
     testFix("table",
-            DatasetProperties.builder().add(Table.PROPERTY_COLUMN_FAMILY, "fam").build());
+            TableProperties.builder().setColumnFamily("fam").build());
     testFix("indexedTable",
             DatasetProperties.builder().add(IndexedTable.INDEX_COLUMNS_CONF_KEY, "a,c").build());
   }

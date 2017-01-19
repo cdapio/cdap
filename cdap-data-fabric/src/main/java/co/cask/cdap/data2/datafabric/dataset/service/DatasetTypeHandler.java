@@ -17,6 +17,8 @@
 package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.AuditDetail;
+import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
@@ -80,6 +82,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @PUT
   @Path("/data/modules/{name}")
+  @AuditPolicy(AuditDetail.HEADERS)
   public BodyConsumer addModule(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId, @PathParam("name") final String name,
                                 @QueryParam("force") final boolean forceUpdate,

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,6 +54,11 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * it. If not set, a default column family will be used.
    */
   String PROPERTY_COLUMN_FAMILY = "dataset.table.column.family";
+
+  /**
+   * The default column family. This is used if table properties do not specify a column family.
+   */
+  String DEFAULT_COLUMN_FAMILY = "d";
 
   /**
    * Property set to configure transaction conflict detection level. This property only applies to implementations

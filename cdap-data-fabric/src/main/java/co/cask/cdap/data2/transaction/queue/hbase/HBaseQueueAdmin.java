@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
@@ -300,9 +301,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   private DatasetId createStateStoreDataset(String namespace) throws IOException {
     try {
       DatasetId stateStoreId = getStateStoreId(namespace);
-      DatasetProperties configProperties = DatasetProperties.builder()
-        .add(Table.PROPERTY_COLUMN_FAMILY, Bytes.toString(QueueEntryRow.COLUMN_FAMILY))
-        .build();
+      DatasetProperties configProperties =
+        TableProperties.builder().setColumnFamily(QueueEntryRow.COLUMN_FAMILY).build();
       DatasetsUtil.createIfNotExists(datasetFramework, stateStoreId,
                                      HBaseQueueDatasetModule.STATE_STORE_TYPE_NAME, configProperties);
       return stateStoreId;

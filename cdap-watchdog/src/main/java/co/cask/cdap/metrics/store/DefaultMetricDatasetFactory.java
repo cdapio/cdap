@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Cask Data, Inc.
+ * Copyright 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package co.cask.cdap.metrics.store;
 
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -85,13 +85,13 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
                                  Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
     int ttl =  cConf.getInt(Constants.Metrics.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
-    DatasetProperties.Builder props = DatasetProperties.builder();
+    TableProperties.Builder props = TableProperties.builder();
     // don't add TTL for MAX_RESOLUTION table. CDAP-1626
     if (ttl > 0 && resolution != Integer.MAX_VALUE) {
-      props.add(Table.PROPERTY_TTL, ttl);
+      props.setTTL(ttl);
     }
     // for efficient counters
-    props.add(Table.PROPERTY_READLESS_INCREMENT, "true");
+    props.setReadlessIncrementSupport(true);
     // configuring pre-splits
     props.add(HBaseTableAdmin.PROPERTY_SPLITS,
               GSON.toJson(FactTable.getSplits(DefaultMetricStore.AGGREGATIONS.size())));

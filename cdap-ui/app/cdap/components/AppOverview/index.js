@@ -18,7 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import classnames from 'classnames';
 import {MyAppApi} from 'api/app';
 import {objectQuery} from 'services/helpers';
-require('./AppOverview.less');
+require('./AppOverview.scss');
 import OverviewTabConfig from './OverviewTabConfig';
 import ConfigurableTab from 'components/ConfigurableTab';
 import ApplicationMetrics from 'components/EntityCard/ApplicationMetrics';
@@ -155,7 +155,7 @@ export default class AppOverview extends Component {
               {this.state.entityDetail.name}
               <small>1.0.0</small>
             </span>
-            <span className="text-right">
+            <span className="text-xs-right">
               <i className="fa fa-info fa-lg hidden"></i>
               <Link to={{
                   pathname: `/ns/${namespace}/apps/${this.props.entity.id}`,

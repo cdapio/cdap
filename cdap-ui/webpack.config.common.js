@@ -35,8 +35,8 @@ var plugins = [
 ];
 var loaders = [
   {
-    test: /\.less$/,
-    loader: 'style-loader!css-loader!less-loader'
+    test: /\.scss$/,
+    loader: 'style-loader!css-loader!sass-loader'
   },
   {
     test: /\.ya?ml$/,
@@ -44,7 +44,7 @@ var loaders = [
   },
   {
     test: /\.css$/,
-    loader: 'style-loader!css-loader!less-loader'
+    loader: 'style-loader!css-loader!sass-loader'
   },
   {
     test: /\.js$/,
@@ -54,6 +54,14 @@ var loaders = [
       plugins: ['lodash'],
       presets: ['react', 'es2015']
     }
+  },
+  {
+    test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+    loader: 'url-loader?limit=10000&mimetype=application/font-woff'
+  },
+  {
+    test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+    loader: 'file-loader'
   }
 ];
 

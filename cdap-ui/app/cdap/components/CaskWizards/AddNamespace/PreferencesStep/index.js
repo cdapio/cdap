@@ -18,7 +18,7 @@ import KeyValuePairs from 'components/KeyValuePairs';
 import AddNamespaceActions from 'services/WizardStores/AddNamespace/AddNamespaceActions';
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
 import {Provider, connect} from 'react-redux';
-require('./PreferencesStep.less');
+require('./PreferencesStep.scss');
 
 export default function PreferencesStep() {
 

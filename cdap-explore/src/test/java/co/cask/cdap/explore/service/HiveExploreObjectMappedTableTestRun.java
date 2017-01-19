@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,8 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.ExploreProperties;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
@@ -28,7 +30,6 @@ import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.Lists;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -36,7 +37,9 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
+import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Tests exploration of object mapped tables.
@@ -52,12 +55,31 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
   @BeforeClass
   public static void start() throws Exception {
     initialize(tmpFolder);
+  }
 
-    datasetFramework.addInstance(ObjectMappedTable.class.getName(), MY_TABLE, ObjectMappedTableProperties.builder()
+  private DatasetProperties setupProperties(@Nullable String dbName, @Nullable String tableName, String rowKey)
+    throws Exception {
+
+    ObjectMappedTableProperties.Builder props = ObjectMappedTableProperties.builder()
       .setType(Record.class)
-      .setRowKeyExploreName("row_key")
-      .setRowKeyExploreType(Schema.Type.STRING)
-      .build());
+      .setRowKeyExploreName(rowKey)
+      .setRowKeyExploreType(Schema.Type.STRING);
+    if (dbName != null) {
+      ExploreProperties.setExploreDatabaseName(props, dbName);
+    }
+    if (tableName != null) {
+      ExploreProperties.setExploreTableName(props, tableName);
+    }
+    return props.build();
+  }
+
+  private void setupTable(@Nullable String dbName, @Nullable String tableName) throws Exception {
+
+    if (dbName != null) {
+      runCommand(NAMESPACE_ID, "create database if not exists " + dbName, false, null, null);
+    }
+    datasetFramework.addInstance(ObjectMappedTable.class.getName(), MY_TABLE,
+                                 setupProperties(dbName, tableName, "row_key"));
 
     // Accessing dataset instance to perform data operations
     ObjectMappedTable<Record> table = datasetFramework.getDataset(MY_TABLE, DatasetDefinition.NO_ARGUMENTS, null);
@@ -78,23 +100,58 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
     transactionManager.commit(tx1);
 
     txTable.postTxCommit();
-
-    Transaction tx2 = transactionManager.startShort(100);
-    txTable.startTx(tx2);
-  }
-
-  @AfterClass
-  public static void stop() throws Exception {
-    datasetFramework.deleteInstance(MY_TABLE);
   }
 
   @Test
-  public void testSchema() throws Exception {
-    testSchema("row_key");
+  public void testCreateQueryUpdateDrop() throws Exception {
+    testCreateQueryUpdateDrop(null, null);
+    testCreateQueryUpdateDrop("dba", null);
+    testCreateQueryUpdateDrop(null, "tab");
+    testCreateQueryUpdateDrop("dbx", "taby");
   }
 
-  private void testSchema(String rowKey) throws Exception {
-    runCommand(NAMESPACE_ID, "describe " + MY_TABLE_NAME,
+  private void testCreateQueryUpdateDrop(@Nullable String dbName, @Nullable String tableName) throws Exception {
+    setupTable(dbName, tableName);
+    try {
+      if (tableName == null) {
+        tableName = MY_TABLE_NAME;
+      }
+      String tableToQuery = tableName;
+      String showTablesCommand = "show tables";
+      if (dbName != null) {
+        tableToQuery = dbName + "." + tableToQuery;
+        showTablesCommand += " in " + dbName;
+      }
+
+      // verify that the hive table was created
+      runCommand(NAMESPACE_ID, showTablesCommand, true, null,
+                 Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
+
+      testSchema(tableToQuery, "row_key");
+      testSelect(tableToQuery);
+      testSelectStar(tableToQuery, tableName);
+
+      // update the properties to use a new key
+      datasetFramework.updateInstance(MY_TABLE, setupProperties(dbName, tableName, "new_key"));
+      testSchema(tableToQuery, "new_key");
+
+      // update back to row key
+      datasetFramework.updateInstance(MY_TABLE, setupProperties(dbName, tableName, "row_key"));
+      testSchema(tableToQuery, "row_key");
+
+      // delete the instance
+      datasetFramework.deleteInstance(MY_TABLE);
+      // verify the Hive table is gone
+      runCommand(NAMESPACE_ID, showTablesCommand, false, null, Collections.<QueryResult>emptyList());
+    } finally {
+      if (dbName != null) {
+        runCommand(NAMESPACE_ID, "drop database if exists " + dbName + "cascade", false, null, null);
+      }
+    }
+  }
+
+  private void testSchema(String tableToQuery, String rowKey) throws Exception {
+    runCommand(NAMESPACE_ID, "describe " + tableToQuery,
                true,
                Lists.newArrayList(
                  new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
@@ -113,36 +170,17 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
     );
   }
 
-  @Test
-  public void testUpdate() throws Exception {
-    datasetFramework.updateInstance(MY_TABLE, ObjectMappedTableProperties.builder()
-      .setType(Record.class)
-      .setRowKeyExploreName("new_key")
-      .setRowKeyExploreType(Schema.Type.STRING)
-      .build());
-    testSchema("new_key");
-
-    // update back to previous schema as other tests depend on it
-    datasetFramework.updateInstance(MY_TABLE, ObjectMappedTableProperties.builder()
-      .setType(Record.class)
-      .setRowKeyExploreName("row_key")
-      .setRowKeyExploreType(Schema.Type.STRING)
-      .build());
-    testSchema();
-  }
-
-  @Test
-  public void testSelectStar() throws Exception {
+  public void testSelectStar(String tableToQuery, String tableInSchema) throws Exception {
     List<ColumnDesc> expectedSchema = Lists.newArrayList(
-      new ColumnDesc(MY_TABLE_NAME + ".row_key", "STRING", 1, null),
-      new ColumnDesc(MY_TABLE_NAME + ".bytearrayfield", "BINARY", 2, null),
-      new ColumnDesc(MY_TABLE_NAME + ".doublefield", "DOUBLE", 3, null),
-      new ColumnDesc(MY_TABLE_NAME + ".floatfield", "FLOAT", 4, null),
-      new ColumnDesc(MY_TABLE_NAME + ".intfield", "INT", 5, null),
-      new ColumnDesc(MY_TABLE_NAME + ".longfield", "BIGINT", 6, null),
-      new ColumnDesc(MY_TABLE_NAME + ".stringfield", "STRING", 7, null)
+      new ColumnDesc(tableInSchema + ".row_key", "STRING", 1, null),
+      new ColumnDesc(tableInSchema + ".bytearrayfield", "BINARY", 2, null),
+      new ColumnDesc(tableInSchema + ".doublefield", "DOUBLE", 3, null),
+      new ColumnDesc(tableInSchema + ".floatfield", "FLOAT", 4, null),
+      new ColumnDesc(tableInSchema + ".intfield", "INT", 5, null),
+      new ColumnDesc(tableInSchema + ".longfield", "BIGINT", 6, null),
+      new ColumnDesc(tableInSchema + ".stringfield", "STRING", 7, null)
     );
-    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + tableToQuery).get();
     // check schema
     Assert.assertEquals(expectedSchema, results.getResultSchema());
     List<Object> columns = results.next().getColumns();
@@ -168,9 +206,8 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
     Assert.assertFalse(results.hasNext());
   }
 
-  @Test
-  public void testSelect() throws Exception {
-    String command = String.format("select intfield, stringfield from %s where row_key='123'", MY_TABLE_NAME);
+  public void testSelect(String tableToQuery) throws Exception {
+    String command = String.format("select intfield, stringfield from %s where row_key='123'", tableToQuery);
     runCommand(NAMESPACE_ID, command,
                true,
                Lists.newArrayList(new ColumnDesc("intfield", "INT", 1, null),

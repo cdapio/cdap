@@ -1,0 +1,106 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.scss';
+$spotlight-search-height: 32px;
+$spotlight-bg-color: darken($cdap-darkness, 25%);
+$disabled-color: #999999;
+$border-color: #cccccc;
+
+.spotlight-search-container {
+  @media(max-width: 1260px) {
+    .form-group {
+      input.control {
+        width: 150px;
+      }
+    }
+  }
+
+  &.open {
+    margin-top: 8px;
+    margin-right: -8px;
+  }
+
+  .not-open { line-height: $spotlight-search-height; }
+  .form-group { margin-bottom: 0; }
+  .input-feedback {
+    line-height: $spotlight-search-height;
+    color: $spotlight-bg-color;
+    position: absolute;
+    margin-top: 0;
+    top: 0;
+    right: 5px;
+  }
+
+  .input-group {
+    .form-control:not(:last-child) {
+      height: $spotlight-search-height;
+      border: 0;
+      border-bottom-right-radius: 4px;
+      border-top-right-radius: 4px;
+      background-color: white;
+      color: $spotlight-bg-color;
+
+      &:focus {
+        box-shadow: none;
+      }
+    }
+  }
+
+  .search-results-dropdown.dropdown {
+    .dropdown-menu {
+      width: 200px;
+      left: -1px;
+      top: -5px;
+      border-radius: 0;
+      padding-bottom: 0;
+      padding-top: 0;
+      border-bottom-right-radius: 4px;
+      border-bottom-left-radius: 4px;
+
+      a.dropdown-item {
+        display: block;
+        color: $spotlight-bg-color;
+        line-height: 35px;
+        padding-left: 10px;
+        padding-right: 10px;
+        border-bottom: 1px solid $border-color;
+        white-space: nowrap;
+        overflow-x: hidden;
+        text-overflow: ellipsis;
+
+        &.disabled {
+          cursor: not-allowed;
+          color: $disabled-color;
+
+          &:hover { color: $disabled-color; }
+        }
+
+        &:hover:not(.disabled),
+        &.hover {
+          color: white;
+          background-color: $spotlight-bg-color;
+        }
+
+        &:last-child { border-bottom: 0; }
+        .icon {
+          margin-right: 5px;
+          vertical-align: middle;
+        }
+      }
+    }
+  }
+}

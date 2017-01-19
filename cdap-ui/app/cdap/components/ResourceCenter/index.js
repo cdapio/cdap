@@ -22,7 +22,7 @@ import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithU
 import AbstractWizard from 'components/AbstractWizard';
 import T from 'i18n-react';
 
-require('./ResourceCenter.less');
+require('./ResourceCenter.scss');
 /*
   TODO: Stream views:
   {

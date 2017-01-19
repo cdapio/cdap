@@ -21,7 +21,7 @@ import InputWithValidations from 'components/InputWithValidations';
 import T from 'i18n-react';
 
 import { connect, Provider } from 'react-redux';
-require('./GeneralInfoStep.less');
+require('./GeneralInfoStep.scss');
 const mapStateToStreamNameProps = (state) => {
   return {
     value: state.general.name,
@@ -96,16 +96,16 @@ export default function GeneralInfoStep() {
           return false;
         }}
       >
-        <FormGroup>
+        <FormGroup row>
           <Col xs="3">
             <Label className="control-label">{T.translate('commons.nameLabel')}</Label>
           </Col>
           <Col xs="7">
             <InputStreamName />
           </Col>
-          <i className="fa fa-asterisk text-danger pull-left"/>
+          <i className="fa fa-asterisk text-danger float-xs-left"/>
         </FormGroup>
-        <FormGroup>
+        <FormGroup row>
           <Col xs="3">
             <Label className="control-label">{T.translate('commons.descriptionLabel')}</Label>
           </Col>
@@ -113,7 +113,7 @@ export default function GeneralInfoStep() {
             <InputStreamDescription />
           </Col>
         </FormGroup>
-        <FormGroup>
+        <FormGroup row>
           <Col sm="3">
             <Label className="control-label">{T.translate('features.Wizard.StreamCreate.Step1.ttllabel')} </Label>
           </Col>

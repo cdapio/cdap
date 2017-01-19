@@ -23,7 +23,7 @@ import PluginArtifactUploadActions from 'services/WizardStores/PluginArtifactUpl
 import ArtifactUploadActionCreator from 'services/WizardStores/PluginArtifactUpload/ActionCreator';
 import T from 'i18n-react';
 
-require('./PluginArtifactUpload.less');
+require('./PluginArtifactUpload.scss');
 
 export default class PluginArtifactUploadWizard extends Component {
   constructor(props) {

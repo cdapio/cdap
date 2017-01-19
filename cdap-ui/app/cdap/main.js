@@ -18,10 +18,10 @@ import React, {Component, PropTypes} from 'react';
 import ReactDOM from 'react-dom';
 
 require('../ui-utils/url-generator');
-require('font-awesome-webpack!./styles/font-awesome.config.js');
-require('./styles/lib-styles.less');
-require('./styles/common.less');
-require('./styles/main.less');
+require('font-awesome-sass-loader!./styles/font-awesome.config.js');
+require('./styles/lib-styles.scss');
+require('./styles/common.scss');
+require('./styles/main.scss');
 
 import Management from 'components/Management';
 import Dashboard from 'components/Dashboard';
@@ -45,6 +45,9 @@ import SchemaEditor from 'components/SchemaEditor';
 import MyCDAPVersionApi from 'api/version.js';
 import VersionStore from 'services/VersionStore';
 import VersionActions from 'services/VersionStore/VersionActions';
+import StatusFactory from 'services/StatusFactory';
+import LoadingIndicator from 'components/LoadingIndicator';
+import StatusAlertMessage from 'components/StatusAlertMessage';
 
 class CDAP extends Component {
   constructor(props) {
@@ -82,17 +85,20 @@ class CDAP extends Component {
         }
       );
 
-      if (!VersionStore.getState().version) {
-        MyCDAPVersionApi.get().subscribe((res) => {
-          this.setState({ version : res.version });
-          VersionStore.dispatch({
-            type: VersionActions.updateVersion,
-            payload: {
-              version: res.version
-            }
-          });
+    StatusFactory.startPolling();
+
+    if (!VersionStore.getState().version) {
+      MyCDAPVersionApi.get().subscribe((res) => {
+        this.setState({ version : res.version });
+        VersionStore.dispatch({
+          type: VersionActions.updateVersion,
+          payload: {
+            version: res.version
+          }
         });
-      }
+      });
+    }
+
   }
 
   render() {
@@ -105,6 +111,8 @@ class CDAP extends Component {
           />
           <CdapHeader />
           <SplashScreen openVideo={this.openCaskVideo}/>
+          <LoadingIndicator />
+          <StatusAlertMessage />
           <div className="container-fluid">
             <Match exactly pattern="/" component={RouteToNamespace} />
             <Match exactly pattern="/notfound" component={Missed} />

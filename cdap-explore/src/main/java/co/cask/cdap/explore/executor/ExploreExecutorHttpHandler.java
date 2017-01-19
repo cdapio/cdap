@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,11 +28,14 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.AuditDetail;
+import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.explore.client.DisableExploreParameters;
 import co.cask.cdap.explore.client.EnableExploreParameters;
 import co.cask.cdap.explore.client.UpdateExploreParameters;
 import co.cask.cdap.explore.service.ExploreException;
@@ -100,6 +103,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("streams/{stream}/tables/{table}/enable")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void enableStream(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespace,
                            @PathParam("stream") String streamName,
@@ -176,22 +180,31 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void enableDataset(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName) {
     DatasetId datasetId = new DatasetId(namespace, datasetName);
-    DatasetSpecification datasetSpec;
-    try {
-      datasetSpec = datasetFramework.getDatasetSpec(datasetId);
-      if (datasetSpec == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetId);
-        return;
-      }
-    } catch (DatasetManagementException e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error getting spec for dataset " + datasetId);
-      return;
+    DatasetSpecification datasetSpec = retrieveDatasetSpec(responder, datasetId);
+    if (datasetSpec == null) {
+      return; // this means the spec could not be retrieved and retrievedDatasetSpec() already responded
     }
     enableDataset(responder, datasetId, datasetSpec);
   }
 
+  private DatasetSpecification retrieveDatasetSpec(HttpResponder responder, DatasetId datasetId) {
+    DatasetSpecification datasetSpec;
+    try {
+      datasetSpec = datasetFramework.getDatasetSpec(datasetId);
+      if (datasetSpec == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Dataset %s not found.", datasetId));
+        return null;
+      }
+      return datasetSpec;
+    } catch (DatasetManagementException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error getting spec for dataset " + datasetId);
+      return null;
+    }
+  }
+
   private void enableDataset(HttpResponder responder, final DatasetId datasetId,
                              final DatasetSpecification datasetSpec) {
+    LOG.debug("Enabling explore for dataset instance {}", datasetId);
     try {
       QueryHandle handle = impersonator.doAs(datasetId.getParent(), new Callable<QueryHandle>() {
         @Override
@@ -223,6 +236,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    */
   @POST
   @Path("datasets/{dataset}/update")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void updateDataset(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName)
     throws BadRequestException {
@@ -272,6 +286,15 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
+  private static DisableExploreParameters readDisableParameters(HttpRequest request)
+    throws BadRequestException, IOException {
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+      return GSON.fromJson(reader, DisableExploreParameters.class);
+    } catch (JsonSyntaxException | NullPointerException e) {
+      throw new BadRequestException("Cannot read dataset specification from request: " + e.getMessage(), e);
+    }
+  }
+
   private static UpdateExploreParameters readUpdateParameters(HttpRequest request)
     throws BadRequestException, IOException {
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
@@ -289,13 +312,32 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void disableDataset(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName) {
 
-    LOG.debug("Disabling explore for dataset instance {}", datasetName);
     final DatasetId datasetId = new DatasetId(namespace, datasetName);
+    DatasetSpecification datasetSpec = retrieveDatasetSpec(responder, datasetId);
+    if (datasetSpec == null) {
+      return; // this means the spec could not be retrieved and retrievedDatasetSpec() already responded
+    }
+    disableDataset(responder, datasetId, datasetSpec);
+  }
+
+  /**
+   * Disable ad-hoc exploration of a dataset instance.
+   */
+  @POST
+  @Path("datasets/{dataset}/disable-internal")
+  public void disableInternal(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName)
+    throws BadRequestException, IOException {
+
+    disableDataset(responder, new DatasetId(namespace, datasetName), readDisableParameters(request).getSpec());
+  }
+
+  private void disableDataset(HttpResponder responder, final DatasetId datasetId, final DatasetSpecification spec) {
     try {
       QueryHandle handle = impersonator.doAs(datasetId.getParent(), new Callable<QueryHandle>() {
         @Override
         public QueryHandle call() throws Exception {
-          return exploreTableManager.disableDataset(datasetId);
+          return exploreTableManager.disableDataset(datasetId, spec);
         }
       });
       JsonObject json = new JsonObject();
@@ -374,7 +416,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      QueryHandle handle = exploreTableManager.addPartition(datasetId, partitionKey, fsPath);
+      QueryHandle handle = exploreTableManager.addPartition(datasetId, properties, partitionKey, fsPath);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -446,7 +488,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      QueryHandle handle = exploreTableManager.dropPartition(datasetId, partitionKey);
+      QueryHandle handle = exploreTableManager.dropPartition(datasetId, properties, partitionKey);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);

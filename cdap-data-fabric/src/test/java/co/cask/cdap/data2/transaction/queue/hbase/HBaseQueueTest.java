@@ -57,7 +57,6 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
-import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -659,7 +658,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     try (HTable hTable = tableUtil.createHTable(hConf, hTableId)) {
       HTableDescriptor htd = hTable.getTableDescriptor();
       final TableName configTableName = htd.getTableName();
-      HTableNameConverter nameConverter = new HTableNameConverterFactory().get();
+      HTableNameConverter nameConverter = new HTableNameConverter();
       String prefix = htd.getValue(Constants.Dataset.TABLE_PREFIX);
       CConfigurationReader cConfReader = new CConfigurationReader(hConf, nameConverter.getSysConfigTablePrefix(prefix));
       return ConsumerConfigCache.getInstance(configTableName,

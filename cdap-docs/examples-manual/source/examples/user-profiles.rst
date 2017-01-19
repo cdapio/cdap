@@ -38,7 +38,7 @@ of the application are tied together by a class ``UserProfiles``:
 
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
     :language: java
-    :lines: 33-
+    :lines: 34-
     
 This application uses a Table with conflict detection either at the row level or
 at the column level.
@@ -105,11 +105,11 @@ and build this example twice:
 
    .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
          :language: java
-         :lines: 56-58
+         :lines: 57-64
          :dedent: 4
 
    - The first time you build the application, set the ``Table.PROPERTY_CONFLICT_LEVEL`` to
-     ``ConflictDetection.ROW.name()``. 
+     ``ConflictDetection.ROW``.
  
    - Build the example (as described :ref:`Building an Example Application <cdap-building-running-example>`).
    - Start CDAP, deploy and start the application and its component.
@@ -123,7 +123,7 @@ and build this example twice:
    - :ref:`Delete the existing dataset <user-profiles-delete-dataset>` ``profiles``,
      either through the CDAP Command Line Interface or by making a ``curl`` call.
    - Now, rebuild the application, setting the ``Table.PROPERTY_CONFLICT_LEVEL`` back to its
-     original value, ``ConflictDetection.COLUMN.name()``.
+     original value, ``ConflictDetection.COLUMN``.
    - Re-deploy and re-run the application. You should not see any errors in the log.    
 
 .. Starting the Flow

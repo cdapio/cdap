@@ -17,6 +17,8 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.AuditDetail;
+import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
@@ -114,6 +116,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/transactions/invalid/remove/until")
   @POST
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void truncateInvalidTxBefore(HttpRequest request,
                                       HttpResponder responder) throws InvalidTruncateTimeException {
     Map<String, Long> body;
@@ -136,6 +139,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/transactions/invalid/remove/ids")
   @POST
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void truncateInvalidTx(HttpRequest request, HttpResponder responder) {
     Map<String, Set<Long>> body;
     try {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -134,26 +134,44 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
   }
 
   @Test
-  public void testCreateAddDrop() throws Exception {
-    final DatasetId datasetInstanceId = NAMESPACE_ID.dataset("files");
-    final String tableName = getDatasetHiveName(datasetInstanceId);
+  public void testCreateAddAlterDrop() throws Exception {
+    testCreateAddAlterDrop(null, null);
+    testCreateAddAlterDrop(null, "tb1");
+    testCreateAddAlterDrop("db1", "tb1");
+  }
 
-    // create a time partitioned file set
-    datasetFramework.addInstance("fileSet", datasetInstanceId, FileSetProperties.builder()
+  private void testCreateAddAlterDrop(@Nullable String dbName, @Nullable String tableName) throws Exception {
+    DatasetId datasetInstanceId = NAMESPACE_ID.dataset("files");
+    String hiveTableName = getDatasetHiveName(datasetInstanceId);
+    String showTablesCommand = "show tables";
+
+    FileSetProperties.Builder props = FileSetProperties.builder()
       // properties for file set
       .setBasePath("myPath")
-        // properties for partitioned hive table
+      // properties for partitioned hive table
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
       .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-      .setTableProperty("avro.schema.literal", SCHEMA.toString())
-      .build());
+      .setTableProperty("avro.schema.literal", SCHEMA.toString());
+    if (tableName != null) {
+      props.setExploreTableName(tableName);
+      hiveTableName = tableName;
+    }
+    String queryTableName = hiveTableName;
+    if (dbName != null) {
+      props.setExploreDatabaseName(dbName);
+      runCommand(NAMESPACE_ID, "create database " + dbName, false, null, null);
+      showTablesCommand += " in " + dbName;
+      queryTableName = dbName + "." + queryTableName;
+    }
+
+    // create a time partitioned file set
+    datasetFramework.addInstance("fileSet", datasetInstanceId, props.build());
 
     // verify that the hive table was created for this file set
-    runCommand(NAMESPACE_ID, "show tables", true,
-               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
+    runCommand(NAMESPACE_ID, showTablesCommand, true, null,
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(hiveTableName))));
 
     // Accessing dataset instance to perform data operations
     FileSet fileSet = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
@@ -163,10 +181,10 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     FileWriterHelper.generateAvroFile(fileSet.getLocation("file1").getOutputStream(), "a", 0, 3);
 
     // verify that we can query the key-values in the file with Hive
-    runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName, true,
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + queryTableName, true,
                Lists.newArrayList(
-                 new ColumnDesc(tableName + ".key", "STRING", 1, null),
-                 new ColumnDesc(tableName + ".value", "STRING", 2, null)),
+                 new ColumnDesc(hiveTableName + ".key", "STRING", 1, null),
+                 new ColumnDesc(hiveTableName + ".value", "STRING", 2, null)),
                Lists.newArrayList(
                  new QueryResult(Lists.<Object>newArrayList("a0", "#0")),
                  new QueryResult(Lists.<Object>newArrayList("a1", "#1")),
@@ -176,44 +194,95 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     FileWriterHelper.generateAvroFile(fileSet.getLocation("file2").getOutputStream(), "b", 3, 5);
 
     // verify that we can query the key-values in the file with Hive
-    runCommand(NAMESPACE_ID, "SELECT count(*) AS count FROM " + tableName, true,
+    runCommand(NAMESPACE_ID, "SELECT count(*) AS count FROM " + queryTableName, true,
                Lists.newArrayList(new ColumnDesc("count", "BIGINT", 1, null)),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(5L))));
+
+    // disable explore by updating the props
+    datasetFramework.updateInstance(datasetInstanceId, props.setEnableExploreOnCreate(false).build());
+
+    // verify the Hive table is gone
+    runCommand(NAMESPACE_ID, showTablesCommand, false, null, Collections.<QueryResult>emptyList());
+
+    // re-enable explore by updating the props
+    datasetFramework.updateInstance(datasetInstanceId, props.setEnableExploreOnCreate(true).build());
+
+    // verify that we can query again
+    runCommand(NAMESPACE_ID, "SELECT count(*) AS count FROM " + queryTableName, true,
+               Lists.newArrayList(new ColumnDesc("count", "BIGINT", 1, null)),
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(5L))));
+
+    // change the explore schema by updating the props
+    datasetFramework.updateInstance(datasetInstanceId,
+                                    props.setTableProperty("avro.schema.literal", K_SCHEMA.toString()).build());
+
+    // verify that we can query the key-values in the file with Hive
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + queryTableName, true,
+               Lists.newArrayList(
+                 new ColumnDesc(hiveTableName + ".key", "STRING", 1, null)),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("a0")),
+                 new QueryResult(Lists.<Object>newArrayList("a1")),
+                 new QueryResult(Lists.<Object>newArrayList("a2")),
+                 new QueryResult(Lists.<Object>newArrayList("b3")),
+                 new QueryResult(Lists.<Object>newArrayList("b4"))));
 
     // drop the dataset
     datasetFramework.deleteInstance(datasetInstanceId);
 
     // verify the Hive table is gone
-    runCommand(NAMESPACE_ID, "show tables", false,
-               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-               Collections.<QueryResult>emptyList());
+    runCommand(NAMESPACE_ID, showTablesCommand, false, null, Collections.<QueryResult>emptyList());
+
+    // drop the database if needed
+    if (dbName != null) {
+      runCommand(NAMESPACE_ID, "drop database " + dbName, false, null, null);
+    }
   }
 
   @Test
   public void testPartitionedFileSet() throws Exception {
-    final DatasetId datasetInstanceId = NAMESPACE_ID.dataset("parted");
-    final String tableName = getDatasetHiveName(datasetInstanceId);
+    testPartitionedFileSet(null, null);
+    testPartitionedFileSet(null, "tb1");
+    testPartitionedFileSet("db1", "tb1");
+  }
 
-    // create a time partitioned file set
-    datasetFramework.addInstance("partitionedFileSet", datasetInstanceId, PartitionedFileSetProperties.builder()
+  private void testPartitionedFileSet(@Nullable String dbName, @Nullable String tableName) throws Exception {
+    DatasetId datasetInstanceId = NAMESPACE_ID.dataset("parted");
+    String hiveTableName = getDatasetHiveName(datasetInstanceId);
+    String showTablesCommand = "show tables";
+
+    FileSetProperties.Builder props = PartitionedFileSetProperties.builder()
       .setPartitioning(Partitioning.builder()
                          .addStringField("str")
                          .addIntField("num")
                          .build())
-        // properties for file set
+      // properties for file set
       .setBasePath("parted")
-        // properties for partitioned hive table
+      // properties for partitioned hive table
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
       .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-      .setTableProperty("avro.schema.literal", SCHEMA.toString())
-      .build());
+      .setTableProperty("avro.schema.literal", SCHEMA.toString());
+
+    if (tableName != null) {
+      props.setExploreTableName(tableName);
+      hiveTableName = tableName;
+    }
+    String queryTableName = hiveTableName;
+    if (dbName != null) {
+      props.setExploreDatabaseName(dbName);
+      runCommand(NAMESPACE_ID, "create database " + dbName, false, null, null);
+      showTablesCommand += " in " + dbName;
+      queryTableName = dbName + "." + queryTableName;
+    }
+
+    // create a time partitioned file set
+    datasetFramework.addInstance("partitionedFileSet", datasetInstanceId, props.build());
 
     // verify that the hive table was created for this file set
-    runCommand(NAMESPACE_ID, "show tables", true,
-               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
+    runCommand(NAMESPACE_ID, showTablesCommand, true, null,
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(hiveTableName))));
 
     // Accessing dataset instance to perform data operations
     final PartitionedFileSet partitioned = datasetFramework
@@ -243,25 +312,25 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     addPartition(partitioned, keyY2, "fileY2");
 
     // verify that the partitions were added to Hive
-    validatePartitions(tableName, partitioned, ImmutableList.of(keyX1, keyX2, keyY1, keyY2));
+    validatePartitions(queryTableName, partitioned, ImmutableList.of(keyX1, keyX2, keyY1, keyY2));
 
     // verify that count() and where... work in Hive
-    runCommand(NAMESPACE_ID, "SELECT count(*) AS count FROM " + tableName, true,
+    runCommand(NAMESPACE_ID, "SELECT count(*) AS count FROM " + queryTableName, true,
                Lists.newArrayList(new ColumnDesc("count", "BIGINT", 1, null)),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(4L))));
-    runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName + " WHERE num = 2 ORDER BY key, value", true,
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + queryTableName + " WHERE num = 2 ORDER BY key, value", true,
                Lists.newArrayList(
-                 new ColumnDesc(tableName + ".key", "STRING", 1, null),
-                 new ColumnDesc(tableName + ".value", "STRING", 2, null),
-                 new ColumnDesc(tableName + ".str", "STRING", 3, null),
-                 new ColumnDesc(tableName + ".num", "INT", 4, null)),
+                 new ColumnDesc(hiveTableName + ".key", "STRING", 1, null),
+                 new ColumnDesc(hiveTableName + ".value", "STRING", 2, null),
+                 new ColumnDesc(hiveTableName + ".str", "STRING", 3, null),
+                 new ColumnDesc(hiveTableName + ".num", "INT", 4, null)),
                Lists.newArrayList(
                  new QueryResult(Lists.<Object>newArrayList("x2", "#2", "x", 2)),
                  new QueryResult(Lists.<Object>newArrayList("y2", "#2", "y", 2))));
 
     // drop a partition and query again
     dropPartition(partitioned, keyX2);
-    validatePartitions(tableName, partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
+    validatePartitions(queryTableName, partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
 
     // attempt a transaction that drops one partition, adds another, and then fails
     try {
@@ -277,7 +346,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
       // expected
     }
     // validate that both the drop and addPartition were undone
-    validatePartitions(tableName, partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
+    validatePartitions(queryTableName, partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
 
     // attempt a transaction that attempts to add an existing partition, hence fails
     try {
@@ -293,25 +362,43 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
       Assert.assertTrue(e.getCause() instanceof DataSetException);
     }
     // validate that both the drop and addPartition were undone
-    validatePartitions(tableName, partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
+    validatePartitions(queryTableName, partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
 
     // drop a partition directly from hive
-    runCommand(NAMESPACE_ID, "ALTER TABLE " + tableName + " DROP PARTITION (str='y', num=2)", false, null, null);
+    runCommand(NAMESPACE_ID, "ALTER TABLE " + queryTableName + " DROP PARTITION (str='y', num=2)", false, null, null);
     // verify that one more value is gone now, namely y2, in Hive, but the PFS still has it
-    validatePartitionsInHive(tableName, ImmutableSet.of(keyX1, keyY1));
+    validatePartitionsInHive(queryTableName, ImmutableSet.of(keyX1, keyY1));
     validatePartitionsInPFS(partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
 
     // make sure the partition can still be dropped from the PFS dataset
     dropPartition(partitioned, keyY2);
-    validatePartitions(tableName, partitioned, ImmutableSet.of(keyX1, keyY1));
+    validatePartitions(queryTableName, partitioned, ImmutableSet.of(keyX1, keyY1));
+
+    // change the explore schema by updating the props
+    datasetFramework.updateInstance(datasetInstanceId,
+                                    props.setTableProperty("avro.schema.literal", K_SCHEMA.toString()).build());
+
+    // valudate the schema was updated
+    validatePartitions(queryTableName, partitioned, ImmutableSet.of(keyX1, keyY1), true);
+
+    // disable explore by updating the props
+    datasetFramework.updateInstance(datasetInstanceId, props.setEnableExploreOnCreate(false).build());
+
+    // verify the Hive table is gone
+    runCommand(NAMESPACE_ID, showTablesCommand, false, null, Collections.<QueryResult>emptyList());
+
+    // re-enable explore by updating the props
+    datasetFramework.updateInstance(datasetInstanceId, props.setEnableExploreOnCreate(true).build());
+
+    // verify the Hive table is back
+    runCommand(NAMESPACE_ID, showTablesCommand, true, null,
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(hiveTableName))));
 
     // drop the dataset
     datasetFramework.deleteInstance(datasetInstanceId);
 
     // verify the Hive table is gone
-    runCommand(NAMESPACE_ID, "show tables", false,
-               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-               Collections.<QueryResult>emptyList());
+    runCommand(NAMESPACE_ID, "show tables", false, null, Collections.<QueryResult>emptyList());
   }
 
   @Test
@@ -762,6 +849,13 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
   private void validatePartitionsInHive(String tableName,
                                         final Collection<PartitionKey> expected)
     throws Exception {
+    validatePartitionsInHive(tableName, expected, false);
+  }
+
+  private void validatePartitionsInHive(String tableName,
+                                        final Collection<PartitionKey> expected,
+                                        boolean keyOnly)
+    throws Exception {
 
     // validate the partitions
     runCommand(NAMESPACE_ID, "show partitions " + tableName, true,
@@ -769,20 +863,31 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                partitionKeys2PartitionResults(expected));
 
     // and validate the contents of the partitions
-    runCommand(NAMESPACE_ID, "SELECT key, value FROM " + tableName + " ORDER BY key, value", true,
-               Lists.newArrayList(
-                 new ColumnDesc("key", "STRING", 1, null),
-                 new ColumnDesc("value", "STRING", 2, null)),
-               partitionKeys2QueryResults(expected));
+    runCommand(NAMESPACE_ID, "SELECT key" + (keyOnly ? "" : ",value") + " FROM " + tableName
+      + " ORDER BY key" + (keyOnly ? "" : ",value"),
+               true,
+               keyOnly
+                 ? Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null))
+                 : Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
+                                      new ColumnDesc("value", "STRING", 2, null)),
+               partitionKeys2QueryResults(expected, keyOnly));
   }
 
   private void validatePartitions(String tableName,
                                   final PartitionedFileSet partitioned,
                                   final Collection<PartitionKey> expected) throws Exception {
+    validatePartitions(tableName, partitioned, expected, false);
+  }
+
+  private void validatePartitions(String tableName,
+                                  final PartitionedFileSet partitioned,
+                                  final Collection<PartitionKey> expected,
+                                  final boolean keyOnly) throws Exception {
+
     // first validate partitions in the pfs
     validatePartitionsInPFS(partitioned, expected);
     // now validate the partitions in Hive
-    validatePartitionsInHive(tableName, expected);
+    validatePartitionsInHive(tableName, expected, keyOnly);
   }
 
   private List<QueryResult> partitionKeys2PartitionResults(Collection<PartitionKey> keys) {
@@ -794,11 +899,16 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     return res;
   }
 
-  private List<QueryResult> partitionKeys2QueryResults(Collection<PartitionKey> keys) {
+  private List<QueryResult> partitionKeys2QueryResults(Collection<PartitionKey> keys, boolean keyOnly) {
     List<QueryResult> res = new ArrayList<>(keys.size());
     for (PartitionKey key : keys) {
-      res.add(new QueryResult(Lists.<Object>newArrayList(
-        String.format("%s%s", key.getField("str"), key.getField("num")), "#" + key.getField("num"))));
+      if (keyOnly) {
+        res.add(new QueryResult(Lists.<Object>newArrayList(
+          String.format("%s%s", key.getField("str"), key.getField("num")))));
+      } else {
+        res.add(new QueryResult(Lists.<Object>newArrayList(
+          String.format("%s%s", key.getField("str"), key.getField("num")), "#" + key.getField("num"))));
+      }
     }
     return res;
   }

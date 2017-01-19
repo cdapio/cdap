@@ -400,6 +400,14 @@ public class MetadataStoreTest {
       ImmutableList.<MetadataSearchResultRecord>of(),
       ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
+
+    // ensure overflow bug is squashed (JIRA: CDAP-8133)
+    response = search(ns.getNamespace(), "tag*", 1, Integer.MAX_VALUE, 0);
+    Assert.assertEquals(3, response.getTotal());
+    Assert.assertEquals(
+      ImmutableList.of(streamSearchResult, flowSearchResult),
+      ImmutableList.copyOf(stripMetadata(response.getResults()))
+    );
   }
 
   @AfterClass

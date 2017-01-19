@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -91,7 +91,21 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doDisableExploreDataset(datasetInstance);
+        return doDisableExploreDataset(datasetInstance, null);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
+  public ListenableFuture<Void> disableExploreDataset(final DatasetId datasetInstance,
+                                                      final DatasetSpecification spec) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doDisableExploreDataset(datasetInstance, spec);
       }
     });
 
@@ -170,11 +184,12 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
   @Override
   public ListenableFuture<Void> addPartition(final DatasetId datasetInstance,
+                                             final DatasetSpecification spec,
                                              final PartitionKey key, final String path) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doAddPartition(datasetInstance, key, path);
+        return doAddPartition(datasetInstance, spec, key, path);
       }
     });
 
@@ -183,11 +198,13 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> dropPartition(final DatasetId datasetInstance, final PartitionKey key) {
+  public ListenableFuture<Void> dropPartition(final DatasetId datasetInstance,
+                                              final DatasetSpecification spec,
+                                              final PartitionKey key) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doDropPartition(datasetInstance, key);
+        return doDropPartition(datasetInstance, spec, key);
       }
     });
 

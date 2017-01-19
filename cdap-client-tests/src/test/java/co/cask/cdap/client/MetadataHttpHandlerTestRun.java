@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.app.AllProgramsApp;
 import co.cask.cdap.client.util.RESTClient;
@@ -695,7 +696,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     );
 
     //Update properties, and make sure that system metadata gets updated (except create time)
-    datasetClient.update(datasetInstance, ImmutableMap.of(Table.PROPERTY_TTL, "100000"));
+    datasetClient.update(datasetInstance, TableProperties.builder().setTTL(100000L).build().getProperties());
     dsSystemProperties = getProperties(datasetInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(
       ImmutableMap.of(

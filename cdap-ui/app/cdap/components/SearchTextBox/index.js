@@ -16,7 +16,7 @@
 
 import React, {PropTypes} from 'react';
 var classnames = require('classnames');
-require('./SearchTextBox.less');
+require('./SearchTextBox.scss');
 
 export default function SearchTextBox({value, defaultValue, onChange, className, placeholder}) {
   return (

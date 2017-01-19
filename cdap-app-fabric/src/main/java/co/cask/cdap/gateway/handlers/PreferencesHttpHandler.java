@@ -18,6 +18,8 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.AuditDetail;
+import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.ProgramType;
@@ -72,6 +74,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/preferences")
   @PUT
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void setInstancePrefs(HttpRequest request, HttpResponder responder) throws Exception {
     try {
       Map<String, String> propMap = decodeArguments(request);
@@ -102,6 +105,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/namespaces/{namespace-id}/preferences")
   @PUT
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void setNamespacePrefs(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespace) throws Exception {
     if (nsStore.get(new NamespaceId(namespace)) == null) {
@@ -151,6 +155,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/namespaces/{namespace-id}/apps/{application-id}/preferences")
   @PUT
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void putAppPrefs(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
     throws Exception {
@@ -204,6 +209,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}/preferences")
   @PUT
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void putProgramPrefs(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
                               @PathParam("program-type") String programType, @PathParam("program-id") String programId)

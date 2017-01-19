@@ -1,0 +1,173 @@
+/*
+* Copyright © 2016 Cask Data, Inc.
+*
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License.
+*/
+
+@import "../../styles/variables.scss";
+$namespace-action-bg: #e7e7e7;
+$namespace-dropdown-color: #333333;
+$namespace-hover-bg: #262933;
+
+.namespace-dropdown {
+  width: 160px;
+  border-left: 1px solid #666666;
+  padding: 0;
+  font-size: 14px;
+  user-select: none;
+  display: inline-block;
+  line-height: 50px;
+
+  .dropdown {
+    &.open {
+      .current-namespace {
+        background-color: $namespace-hover-bg;
+      }
+    }
+  }
+  div[disabled] { cursor: not-allowed; }
+
+  .dropdown-toggle { height: 50px; }
+
+  .fa.fa-angle-down {
+    line-height: 50px;
+    font-size: 17px;
+  }
+
+  .namespace-display {
+    display: inline-block;
+    width: 87%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .no-namespace {
+    .dropdown-menu {
+      width: 160px;
+      left: 0;
+    }
+  }
+  .current-namespace {
+    padding-left: 10px;
+    height: 50px;
+    cursor: pointer;
+    &:hover {
+      background-color: $namespace-hover-bg;
+    }
+    span {
+      padding-right: 10px;
+    }
+    .namespace-text {
+      width: 120px;
+      height: 50px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      display: inline-block;
+    }
+  }
+  .dropdown-menu {
+    position: absolute;
+    width: 220px;
+    left: -61px;
+    border-bottom-left-radius: 3px;
+    outline: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 3px;
+    border: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
+    margin: 0;
+    color: $namespace-dropdown-color;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+
+    .namespace-list {
+      padding: 0;
+      max-height: 200px;
+      overflow: auto;
+      .modal-backdrop {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1040;
+        background-color: #000000;
+        opacity: 0.5;
+      }
+      a.namespace-link {
+        color: $namespace-dropdown-color;
+        text-decoration: inherit;
+        cursor: auto;
+        padding-right: 0;
+        border-bottom: 1px solid $namespace-action-bg;
+        display: block;
+        font-size: 13px;
+      }
+    }
+    div {
+      padding: 0 10px;
+      line-height: 39px;
+      &.namespace-action {
+        padding: 0 10px;
+        color: #666666;
+        background: $namespace-action-bg;
+        cursor: pointer;
+        &:hover {
+          background-color: #d8d8d8;
+          color: #333333;
+        }
+      }
+
+      &.namespace-container {
+        color: #333333;
+        .namespace-name {
+          width: calc(100% - 15px);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .default-ns-section {
+          position: relative;
+          .default-btn {
+            display: none;
+            position: absolute;
+            right: 0;
+
+            .btn.btn-secondary {
+              background: #464a57;
+              border: 0;
+              color: white;
+              font-size: 11px;
+              border-radius: 4px;
+            }
+
+            .small-button {
+              // Bootstrap 4 does not have btn-xs anymore
+              padding: 1px 5px;
+              line-height: 1.5;
+            }
+          }
+        }
+      }
+    }
+    div.namespace-container:hover {
+      background-color: $namespace-hover-bg;
+      color: white;
+      .default-btn {
+        display: inline-block;
+      }
+    }
+  }
+}

@@ -80,6 +80,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-explore</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>co.cask.http</groupId>
       <artifactId>netty-http</artifactId>
     </dependency>

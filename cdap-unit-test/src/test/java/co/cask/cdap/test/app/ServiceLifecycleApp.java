@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,10 +21,9 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpContentProducer;
@@ -62,9 +61,9 @@ public class ServiceLifecycleApp extends AbstractApplication {
     addService("test", new TestHandler());
 
     createDataset(HANDLER_TABLE_NAME, KeyValueTable.class,
-                  DatasetProperties.builder()
-                    .add(Table.PROPERTY_READLESS_INCREMENT, "true")
-                    .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.NONE.name())
+                  TableProperties.builder()
+                    .setReadlessIncrementSupport(true)
+                    .setConflictDetection(ConflictDetection.NONE)
                     .build());
   }
 

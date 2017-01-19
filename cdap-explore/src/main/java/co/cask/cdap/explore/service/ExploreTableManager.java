@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.ExploreProperties;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
@@ -135,7 +136,7 @@ public class ExploreTableManager {
       Constants.Explore.STREAM_NAMESPACE, streamId.getNamespace(),
       Constants.Explore.FORMAT_SPEC, GSON.toJson(formatSpec));
 
-    String createStatement = new CreateStatementBuilder(streamName, tableName, shouldEscapeColumns)
+    String createStatement = new CreateStatementBuilder(streamName, null, tableName, shouldEscapeColumns)
       .setSchema(schema)
       .setTableComment("CDAP Stream")
       .buildWithStorageHandler(StreamStorageHandler.class.getName(), serdeProperties);
@@ -156,7 +157,7 @@ public class ExploreTableManager {
    */
   public QueryHandle disableStream(String tableName, StreamId streamId) throws ExploreException, SQLException {
     LOG.debug("Disabling explore for stream {} with table {}", streamId, tableName);
-    String deleteStatement = generateDeleteTableStatement(tableName);
+    String deleteStatement = generateDeleteTableStatement(null, tableName);
     return exploreService.execute(streamId.getParent(), deleteStatement);
   }
 
@@ -178,23 +179,28 @@ public class ExploreTableManager {
     throws IllegalArgumentException, ExploreException, SQLException,
     UnsupportedTypeException, DatasetNotFoundException, ClassNotFoundException {
 
-    Dataset dataset = null;
-    String createStatement;
-    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      dataset = datasetInstantiator.getDataset(datasetId);
-      createStatement = generateCreateStatement(dataset, spec, datasetId, tableNaming.getTableName(datasetId));
-    } catch (IOException e) {
-      LOG.error("Exception instantiating dataset {}.", datasetId, e);
-      throw new ExploreException("Exception while trying to instantiate dataset " + datasetId);
-    } finally {
-      Closeables.closeQuietly(dataset);
-    }
-
+    String createStatement = generateEnableStatement(datasetId, spec);
     if (createStatement != null) {
       return exploreService.execute(datasetId.getParent(), createStatement);
     } else {
       // if the dataset is not explorable, this is a no op.
       return QueryHandle.NO_OP;
+    }
+  }
+
+  private String generateEnableStatement(DatasetId datasetId, DatasetSpecification spec)
+    throws UnsupportedTypeException, ExploreException {
+
+    Dataset dataset = null;
+    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
+      dataset = datasetInstantiator.getDataset(datasetId);
+      return generateEnableStatement(dataset, spec, datasetId,
+                                     tableNaming.getTableName(datasetId, spec.getProperties()));
+    } catch (IOException e) {
+      LOG.error("Exception instantiating dataset {}.", datasetId, e);
+      throw new ExploreException("Exception while trying to instantiate dataset " + datasetId);
+    } finally {
+      Closeables.closeQuietly(dataset);
     }
   }
 
@@ -217,28 +223,44 @@ public class ExploreTableManager {
     throws IllegalArgumentException, ExploreException, SQLException,
     UnsupportedTypeException, DatasetNotFoundException, ClassNotFoundException {
 
-    String tableName = tableNaming.getTableName(datasetId);
-    // If table does not exist, nothing to be done
+    String tableName = tableNaming.getTableName(datasetId, spec.getProperties());
+    String databaseName = ExploreProperties.getExploreDatabaseName(spec.getProperties());
+
+    String oldTableName = tableNaming.getTableName(datasetId, oldSpec.getProperties());
+    String oldDatabaseName = ExploreProperties.getExploreDatabaseName(oldSpec.getProperties());
+
     try {
-      exploreService.getTableInfo(datasetId.getNamespace(), tableName);
+      exploreService.getTableInfo(datasetId.getNamespace(), oldDatabaseName, oldTableName);
     } catch (TableNotFoundException e) {
       // the dataset was not enabled for explore before;
       // but the new spec may be explorable, so attempt to enable it
       return enableDataset(datasetId, spec);
     }
 
-    Dataset dataset = null;
     List<String> alterStatements;
-    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      dataset = datasetInstantiator.getDataset(datasetId);
-      alterStatements = generateAlterStatements(datasetId, tableName, dataset, spec, oldSpec);
-    } catch (IOException e) {
-      LOG.error("Exception instantiating dataset {}.", datasetId, e);
-      throw new ExploreException("Exception while trying to instantiate dataset " + datasetId);
-    } finally {
-      Closeables.closeQuietly(dataset);
+    if (!(oldTableName.equals(tableName) && Objects.equals(oldDatabaseName, databaseName))) {
+      alterStatements = new ArrayList<>();
+      // database/table name changed. All we can do is disable the old table and enable the new one
+      String disableStatement = generateDisableStatement(datasetId, oldSpec);
+      if (disableStatement != null) {
+        alterStatements.add(disableStatement);
+      }
+      String enableStatement = generateEnableStatement(datasetId, spec);
+      if (enableStatement != null) {
+        alterStatements.add(enableStatement);
+      }
+    } else {
+      Dataset dataset = null;
+      try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
+        dataset = datasetInstantiator.getDataset(datasetId);
+        alterStatements = generateAlterStatements(datasetId, tableName, dataset, spec, oldSpec);
+      } catch (IOException e) {
+        LOG.error("Exception instantiating dataset {}.", datasetId, e);
+        throw new ExploreException("Exception while trying to instantiate dataset " + datasetId);
+      } finally {
+        Closeables.closeQuietly(dataset);
+      }
     }
-
     LOG.trace("alter statements for update: {}", alterStatements);
     if (alterStatements == null || alterStatements.isEmpty()) {
       return QueryHandle.NO_OP;
@@ -259,31 +281,11 @@ public class ExploreTableManager {
    * @throws DatasetNotFoundException if the dataset had to be instantiated, but could not be found
    * @throws ClassNotFoundException if the was a missing class when instantiating the dataset
    */
-  public QueryHandle disableDataset(DatasetId datasetId)
+  public QueryHandle disableDataset(DatasetId datasetId, DatasetSpecification spec)
     throws ExploreException, SQLException, DatasetNotFoundException, ClassNotFoundException {
+
     LOG.debug("Disabling explore for dataset instance {}", datasetId);
-
-    String tableName = tableNaming.getTableName(datasetId);
-    // If table does not exist, nothing to be done
-    try {
-      exploreService.getTableInfo(datasetId.getNamespace(), tableName);
-    } catch (TableNotFoundException e) {
-      // Ignore exception, since this means table was not found.
-      return QueryHandle.NO_OP;
-    }
-
-    Dataset dataset = null;
-    String deleteStatement;
-    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      dataset = datasetInstantiator.getDataset(datasetId);
-      deleteStatement = generateDeleteStatement(dataset, tableName);
-    } catch (IOException e) {
-      LOG.error("Exception creating dataset classLoaderProvider for dataset {}.", datasetId, e);
-      throw new ExploreException("Exception instantiating dataset " + datasetId);
-    } finally {
-      Closeables.closeQuietly(dataset);
-    }
-
+    String deleteStatement = generateDisableStatement(datasetId, spec);
     if (deleteStatement != null) {
       LOG.debug("Running delete statement for dataset {} - {}", datasetId, deleteStatement);
       return exploreService.execute(datasetId.getParent(), deleteStatement);
@@ -292,21 +294,57 @@ public class ExploreTableManager {
     }
   }
 
+  private String generateDisableStatement(DatasetId datasetId, DatasetSpecification spec) throws ExploreException {
+
+    String tableName = tableNaming.getTableName(datasetId, spec.getProperties());
+    String databaseName = ExploreProperties.getExploreDatabaseName(spec.getProperties());
+    // If table does not exist, nothing to be done
+    try {
+      exploreService.getTableInfo(datasetId.getNamespace(), databaseName, tableName);
+    } catch (TableNotFoundException e) {
+      // Ignore exception, since this means table was not found.
+      return null;
+    }
+
+    Dataset dataset = null;
+    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
+      dataset = datasetInstantiator.getDataset(datasetId);
+      return generateDeleteStatement(dataset, databaseName, tableName);
+    } catch (IOException e) {
+      LOG.error("Exception creating dataset classLoaderProvider for dataset {}.", datasetId, e);
+      throw new ExploreException("Exception instantiating dataset " + datasetId);
+    } finally {
+      Closeables.closeQuietly(dataset);
+    }
+  }
+
   /**
    * Adds a partition to the Hive table for the given dataset.
    *
    * @param datasetId the ID of the dataset to add a partition to
+   * @param properties additional dataset properties relevant to this operation
    * @param partitionKey the partition key to add
    * @param fsPath the path of the partition
    * @return the query handle for adding the partition the dataset
    * @throws ExploreException if there was an exception adding the partition
    * @throws SQLException if there was a problem with the add partition statement
    */
-  public QueryHandle addPartition(DatasetId datasetId, PartitionKey partitionKey, String fsPath)
+  public QueryHandle addPartition(DatasetId datasetId, Map<String, String> properties,
+                                  PartitionKey partitionKey, String fsPath)
     throws ExploreException, SQLException {
-    String addPartitionStatement = String.format(
-      "ALTER TABLE %s ADD PARTITION %s LOCATION '%s'",
-      tableNaming.getTableName(datasetId), generateHivePartitionKey(partitionKey), fsPath);
+
+    StringBuilder str = new StringBuilder("ALTER TABLE ");
+    String database = ExploreProperties.getExploreDatabaseName(properties);
+    if (database != null) {
+      str.append(database).append(".");
+    }
+    str.append(tableNaming.getTableName(datasetId, properties))
+      .append(" ADD PARTITION ")
+      .append(generateHivePartitionKey(partitionKey))
+      .append(" LOCATION '")
+      .append(fsPath)
+      .append("'");
+    String addPartitionStatement = str.toString();
 
     LOG.debug("Add partition for key {} dataset {} - {}", partitionKey, datasetId, addPartitionStatement);
 
@@ -317,17 +355,24 @@ public class ExploreTableManager {
    * Drop a partition from the Hive table for the given dataset.
    *
    * @param datasetId the ID of the dataset to drop the partition from
+   * @param properties additional dataset properties relevant to this operation
    * @param partitionKey the partition key to drop
    * @return the query handle for dropping the partition from the dataset
    * @throws ExploreException if there was an exception dropping the partition
    * @throws SQLException if there was a problem with the drop partition statement
    */
-  public QueryHandle dropPartition(DatasetId datasetId, PartitionKey partitionKey)
+  public QueryHandle dropPartition(DatasetId datasetId, Map<String, String> properties, PartitionKey partitionKey)
     throws ExploreException, SQLException {
 
-    String dropPartitionStatement = String.format(
-      "ALTER TABLE %s DROP PARTITION %s",
-      tableNaming.getTableName(datasetId), generateHivePartitionKey(partitionKey));
+    StringBuilder str = new StringBuilder("ALTER TABLE ");
+    String database = ExploreProperties.getExploreDatabaseName(properties);
+    if (database != null) {
+      str.append(database).append(".");
+    }
+    str.append(tableNaming.getTableName(datasetId, properties))
+      .append(" DROP PARTITION ")
+      .append(generateHivePartitionKey(partitionKey));
+    String dropPartitionStatement = str.toString();
 
     LOG.debug("Drop partition for key {} dataset {} - {}", partitionKey, datasetId, dropPartitionStatement);
 
@@ -344,7 +389,7 @@ public class ExploreTableManager {
    * @throws UnsupportedTypeException if the dataset is a RecordScannable of a type that is not supported by Hive
    */
   @Nullable
-  private String generateCreateStatement(Dataset dataset, DatasetSpecification spec,
+  private String generateEnableStatement(Dataset dataset, DatasetSpecification spec,
                                          DatasetId datasetId, String tableName) throws UnsupportedTypeException {
 
     String datasetName = datasetId.getDataset();
@@ -379,7 +424,8 @@ public class ExploreTableManager {
 
       // otherwise, derive the schema from the record type
       LOG.debug("Enabling explore for dataset instance {}", datasetName);
-      return new CreateStatementBuilder(datasetName, tableName, shouldEscapeColumns)
+      String databaseName = ExploreProperties.getExploreDatabaseName(spec.getProperties());
+      return new CreateStatementBuilder(datasetName, databaseName, tableName, shouldEscapeColumns)
         .setSchema(hiveSchemaFor(recordType))
         .setTableComment("CDAP Dataset")
         .buildWithStorageHandler(DatasetStorageHandler.class.getName(), serdeProperties);
@@ -419,7 +465,8 @@ public class ExploreTableManager {
     if (schema == null) {
       return null;
     }
-    return new CreateStatementBuilder(datasetId.getDataset(), tableName, shouldEscapeColumns)
+    String databaseName = ExploreProperties.getExploreDatabaseName(spec.getProperties());
+    return new CreateStatementBuilder(datasetId.getDataset(), databaseName, tableName, shouldEscapeColumns)
       .setSchema(schema)
       .setTableComment("CDAP Dataset")
       .buildWithStorageHandler(DatasetStorageHandler.class.getName(), serdeProperties);
@@ -473,7 +520,8 @@ public class ExploreTableManager {
   private String generateFileSetCreateStatement(DatasetId datasetId, Dataset dataset,
                                                 Map<String, String> properties) throws IllegalArgumentException {
 
-    String tableName = tableNaming.getTableName(datasetId);
+    String tableName = tableNaming.getTableName(datasetId, properties);
+    String databaseName = ExploreProperties.getExploreDatabaseName(properties);
     Map<String, String> tableProperties = FileSetProperties.getTableProperties(properties);
 
     Location baseLocation;
@@ -486,7 +534,7 @@ public class ExploreTableManager {
     }
 
     CreateStatementBuilder createStatementBuilder =
-      new CreateStatementBuilder(datasetId.getDataset(), tableName, shouldEscapeColumns)
+      new CreateStatementBuilder(datasetId.getDataset(), databaseName, tableName, shouldEscapeColumns)
         .setLocation(baseLocation)
         .setPartitioning(partitioning)
         .setTableProperties(tableProperties);
@@ -533,14 +581,15 @@ public class ExploreTableManager {
    * Generate a Hive DDL statement to delete the Hive table for the given dataset.
    *
    * @param dataset the instantiated dataset
+   * @param databaseName database name in which to delete the table. If null, the database is implied by the namespace.
    * @param tableName the table name corresponding to the dataset
    * @return a DROP TABLE statement, or null if the dataset is not explorable
    */
   @Nullable
-  private String generateDeleteStatement(Dataset dataset, String tableName) {
+  private String generateDeleteStatement(Dataset dataset, @Nullable String databaseName, String tableName) {
     if (dataset instanceof RecordScannable || dataset instanceof RecordWritable ||
       dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
-      return generateDeleteTableStatement(tableName);
+      return generateDeleteTableStatement(databaseName, tableName);
     }
     return null;
   }
@@ -560,22 +609,24 @@ public class ExploreTableManager {
                                                DatasetSpecification spec, DatasetSpecification oldSpec)
     throws UnsupportedTypeException {
 
+    Map<String, String> properties = spec.getProperties();
+    String databaseName = ExploreProperties.getExploreDatabaseName(properties);
+
     if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
-      Map<String, String> properties = spec.getProperties();
       if (FileSetProperties.isExploreEnabled(properties)) {
         return generateFileSetAlterStatements(datasetId, tableName, properties, oldSpec.getProperties());
       } else {
         // old spec was explorable but new spec is not -> disable explore
-        return Collections.singletonList(generateDeleteStatement(dataset, tableName));
+        return Collections.singletonList(generateDeleteStatement(dataset, databaseName, tableName));
       }
     }
 
     // all other dataset types use DatasetStorageHandler and DatasetSerDe. ALTER TABLE is not supported for these
-    // datasets (because Hive does not allow altering a table in no-native format).
+    // datasets (because Hive does not allow altering a table in non-native format).
     // see: https://cwiki.apache.org/confluence/display/Hive/StorageHandlers#StorageHandlers-DDL
     // therefore we have no choice but to drop and recreate the dataset
-    String deleteStatement = generateDeleteStatement(dataset, tableName);
-    String createStatement = generateCreateStatement(dataset, spec, datasetId, tableName);
+    String deleteStatement = generateDeleteStatement(dataset, databaseName, tableName);
+    String createStatement = generateEnableStatement(dataset, spec, datasetId, tableName);
     List<String> statements = new ArrayList<>();
     if (deleteStatement != null) {
       statements.add(deleteStatement);
@@ -600,12 +651,14 @@ public class ExploreTableManager {
                                                       Map<String, String> oldProperties)
     throws IllegalArgumentException {
 
+    String datasetName = datasetId.getDataset();
+    String databaseName = ExploreProperties.getExploreDatabaseName(properties);
     List<String> alterStatements = new ArrayList<>();
 
     Map<String, String> tableProperties = FileSetProperties.getTableProperties(properties);
     Map<String, String> oldTableProperties = FileSetProperties.getTableProperties(oldProperties);
     if (!oldTableProperties.equals(tableProperties)) {
-      alterStatements.add(new AlterStatementBuilder(datasetId.getDataset(), tableName, shouldEscapeColumns)
+      alterStatements.add(new AlterStatementBuilder(datasetName, databaseName, tableName, shouldEscapeColumns)
                             .buildWithTableProperties(tableProperties));
     }
 
@@ -617,7 +670,7 @@ public class ExploreTableManager {
     if (format != null) {
       if (!(format.equals(oldFormat) && formatProps.equals(oldFormatProps))) {
         if ("parquet".equals(format)) {
-          alterStatements.add(new AlterStatementBuilder(datasetId.getDataset(), tableName, shouldEscapeColumns)
+          alterStatements.add(new AlterStatementBuilder(datasetName, databaseName, tableName, shouldEscapeColumns)
                                 .buildWithFileFormat("parquet"));
           return alterStatements;
         }
@@ -632,7 +685,7 @@ public class ExploreTableManager {
         } else if ("csv".equals(format)) {
           delimiter = ",";
         }
-        alterStatements.add(new AlterStatementBuilder(datasetId.getDataset(), tableName, shouldEscapeColumns)
+        alterStatements.add(new AlterStatementBuilder(datasetName, databaseName, tableName, shouldEscapeColumns)
                               .buildWithDelimiter(delimiter));
       }
     } else {
@@ -648,7 +701,7 @@ public class ExploreTableManager {
                                   "All of SerDe, InputFormat and OutputFormat must be given in dataset properties");
 
       if (!inputFormat.equals(oldInputFormat) || !outputFormat.equals(oldOutputFormat) || !serde.equals(oldSerde)) {
-        alterStatements.add(new AlterStatementBuilder(datasetId.getDataset(), tableName, shouldEscapeColumns)
+        alterStatements.add(new AlterStatementBuilder(datasetName, databaseName, tableName, shouldEscapeColumns)
                               .buildWithFormats(inputFormat, outputFormat, serde));
       }
     }
@@ -667,15 +720,19 @@ public class ExploreTableManager {
     String schema = FileSetProperties.getExploreSchema(properties);
     String oldSchema = FileSetProperties.getExploreSchema(oldProperties);
     if (schema != null && !schema.equals(oldSchema)) {
-      alterStatements.add(new AlterStatementBuilder(datasetId.getDataset(), tableName, shouldEscapeColumns)
+      alterStatements.add(new AlterStatementBuilder(datasetName, databaseName, tableName, shouldEscapeColumns)
                             .buildWithSchema(schema));
     }
 
     return alterStatements;
   }
 
-  private String generateDeleteTableStatement(String name) {
-    return String.format("DROP TABLE IF EXISTS %s", tableNaming.cleanTableName(name));
+  private String generateDeleteTableStatement(@Nullable String databaseName, String name) {
+    if (databaseName != null) {
+      return String.format("DROP TABLE IF EXISTS %s.%s", databaseName, tableNaming.cleanTableName(name));
+    } else {
+      return String.format("DROP TABLE IF EXISTS %s", tableNaming.cleanTableName(name));
+    }
   }
 
   private String generateHivePartitionKey(PartitionKey key) {

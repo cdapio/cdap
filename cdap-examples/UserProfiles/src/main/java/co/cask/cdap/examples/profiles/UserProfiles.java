@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 
 /**
  * Demonstrates the use of column-level conflict detection by the example of managing user profiles,
@@ -53,12 +54,12 @@ public class UserProfiles extends AbstractApplication {
       Schema.Field.of("login", Schema.nullableOf(Schema.of(Schema.Type.LONG))),
       Schema.Field.of("active", Schema.nullableOf(Schema.of(Schema.Type.LONG)))
     );
-    createDataset("profiles", Table.class.getName(), DatasetProperties.builder()
+    createDataset("profiles", Table.class.getName(), TableProperties.builder()
       // create the profiles table with column-level conflict detection
-      .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.COLUMN.name())
-      .add(Table.PROPERTY_SCHEMA, profileSchema.toString())
+      .setConflictDetection(ConflictDetection.COLUMN)
+      .setSchema(profileSchema)
       // to indicate that the id field should come from the row key and not a row column
-      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "id")
+      .setRowFieldName("id")
       .setDescription("Profiles table with column-level conflict detection")
       .build());
   }

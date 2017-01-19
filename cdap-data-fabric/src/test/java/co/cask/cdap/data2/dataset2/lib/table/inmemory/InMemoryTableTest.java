@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,9 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTableTest;
-import co.cask.cdap.data2.dataset2.lib.table.TableProperties;
 
 import java.util.Map;
 
@@ -36,8 +36,7 @@ public class InMemoryTableTest extends BufferingTableTest<InMemoryTable> {
   @Override
   protected InMemoryTable getTable(DatasetContext datasetContext, String name,
                                    DatasetProperties props, Map<String, String> runtimeArguments) throws Exception {
-    ConflictDetection conflictLevel =
-      TableProperties.getConflictDetectionLevel(props.getProperties(), ConflictDetection.ROW);
+    ConflictDetection conflictLevel = TableProperties.getConflictDetection(props, ConflictDetection.ROW);
     return new InMemoryTable(datasetContext, name, conflictLevel, cConf);
   }
 

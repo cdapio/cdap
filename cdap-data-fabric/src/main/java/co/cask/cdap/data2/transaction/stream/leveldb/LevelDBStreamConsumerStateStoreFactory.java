@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package co.cask.cdap.data2.transaction.stream.leveldb;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
@@ -67,7 +67,7 @@ public final class LevelDBStreamConsumerStateStoreFactory implements StreamConsu
   }
 
   private LevelDBTableAdmin getLevelDBTableAdmin(TableId tableId) throws IOException {
-    DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_COLUMN_FAMILY, "t").build();
+    DatasetProperties props = TableProperties.builder().setColumnFamily("t").build();
     LevelDBTableDefinition tableDefinition = new LevelDBTableDefinition("tableDefinition");
     DatasetSpecification spec = tableDefinition.configure(tableId.getTableName(), props);
 

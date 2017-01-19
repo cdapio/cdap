@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,7 @@ import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.api.dataset.table.TableSplit;
 import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.conf.Constants;
@@ -125,7 +125,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
    * @param level the conflict detection level
    */
   public BufferingTable(String name, ConflictDetection level) {
-    this(name, false, Collections.singletonMap(Table.PROPERTY_CONFLICT_LEVEL, level.name()));
+    this(name, false, TableProperties.builder().setConflictDetection(level).build().getProperties());
   }
 
   /**
@@ -143,7 +143,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     Preconditions.checkArgument(name.length() < Byte.MAX_VALUE,
                                 "Too big table name: " + name + ", exceeds " + Byte.MAX_VALUE);
     this.name = name;
-    this.conflictLevel = TableProperties.getConflictDetectionLevel(properties, ConflictDetection.ROW);
+    this.conflictLevel = TableProperties.getConflictDetection(properties, ConflictDetection.ROW);
     this.enableReadlessIncrements = enableReadlessIncrements;
     // TODO: having central dataset management service will allow us to use table ids instead of names, which will
     //       reduce changeset size transferred to/from server

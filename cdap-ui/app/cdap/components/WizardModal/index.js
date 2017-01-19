@@ -18,7 +18,7 @@ import {Modal, ModalBody, ModalHeader} from 'reactstrap';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import classnames from 'classnames';
 
-require('./WizardModal.less');
+require('./WizardModal.scss');
 
 export default function WizardModal({children, title, isOpen, toggle, className}) {
   return (
@@ -29,11 +29,11 @@ export default function WizardModal({children, title, isOpen, toggle, className}
       size="lg"
     >
       <ModalHeader>
-        <span className="pull-left">
+        <span className="float-xs-left">
           {title}
         </span>
         <div
-          className="close-section pull-right"
+          className="close-section float-xs-right"
           onClick={toggle}
         >
           <span

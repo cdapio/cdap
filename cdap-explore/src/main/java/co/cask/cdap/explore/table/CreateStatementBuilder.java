@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,7 +64,8 @@ import javax.annotation.Nullable;
  */
 public class CreateStatementBuilder {
   private final String name;
-  private final String hiveTableName;
+  private final String databaseName;
+  private final String tableName;
   private final boolean shouldEscapeColumns;
   private final SchemaConverter schemaConverter;
   private String hiveSchema;
@@ -74,9 +75,11 @@ public class CreateStatementBuilder {
   private Partitioning partitioning;
   private Map<String, String> tableProperties;
 
-  public CreateStatementBuilder(String name, String hiveTableName, boolean shouldEscapeColumns) {
+  public CreateStatementBuilder(String name, @Nullable String databaseName,
+                                String tableName, boolean shouldEscapeColumns) {
     this.name = name;
-    this.hiveTableName = hiveTableName;
+    this.databaseName = databaseName;
+    this.tableName = tableName;
     this.tableProperties = addRequiredTableProperties(Maps.<String, String>newHashMap());
     this.shouldEscapeColumns = shouldEscapeColumns;
     this.schemaConverter = new SchemaConverter(shouldEscapeColumns);
@@ -278,8 +281,11 @@ public class CreateStatementBuilder {
    */
   private StringBuilder startBuild() {
     StringBuilder strBuilder = new StringBuilder()
-      .append("CREATE EXTERNAL TABLE IF NOT EXISTS ")
-      .append(hiveTableName);
+      .append("CREATE EXTERNAL TABLE IF NOT EXISTS ");
+    if (databaseName != null) {
+      strBuilder.append(databaseName).append('.');
+    }
+    strBuilder.append(tableName);
 
     // yeah... schema is not always required.
     if (hiveSchema != null) {

@@ -45,6 +45,7 @@ public class SportResults extends AbstractApplication {
       .setEnableExploreOnCreate(true)
       .setExploreFormat("csv")
       .setExploreSchema("`date` STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
+      .setExploreTableName("results")
       .setDescription("FileSet dataset of game results for a sport league and season")
       .build());
 
@@ -58,6 +59,7 @@ public class SportResults extends AbstractApplication {
       .setOutputProperty(TextOutputFormat.SEPERATOR, ",")
       // Properties for Explore (to create a partitioned Hive table)
       .setEnableExploreOnCreate(true)
+      .setExploreTableName("totals")
       .setExploreFormat("csv")
       .setExploreSchema("team STRING, wins INT, ties INT, losses INT, scored INT, conceded INT")
       .setDescription("FileSet dataset of aggregated results for each sport league")

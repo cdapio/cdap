@@ -16,7 +16,7 @@
 
 import React, {Component} from 'react';
 import {Provider} from 'react-redux';
-require('./SchemaEditor.less');
+require('./SchemaEditor.scss');
 import {getParsedSchema} from 'components/SchemaEditor/SchemaHelpers';
 import RecordSchemaRow from 'components/SchemaEditor/RecordSchemaRow';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';

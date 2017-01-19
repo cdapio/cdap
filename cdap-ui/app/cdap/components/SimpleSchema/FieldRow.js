@@ -17,7 +17,7 @@ import React, { PropTypes } from 'react';
 import { Input } from 'reactstrap';
 import SelectWithOptions from 'components/SelectWithOptions';
 
-require('./FieldRow.less');
+require('./FieldRow.scss');
 const defaultFieldTypes = [
   '',
   'boolean',
@@ -50,7 +50,7 @@ const FieldRow = ({className, name, type, isNullable, onKeyUp, onChange, onRemov
         />
       </td>
       <td>
-        <Input
+        <input
           type="checkbox"
           checked={isNullable}
           onChange={onChange.bind(null, 'isNullable')}
@@ -59,7 +59,7 @@ const FieldRow = ({className, name, type, isNullable, onKeyUp, onChange, onRemov
       <td>
         <a
           onClick={onRemove}
-          className="btn btn-xs btn-danger">
+          className="btn btn-sm btn-danger">
           <i className="fa fa-trash"/>
         </a>
       </td>

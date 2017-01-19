@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.HTable98NameConverter;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.messaging.MessagingUtils;
 import com.google.common.base.Supplier;
@@ -102,7 +101,7 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
       prefixLength = Integer.valueOf(tableDesc.getValue(
         Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES));
 
-      HTableNameConverter nameConverter = new HTable98NameConverter();
+      HTableNameConverter nameConverter = new HTableNameConverter();
       String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
       cConfReader = new CConfigurationReader(env.getConfiguration(), sysConfigTablePrefix);
 
@@ -203,7 +202,7 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
   }
 
   private Supplier<TransactionStateCache> getTransactionStateCacheSupplier(String tablePrefix, Configuration conf) {
-    String sysConfigTablePrefix = new HTable98NameConverter().getSysConfigTablePrefix(tablePrefix);
+    String sysConfigTablePrefix = new HTableNameConverter().getSysConfigTablePrefix(tablePrefix);
     return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
   }
 

@@ -43,6 +43,7 @@
     "getAbsUIUrl": true,
     "_": true,
     "describe": true,
+    "jasmine": true,
     "it": true,
     "expect": true,
     "jest": true,

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -90,6 +90,7 @@ public class ExploreFacade {
 
   /**
    * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
+   *
    * @param datasetInstance dataset instance id.
    */
   public void enableExploreDataset(DatasetId datasetInstance) throws ExploreException, SQLException {
@@ -103,7 +104,9 @@ public class ExploreFacade {
 
   /**
    * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
+   *
    * @param datasetInstance dataset instance id.
+   * @param spec the dataset specification of the dataset
    */
   public void enableExploreDataset(DatasetId datasetInstance,
                                    DatasetSpecification spec) throws ExploreException, SQLException {
@@ -117,6 +120,7 @@ public class ExploreFacade {
 
   /**
    * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
+   *
    * @param datasetInstance dataset instance id.
    * @param oldSpec the previous dataset spec
    */
@@ -133,6 +137,7 @@ public class ExploreFacade {
 
   /**
    * Disable ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
+   *
    * @param datasetInstance dataset instance id.
    */
   public void disableExploreDataset(DatasetId datasetInstance) throws ExploreException, SQLException {
@@ -144,23 +149,39 @@ public class ExploreFacade {
     handleExploreFuture(futureSuccess, "disable", "dataset", datasetInstance.getDataset());
   }
 
-  public void addPartition(DatasetId datasetInstance,
+  /**
+   * Disable ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
+   *
+   * @param datasetInstance dataset instance id.
+   * @param spec the dataset specification of the dataset
+   */
+  public void disableExploreDataset(DatasetId datasetInstance,
+                                    DatasetSpecification spec) throws ExploreException, SQLException {
+    if (!(exploreEnabled && isDatasetExplorable(datasetInstance))) {
+      return;
+    }
+
+    ListenableFuture<Void> futureSuccess = exploreClient.disableExploreDataset(datasetInstance, spec);
+    handleExploreFuture(futureSuccess, "disable", "dataset", datasetInstance.getDataset());
+  }
+
+  public void addPartition(DatasetId datasetInstance, DatasetSpecification spec,
                            PartitionKey key, String location) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
-    ListenableFuture<Void> futureSuccess = exploreClient.addPartition(datasetInstance, key, location);
+    ListenableFuture<Void> futureSuccess = exploreClient.addPartition(datasetInstance, spec, key, location);
     handleExploreFuture(futureSuccess, "add", "partition", datasetInstance.getDataset());
   }
 
-  public void dropPartition(DatasetId datasetInstance,
+  public void dropPartition(DatasetId datasetInstance, DatasetSpecification spec,
                             PartitionKey key) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
-    ListenableFuture<Void> futureSuccess = exploreClient.dropPartition(datasetInstance, key);
+    ListenableFuture<Void> futureSuccess = exploreClient.dropPartition(datasetInstance, spec, key);
     handleExploreFuture(futureSuccess, "drop", "partition", datasetInstance.getDataset());
   }
 

@@ -18,7 +18,7 @@ import {connect, Provider} from 'react-redux';
 import {Input, FormGroup, Form} from 'reactstrap';
 import T from 'i18n-react';
 
-require('./ThresholdStep.less');
+require('./ThresholdStep.scss');
 import CreateStreamWithUploadActions  from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadActions';
 import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
 const mapStateToStreamThresholdProps = (state) => {
@@ -41,7 +41,7 @@ const mapDispatchToStreamThresholdProps = (dispatch) => {
 };
 let ThresholdTextBox = ({value, onChange}) => {
   return (
-    <FormGroup className="threshold-step">
+    <FormGroup row className="threshold-step">
       <Input
         value={value}
         type="number"

@@ -24,7 +24,7 @@ import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import classNames from 'classnames';
 import T from 'i18n-react';
 
-require('./PlusButtonModal.less');
+require('./PlusButtonModal.scss');
 
 export default class PlusButtonModal extends Component {
   constructor(props) {
@@ -72,7 +72,7 @@ export default class PlusButtonModal extends Component {
         size="lg"
       >
         <ModalHeader>
-          <span className="pull-left">
+          <span className="float-xs-left">
             <span
               className={classNames("modal-header-icon", this.getIconForView(this.state.viewMode))}
             />
@@ -80,7 +80,7 @@ export default class PlusButtonModal extends Component {
             { this.state.viewMode === 'resourcecenter' ? resourceCenter : market }
             </span>
           </span>
-          <div className="pull-right">
+          <div className="float-xs-right">
             <div className="btn-group">
               <button
                 className={classNames("btn btn-sm navigation-button", {

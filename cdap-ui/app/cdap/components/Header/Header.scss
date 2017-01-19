@@ -1,0 +1,143 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../styles/variables.scss";
+
+$navbar-brand-bg: #363945;
+
+@mixin product-navbar-mixins($border-product-color, $active-link-color) {
+  .brand-header .navbar-brand { border-color: $border-product-color; }
+  .navbar-list {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    a {
+      &:hover,
+      &.active {
+        color: $active-link-color;
+      }
+      color: #cccccc;
+    }
+  }
+}
+
+.cask-header {
+  @media(max-width: 1260px) {
+    .navbar {
+      .navbar-list {
+        padding-left: 10px;
+      }
+    }
+  }
+  .navbar {
+    height: $height-of-header;
+    background-color: $navbar-bg;
+    color: white;
+    border: 0;
+    font-weight: 500;
+    z-index: 1000;
+    margin-bottom: 0;
+    padding: 0;
+
+    &.cdap { @include product-navbar-mixins($cdap-orange, $cdap-orange); }
+    &.hydrator { @include product-navbar-mixins($hydrator-blue, #43AAFF); }
+    &.tracker { @include product-navbar-mixins($tracker-green, $tracker-green); }
+    .brand-header {
+      float: left;
+      a { color: white; }
+
+      .navbar-brand {
+        background-color: transparent;
+        padding: 10px;
+      }
+    }
+
+    .menu-item,
+    .navbar-item {
+      display: inline-block;
+      line-height: $height-of-header;
+      height: $height-of-header;
+      text-decoration: none;
+    }
+
+    .menu-item {
+      font-size: 14px;
+    }
+
+    .environment {
+      display: inline-block;
+      line-height: $height-of-header;
+      position: absolute;
+      right: 335px;
+      color: rgba(117, 117, 117, 0.7);
+    }
+
+    .product-title {
+      margin-left: 10px;
+      user-select: none;
+    }
+
+    /* RIGHT MENU */
+    .right-menu {
+      height: 50px;
+    }
+    .navbar-item {
+      font-size: 17px;
+      cursor: pointer;
+      float: left;
+      padding: 0 12px;
+
+      .namespace-holder {
+        height: inherit;
+      }
+      &.open {
+        background-color: white;
+        color: #666666;
+        border-bottom: 2px solid #cccccc;
+      }
+
+      ul.dropdown-menu {
+        margin: 1px 0;
+        border: 0;
+        border-radius: 0 0 4px 4px;
+        max-height: 300px;
+        overflow-y: auto;
+
+        li a {
+          line-height: 30px;
+          font-weight: 500;
+        }
+      }
+    }
+    // TODO: Look into switching this to behave like the Settings uib dropdown
+    .popover.bottom > .arrow {
+      border-bottom-color: #999999;
+    }
+  }
+
+  .display-container {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1040;
+  }
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.api.dataset.lib.CompositeDatasetDefinition;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 
 import java.io.IOException;
 import java.util.Map;
@@ -55,9 +56,9 @@ public class LineageDatasetDefinition extends CompositeDatasetDefinition<Lineage
   private DatasetProperties noConflictDetection(DatasetProperties properties) {
     // Use ConflictDetection.NONE as we only need a flag whether a program uses a dataset/stream.
     // Having conflict detection will lead to failures when programs try to register accesses at the same time.
-    return DatasetProperties.builder()
+    return TableProperties.builder()
+      .setConflictDetection(ConflictDetection.NONE)
       .addAll(properties.getProperties())
-      .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.NONE.name())
       .build();
   }
 

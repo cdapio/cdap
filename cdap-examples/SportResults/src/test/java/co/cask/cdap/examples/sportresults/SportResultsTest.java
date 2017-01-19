@@ -109,7 +109,7 @@ public class SportResultsTest extends TestBase {
     Connection connection = getQueryClient();
     ResultSet results = connection
       .prepareStatement("SELECT wins, ties, losses, scored, conceded " +
-                          "FROM dataset_totals WHERE team = 'My Team' AND league = 'fantasy'")
+                          "FROM totals WHERE team = 'My Team' AND league = 'fantasy'")
       .executeQuery();
 
     // should return only one row, with correct time fields

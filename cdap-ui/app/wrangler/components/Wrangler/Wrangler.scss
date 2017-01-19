@@ -1,0 +1,383 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.scss';
+$error-color: #e74c3c;
+$wrangler-left-panel-width: 175px;
+$border: 1px solid #dddddd;
+
+.error-text { color: $error-color; }
+
+.btn.btn-wrangler {
+  color: $wrangler-dark-color;
+  background-color: $wrangler-yellow;
+  font-weight: 500;
+
+  &:hover {
+    background-color: darken($wrangler-yellow, 7%);
+    color: $wrangler-dark-color;
+  }
+}
+
+.wrangler-container {
+  height: 100%;
+
+  .wrangler-input-container {
+    overflow-y: auto;
+    height: 100%;
+    padding-bottom: 50px;
+    padding-top: 10px;
+  }
+
+  .wrangler-copy-paste,
+  .wrangler-error-container,
+  .file-input {
+    width: 750px;
+    margin: 0 auto;
+  }
+
+  .wrangle-button {
+    font-size: 18px;
+    padding: 5px 35px;
+  }
+
+  .wrangler-copy-paste {
+    border: 2px solid #dedede;
+    border-radius: 4px;
+    height: 270px;
+    margin: 0 auto;
+    position: relative;
+
+    textarea {
+      border: 0;
+
+      &:focus { box-shadow: none; }
+    }
+
+    &.with-error {
+      border-bottom-right-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    .parse-options {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      padding: 10px;
+      border: 2px solid #dedede;
+      border-radius: 4px;
+
+      hr {
+        margin-top: 0;
+        margin-bottom: 10px;
+        border-top: 2px solid #cccccc;
+      }
+
+      .delimiter {
+        .form-control {
+          border: none;
+          box-shadow: none;
+          padding-left: 0;
+        }
+      }
+
+      .checkbox { margin-right: 25px; }
+    }
+  }
+
+  .loading {
+    margin-top: 100px;
+    span.fa.fa-spinner {
+      font-size: 60px;
+      color: #666666;
+    }
+
+    h3 {
+      font-weight: 400;
+      color: #666666;
+    }
+  }
+
+  .wrangler-data {
+    position: relative;
+    margin: 0;
+    height: 100%;
+
+    .wrangle-transforms,
+    .wrangle-results {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+    }
+
+    .wrangle-transforms {
+      left: 0;
+      width: $wrangler-left-panel-width;
+      border-right: $border;
+
+      .wrangle-filters {
+        height: 60px;
+        border-bottom: $border;
+        background-color: #eeeeee;
+        font-size: 25px;
+        display: flex;
+        justify-content: space-around;
+
+        & > span {
+          line-height: 60px;
+          vertical-align: middle;
+
+          span.fa {
+            cursor: pointer;
+
+            &.disabled {
+              cursor: not-allowed;
+              color: #999999;
+            }
+          }
+        }
+      }
+
+      .transform-item {
+        padding: 10px 15px;
+        border-bottom: $border;
+        cursor: pointer;
+
+        &.expanded {
+          border-left: 4px solid $wrangler-yellow;
+          .filter-input {
+            margin-top: 10px;
+            font-size: 13px;
+
+            .form-check {
+              margin-top: 10px;
+              margin-bottom: 10px;
+
+              .form-check-label {
+                padding-left: 20px;
+
+                .form-check-input {
+                  margin-left: -20px;
+                  position: absolute;
+                }
+              }
+            }
+          }
+        }
+        &.disabled { cursor: not-allowed; }
+        .transform-item-text {
+          margin-left: 10px;
+          span { margin-right: 5px; }
+        }
+        .sort-indicator { color: #999999; }
+      }
+    }
+
+    .wrangle-results {
+      left: $wrangler-left-panel-width;
+      right: 400px; // offset right panel
+      overflow-y: auto;
+
+      &.expanded { right: 0; }
+
+      .data-table {
+        width: 100%;
+        height: calc(100% - 60px);
+        overflow-x: auto;
+      }
+    }
+  }
+
+  .table {
+    margin-bottom: 0;
+
+    .resize-container {
+      table-layout: fixed;
+      display: table;
+      width: 100%;
+    }
+
+    .resize-value {
+      display: inline-block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      word-break: break-all;
+      word-wrap: break-word;
+      width: calc(100% - 1px);
+    }
+
+    .resize-handle {
+      cursor: col-resize;
+      float: right;
+      width: 0;
+      margin-right: -6px;
+    }
+
+    &.table-bordered { border: 0; }
+
+    th:first-child,
+    td:first-child {
+      border-left: 0;
+    }
+
+    th:last-child,
+    td:last-child {
+      border-right: 0;
+    }
+
+    .column-name {
+      cursor: pointer;
+      background-color: #cccccc;
+    }
+    .active {
+      $active-border: 2px solid $wrangler-yellow;
+
+      border-right: $active-border;
+      border-left: $active-border;
+
+      &.top-header {
+        border-top: $active-border;
+      }
+    }
+
+    .header-content-container {
+      display: inline-block;
+      width: 100%;
+
+      .header-text {
+        cursor: pointer;
+        display: inline-block;
+        width: calc(100% - 40px);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        line-height: 18px;
+        vertical-align: middle;
+      }
+
+      .action-icon { width: 40px; }
+    }
+
+    td.column-type-cell {
+      font-size: 11px;
+      font-weight: 400;
+      padding: 3px 8px;
+      background-color: #efefef;
+    }
+
+    th {
+      background-color: #efefef;
+      border-bottom-width: 0;
+      padding: 8px;
+      border-color: #dddddd;
+
+      &.index-column {
+        font-size: 13px;
+        .fa {
+          margin-left: 5px;
+        }
+
+        .index-column-header-content { cursor: pointer; }
+      }
+    }
+
+    td {
+      padding: 8px 5px 8px 8px;
+      background-color: white;
+      font-size: 12px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .index-column {
+      background-color: #cccccc;
+      font-size: 10px;
+      padding: 7px;
+
+      .content { margin-right: 0; }
+    }
+
+    .content {
+      margin-right: 15px;
+    }
+  }
+
+  .error {
+    color: $error-color;
+    margin-left: 10px;
+  }
+
+  .wrangler-data-metrics {
+    height: 60px;
+    border-bottom: $border;
+
+    .action-button-container {
+      .hydrator-button {
+        margin-right: 15px;
+        line-height: 60px;
+        float: left;
+
+        .fa {
+          margin-right: 5px;
+          vertical-align: top;
+          margin-top: 2px;
+        }
+      }
+
+      .action-button {
+        display: inline-block;
+        line-height: 60px;
+        width: 60px;
+        cursor: pointer;
+        border-left: $border;
+        font-size: 16px;
+
+        &:hover {
+          background-color: #efefef;
+        }
+      }
+    }
+
+    .metric-block {
+      display: inline-block;
+      padding-right: 25px;
+      padding-left: 25px;
+
+      .text-danger { color: $error-color; }
+      .text-success { color: #27ae60; }
+
+      h3,
+      h5 {
+        font-weight: 400;
+      }
+
+      h3 {
+        margin-top: 10px;
+        margin-bottom: 3px;
+      }
+
+      h5 {
+        margin-top: 3px;
+        font-size: 12px;
+        color: #999999;
+        font-weight: 500;
+      }
+    }
+  }
+}

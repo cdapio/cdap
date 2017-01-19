@@ -119,7 +119,6 @@ export default class StartStopAction extends Component {
 
 
   render() {
-
     let icon;
     let confirmBtnText;
     let headerText;
@@ -141,7 +140,7 @@ export default class StartStopAction extends Component {
     }
 
     return (
-      <div>
+      <span>
         {
           this.state.modal ? (
             <ConfirmationModal
@@ -166,7 +165,7 @@ export default class StartStopAction extends Component {
             </button>
           ) :
           (
-            <div>
+            <span>
               <FastActionButton
                 icon={icon}
                 action={this.onClick}
@@ -181,10 +180,10 @@ export default class StartStopAction extends Component {
               >
                 {T.translate(`features.FastAction.${this.startStop}`)}
               </Tooltip>
-            </div>
+            </span>
           )
         }
-      </div>
+      </span>
     );
   }
 }

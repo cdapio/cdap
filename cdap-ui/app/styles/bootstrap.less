@@ -64,3 +64,30 @@
 // Utility classes
 @import "../../bower_components/bootstrap/less/utilities.less";
 @import "../../bower_components/bootstrap/less/responsive-utilities.less";
+
+// Addition for working in conjunction with bootstrap 4
+
+.float-xs-right {
+  float: right !important;
+}
+
+.float-xs-left {
+  float: left !important;
+}
+
+.text-xs-right {
+  text-align: right !important;
+}
+
+.text-xs-left {
+  text-align: left !important;
+}
+
+.text-xs-center {
+  text-align: center !important;
+}
+
+.btn-secondary {
+  // use btn-default coloring
+  .button-variant(@btn-default-color; @btn-default-bg; @btn-default-border);
+}

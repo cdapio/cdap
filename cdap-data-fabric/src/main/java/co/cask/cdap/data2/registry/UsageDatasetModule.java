@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 
 import java.io.IOException;
 import java.util.Map;
@@ -61,9 +62,9 @@ public class UsageDatasetModule implements DatasetModule {
     public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
       // Use ConflictDetection.NONE as we only need a flag whether a program uses a dataset/stream.
       // Having conflict detection will lead to failures when programs start, and all try to register at the same time.
-      DatasetProperties datasetProperties = DatasetProperties.builder()
+      DatasetProperties datasetProperties = TableProperties.builder()
+        .setConflictDetection(ConflictDetection.NONE)
         .addAll(properties.getProperties())
-        .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.NONE.name())
         .build();
       DatasetSpecification spec = tableDefinition.configure(instanceName, datasetProperties);
       return DatasetSpecification.builder(instanceName, getName())
@@ -76,9 +77,9 @@ public class UsageDatasetModule implements DatasetModule {
                                             DatasetSpecification currentSpec) throws IncompatibleUpdateException {
       // Use ConflictDetection.NONE as we only need a flag whether a program uses a dataset/stream.
       // Having conflict detection will lead to failures when programs start, and all try to register at the same time.
-      DatasetProperties datasetProperties = DatasetProperties.builder()
+      DatasetProperties datasetProperties = TableProperties.builder()
+        .setConflictDetection(ConflictDetection.NONE)
         .addAll(properties.getProperties())
-        .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.NONE.name())
         .build();
       DatasetSpecification spec = AbstractDatasetDefinition
         .reconfigure(tableDefinition, instanceName, datasetProperties, currentSpec);

@@ -51,9 +51,11 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
@@ -72,6 +74,7 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.operations.OperationalStatsLoader;
 import co.cask.cdap.operations.OperationalStatsService;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.replication.ReplicationConstants;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -103,8 +106,13 @@ import org.apache.hadoop.fs.ParentNotDirectoryException;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
@@ -130,8 +138,10 @@ import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -156,6 +166,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
+
+import static org.apache.hadoop.hbase.HConstants.REPLICATION_ENABLE_KEY;
 
 /**
  * Driver class for starting all master services.
@@ -253,6 +265,7 @@ public class MasterServiceMain extends DaemonMain {
     createDirectory(cConf.get(Constants.MessagingSystem.COPROCESSOR_DIR));
     createSystemHBaseNamespace();
     updateConfigurationTable();
+    saveShutdownTime(0L); // Reset shutdown time
     Services.startAndWait(zkClient, cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
                           TimeUnit.MILLISECONDS,
                           String.format("Connection timed out while trying to start ZooKeeper client. Please " +
@@ -295,7 +308,7 @@ public class MasterServiceMain extends DaemonMain {
     } catch (AccessControlException | ParentNotDirectoryException | FileNotFoundException e) {
       // just log the exception
       LOG.error("Exception while trying to create directory at {}", path, e);
-    }  catch (IOException e) {
+    } catch (IOException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -471,6 +484,22 @@ public class MasterServiceMain extends DaemonMain {
       new ConfigurationTable(hConf).write(ConfigurationTable.Type.DEFAULT, cConf);
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);
+    }
+  }
+
+  /**
+   * The replication Status tool will use CDAP shutdown time to determine last CDAP related writes to HBase.
+   */
+  private void saveShutdownTime(Long timestamp) {
+    File shutdownTimeFile = new File(System.getProperty("java.io.tmpdir"),
+                                     Constants.Replication.CDAP_SHUTDOWN_TIME_FILENAME);
+    try (BufferedWriter bw = new BufferedWriter(new FileWriter(shutdownTimeFile))) {
+      //Write shutdown time
+      bw.write(timestamp.toString());
+      bw.close();
+      LOG.info("Saved CDAP shutdown time {} at file {}", timestamp, shutdownTimeFile.getAbsolutePath());
+    } catch (IOException e) {
+      LOG.error("Failed to save CDAP shutdown time", e);
     }
   }
 
@@ -665,6 +694,7 @@ public class MasterServiceMain extends DaemonMain {
       }
       services.clear();
       stopQuietly(twillRunner);
+      saveShutdownTime(System.currentTimeMillis());
       Closeables.closeQuietly(authorizerInstantiator);
       Closeables.closeQuietly(exploreClient);
     }

@@ -17,7 +17,7 @@
 import React, { Component, PropTypes } from 'react';
 import 'whatwg-fetch';
 import CaskVideo from 'components/CaskVideo';
-require('./SplashScreen.less');
+require('./SplashScreen.scss');
 
 import Card from '../Card';
 import MyUserStoreApi from '../../api/userstore';
@@ -126,7 +126,7 @@ import VersionActions from 'services/VersionStore/VersionActions';
               className="splash-screen-card"
               header={cardHeader}
             >
-              <div className="text-center">
+              <div className="text-xs-center">
                 <div className="splash-main-container">
                 {
                   this.state.videoOpen ?
@@ -148,19 +148,19 @@ import VersionActions from 'services/VersionStore/VersionActions';
                 <br />
                 <div className={'group'}>
                   <a className="spash-screen-btn" target="_blank" href={`http://docs.cask.co/cdap/${this.state.version}/en/index.html`}>
-                    <div className="btn btn-default">
+                    <div className="btn btn-secondary">
                       <span className="fa fa-book btn-icon"></span>{T.translate('features.SplashScreen.buttons.getStarted')}
                     </div>
                   </a>
                   <div
-                    className={'btn btn-default spash-screen-btn'}
+                    className={'btn btn-secondary spash-screen-btn'}
                     onClick={this.toggleVideo}
                   >
                     <span className="fa fa-youtube-play btn-icon"></span>{T.translate('features.SplashScreen.buttons.introduction')}
                   </div>
                   <a target="_blank" href="http://cask.co/company/contact/#mailing-list">
                     <div
-                      className={'btn btn-default spash-screen-btn'}
+                      className={'btn btn-secondary spash-screen-btn'}
                     >
                       <span className="fa fa-pencil-square btn-icon" />{T.translate('features.SplashScreen.getUpdates')}
                     </div>

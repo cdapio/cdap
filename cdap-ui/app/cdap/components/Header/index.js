@@ -16,7 +16,7 @@
 
 import React, {Component, PropTypes} from 'react';
 
-require('./Header.less');
+require('./Header.scss');
 import HeaderBrand from '../HeaderBrand';
 import HeaderNavbarList from '../HeaderNavbarList';
 import HeaderActions from '../HeaderActions';

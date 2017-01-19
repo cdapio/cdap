@@ -17,7 +17,7 @@
 import React, {PropTypes} from 'react';
 var classnames = require('classnames');
 
-require('./Tabs.less');
+require('./Tabs.scss');
 
 export default function Tabs({layout, children}) {
   return (

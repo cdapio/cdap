@@ -16,7 +16,7 @@
 
 import React, {Component} from 'react';
 
-require('./Footer.less');
+require('./Footer.scss');
 
 export default class Footer extends Component {
   constructor(props) {
@@ -32,7 +32,7 @@ export default class Footer extends Component {
         <div className="container">
           <div className="row text-muted">
             <div className="text-uppercase">
-              <p className="text-center">
+              <p className="text-xs-center">
                 <span>Copyright &copy; {this.copyrightYear} Cask Data, Inc.</span>
               </p>
             </div>

@@ -22,7 +22,7 @@ import {Input} from 'reactstrap';
 import classnames from 'classnames';
 import cloneDeep from 'lodash/cloneDeep';
 
-require('./MapSchemaRow.less');
+require('./MapSchemaRow.scss');
 
 export default class MapSchemaRow extends Component {
   constructor(props) {

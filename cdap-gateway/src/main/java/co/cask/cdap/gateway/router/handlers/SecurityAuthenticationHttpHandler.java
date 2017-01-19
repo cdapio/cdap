@@ -18,13 +18,16 @@ package co.cask.cdap.gateway.router.handlers;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.logging.AuditLogContent;
 import co.cask.cdap.common.logging.AuditLogEntry;
+import co.cask.cdap.gateway.router.RouterAuditLookUp;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.auth.TokenState;
 import co.cask.cdap.security.auth.TokenValidator;
 import co.cask.cdap.security.server.GrantAccessToken;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -44,6 +47,7 @@ import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.WriteCompletionEvent;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -52,6 +56,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -63,15 +71,16 @@ import java.util.regex.PatternSyntaxException;
 public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
   private static final Logger LOG = LoggerFactory.getLogger(SecurityAuthenticationHttpHandler.class);
   private static final Logger AUDIT_LOG = LoggerFactory.getLogger("http-access");
+  private static final Set AUDIT_LOG_LOOKUP_METHOD = ImmutableSet.of(HttpMethod.PUT, HttpMethod.DELETE,
+                                                                     HttpMethod.POST);
+  private static final RouterAuditLookUp AUDIT_LOOK_UP = RouterAuditLookUp.getAuditLookUp();
 
   private final TokenValidator tokenValidator;
   private final AccessTokenTransformer accessTokenTransformer;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final Iterable<Discoverable> discoverables;
   private final CConfiguration configuration;
   private final String realm;
   private final Pattern bypassPattern;
-
 
   public SecurityAuthenticationHttpHandler(String realm, TokenValidator tokenValidator,
                                            CConfiguration configuration,
@@ -80,7 +89,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     this.realm = realm;
     this.tokenValidator = tokenValidator;
     this.accessTokenTransformer = accessTokenTransformer;
-    this.discoveryServiceClient = discoveryServiceClient;
     this.discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
     this.configuration = configuration;
     this.bypassPattern = createMatcher(configuration.get(Constants.Security.Router.BYPASS_AUTHENTICATION_REGEX));
@@ -129,8 +137,10 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       }
     }
 
+    HttpMethod httpMethod = msg.getMethod();
+    String uri = msg.getUri();
     logEntry.setClientIP(((InetSocketAddress) ctx.getChannel().getRemoteAddress()).getAddress());
-    logEntry.setRequestLine(msg.getMethod(), msg.getUri(), msg.getProtocolVersion());
+    logEntry.setRequestLine(httpMethod, uri, msg.getProtocolVersion());
 
     TokenState tokenState = tokenValidator.validate(accessToken);
     if (!tokenState.isValid()) {
@@ -171,6 +181,27 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     } else {
       AccessTokenTransformer.AccessTokenIdentifierPair accessTokenIdentifierPair =
         accessTokenTransformer.transform(accessToken);
+      AuditLogContent auditLogContent =
+        AUDIT_LOG_LOOKUP_METHOD.contains(httpMethod)
+          ? AUDIT_LOOK_UP.getAuditLogContent(msg.getUri(), httpMethod) : null;
+      if (auditLogContent != null) {
+        List<String> headerNames = auditLogContent.getHeaderNames();
+        if (!headerNames.isEmpty()) {
+          Map<String, String> headers = new HashMap<>();
+          for (String headerName : headerNames) {
+            headers.put(headerName, msg.getHeader(headerName));
+          }
+          logEntry.setHeaders(headers);
+        }
+        if (auditLogContent.isLogRequestBody()) {
+          ChannelBuffer body = msg.getContent();
+          if (body.readable()) {
+            logEntry.setRequestBody(body.toString(Charsets.UTF_8));
+          }
+        }
+        logEntry.setLogResponseBody(auditLogContent.isLogResponsebody());
+      }
+
       logEntry.setUserName(accessTokenIdentifierPair.getAccessTokenIdentifierObj().getUsername());
       msg.setHeader(HttpHeaders.Names.AUTHORIZATION,
                     "CDAP-verified " + accessTokenIdentifierPair.getAccessTokenIdentifierStr());
@@ -243,10 +274,17 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
   @Override
   public void writeRequested(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
     AuditLogEntry logEntry = getLogEntry(ctx);
+    boolean isLogResponseBody = logEntry.isLogResponseBody();
     Object message = e.getMessage();
     if (message instanceof HttpResponse) {
       HttpResponse response = (HttpResponse) message;
       logEntry.setResponseCode(response.getStatus().getCode());
+      if (isLogResponseBody) {
+        ChannelBuffer body = response.getContent();
+        if (body.readable()) {
+          logEntry.setResponseBody(body.toString(Charsets.UTF_8));
+        }
+      }
       if (response.containsHeader(HttpHeaders.Names.CONTENT_LENGTH)) {
         String lengthString = response.getHeader(HttpHeaders.Names.CONTENT_LENGTH);
         try {
@@ -258,14 +296,19 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     } else if (message instanceof ChannelBuffer) {
       // for chunked responses the response code will only be present on the first chunk
       // so we only look for it the first time around
+      ChannelBuffer channelBuffer = (ChannelBuffer) message;
       if (logEntry.getResponseCode() == null) {
-        ChannelBuffer channelBuffer = (ChannelBuffer) message;
         logEntry.setResponseCode(findResponseCode(channelBuffer));
         if (logEntry.getResponseCode() != null) {
           // we currently only look for a Content-Length header in the first buffer on an HTTP response
           // this is a limitation of the implementation that simplifies header parsing
           logEntry.setResponseContentLength(findContentLength(channelBuffer));
+          if (isLogResponseBody) {
+            logEntry.setResponseBody(findResponseBody(channelBuffer, true));
+          }
         }
+      } else if (isLogResponseBody) {
+        logEntry.appendResponseBody(findResponseBody(channelBuffer, false));
       }
     } else {
       LOG.debug("Unhandled response message type: {}", message.getClass());
@@ -332,6 +375,20 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     return logEntry;
   }
 
+  private String findResponseBody(ChannelBuffer channelBuffer, boolean isFirstChunk) {
+    if (!isFirstChunk) {
+      return channelBuffer.readable() ? channelBuffer.toString(Charsets.UTF_8) : "";
+    }
+    int bufferEnd = channelBuffer.writerIndex();
+    int start = channelBuffer.indexOf(channelBuffer.readerIndex(), bufferEnd, TWO_SEPERATOR_FINDER);
+
+    if (start >= 0) {
+      // The http message separator is CRLF, which is "\r\n", two CRLF will be 4 characters.
+      return channelBuffer.toString(start + 4, bufferEnd - start - 4, Charsets.UTF_8).trim();
+    }
+    return "";
+  }
+
   private static final ChannelBufferIndexFinder CONTENT_LENGTH_FINDER = new ChannelBufferIndexFinder() {
     private byte[] headerName = HttpHeaders.Names.CONTENT_LENGTH.getBytes(Charsets.UTF_8);
 
@@ -343,6 +400,24 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
 
       for (int i = 0; i < headerName.length; i++) {
         if (headerName[i] != buffer.getByte(guessedIndex + i)) {
+          return false;
+        }
+      }
+      return true;
+    }
+  };
+
+  private static final ChannelBufferIndexFinder TWO_SEPERATOR_FINDER = new ChannelBufferIndexFinder() {
+    private byte[] lineSeperator  = "\r\n\r\n".getBytes(Charsets.UTF_8);
+
+    @Override
+    public boolean find(ChannelBuffer buffer, int guessedIndex) {
+      if (buffer.capacity() - guessedIndex < lineSeperator.length) {
+        return false;
+      }
+
+      for (int i = 0; i < lineSeperator.length; i++) {
+        if (lineSeperator[i] != buffer.getByte(guessedIndex + i)) {
           return false;
         }
       }

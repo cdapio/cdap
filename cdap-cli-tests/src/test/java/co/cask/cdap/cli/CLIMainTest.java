@@ -418,60 +418,32 @@ public class CLIMainTest extends CLITestBase {
 
   @Test
   public void testRuntimeArgs() throws Exception {
-    ServiceId service = fakeAppId.service(PrefixedEchoHandler.NAME);
-    ServiceId serviceV1 = fakeAppIdV1.service(PrefixedEchoHandler.NAME);
-    String serviceName = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
-    String serviceArgument = String.format("%s version %s", serviceName, ApplicationId.DEFAULT_VERSION);
-    String serviceV1Argument = String.format("%s version %s", serviceName, V1_SNAPSHOT);
+    String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
+    ServiceId service = NamespaceId.DEFAULT.app(FakeApp.NAME).service(PrefixedEchoHandler.NAME);
 
-    // Start service with default version
     Map<String, String> runtimeArgs = ImmutableMap.of("sdf", "bacon");
-    String runtimeArgsJson = GSON.toJson(runtimeArgs);
     String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
-    testCommandOutputContains(cli, "start service " + serviceArgument + " '" + runtimeArgsKV + "'",
+    testCommandOutputContains(cli, "start service " + qualifiedServiceId + " '" + runtimeArgsKV + "'",
                               "Successfully started service");
-    assertProgramStatus(programClient, service, "RUNNING");
-
     try {
-      // Use commands with no optional version argument to call service and stop it
-      testCommandOutputContains(cli, "call service " + serviceName + " POST /echo body \"testBody\"",
+      assertProgramStatus(programClient, service, "RUNNING");
+      testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
                                 "bacon:testBody");
-      testCommandOutputContains(cli, "stop service " + serviceName, "Successfully stopped service");
+      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped service");
       assertProgramStatus(programClient, service, "STOPPED");
-      
-      // Start serviceV1
-      Map<String, String> runtimeArgs1 = ImmutableMap.of("sdf", "chickenz");
-      String runtimeArgs1Json = GSON.toJson(runtimeArgs1);
-      String runtimeArgs1KV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs1);
-      testCommandOutputContains(cli, "start service " + serviceV1Argument + " '" + runtimeArgs1KV + "'",
-                                "Successfully started service");
-      assertProgramStatus(programClient, serviceV1, "RUNNING");
 
-      // Call serviceV1 and stop it
-      testCommandOutputContains(cli, "call service " + serviceV1Argument + " POST /echo body \"testBody\"",
-                                "chickenz:testBody");
-      testCommandOutputContains(cli, "stop service " + serviceV1Argument, "Successfully stopped service");
-      assertProgramStatus(programClient, serviceV1, "STOPPED");
-
-      // Use commands with no optional version argument to set runtimeargs1 for service, get runtimeargs1, call service
-      testCommandOutputContains(cli, "set service runtimeargs " + serviceName + " '" + runtimeArgs1KV + "'",
+      Map<String, String> runtimeArgs2 = ImmutableMap.of("sdf", "chickenz");
+      String runtimeArgs2Json = GSON.toJson(runtimeArgs2);
+      String runtimeArgs2KV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs2);
+      testCommandOutputContains(cli, "set service runtimeargs " + qualifiedServiceId + " '" + runtimeArgs2KV + "'",
                                 "Successfully set runtime args");
-      testCommandOutputContains(cli, "start service " + serviceName, "Successfully started service");
-      testCommandOutputContains(cli, "get service runtimeargs " + serviceName, runtimeArgs1Json);
-      testCommandOutputContains(cli, "call service " + serviceName + " POST /echo body \"testBody\"",
+      testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started service");
+      testCommandOutputContains(cli, "get service runtimeargs " + qualifiedServiceId, runtimeArgs2Json);
+      testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
                                 "chickenz:testBody");
-
-      // Use commands with version argument to set runtimeargs for serviceV1, get runtimeargs, call service when both
-      // versions of the service are running
-      testCommandOutputContains(cli, "set service runtimeargs " + serviceV1Argument + " '" + runtimeArgsKV + "'",
-                                "Successfully set runtime args");
-      testCommandOutputContains(cli, "start service " + serviceV1Argument, "Successfully started service");
-      testCommandOutputContains(cli, "get service runtimeargs " + serviceV1Argument, runtimeArgsJson);
-      testCommandOutputContains(cli, "call service " + serviceV1Argument + " POST /echo body \"testBody\"",
-                                "bacon:testBody");
     } finally {
-      // Stop all running services
-      programClient.stopAll(NamespaceId.DEFAULT);
+      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped service");
+      assertProgramStatus(programClient, service, "STOPPED");
     }
   }
 

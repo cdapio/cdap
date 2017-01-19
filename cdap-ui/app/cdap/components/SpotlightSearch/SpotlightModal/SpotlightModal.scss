@@ -1,0 +1,166 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../../styles/variables.scss';
+$spotlight-bg-color: darken($cdap-darkness, 25%);
+$row-dark-color: #eeeeee;
+$description-color: #666666;
+$light-grey: #cccccc;
+$hightlight-color: #7f8c8d;
+
+.modal-dialog.search-results-modal {
+  margin-top: 95px;
+  width: 700px;
+
+  .modal-content { border-radius: 0; }
+  .modal-header {
+    background-color: $spotlight-bg-color;
+    color: white;
+    padding: 10px 15px;
+    border-bottom: 0;
+
+    .close-section {
+      width: 325px;
+
+      .dropdown {
+        display: inline-block;
+        margin-right: 26px;
+
+        .current-page {
+          margin-left: 5px;
+        }
+
+        .fa-caret-down {
+          margin-top: 4px;
+          margin-left: 10px;
+        }
+
+        .dropdown-menu {
+          min-width: 65px;
+          outline: 0;
+        }
+
+        .dropdown-item {
+          border: none;
+          display: block;
+          color: black;
+          background-color: white;
+          width: 100%;
+          text-align: left;
+          outline: 0;
+
+          &:hover {
+            background-color: #2e323b;
+            color: white;
+          }
+        }
+      }
+    }
+    .modal-title {
+      font-size: 14px;
+      font-weight: 500;
+
+      .search-results-total {
+        color: $light-grey;
+        font-size: 13px;
+        margin-right: 26px;
+      }
+
+      span.fa.fa-times { cursor: pointer; }
+    }
+  }
+
+  .modal-body {
+    padding: 0;
+    min-height: 550px;
+    max-height: 550px;
+    overflow-y: auto;
+
+    .search-results-item {
+      padding: 5px 15px;
+      margin-right: 0;
+      margin-left: 0;
+      min-height: 55px;
+
+      &:nth-of-type(odd) {
+        background-color: $row-dark-color;
+      }
+
+      .entity-title,
+      .tag {
+        white-space: nowrap;
+        overflow-x: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .entity-title { font-size: 16px; }
+      .entity-icon {
+        margin-right: 10px;
+        vertical-align: middle;
+      }
+      .entity-title { font-weight: 500; }
+      .entity-description {
+        color: $description-color;
+        margin-top: 3px;
+      }
+
+      .tag {
+        max-width: 200px;
+        display: inline-block;
+        padding: 2px 5px;
+        margin-right: 3px;
+        margin-top: 3px;
+        font-size: 10px;
+        background-color: $spotlight-bg-color;
+        color: white;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+
+      &.active {
+        background-color: $hightlight-color;
+        color: white;
+      }
+    }
+
+    .pagination {
+      .page-item {
+        &.active .page-link {
+          background-color: $spotlight-bg-color;
+          border-color: $spotlight-bg-color;
+          color: white;
+        }
+
+        &:not(:last-child):not(:first-child) {
+          .page-link {
+            border: none;
+          }
+        }
+
+        &:first-child > .page-link { margin-right: 10px; }
+        &:last-child > .page-link { margin-left: 10px; }
+        &.disabled > .page-link { cursor: not-allowed; }
+      }
+
+      .page-link {
+        cursor: pointer;
+        color: $spotlight-bg-color;
+        border-radius: 4px;
+      }
+
+    }
+  }
+}

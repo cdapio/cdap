@@ -21,7 +21,7 @@ import {
   ModalHeader
 } from 'reactstrap';
 
-require('./SpotlightModal.less');
+require('./SpotlightModal.scss');
 
  export default class SpotlightModalHeader extends Component {
    constructor(props) {
@@ -41,7 +41,7 @@ require('./SpotlightModal.less');
    render() {
      return (
        <ModalHeader>
-         <span className="pull-left">
+         <span className="float-xs-left">
            {
 
              T.translate('features.SpotlightSearch.SpotlightModal.headerSearchResults', {
@@ -50,7 +50,7 @@ require('./SpotlightModal.less');
            }
          </span>
          <div
-           className="close-section pull-right text-right"
+           className="close-section float-xs-right text-xs-right"
          >
            <span className="search-results-total">
              {

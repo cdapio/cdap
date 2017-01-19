@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,10 +20,11 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
-import co.cask.cdap.data2.dataset2.lib.table.TableProperties;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -39,7 +40,6 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,11 +71,12 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
 
   @Override
   public void create() throws IOException {
-    HColumnDescriptor columnDescriptor = new HColumnDescriptor(TableProperties.getColumnFamily(spec.getProperties()));
+    HColumnDescriptor columnDescriptor =
+      new HColumnDescriptor(TableProperties.getColumnFamilyBytes(spec.getProperties()));
 
-    if (TableProperties.supportsReadlessIncrements(spec.getProperties())) {
+    if (TableProperties.getReadlessIncrementSupport(spec.getProperties())) {
       columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
-    } else if (TableProperties.isTransactional(spec.getProperties())) {
+    } else if (DatasetsUtil.isTransactional(spec.getProperties())) {
       // NOTE: we cannot limit number of versions as there's no hard limit on # of excluded from read txs
       columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
     } else {
@@ -84,30 +85,27 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
 
     tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
 
-    String ttlProp = spec.getProperties().get(Table.PROPERTY_TTL);
-    if (ttlProp != null) {
-      long ttl = Long.parseLong(ttlProp);
-      if (ttl > 0) {
-        // convert ttl from seconds to milli-seconds
-        ttl = TimeUnit.SECONDS.toMillis(ttl);
-        columnDescriptor.setValue(TxConstants.PROPERTY_TTL, String.valueOf(ttl));
-      }
+    Long ttl = TableProperties.getTTL(spec.getProperties());
+    if (ttl != null) {
+      // convert ttl from seconds to milli-seconds
+      ttl = TimeUnit.SECONDS.toMillis(ttl);
+      columnDescriptor.setValue(TxConstants.PROPERTY_TTL, String.valueOf(ttl));
     }
 
     final HTableDescriptorBuilder tableDescriptor = tableUtil.buildHTableDescriptor(tableId);
     tableDescriptor.addFamily(columnDescriptor);
 
-    // if the dataset is configured for readless increments, the set the table property to support upgrades
-    boolean supportsReadlessIncrements = TableProperties.supportsReadlessIncrements(spec.getProperties());
+    // if the dataset is configured for read-less increments, then set the table property to support upgrades
+    boolean supportsReadlessIncrements = TableProperties.getReadlessIncrementSupport(spec.getProperties());
     if (supportsReadlessIncrements) {
       tableDescriptor.setValue(Table.PROPERTY_READLESS_INCREMENT, "true");
     }
 
-    // if the dataset is configured to be non-transactional, the set the table property to support upgrades
-    if (!TableProperties.isTransactional(spec.getProperties())) {
+    // if the dataset is configured to be non-transactional, then set the table property to support upgrades
+    if (!DatasetsUtil.isTransactional(spec.getProperties())) {
       tableDescriptor.setValue(Constants.Dataset.TABLE_TX_DISABLED, "true");
       if (supportsReadlessIncrements) {
-        // readless increments CPs by default assume that table is transactional
+        // read-less increments CPs by default assume that table is transactional
         columnDescriptor.setValue("dataset.table.readless.increment.transactional", "false");
       }
     }
@@ -138,47 +136,37 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
   @Override
   protected boolean needsUpdate(HTableDescriptor tableDescriptor) {
     HColumnDescriptor columnDescriptor =
-      tableDescriptor.getFamily(TableProperties.getColumnFamily(spec.getProperties()));
+      tableDescriptor.getFamily(TableProperties.getColumnFamilyBytes(spec.getProperties()));
 
     boolean needUpgrade = false;
     if (tableUtil.getBloomFilter(columnDescriptor) != HBaseTableUtil.BloomType.ROW) {
       tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
       needUpgrade = true;
     }
-    String ttlInMillis = null;
-    if (spec.getProperty(Table.PROPERTY_TTL) != null) {
-      // ttl not null, convert to millis
-      ttlInMillis = String.valueOf(TimeUnit.SECONDS.toMillis(Long.valueOf(spec.getProperty(Table.PROPERTY_TTL))));
-    }
+    Long ttl = TableProperties.getTTL(spec.getProperties());
+    String ttlInMillis = ttl == null ? null : String.valueOf(TimeUnit.SECONDS.toMillis(ttl));
 
-    if (spec.getProperty(Table.PROPERTY_TTL) == null &&
-        columnDescriptor.getValue(TxConstants.PROPERTY_TTL) != null) {
+    if (ttl == null && columnDescriptor.getValue(TxConstants.PROPERTY_TTL) != null) {
       columnDescriptor.remove(TxConstants.PROPERTY_TTL.getBytes());
       needUpgrade = true;
-    } else if (spec.getProperty(Table.PROPERTY_TTL) != null &&
-               !ttlInMillis.equals(columnDescriptor.getValue(TxConstants.PROPERTY_TTL))) {
+    } else if (ttl != null && !ttlInMillis.equals(columnDescriptor.getValue(TxConstants.PROPERTY_TTL))) {
       columnDescriptor.setValue(TxConstants.PROPERTY_TTL, ttlInMillis);
       needUpgrade = true;
     }
 
     // NOTE: transactional attribute for table cannot be changed between upgrades, currently
 
-    // check if the readless increment setting has changed
-    boolean supportsReadlessIncrements;
-    if (spec.getProperty(Table.PROPERTY_READLESS_INCREMENT) == null &&
-        tableDescriptor.getValue(Table.PROPERTY_READLESS_INCREMENT) != null) {
+    // check if the read-less increment setting has changed
+    boolean supportsReadlessIncrements = supportsReadlessIncrements(tableDescriptor);
+    boolean specifiedReadlessIncrements = TableProperties.getReadlessIncrementSupport(spec.getProperties());
+    if (!specifiedReadlessIncrements && supportsReadlessIncrements) {
       tableDescriptor.remove(Table.PROPERTY_READLESS_INCREMENT);
       supportsReadlessIncrements = false;
       needUpgrade = true;
-    } else if (spec.getProperty(Table.PROPERTY_READLESS_INCREMENT) != null &&
-        !spec.getProperty(Table.PROPERTY_READLESS_INCREMENT).equals(
-            tableDescriptor.getValue(Table.PROPERTY_READLESS_INCREMENT))) {
-      tableDescriptor.setValue(Table.PROPERTY_READLESS_INCREMENT,
-          spec.getProperty(Table.PROPERTY_READLESS_INCREMENT));
+    } else if (specifiedReadlessIncrements && !supportsReadlessIncrements) {
+      tableDescriptor.setValue(Table.PROPERTY_READLESS_INCREMENT, "true");
       supportsReadlessIncrements = true;
       needUpgrade = true;
-    } else {
-      supportsReadlessIncrements = supportsReadlessIncrements(tableDescriptor);
     }
 
     boolean setMaxVersions = supportsReadlessIncrements || HBaseTableAdmin.isTransactional(tableDescriptor);
@@ -192,8 +180,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
 
   @Override
   protected CoprocessorJar createCoprocessorJar() throws IOException {
-    boolean supportsIncrement = TableProperties.supportsReadlessIncrements(spec.getProperties());
-    boolean transactional = TableProperties.isTransactional(spec.getProperties());
+    boolean supportsIncrement = TableProperties.getReadlessIncrementSupport(spec.getProperties());
+    boolean transactional = DatasetsUtil.isTransactional(spec.getProperties());
     return createCoprocessorJarInternal(conf, locationFactory, tableUtil, transactional, supportsIncrement);
   }
 
@@ -214,7 +202,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
         coprocessors.add(dataJanitorClass);
       }
     }
-    // readless increments
+    // read-less increments
     if (supportsReadlessIncrement) {
       coprocessors.add(incrementClass);
     }
@@ -225,42 +213,6 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     }
     Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, coprocessorList);
     return new CoprocessorJar(coprocessorList, jarFile);
-  }
-
-  /**
-   * Returns whether or not the dataset defined in the given specification should enable read-less increments.
-   * Defaults to false.
-   *
-   * @deprecated use {@link TableProperties#supportsReadlessIncrements(Map)} instead
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  public static boolean supportsReadlessIncrements(Map<String, String> props) {
-    return TableProperties.supportsReadlessIncrements(props);
-  }
-
-  /**
-   * Returns whether or not the dataset defined in the given specification is transactional.
-   * Defaults to true.
-   *
-   * @deprecated use {@link TableProperties#isTransactional(Map)} instead
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  public static boolean isTransactional(Map<String, String> props) {
-    return TableProperties.isTransactional(props);
-  }
-
-  /**
-   * Returns the column family as being set in the given specification.
-   * If it is not set, the {@link TableProperties#DEFAULT_DATA_COLUMN_FAMILY} will be returned.
-   *
-   * @deprecated use {@link TableProperties#getColumnFamily(Map)} instead
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  public static byte[] getColumnFamily(Map<String, String> props) {
-    return TableProperties.getColumnFamily(props);
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.api.dataset.table.Tables;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
@@ -143,7 +143,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     int ttl = 1;
     String ttlTable = "ttl";
     String noTtlTable = "nottl";
-    DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_TTL, String.valueOf(ttl)).build();
+    DatasetProperties props = TableProperties.builder().setTTL(ttl).build();
     getTableAdmin(CONTEXT1, ttlTable, props).create();
     DatasetSpecification ttlTableSpec = DatasetSpecification.builder(ttlTable, HBaseTable.class.getName())
       .properties(props.getProperties())
@@ -175,8 +175,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     Assert.assertArrayEquals(b("val2"), table.get(b("row2"), b("col2")));
 
     // test a table with no TTL
-    DatasetProperties props2 = DatasetProperties.builder()
-      .add(Table.PROPERTY_TTL, String.valueOf(Tables.NO_TTL)).build();
+    DatasetProperties props2 = TableProperties.builder().setTTL(Tables.NO_TTL).build();
     getTableAdmin(CONTEXT1, noTtlTable, props2).create();
     DatasetSpecification noTtlTableSpec = DatasetSpecification.builder(noTtlTable, HBaseTable.class.getName())
       .properties(props2.getProperties())
@@ -229,17 +228,17 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     TableId disabledTableId = hBaseTableUtil.createHTableId(NAMESPACE1, disableTableName);
     TableId enabledTableId = hBaseTableUtil.createHTableId(NAMESPACE1, enabledTableName);
 
-    DatasetProperties propsDisabled = DatasetProperties.builder()
-      .add(Table.PROPERTY_READLESS_INCREMENT, "false")
-      .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.COLUMN.name())
+    DatasetProperties propsDisabled = TableProperties.builder()
+      .setReadlessIncrementSupport(false)
+      .setConflictDetection(ConflictDetection.COLUMN)
       .build();
     HBaseTableAdmin disabledAdmin = getTableAdmin(CONTEXT1, disableTableName, propsDisabled);
     disabledAdmin.create();
     HBaseAdmin admin = TEST_HBASE.getHBaseAdmin();
 
-    DatasetProperties propsEnabled = DatasetProperties.builder()
-      .add(Table.PROPERTY_READLESS_INCREMENT, "true")
-      .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.COLUMN.name())
+    DatasetProperties propsEnabled = TableProperties.builder()
+      .setReadlessIncrementSupport(true)
+      .setConflictDetection(ConflictDetection.COLUMN)
       .build();
     HBaseTableAdmin enabledAdmin = getTableAdmin(CONTEXT1, enabledTableName, propsEnabled);
     enabledAdmin.create();
@@ -302,7 +301,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
 
   @Test
   public void testColumnFamily() throws Exception {
-    DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_COLUMN_FAMILY, "t").build();
+    DatasetProperties props = TableProperties.builder().setColumnFamily("t").build();
     String tableName = "testcf";
     DatasetAdmin admin = getTableAdmin(CONTEXT1, tableName, props);
     admin.create();

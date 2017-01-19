@@ -18,7 +18,7 @@ import {connect, Provider} from 'react-redux';
 import FileDnD from 'components/FileDnD';
 import CreateStreamWithUploadActions from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadActions';
 import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
-require('./UploadData.less');
+require('./UploadData.scss');
 
 const mapStateWithDNDFileProps = (state) => {
   return {

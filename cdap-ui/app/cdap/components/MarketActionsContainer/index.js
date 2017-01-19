@@ -20,7 +20,7 @@ import shortid from 'shortid';
 import classnames from 'classnames';
 import AbstractWizard from 'components/AbstractWizard';
 
-require('./MarketActionsContainer.less');
+require('./MarketActionsContainer.scss');
 
 export default class MarketActionsContainer extends Component {
   constructor(props) {
@@ -80,7 +80,7 @@ export default class MarketActionsContainer extends Component {
               let actionIcon = getIcon(action.type);
               return (
                 <div
-                  className="action-container text-center"
+                  className="action-container text-xs-center"
                   key={shortid.generate()}
                   onClick={this.openWizard.bind(this, index, action.type, action)}
                 >
@@ -88,7 +88,7 @@ export default class MarketActionsContainer extends Component {
                     className="action"
                     key={index}
                   >
-                    <div className="step text-center">
+                    <div className="step text-xs-center">
                       <span className={classnames("badge", {'completed' : isCompletedAction})}>{index + 1}</span>
                     </div>
                     <div className="action-icon">

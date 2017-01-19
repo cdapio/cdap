@@ -18,7 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import { Dropdown, DropdownMenu } from 'reactstrap';
 import T from 'i18n-react';
 import classnames from 'classnames';
-require('./ProductsDropdown.less');
+require('./ProductsDropdown.scss');
 import head from 'lodash/head';
 import shortid from 'shortid';
 import NamespaceStore from 'services/NamespaceStore';
