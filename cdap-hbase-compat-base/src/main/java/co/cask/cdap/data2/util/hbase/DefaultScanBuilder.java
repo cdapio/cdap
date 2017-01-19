@@ -29,11 +29,11 @@ import java.util.NavigableSet;
 /**
  * Default implementation for {@link ScanBuilder}. Specific HBase compat module can extends and override methods.
  */
-class DefaultScanBuilder implements ScanBuilder {
+public class DefaultScanBuilder implements ScanBuilder {
 
   protected final Scan scan;
 
-  DefaultScanBuilder() {
+  public DefaultScanBuilder() {
     this.scan = new Scan();
   }
 
