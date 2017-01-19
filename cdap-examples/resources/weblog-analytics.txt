@@ -1,3 +1,4 @@
+
 create app test cdap-etl-batch 3.6.1-SNAPSHOT system \$CDAP_HOME/examples/resources/weblog-analytics-config.json
 load stream logEventStream \$CDAP_HOME/examples/resources/accesslog.txt
 start mapreduce test.ETLMapReduce
