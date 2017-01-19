@@ -365,9 +365,9 @@ A. If you are **adding CDAP** to an existing Kerberos cluster, in order to confi
  
       .. highlight:: xml
  
-      i. To allow CDAP to act as a Hive client, it must be given ``proxyuser`` permissions and allowed from all hosts. 
-         For example: set the following properties in the configuration file ``core-site.xml``, where ``cdap`` is a system 
-         group to which the ``cdap`` user is a member::
+      i. To allow CDAP to act as a Hive client, it must be given ``proxyuser`` permissions and allowed
+         from all hosts. For example: set the following properties in the configuration file ``core-site.xml``, 
+         where ``cdap`` is a system group to which the ``cdap`` user is a member::
    
            <property>
              <name>hadoop.proxyuser.hive.groups</name>
@@ -380,6 +380,7 @@ A. If you are **adding CDAP** to an existing Kerberos cluster, in order to confi
    
       #. To execute Hive queries on a secure cluster, the cluster must be running the MapReduce ``JobHistoryServer`` 
          service. Consult your distribution documentation on the proper configuration of this service.
+         
       #. To execute Hive queries on a secure cluster using the CDAP Explore Service, the Hive MetaStore service 
          must be configured for Kerberos authentication. Consult your distribution documentation on the proper 
          configuration of the Hive MetaStore service.
