@@ -601,9 +601,13 @@ features:
       MISSING_REQUIRED_FIELDS: Please fill out all required fields
       INVALID_NAME: "Invalid column name. Column name can only be alphanumeric, '_', or '-'"
       DUPLICATE_NAME: "Column name already exist. Please choose a different name"
-      INVALID_COLUMNS: "Invalid column name {columns}. Column names can contain only A-Z, a-z, 0-9 and underscores"
-      DUPLICATE_COLUMNS: Duplicate column name {columns}
-      NO_DATA: No data to process, please upload a file, enter data to process or choose data from existing datasets
+      INVALID_COLUMNS: "Column names can contain only A-Z, a-z, 0-9 and underscores. Invalid columns: {columns} "
+      DUPLICATE_COLUMNS: "Duplicates: {columns}"
+      NO_DATA: Please upload a file, enter data to process or choose data from existing datasets
+    ErrorsShortDescription:
+      INVALID_COLUMNS: Invalid column name.
+      DUPLICATE_COLUMNS: Duplicate column name.
+      NO_DATA: No data to process.
     Explore:
       browse: "Browse Dataset ({count})"
       noData: No data
@@ -638,6 +642,7 @@ features:
         delimiter: Set delimiter
         firstLineAsColumns: First line as column name
         skipEmptyLines: Skip empty lines
+        convertToSchema: Make column names schema compatible
     LeftPanel:
       sort: Sort
       selectColumn: Select a column to enable {type}

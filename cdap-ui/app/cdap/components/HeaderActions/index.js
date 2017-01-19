@@ -19,7 +19,8 @@ import { Dropdown, DropdownMenu, DropdownItem } from 'reactstrap';
 import PlusButton from '../PlusButton';
 import T from 'i18n-react';
 import NamespaceStore from 'services/NamespaceStore';
-import SpotlightSearch from 'components/SpotlightSearch';
+// FIXME: CDAP-8125 - We will add this back when we have detailed view of entities.
+// import SpotlightSearch from 'components/SpotlightSearch';
 require('./HeaderActions.scss');
 var classNames = require('classnames');
 import NamespaceDropdown from 'components/NamespaceDropdown';
@@ -95,9 +96,13 @@ export default class HeaderActions extends Component {
             </span>
             <span className={classNames("fa", {'fa-unlock': !mode.secured, 'fa-lock': mode.secured})}></span>
           </div>
-          <div className="navbar-item">
-            <SpotlightSearch />
-          </div>
+          {/*
+            FIXME: CDAP-8125 -
+            We will add this back when we have detailed view of entities.
+            <div className="navbar-item">
+              <SpotlightSearch />
+            </div>
+          */}
           {
             // FIXME: Add this later.
             // <div className="navbar-item">

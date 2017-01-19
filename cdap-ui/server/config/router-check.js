@@ -57,7 +57,7 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
       url = cdapConfig['router.server.address'],
       checkTimeout = cdapConfig['dashboard.router.check.timeout.secs'];
 
-  if (cdapConfig['ssl.enabled'] === "true") {
+  if (cdapConfig['ssl.external.enabled'] === "true") {
     url = 'https://' + url + ':' + cdapConfig['router.ssl.server.port'];
   } else {
     url = 'http://' + url + ':' + cdapConfig['router.server.port'];

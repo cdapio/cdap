@@ -27,9 +27,9 @@ import java.util.Map;
 /**
  * HBase 1.1 specific implementation for {@link ScanBuilder}.
  */
-class HBase11ScanBuilder extends DefaultScanBuilder {
+public class HBase11ScanBuilder extends DefaultScanBuilder {
 
-  HBase11ScanBuilder() {
+  public HBase11ScanBuilder() {
     super();
   }
 

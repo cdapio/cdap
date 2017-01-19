@@ -34,10 +34,13 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.messaging.server.MessagingHttpService;
+import co.cask.cdap.messaging.store.TableFactory;
+import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -46,13 +49,17 @@ import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
  * A {@link TwillRunnable} for messaging system.
  */
 public class MessagingServiceTwillRunnable extends AbstractMasterTwillRunnable {
+  private static final Logger LOG = LoggerFactory.getLogger(MessagingServiceTwillRunnable.class);
 
   private Injector injector;
 
@@ -84,9 +91,24 @@ public class MessagingServiceTwillRunnable extends AbstractMasterTwillRunnable {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.MESSAGING_SERVICE));
+    HBaseTableFactory tableFactory = (HBaseTableFactory) injector.getInstance(TableFactory.class);
+
+    // Upgrade the TMS Message and Payload Tables
+    try {
+      tableFactory.upgradeMessageTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
+    } catch (IOException ex) {
+      LOG.warn("Exception while trying to upgrade TMS MessageTable.", ex);
+    }
+
+    try {
+      tableFactory.upgradePayloadTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
+    } catch (IOException ex) {
+      LOG.warn("Exception while trying to upgrade TMS PayloadTable.", ex);
+    }
   }
 
-  private Injector createInjector(CConfiguration cConf, Configuration hConf) {
+  @VisibleForTesting
+  public static Injector createInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),

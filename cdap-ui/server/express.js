@@ -93,7 +93,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       hydrator: {
         previewEnabled: cdapConfig['enable.preview'] === 'true'
       },
-      sslEnabled: cdapConfig['ssl.enabled'] === 'true',
+      sslEnabled: cdapConfig['ssl.external.enabled'] === 'true',
       securityEnabled: authAddress.enabled,
       isEnterprise: process.env.NODE_ENV === 'production'
     });
@@ -217,12 +217,12 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   app.post('/namespaces/:namespace/:path(*)', function (req, res) {
     var protocol,
         port;
-    if (cdapConfig['ssl.enabled'] === 'true') {
+    if (cdapConfig['ssl.external.enabled'] === 'true') {
       protocol = 'https://';
     } else {
       protocol = 'http://';
     }
-    if (cdapConfig['ssl.enabled'] === 'true') {
+    if (cdapConfig['ssl.external.enabled'] === 'true') {
       port = cdapConfig['router.ssl.bind.port'];
     } else {
       port = cdapConfig['router.server.port'];
@@ -333,7 +333,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     request(opts,
       function (nerr, nres, nbody) {
         if (nerr || nres.statusCode !== 200) {
-          res.status(nres.statusCode).send(nbody);
+          var statusCode = (nres ? nres.statusCode : 500) || 500;
+          res.status(statusCode).send(nbody);
         } else {
           res.send(nbody);
         }
@@ -370,13 +371,13 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     function (req, res) {
       var protocol,
           port;
-      if (cdapConfig['ssl.enabled'] === 'true') {
+      if (cdapConfig['ssl.external.enabled'] === 'true') {
         protocol = 'https://';
       } else {
         protocol = 'http://';
       }
 
-      if (cdapConfig['ssl.enabled'] === 'true') {
+      if (cdapConfig['ssl.external.enabled'] === 'true') {
         port = cdapConfig['router.ssl.bind.port'];
       } else {
         port = cdapConfig['router.server.port'];
@@ -570,7 +571,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       hydrator: {
         previewEnabled: cdapConfig['enable.alpha.preview'] === 'true'
       },
-      sslEnabled: cdapConfig['ssl.enabled'] === 'true',
+      sslEnabled: cdapConfig['ssl.external.enabled'] === 'true',
       securityEnabled: authAddress.enabled,
       isEnterprise: process.env.NODE_ENV === 'production'
     });

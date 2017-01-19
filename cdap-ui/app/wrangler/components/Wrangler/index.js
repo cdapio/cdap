@@ -28,6 +28,8 @@ import FileDataUpload from 'components/FileDataUpload';
 
 require('./Wrangler.scss');
 
+const NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+
 /**
  * 3 Steps for any transforms:
  *    1. Format the data
@@ -43,6 +45,7 @@ export default class Wrangler extends Component {
       loading: false,
       header: false,
       skipEmptyLines: false,
+      convertToSchema: false,
       delimiter: '',
       wranglerInput: '',
       isDataSet: false,
@@ -61,6 +64,7 @@ export default class Wrangler extends Component {
     this.getWranglerOutput = this.getWranglerOutput.bind(this);
     this.onTextInputBlur = this.onTextInputBlur.bind(this);
     this.handleDataUpload = this.handleDataUpload.bind(this);
+    this.handleSetConvertToSchema = this.handleSetConvertToSchema.bind(this);
   }
 
   getChildContext() {
@@ -138,6 +142,42 @@ export default class Wrangler extends Component {
 
     let headers = papa.meta.fields || Object.keys(formattedData[0]);
 
+    if (this.state.convertToSchema) {
+      // modify header to be in the acceptable AVRO format
+      let renameColumns = [];
+
+      headers.forEach((column, index) => {
+        if (!NAME_PATTERN.test(column)) {
+          let newName = column;
+          let firstCharRegex = /[A-Za-z_]/;
+
+          if (!firstCharRegex.test(newName[0])) {
+            newName = '_'.concat(newName.slice(1));
+          }
+
+          let invalidRegex = /[^A-Za-z0-9_-]/g;
+          newName = newName.replace(invalidRegex, '_');
+
+          renameColumns.push({
+            oldName: column,
+            newName: newName
+          });
+
+          headers[index] = newName;
+        }
+      });
+
+      // Reformatting keys
+      if (renameColumns.length > 0) {
+        formattedData.forEach((row) => {
+          renameColumns.forEach((column) => {
+            row[column.newName] = row[column.oldName];
+            delete row[column.oldName];
+          });
+        });
+      }
+    }
+
     let error = this.validateHeaders(headers);
 
     if (error) {
@@ -184,7 +224,6 @@ export default class Wrangler extends Component {
     // Check for valid names
     let invalidNames = [];
     headers.forEach((column) => {
-      const NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_-]*$/;
       if (!NAME_PATTERN.test(column)) {
         invalidNames.push(column);
       }
@@ -210,6 +249,10 @@ export default class Wrangler extends Component {
   handleSetSkipEmptyLines() {
     this.setState({skipEmptyLines: !this.state.skipEmptyLines});
   }
+  handleSetConvertToSchema() {
+    this.setState({convertToSchema: !this.state.convertToSchema});
+  }
+
   handleTextInput(input) {
     this.setState({wranglerInput: input});
   }
@@ -229,7 +272,8 @@ export default class Wrangler extends Component {
       <div className="wrangler-error-container">
         <CardActionFeedback
           type="DANGER"
-          message={T.translate(`features.Wrangler.Errors.${errorType}`, {columns})}
+          message={T.translate(`features.Wrangler.ErrorsShortDescription.${errorType}`)}
+          extendedMessage={T.translate(`features.Wrangler.Errors.${errorType}`, {columns})}
         />
       </div>
     );
@@ -342,7 +386,7 @@ export default class Wrangler extends Component {
                   <input type="checkbox"
                     className="form-check-input"
                     onChange={this.handleSetHeaders}
-                    checked={this.state.headers}
+                    checked={this.state.header}
                   /> {T.translate('features.Wrangler.InputScreen.Options.firstLineAsColumns')}
                 </label>
               </div>
@@ -353,7 +397,18 @@ export default class Wrangler extends Component {
                   <input type="checkbox"
                     className="form-check-input"
                     onChange={this.handleSetSkipEmptyLines}
+                    checked={this.state.skipEmptyLines}
                   /> {T.translate('features.Wrangler.InputScreen.Options.skipEmptyLines')}
+                </label>
+              </div>
+
+              <div className="checkbox">
+                {/* convertToSchema */}
+                <label>
+                  <input type="checkbox"
+                    onChange={this.handleSetConvertToSchema}
+                    checked={this.state.convertToSchema}
+                  /> {T.translate('features.Wrangler.InputScreen.Options.convertToSchema')}
                 </label>
               </div>
             </form>

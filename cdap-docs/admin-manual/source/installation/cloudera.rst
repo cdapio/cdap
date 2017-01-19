@@ -107,6 +107,10 @@ changes.
 Downloading and Distributing Packages
 =====================================
 
+**Note:** Both the :ref:`Custom Service Descriptor (CSD) <cloudera-installation-download>`
+and the :ref:`CDAP Parcel <cloudera-installation-download-distribute-parcel>` must be
+downloaded and installed in order to successfully install CDAP.
+
 .. _cloudera-installation-download:
 
 Downloading and Installing CSD
@@ -596,14 +600,14 @@ For Kerberos-enabled Hadoop clusters:
   creates will already exist and be owned by a different user. On all datanodes, run this
   command, substituting in the correct value of the YARN parameter ``yarn.nodemanager.local-dirs``::
     
-    rm -rf <YARN.NODEMANAGER.LOCAL-DIRS>/usercache/cdap
+    $ rm -rf <YARN.NODEMANAGER.LOCAL-DIRS>/usercache/cdap
   
   (As ``yarn.nodemanager.local-dirs`` can be a comma-separated list of directories, you may
   need to run this command multiple times, once for each entry.)
   
   If, for example, the setting for ``yarn.nodemanager.local-dirs`` is ``/yarn/nm``, you would use::
   
-    rm -rf /yarn/nm/usercache/cdap
+    $ rm -rf /yarn/nm/usercache/cdap
 
   Restart CDAP after removing the usercache(s).
 

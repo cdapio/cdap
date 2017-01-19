@@ -296,6 +296,7 @@ gulp.task('polyfill', function () {
     './app/polyfill.js',
     './app/ui-utils/url-generator.js'
   ])
+    .pipe(plug.babel())
     .pipe(plug.concat('polyfill.js'))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });

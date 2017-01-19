@@ -349,6 +349,74 @@ not have a mechanism for setting the YARN ``allowed.system.users`` |---| the pre
 method of enabling the ``cdap`` user as it is more precise and limited |---| the setting
 of ``min.user.id`` needs to be used instead.)
 
+A. If you are **adding CDAP** to an existing Kerberos cluster, in order to configure **CDAP for
+   Kerberos authentication**:
+   
+   #. The ``<cdap-principal>`` is shown in the commands that follow as ``cdap``;
+      however, you are free to use a different appropriate name.
+
+      .. highlight:: console
+      
+   #. When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
+
+        $ echo "grant 'cdap', 'RWCA'" | hbase shell
+
+   #. In order to configure **CDAP Explore Service for secure Hadoop:**
+ 
+      .. highlight:: xml
+ 
+      i. To allow CDAP to act as a Hive client, it must be given ``proxyuser`` permissions and allowed
+         from all hosts. For example: set the following properties in the configuration file ``core-site.xml``, 
+         where ``cdap`` is a system group to which the ``cdap`` user is a member::
+   
+           <property>
+             <name>hadoop.proxyuser.hive.groups</name>
+             <value>cdap,hadoop,hive</value>
+           </property>
+           <property>
+             <name>hadoop.proxyuser.hive.hosts</name>
+             <value>*</value>
+           </property>
+   
+      #. To execute Hive queries on a secure cluster, the cluster must be running the MapReduce ``JobHistoryServer`` 
+         service. Consult your distribution documentation on the proper configuration of this service.
+         
+      #. To execute Hive queries on a secure cluster using the CDAP Explore Service, the Hive MetaStore service 
+         must be configured for Kerberos authentication. Consult your distribution documentation on the proper 
+         configuration of the Hive MetaStore service.
+ 
+      With all these properties set, the CDAP Explore Service will run on secure Hadoop clusters.
+
+B. If you are **adding Kerberos** to an existing cluster, in order to configure **CDAP for
+   Kerberos authentication**:
+   
+   .. highlight:: console
+
+   #. The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
+      that by running the following command as the ``hdfs`` user (change the ownership in the 
+      command from ``cdap`` to whatever is the ``<cdap-principal>``)::
+   
+        $ su hdfs && hadoop fs -mkdir -p /cdap && hadoop fs -chown cdap /cdap
+        
+   #. When converting an existing CDAP cluster to being Kerberos-enabled, you may
+      run into YARN usercache directory permission problems. A non-Kerberos cluster with
+      default settings will run CDAP containers as the user ``yarn``. A Kerberos cluster will
+      run them as the user ``cdap``. When converting, the usercache directory that YARN
+      creates will already exist and be owned by a different user. On all datanodes, run this
+      command, substituting in the correct value of the YARN parameter ``yarn.nodemanager.local-dirs``::
+    
+        $ rm -rf <YARN.NODEMANAGER.LOCAL-DIRS>/usercache/cdap
+  
+      (As ``yarn.nodemanager.local-dirs`` can be a comma-separated list of directories, you may
+      need to run this command multiple times, once for each entry.)
+  
+      If, for example, the setting for ``yarn.nodemanager.local-dirs`` is ``/yarn/nm``, you would use::
+  
+        $ rm -rf /yarn/nm/usercache/cdap
+  
+      Restart CDAP after removing the usercache(s).
+
+
 .. _ambari-configuration-highly-available:
 
 Enabling CDAP HA

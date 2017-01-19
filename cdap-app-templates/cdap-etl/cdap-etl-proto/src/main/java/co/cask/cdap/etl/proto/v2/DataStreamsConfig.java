@@ -73,7 +73,7 @@ public final class DataStreamsConfig extends ETLConfig {
   }
 
   public Boolean getStopGracefully() {
-    return stopGracefully == null ? false : stopGracefully;
+    return stopGracefully == null ? true : stopGracefully;
   }
 
   @Nullable
@@ -135,7 +135,7 @@ public final class DataStreamsConfig extends ETLConfig {
     public Builder() {
       this.isUnitTest = true;
       this.batchInterval = "1m";
-      this.stopGraceFully = false;
+      this.stopGraceFully = true;
     }
 
     public Builder setBatchInterval(String batchInterval) {
