@@ -12,13 +12,13 @@ Prerequisites
 -------------
 - NodeJS Version: 4.5.0 or higher
 
-  CDAP UI requires a minimum NodeJS version of 4.5.0. 
+  CDAP UI requires a minimum NodeJS version of 4.5.0.
   You could either download from the nodejs.org website or use a version manager.
 
   - `v4.5.0 Download <https://nodejs.org/download/release/v4.5.0/>`__
 
   - `nvm <https://github.com/creationix/nvm#install-script>`__ or
-  
+
   - `n <https://github.com/tj/n>`__ from github.
 
   The node version managers help switching between node version quite seamlessly.
@@ -52,6 +52,15 @@ Building Hydrator and Tracker in Angular
 
   $ npm run build ## build version
   $ npm run build-w ## watch version
+
+
+Building DLLs for updating pre-built libraries used by CDAP
+===========================================================
+::
+
+  $ npm run build-dlls
+
+This will build the pre-built library dlls that we use in CDAP
 
 
 Building a Running Backend
