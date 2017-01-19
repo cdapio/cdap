@@ -19,7 +19,6 @@ package co.cask.cdap.data2.transaction.messaging.coprocessor.hbase98;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.util.hbase.DefaultScanBuilder;
-import co.cask.cdap.data2.util.hbase.HTable98NameConverter;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.TopicMetadataCache;
@@ -79,7 +78,7 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
       prefixLength = Integer.valueOf(tableDesc.getValue(
         Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES));
 
-      nameConverter = new HTable98NameConverter();
+      nameConverter = new HTableNameConverter();
       String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
       cConfReader = new CConfigurationReader(env.getConfiguration(), sysConfigTablePrefix);
       topicMetadataCache = createTopicMetadataCache((RegionCoprocessorEnvironment) env);
