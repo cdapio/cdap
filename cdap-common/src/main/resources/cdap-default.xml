@@ -61,7 +61,7 @@
     <description>
       A cluster-based name for CDAP. It is used for scope resolution of preferences and
       runtime arguments. For example: the preference key "cluster.[cluster.name].my.key"
-      would be resolved to "my.key" at runtime; a program can then retreive the preference
+      would be resolved to "my.key" at runtime; a program can then retrieve the preference
       value by using just "my.key". The administrator can use this property to set
       different preferences for each cluster.
     </description>
@@ -274,7 +274,9 @@
     <name>app.program.extra.classpath</name>
     <value></value>
     <description>
-      Extra Java classpath for CDAP programs
+      Additional Java classpath for CDAP programs. These extra classpaths must
+      be present on all nodes in the cluster. Supports wildcard suffix "*"
+      to include all JAR files under a directory.
     </description>
   </property>
 
@@ -308,8 +310,8 @@
     <name>app.program.spark.yarn.client.rewrite.enabled</name>
     <value>true</value>
     <description>
-      Specify whether to rewrite the yarn.client class in Spark to work
-      around the issue SPARK-13441 in CDH clusters
+      Specify whether to rewrite the YARN 'Client.scala' class in Spark to work
+      around issue SPARK-13441 in CDH clusters
     </description>
   </property>
 
@@ -495,7 +497,7 @@
     <name>data.tx.num.cores</name>
     <value>${master.service.num.cores}</value>
     <description>
-      Number of cores for the transaction service
+      Number of virtual cores for the transaction service
     </description>
   </property>
 
@@ -856,8 +858,8 @@
     <name>kafka.server.log.flush.interval.messages</name>
     <value>10000</value>
     <description>
-      The interval length at which will force an fsync of data written to
-      the log
+      The interval length (in number of messages) at which to force an fsync of data
+      written to the log
     </description>
   </property>
 
@@ -997,7 +999,7 @@
     <name>log.saver.run.num.cores</name>
     <value>2</value>
     <description>
-      Number of cores for each log saver instance in YARN
+      Number of virtual cores for each log saver instance in YARN
     </description>
   </property>
 
@@ -1083,7 +1085,7 @@
     <name>master.service.num.cores</name>
     <value>2</value>
     <description>
-      Number of cores for master service instance
+      Number of virtual cores for each master service instance
     </description>
   </property>
 
@@ -1105,7 +1107,9 @@
   <property>
     <name>master.services.scheduler.queue</name>
     <value></value>
-    <description>Scheduler queue for CDAP Master Services</description>
+    <description>
+      Scheduler queue for CDAP Master services
+    </description>
   </property>
 
 
@@ -1328,7 +1332,7 @@
     <name>metrics.processor.num.cores</name>
     <value>1</value>
     <description>
-      Number of cores for metrics processor service Apache Twill runnable
+      Number of virtual cores for metrics processor service Apache Twill runnable
     </description>
   </property>
 
@@ -1557,6 +1561,7 @@
     <name>router.ssl.server.port</name>
     <value>${router.ssl.bind.port}</value>
     <description>
+      CDAP Router service bind port for HTTPS, for clients and webapps
     </description>
   </property>
 
@@ -1976,7 +1981,7 @@
     <name>stream.container.num.cores</name>
     <value>2</value>
     <description>
-      Number of virtual core for the YARN container that runs the stream
+      Number of virtual cores for the YARN container that runs the stream
       handler
     </description>
   </property>
