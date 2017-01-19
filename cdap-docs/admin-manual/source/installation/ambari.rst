@@ -361,10 +361,6 @@ A. If you are **adding CDAP** to an existing Kerberos cluster, in order to confi
 
         $ echo "grant 'cdap', 'RWCA'" | hbase shell
 
-   #. In order to configure **YARN for secure Hadoop:** the ``<cdap-principal>`` user must be 
-      able to launch YARN containers, either by adding it to the YARN ``allowed.system.users``
-      whitelist (preferred) or by adjusting the YARN ``min.user.id`` to include the ``<cdap-principal>`` user.
- 
    #. In order to configure **CDAP Explore Service for secure Hadoop:**
  
       .. highlight:: xml
