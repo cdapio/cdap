@@ -150,7 +150,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     reRenderComplexSchema();
   });
 
-  EventPipe.on('schema.import', (data) => {
+  EventPipe.on('schema.import', (data, append) => {
     vm.clearDOM = true;
 
     let jsonSchema;
@@ -173,6 +173,10 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
         });
         vm.clearDOM = false;
         return;
+      }
+
+      if (append && vm.schemaObj.fields){
+        jsonSchema.fields = _.union(vm.schemaObj.fields, jsonSchema.fields);
       }
 
       if (vm.pluginName === 'Stream') {

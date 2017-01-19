@@ -14,7 +14,7 @@
  * the License.
  */
 
-function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, SchemaHelper) {
+function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, SchemaHelper, EventPipe) {
   'ngInject';
   var vm = this;
 
@@ -66,6 +66,23 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     }
 
     field.nested = SchemaHelper.checkComplexType(field.displayType);
+  };
+
+  vm.pasteFields = (event) => {
+    let data = [];
+    let pastedData = event.clipboardData.getData('text/plain');
+    let pastedDataArr = pastedData.replace(/[\n\r\t,| ]/g, '$').split('$');
+    pastedDataArr.filter((name) => {
+      if (name){
+        data.push({
+          'name': name,
+          'type': 'string'
+        });
+      }
+    });
+
+    document.getElementsByClassName('bottompanel-body')[0].scrollTop = 0;
+    EventPipe.emit('schema.import', JSON.stringify(data), true);
   };
 
   function init(strJson) {
