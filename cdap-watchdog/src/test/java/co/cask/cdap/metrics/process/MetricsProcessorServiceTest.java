@@ -34,6 +34,7 @@ import co.cask.cdap.common.io.Encoder;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.common.security.UnsupportedUGIProvider;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -81,6 +82,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Testing the basic properties of the {@link MessagingMetricsProcessorService}.
@@ -118,7 +121,7 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
     KafkaClientService kafkaClient = new ZKKafkaClientService(zkClient);
     kafkaClient.startAndWait();
 
-    MetricStore metricStore = injector.getInstance(MetricStore.class);
+    final MetricStore metricStore = injector.getInstance(MetricStore.class);
 
     Set<Integer> partitions = new HashSet<>();
     for (int i = 0; i < PARTITION_SIZE; i++) {
@@ -134,7 +137,7 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
     KafkaPublisher publisher = kafkaClient.getPublisher(KafkaPublisher.Ack.FIRE_AND_FORGET, Compression.SNAPPY);
     KafkaPublisher.Preparer preparer = publisher.prepare(topicPrefix);
 
-    Map<String, Long> expected = new HashMap<>();
+    final Map<String, Long> expected = new HashMap<>();
     // Publish metrics to Kafka and record expected metrics before kafkaMetricsProcessorService starts
     for (int i = 1; i < 10; i++) {
       addKafkaMetrics(i, metricsContext, expected, preparer);
@@ -191,7 +194,12 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
       publishMessagingMetrics(i, metricsContext, expected);
     }
 
-    Thread.sleep(5000);
+    Tasks.waitFor(true, new Callable<Boolean>() {
+                    @Override
+                    public Boolean call() throws Exception {
+                      return canQueryAllMetrics(metricStore, metricsContext, expected);
+                    }
+                  }, 7000, TimeUnit.MILLISECONDS, "Cannot get all expected metrics from the metrics store.");
 
     // Query metrics from the metricStore and compare them with the expected ones
     assertMetricsResult(metricStore, metricsContext, expected);
@@ -233,20 +241,33 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
     return metric;
   }
 
+  private boolean canQueryAllMetrics(MetricStore metricStore, Map<String, String> metricsContext,
+                                     Map<String, Long> expected) {
+    for (Map.Entry<String, Long> metric : expected.entrySet()) {
+      if (getQueryResult(metricStore, metricsContext, metric.getKey()).size() == 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private void assertMetricsResult(MetricStore metricStore, Map<String, String> metricsContext,
                                    Map<String, Long> expected) {
     for (Map.Entry<String, Long> metric : expected.entrySet()) {
-      MetricDataQuery metricDataQuery =
-        new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, metric.getKey(),
-                            AggregationFunction.SUM,
-                            metricsContext,
-                            ImmutableList.<String>of());
-      Collection<MetricTimeSeries> query = metricStore.query(metricDataQuery);
+      Collection<MetricTimeSeries> query = getQueryResult(metricStore, metricsContext, metric.getKey());
       MetricTimeSeries timeSeries = Iterables.getOnlyElement(query);
       List<TimeValue> timeValues = timeSeries.getTimeValues();
       TimeValue timeValue = Iterables.getOnlyElement(timeValues);
       Assert.assertEquals(metric.getValue().longValue(), timeValue.getValue());
     }
+  }
+
+  private Collection<MetricTimeSeries> getQueryResult(MetricStore metricStore, Map<String, String> metricsContext,
+                                                      String metricName) {
+    MetricDataQuery metricDataQuery =
+      new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
+                          metricsContext, ImmutableList.<String>of());
+    return metricStore.query(metricDataQuery);
   }
 
   @Override
