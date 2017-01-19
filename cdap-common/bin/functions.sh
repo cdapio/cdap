@@ -985,7 +985,7 @@ cdap_cli() {
   elif [[ -d ${__path}/conf ]]; then
     CLASSPATH=${CLASSPATH}:"${__path}"/conf/
   fi
-  "${JAVA}" ${JAVA_OPTS} -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
+  "${JAVA}" ${JAVA_OPTS} -cp ${CLASSPATH} -Dscript=${__script} ${__class} "${@}"
 }
 
 #
