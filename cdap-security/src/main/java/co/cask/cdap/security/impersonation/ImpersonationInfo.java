@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,13 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.common.security;
+package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 
+import java.io.IOException;
 import java.util.Objects;
 
 /**
@@ -33,35 +35,22 @@ public final class ImpersonationInfo {
   /**
    * Creates {@link ImpersonationInfo} using the specified principal and keytab path.
    */
+  public ImpersonationInfo(String principal, CConfiguration cConf) throws IOException {
+    this.principal = principal;
+    this.keytabURI = SecurityUtil.getKeytabURIforPrincipal(principal, cConf);
+  }
+
+  /**
+   * Creates {@link ImpersonationInfo} using the specified principal and keytab path.
+   */
   public ImpersonationInfo(String principal, String keytabURI) {
     this.principal = principal;
     this.keytabURI = keytabURI;
   }
 
-  /**
-   * Creates {@link ImpersonationInfo} for the specified namespace. If the info is not configured at the namespace
-   * level is empty, returns the info configured at the cdap level.
-   */
-  public ImpersonationInfo(NamespaceMeta namespaceMeta, CConfiguration cConf) {
-    NamespaceConfig namespaceConfig = namespaceMeta.getConfig();
-
-    String configuredPrincipal = namespaceConfig.getPrincipal();
-    String configuredKeytabURI = namespaceConfig.getKeytabURI();
-
-    if (configuredPrincipal != null && configuredKeytabURI != null) {
-      this.principal = configuredPrincipal;
-      this.keytabURI = configuredKeytabURI;
-    } else if (configuredPrincipal == null && configuredKeytabURI == null) {
-      this.principal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
-      this.keytabURI = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
-    } else {
-      // Ideally, this should never happen, because we make the check upon namespace create.
-      // This can technically happen if someone modifies the namespace store directly (i.e. hbase shell PUT).
-      throw new IllegalStateException(
-        String.format("Either neither or both of the following two configurations must be configured. " +
-                        "Configured principal: %s, Configured keytabURI: %s",
-                      configuredPrincipal, configuredKeytabURI));
-    }
+  public static ImpersonationInfo getMasterImpersonationInfo(CConfiguration cConf) {
+    return new ImpersonationInfo(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL),
+                                 cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH));
   }
 
   public String getPrincipal() {

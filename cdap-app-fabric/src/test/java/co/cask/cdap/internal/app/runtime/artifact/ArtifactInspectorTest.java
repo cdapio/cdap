@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,16 +24,16 @@ import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.security.DefaultImpersonator;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
 import co.cask.cdap.internal.app.runtime.artifact.app.InvalidConfigApp;
 import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClass;
 import co.cask.cdap.proto.artifact.ArtifactClasses;
+import co.cask.cdap.security.impersonation.DefaultImpersonator;
+import co.cask.cdap.security.impersonation.EntityImpersonator;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
@@ -78,8 +78,8 @@ public class ArtifactInspectorTest {
     Location artifactLocation = Locations.toLocation(appFile);
     try (CloseableClassLoader artifactClassLoader =
            classLoaderFactory.createClassLoader(
-             artifactLocation, new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
-                                                          new DefaultImpersonator(CConfiguration.create(),
+             artifactLocation, new EntityImpersonator(artifactId.toEntityId(),
+                                                      new DefaultImpersonator(CConfiguration.create(),
                                                                                   null, null)))) {
       artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader);
     }
@@ -96,8 +96,8 @@ public class ArtifactInspectorTest {
     Location artifactLocation = Locations.toLocation(appFile);
     try (CloseableClassLoader artifactClassLoader =
            classLoaderFactory.createClassLoader(
-             artifactLocation, new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
-                                                          new DefaultImpersonator(CConfiguration.create(),
+             artifactLocation, new EntityImpersonator(artifactId.toEntityId(),
+                                                      new DefaultImpersonator(CConfiguration.create(),
                                                                                   null, null)))) {
 
       ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader);

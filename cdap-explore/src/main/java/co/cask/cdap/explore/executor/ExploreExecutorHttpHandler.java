@@ -30,7 +30,6 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -45,6 +44,7 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
@@ -114,7 +114,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       if (format == null) {
         throw new BadRequestException("Expected format in the body");
       }
-      QueryHandle handle = impersonator.doAs(new NamespaceId(namespace), new Callable<QueryHandle>() {
+      QueryHandle handle = impersonator.doAs(streamId, new Callable<QueryHandle>() {
         @Override
         public QueryHandle call() throws Exception {
           return exploreTableManager.enableStream(tableName, streamId, format);
@@ -207,7 +207,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                              final DatasetSpecification datasetSpec, final boolean truncating) {
     LOG.debug("Enabling explore for dataset instance {}", datasetId);
     try {
-      QueryHandle handle = impersonator.doAs(datasetId.getParent(), new Callable<QueryHandle>() {
+      QueryHandle handle = impersonator.doAs(datasetId, new Callable<QueryHandle>() {
         @Override
         public QueryHandle call() throws Exception {
           return exploreTableManager.enableDataset(datasetId, datasetSpec, truncating);
@@ -252,7 +252,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       if (oldSpec.equals(datasetSpec)) {
         handle = QueryHandle.NO_OP;
       } else {
-        handle = impersonator.doAs(datasetId.getParent(), new Callable<QueryHandle>() {
+        handle = impersonator.doAs(datasetId, new Callable<QueryHandle>() {
           @Override
           public QueryHandle call() throws Exception {
             return exploreTableManager.updateDataset(datasetId, datasetSpec, oldSpec);
@@ -335,7 +335,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   private void disableDataset(HttpResponder responder, final DatasetId datasetId, final DatasetSpecification spec) {
     try {
-      QueryHandle handle = impersonator.doAs(datasetId.getParent(), new Callable<QueryHandle>() {
+      QueryHandle handle = impersonator.doAs(datasetId, new Callable<QueryHandle>() {
         @Override
         public QueryHandle call() throws Exception {
           return exploreTableManager.disableDataset(datasetId, spec);
@@ -357,7 +357,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                            @PathParam("dataset") String datasetName) throws Exception {
     final DatasetId datasetId = new DatasetId(namespace, datasetName);
     propagateUserId(request);
-    impersonator.doAs(datasetId.getParent(), new Callable<Void>() {
+    impersonator.doAs(datasetId, new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         doAddPartition(request, responder, datasetId);
@@ -437,7 +437,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                             @PathParam("dataset") String datasetName) throws Exception {
     final DatasetId datasetId = new DatasetId(namespace, datasetName);
     propagateUserId(request);
-    impersonator.doAs(datasetId.getParent(), new Callable<Void>() {
+    impersonator.doAs(datasetId, new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         doDropPartition(request, responder, datasetId);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,11 +25,11 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
-import co.cask.cdap.common.security.UGIProvider;
-import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -44,6 +44,8 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.impersonation.UGIProvider;
+import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -129,6 +131,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
         protected void configure() {
           // TransactionService should never need to use UGIProvider. It is simply bound in HBaseQueueAdmin
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class).in(Scopes.SINGLETON);
+          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
       }
     );

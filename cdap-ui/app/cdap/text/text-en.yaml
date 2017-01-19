@@ -129,13 +129,13 @@ features:
     uploadLabel: Drag-and-drop the file to be uploaded
     clickLabel: Click to select file from your computer
   FastAction:
-    deleteConfirmation: Are you sure you want to delete *_{entityId}_*?
+    deleteConfirmation: Are you sure you want to delete *_{datasetId}_*?
     exploreLabel: Explore
     deleteLabel: Delete
-    deleteFailed: Failed to delete {entityId}.
-    truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
+    deleteFailed: Failed to delete {datasetId}.
+    truncateConfirmation: Are you sure you want to truncate *_{datasetId}_*?
     truncateLabel: Truncate
-    truncateFailed: Failed to truncate {entityId}.
+    truncateFailed: Failed to truncate {datasetId}.
     sendEventsLabel: Send Events
     setPreferencesModalLabel: Preferences
     setPreferencesActionLabel: Set Preferences
@@ -167,8 +167,8 @@ features:
     sendEventsSuccess: Success - Events uploaded successfully.
     startConfirmLabel: Start
     stopConfirmLabel: Stop
-    startConfirmation: "Are you sure you want to start the program: *_{entityId}_*?"
-    stopConfirmation: "Are you sure you want to stop the program:  *_{entityId}_*?"
+    startConfirmation: "Are you sure you want to start the program: *_{datasetId}_*?"
+    stopConfirmation: "Are you sure you want to stop the program:  *_{datasetId}_*?"
     stopProgramHeader: Stop Program
     startProgramHeader: Start Program
 

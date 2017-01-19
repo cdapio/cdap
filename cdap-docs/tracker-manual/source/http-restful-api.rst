@@ -83,7 +83,7 @@ Results (reformatted for display)::
       {
         "version": 1,
         "time": 1461266805472,
-        "entityId": {
+        "datasetId": {
           "namespace": "default",
           "stream": "who",
           "entity": "STREAM"
@@ -122,7 +122,7 @@ Results (reformatted for display)::
       {
         "version": 1,
         "time": 1461266805404,
-        "entityId": {
+        "datasetId": {
           "namespace": "default",
           "stream": "who",
           "entity": "STREAM"

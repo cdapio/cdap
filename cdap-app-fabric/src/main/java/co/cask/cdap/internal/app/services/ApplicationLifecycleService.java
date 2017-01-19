@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,7 +40,6 @@ import co.cask.cdap.common.CannotBeDeletedException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -71,6 +70,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.route.store.RouteStore;
+import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
@@ -629,7 +629,7 @@ ApplicationLifecycleService extends AbstractIdleService {
       // Remove all process states and group states for each stream
       final String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
 
-      impersonator.doAs(appId.getParent(), new Callable<Void>() {
+      impersonator.doAs(appId, new Callable<Void>() {
 
         // TODO: (CDAP-7326) since one worker or flow can only be ran by a single instance of APP, (also a single
         // version), should delete flow for each version

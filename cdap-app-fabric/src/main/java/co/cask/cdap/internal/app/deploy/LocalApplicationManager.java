@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -44,6 +43,7 @@ import co.cask.cdap.pipeline.Context;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.pipeline.Stage;
+import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.util.concurrent.ListenableFuture;
