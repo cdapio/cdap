@@ -46,7 +46,7 @@ export default class Wizard extends Component {
       activeStep: this.props.wizardConfig.steps[0].id,
       success: false,
       loading: false,
-      error: ''
+      error: '',
     };
   }
   getChildContext() {
@@ -97,10 +97,8 @@ export default class Wizard extends Component {
           }
         );
     }
-
   }
   render() {
-
     const getNavigationButtons = function getNavigationButtons(matchedStep) {
       let matchedIndex = currentStepIndex(this.props.wizardConfig.steps, matchedStep.id);
       let navButtons;
@@ -126,6 +124,7 @@ export default class Wizard extends Component {
         <button
           className="btn btn-primary"
           onClick={this.submitForm.bind(this)}
+          disabled={this.props.finishButtonDisabled ? 'disabled' : null}
         >
           Finish
         </button>
@@ -308,5 +307,6 @@ Wizard.propTypes = {
     replaceReducer: PropTypes.func
   }).isRequired,
   onSubmit: PropTypes.func.isRequired,
-  onClose: PropTypes.func.isRequired
+  onClose: PropTypes.func.isRequired,
+  finishButtonDisabled: PropTypes.bool
 };
