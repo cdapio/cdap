@@ -26,6 +26,7 @@ var classNames = require('classnames');
 import NamespaceDropdown from 'components/NamespaceDropdown';
 import ProductsDrawer from 'components/ProductsDrawer';
 import RedirectToLogin from 'services/redirect-to-login';
+import cookie from 'react-cookie';
 
 export default class HeaderActions extends Component {
   constructor(props) {
@@ -38,6 +39,7 @@ export default class HeaderActions extends Component {
     this.toggleSettingsDropdown = this.toggleSettingsDropdown.bind(this);
   }
   logout() {
+    cookie.remove('show-splash-screen-for-session', {path: '/'});
     RedirectToLogin({statusCode: 401});
   }
   toggleSettingsDropdown() {
