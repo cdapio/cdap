@@ -19,33 +19,58 @@ $label-text-font-size: 18px;
 $text-field-width: 300px;
 $modal-width: 884px;
 $modal-max-height: 750px;
+$modal-header-color: #464a57;
 $cell-height: 2.5em;
+$link-color: #0275d8;
 
 .tooltip {
-  .tooltip-inner {
-    background-color: #000000;
-    color: white;
+  &.preferences-tooltip {
+    .tooltip-inner {
+      background-color: #000000;
+      color: white;
+    }
   }
 }
 
 .modal {
   .set-preference-modal {
+    margin-top: 125px;
     .modal-content {
       max-height: $modal-max-height;
       width: $modal-width;
+      border-radius: 0;
+      border: 0;
 
       .modal-header {
-        .title {
-          margin-left: 5px;
+        padding: 0 10px;
+        background-color: $modal-header-color;
+        height: 40px;
+        border-bottom: 0;
+
+        .modal-title {
+          margin: inherit;
+          line-height: 40px;
+          color: white;
+          font-size: normal;
+          font-size: 14px;
+
+          .title {
+            margin-left: 5px;
+          }
         }
       }
 
       .modal-body {
+        padding: 0;
+        max-height: none;
+        overflow: initial;
+
         .preferences-container {
           font-size: $normal-text-font-size;
 
           h4 {
             margin-top: 15px;
+            font-weight: 400;
             font-size: $label-text-font-size;
           }
 
@@ -79,7 +104,7 @@ $cell-height: 2.5em;
                 font-size: 12px;
 
                 .key-label {
-                  margin-right: 330px;
+                  margin-right: 325px;
                 }
               }
 
@@ -125,6 +150,7 @@ $cell-height: 2.5em;
                   top: 0.5em;
                   left: 2em;
                   cursor: pointer;
+                  color: $link-color;
 
                   &:hover {
                     text-decoration: none;
@@ -197,10 +223,6 @@ $cell-height: 2.5em;
                 display: block;
                 overflow: scroll;
                 max-height: ($cell-height * 5);
-
-                i.fa-check {
-                  color: #7ed321;
-                }
               }
             }
           }

@@ -134,8 +134,10 @@ features:
     sendEventsLabel: Send Events
     setPreferencesModalLabel: Preferences
     setPreferencesActionLabel: Set Preferences
-    setPreferencesAppDescriptionLabel: Specify new or override existing system or namespace preferences. These preferences will be accessible in all programs within this application.
-    setPreferencesProgramDescriptionLabel: Specify new or override existing system, namespace, or application preferences. These preferences will only be accessible within this program.
+    setPreferencesDescriptionLabel:
+      namespace: Specify new or override existing system preferences. These preferences will be accessible in all applications within this namespace.
+      app: Specify new or override existing system or namespace preferences. These preferences will be accessible in all programs within this application.
+      program: Specify new or override existing system, namespace, or application preferences. These preferences will only be accessible within this program.
     setPreferencesButtonLabel:
       saveAndClose: Save & Close
       saving: Saving
@@ -146,6 +148,7 @@ features:
       origin: ORIGIN
     setPreferencesReset: Reset
     setPreferencesFailed: Error - Set Preferences Failed.
+    setPreferencesSuccess: Preferences Saved
     start: Start
     stop: Stop
     sendEventsButtonLabel: Send
@@ -362,6 +365,9 @@ features:
     Sidebar:
       extension: "Extensions:"
     NamespaceDropdown:
+      applications: Applications
+      datasets: Datasets
+      streams: Streams
       addNS: "Add Namespace"
   Pagination:
     dropdown-label: Page
