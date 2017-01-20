@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc 
     :description: Release notes for the Cask Data Application Platform
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-nav: true
 :orphan:
@@ -17,11 +17,48 @@
 Cask Data Application Platform Release Notes
 ============================================
 
+.. New Features
+.. Improvements
+.. Bug Fixes
+.. Known Issues
+.. API Changes
+.. Deprecated and Removed Features
+
 .. contents::
    :local:
    :class: faq
    :backlinks: none
    :depth: 2
+
+`Release 3.5.3 <http://docs.cask.co/cdap/3.5.3/index.html>`__
+=============================================================
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-7647` - Now allows usage of a custom Kyro serializer in Spark programs.
+
+Bug Fixes
+------------
+
+- :cask-issue:`CDAP-7694` - Fixed an issue where the CDAP service scripts could cause a
+  terminal session to not echo characters.
+
+- :cask-issue:`CDAP-8086` - Removed an obsolete Update Dataset Specifications step in the
+  CDAP Upgrade tool. This step was required only for upgrading from CDAP versions lower
+  than 3.2 to CDAP Version 3.2.
+
+- :cask-issue:`CDAP-8087` - Provided a workaround for Scala bug SI-6240 
+  (https://issues.scala-lang.org/browse/SI-6240) to allow concurrent execution of Spark
+  programs in CDAP Workflows.
+
+Known Issue
+-----------
+
+- :cask-issue:`CDAP-8140` - Impersonation does not work when a join query is executed
+  using CDAP Explore with Hive 0.13 (shipped by CDH 5.1, CDH 5.2, CDH 5.3, HDP 2.0, and HDP
+  2.1).
+
 
 `Release 3.5.2 <http://docs.cask.co/cdap/3.5.2/index.html>`__
 =============================================================
@@ -30,8 +67,9 @@ Known Issues
 ------------
 
 - :cask-issue:`CDAP-7179` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
-  properties such as ``kafka.log.dir``, as described in the :ref:`Administration Manual: 
-  Appendices: cdap-site.xml <appendix-cdap-default-deprecated-properties>`. 
+  properties such as ``kafka.log.dir``, as described in the `Administration Manual: 
+  Appendices: cdap-site.xml 
+  <http://docs.cask.co/cdap/3.5.2/en/admin-manual/appendices/cdap-site.html#appendix-cdap-default-deprecated-properties>`__. 
   
   **If you are upgrading from CDAP 3.4.x to 3.5.x** and you have set a value for
   ``kafka.log.dir`` by using Cloudera Manager's :ref:`safety-valve mechanism
@@ -224,8 +262,9 @@ Known Issues
   distribution for details.
 
 - :cask-issue:`CDAP-7179` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
-  properties such as ``kafka.log.dir``, as described in the :ref:`Administration Manual: 
-  Appendices: cdap-site.xml <appendix-cdap-default-deprecated-properties>`. 
+  properties such as ``kafka.log.dir``, as described in the `Administration Manual: 
+  Appendices: cdap-site.xml 
+  <http://docs.cask.co/cdap/3.5.1/en/admin-manual/appendices/cdap-site.html#appendix-cdap-default-deprecated-properties>`__. 
   
   **If you are upgrading from CDAP 3.4.x to 3.5.x** and you have set a value for
   ``kafka.log.dir`` by using Cloudera Manager's :ref:`safety-valve mechanism
@@ -313,8 +352,9 @@ Bug Fixes
 Known Issues
 ------------
 - :cask-issue:`CDAP-7179` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
-  properties such as ``kafka.log.dir``, as described in the :ref:`Administration Manual: 
-  Appendices: cdap-site.xml <appendix-cdap-default-deprecated-properties>`. 
+  properties such as ``kafka.log.dir``, as described in the `Administration Manual: 
+  Appendices: cdap-site.xml 
+  <http://docs.cask.co/cdap/3.5.1/en/admin-manual/appendices/cdap-site.html#appendix-cdap-default-deprecated-properties>`__. 
   
   **If you are upgrading from CDAP 3.4.x to 3.5.x,** and you have set a value for
   ``kafka.log.dir`` by using Cloudera Manager's :ref:`safety-valve mechanism
