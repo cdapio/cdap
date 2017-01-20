@@ -22,8 +22,8 @@
   </select>
 
   <div class="import-section">
-    <a class="btn btn-default" href="" ng-click="HydratorPlusPlusLeftPanelCtrl.showTemplates()">Template Gallery</a>
     <a class="btn btn-default" href="" ng-click="HydratorPlusPlusLeftPanelCtrl.openFileBrowser()">Import Pipeline</a>
+    <a class="btn btn-default" href="" ng-click="HydratorPlusPlusLeftPanelCtrl.loadArtifact();">Add Plugin</a>
   </div>
 </div>
 <my-side-panel
@@ -40,10 +40,10 @@
 </my-side-panel>
 
 <div class="btn btn-default btn-left-panel-toggle btn-sm pull-right" ng-click="HydratorPlusPlusStudioCtrl.toggleSidebar();">
-  <span ng-class="{'fa-angle-double-left': HydratorPlusPlusStudioCtrl.isExpanded === true, 'fa-angle-double-right': HydratorPlusPlusStudioCtrl.isExpanded === false}" class="fa "></span>
-</div>
-<div class="btn btn-default btn-left-panel-add-plugin btn-sm pull-right" ng-click="HydratorPlusPlusLeftPanelCtrl.loadArtifact();">
-  <span class="fa fa-plus"></span>
+  <span
+    ng-class="{'fa-angle-double-left': HydratorPlusPlusStudioCtrl.isExpanded === true, 'fa-angle-double-right': HydratorPlusPlusStudioCtrl.isExpanded === false}"
+    class="fa">
+  </span>
 </div>
 
 <my-file-select class="sr-only"
