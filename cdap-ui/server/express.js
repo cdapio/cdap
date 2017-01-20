@@ -141,6 +141,57 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   });
 
+  /**
+   * This is used to stream content from Market directly to CDAP
+   * ie. download app from market, and publish to CDAP
+   *
+   * Query parameters:
+   *    source: Link to the content to forward
+   *    sourceMethod: HTTP method to obtain content (default to GET)
+   *    target: CDAP API
+   *    targetMethod: HTTP method for the CDAP API (default to POST)
+   *    headers: JSON of custom headers for CDAP
+   **/
+  app.get('/forwardMarketToCdap', function(req, res) {
+    var sourceLink = req.query.content,
+        targetLink = req.query.stream,
+        sourceMethod = req.query.sourceMethod || 'GET',
+        targetMethod = req.query.targetMethod || 'POST'
+        headers;
+
+    if (req.query.headers) {
+      try {
+        headers = JSON.parse(req.query.headers);
+      } catch (e) {
+        res.status(500).send(e);
+        log.error('/forwardMarketToCDAP failed to parse headers');
+        return;
+      }
+    }
+
+    var forwardRequestObject = {
+      url: targetLink,
+      method: targetMethod
+    };
+
+    if (headers) {
+      forwardRequestObject.headers = headers;
+    }
+
+    request({
+      url: sourceLink,
+      method: sourceMethod
+    })
+    .on('error', function (e) {
+      log.error('Error', e);
+    })
+    .pipe(request(forwardRequestObject))
+    .on('error', function (e) {
+      log.error('Error', e);
+    })
+    .pipe(res);
+  });
+
   app.get('/downloadLogs', function(req, res) {
     var url = decodeURIComponent(req.query.backendUrl);
     var method = (req.query.method || 'GET');
