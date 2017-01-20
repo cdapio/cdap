@@ -1,7 +1,7 @@
 {
     "artifact": {
         "name": "cdap-data-pipeline",
-        "version": "3.5.3-SNAPSHOT",
+        "version": "3.5.3",
         "scope": "SYSTEM"
     },
     "description": "Score incoming events against a learned model to classify events as spam or not spam",

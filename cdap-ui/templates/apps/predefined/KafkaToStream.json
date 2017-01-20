@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-etl-realtime",
         "scope": "SYSTEM",
-        "version": "3.5.3-SNAPSHOT"
+        "version": "3.5.3"
     },
     "description": "Ingests in real time from Kafka into a stream",
     "name": "KafkaToStream",
