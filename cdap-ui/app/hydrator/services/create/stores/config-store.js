@@ -99,6 +99,7 @@ class HydratorPlusPlusConfigStore {
       resources: angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
       driverResources: angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
       connections: [],
+      batchInterval: this.HYDRATOR_DEFAULT_VALUES.batchInterval,
       comments: [],
       postActions: []
     };
@@ -653,7 +654,11 @@ class HydratorPlusPlusConfigStore {
     return this.getState().config.batchInterval;
   }
   setBatchInterval(interval) {
-    this.state.config.batchInterval = interval;
+    if (!interval) {
+      this.state.config.batchInterval = this.getDefaultConfig().batchInterval;
+    } else {
+      this.state.config.batchInterval = interval;
+    }
   }
   getInstance() {
     return this.getState().config.instances;

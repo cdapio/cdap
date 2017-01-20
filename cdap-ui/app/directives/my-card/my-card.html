@@ -15,13 +15,17 @@
 -->
 
 <div class="panel panel-default">
-  <a href="" class="panel-heading" ng-click="MyCardCtrl.dominimize()">
+  <a href=""
+     class="panel-heading"
+     title=""
+     ng-click="MyCardCtrl.dominimize()">
     <div class="panel-title">
       <div class="panel-content-holder">
         <span>
           <span class="fa fa-info-circle"
                 ng-if="MyCardCtrl.tooltip"
                 uib-tooltip="{{MyCardCtrl.tooltip}}"
+                tooltip-placement="bottom"
                 tooltip-append-to-body="true">
           </span>
           {{::MyCardCtrl.title}}
