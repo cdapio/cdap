@@ -25,7 +25,7 @@
                     "artifact": {
                         "name": "kafka-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0"
+                        "version": "1.4.1"
                     },
                     "properties": {
                         "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"remote_host\",\"type\":\"string\"},{\"name\":\"status\",\"type\":\"int\"}]}",
@@ -47,7 +47,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0"
+                        "version": "1.4.1"
                     },
                     "properties": {
                         "dataset.cube.resolutions": "1",

@@ -36,7 +36,7 @@
                     "label": "S3 Source",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "1.4.0",
+                        "version": "1.4.1",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -56,7 +56,7 @@
                     "label": "Log Parser",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "1.4.0",
+                        "version": "1.4.1",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -81,7 +81,7 @@
                     "label": "Group By Aggregator",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "1.4.0",
+                        "version": "1.4.1",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -131,7 +131,7 @@
                     "label": "Aggregated Result",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "1.4.0",
+                        "version": "1.4.1",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -166,7 +166,7 @@
                     "label": "Raw Logs",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "1.4.0",
+                        "version": "1.4.1",
                         "scope": "SYSTEM"
                     },
                     "properties": {

@@ -29,7 +29,7 @@
                     "artifact": {
                         "name": "kafka-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0"
+                        "version": "1.4.1"
                     },
                     "properties": {
                         "kafka.topic": "",
@@ -46,7 +46,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0"
+                        "version": "1.4.1"
                     },
                     "properties": {
                         "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"body\",\"type\":\"string\"}]}",
@@ -64,7 +64,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0"
+                        "version": "1.4.1"
                     },
                     "properties": {
                         "name": "",

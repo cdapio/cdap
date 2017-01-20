@@ -25,7 +25,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0"
+                        "version": "1.4.1"
                     },
                     "properties": {
                         "AccessToken": "",
@@ -45,7 +45,7 @@
                     "artifact": {
                         "name": "core-plugins",
                         "scope": "SYSTEM",
-                        "version": "1.4.0"
+                        "version": "1.4.1"
                     },
                     "properties": {
                         "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"message\",\"type\":\"string\"},{\"name\":\"lang\",\"type\":\"string\"},{\"name\":\"time\",\"type\":\"long\"},{\"name\":\"favCount\",\"type\":\"int\"},{\"name\":\"rtCount\",\"type\":\"int\"},{\"name\":\"source\",\"type\":\"string\"},{\"name\":\"id\",\"type\":\"long\"}]}",
