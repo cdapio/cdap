@@ -23,6 +23,13 @@
 </div>
 <div class="row">
   <div class="col-sm-6 preferred-tags">
+    <div class="loading-search" ng-if="TagsController.loadingTags">
+      <div class="container-fluid">
+        <h3>
+          <span class="fa fa-spinner fa-spin"></span>
+        </h3>
+      </div>
+    </div>
     <div ng-if="TagsController.tags.preferredTags.length > 0"
         class="table-responsive">
       <table class="table table-striped" cask-sortable>
@@ -68,12 +75,19 @@
                         ng-model="TagsController.currentPreferredPage"></uib-pagination>
       </div>
     </div>
-    <div ng-if="TagsController.tags.preferredTags.length === 0"
+    <div ng-if="TagsController.tags.preferredTags.length === 0 && !TagsController.loadingTags"
         class="well text-center">
       <p>No preferred tags to display.</p>
     </div>
   </div>
   <div class="col-sm-6 user-tags">
+    <div class="loading-search" ng-if="TagsController.loadingTags">
+      <div class="container-fluid">
+        <h3>
+          <span class="fa fa-spinner fa-spin"></span>
+        </h3>
+      </div>
+    </div>
     <div ng-if="TagsController.tags.userTags.length > 0"
         class="table-responsive">
       <table class="table table-striped" cask-sortable>
@@ -110,7 +124,7 @@
                         ng-model="TagsController.currentUserPage"></uib-pagination>
       </div>
     </div>
-    <div ng-if="TagsController.tags.userTags.length === 0"
+    <div ng-if="TagsController.tags.userTags.length === 0 && !TagsController.loadingTags"
         class="well text-center">
       <p>No user tags to display.</p>
     </div>
