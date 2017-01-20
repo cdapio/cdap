@@ -156,7 +156,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     var sourceLink = req.query.content,
         targetLink = req.query.stream,
         sourceMethod = req.query.sourceMethod || 'GET',
-        targetMethod = req.query.targetMethod || 'POST'
+        targetMethod = req.query.targetMethod || 'POST',
         headers;
 
     if (req.query.headers) {
