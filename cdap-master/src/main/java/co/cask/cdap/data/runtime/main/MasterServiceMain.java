@@ -167,8 +167,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
-import static org.apache.hadoop.hbase.HConstants.REPLICATION_ENABLE_KEY;
-
 /**
  * Driver class for starting all master services.
  * AppFabricHttpService
