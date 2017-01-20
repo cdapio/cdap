@@ -87,9 +87,11 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
 
     RunId runId = ProgramRunners.getRunId(options);
     LOG.info("Launching MapReduce program: {}", program.getId().run(runId));
-    TwillController controller = launcher.launch(
-      new MapReduceTwillApplication(program, options.getUserArguments(), spec, localizeResources, eventHandler),
-      extraClassPaths, Collections.singletonList(YarnClientProtocolProvider.class));
+    TwillController controller = launcher
+      .addClassPaths(extraClassPaths)
+      .addDependencies(Collections.singleton(YarnClientProtocolProvider.class))
+      .launch(new MapReduceTwillApplication(program, options.getUserArguments(),
+                                            spec, localizeResources, eventHandler));
 
     return createProgramController(controller, program.getId(), runId);
   }

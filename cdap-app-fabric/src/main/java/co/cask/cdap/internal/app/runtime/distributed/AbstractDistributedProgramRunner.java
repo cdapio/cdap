@@ -84,8 +84,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
@@ -119,6 +122,25 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
    */
   protected abstract class ApplicationLauncher {
 
+    protected final List<String> classPaths = new ArrayList<>();
+    protected final Set<Class<?>> dependencies = new LinkedHashSet<>();
+    protected final Map<String, String> env = new LinkedHashMap<>();
+
+    public ApplicationLauncher addClassPaths(Iterable<String> classpaths) {
+      Iterables.addAll(this.classPaths, classpaths);
+      return this;
+    }
+
+    public ApplicationLauncher addDependencies(Iterable<? extends Class<?>> dependencies) {
+      Iterables.addAll(this.dependencies, dependencies);
+      return this;
+    }
+
+    public ApplicationLauncher addEnvironment(Map<String, String> env) {
+      this.env.putAll(env);
+      return this;
+    }
+
     /**
      * Starts the given application through Twill.
      *
@@ -126,36 +148,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
      *
      * @return the {@link TwillController} for the application.
      */
-    public TwillController launch(TwillApplication twillApplication) {
-      return launch(twillApplication, Collections.<String>emptyList(), Collections.<Class<?>>emptyList());
-    }
-
-    /**
-     * Starts the given application through Twill with extra classpaths appended to the end of the classpath of
-     * the runnables inside the applications.
-     *
-     * @param twillApplication the application to start
-     * @param extraClassPaths to append
-     *
-     * @return the {@link TwillController} for the application.
-     * @see TwillPreparer#withClassPaths(Iterable)
-     */
-    public TwillController launch(TwillApplication twillApplication, String...extraClassPaths) {
-      return launch(twillApplication, Arrays.asList(extraClassPaths), Collections.<Class<?>>emptyList());
-    }
-
-    /**
-     * Starts the given application through Twill with extra classpaths appended to the end of the classpath of
-     * the runnables inside the applications.
-     *
-     * @param twillApplication the application to start
-     * @param extraClassPaths to append
-     *
-     * @return the {@link TwillController} for the application.
-     * @see TwillPreparer#withClassPaths(Iterable)
-     */
-    public abstract TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths,
-                                           Iterable<? extends Class<?>> extraDependencies);
+    public abstract TwillController launch(TwillApplication twillApplication);
   }
 
   protected AbstractDistributedProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
@@ -250,17 +243,9 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
 
           return launch(program, options, localizeResources, tempDir, new ApplicationLauncher() {
             @Override
-            public TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths,
-                                          Iterable<? extends Class<?>> extraDependencies) {
+            public TwillController launch(TwillApplication twillApplication) {
               TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
-              // TODO: CDAP-5506. It's a bit hacky to set a Spark environment here. However, we always launch
-              // Spark using YARN and it is needed for both Workflow and Spark runner. We need to set it
-              // because inside Spark code, it will set and unset the SPARK_YARN_MODE system properties, causing
-              // fork in distributed mode not working. Setting it in the environment, which Spark uses for defaults,
-              // so it can't be unset by Spark
-              Iterables.addAll(additionalClassPaths, extraClassPaths);
-              twillPreparer.withEnv(ImmutableMap.of("SPARK_YARN_MODE", "true",
-                                                    "CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
+              Iterables.addAll(additionalClassPaths, classPaths);
               if (options.isDebug()) {
                 twillPreparer.enableDebugging();
               }
@@ -303,15 +288,21 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
 
               Iterable<Class<?>> dependencies = Iterables.concat(
                 Collections.singletonList(HBaseTableUtilFactory.getHBaseTableUtilClass()),
-                getKMSSecureStore(cConf), extraDependencies);
+                getKMSSecureStore(cConf), this.dependencies);
 
               Iterable<String> yarnAppClassPath = Arrays.asList(
                 hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
                                         YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
 
+              // Setup the environment for the container
+              Map<String, String> env = new LinkedHashMap<>(this.env);
+              // This is for logback xml
+              env.put("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+
               twillPreparer
                 .withDependencies(dependencies)
                 .withClassPaths(Iterables.concat(additionalClassPaths, yarnAppClassPath))
+                .withEnv(env)
                 .withApplicationClassPaths(yarnAppClassPath)
                 .withBundlerClassAcceptor(new HadoopClassExcluder() {
                   @Override

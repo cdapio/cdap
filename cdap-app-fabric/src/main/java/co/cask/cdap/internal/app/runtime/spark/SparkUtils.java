@@ -37,9 +37,12 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.annotation.Nullable;
 
 /**
  * A utility class to help determine Spark supports and locating Spark jar.
@@ -50,14 +53,23 @@ public final class SparkUtils {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkUtils.class);
 
+  // The prefix for spark environment variable names. It is being setup by the startup script.
+  private static final String SPARK_ENV_PREFIX = "_SPARK_";
+  // Environment variable name for the spark conf directory.
+  private static final String SPARK_CONF_DIR = "SPARK_CONF_DIR";
   // Environment variable name for locating spark assembly jar file
   private static final String SPARK_ASSEMBLY_JAR = "SPARK_ASSEMBLY_JAR";
+  // File name for the spark default config
+  private static final String SPARK_DEFAULTS_CONF = "spark-defaults.conf";
+
   // Environment variable name for locating spark home directory
   public static final String SPARK_HOME = Constants.SPARK_HOME;
 
   // File name of the Spark conf directory as defined by the Spark framework
   // This is for the Hack to workaround CDAP-5019 (SPARK-13441)
   public static final String LOCALIZED_CONF_DIR = "__spark_conf__";
+
+  private static Map<String, String> sparkEnv;
 
   private static File sparkAssemblyJar;
 
@@ -73,7 +85,7 @@ public final class SparkUtils {
     }
 
     // If someone explicitly set the location, use it.
-    // It's useful for overridding what being set for SPARK_HOME
+    // It's useful for overriding what being set for SPARK_HOME
     String jarEnv = System.getenv(SPARK_ASSEMBLY_JAR);
     if (jarEnv != null) {
       File file = new File(jarEnv);
@@ -145,6 +157,12 @@ public final class SparkUtils {
     File sparkAssemblyJar = locateSparkAssemblyJar();
     localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
 
+    // Localize the spark-defaults.conf file if it exists.
+    File sparkDefaultConfFile = locateSparkDefaultsConfFile(getSparkEnv());
+    if (sparkDefaultConfFile != null) {
+      localizeResources.put(sparkDefaultConfFile.getName(), new LocalizeResource(sparkDefaultConfFile));
+    }
+
     // Shallow copy all files under directory defined by $HADOOP_CONF_DIR
     // If $HADOOP_CONF_DIR is not defined, use the location of "yarn-site.xml" to determine the directory
     // This is part of workaround for CDAP-5019 (SPARK-13441).
@@ -183,6 +201,65 @@ public final class SparkUtils {
     }
 
     return sparkAssemblyJar.getName();
+  }
+
+  /**
+   * Returns the Spark environment setup via the start up script.
+   */
+  public static synchronized Map<String, String> getSparkEnv() {
+    if (sparkEnv != null) {
+      return sparkEnv;
+    }
+
+    Map<String, String> env = new LinkedHashMap<>();
+    for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+      if (entry.getKey().startsWith(SPARK_ENV_PREFIX)) {
+        env.put(entry.getKey().substring(SPARK_ENV_PREFIX.length()), entry.getValue());
+      }
+    }
+
+    // Spark using YARN and it is needed for both Workflow and Spark runner. We need to set it
+    // because inside Spark code, it will set and unset the SPARK_YARN_MODE system properties, causing
+    // fork in distributed mode not working. Setting it in the environment, which Spark uses for defaults,
+    // so it can't be unset by Spark
+    env.put("SPARK_YARN_MODE", "true");
+
+    sparkEnv = Collections.unmodifiableMap(env);
+    return sparkEnv;
+  }
+
+  /**
+   * Returns the environment for the Spark client container.
+   */
+  public static Map<String, String> getSparkClientEnv() {
+    Map<String, String> env = new LinkedHashMap<>(getSparkEnv());
+
+    // The spark-defaults.conf will be localized to container
+    // and we shouldn't have SPARK_HOME set
+    env.put(SPARK_CONF_DIR, "$PWD");
+    env.remove(SPARK_HOME);
+
+    // Spark using YARN and it is needed for both Workflow and Spark runner. We need to set it
+    // because inside Spark code, it will set and unset the SPARK_YARN_MODE system properties, causing
+    // fork in distributed mode not working. Setting it in the environment, which Spark uses for defaults,
+    // so it can't be unset by Spark
+    env.put("SPARK_YARN_MODE", "true");
+
+    return Collections.unmodifiableMap(env);
+  }
+
+  @Nullable
+  public static File locateSparkDefaultsConfFile(Map<String, String> env) {
+    File confFile = null;
+    if (env.containsKey(SPARK_CONF_DIR)) {
+      // If SPARK_CONF_DIR is defined, then the default conf should be under it
+      confFile = new File(env.get(SPARK_CONF_DIR), SPARK_DEFAULTS_CONF);
+    } else if (env.containsKey(SPARK_HOME)) {
+      // Otherwise, it should be under SPARK_HOME/conf
+      confFile = new File(new File(env.get(SPARK_HOME), "conf"), SPARK_DEFAULTS_CONF);
+    }
+
+    return confFile == null || !confFile.isFile() ? null : confFile;
   }
 
   private SparkUtils() {

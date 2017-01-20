@@ -43,6 +43,7 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.security.store.SecureStoreUtils;
@@ -74,6 +75,7 @@ import scala.Tuple2;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -429,6 +431,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     // as WARN, which pollute the logs a lot if there are concurrent Spark job running (e.g. a fork in Workflow).
     configs.put("spark.ui.port", "0");
 
+    // Setup configs from the default spark conf
+    setSparkDefaultConfigs(configs);
+
     // Setups the resources requirements for driver and executor. The user can override it with the SparkConf.
     configs.put("spark.driver.memory", context.getDriverResources().getMemoryMB() + "m");
     configs.put("spark.driver.cores", String.valueOf(context.getDriverResources().getVirtualCores()));
@@ -486,6 +491,27 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     SparkRuntimeUtils.setLocalizedResources(localizedResources.keySet(), configs);
 
     return configs;
+  }
+
+  /**
+   * Tries to read the spark default config file and put those configurations into the given map.
+   */
+  private void setSparkDefaultConfigs(Map<String, String> configs) {
+    File confFile = SparkUtils.locateSparkDefaultsConfFile(System.getenv());
+    if (confFile == null) {
+      return;
+    }
+    Properties properties = new Properties();
+    try (Reader reader = Files.newReader(confFile, Charsets.UTF_8)) {
+      properties.load(reader);
+      for (String key : properties.stringPropertyNames()) {
+        if (key.startsWith("spark.")) {
+          configs.put(key, properties.getProperty(key));
+        }
+      }
+    } catch (IOException e) {
+      LOG.warn("Failed to load Spark default configurations from {}.", confFile, e);
+    }
   }
 
   /**

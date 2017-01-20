@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -102,9 +103,10 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
 
     RunId runId = ProgramRunners.getRunId(options);
     LOG.info("Launching Spark program: {}", program.getId().run(runId));
-    TwillController controller = launcher.launch(
-      new SparkTwillApplication(program, options.getUserArguments(),
-                                spec, localizeResources, eventHandler), sparkAssemblyJarName);
+    TwillController controller = launcher
+      .addClassPaths(Collections.singleton(sparkAssemblyJarName))
+      .addEnvironment(SparkUtils.getSparkClientEnv())
+      .launch(new SparkTwillApplication(program, options.getUserArguments(), spec, localizeResources, eventHandler));
 
     return createProgramController(controller, program.getId(), runId);
   }

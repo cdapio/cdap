@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -119,6 +120,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     // It the workflow has Spark, localize the spark-assembly jar
     List<String> extraClassPaths = new ArrayList<>();
     List<Class<?>> extraDependencies = new ArrayList<>();
+    Map<String, String> environment = Collections.emptyMap();
 
     // Adds the extra classes that MapReduce needs
     extraDependencies.add(YarnClientProtocolProvider.class);
@@ -142,6 +144,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
         // Localize the spark-assembly jar and spark conf zip
         extraClassPaths.add(sparkAssemblyJarName);
         extraDependencies.add(provider.getClass());
+        environment = SparkUtils.getSparkClientEnv();
       } catch (Exception e) {
         if (driverMeta.hasSpark) {
           // If the Workflow actually has spark, we can't ignore this error.
@@ -162,11 +165,12 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
     RunId runId = ProgramRunners.getRunId(options);
     LOG.info("Launching distributed workflow: {}", program.getId().run(runId));
-    TwillController controller = launcher.launch(
-      new WorkflowTwillApplication(program, options.getUserArguments(),
-                                   workflowSpec, localizeResources, eventHandler, driverMeta.resources),
-      extraClassPaths, extraDependencies
-    );
+    TwillController controller = launcher
+      .addClassPaths(extraClassPaths)
+      .addDependencies(extraDependencies)
+      .addEnvironment(environment)
+      .launch(new WorkflowTwillApplication(program, options.getUserArguments(),
+                                           workflowSpec, localizeResources, eventHandler, driverMeta.resources));
     return createProgramController(controller, program.getId(), runId);
   }
 
