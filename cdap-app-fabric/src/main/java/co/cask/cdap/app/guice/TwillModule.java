@@ -23,6 +23,7 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.twill.api.Configs;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.filesystem.LocationFactories;
@@ -67,9 +68,11 @@ public class TwillModule extends PrivateModule {
     public TwillRunnerService get() {
       String zkConnectStr = cConf.get(Constants.Zookeeper.QUORUM) + cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE);
 
-      // Copy the yarn config and set the max heap ratio.
+      // Copy the yarn config and setup twill configs
       YarnConfiguration yarnConfig = new YarnConfiguration(yarnConf);
-      yarnConfig.set(Constants.CFG_TWILL_RESERVED_MEMORY_MB, cConf.get(Constants.CFG_TWILL_RESERVED_MEMORY_MB));
+      // Always disable the location delegation update from twill, as we always do it from CDAP side
+      yarnConfig.setBoolean(Configs.Keys.SECURE_STORE_UPDATE_LOCATION_ENABLED, false);
+
       YarnTwillRunnerService runner = new YarnTwillRunnerService(yarnConfig,
                                                                  zkConnectStr,
                                                                  LocationFactories.namespace(locationFactory, "twill"));

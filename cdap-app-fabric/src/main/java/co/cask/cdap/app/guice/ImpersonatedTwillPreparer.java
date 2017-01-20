@@ -29,6 +29,7 @@ import org.apache.twill.api.logging.LogHandler;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link TwillPreparer} wrapper that provides impersonation support.
@@ -183,6 +184,20 @@ final class ImpersonatedTwillPreparer implements TwillPreparer {
         @Override
         public TwillController call() throws Exception {
           return new ImpersonatedTwillController(delegate.start(), impersonator, programId);
+        }
+      });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public TwillController start(final long timeout, final TimeUnit timeoutUnit) {
+    try {
+      return impersonator.doAs(programId.getNamespaceId(), new Callable<TwillController>() {
+        @Override
+        public TwillController call() throws Exception {
+          return new ImpersonatedTwillController(delegate.start(timeout, timeoutUnit), impersonator, programId);
         }
       });
     } catch (Exception e) {

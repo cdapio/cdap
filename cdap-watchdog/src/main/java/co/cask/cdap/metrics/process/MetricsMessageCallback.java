@@ -67,13 +67,15 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
   }
 
   @Override
-  public void onReceived(Iterator<FetchedMessage> messages) {
+  public long onReceived(Iterator<FetchedMessage> messages) {
     // Decode the metrics records.
     ByteBufferInputStream is = new ByteBufferInputStream(null);
     List<MetricValues> records = Lists.newArrayList();
 
+    long nextOffset = 0L;
     while (messages.hasNext()) {
       FetchedMessage input = messages.next();
+      nextOffset = input.getNextOffset();
       try {
         MetricValues metricValues = recordReader.read(new BinaryDecoder(is.reset(input.getPayload())), recordSchema);
         records.add(metricValues);
@@ -84,7 +86,7 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
 
     if (records.isEmpty()) {
       LOG.info("No records to process.");
-      return;
+      return nextOffset;
     }
 
     try {
@@ -102,6 +104,7 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
       LOG.info("{} metrics records processed. Last record time: {}.",
                recordsProcessed, records.get(records.size() - 1).getTimestamp());
     }
+    return nextOffset;
   }
 
   private void addProcessingStats(List<MetricValues> records) {

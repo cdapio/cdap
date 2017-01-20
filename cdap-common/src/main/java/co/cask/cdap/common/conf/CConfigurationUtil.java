@@ -41,6 +41,18 @@ public class CConfigurationUtil extends Configuration {
   }
 
   /**
+   * Copies configurations prefixed with {@code twill.} to the given hadoop configuration.
+   */
+  public static void copyTwillProperties(CConfiguration cConf, org.apache.hadoop.conf.Configuration destination) {
+    Properties props = cConf.getProps();
+    for (String property : props.stringPropertyNames()) {
+      if (property.startsWith("twill.")) {
+        destination.set(property, cConf.get(property));
+      }
+    }
+  }
+
+  /**
    * Get extra jars set in {@link CConfiguration} as a list of {@link URI}.
    *
    * @param cConf {@link CConfiguration} containing the extra jars

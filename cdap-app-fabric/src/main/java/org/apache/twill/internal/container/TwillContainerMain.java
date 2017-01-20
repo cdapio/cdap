@@ -33,7 +33,6 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillRunnableSpecification;
-import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.discovery.ZKDiscoveryService;
 import org.apache.twill.internal.Arguments;
 import org.apache.twill.internal.BasicTwillContext;
@@ -97,11 +96,13 @@ public final class TwillContainerMain extends ServiceMain {
   }
 
   public static void doMain(String[] args) throws Exception {
+    new TwillContainerMain().doMain();
+  }
 
+  private void doMain() throws Exception {
     // Try to load the secure store from localized file, which AM requested RM to localize it for this container.
     loadSecureStore();
-
-    File twillSpecFile = new File(Constants.Files.TWILL_SPEC);
+    File twillSpecFile = new File(Constants.Files.RUNTIME_CONFIG_JAR, Constants.Files.TWILL_SPEC);
     TwillRuntimeSpecification twillRuntimeSpec = loadTwillSpec(twillSpecFile);
     String zkConnectStr = twillRuntimeSpec.getZkConnectStr();
     RunId appRunId = twillRuntimeSpec.getTwillAppRunId();
@@ -142,7 +143,7 @@ public final class TwillContainerMain extends ServiceMain {
                                                               createAppLocation(conf, twillRuntimeSpec.getFsUser(),
                                                                                 twillRuntimeSpec.getTwillAppDir()),
                                                               defaultLogLevels, logLevels);
-    new TwillContainerMain().doMain(
+    doMain(
       service,
       zkClientService,
       new LogFlushService(),
@@ -208,7 +209,8 @@ public final class TwillContainerMain extends ServiceMain {
   }
 
   private static Arguments decodeArgs() throws IOException {
-    return ArgumentsCodec.decode(Files.newReaderSupplier(new File(Constants.Files.ARGUMENTS), Charsets.UTF_8));
+    return ArgumentsCodec.decode(
+      Files.newReaderSupplier(new File(Constants.Files.RUNTIME_CONFIG_JAR, Constants.Files.ARGUMENTS), Charsets.UTF_8));
   }
 
   @Override

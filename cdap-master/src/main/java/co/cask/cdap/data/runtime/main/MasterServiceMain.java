@@ -51,11 +51,9 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
-import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
@@ -74,7 +72,6 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.operations.OperationalStatsLoader;
 import co.cask.cdap.operations.OperationalStatsService;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.replication.ReplicationConstants;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -106,13 +103,8 @@ import org.apache.hadoop.fs.ParentNotDirectoryException;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
@@ -166,8 +158,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
-
-import static org.apache.hadoop.hbase.HConstants.REPLICATION_ENABLE_KEY;
 
 /**
  * Driver class for starting all master services.
@@ -885,7 +875,8 @@ public class MasterServiceMain extends DaemonMain {
           }
 
           // Add a listener to delete temp files when application started/terminated.
-          TwillController controller = preparer.start();
+          TwillController controller = preparer.start(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
+                                                      TimeUnit.SECONDS);
           Runnable cleanup = new Runnable() {
             @Override
             public void run() {

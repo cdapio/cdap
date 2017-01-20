@@ -17,7 +17,7 @@
  */
 package org.apache.twill.yarn;
 
-import com.google.common.base.Charsets;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -34,19 +34,18 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Callables;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileContext;
+import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.api.Configs;
+import org.apache.twill.api.LocalFile;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.SecureStore;
@@ -57,11 +56,10 @@ import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.TwillSpecification;
-import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.HDFSLocationFactory;
+import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.Constants;
@@ -69,10 +67,13 @@ import org.apache.twill.internal.ProcessController;
 import org.apache.twill.internal.RunIds;
 import org.apache.twill.internal.SingleRunnableApplication;
 import org.apache.twill.internal.appmaster.ApplicationMasterLiveNodeData;
+import org.apache.twill.internal.io.BasicLocationCache;
+import org.apache.twill.internal.io.LocationCache;
+import org.apache.twill.internal.io.NoCachingLocationCache;
+import org.apache.twill.internal.utils.Dependencies;
 import org.apache.twill.internal.yarn.VersionDetectYarnAppClientFactory;
 import org.apache.twill.internal.yarn.YarnAppClient;
 import org.apache.twill.internal.yarn.YarnApplicationReport;
-import org.apache.twill.internal.yarn.YarnUtils;
 import org.apache.twill.zookeeper.NodeChildren;
 import org.apache.twill.zookeeper.NodeData;
 import org.apache.twill.zookeeper.RetryStrategies;
@@ -91,7 +92,9 @@ import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.security.PrivilegedExceptionAction;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -110,7 +113,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class YarnTwillRunnerService implements TwillRunnerService {
 
   private static final Logger LOG = LoggerFactory.getLogger(YarnTwillRunnerService.class);
-
   private static final int ZK_TIMEOUT = 10000;
   private static final Function<String, RunId> STRING_TO_RUN_ID = new Function<String, RunId>() {
     @Override
@@ -120,19 +122,22 @@ public final class YarnTwillRunnerService implements TwillRunnerService {
   };
   private static final Function<YarnTwillController, TwillController> CAST_CONTROLLER =
     new Function<YarnTwillController, TwillController>() {
-    @Override
-    public TwillController apply(YarnTwillController controller) {
-      return controller;
-    }
-  };
+      @Override
+      public TwillController apply(YarnTwillController controller) {
+        return controller;
+      }
+    };
 
   private final YarnConfiguration yarnConfig;
   private final YarnAppClient yarnAppClient;
   private final ZKClientService zkClientService;
   private final LocationFactory locationFactory;
   private final Table<String, RunId, YarnTwillController> controllers;
+  private final Set<URL> twillClassPaths;
   // A Guava service to help the state transition.
   private final Service serviceDelegate;
+  private LocationCache locationCache;
+  private LocationCacheCleaner locationCacheCleaner;
   private ScheduledExecutorService secureStoreScheduler;
 
   private Iterable<LiveInfo> liveInfos;
@@ -141,7 +146,7 @@ public final class YarnTwillRunnerService implements TwillRunnerService {
   private volatile String jvmOptions = null;
 
   /**
-   * Creates an instance with a {@link HDFSLocationFactory} created base on the given configuration with the
+   * Creates an instance with a {@link FileContextLocationFactory} created base on the given configuration with the
    * user home directory as the location factory namespace.
    *
    * @param config Configuration of the yarn cluster
@@ -164,6 +169,7 @@ public final class YarnTwillRunnerService implements TwillRunnerService {
     this.locationFactory = locationFactory;
     this.zkClientService = getZKClientService(zkConnect);
     this.controllers = HashBasedTable.create();
+    this.twillClassPaths = new HashSet<>();
     this.serviceDelegate = new AbstractIdleService() {
       @Override
       protected void startUp() throws Exception {
@@ -278,15 +284,24 @@ public final class YarnTwillRunnerService implements TwillRunnerService {
     Preconditions.checkState(serviceDelegate.isRunning(), "Service not start. Please call start() first.");
     final TwillSpecification twillSpec = application.configure();
     final String appName = twillSpec.getName();
+    RunId runId = RunIds.generate();
+    Location appLocation = locationFactory.create(String.format("/%s/%s", twillSpec.getName(), runId.getId()));
+    LocationCache locationCache = this.locationCache;
+    if (locationCache == null) {
+      locationCache = new NoCachingLocationCache(appLocation);
+    }
 
-    return new YarnTwillPreparer(yarnConfig, twillSpec, yarnAppClient, zkClientService.getConnectString(),
-                                 locationFactory, jvmOptions, LogEntry.Level.INFO, new YarnTwillControllerFactory() {
+    return new YarnTwillPreparer(yarnConfig, twillSpec, runId, yarnAppClient,
+                                 zkClientService.getConnectString(), appLocation, twillClassPaths, jvmOptions,
+                                 locationCache, new YarnTwillControllerFactory() {
       @Override
       public YarnTwillController create(RunId runId, Iterable<LogHandler> logHandlers,
-                                        Callable<ProcessController<YarnApplicationReport>> startUp) {
+                                        Callable<ProcessController<YarnApplicationReport>> startUp,
+                                        long startTimeout, TimeUnit startTimeoutUnit) {
         ZKClient zkClient = ZKClients.namespace(zkClientService, "/" + appName);
         YarnTwillController controller = listenController(new YarnTwillController(appName, runId, zkClient,
-                                                                                  logHandlers, startUp));
+                                                                                  logHandlers, startUp,
+                                                                                  startTimeout, startTimeoutUnit));
         synchronized (YarnTwillRunnerService.this) {
           Preconditions.checkArgument(!controllers.contains(appName, runId),
                                       "Application %s with runId %s is already running.", appName, runId);
@@ -323,6 +338,19 @@ public final class YarnTwillRunnerService implements TwillRunnerService {
   private void startUp() throws Exception {
     zkClientService.startAndWait();
 
+    // Find all the classpaths for Twill classes. It is used for class filtering when building application jar
+    // in the YarnTwillPreparer
+    Dependencies.findClassDependencies(getClass().getClassLoader(), new ClassAcceptor() {
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        if (!className.startsWith("org.apache.twill.")) {
+          return false;
+        }
+        twillClassPaths.add(classPathUrl);
+        return true;
+      }
+    }, getClass().getName());
+
     // Create the root node, so that the namespace root would get created if it is missing
     // If the exception is caused by node exists, then it's ok. Otherwise propagate the exception.
     ZKOperations.ignoreError(zkClientService.create("/", null, CreateMode.PERSISTENT),
@@ -330,6 +358,85 @@ public final class YarnTwillRunnerService implements TwillRunnerService {
 
     watchCancellable = watchLiveApps();
     liveInfos = createLiveInfos();
+
+    boolean enableSecureStoreUpdate = yarnConfig.getBoolean(Configs.Keys.SECURE_STORE_UPDATE_LOCATION_ENABLED, true);
+    // Schedule an updater for updating HDFS delegation tokens
+    if (UserGroupInformation.isSecurityEnabled() && enableSecureStoreUpdate) {
+      long renewalInterval = yarnConfig.getLong(DFSConfigKeys.DFS_NAMENODE_DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
+                                                DFSConfigKeys.DFS_NAMENODE_DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT);
+      // Schedule it five minutes before it expires.
+      long delay = renewalInterval - TimeUnit.MINUTES.toMillis(5);
+      // Just to safeguard. In practice, the value shouldn't be that small, otherwise nothing could work.
+      if (delay <= 0) {
+        delay = (renewalInterval <= 2) ? 1 : renewalInterval / 2;
+      }
+      scheduleSecureStoreUpdate(new LocationSecureStoreUpdater(yarnConfig, locationFactory),
+                                delay, delay, TimeUnit.MILLISECONDS);
+    }
+
+    // Optionally create a LocationCache
+    String cacheDir = yarnConfig.get(Configs.Keys.LOCATION_CACHE_DIR);
+    if (cacheDir != null) {
+      String sessionId = Long.toString(System.currentTimeMillis());
+      try {
+        Location cacheBase = locationFactory.create(cacheDir);
+        cacheBase.mkdirs();
+        cacheBase.setPermissions("775");
+
+        // Use a unique cache directory for each instance of this class
+        Location cacheLocation = cacheBase.append(sessionId);
+        cacheLocation.mkdirs();
+        cacheLocation.setPermissions("775");
+
+        locationCache = new BasicLocationCache(cacheLocation);
+        locationCacheCleaner = startLocationCacheCleaner(cacheBase, sessionId);
+      } catch (IOException e) {
+        LOG.warn("Failed to create location cache directory. Location cache cannot be enabled.", e);
+      }
+    }
+  }
+
+  /**
+   * Forces a cleanup of location cache based on the given time.
+   */
+  @VisibleForTesting
+  void forceLocationCacheCleanup(long currentTime) {
+    locationCacheCleaner.forceCleanup(currentTime);
+  }
+
+  private LocationCacheCleaner startLocationCacheCleaner(final Location cacheBase, final String sessionId) {
+    LocationCacheCleaner cleaner = new LocationCacheCleaner(
+      yarnConfig, cacheBase, sessionId, new Predicate<Location>() {
+      @Override
+      public boolean apply(Location location) {
+        // Collects all the locations that is being used by any live applications
+        Set<Location> activeLocations = new HashSet<>();
+        synchronized (YarnTwillRunnerService.this) {
+          for (YarnTwillController controller : controllers.values()) {
+            ApplicationMasterLiveNodeData amLiveNodeData = controller.getApplicationMasterLiveNodeData();
+            if (amLiveNodeData != null) {
+              for (LocalFile localFile : amLiveNodeData.getLocalFiles()) {
+                activeLocations.add(locationFactory.create(localFile.getURI()));
+              }
+            }
+          }
+        }
+
+        try {
+          // Always keep the launcher.jar and twill.jar from the current session as they should never change,
+          // hence never expires
+          activeLocations.add(cacheBase.append(sessionId).append(Constants.Files.LAUNCHER_JAR));
+          activeLocations.add(cacheBase.append(sessionId).append(Constants.Files.TWILL_JAR));
+        } catch (IOException e) {
+          // This should not happen
+          LOG.warn("Failed to construct cache location", e);
+        }
+
+        return !activeLocations.contains(location);
+      }
+    });
+    cleaner.startAndWait();
+    return cleaner;
   }
 
   private void shutDown() throws Exception {
@@ -338,6 +445,9 @@ public final class YarnTwillRunnerService implements TwillRunnerService {
     // when the JVM process is about to exit. Hence it is important that threads created in the controllers are
     // daemon threads.
     synchronized (this) {
+      if (locationCacheCleaner != null) {
+        locationCacheCleaner.stopAndWait();
+      }
       if (secureStoreScheduler != null) {
         secureStoreScheduler.shutdownNow();
       }
@@ -480,8 +590,9 @@ public final class YarnTwillRunnerService implements TwillRunnerService {
         if (cancelled.get()) {
           return;
         }
-        ApplicationId appId = getApplicationId(result);
-        if (appId == null) {
+
+        ApplicationMasterLiveNodeData amLiveNodeData = ApplicationMasterLiveNodeDecoder.decode(result);
+        if (amLiveNodeData == null) {
           return;
         }
 
@@ -489,8 +600,7 @@ public final class YarnTwillRunnerService implements TwillRunnerService {
           if (!controllers.contains(appName, runId)) {
             ZKClient zkClient = ZKClients.namespace(zkClientService, "/" + appName);
             YarnTwillController controller = listenController(
-              new YarnTwillController(appName, runId, zkClient,
-                                      Callables.returning(yarnAppClient.createProcessController(appId))));
+              new YarnTwillController(appName, runId, zkClient, amLiveNodeData, yarnAppClient));
             controllers.put(appName, runId, controller);
             controller.start();
           }
@@ -504,40 +614,6 @@ public final class YarnTwillRunnerService implements TwillRunnerService {
     }, Threads.SAME_THREAD_EXECUTOR);
   }
 
-
-  /**
-   * Decodes application ID stored inside the node data.
-   * @param nodeData The node data to decode from. If it is {@code null}, this method would return {@code null}.
-   * @return The ApplicationId or {@code null} if failed to decode.
-   */
-  private ApplicationId getApplicationId(NodeData nodeData) {
-    byte[] data = nodeData == null ? null : nodeData.getData();
-    if (data == null) {
-      return null;
-    }
-
-    Gson gson = new Gson();
-    JsonElement json = gson.fromJson(new String(data, Charsets.UTF_8), JsonElement.class);
-    if (!json.isJsonObject()) {
-      LOG.warn("Unable to decode live data node.");
-      return null;
-    }
-
-    JsonObject jsonObj = json.getAsJsonObject();
-    json = jsonObj.get("data");
-    if (!json.isJsonObject()) {
-      LOG.warn("Property data not found in live data node.");
-      return null;
-    }
-
-    try {
-      ApplicationMasterLiveNodeData amLiveNode = gson.fromJson(json, ApplicationMasterLiveNodeData.class);
-      return YarnUtils.createApplicationId(amLiveNode.getAppIdClusterTime(), amLiveNode.getAppId());
-    } catch (Exception e) {
-      LOG.warn("Failed to decode application live node data.", e);
-      return null;
-    }
-  }
 
   private void updateSecureStores(Table<String, RunId, SecureStore> secureStores) {
     for (Table.Cell<String, RunId, SecureStore> cell : secureStores.cellSet()) {
@@ -611,8 +687,8 @@ public final class YarnTwillRunnerService implements TwillRunnerService {
 
   private static LocationFactory createDefaultLocationFactory(Configuration configuration) {
     try {
-      FileSystem fs = FileSystem.get(configuration);
-      return new HDFSLocationFactory(fs, fs.getHomeDirectory().toUri().getPath());
+      FileContext fc = FileContext.getFileContext(configuration);
+      return new FileContextLocationFactory(configuration, fc, fc.getHomeDirectory().toUri().getPath());
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

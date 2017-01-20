@@ -58,12 +58,13 @@ public final class PersistedMessageCallback implements KafkaConsumer.MessageCall
   }
 
   @Override
-  public void onReceived(Iterator<FetchedMessage> messages) {
-    delegate.onReceived(new OffsetTrackingIterator(messages));
+  public long onReceived(Iterator<FetchedMessage> messages) {
+    long offset = delegate.onReceived(new OffsetTrackingIterator(messages));
     if (messageCount.get() >= persistThreshold) {
       messageCount.set(0);
       persistOffsets();
     }
+    return offset;
   }
 
   @Override

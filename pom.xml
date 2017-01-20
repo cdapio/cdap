@@ -95,11 +95,14 @@
     <asm.version>5.0.3</asm.version>
     <async.http.version>1.7.18</async.http.version>
     <avro.version>1.6.2</avro.version>
-    <commons.codec.version>1.6</commons.codec.version>
-    <commons.cli.version>1.2</commons.cli.version>
-    <concurrent.trees.version>2.4.0</concurrent.trees.version>
     <cask.common.cli.version>0.8.0</cask.common.cli.version>
     <cask.common.version>0.7.1</cask.common.version>
+    <cdap.client.version>1.2.0</cdap.client.version>
+    <commons.cli.version>1.2</commons.cli.version>
+    <commons.codec.version>1.6</commons.codec.version>
+    <commons.compress.version>1.9</commons.compress.version>
+    <concurrent.trees.version>2.4.0</concurrent.trees.version>
+    <dumbster.version>1.6</dumbster.version>
     <fastutil.version>6.5.6</fastutil.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
@@ -109,17 +112,17 @@
     <guava.version>13.0.1</guava.version>
     <guice.version>3.0</guice.version>
     <hadoop.version>2.3.0</hadoop.version>
-    <hbase96.version>0.96.2-hadoop2</hbase96.version>
-    <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
+    <hbase10.version>1.0.1.1</hbase10.version>
     <hbase10cdh.version>1.0.0-cdh5.4.4</hbase10cdh.version>
     <hbase10cdh550.version>1.0.0-cdh5.5.0</hbase10cdh550.version>
-    <hbase10.version>1.0.1.1</hbase10.version>
     <hbase11.version>1.1.1</hbase11.version>
     <hbase12cdh570.version>1.2.0-cdh5.7.0</hbase12cdh570.version>
+    <hbase96.version>0.96.2-hadoop2</hbase96.version>
+    <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
     <hive.version>1.2.1</hive.version>
-    <tez.version>0.8.4</tez.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
+    <javamail.version>1.4.1</javamail.version>
     <jetty.version>6.1.22</jetty.version>
     <jetty8.version>8.1.15.v20140411</jetty8.version>
     <jline.version>2.12</jline.version>
@@ -128,30 +131,28 @@
     <kafka.version>0.8.2.2</kafka.version>
     <leveldb.version>0.6</leveldb.version>
     <logback.version>1.0.9</logback.version>
+    <mockftp.version>2.6</mockftp.version>
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
-    <netty.version>3.6.6.Final</netty.version>
     <netty.http.version>0.16.0</netty.http.version>
-    <rs-api.version>2.0</rs-api.version>
+    <netty.version>3.6.6.Final</netty.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
+    <rs-api.version>2.0</rs-api.version>
     <scala.version>2.10.4</scala.version>
     <servlet.api.version>3.0.1</servlet.api.version>
-    <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
+    <snappy.version>1.1.1.7</snappy.version>
+    <spark.version>1.6.1</spark.version>
     <tephra.version>0.10.0-incubating</tephra.version>
+    <tez.version>0.8.4</tez.version>
     <thrift.version>0.9.3</thrift.version>
-    <twill.version>0.9.0</twill.version>
+    <twill.version>0.10.0-SNAPSHOT</twill.version>
+    <twitter4j.version>4.0.3</twitter4j.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
-    <spark.version>1.6.1</spark.version>
-    <cdap.client.version>1.2.0</cdap.client.version>
-    <twitter4j.version>4.0.3</twitter4j.version>
-    <dumbster.version>1.6</dumbster.version>
-    <javamail.version>1.4.1</javamail.version>
-    <commons.compress.version>1.9</commons.compress.version>
-    <mockftp.version>2.6</mockftp.version>
+
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
     <release.iteration>1</release.iteration>

@@ -939,7 +939,6 @@ public final class Constants {
   public static final String CFG_HDFS_LIB_DIR = "hdfs.lib.dir";
 
   public static final String CFG_TWILL_ZK_NAMESPACE = "twill.zookeeper.namespace";
-  public static final String CFG_TWILL_RESERVED_MEMORY_MB = "twill.java.reserved.memory.mb";
   public static final String CFG_TWILL_NO_CONTAINER_TIMEOUT = "twill.no.container.timeout";
 
   /**

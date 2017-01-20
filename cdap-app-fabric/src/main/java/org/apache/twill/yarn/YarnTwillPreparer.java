@@ -17,12 +17,9 @@
  */
 package org.apache.twill.yarn;
 
-import co.cask.cdap.common.io.Locations;
-import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
@@ -35,6 +32,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.OutputSupplier;
 import com.google.common.reflect.TypeToken;
@@ -45,6 +44,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.api.Configs;
 import org.apache.twill.api.EventHandlerSpecification;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.api.RunId;
@@ -55,12 +55,9 @@ import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
 import org.apache.twill.internal.Arguments;
-import org.apache.twill.internal.Configs;
 import org.apache.twill.internal.Constants;
 import org.apache.twill.internal.DefaultLocalFile;
 import org.apache.twill.internal.DefaultRuntimeSpecification;
@@ -70,11 +67,11 @@ import org.apache.twill.internal.JvmOptions;
 import org.apache.twill.internal.LogOnlyEventHandler;
 import org.apache.twill.internal.ProcessController;
 import org.apache.twill.internal.ProcessLauncher;
-import org.apache.twill.internal.RunIds;
 import org.apache.twill.internal.TwillRuntimeSpecification;
 import org.apache.twill.internal.appmaster.ApplicationMasterInfo;
 import org.apache.twill.internal.appmaster.ApplicationMasterMain;
 import org.apache.twill.internal.container.TwillContainerMain;
+import org.apache.twill.internal.io.LocationCache;
 import org.apache.twill.internal.json.ArgumentsCodec;
 import org.apache.twill.internal.json.JvmOptionsCodec;
 import org.apache.twill.internal.json.LocalFileCodec;
@@ -100,15 +97,20 @@ import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
-import javax.annotation.Nullable;
 
 /**
  * Implementation for {@link TwillPreparer} to prepare and launch distributed application on Hadoop YARN.
@@ -116,12 +118,18 @@ import javax.annotation.Nullable;
 final class YarnTwillPreparer implements TwillPreparer {
 
   private static final Logger LOG = LoggerFactory.getLogger(YarnTwillPreparer.class);
+  private static final Function<Class<?>, String> CLASS_TO_NAME = new Function<Class<?>, String>() {
+    @Override
+    public String apply(Class<?> cls) {
+      return cls.getName();
+    }
+  };
 
   private final YarnConfiguration yarnConfig;
   private final TwillSpecification twillSpec;
   private final YarnAppClient yarnAppClient;
   private final String zkConnectString;
-  private final LocationFactory locationFactory;
+  private final Location appLocation;
   private final YarnTwillControllerFactory controllerFactory;
   private final RunId runId;
 
@@ -135,36 +143,37 @@ final class YarnTwillPreparer implements TwillPreparer {
   private final List<String> applicationClassPaths = Lists.newArrayList();
   private final Credentials credentials;
   private final int reservedMemory;
+  private final File localStagingDir;
   private final Map<String, Map<String, String>> logLevels = new HashMap<>();
-  private String user;
+  private final LocationCache locationCache;
+  private final Set<URL> twillClassPaths;
   private String schedulerQueue;
   private String extraOptions;
   private JvmOptions.DebugOptions debugOptions = JvmOptions.DebugOptions.NO_DEBUG;
   private ClassAcceptor classAcceptor;
-  // Hack for CDAP-7021
-  private LocationFactory jarCacheLocationFactory;
-  // Hacks for TWILL-187
-  private Integer maxStartSeconds;
-  private Integer maxStopSeconds;
 
-  YarnTwillPreparer(YarnConfiguration yarnConfig, TwillSpecification twillSpec,
-                    YarnAppClient yarnAppClient, String zkConnectString,
-                    LocationFactory locationFactory, String extraOptions, LogEntry.Level logLevel,
-                    YarnTwillControllerFactory controllerFactory) {
+  YarnTwillPreparer(YarnConfiguration yarnConfig, TwillSpecification twillSpec, RunId runId,
+                    YarnAppClient yarnAppClient, String zkConnectString, Location appLocation, Set<URL> twillClassPaths,
+                    String extraOptions, LocationCache locationCache, YarnTwillControllerFactory controllerFactory) {
     this.yarnConfig = yarnConfig;
     this.twillSpec = twillSpec;
+    this.runId = runId;
     this.yarnAppClient = yarnAppClient;
     this.zkConnectString = zkConnectString;
-    this.locationFactory = locationFactory;
+    this.appLocation = appLocation;
     this.controllerFactory = controllerFactory;
-    this.runId = RunIds.generate();
     this.credentials = createCredentials();
     this.reservedMemory = yarnConfig.getInt(Configs.Keys.JAVA_RESERVED_MEMORY_MB,
                                             Configs.Defaults.JAVA_RESERVED_MEMORY_MB);
-    this.user = System.getProperty("user.name");
+    this.localStagingDir = new File(yarnConfig.get(Configs.Keys.LOCAL_STAGING_DIRECTORY,
+                                                   Configs.Defaults.LOCAL_STAGING_DIRECTORY));
     this.extraOptions = extraOptions;
     this.classAcceptor = new ClassAcceptor();
-    saveLogLevels(logLevel);
+    this.locationCache = locationCache;
+    this.twillClassPaths = twillClassPaths;
+
+    // By default, the root logger is having INFO log level
+    setLogLevel(LogEntry.Level.INFO);
   }
 
   @Override
@@ -175,7 +184,6 @@ final class YarnTwillPreparer implements TwillPreparer {
 
   @Override
   public TwillPreparer setUser(String user) {
-    this.user = user;
     return this;
   }
 
@@ -215,40 +223,7 @@ final class YarnTwillPreparer implements TwillPreparer {
 
   @Override
   public TwillPreparer withApplicationArguments(Iterable<String> args) {
-    for (String arg : args) {
-      // Hack for CDAP-7021 and TWILL-187
-      if (arg.startsWith("cdap.jar.cache.dir=")) {
-        String jarCacheDir = arg.substring(arg.indexOf("=") + 1);
-        LOG.debug("using local directory {} to cache jars.", jarCacheDir);
-        jarCacheLocationFactory = new LocalLocationFactory(new File(jarCacheDir));
-      } else if (arg.startsWith("app.max.start.seconds=")) {
-        String secondsStr = arg.substring(arg.indexOf("=") + 1);
-        try {
-          maxStartSeconds = Integer.parseInt(secondsStr);
-          if (maxStartSeconds < 0) {
-            LOG.warn("Invalid value for app.max.start.seconds={}. The default value will be used.", secondsStr);
-            maxStartSeconds = null;
-          }
-          LOG.debug("using max start seconds {}.", maxStartSeconds);
-        } catch (NumberFormatException e) {
-          LOG.warn("Invalid value for app.max.start.seconds={}. The default value will be used.", secondsStr);
-        }
-      } else if (arg.startsWith("app.max.stop.seconds=")) {
-        String secondsStr = arg.substring(arg.indexOf("=") + 1);
-        try {
-          maxStopSeconds = Integer.parseInt(secondsStr);
-          if (maxStopSeconds < 0) {
-            LOG.warn("Invalid value for app.max.stop.seconds={}. The default value will be used.", secondsStr);
-            maxStopSeconds = null;
-          }
-          LOG.debug("using max stop seconds {}.", maxStopSeconds);
-        } catch (NumberFormatException e) {
-          LOG.warn("Invalid value for app.max.stop.seconds={}. The default value will be used.", secondsStr);
-        }
-      } else {
-        arguments.add(arg);
-      }
-    }
+    Iterables.addAll(arguments, args);
     return this;
   }
 
@@ -368,6 +343,11 @@ final class YarnTwillPreparer implements TwillPreparer {
 
   @Override
   public TwillController start() {
+    return start(Constants.APPLICATION_MAX_START_SECONDS, TimeUnit.SECONDS);
+  }
+
+  @Override
+  public TwillController start(long timeout, TimeUnit timeoutUnit) {
     try {
       final ProcessLauncher<ApplicationMasterInfo> launcher = yarnAppClient.createLauncher(twillSpec, schedulerQueue);
       final ApplicationMasterInfo appMasterInfo = launcher.getContainerInfo();
@@ -375,27 +355,35 @@ final class YarnTwillPreparer implements TwillPreparer {
         new Callable<ProcessController<YarnApplicationReport>>() {
           @Override
           public ProcessController<YarnApplicationReport> call() throws Exception {
-            String fsUser = locationFactory.getHomeLocation().getName();
 
             // Local files needed by AM
             Map<String, LocalFile> localFiles = Maps.newHashMap();
-            // Local files declared by runnables
-            Multimap<String, LocalFile> runnableLocalFiles = HashMultimap.create();
 
-            createAppMasterJar(createBundler(), localFiles);
-            createContainerJar(createBundler(), localFiles);
-            populateRunnableLocalFiles(twillSpec, runnableLocalFiles);
-            saveSpecification(twillSpec, runnableLocalFiles, localFiles);
-            saveLogback(localFiles);
-            saveLauncher(localFiles);
-            saveJvmOptions(localFiles);
-            saveArguments(new Arguments(arguments, runnableArgs), localFiles);
-            saveEnvironments(localFiles);
-            saveLocalFiles(localFiles, ImmutableSet.of(Constants.Files.TWILL_SPEC,
-                                                       Constants.Files.LOGBACK_TEMPLATE,
-                                                       Constants.Files.CONTAINER_JAR,
-                                                       Constants.Files.LAUNCHER_JAR,
-                                                       Constants.Files.ARGUMENTS));
+            createLauncherJar(localFiles);
+            createTwillJar(createBundler(classAcceptor), localFiles);
+//            createApplicationJar(createApplicationJarBundler(classAcceptor), localFiles);
+            // TODO: CDAP-8170. Because we copy classes from twill, hence when tracing twill dependencies,
+            // CDAP classes gets included. When we create app, we can't exclude those twill dependencies
+            // (which has CDAP in it), otherwise it will result in missing some CDAP jars.
+            createApplicationJar(createBundler(classAcceptor), localFiles);
+            createResourcesJar(createBundler(classAcceptor), localFiles);
+
+            Path runtimeConfigDir = Files.createTempDirectory(localStagingDir.toPath(),
+                                                              Constants.Files.RUNTIME_CONFIG_JAR);
+            try {
+              saveSpecification(twillSpec, runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC));
+              saveLogback(runtimeConfigDir.resolve(Constants.Files.LOGBACK_TEMPLATE));
+              saveClassPaths(runtimeConfigDir);
+              saveJvmOptions(runtimeConfigDir.resolve(Constants.Files.JVM_OPTIONS));
+              saveArguments(new Arguments(arguments, runnableArgs),
+                            runtimeConfigDir.resolve(Constants.Files.ARGUMENTS));
+              saveEnvironments(runtimeConfigDir.resolve(Constants.Files.ENVIRONMENTS));
+              createRuntimeConfigJar(runtimeConfigDir, localFiles);
+            } finally {
+              Paths.deleteRecursively(runtimeConfigDir);
+            }
+
+            createLocalizeFilesJson(localFiles);
 
             LOG.debug("Submit AM container spec: {}", appMasterInfo);
             // java -Djava.io.tmpdir=tmp -cp launcher.jar:$HADOOP_CONF_DIR -XmxMemory
@@ -417,21 +405,13 @@ final class YarnTwillPreparer implements TwillPreparer {
                 "-Xmx" + memory + "m",
                 extraOptions == null ? "" : extraOptions,
                 TwillLauncher.class.getName(),
-                Constants.Files.APP_MASTER_JAR,
                 ApplicationMasterMain.class.getName(),
                 Boolean.FALSE.toString())
               .launch();
           }
         };
 
-      YarnTwillController controller = controllerFactory.create(runId, logHandlers, submitTask);
-      // Hacks for TWILL-187
-      if (maxStartSeconds != null) {
-        controller.setMaxStartSeconds(maxStartSeconds);
-      }
-      if (maxStopSeconds != null) {
-        controller.setMaxStopSeconds(maxStopSeconds);
-      }
+      YarnTwillController controller = controllerFactory.create(runId, logHandlers, submitTask, timeout, timeoutUnit);
       controller.start();
       return controller;
     } catch (Exception e) {
@@ -455,15 +435,6 @@ final class YarnTwillPreparer implements TwillPreparer {
     }
   }
 
-  private void saveLogLevels(LogEntry.Level level) {
-    Preconditions.checkNotNull(level);
-    Map<String, String> appLogLevels = new HashMap<>();
-    appLogLevels.put(Logger.ROOT_LOGGER_NAME, level.name());
-    for (String runnableName : twillSpec.getRunnables().keySet()) {
-      this.logLevels.put(runnableName, appLogLevels);
-    }
-  }
-
   private void saveLogLevels(String runnableName, Map<String, LogEntry.Level> logLevels) {
     Map<String, String> newLevels = new HashMap<>();
     for (Map.Entry<String, LogEntry.Level> entry : logLevels.entrySet()) {
@@ -479,18 +450,16 @@ final class YarnTwillPreparer implements TwillPreparer {
     try {
       credentials.addAll(UserGroupInformation.getCurrentUser().getCredentials());
 
-      List<Token<?>> tokens = YarnUtils.addDelegationTokens(yarnConfig, locationFactory, credentials);
-      for (Token<?> token : tokens) {
-        LOG.debug("Delegation token acquired for {}, {}", locationFactory.getHomeLocation(), token);
+      List<Token<?>> tokens = YarnUtils.addDelegationTokens(yarnConfig, appLocation.getLocationFactory(), credentials);
+      if (LOG.isDebugEnabled()) {
+        for (Token<?> token : tokens) {
+          LOG.debug("Delegation token acquired for {}, {}", appLocation, token);
+        }
       }
     } catch (IOException e) {
       LOG.warn("Failed to check for secure login type. Not gathering any delegation token.", e);
     }
     return credentials;
-  }
-
-  private ApplicationBundler createBundler() {
-    return new ApplicationBundler(classAcceptor);
   }
 
   private LocalFile createLocalFile(String name, Location location) throws IOException {
@@ -501,92 +470,105 @@ final class YarnTwillPreparer implements TwillPreparer {
     return new DefaultLocalFile(name, location.toURI(), location.lastModified(), location.length(), archive, null);
   }
 
-  private void createAppMasterJar(ApplicationBundler bundler, Map<String, LocalFile> localFiles) throws IOException {
-    try {
-      LOG.debug("Create and copy {}", Constants.Files.APP_MASTER_JAR);
-      Location location = createTempLocation(Constants.Files.APP_MASTER_JAR);
-
-      Location cachedLocation = jarCacheLocationFactory == null ?
-        null : jarCacheLocationFactory.create(Constants.Files.APP_MASTER_JAR);
-      Location cacheDoneLocation = cachedLocation == null ?
-        null : jarCacheLocationFactory.create(Constants.Files.APP_MASTER_JAR + ".done");
-
-      if (cachedLocation != null && cacheDoneLocation.exists()) {
-        LOG.debug("Found cached app master jar for twill app {} at {}", twillSpec.getName(), cachedLocation);
-        // the jar is cached on local disk. Upload it to hdfs.
-        ByteStreams.copy(Locations.newInputSupplier(cachedLocation), Locations.newOutputSupplier(location));
-      } else {
-        List<Class<?>> classes = Lists.newArrayList();
-        classes.add(ApplicationMasterMain.class);
-
+  private void createTwillJar(final ApplicationBundler bundler, Map<String, LocalFile> localFiles) throws IOException {
+    LOG.debug("Create and copy {}", Constants.Files.TWILL_JAR);
+    Location location = locationCache.get(Constants.Files.TWILL_JAR, new LocationCache.Loader() {
+      @Override
+      public void load(String name, Location targetLocation) throws IOException {
         // Stuck in the yarnAppClient class to make bundler being able to pickup the right yarn-client version
-        classes.add(yarnAppClient.getClass());
-
-        // Add the TwillRunnableEventHandler class
-        if (twillSpec.getEventHandler() != null) {
-          classes.add(getClassLoader().loadClass(twillSpec.getEventHandler().getClassName()));
-        }
-
-        bundler.createBundle(location, classes);
-        LOG.debug("Done {}", Constants.Files.APP_MASTER_JAR);
-
-        if (cachedLocation != null) {
-          copyToLocalCache(location, cachedLocation, cacheDoneLocation);
-        }
+        bundler.createBundle(targetLocation, ApplicationMasterMain.class,
+                             yarnAppClient.getClass(), TwillContainerMain.class);
       }
-      localFiles.put(Constants.Files.APP_MASTER_JAR, createLocalFile(Constants.Files.APP_MASTER_JAR, location));
+    });
+
+    LOG.debug("Done {}", Constants.Files.TWILL_JAR);
+    localFiles.put(Constants.Files.TWILL_JAR, createLocalFile(Constants.Files.TWILL_JAR, location, true));
+  }
+
+  private void createApplicationJar(final ApplicationBundler bundler,
+                                    Map<String, LocalFile> localFiles) throws IOException {
+    try {
+      final Set<Class<?>> classes = Sets.newIdentityHashSet();
+      classes.addAll(dependencies);
+
+      ClassLoader classLoader = getClassLoader();
+      for (RuntimeSpecification spec : twillSpec.getRunnables().values()) {
+        classes.add(classLoader.loadClass(spec.getRunnableSpecification().getClassName()));
+      }
+
+      // Add the TwillRunnableEventHandler class
+      if (twillSpec.getEventHandler() != null) {
+        classes.add(getClassLoader().loadClass(twillSpec.getEventHandler().getClassName()));
+      }
+
+      // The location name is computed from the MD5 of all the classes names
+      // The localized name is always APPLICATION_JAR
+      List<String> classList = Lists.newArrayList(Iterables.transform(classes, CLASS_TO_NAME));
+      Collections.sort(classList);
+      Hasher hasher = Hashing.md5().newHasher();
+      for (String name : classList) {
+        hasher.putString(name);
+      }
+      // TODO: TWILL-207. Only depends on class list so that it can be reused across different programs of the same type
+      String name = hasher.hash().toString() + "-" + Constants.Files.APPLICATION_JAR;
+
+      LOG.debug("Create and copy {}", Constants.Files.APPLICATION_JAR);
+      Location location = locationCache.get(name, new LocationCache.Loader() {
+        @Override
+        public void load(String name, Location targetLocation) throws IOException {
+          bundler.createBundle(targetLocation, classes);
+        }
+      });
+
+      LOG.debug("Done {}", Constants.Files.APPLICATION_JAR);
+
+      localFiles.put(Constants.Files.APPLICATION_JAR, createLocalFile(Constants.Files.APPLICATION_JAR, location, true));
 
     } catch (ClassNotFoundException e) {
       throw Throwables.propagate(e);
     }
   }
 
-  private void createContainerJar(ApplicationBundler bundler, Map<String, LocalFile> localFiles) throws IOException {
-    try {
-      LOG.debug("Create and copy {}", Constants.Files.CONTAINER_JAR);
-      Location location = createTempLocation(Constants.Files.CONTAINER_JAR);
-
-      Location cachedLocation = jarCacheLocationFactory == null ?
-        null : jarCacheLocationFactory.create(Constants.Files.CONTAINER_JAR);
-      Location cacheDoneLocation = cachedLocation == null ?
-        null : jarCacheLocationFactory.create(Constants.Files.CONTAINER_JAR + ".done");
-      if (cachedLocation != null && cacheDoneLocation.exists()) {
-        LOG.debug("Found cached container jar for twill app {} at {}", twillSpec.getName(), cachedLocation);
-        // the jar is cached on local disk. Upload it to hdfs.
-        ByteStreams.copy(Locations.newInputSupplier(cachedLocation), Locations.newOutputSupplier(location));
-      } else {
-        Set<Class<?>> classes = Sets.newIdentityHashSet();
-        classes.add(TwillContainerMain.class);
-        classes.addAll(dependencies);
-
-        ClassLoader classLoader = getClassLoader();
-        for (RuntimeSpecification spec : twillSpec.getRunnables().values()) {
-          classes.add(classLoader.loadClass(spec.getRunnableSpecification().getClassName()));
-        }
-
-        bundler.createBundle(location, classes, resources);
-        LOG.debug("Done {}", Constants.Files.CONTAINER_JAR);
-
-        if (cachedLocation != null) {
-          copyToLocalCache(location, cachedLocation, cacheDoneLocation);
-        }
-      }
-
-      localFiles.put(Constants.Files.CONTAINER_JAR, createLocalFile(Constants.Files.CONTAINER_JAR, location));
-
-    } catch (ClassNotFoundException e) {
-      throw Throwables.propagate(e);
+  private void createResourcesJar(ApplicationBundler bundler, Map<String, LocalFile> localFiles) throws IOException {
+    // If there is no resources, no need to create the jar file.
+    if (resources.isEmpty()) {
+      return;
     }
+
+    LOG.debug("Create and copy {}", Constants.Files.RESOURCES_JAR);
+    Location location = createTempLocation(Constants.Files.RESOURCES_JAR);
+    bundler.createBundle(location, Collections.<Class<?>>emptyList(), resources);
+    LOG.debug("Done {}", Constants.Files.RESOURCES_JAR);
+    localFiles.put(Constants.Files.RESOURCES_JAR, createLocalFile(Constants.Files.RESOURCES_JAR, location, true));
+  }
+
+  private void createRuntimeConfigJar(Path dir, Map<String, LocalFile> localFiles) throws IOException {
+    LOG.debug("Create and copy {}", Constants.Files.RUNTIME_CONFIG_JAR);
+
+    // Jar everything under the given directory, which contains different files needed by AM/runnable containers
+    Location location = createTempLocation(Constants.Files.RUNTIME_CONFIG_JAR);
+    try (
+      JarOutputStream jarOutput = new JarOutputStream(location.getOutputStream());
+      DirectoryStream<Path> stream = Files.newDirectoryStream(dir)
+    ) {
+      for (Path path : stream) {
+        jarOutput.putNextEntry(new JarEntry(path.getFileName().toString()));
+        Files.copy(path, jarOutput);
+        jarOutput.closeEntry();
+      }
+    }
+
+    LOG.debug("Done {}", Constants.Files.RUNTIME_CONFIG_JAR);
+    localFiles.put(Constants.Files.RUNTIME_CONFIG_JAR,
+                   createLocalFile(Constants.Files.RUNTIME_CONFIG_JAR, location, true));
   }
 
   /**
    * Based on the given {@link TwillSpecification}, upload LocalFiles to Yarn Cluster.
    * @param twillSpec The {@link TwillSpecification} for populating resource.
-   * @param localFiles A Multimap to store runnable name to transformed LocalFiles.
-   * @throws IOException
    */
-  private void populateRunnableLocalFiles(TwillSpecification twillSpec,
-                                          Multimap<String, LocalFile> localFiles) throws IOException {
+  private Multimap<String, LocalFile> populateRunnableLocalFiles(TwillSpecification twillSpec) throws IOException {
+    Multimap<String, LocalFile> localFiles = HashMultimap.create();
 
     LOG.debug("Populating Runnable LocalFiles");
     for (Map.Entry<String, RuntimeSpecification> entry: twillSpec.getRunnables().entrySet()) {
@@ -595,14 +577,14 @@ final class YarnTwillPreparer implements TwillPreparer {
         Location location;
 
         URI uri = localFile.getURI();
-        if (locationFactory.getHomeLocation().toURI().getScheme().equals(uri.getScheme())) {
+        if (appLocation.toURI().getScheme().equals(uri.getScheme())) {
           // If the source file location is having the same scheme as the target location, no need to copy
-          location = locationFactory.create(uri);
+          location = appLocation.getLocationFactory().create(uri);
         } else {
           URL url = uri.toURL();
           LOG.debug("Create and copy {} : {}", runnableName, url);
           // Preserves original suffix for expansion.
-          location = copyFromURL(url, createTempLocation(Paths.appendSuffix(url.getFile(), localFile.getName())));
+          location = copyFromURL(url, createTempLocation(Paths.addExtension(url.getFile(), localFile.getName())));
           LOG.debug("Done {} : {}", runnableName, url);
         }
 
@@ -612,10 +594,12 @@ final class YarnTwillPreparer implements TwillPreparer {
       }
     }
     LOG.debug("Done Runnable LocalFiles");
+    return localFiles;
   }
 
-  private void saveSpecification(TwillSpecification spec, final Multimap<String, LocalFile> runnableLocalFiles,
-                                 Map<String, LocalFile> localFiles) throws IOException {
+  private void saveSpecification(TwillSpecification spec, Path targetFile) throws IOException {
+    final Multimap<String, LocalFile> runnableLocalFiles = populateRunnableLocalFiles(spec);
+
     // Rewrite LocalFiles inside twillSpec
     Map<String, RuntimeSpecification> runtimeSpec = Maps.transformEntries(
       spec.getRunnables(), new Maps.EntryTransformer<String, RuntimeSpecification, RuntimeSpecification>() {
@@ -627,9 +611,8 @@ final class YarnTwillPreparer implements TwillPreparer {
       });
 
     // Serialize into a local temp file.
-    LOG.debug("Create and copy {}", Constants.Files.TWILL_SPEC);
-    Location location = createTempLocation(Constants.Files.TWILL_SPEC);
-    try (Writer writer = new OutputStreamWriter(location.getOutputStream(), Charsets.UTF_8)) {
+    LOG.debug("Creating {}", targetFile);
+    try (Writer writer = Files.newBufferedWriter(targetFile, StandardCharsets.UTF_8)) {
       EventHandlerSpecification eventHandler = spec.getEventHandler();
       if (eventHandler == null) {
         eventHandler = new LogOnlyEventHandler().configure();
@@ -637,136 +620,124 @@ final class YarnTwillPreparer implements TwillPreparer {
       TwillSpecification newTwillSpec = new DefaultTwillSpecification(spec.getName(), runtimeSpec, spec.getOrders(),
                                                                       spec.getPlacementPolicies(), eventHandler);
       TwillRuntimeSpecificationAdapter.create().toJson(
-        new TwillRuntimeSpecification(newTwillSpec, locationFactory.getHomeLocation().getName(),
-                                      getAppLocation().toURI(), zkConnectString, runId, twillSpec.getName(),
+        new TwillRuntimeSpecification(newTwillSpec, appLocation.getLocationFactory().getHomeLocation().getName(),
+                                      appLocation.toURI(), zkConnectString, runId, twillSpec.getName(),
                                       reservedMemory, yarnConfig.get(YarnConfiguration.RM_SCHEDULER_ADDRESS),
                                       logLevels), writer);
     }
-    LOG.debug("Done {}", Constants.Files.TWILL_SPEC);
-
-    localFiles.put(Constants.Files.TWILL_SPEC, createLocalFile(Constants.Files.TWILL_SPEC, location));
+    LOG.debug("Done {}", targetFile);
   }
 
-  private void saveLogback(Map<String, LocalFile> localFiles) throws IOException {
-    LOG.debug("Create and copy {}", Constants.Files.LOGBACK_TEMPLATE);
-    Location location = copyFromURL(getClass().getClassLoader().getResource(Constants.Files.LOGBACK_TEMPLATE),
-                                    createTempLocation(Constants.Files.LOGBACK_TEMPLATE));
-    LOG.debug("Done {}", Constants.Files.LOGBACK_TEMPLATE);
+  private void saveLogback(Path targetFile) throws IOException {
+    URL url = getClass().getClassLoader().getResource(Constants.Files.LOGBACK_TEMPLATE);
+    if (url == null) {
+      return;
+    }
 
-    localFiles.put(Constants.Files.LOGBACK_TEMPLATE, createLocalFile(Constants.Files.LOGBACK_TEMPLATE, location));
+    LOG.debug("Creating {}", targetFile);
+    try (InputStream is = url.openStream()) {
+      Files.copy(is, targetFile);
+    }
+    LOG.debug("Done {}", targetFile);
   }
 
   /**
    * Creates the launcher.jar for launch the main application.
    */
-  private void saveLauncher(Map<String, LocalFile> localFiles) throws URISyntaxException, IOException {
+  private void createLauncherJar(Map<String, LocalFile> localFiles) throws URISyntaxException, IOException {
 
     LOG.debug("Create and copy {}", Constants.Files.LAUNCHER_JAR);
-    Location location = createTempLocation(Constants.Files.LAUNCHER_JAR);
 
-    final String launcherName = TwillLauncher.class.getName();
-    final String portFinderName = FindFreePort.class.getName();
-
-    // Create a jar file with the TwillLauncher optionally a json serialized classpath.json in it.
-    // Also a little utility to find a free port, used for debugging.
-    final JarOutputStream jarOut = new JarOutputStream(location.getOutputStream());
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    if (classLoader == null) {
-      classLoader = getClass().getClassLoader();
-    }
-    Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
+    Location location = locationCache.get(Constants.Files.LAUNCHER_JAR, new LocationCache.Loader() {
       @Override
-      public boolean accept(String className, URL classUrl, URL classPathUrl) {
-        Preconditions.checkArgument(className.startsWith(launcherName) || className.equals(portFinderName),
-                                    "Launcher jar should not have dependencies: %s", className);
-        try {
-          jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
-          try (InputStream is = classUrl.openStream()) {
-            ByteStreams.copy(is, jarOut);
+      public void load(String name, Location targetLocation) throws IOException {
+        // Create a jar file with the TwillLauncher and FindFreePort and dependent classes inside.
+        try (JarOutputStream jarOut = new JarOutputStream(targetLocation.getOutputStream())) {
+          ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+          if (classLoader == null) {
+            classLoader = getClass().getClassLoader();
           }
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
+          Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
+            @Override
+            public boolean accept(String className, URL classUrl, URL classPathUrl) {
+              try {
+                jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
+                try (InputStream is = classUrl.openStream()) {
+                  ByteStreams.copy(is, jarOut);
+                }
+              } catch (IOException e) {
+                throw Throwables.propagate(e);
+              }
+              return true;
+            }
+          }, TwillLauncher.class.getName(), FindFreePort.class.getName());
         }
-        return true;
       }
-    }, launcherName, portFinderName);
+    });
 
-    try {
-      addClassPaths(Constants.CLASSPATH, classPaths, jarOut);
-      addClassPaths(Constants.APPLICATION_CLASSPATH, applicationClassPaths, jarOut);
-    } finally {
-      jarOut.close();
-    }
     LOG.debug("Done {}", Constants.Files.LAUNCHER_JAR);
 
     localFiles.put(Constants.Files.LAUNCHER_JAR, createLocalFile(Constants.Files.LAUNCHER_JAR, location));
   }
 
-  private void addClassPaths(String classpathId, List<String> classPaths, JarOutputStream jarOut) throws IOException {
-    if (!classPaths.isEmpty()) {
-      jarOut.putNextEntry(new JarEntry(classpathId));
-      jarOut.write(Joiner.on(':').join(classPaths).getBytes(Charsets.UTF_8));
-    }
+  private void saveClassPaths(Path targetDir) throws IOException {
+    Files.write(targetDir.resolve(Constants.Files.APPLICATION_CLASSPATH),
+                Joiner.on(':').join(applicationClassPaths).getBytes(StandardCharsets.UTF_8));
+    Files.write(targetDir.resolve(Constants.Files.CLASSPATH),
+                Joiner.on(':').join(classPaths).getBytes(StandardCharsets.UTF_8));
   }
 
-  private void saveJvmOptions(Map<String, LocalFile> localFiles) throws IOException {
+  private void saveJvmOptions(final Path targetPath) throws IOException {
     if ((extraOptions == null || extraOptions.isEmpty()) &&
       JvmOptions.DebugOptions.NO_DEBUG.equals(debugOptions)) {
       // If no vm options, no need to localize the file.
       return;
     }
-    LOG.debug("Create and copy {}", Constants.Files.JVM_OPTIONS);
-    final Location location = createTempLocation(Constants.Files.JVM_OPTIONS);
+    LOG.debug("Creating {}", targetPath);
     JvmOptionsCodec.encode(new JvmOptions(extraOptions, debugOptions), new OutputSupplier<Writer>() {
       @Override
       public Writer getOutput() throws IOException {
-        return new OutputStreamWriter(location.getOutputStream(), Charsets.UTF_8);
+        return Files.newBufferedWriter(targetPath, StandardCharsets.UTF_8);
       }
     });
-    LOG.debug("Done {}", Constants.Files.JVM_OPTIONS);
-
-    localFiles.put(Constants.Files.JVM_OPTIONS, createLocalFile(Constants.Files.JVM_OPTIONS, location));
+    LOG.debug("Done {}", targetPath);
   }
 
-  private void saveArguments(Arguments arguments, Map<String, LocalFile> localFiles) throws IOException {
-    LOG.debug("Create and copy {}", Constants.Files.ARGUMENTS);
-    final Location location = createTempLocation(Constants.Files.ARGUMENTS);
+  private void saveArguments(Arguments arguments, final Path targetPath) throws IOException {
+    LOG.debug("Creating {}", targetPath);
     ArgumentsCodec.encode(arguments, new OutputSupplier<Writer>() {
       @Override
       public Writer getOutput() throws IOException {
-        return new OutputStreamWriter(location.getOutputStream(), Charsets.UTF_8);
+        return Files.newBufferedWriter(targetPath, StandardCharsets.UTF_8);
       }
     });
-    LOG.debug("Done {}", Constants.Files.ARGUMENTS);
-
-    localFiles.put(Constants.Files.ARGUMENTS, createLocalFile(Constants.Files.ARGUMENTS, location));
+    LOG.debug("Done {}", targetPath);
   }
 
-  private void saveEnvironments(Map<String, LocalFile> localFiles) throws IOException {
+  private void saveEnvironments(Path targetPath) throws IOException {
     if (environments.isEmpty()) {
       return;
     }
 
-    LOG.debug("Create and copy {}", Constants.Files.ENVIRONMENTS);
-    final Location location = createTempLocation(Constants.Files.ENVIRONMENTS);
-    try (Writer writer = new OutputStreamWriter(location.getOutputStream(), Charsets.UTF_8)) {
+    LOG.debug("Creating {}", targetPath);
+    try (Writer writer = Files.newBufferedWriter(targetPath, StandardCharsets.UTF_8)) {
       new Gson().toJson(environments, writer);
     }
-    LOG.debug("Done {}", Constants.Files.ENVIRONMENTS);
-
-    localFiles.put(Constants.Files.ENVIRONMENTS, createLocalFile(Constants.Files.ENVIRONMENTS, location));
+    LOG.debug("Done {}", targetPath);
   }
 
   /**
-   * Serializes the list of files that needs to localize from AM to Container.
+   * Serializes the information for files that are localized to all YARN containers.
    */
-  private void saveLocalFiles(Map<String, LocalFile> localFiles, Set<String> includes) throws IOException {
-    Map<String, LocalFile> localize = ImmutableMap.copyOf(Maps.filterKeys(localFiles, Predicates.in(includes)));
+  private void createLocalizeFilesJson(Map<String, LocalFile> localFiles) throws IOException {
     LOG.debug("Create and copy {}", Constants.Files.LOCALIZE_FILES);
     Location location = createTempLocation(Constants.Files.LOCALIZE_FILES);
-    try (Writer writer = new OutputStreamWriter(location.getOutputStream(), Charsets.UTF_8)) {
+
+    // Serialize the list of LocalFiles, except the one we are generating here, as this file is used by AM only.
+    // This file should never use LocationCache.
+    try (Writer writer = new OutputStreamWriter(location.getOutputStream(), StandardCharsets.UTF_8)) {
       new GsonBuilder().registerTypeAdapter(LocalFile.class, new LocalFileCodec())
-        .create().toJson(localize.values(), new TypeToken<List<LocalFile>>() {
+        .create().toJson(localFiles.values(), new TypeToken<List<LocalFile>>() {
       }.getType(), writer);
     }
     LOG.debug("Done {}", Constants.Files.LOCALIZE_FILES);
@@ -790,14 +761,10 @@ final class YarnTwillPreparer implements TwillPreparer {
     name = fileName.substring(0, fileName.length() - suffix.length() - 1);
 
     try {
-      return getAppLocation().append(name).getTempFile('.' + suffix);
+      return appLocation.append(name).getTempFile('.' + suffix);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  private Location getAppLocation() {
-    return locationFactory.create(String.format("/%s/%s", twillSpec.getName(), runId.getId()));
   }
 
   /**
@@ -808,39 +775,22 @@ final class YarnTwillPreparer implements TwillPreparer {
     return classLoader == null ? getClass().getClassLoader() : classLoader;
   }
 
-  // part of hack for CDAP-7021
-  private void copyToLocalCache(Location jarLocation, Location cacheLocation,
-                                Location doneLocation) throws IOException {
+  private ApplicationBundler createBundler(ClassAcceptor classAcceptor) {
+    return new ApplicationBundler(classAcceptor).setTempDir(localStagingDir);
+  }
 
-    // to handle race conditions, only the first one to create the cached location will populate it
-    if (cacheLocation.createNew()) {
-      try {
-        ByteStreams.copy(Locations.newInputSupplier(jarLocation), Locations.newOutputSupplier(cacheLocation));
-      } catch (IOException e) {
-        LOG.error("Error caching container jar for twill app {} at {}, it will need to be rebuilt next time.",
-                  twillSpec.getName(), cacheLocation, e);
-        cacheLocation.delete();
-        return;
+  /**
+   * Creates a {@link ApplicationBundler} for building application jar. The bundler will include classes
+   * accepted by the given {@link ClassAcceptor}, as long as it is not a twill class.
+   */
+  private ApplicationBundler createApplicationJarBundler(final ClassAcceptor classAcceptor) {
+    // Accept classes based on the classAcceptor and also excluding all twill classes as they are already
+    // in the twill.jar
+    return createBundler(new ClassAcceptor() {
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        return !twillClassPaths.contains(classPathUrl) && classAcceptor.accept(className, classUrl, classPathUrl);
       }
-      try {
-        doneLocation.createNew();
-      } catch (IOException e) {
-        LOG.error("Error caching container jar for twill app {} at {}, it will need to be rebuilt next time.",
-                  twillSpec.getName(), cacheLocation, e);
-        try {
-          doneLocation.delete();
-        } catch (IOException e1) {
-          LOG.error("Error cleaning up {} after cache failure. The file will need to be manually deleted.",
-                    doneLocation, e1);
-        } finally {
-          try {
-            cacheLocation.delete();
-          } catch (IOException e2) {
-            LOG.error("Error cleaning up {} after cache failure. The file will need to be manually deleted.",
-                      cacheLocation, e2);
-          }
-        }
-      }
-    }
+    });
   }
 }

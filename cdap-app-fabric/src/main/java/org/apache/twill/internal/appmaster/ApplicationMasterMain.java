@@ -72,7 +72,7 @@ public final class ApplicationMasterMain extends ServiceMain {
    * Starts the application master.
    */
   public static void main(String[] args) throws Exception {
-    File twillSpec = new File(Constants.Files.TWILL_SPEC);
+    File twillSpec = new File(Constants.Files.RUNTIME_CONFIG_JAR, Constants.Files.TWILL_SPEC);
     TwillRuntimeSpecification twillRuntimeSpec = TwillRuntimeSpecificationAdapter.create().fromJson(twillSpec);
     String zkConnect = twillRuntimeSpec.getZkConnectStr();
     RunId runId = twillRuntimeSpec.getTwillAppRunId();

@@ -304,11 +304,15 @@ public class KafkaTester extends ExternalResource {
     Cancellable cancellable = preparer.consume(
       new KafkaConsumer.MessageCallback() {
         @Override
-        public void onReceived(Iterator<FetchedMessage> messages) {
+        public long onReceived(Iterator<FetchedMessage> messages) {
+          long offset = 0L;
           while (messages.hasNext()) {
-            actual.add(converter.apply(messages.next()));
+            FetchedMessage message = messages.next();
+            actual.add(converter.apply(message));
             latch.countDown();
+            offset = message.getNextOffset();
           }
+          return offset;
         }
 
         @Override

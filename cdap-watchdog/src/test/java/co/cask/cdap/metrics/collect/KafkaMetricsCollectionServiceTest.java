@@ -174,10 +174,13 @@ public class KafkaMetricsCollectionServiceTest {
       ReflectionDatumReader<MetricValues> reader = new ReflectionDatumReader<>(schema, metricRecordType);
 
       @Override
-      public void onReceived(Iterator<FetchedMessage> messages) {
+      public long onReceived(Iterator<FetchedMessage> messages) {
+        long nextOffset = 0L;
         try {
           while (messages.hasNext()) {
-            ByteBuffer payload = messages.next().getPayload();
+            FetchedMessage message = messages.next();
+            nextOffset = message.getNextOffset();
+            ByteBuffer payload = message.getPayload();
             MetricValues metricsRecord = reader.read(new BinaryDecoder(new ByteBufferInputStream(payload)), schema);
             StringBuilder flattenContext = new StringBuilder();
             // for verifying expected results, sorting tags
@@ -196,6 +199,7 @@ public class KafkaMetricsCollectionServiceTest {
         } catch (Exception e) {
           LOG.error("Error in consume", e);
         }
+        return nextOffset;
       }
 
       @Override

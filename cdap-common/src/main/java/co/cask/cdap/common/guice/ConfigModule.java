@@ -60,6 +60,7 @@ public final class ConfigModule extends AbstractModule {
     this.hConf = hConf;
     this.sConf = sConf;
     CConfigurationUtil.copyTxProperties(cConf, hConf);
+    CConfigurationUtil.copyTwillProperties(cConf, hConf);
 
     // Set system properties for all HTTP requests if they were found
     String connectionTimeout = cConf.get(Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS);

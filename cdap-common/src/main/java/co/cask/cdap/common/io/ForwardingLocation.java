@@ -67,6 +67,21 @@ public abstract class ForwardingLocation implements Location {
   }
 
   @Override
+  public String getOwner() throws IOException {
+    return delegate.getOwner();
+  }
+
+  @Override
+  public String getGroup() throws IOException {
+    return delegate.getGroup();
+  }
+
+  @Override
+  public void setGroup(String group) throws IOException {
+    delegate.setGroup(group);
+  }
+
+  @Override
   public String getPermissions() throws IOException {
     return delegate.getPermissions();
   }
