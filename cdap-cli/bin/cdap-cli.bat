@@ -31,7 +31,7 @@ SET "JAVACMD=%JAVA_HOME%\bin\java.exe"
 SET CDAP_VERSION=@@project.version@@
 
 ECHO:
-ECHO [WARN] %0 is deprecated and will be removed in CDAP 5.0. Please use 'cdap cli' for CDAP command line.
+ECHO [WARN] %0 is deprecated and will be removed in CDAP 5.0. Please use 'cdap cli' for the CDAP command line.
 ECHO:
 ECHO   cdap cli %*
 ECHO:
