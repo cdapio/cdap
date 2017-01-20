@@ -1,6 +1,6 @@
 {
   "name": "cdap-ui",
-  "version": "3.5.3-SNAPSHOT",
+  "version": "3.5.3",
   "dependencies": {
     "accepts": {
       "version": "1.3.3",
