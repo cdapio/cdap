@@ -18,6 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import EntityCard from 'components/EntityCard';
 import {parseMetadata} from 'services/metadata-parser';
 require('./DatasetsTab.scss');
+import shortid from 'shortid';
 
 export default class DatasetsTab extends Component {
   constructor(props) {
@@ -38,6 +39,7 @@ export default class DatasetsTab extends Component {
                   }
                 };
                 entity = parseMetadata(entity);
+                entity.uniqueId = shortid.generate();
                 return (
                   <EntityCard
                     className="entity-card-container"
@@ -59,6 +61,7 @@ export default class DatasetsTab extends Component {
                   }
                 };
                 entity = parseMetadata(entity);
+                entity.uniqueId = shortid.generate();
                 return (
                   <EntityCard
                     className="entity-card-container"

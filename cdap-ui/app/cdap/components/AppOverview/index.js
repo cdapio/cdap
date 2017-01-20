@@ -44,9 +44,12 @@ export default class AppOverview extends Component {
       },
       dimension: {}
     };
-    this.documentClickEventListener$ = Rx.Observable.fromEvent(document, 'click')
+    this.documentClickEventListener$ = Rx.Observable.fromEvent(document.querySelector('.entity-list-view'), 'click')
       .subscribe((e) => {
-        if (isDescendant(this.overviewRef, e.target)) {
+        if (
+          isDescendant(this.overviewRef, e.target) ||
+          isDescendant(document.querySelector('.modal'), e.target)
+        ) {
           return;
         }
         if (this.props.onClose) {

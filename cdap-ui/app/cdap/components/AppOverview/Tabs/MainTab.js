@@ -18,6 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import EntityCard from 'components/EntityCard';
 import {parseMetadata} from 'services/metadata-parser';
 require('./MainTab.scss');
+import shortid from 'shortid';
 
 export default class MainTab extends Component {
   constructor(props) {
@@ -48,6 +49,7 @@ export default class MainTab extends Component {
                     }
                   };
                   entity = parseMetadata(entity);
+                  entity.uniqueId = shortid.generate();
                   return (
                     <EntityCard
                       className="entity-card-container"
