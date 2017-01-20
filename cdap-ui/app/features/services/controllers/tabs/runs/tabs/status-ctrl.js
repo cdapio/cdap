@@ -52,7 +52,7 @@ angular.module(PKG.name + '.feature.services')
 
     this.openModal = function (endpoint) {
       $uibModal.open({
-        templateUrl: '/assets/features/services/templates/tabs/runs/tabs/status/make-request.html',
+        templateUrl: '/old_assets/features/services/templates/tabs/runs/tabs/status/make-request.html',
         keyboard: true,
         backdrop: 'static',
         size: 'lg',

@@ -212,7 +212,7 @@ angular.module(PKG.name + '.feature.tracker')
         startTime: '@',
         endTime: '@'
       },
-      templateUrl: '/assets/features/tracker/directives/histogram/histogram.html',
+      templateUrl: '/old_assets/features/tracker/directives/histogram/histogram.html',
       link: HistogramLink,
       controller: function($scope) {
         $scope.$watch('model', function() {

@@ -195,7 +195,7 @@ function link (scope, element) {
     sliderHandle = slide.append('svg:image')
       .attr('width', handleWidth)
       .attr('height', 52)
-      .attr('xlink:href', '/assets/img/sliderHandle.svg')
+      .attr('xlink:href', '/old_assets/img/sliderHandle.svg')
       .attr('x', xValue-1)
       .attr('y', -10);
 
@@ -230,7 +230,7 @@ function link (scope, element) {
     pinHandle = slider.append('svg:image')
       .attr('width', 40)
       .attr('height', 60)
-      .attr('xlink:href', '/assets/img/scrollPin.svg')
+      .attr('xlink:href', '/old_assets/img/scrollPin.svg')
       .attr('x', thePinScrollPosition - pinOffset)
       .attr('y', 0)
       .on('mouseover', function() {

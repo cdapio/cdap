@@ -49,7 +49,7 @@ angular.module(PKG.name + '.feature.tracker')
         datasetType: '=?',
         datasetExplorable: '='
       },
-      templateUrl: '/assets/features/tracker/directives/jump/jump.html',
+      templateUrl: '/old_assets/features/tracker/directives/jump/jump.html',
       controller: JumpController,
       controllerAs: 'Jump'
     };

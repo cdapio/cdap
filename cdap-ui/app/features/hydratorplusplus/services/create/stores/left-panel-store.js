@@ -32,7 +32,7 @@
 */
 
 let leftpanelactions, _DAGPlusPlusFactory, _GLOBALS, _myHelpers;
-let popoverTemplate = '/assets/features/hydratorplusplus/templates/create/popovers/leftpanel-plugin-popover.html';
+let popoverTemplate = '/old_assets/features/hydratorplusplus/templates/create/popovers/leftpanel-plugin-popover.html';
 let getInitialState = () => {
   return {
     plugins: {

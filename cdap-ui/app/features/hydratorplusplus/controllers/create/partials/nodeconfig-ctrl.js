@@ -39,15 +39,15 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.tabs = [
       {
         label: 'Configuration',
-        templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/configuration-tab.html'
+        templateUrl: '/old_assets/features/hydratorplusplus/templates/partial/node-config-modal/configuration-tab.html'
       },
       {
         label: 'Preview',
-        templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/preview-tab.html'
+        templateUrl: '/old_assets/features/hydratorplusplus/templates/partial/node-config-modal/preview-tab.html'
       },
       {
         label: 'Reference',
-        templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/reference-tab.html'
+        templateUrl: '/old_assets/features/hydratorplusplus/templates/partial/node-config-modal/reference-tab.html'
       }
     ];
 

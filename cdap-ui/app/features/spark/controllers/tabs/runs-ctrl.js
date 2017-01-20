@@ -49,11 +49,11 @@ angular.module(PKG.name + '.feature.spark')
     this.tabs = [
     {
       title: 'Status',
-      template: '/assets/features/spark/templates/tabs/runs/tabs/status.html'
+      template: '/old_assets/features/spark/templates/tabs/runs/tabs/status.html'
     },
     {
       title: 'Logs',
-      template: '/assets/features/spark/templates/tabs/runs/tabs/log.html'
+      template: '/old_assets/features/spark/templates/tabs/runs/tabs/log.html'
     }];
 
     this.activeTab = this.tabs[0];
@@ -65,7 +65,7 @@ angular.module(PKG.name + '.feature.spark')
     this.openHistory = function() {
       this.$uibModal.open({
         size: 'lg',
-        templateUrl: '/assets/features/spark/templates/tabs/history.html',
+        templateUrl: '/old_assets/features/spark/templates/tabs/history.html',
         controller: ['runs', '$scope', function(runs, $scope) {
           $scope.runs = runs;
         }],

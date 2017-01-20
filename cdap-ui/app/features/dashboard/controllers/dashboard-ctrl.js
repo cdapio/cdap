@@ -112,13 +112,13 @@ function ($scope, $state, rDashboardsModel, MY_CONFIG, myAlertOnValium, $timeout
     return {
         replace: true,
         restrict: 'E',
-        templateUrl: '/assets/features/dashboard/templates/partials/tab-dd.html'
+        templateUrl: '/old_assets/features/dashboard/templates/partials/tab-dd.html'
     };
 })
 .directive('widgetDdMenu', function() {
   return {
     replace: true,
     restrict: 'E',
-    templateUrl: '/assets/features/dashboard/templates/partials/wdgt-dd.html'
+    templateUrl: '/old_assets/features/dashboard/templates/partials/wdgt-dd.html'
   };
 });

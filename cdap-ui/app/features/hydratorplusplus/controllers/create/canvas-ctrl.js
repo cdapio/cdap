@@ -68,8 +68,8 @@ class HydratorPlusPlusCreateCanvasCtrl {
 
     this.$uibModal
         .open({
-          windowTemplateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover-template.html',
-          templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover.html',
+          windowTemplateUrl: '/old_assets/features/hydratorplusplus/templates/partial/node-config-modal/popover-template.html',
+          templateUrl: '/old_assets/features/hydratorplusplus/templates/partial/node-config-modal/popover.html',
           size: 'lg',
           windowClass: 'node-config-modal hydrator-modal',
           controller: 'HydratorPlusPlusNodeConfigCtrl',

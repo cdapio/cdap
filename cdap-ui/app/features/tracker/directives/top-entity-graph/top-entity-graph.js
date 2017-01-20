@@ -208,7 +208,7 @@ angular.module(PKG.name + '.feature.tracker')
         end: '=?',
         limit: '='
       },
-      templateUrl: '/assets/features/tracker/directives/top-entity-graph/top-entity-graph.html',
+      templateUrl: '/old_assets/features/tracker/directives/top-entity-graph/top-entity-graph.html',
       link: EntityGraphLink
     };
   });

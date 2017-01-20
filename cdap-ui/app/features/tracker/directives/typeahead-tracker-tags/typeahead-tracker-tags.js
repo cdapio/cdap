@@ -18,7 +18,7 @@ angular.module(PKG.name + '.feature.tracker')
   .directive('myTypeaheadTrackerTags', function() {
     return {
       restrict: 'EA',
-      templateUrl: '/assets/features/tracker/directives/typeahead-tracker-tags/typeahead-tracker-tags.html',
+      templateUrl: '/old_assets/features/tracker/directives/typeahead-tracker-tags/typeahead-tracker-tags.html',
       scope: {
         list: '=',
         onSelect: '&',

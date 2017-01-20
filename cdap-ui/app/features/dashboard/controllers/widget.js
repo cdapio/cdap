@@ -58,7 +58,7 @@ angular.module(PKG.name+'.feature.dashboard')
     }
 
     Widget.prototype.getPartial = function () {
-      return '/assets/features/dashboard/templates/widgets/' + this.type + '.html';
+      return '/old_assets/features/dashboard/templates/widgets/' + this.type + '.html';
     };
 
     function generateColors(metrics) {

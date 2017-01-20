@@ -103,7 +103,7 @@ class TrackerTagsController{
 
   showDeleteModal(tag) {
     let modal = this.$uibModal.open({
-      templateUrl: '/assets/features/tracker/templates/partial/delete-preferred-tags-popover.html',
+      templateUrl: '/old_assets/features/tracker/templates/partial/delete-preferred-tags-popover.html',
       size: 'sm',
       backdrop: true,
       keyboard: true,
@@ -126,7 +126,7 @@ class TrackerTagsController{
 
   showAddModal() {
     let modal = this.$uibModal.open({
-      templateUrl: '/assets/features/tracker/templates/partial/add-preferred-tags-popover.html',
+      templateUrl: '/old_assets/features/tracker/templates/partial/add-preferred-tags-popover.html',
       size: 'sm',
       backdrop: true,
       keyboard: true,

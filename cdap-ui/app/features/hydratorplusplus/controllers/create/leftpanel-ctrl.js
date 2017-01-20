@@ -240,7 +240,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     let templateType = this.HydratorPlusPlusConfigStore.getArtifact().name;
     let openTemplatesPopup = () => {
       this.$uibModal.open({
-        templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/pre-configured-templates.html',
+        templateUrl: '/old_assets/features/hydratorplusplus/templates/create/popovers/pre-configured-templates.html',
         size: 'lg',
         backdrop: true,
         keyboard: true,
@@ -265,7 +265,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     let isStoreDirty = this.HydratorPlusPlusConfigStore.getIsStateDirty();
     if (isStoreDirty) {
       return this.$uibModal.open({
-        templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/canvas-overwrite-confirmation.html',
+        templateUrl: '/old_assets/features/hydratorplusplus/templates/create/popovers/canvas-overwrite-confirmation.html',
         size: 'lg',
         backdrop: 'static',
         keyboard: false,
@@ -333,7 +333,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     let templateType = this.HydratorPlusPlusConfigStore.getArtifact().name;
     this.$uibModal
       .open({
-        templateUrl: '/assets/features/hydratorplusplus/templates/partial/plugin-delete-confirmation.html',
+        templateUrl: '/old_assets/features/hydratorplusplus/templates/partial/plugin-delete-confirmation.html',
         size: 'lg',
         backdrop: 'static',
         keyboard: false,
@@ -350,7 +350,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     let templateType = this.HydratorPlusPlusConfigStore.getArtifact().name;
     this.$uibModal
       .open({
-        templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/plugin-templates.html',
+        templateUrl: '/old_assets/features/hydratorplusplus/templates/create/popovers/plugin-templates.html',
         size: 'lg',
         backdrop: 'static',
         keyboard: false,
@@ -436,7 +436,7 @@ class HydratorPlusPlusLeftPanelCtrl {
   loadArtifact() {
     this.$uibModal
       .open({
-        templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/load-artifact.html',
+        templateUrl: '/old_assets/features/hydratorplusplus/templates/create/popovers/load-artifact.html',
         size: 'lg',
         backdrop: 'static',
         keyboard: false,

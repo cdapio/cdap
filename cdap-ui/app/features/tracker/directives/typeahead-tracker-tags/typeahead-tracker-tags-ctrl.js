@@ -18,7 +18,7 @@ angular.module(PKG.name + '.feature.tracker')
   .controller('TypeaheadTrackerTagsCtrl', function(caskFocusManager) {
     this.modelLoading = false;
     this.isOpen = true;
-    this.template = '/assets/features/tracker/directives/typeahead-tracker-tags/popup.html';
+    this.template = '/old_assets/features/tracker/directives/typeahead-tracker-tags/popup.html';
     this.list.sort(function(a,b) {
       return a.preferredTag < b.preferredTag ? 1 : -1;
     });

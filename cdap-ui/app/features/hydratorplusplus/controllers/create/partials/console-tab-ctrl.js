@@ -69,7 +69,7 @@ class HydratorPlusPlusConsoleTabService {
     } else if (errorMessage.length) {
       this.myAlertOnValium.show({
         type: 'danger',
-        templateUrl: '/assets/features/hydratorplusplus/templates/partial/error-template.html',
+        templateUrl: '/old_assets/features/hydratorplusplus/templates/partial/error-template.html',
         templateScope: {
           content: errorMessage,
           currentIndex: 0,

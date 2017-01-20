@@ -40,7 +40,7 @@ class WizardSelectActionStepCtrl {
           this.postActionsList = Object.keys(filteredPlugins).map( postaction => {
             // Coverting the name to lowercase before lookup as we can maintain a case insensitive map in case backend wants to change from camelcase or to any other case.
             return Object.assign({}, filteredPlugins[postaction], {
-              template: '/assets/features/hydratorplusplus/templates/create/popovers/leftpanel-plugin-popover.html',
+              template: '/old_assets/features/hydratorplusplus/templates/create/popovers/leftpanel-plugin-popover.html',
               label: myHelpers.objectQuery(
                 GLOBALS.pluginTypes, 'post-run-actions', filteredPlugins[postaction].name.toLowerCase()
               ) || filteredPlugins[postaction].name,

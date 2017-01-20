@@ -49,23 +49,23 @@ angular.module(PKG.name + '.feature.mapreduce')
 
     this.tabs = [{
       title: 'Status',
-      template: '/assets/features/mapreduce/templates/tabs/runs/tabs/status.html'
+      template: '/old_assets/features/mapreduce/templates/tabs/runs/tabs/status.html'
     },
     {
       title: 'Mappers',
-      template: '/assets/features/mapreduce/templates/tabs/runs/tabs/mappers.html'
+      template: '/old_assets/features/mapreduce/templates/tabs/runs/tabs/mappers.html'
     },
     {
       title: 'Reducers',
-      template: '/assets/features/mapreduce/templates/tabs/runs/tabs/reducers.html'
+      template: '/old_assets/features/mapreduce/templates/tabs/runs/tabs/reducers.html'
     },
     {
       title: 'Logs',
-      template: '/assets/features/mapreduce/templates/tabs/runs/tabs/log.html'
+      template: '/old_assets/features/mapreduce/templates/tabs/runs/tabs/log.html'
     },
     {
       title: 'Datasets',
-      template: '/assets/features/mapreduce/templates/tabs/data.html'
+      template: '/old_assets/features/mapreduce/templates/tabs/data.html'
     }];
 
     this.activeTab = this.tabs[0];
@@ -77,7 +77,7 @@ angular.module(PKG.name + '.feature.mapreduce')
     this.openHistory = function() {
       this.$uibModal.open({
         size: 'lg',
-        templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
+        templateUrl: '/old_assets/features/mapreduce/templates/tabs/history.html',
         controller: ['runs', '$scope', function(runs, $scope) {
           $scope.runs = runs;
         }],

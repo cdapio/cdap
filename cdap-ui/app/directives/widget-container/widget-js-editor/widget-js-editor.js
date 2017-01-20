@@ -27,9 +27,9 @@ angular.module(PKG.name + '.commons')
       template: '<div ui-ace="aceoptions" ng-model="model" ng-readonly="disabled" aceEditorStyle></div>',
       controller: function($scope) {
         var config = $window.ace.require('ace/config');
-        config.set('modePath', '/assets/bundle/ace-editor-worker-scripts/');
+        config.set('modePath', '/old_assets/bundle/ace-editor-worker-scripts/');
         $scope.aceoptions = {
-          workerPath: '/assets/bundle/ace-editor-worker-scripts',
+          workerPath: '/old_assets/bundle/ace-editor-worker-scripts',
           mode: $scope.mode || 'javascript',
           useWrapMode: true,
           newLineMode: 'unix',

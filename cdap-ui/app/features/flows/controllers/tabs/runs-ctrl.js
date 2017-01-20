@@ -56,19 +56,19 @@
     this.tabs = [
       {
         title: 'Status',
-        template: '/assets/features/flows/templates/tabs/runs/tabs/status.html'
+        template: '/old_assets/features/flows/templates/tabs/runs/tabs/status.html'
       },
       {
        title: 'Flowlets',
-       template: '/assets/features/flows/templates/tabs/runs/tabs/flowlets.html'
+       template: '/old_assets/features/flows/templates/tabs/runs/tabs/flowlets.html'
       },
       {
         title: 'Logs',
-        template: '/assets/features/flows/templates/tabs/runs/tabs/log.html'
+        template: '/old_assets/features/flows/templates/tabs/runs/tabs/log.html'
       },
       {
         title: 'Datasets',
-        template: '/assets/features/flows/templates/tabs/data.html'
+        template: '/old_assets/features/flows/templates/tabs/data.html'
       }
     ];
 
@@ -93,7 +93,7 @@
    openHistory() {
      this.$uibModal.open({
        size: 'lg',
-       templateUrl: '/assets/features/flows/templates/tabs/history.html',
+       templateUrl: '/old_assets/features/flows/templates/tabs/history.html',
        controller: ['runs', '$scope', function(runs, $scope) {
          $scope.runs = runs;
        }],

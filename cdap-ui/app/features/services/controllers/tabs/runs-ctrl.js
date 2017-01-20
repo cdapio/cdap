@@ -51,15 +51,15 @@ angular.module(PKG.name + '.feature.services')
     this.tabs = [
       {
         title: 'Status',
-        template: '/assets/features/services/templates/tabs/runs/tabs/status.html'
+        template: '/old_assets/features/services/templates/tabs/runs/tabs/status.html'
       },
       {
         title: 'Logs',
-        template: '/assets/features/services/templates/tabs/runs/tabs/log.html'
+        template: '/old_assets/features/services/templates/tabs/runs/tabs/log.html'
       },
       {
         title: 'Datasets',
-        template: '/assets/features/services/templates/tabs/data.html'
+        template: '/old_assets/features/services/templates/tabs/data.html'
       }
     ];
 
@@ -72,7 +72,7 @@ angular.module(PKG.name + '.feature.services')
     this.openHistory = function() {
       this.$uibModal.open({
         size: 'lg',
-        templateUrl: '/assets/features/services/templates/tabs/history.html',
+        templateUrl: '/old_assets/features/services/templates/tabs/history.html',
         controller: ['runs', '$scope', function(runs, $scope) {
           $scope.runs = runs;
         }],

@@ -201,7 +201,7 @@ angular.module(PKG.name + '.feature.tracker')
         navigationFunction: '&',
         context: '='
       },
-      templateUrl: '/assets/features/tracker/directives/lineage/lineage.html',
+      templateUrl: '/old_assets/features/tracker/directives/lineage/lineage.html',
       controller: LineageController,
       controllerAs: 'Lineage',
       link: LineageLink
