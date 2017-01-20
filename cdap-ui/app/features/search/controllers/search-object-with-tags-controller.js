@@ -38,7 +38,7 @@ class SearchObjectWithTagsController {
       .$promise
       .then(
         (taggedObjects) => {
-          taggedObjects.forEach( (tObject) => {
+          taggedObjects.results.forEach( (tObject) => {
             this.parseTaggedObject(tObject);
           });
 
