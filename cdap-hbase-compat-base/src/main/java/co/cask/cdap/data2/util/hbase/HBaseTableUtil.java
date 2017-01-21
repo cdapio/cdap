@@ -27,10 +27,11 @@ import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import co.cask.cdap.spi.hbase.TableDescriptor;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -49,7 +50,6 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.RegionLoad;
 import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -236,42 +236,12 @@ public abstract class HBaseTableUtil {
   public void createTableIfNotExists(HBaseAdmin admin, TableId tableId, HTableDescriptor tableDescriptor,
                                      @Nullable byte[][] splitKeys,
                                      long timeout, TimeUnit timeoutUnit) throws IOException {
-    if (tableExists(admin, tableId)) {
-      return;
-    }
     setDefaultConfiguration(tableDescriptor, admin.getConfiguration());
     tableDescriptor = setVersion(tableDescriptor);
     tableDescriptor = setTablePrefix(tableDescriptor);
-    try {
-      LOG.debug("Attempting to create table '{}' if it does not exist", tableId);
-      // HBaseAdmin.createTable can handle null splitKeys.
-      admin.createTable(tableDescriptor, splitKeys);
-      LOG.info("Table created '{}'", tableId);
-      return;
-    } catch (TableExistsException e) {
-      // table may exist because someone else is creating it at the same
-      // time. But it may not be available yet, and opening it might fail.
-      LOG.debug("Table '{}' already exists.", tableId, e);
-    }
-
-    // Wait for table to materialize
-    try {
-      Stopwatch stopwatch = new Stopwatch();
-      stopwatch.start();
-      long sleepTime = timeoutUnit.toNanos(timeout) / 10;
-      sleepTime = sleepTime <= 0 ? 1 : sleepTime;
-      do {
-        if (tableExists(admin, tableId)) {
-          LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.", tableId);
-          return;
-        } else {
-          TimeUnit.NANOSECONDS.sleep(sleepTime);
-        }
-      } while (stopwatch.elapsedTime(timeoutUnit) < timeout);
-    } catch (InterruptedException e) {
-      LOG.warn("Sleeping thread interrupted.");
-    }
-    LOG.error("Table '{}' does not exist after waiting {} ms. Giving up.", tableId, MAX_CREATE_TABLE_WAIT);
+    DefaultHBaseDDLExecutor executor = (DefaultHBaseDDLExecutor) getHBaseDDLExecutor(admin.getConfiguration());
+    TableDescriptor descriptor = executor.getTableDescriptor(tableDescriptor);
+    executor.createTableIfNotExists(descriptor, splitKeys);
   }
 
   // This is a workaround for unit-tests which should run even if compression is not supported
@@ -498,6 +468,13 @@ public abstract class HBaseTableUtil {
 
     return info;
   }
+
+  /**
+   * Get the instance of the {@link HBaseDDLExecutor}.
+   * @param hConf the hadoop configurations
+   * @return the instance of DDL executor
+   */
+  public abstract HBaseDDLExecutor getHBaseDDLExecutor(Configuration hConf);
 
   /**
    * Creates a new {@link HTable} which may contain an HBase namespace depending on the HBase version

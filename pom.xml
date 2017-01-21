@@ -2513,6 +2513,7 @@
         <module>cdap-hbase-compat-1.0</module>
         <module>cdap-hbase-compat-1.1</module>
         <module>cdap-hbase-compat-1.2-cdh5.7.0</module>
+        <module>cdap-hbase-spi</module>
         <module>cdap-common</module>
         <module>cdap-docs-gen</module>
         <module>cdap-watchdog-api</module>
