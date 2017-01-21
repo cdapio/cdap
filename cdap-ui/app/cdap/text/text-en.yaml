@@ -136,7 +136,7 @@ features:
     setPreferencesActionLabel: Set Preferences
     setPreferencesAppDescriptionLabel: Specify new or override existing system or namespace preferences. These preferences will be accessible in all programs within this application.
     setPreferencesProgramDescriptionLabel: Specify new or override existing system, namespace, or application preferences. These preferences will only be accessible within this program.
-    setPreferencesButtonLabel: 
+    setPreferencesButtonLabel:
       saveAndClose: Save & Close
       saving: Saving
     setPreferencesInheritedPrefsLabel: Inherited Preferences
@@ -149,8 +149,10 @@ features:
     start: Start
     stop: Stop
     sendEventsButtonLabel: Send
+    clearEventsButtonLabel: Clear
     sendEventsClickLabel: Click to input events.
     sendEventsFailed: Error - Send Events Failed.
+    sendEventsSuccess: Success - Events uploaded successfully.
     startConfirmLabel: Start
     stopConfirmLabel: Stop
     startConfirmation: "Are you sure you want to start the program: *_{entityId}_*?"

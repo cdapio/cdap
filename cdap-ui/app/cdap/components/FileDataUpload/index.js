@@ -24,15 +24,27 @@ export default class FileDataUpload extends Component {
   constructor(props) {
     super(props);
 
-    this.state = {
-      textarea: false,
-      wranglerInput: '',
-      file: ''
-    };
+    this.state = this.getDefaultState();
 
     this.onContainerClick = this.onContainerClick.bind(this);
     this.handleTextInput = this.handleTextInput.bind(this);
     this.onTextInputBlur = this.onTextInputBlur.bind(this);
+  }
+
+  getDefaultState() {
+    return {
+      textarea: false,
+      textInput: '',
+      file: {
+        name: ''
+      }
+    };
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.reset !== this.props.reset) {
+      this.setState(this.getDefaultState());
+    }
   }
 
   preventPropagation (e) {
@@ -42,7 +54,7 @@ export default class FileDataUpload extends Component {
 
   handleTextInput(e) {
     this.props.onTextInput(e.target.value);
-    this.setState({wranglerInput: e.target.value});
+    this.setState({textInput: e.target.value});
   }
 
   onContainerClick() {
@@ -50,7 +62,7 @@ export default class FileDataUpload extends Component {
   }
 
   onTextInputBlur() {
-    if (this.state.wranglerInput) { return; }
+    if (this.state.textInput) { return; }
     this.setState({textarea: false});
   }
 
@@ -62,12 +74,9 @@ export default class FileDataUpload extends Component {
       >
         {
           (!this.state.textarea || this.state.file.name) ?
-            (<div
-              className="file-data-metadata-container"
-            >
-              <div
-                className="file-data-metadata"
-              >
+            (
+              <div className="file-data-metadata-container">
+                <div className="file-data-metadata">
                 <div
                   className="upload-data"
                   onClick={(e) => this.preventPropagation(e)}
@@ -85,7 +94,7 @@ export default class FileDataUpload extends Component {
                         null
                       :
                         (
-                          <i className="plus-button fa fa-plus-circle"></i>
+                          <i className="plus-button fa fa-upload"></i>
                         )
                     }
                   </Dropzone>
@@ -100,7 +109,7 @@ export default class FileDataUpload extends Component {
                       <div>
                         <h4>
                           {T.translate('features.Wrangler.InputScreen.HelperText.click')}
-                          <span className="fa fa-plus-circle" />
+                          <span className="fa fa-upload" />
                           {T.translate('features.Wrangler.InputScreen.HelperText.upload')}
                         </h4>
                         <h5>{T.translate('features.Wrangler.InputScreen.HelperText.or')}</h5>
@@ -110,10 +119,12 @@ export default class FileDataUpload extends Component {
                   }
                 </div>
               </div>
-            </div>)
+              </div>
+            )
           :
             (
               <textarea
+                value={this.state.textInput}
                 className="form-control"
                 onChange={this.handleTextInput}
                 autoFocus={true}
@@ -126,8 +137,14 @@ export default class FileDataUpload extends Component {
   }
 }
 
-FileDataUpload.propTypes = {
-  onDataUpload: PropTypes.func,
-  onTextInput: PropTypes.func
+FileDataUpload.defaultProps = {
+  file: {
+    name: ''
+  }
 };
 
+FileDataUpload.propTypes = {
+  onDataUpload: PropTypes.func,
+  onTextInput: PropTypes.func,
+  reset: PropTypes.number
+};
