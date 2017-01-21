@@ -33,6 +33,7 @@
 
     <div class="select-fields-group">
       <button class="delete-field-button btn btn-link"
+            type="button"
             ng-if="rule.hover && SqlConditions.rules.length !== 1 && !SqlConditions.disabled"
             ng-click="SqlConditions.deleteRule($index)">x</button>
 
@@ -63,6 +64,7 @@
 
       <button class="btn btn-sm btn-field-actions"
               ng-if="$last"
+              type="button"
               ng-click="SqlConditions.addRule()">
         <i class="fa fa-plus"></i>
       </button>
