@@ -22,13 +22,13 @@
     <div class="panel-title">
       <div class="panel-content-holder">
         <span>
+          {{::MyCardCtrl.title}}
           <span class="fa fa-info-circle"
                 ng-if="MyCardCtrl.tooltip"
                 uib-tooltip="{{MyCardCtrl.tooltip}}"
-                tooltip-placement="bottom"
+                tooltip-placement="auto bottom-right"
                 tooltip-append-to-body="true">
           </span>
-          {{::MyCardCtrl.title}}
         </span>
         <span href="" ng-if="!MyCardCtrl.minimize">
           <span class="fa fa-minus"></span>
