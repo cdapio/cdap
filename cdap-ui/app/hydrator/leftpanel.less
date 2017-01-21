@@ -86,14 +86,17 @@ body.theme-cdap.state-hydrator-create {
 
           .hydrator-filter {
             min-height: 50px;
+            padding: 9px 5px 9px 10px;
             .btn-group,
             input.form-control {
-              display: block;
+              display: inline-block;
               height: 32px;
+              vertical-align: top;
               margin: 0;
             }
             input.form-control {
               border: 1px solid #dfe2e9;
+              width: 175px;
             }
             .btn-group {
               display: inline-block;
@@ -479,13 +482,15 @@ body.theme-cdap.state-hydrator-create {
 
       }
       .hydrator-filter {
-        padding: 9px 5px 9px 10px;
+        padding: 6px 5px 9px 5px;
         background: #eeeeee;
         min-height: 41px;
 
-        .btn-group,
-        input.form-control {
+        .btn-group {
           display: none;
+        }
+        input.form-control {
+          width: 90px;
         }
 
       }
