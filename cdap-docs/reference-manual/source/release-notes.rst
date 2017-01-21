@@ -36,7 +36,7 @@ Cask Data Application Platform Release Notes
 Improvements
 ------------
 
-- :cask-issue:`CDAP-7647` - Now allows usage of a custom Kyro serializer in Spark programs.
+- :cask-issue:`CDAP-7647` - Now allows usage of a custom Kryo serializer in Spark programs.
 
 Bug Fixes
 ------------
@@ -51,13 +51,6 @@ Bug Fixes
 - :cask-issue:`CDAP-8087` - Provided a workaround for Scala bug SI-6240 
   (https://issues.scala-lang.org/browse/SI-6240) to allow concurrent execution of Spark
   programs in CDAP Workflows.
-
-Known Issue
------------
-
-- :cask-issue:`CDAP-8140` - Impersonation does not work when a join query is executed
-  using CDAP Explore with Hive 0.13 (shipped by CDH 5.1, CDH 5.2, CDH 5.3, HDP 2.0, and HDP
-  2.1).
 
 
 `Release 3.5.2 <http://docs.cask.co/cdap/3.5.2/index.html>`__
