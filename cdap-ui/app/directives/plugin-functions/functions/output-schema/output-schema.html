@@ -15,6 +15,7 @@
 -->
 
 <button class="btn {{ OutputSchemaController.btnClass }} pull-right"
+        type="button"
         ng-disabled="OutputSchemaController.requiredProperties.indexOf('') !== -1"
         ng-click="OutputSchemaController.openModal()">
   <span ng-if="OutputSchemaController.requiredProperties.indexOf('') !== -1"

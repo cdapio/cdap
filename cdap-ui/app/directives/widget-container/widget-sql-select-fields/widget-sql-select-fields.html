@@ -18,11 +18,13 @@
 
   <div class="button-container">
     <button class="btn btn-sm btn-default"
+            type="button"
             ng-click="SqlSelector.toggleAll(SqlSelector.expandedButton)">
       <span ng-if="SqlSelector.expandedButton">Expand All</span>
       <span ng-if="!SqlSelector.expandedButton">Collapse All</span>
     </button>
     <button class="btn btn-sm btn-reset"
+            type="button"
             ng-click="SqlSelector.resetAll()">
       Reset All
     </button>
@@ -52,7 +54,10 @@
           <th>Name</th>
           <th class="checkbox-column">
             <div class="btn-group" uib-dropdown dropdown-append-to-body>
-              <button class="btn btn-default" uib-dropdown-toggle>
+              <button
+                class="btn btn-default"
+                type="button"
+                uib-dropdown-toggle>
                 Select <span class="fa fa-chevron-down"></span>
               </button>
               <ul class="dropdown-menu sql-select-dropwdown"
