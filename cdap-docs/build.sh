@@ -239,6 +239,7 @@ function build_docs_cli() {
 function build_docs_inner_level() {
 # Change to each manual, and run the local ./build.sh from there.
 # Each manual can (and does) have a customised build script, using the common-build.sh as a base.
+  pushd $(pwd) > /dev/null
   for i in ${MANUALS}; do
     echo "========================================================"
     echo "Building \"${i}\", target \"${1}\"..."
@@ -248,6 +249,7 @@ function build_docs_inner_level() {
     ./build.sh ${1}
     echo
   done
+  popd > /dev/null
 }
 
 function build_docs_outer_level() {
