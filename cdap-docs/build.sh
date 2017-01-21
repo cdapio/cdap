@@ -245,7 +245,7 @@ function build_docs_inner_level() {
     echo "Building \"${i}\", target \"${1}\"..."
     echo "--------------------------------------------------------"
     echo
-    cd $SCRIPT_PATH/${i}
+    cd ${SCRIPT_PATH}/${i}
     ./build.sh ${1}
     echo
   done
@@ -259,6 +259,7 @@ function build_docs_outer_level() {
   fi
   local title="Building outer-level docs...tag code ${1}"
   display_start_title "${title}"
+  cd ${SCRIPT_PATH}
   clean_outer_level
   set_version
   # Copies placeholder file and renames it
