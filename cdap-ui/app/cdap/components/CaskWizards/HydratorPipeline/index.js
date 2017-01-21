@@ -18,6 +18,7 @@ import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 require('./HydratorPipeline.scss');
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import NamespaceStore from 'services/NamespaceStore';
+import PlusButtonStore from 'services/PlusButtonStore';
 
 import T from 'i18n-react';
 
@@ -53,6 +54,15 @@ export default class HydratorPipeline extends Component {
     });
     this.props.onClose();
   }
+  closeModal() {
+    this.closeHandler();
+    PlusButtonStore.dispatch({
+      type: 'TOGGLE_PLUSBUTTON_MODAL',
+      payload: {
+        modalState: false
+      }
+    });
+  }
   render() {
     return (
       <Modal
@@ -86,6 +96,7 @@ export default class HydratorPipeline extends Component {
               <div className="action-buttons">
                 <a
                   href={this.state.batchPipelineUrl}
+                  onClick={this.closeModal.bind(this)}
                   className="btn btn-secondary"
                 >
                   <i className="fa icon-ETLBatch"/>
@@ -93,6 +104,7 @@ export default class HydratorPipeline extends Component {
                 </a>
                 <a
                   href={this.state.realtimePipelineUrl}
+                  onClick={this.closeModal.bind(this)}
                   className="btn btn-secondary"
                 >
                   <i className="fa icon-sparkstreaming"/>
