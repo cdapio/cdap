@@ -17,10 +17,7 @@
 package co.cask.cdap.logging.framework;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Context;
-import ch.qos.logback.core.filter.Filter;
-import ch.qos.logback.core.spi.FilterReply;
-import ch.qos.logback.core.status.Status;
+import ch.qos.logback.core.AppenderBase;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import com.google.common.base.Throwables;
 import org.apache.avro.Schema;
@@ -28,13 +25,13 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Flushable;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Log Appender implementation for CDAP Log framework
  */
-public class CDAPLogAppender implements LogAppender {
+public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flushable {
   private static final Logger LOG = LoggerFactory.getLogger(CDAPLogAppender.class);
 
   private boolean isStarted;
@@ -59,8 +56,7 @@ public class CDAPLogAppender implements LogAppender {
     this.isStarted = false;
   }
 
-  @Override
-  public void doAppend(ILoggingEvent eventObject) {
+  public void append(ILoggingEvent eventObject) {
     long timestamp = eventObject.getTimeStamp();
 
     LogPathIdentifier logPathIdentifier = LoggingUtil.getLoggingPath(eventObject.getMDCPropertyMap());
@@ -86,17 +82,10 @@ public class CDAPLogAppender implements LogAppender {
   }
 
   @Override
-  public void start() {
-    // no-op
-    this.isStarted = true;
-  }
-
-  @Override
   public void stop() {
     avroFileManager.close();
     this.isStarted = false;
   }
-
 
   @Override
   public boolean isStarted() {
@@ -108,74 +97,4 @@ public class CDAPLogAppender implements LogAppender {
     return this.getClass().getName();
   }
 
-  @Override
-  public void setName(String name) {
-    // no-op
-  }
-
-  @Override
-  public void setContext(Context context) {
-
-  }
-
-  @Override
-  public Context getContext() {
-    return null;
-  }
-
-  @Override
-  public void addStatus(Status status) {
-
-  }
-
-  @Override
-  public void addInfo(String msg) {
-
-  }
-
-  @Override
-  public void addInfo(String msg, Throwable ex) {
-
-  }
-
-  @Override
-  public void addWarn(String msg) {
-
-  }
-
-  @Override
-  public void addWarn(String msg, Throwable ex) {
-
-  }
-
-  @Override
-  public void addError(String msg) {
-
-  }
-
-  @Override
-  public void addError(String msg, Throwable ex) {
-
-  }
-
-  // no filtering logic is required for CDAP Log Appender.
-  @Override
-  public void addFilter(Filter<ILoggingEvent> newFilter) {
-
-  }
-
-  @Override
-  public void clearAllFilters() {
-
-  }
-
-  @Override
-  public List<Filter<ILoggingEvent>> getCopyOfAttachedFiltersList() {
-    return null;
-  }
-
-  @Override
-  public FilterReply getFilterChainDecision(ILoggingEvent event) {
-    return null;
-  }
 }
