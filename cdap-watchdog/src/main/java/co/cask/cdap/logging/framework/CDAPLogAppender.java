@@ -20,6 +20,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
 import org.apache.avro.Schema;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -60,18 +61,21 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     long timestamp = eventObject.getTimeStamp();
 
     LogPathIdentifier logPathIdentifier = LoggingUtil.getLoggingPath(eventObject.getMDCPropertyMap());
-    AvroFileManager.AvroFile avroFile;
+    AvroFileManager.LogFileOutputStream outputStream;
     try {
-      avroFile = avroFileManager.getAvroFile(logPathIdentifier, timestamp);
+      outputStream = avroFileManager.getAvroFile(logPathIdentifier, timestamp);
     } catch (IOException ioe) {
       // if there's exception while creating the file, we keep retrying
       LOG.debug("Exception while creating avro file", ioe);
       throw Throwables.propagate(ioe);
     }
     try {
-      avroFile.append(eventObject);
+      outputStream.append(eventObject);
     } catch (Exception e) {
       LOG.trace("Exception while appending to file", e);
+      if (outputStream != null) {
+        Closeables.closeQuietly(outputStream);
+      }
       throw Throwables.propagate(e);
     }
   }

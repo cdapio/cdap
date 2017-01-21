@@ -19,6 +19,7 @@ package co.cask.cdap.logging.framework;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -39,24 +40,24 @@ import java.util.Map;
 /**
  * Class including logic for getting avro files to write to. Used by {@link CDAPLogAppender}
  */
-public class AvroFileManager {
+class AvroFileManager {
   private static final Logger LOG = LoggerFactory.getLogger(CDAPLogAppender.class);
 
   private final long maxLifetimeMillis;
-  private final Map<LogPathIdentifier, AvroFile> fileMap;
-  private final LoggingLocationFactory loggingLocationFactory;
+  private final Map<LogPathIdentifier, LogFileOutputStream> fileMap;
+  private final Location logsDirectoryLocation;
   private final FileMetaDataManager fileMetaDataManager;
   private final int syncIntervalBytes;
   private final Schema schema;
 
-  public AvroFileManager(long maxFileLifetimeMs, int syncIntervalBytes, Schema schema,
-                         FileMetaDataManager fileMetaDataManager,
-                         LocationFactory locationFactory) {
+  AvroFileManager(long maxFileLifetimeMs, int syncIntervalBytes, Schema schema,
+                  FileMetaDataManager fileMetaDataManager,
+                  LocationFactory locationFactory) {
     this.maxLifetimeMillis = maxFileLifetimeMs;
     this.syncIntervalBytes = syncIntervalBytes;
     this.schema = schema;
     this.fileMetaDataManager = fileMetaDataManager;
-    this.loggingLocationFactory = new LoggingLocationFactory(locationFactory);
+    this.logsDirectoryLocation = locationFactory.create("logs");
     this.fileMap = new HashMap<>();
   }
 
@@ -65,56 +66,44 @@ public class AvroFileManager {
    * or create and return a new file or rotate a file based on time and return.
    * @param logPathIdentifier
    * @param timestamp
-   * @return
+   * @return LogFileOutputStream
    * @throws IOException
    */
-  public AvroFile getAvroFile(LogPathIdentifier logPathIdentifier, long timestamp) throws IOException {
-    AvroFileManager.AvroFile avroFile = fileMap.get(logPathIdentifier);
+  public LogFileOutputStream getAvroFile(LogPathIdentifier logPathIdentifier, long timestamp) throws IOException {
+    LogFileOutputStream logFileOutputStream = fileMap.get(logPathIdentifier);
     // If the file is not open then set reference to null so that a new one gets created
-    if (avroFile != null && !avroFile.isOpen()) {
-      avroFile = null;
-    }
-
-    if (avroFile == null) {
-      avroFile = createAvroFile(logPathIdentifier, timestamp);
+    if (logFileOutputStream == null) {
+      logFileOutputStream = createAvroFile(logPathIdentifier, timestamp);
     }
     // rotate the file if needed (time has passed)
-    avroFile = rotateFile(avroFile, logPathIdentifier, timestamp);
-    return avroFile;
+    logFileOutputStream = rotateFile(logFileOutputStream, logPathIdentifier, timestamp);
+    return logFileOutputStream;
   }
 
-  private AvroFile createAvroFile(LogPathIdentifier identifier, long timestamp) throws IOException {
-    Location location = loggingLocationFactory.getLocation(identifier, timestamp);
+  private LogFileOutputStream createAvroFile(LogPathIdentifier identifier, long timestamp) throws IOException {
+    Location location = getLocation(identifier, timestamp);
     LOG.info("Creating Avro file {}", location);
-    AvroFile avroFile = new AvroFile(location);
-    try {
-      avroFile.open();
-    } catch (IOException e) {
-      closeAndDelete(avroFile);
-      throw e;
-    }
+    LogFileOutputStream logFileOutputStream = new LogFileOutputStream(location);
     try {
       fileMetaDataManager.writeMetaData(identifier, timestamp, location);
     } catch (Throwable e) {
-      closeAndDelete(avroFile);
+      closeAndDelete(logFileOutputStream);
       throw new IOException(e);
     }
 
-    fileMap.put(identifier, avroFile);
-    return avroFile;
+    fileMap.put(identifier, logFileOutputStream);
+    return logFileOutputStream;
   }
 
-  private AvroFile rotateFile(AvroFile avroFile, LogPathIdentifier identifier, long timestamp) throws IOException {
+  private LogFileOutputStream rotateFile(LogFileOutputStream logFileOutputStream,
+                                         LogPathIdentifier identifier, long timestamp) throws IOException {
     long currentTs = System.currentTimeMillis();
-    long timeSinceFileCreate = currentTs - avroFile.getCreateTime();
+    long timeSinceFileCreate = currentTs - logFileOutputStream.getCreateTime();
     if (timeSinceFileCreate > maxLifetimeMillis) {
-      avroFile.close();
-    }
-    if (!avroFile.isOpen()) {
-      LOG.info("Rotating a closed file {}", avroFile.getLocation());
+      logFileOutputStream.close();
       return createAvroFile(identifier, timestamp);
     }
-    return avroFile;
+    return logFileOutputStream;
   }
 
   /**
@@ -123,28 +112,29 @@ public class AvroFileManager {
   public void close() {
     // close all the files in fileMap
     // clear the map
-    for (AvroFile file : fileMap.values()) {
+    for (LogFileOutputStream file : fileMap.values()) {
       try {
         file.flush();
-        file.close();
       } catch (Exception e) {
-        LOG.debug("Exception while flushing and closing contents to file {}", file.getLocation(), e);
+        LOG.debug("Exception while flushing contents to file {}", file.getLocation(), e);
+      } finally {
+        Closeables.closeQuietly(file);
       }
     }
     fileMap.clear();
   }
 
-  private void closeAndDelete(AvroFile avroFile) {
+  private void closeAndDelete(LogFileOutputStream logFileOutputStream) {
     try {
       try {
-        avroFile.close();
+        logFileOutputStream.close();
       } finally {
-        if (avroFile.getLocation().exists()) {
-          avroFile.getLocation().delete();
+        if (logFileOutputStream.getLocation().exists()) {
+          logFileOutputStream.getLocation().delete();
         }
       }
     } catch (IOException e) {
-      LOG.error("Error while closing and deleting file {}", avroFile.getLocation(), e);
+      LOG.error("Error while closing and deleting file {}", logFileOutputStream.getLocation(), e);
     }
   }
 
@@ -154,11 +144,12 @@ public class AvroFileManager {
    */
   public void flush() throws IOException {
     // perform flush on all the files in the fileMap
-    for (AvroFile file : fileMap.values()) {
+    for (LogFileOutputStream file : fileMap.values()) {
       try {
         file.flush();
       } catch (Exception e) {
         LOG.debug("Exception while flushing contents to file {}", file.getLocation());
+        Closeables.closeQuietly(file);
         throw Throwables.propagate(e);
       }
     }
@@ -170,41 +161,25 @@ public class AvroFileManager {
    * Since there is no way to check the state of the underlying file on an exception,
    * all methods of this class assume that the file state is bad on any exception and close the file.
    */
-  public class AvroFile implements Closeable {
+  class LogFileOutputStream implements Closeable {
     private final Location location;
     private FSDataOutputStream outputStream;
     private DataFileWriter<GenericRecord> dataFileWriter;
     private long createTime;
-    private boolean isOpen = false;
 
-    public AvroFile(Location location) {
+    LogFileOutputStream(Location location) throws IOException {
       this.location = location;
-    }
-
-    /**
-     * Opens the underlying file for writing.
-     * If open throws an exception then underlying file may still need to be deleted.
-     *
-     * @throws IOException
-     */
-    void open() throws IOException {
       try {
         this.outputStream = new FSDataOutputStream(location.getOutputStream(), null);
         this.dataFileWriter = new DataFileWriter<>(new GenericDatumWriter<GenericRecord>(schema));
         this.dataFileWriter.create(schema, this.outputStream);
         this.dataFileWriter.setSyncInterval(syncIntervalBytes);
         this.createTime = System.currentTimeMillis();
-        // Sync the file as soon as it is created, otherwise a zero length Avro file can get created on OOM
-        sync();
       } catch (Exception e) {
-        close();
+        Closeables.closeQuietly(dataFileWriter);
+        Closeables.closeQuietly(outputStream);
         throw new IOException("Exception while creating file " + location, e);
       }
-      this.isOpen = true;
-    }
-
-    public boolean isOpen() {
-      return isOpen;
     }
 
     public Location getLocation() {
@@ -215,21 +190,11 @@ public class AvroFileManager {
       try {
         dataFileWriter.append(co.cask.cdap.logging.serialize.LoggingEvent.encode(schema, event));
       } catch (Exception e) {
-        close();
         throw new IOException("Exception while appending to file " + location, e);
       }
     }
 
-    public long getPos() throws IOException {
-      try {
-        return outputStream.getPos();
-      } catch (Exception e) {
-        close();
-        throw new IOException("Exception while getting position of file " + location, e);
-      }
-    }
-
-    public long getCreateTime() {
+    private long getCreateTime() {
       return createTime;
     }
 
@@ -238,7 +203,6 @@ public class AvroFileManager {
         dataFileWriter.flush();
         outputStream.hsync();
       } catch (Exception e) {
-        close();
         throw new IOException("Exception while flushing file " + location, e);
       }
     }
@@ -248,53 +212,37 @@ public class AvroFileManager {
         dataFileWriter.flush();
         outputStream.hsync();
       } catch (Exception e) {
-        close();
         throw new IOException("Exception while syncing file " + location, e);
       }
     }
 
     @Override
     public void close() throws IOException {
-      if (!isOpen) {
-        return;
-      }
-
       LOG.trace("Closing file {}", location);
-      isOpen = false;
 
-      try {
-        if (dataFileWriter != null) {
-          dataFileWriter.close();
-        }
-      } finally {
-        if (outputStream != null) {
-          outputStream.close();
-        }
+      if (dataFileWriter != null) {
+        dataFileWriter.close();
       }
     }
   }
 
-  class LoggingLocationFactory {
-    Location logsLocation;
-
-    LoggingLocationFactory(LocationFactory locationFactory) {
-      this.logsLocation = locationFactory.create("logs");
-
+  private Location getLocation(LogPathIdentifier logPathIdentifier, long timestamp) throws IOException {
+    if (!logsDirectoryLocation.exists()) {
+      try {
+        logsDirectoryLocation.mkdirs();
+      } catch (IOException e) {
+        LOG.error("Unable to create logging base directory at {} ", logsDirectoryLocation, e);
+        throw e;
+      }
     }
 
-    private Location getLocation(LogPathIdentifier logPathIdentifier, long timestamp) throws IOException {
-      // create "<hdfs-namepsace>/logs" if the dir doesn't exist already
-      if (!logsLocation.exists()) {
-        logsLocation.mkdirs();
-      }
-      String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-      Location namespaceLocation = logsLocation.append(logPathIdentifier.getNamespaceId()).append(date);
+    String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+    Location namespaceLocation = logsDirectoryLocation.append(logPathIdentifier.getNamespaceId()).append(date);
 
-      if (!namespaceLocation.exists()) {
-        namespaceLocation.mkdirs();
-      }
-      String fileName = String.format("%s:%s.avro", logPathIdentifier.getLogFilePrefix(), timestamp);
-      return namespaceLocation.append(fileName);
+    if (!namespaceLocation.exists()) {
+      namespaceLocation.mkdirs();
     }
+    String fileName = String.format("%s:%s.avro", logPathIdentifier.getLogFilePrefix(), timestamp);
+    return namespaceLocation.append(fileName);
   }
 }
