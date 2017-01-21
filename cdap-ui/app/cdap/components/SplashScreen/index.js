@@ -19,14 +19,16 @@ import 'whatwg-fetch';
 import CaskVideo from 'components/CaskVideo';
 require('./SplashScreen.scss');
 
-import Card from '../Card';
-import MyUserStoreApi from '../../api/userstore';
+import Card from 'components/Card';
+import MyUserStoreApi from 'api/userstore';
 import T from 'i18n-react';
 import MyCDAPVersionApi from 'api/version';
 import VersionStore from 'services/VersionStore';
 import VersionActions from 'services/VersionStore/VersionActions';
+import {objectQuery} from 'services/helpers';
+import cookie from 'react-cookie';
 
- class SplashScreen extends Component {
+class SplashScreen extends Component {
   constructor(props) {
     super(props);
     this.props = props;
@@ -45,17 +47,17 @@ import VersionActions from 'services/VersionStore/VersionActions';
 
   componentWillMount() {
     MyUserStoreApi.get().subscribe((res) => {
-      setTimeout(() => {
-        this.setState({
-          showSplashScreen : window.CDAP_CONFIG.cdap.standaloneWebsiteSDKDownload &&
-            !window.CDAP_CONFIG.isEnterprise &&
-            (
-              typeof res === 'object' &&
-              typeof res.property === 'object' &&
-              !res.property["user-choice-hide-welcome-message"]
-            )
-        });
-      }, 1000);
+      if (!window.CDAP_CONFIG.isEnterprise) {
+        if (!objectQuery(res, 'property', 'user-choice-hide-welcome-message')) {
+          if (!cookie.load('show-splash-screen-for-session')) {
+            setTimeout(() => {
+              this.setState({
+                showSplashScreen: true
+              });
+            }, 1000);
+          }
+        }
+      }
     });
     MyCDAPVersionApi.get().subscribe((res) => {
       this.setState({ version : res.version});
@@ -70,6 +72,7 @@ import VersionActions from 'services/VersionStore/VersionActions';
 
   // Handles the logic of whether or not to continue showing the splash screen to this user
   resetWelcomeMessage() {
+    cookie.save('show-splash-screen-for-session', true, {path: '/'});
     MyUserStoreApi
       .get()
       .flatMap(res => {

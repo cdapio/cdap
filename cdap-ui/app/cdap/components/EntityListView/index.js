@@ -465,10 +465,12 @@ class EntityListView extends Component {
   }
 
   dismissSplash() {
-    let updateObj = Object.assign({}, this.state.userStoreObj);
-    updateObj.property = updateObj.property || {};
-    updateObj.property['user-has-visited'] = true;
-    MyUserStoreApi.set({}, updateObj.property);
+    MyUserStoreApi
+      .get()
+      .subscribe(res => {
+        res.property['user-has-visited'] = true;
+        MyUserStoreApi.set({}, res.property);
+      });
     this.setState({
       showSplash: true
     });
