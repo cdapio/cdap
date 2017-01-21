@@ -32,10 +32,22 @@ export default class PublishPipelineWizard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showWizard: this.props.isOpen
+      showWizard: this.props.isOpen,
+      pipelineNameIsEmpty: false
     };
 
     this.setDefaultConfig();
+
+    PublishPipelineWizardStore.subscribe(() => {
+      let pipelineName = PublishPipelineWizardStore.getState().pipelinemetadata.name;
+      if (pipelineName === "") {
+        this.setState({pipelineNameIsEmpty: true});
+      } else {
+        if (this.state.pipelineNameIsEmpty) {
+          this.setState({pipelineNameIsEmpty: false});
+        }
+      }
+    });
   }
 
   setDefaultConfig() {
@@ -137,7 +149,9 @@ export default class PublishPipelineWizard extends Component {
                 wizardType="PublishPipeline"
                 onSubmit={this.publishPipeline.bind(this)}
                 onClose={this.toggleWizard.bind(this)}
-                store={PublishPipelineWizardStore}/>
+                store={PublishPipelineWizardStore}
+                finishButtonDisabled={this.state.pipelineNameIsEmpty}
+              />
             </WizardModal>
           :
             null
