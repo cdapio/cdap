@@ -29,11 +29,17 @@ import co.cask.cdap.replication.ReplicationConstants;
 import co.cask.cdap.replication.ReplicationStatusKey;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileChecksum;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,10 +51,14 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.UUID;
 
 /**
@@ -67,13 +77,39 @@ public class ReplicationStatusTool {
   private static Long masterShutdownTime = 0L;
   private static String inputStatusFileName = null;
   private static String outputStatusFileName = null;
+  private static String dirsFileName = null;
   private static boolean debugDump = false;
-  private static String delimiter = ":";
+
+  private static final Gson GSON = new Gson();
+
+  // Default paths to be pulled from configuration
+  private static final String[] ALL_CHECKSUM_PATHS_DEFAULT = {
+    TxConstants.Manager.CFG_TX_SNAPSHOT_DIR 
+  };
+
+  private static Set<String> allChecksumPaths;
+
+  /**
+   * Carries the current replication state of the cluster
+   */
+  private static class ReplicationState {
+    private final Long shutdownTime;
+    private final SortedMap<String, String> hdfsState;
+    private final Map<String, Long> hBaseState;
+
+    ReplicationState(Long shutdownTime, SortedMap<String, String> hdfsState, Map<String, Long> hBaseState) {
+      this.shutdownTime = shutdownTime;
+      this.hdfsState = hdfsState;
+      this.hBaseState = hBaseState;
+    }
+  }
 
   public static void main(String args[]) throws Exception {
 
     parseArgs(args);
     if (debugDump) {
+      setupChecksumDirs();
+      dumpClusterChecksums();
       dumpReplicationStateTable();
       return;
     }
@@ -83,11 +119,14 @@ public class ReplicationStatusTool {
       showHelp();
       return;
     } else if (onMasterCluster) {
+      setupChecksumDirs();
       processMasterCluster();
     } else {
+      setupChecksumDirs();
       processSlaveCluster();
     }
   }
+
 
   private static void parseArgs(String args[]) {
     for (int i = 0; i < args.length;) {
@@ -105,11 +144,17 @@ public class ReplicationStatusTool {
             outputStatusFileName = args[i + 1];
             i += 2;
             break;
+          case 'f':
+            dirsFileName = args[i + 1];
+            i += 2;
+            break;
           case 'd':
             // Debug dump
             debugDump = true;
             i += 1;
             break;
+          default:
+            return;
         }
       } else {
         return;
@@ -120,50 +165,73 @@ public class ReplicationStatusTool {
   private static void showHelp() {
     System.out.println("\nTool to check Replication Status.");
     System.out.println("Run this tool on the Master cluster:");
-    System.out.println("#ReplicationStatusTool -m -o <output filepath>");
+    System.out.println("#ReplicationStatusTool -m -o <output filepath> [-f <file with hdfs paths>]");
     System.out.println("Then run on the Slave Cluster:");
-    System.out.println("#ReplicationStatusTool -i <file copied from Master>\n");
+    System.out.println("#ReplicationStatusTool -i <file copied from Master> [-f <file with hdfs paths>]\n");
     return;
   }
 
-  private static void processMasterCluster() throws IOException {
-    //Get checksum from Snapshot files
-    masterChecksum = getClusterChecksum();
-    masterShutdownTime = getShutdownTime();
+  private static void setupChecksumDirs() throws IOException {
+    allChecksumPaths = new HashSet<>();
+    if (dirsFileName == null) {
+      for (String pathKey : ALL_CHECKSUM_PATHS_DEFAULT) {
+        allChecksumPaths.add(cConf.get(pathKey));
+      }
+    } else {
+      LOG.info("Reading hdfs paths from file " + dirsFileName);
+      try (BufferedReader br = new BufferedReader(new FileReader(dirsFileName))) {
+        String line;
+        while ((line = br.readLine()) != null) {
+          allChecksumPaths.add(line);
+        }
+      }
+    }
+  }
 
+  private static void processMasterCluster() throws IOException {
+    masterShutdownTime = getShutdownTime();
     if (masterShutdownTime == 0L) {
       System.out.println("CDAP Shutdown time not available. Please run after CDAP has been shut down.");
       return;
     }
 
-    //Scan the table and write to output file
-    writeMasterStatusFile(getMapFromTable(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE),
-                          outputStatusFileName);
+    ReplicationState masterReplicationState =
+      new ReplicationState(masterShutdownTime,
+                           getClusterChecksumMap(),
+                           getMapFromTable(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE));
+
+    // write replication state to output file
+    try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outputStatusFileName))) {
+      GSON.toJson(masterReplicationState, bufferedWriter);
+    }
     System.out.println("Copy the file " + outputStatusFileName + " to the Slave Cluster and run tool there.");
   }
 
   private static void processSlaveCluster() throws Exception {
-    // Read Master File for checksum, shutdown time and  writeTime for all regions from the Master Cluster
-    Map<String, Long> masterTimeMap = readMasterStatusFile(inputStatusFileName);
+    // Read Master File for Master shutdown time, checksum map and last write time for all regions
+    ReplicationState masterReplicationState = null;
+    try (BufferedReader bufferedReader = new BufferedReader(new FileReader(inputStatusFileName))) {
+      masterReplicationState = GSON.fromJson(bufferedReader, ReplicationState.class);
+    }
 
-    if (masterShutdownTime == 0L) {
+    if (masterReplicationState == null || masterReplicationState.shutdownTime == 0L) {
       System.out.println("Could not read CDAP Shutdown Time from input file."
                            + " Please make sure CDAP has been shutdown on the Master and rerun the tool on Master.");
       return;
     }
-    if (masterChecksum == null) {
-      System.out.println("Could not read Master Checksum from input file.");
+    if (masterReplicationState.hdfsState.isEmpty()) {
+      System.out.println("No HDFS File Information found in the input file.");
     }
-    if (masterTimeMap == null || masterTimeMap.size() == 0) {
+    if (masterReplicationState.hBaseState.isEmpty()) {
       System.out.println("No region information found in the input file");
     }
 
-    checkHBaseReplicationComplete(masterTimeMap);
-    //checkSnapshotReplicationComplete(masterChecksum);
+    checkHDFSReplicationComplete(masterReplicationState.hdfsState);
+    checkHBaseReplicationComplete(masterReplicationState.hBaseState);
   }
 
   private static void checkHBaseReplicationComplete(Map<String, Long> masterTimeMap) throws Exception {
-    boolean complete = true;
+    boolean complete;
 
     // Get replicate Time from table for all regions
     Map<String, Long> slaveTimeMap =
@@ -172,10 +240,9 @@ public class ReplicationStatusTool {
     //Check if all regions are accounted on both clusters
     if (masterTimeMap.size() != slaveTimeMap.size()) {
       System.out.println("Number of regions on the Master and Slave Clusters do not match.");
-      complete = false;
     }
 
-    complete = !checkDifferences(masterTimeMap.keySet(), slaveTimeMap.keySet());
+    complete = !checkDifferences(masterTimeMap.keySet(), slaveTimeMap.keySet(), "Region");
 
     //Check the maps for all regions
     for (Map.Entry<String, Long> writeTimeEntry : masterTimeMap.entrySet()) {
@@ -197,58 +264,21 @@ public class ReplicationStatusTool {
     }
   }
 
-  static boolean checkDifferences(Set<String> masterRegions, Set<String> slaveRegions) {
-    boolean found = false;
-    Set<String> extraInMaster = Sets.difference(masterRegions, slaveRegions);
-    Set<String> extraInSlave = Sets.difference(slaveRegions, masterRegions);
+  static boolean checkDifferences(Set<String> masterMap, Set<String> slaveMap, String keyName) {
+    boolean different = false;
+    Set<String> extraInMaster = Sets.difference(masterMap, slaveMap);
+    Set<String> extraInSlave = Sets.difference(slaveMap, masterMap);
 
-    for (String regionName : extraInMaster) {
-      System.out.println("Region=" + regionName + " found on Master but not on Slave Cluster.");
-      found = true;
+    for (String key : extraInMaster) {
+      System.out.println(keyName + " " + key + " found on Master but not on Slave Cluster.");
+      different = true;
     }
 
-    for (String regionName : extraInSlave) {
-      System.out.println("Region=" + regionName + " found on Slave but not on Master Cluster.");
-      found = true;
+    for (String key : extraInSlave) {
+      System.out.println(keyName + " "  + key + " found on Slave but not on Master Cluster.");
+      different = true;
     }
-    return found;
-  }
-
-  private static Map<String, Long> readMasterStatusFile(String masterStatusFile) throws IOException {
-    Map<String, Long> map = new HashMap<String, Long>();
-    try (BufferedReader br = new BufferedReader(new FileReader(masterStatusFile))) {
-      String line;
-      //Read the shutdown Time
-      masterShutdownTime = new Long(br.readLine());
-      //Read the checksum
-      masterChecksum = br.readLine();
-
-      //Read the rest into the region map
-      while ((line = br.readLine()) != null) {
-        StringTokenizer st = new StringTokenizer(line, delimiter);
-        String region = st.nextToken();
-        Long timestamp = new Long(st.nextToken());
-        map.put(region, timestamp);
-      }
-    }
-    return map;
-  }
-
-  private static void writeMasterStatusFile(Map<String, Long> map, String filePath) throws IOException {
-    try (BufferedWriter bw =  new BufferedWriter(new FileWriter(filePath))) {
-      //Write shutdown time
-      bw.write(masterShutdownTime.toString());
-      bw.newLine();
-      //Write checksum
-      bw.write(masterChecksum);
-      bw.newLine();
-
-      //Write region map
-      for (Map.Entry<String, Long> entry : map.entrySet()) {
-        bw.write(entry.getKey() + delimiter + entry.getValue());
-        bw.newLine();
-      }
-    }
+    return different;
   }
 
   private static Map<String, Long> getMapFromTable(String rowType) throws IOException {
@@ -350,6 +380,8 @@ public class ReplicationStatusTool {
   }
 
   private static void dumpReplicationStateTable() throws Exception {
+
+    System.out.println("\nThis is all the HBase regions on the Cluster:");
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
     HTable hTable = tableUtil.createHTable(hConf, getReplicationStateTableId(tableUtil));
     ScanBuilder scan = tableUtil.buildScan();
@@ -358,8 +390,6 @@ public class ReplicationStatusTool {
     scan.addColumn(Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.TIME_FAMILY),
                    Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE));
     Result result;
-
-    LOG.info("Dump Contents of the Table from Local Cluster.");
     try (ResultScanner resultScanner = hTable.getScanner(scan.build())) {
       while ((result = resultScanner.next()) != null) {
         ReplicationStatusKey key = new ReplicationStatusKey(result.getRow());
@@ -378,13 +408,85 @@ public class ReplicationStatusTool {
     }
   }
 
-  private static void dumpMap(HashMap<String, Long> regionMap) {
-    for (Map.Entry<String, Long> entry: regionMap.entrySet()) {
-      System.out.println(entry.getKey() + "=>" + " timestamp=" + entry.getValue());
+  private static void checkHDFSReplicationComplete(SortedMap<String, String> masterChecksumMap) throws IOException {
+    boolean complete;
+    SortedMap<String, String> slaveChecksumMap = getClusterChecksumMap();
+
+    //Check if all files are accounted on both clusters
+    if (masterChecksumMap.size() != slaveChecksumMap.size()) {
+      System.out.println("Number of HDFS files on the Master and Slave Clusters do not match.");
+    }
+
+    complete = !checkDifferences(masterChecksumMap.keySet(), slaveChecksumMap.keySet(), "File");
+
+    for (Map.Entry<String, String> checksumEntry : masterChecksumMap.entrySet()) {
+      String file = checksumEntry.getKey();
+      String masterChecksum = checksumEntry.getValue();
+      String slaveChecksum = slaveChecksumMap.get(file);
+
+      if (slaveChecksum != null && !masterChecksum.equals(slaveChecksum)) {
+        System.out.println("Master Checksum " + masterChecksum + " for File " + file + " does not match with"
+                             + " Slave Checksum " + slaveChecksum);
+        complete = false;
+      }
+    }
+
+    if (complete) {
+      // If checksums match for all files.
+      System.out.println("Master and Slave Checksums match. HDFS Replication is complete.");
+    } else {
+      System.out.println("HDFS Replication is NOT Complete.");
     }
   }
 
-  private static String getClusterChecksum() throws IOException {
-    return "checksum";
+  private static String normalizedFileName(String fileName) {
+    //while matching the filenames, ignore the IP addresses of the clusters
+    String normalizedName;
+    String ipv4Pattern = "(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])";
+    String ipv6Pattern = "([0-9a-f]{1,4}:){7}([0-9a-f]){1,4}";
+    normalizedName = fileName.replaceFirst(ipv4Pattern, "<hostname>");
+    normalizedName = normalizedName.replaceFirst(ipv6Pattern, "<hostname>");
+    return normalizedName;
+  }
+
+  private static SortedMap<String, String> getClusterChecksumMap() throws IOException {
+    FileSystem fileSystem = FileSystem.get(hConf);
+    List<String> fileList = addAllFiles(fileSystem);
+    SortedMap<String, String> checksumMap = new TreeMap<String, String>();
+    for (String file : fileList) {
+      FileChecksum fileChecksum = fileSystem.getFileChecksum(new Path(file));
+      checksumMap.put(normalizedFileName(file), fileChecksum.toString());
+    }
+    LOG.info("Added " + checksumMap.size() + " checksums for snapshot files.");
+    return checksumMap;
+  }
+
+  private static List<String> addAllFiles(FileSystem fs) throws IOException {
+    List<String> fileList = new ArrayList<String>();
+    for (String dirPathName : allChecksumPaths) {
+      Path dirPath = new Path(dirPathName);
+      LOG.info("Getting all files under " + dirPath);
+      addAllDirFiles(dirPath, fs, fileList);
+    }
+    return fileList;
+  }
+
+  private static void addAllDirFiles(Path filePath, FileSystem fs, List<String> fileList) throws IOException {
+    FileStatus[] fileStatus = fs.listStatus(filePath);
+    for (FileStatus fileStat : fileStatus) {
+      if (fileStat.isDirectory()) {
+        addAllDirFiles(fileStat.getPath(), fs, fileList);
+      } else {
+        fileList.add(fileStat.getPath().toString());
+      }
+    }
+  }
+
+  private static void dumpClusterChecksums() throws IOException {
+    System.out.println("\nThis is all the File Checksums on the Cluster:");
+    SortedMap<String, String> checksumMap = getClusterChecksumMap();
+    for (Map.Entry<String, String> checksumEntry : checksumMap.entrySet()) {
+      System.out.println("File:" + checksumEntry.getKey() + " Checksum:" + checksumEntry.getValue());
+    }
   }
 }
