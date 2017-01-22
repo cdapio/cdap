@@ -239,15 +239,17 @@ function build_docs_cli() {
 function build_docs_inner_level() {
 # Change to each manual, and run the local ./build.sh from there.
 # Each manual can (and does) have a customised build script, using the common-build.sh as a base.
+  pushd $(pwd) > /dev/null
   for i in ${MANUALS}; do
     echo "========================================================"
     echo "Building \"${i}\", target \"${1}\"..."
     echo "--------------------------------------------------------"
     echo
-    cd $SCRIPT_PATH/${i}
+    cd ${SCRIPT_PATH}/${i}
     ./build.sh ${1}
     echo
   done
+  popd > /dev/null
 }
 
 function build_docs_outer_level() {
@@ -257,6 +259,7 @@ function build_docs_outer_level() {
   fi
   local title="Building outer-level docs...tag code ${1}"
   display_start_title "${title}"
+  cd ${SCRIPT_PATH}
   clean_outer_level
   set_version
   # Copies placeholder file and renames it

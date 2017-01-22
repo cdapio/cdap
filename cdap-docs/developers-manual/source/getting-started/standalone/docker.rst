@@ -134,7 +134,7 @@ started correctly.
      > docker-machine stop cdap
 
 #. For a full list of Docker Commands, see the `Docker Command Line Documentation.
-   <https://docs.docker.com/reference/commandline/cli/>`__
+   <https://docs.docker.com/engine/reference/commandline/cli/>`__
 
 
 .. _docker-kitematic:
