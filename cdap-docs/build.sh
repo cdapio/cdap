@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2016 Cask Data, Inc.
+# Copyright © 2016-2017 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -235,19 +235,20 @@ function build_docs_cli() {
 }
 
 function build_docs_inner_level() {
-# Change to each manual, and run the local ./build.sh from there.
-# Each manual can (and does) have a customised build script, using the common-build.sh as a base.
-local build_target=${1}
-local errors
+  # Change to each manual, and run the local ./build.sh from there.
+  # Each manual can (and does) have a customised build script, using the common-build.sh as a base.
+  local build_target=${1}
+  pushd $(pwd) > /dev/null
   for i in ${MANUALS}; do
     echo "========================================================"
     echo "Building \"${i}\", target \"${build_target}\"..."
     echo "--------------------------------------------------------"
     echo
-    cd $SCRIPT_PATH/${i}
+    cd ${SCRIPT_PATH}/${i}
     ./build.sh ${build_target}
     echo
   done
+  popd > /dev/null
 }
 
 function build_docs_outer_level() {
@@ -257,6 +258,7 @@ function build_docs_outer_level() {
   fi
   local title="Building outer-level docs...tag code ${1}"
   display_start_title "${title}"
+  cd ${SCRIPT_PATH}
   clean_outer_level
   set_version
   # Copies placeholder file and renames it

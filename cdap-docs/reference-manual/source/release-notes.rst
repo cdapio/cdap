@@ -1976,7 +1976,7 @@ Bug Fixes
 - `CDAP-3498 <https://issues.cask.co/browse/CDAP-3498>`__ - Upgraded CDAP to use
   Apache Twill ``0.7.0-incubating`` with numerous new features, improvements, and bug
   fixes. See the `Apache Twill release notes
-  <http://twill.apache.org/releases/0.7.0-incubating.html>`__ for details.
+  <http://twill.apache.org/releases/>`__ for details.
 
 - `CDAP-3584 <https://issues.cask.co/browse/CDAP-3584>`__ - Upon transaction rollback, a
   ``PartitionedFileSet`` now rolls back the files for the partitions that were added and/or
