@@ -28,8 +28,10 @@ import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import {fetchTables} from 'services/ExploreTables/ActionCreator';
 import MyUserStoreApi from 'api/userstore';
 import PlusButtonStore from 'services/PlusButtonStore';
+import globalEvents from 'services/global-events';
 
 require('./EntityListView.scss');
+import ee from 'event-emitter';
 
 const defaultFilter = ['app', 'dataset', 'stream'];
 
@@ -125,6 +127,23 @@ class EntityListView extends Component {
     this.getQueryObject = this.getQueryObject.bind(this);
     this.handlePageChange = this.handlePageChange.bind(this);
     this.setAnimationDirection = this.setAnimationDirection.bind(this);
+    this.eventEmitter = ee(ee);
+    this.refreshSearchByCreationTime = this.refreshSearchByCreationTime.bind(this);
+    this.eventEmitter.on(globalEvents.APPUPLOAD, this.refreshSearchByCreationTime);
+    this.eventEmitter.on(globalEvents.STREAMCREATE, this.refreshSearchByCreationTime);
+    this.eventEmitter.on(globalEvents.PUBLISHPIPELINE, this.refreshSearchByCreationTime);
+  }
+
+  refreshSearchByCreationTime() {
+    this.setState({
+      sortObj: this.sortOptions[4]
+    }, this.search.bind(this));
+  }
+
+  componentWillUnmount() {
+    this.eventEmitter.off(globalEvents.APPUPLOAD, this.refreshSearchByCreationTime);
+    this.eventEmitter.off(globalEvents.STREAMCREATE, this.refreshSearchByCreationTime);
+    this.eventEmitter.off(globalEvents.PUBLISHPIPELINE, this.refreshSearchByCreationTime);
   }
 
   componentWillReceiveProps(nextProps) {

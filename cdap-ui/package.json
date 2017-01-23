@@ -6,15 +6,11 @@
     "start": "node ./server.js",
     "cdap-prod-build": "NODE_ENV=production parallel-webpack",
     "distribute": "node ./node_modules/gulp/bin/gulp.js distribute",
-
     "build": "node ./node_modules/gulp/bin/gulp.js build",
     "build-w": "node ./node_modules/gulp/bin/gulp.js watch",
-
     "build-dlls": "parallel-webpack --config=webpack.config.dlls.js --profile",
-
     "cdap-dev-build": "NODE_ENV=development parallel-webpack --config=webpack.config.js -d --profile",
     "cdap-dev-build-w": "NODE_ENV=development parallel-webpack --dev-tools --watch -d --profile",
-
     "test": "jest --coverage",
     "watch-test": "jest --watch",
     "karma-test": "node ./node_modules/karma/bin/karma start test/karma-conf.js",
@@ -93,6 +89,7 @@
     "compression": "1.6.1",
     "cookie-parser": "1.4.1",
     "d3": "3.5.17",
+    "event-emitter": "0.3.4",
     "express": "4.13.4",
     "finalhandler": "0.4.1",
     "font-awesome": "4.6.3",
