@@ -401,7 +401,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   /**
    * Creates a new instance of {@link MetadataTable}.
    */
-  private MetadataTable createMetadataTable() throws IOException {
+  private synchronized MetadataTable createMetadataTable() throws IOException {
     return tableFactory.createMetadataTable(cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME));
   }
 

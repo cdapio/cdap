@@ -20,7 +20,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
@@ -243,6 +242,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
         return;
       }
       persistRecords();
+      fetcher.setStartMessage(lastMessageId, false);
     }
 
     private void persistRecords() {

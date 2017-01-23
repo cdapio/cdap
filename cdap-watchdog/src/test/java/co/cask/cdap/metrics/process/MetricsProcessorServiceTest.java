@@ -104,6 +104,9 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
 
   private static final int PARTITION_SIZE = 2;
   private static final long START_TIME = System.currentTimeMillis() / 1000;
+  private static final String EXPECTED_METRIC_PREFIX = "system.";
+  private static final String COUNTER_METRIC_NAME = "counter_metric";
+  private static final String EXPECTED_COUNTER_METRIC_NAME = EXPECTED_METRIC_PREFIX + COUNTER_METRIC_NAME;
 
   private ByteArrayOutputStream encoderOutputStream = new ByteArrayOutputStream(1024);
   private Encoder encoder = new BinaryEncoder(encoderOutputStream);
@@ -142,8 +145,11 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
 
     final Map<String, Long> expected = new HashMap<>();
     // Publish metrics to Kafka and record expected metrics before kafkaMetricsProcessorService starts
-    for (int i = 1; i < 10; i++) {
-      addKafkaMetrics(i, metricsContext, expected, preparer);
+    for (int i = 1; i < 5; i++) {
+      addKafkaMetrics(i, metricsContext, expected, preparer, MetricType.GAUGE);
+    }
+    for (int i = 5; i < 10; i++) {
+      addKafkaMetrics(i, metricsContext, expected, preparer, MetricType.COUNTER);
     }
     preparer.send();
 
@@ -177,7 +183,7 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
 
     // Publish metrics and record expected metrics
     for (int i = 10; i < 20; i++) {
-      publishMessagingMetrics(i, metricsContext, expected);
+      publishMessagingMetrics(i, metricsContext, expected, MetricType.COUNTER);
     }
 
     Thread.sleep(5000);
@@ -194,7 +200,7 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
     messagingMetricsProcessorService.startAndWait();
 
     for (int i = 20; i < 30; i++) {
-      publishMessagingMetrics(i, metricsContext, expected);
+      publishMessagingMetrics(i, metricsContext, expected, MetricType.GAUGE);
     }
 
     Tasks.waitFor(true, new Callable<Boolean>() {
@@ -213,11 +219,9 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
   }
 
   private void addKafkaMetrics(int i, Map<String, String> metricsContext, Map<String, Long> expected,
-                                   KafkaPublisher.Preparer preparer)
+                               KafkaPublisher.Preparer preparer, MetricType metricType)
     throws IOException, TopicNotFoundException {
-    MetricValues metric = getExpectedMetricValues(i, metricsContext, expected);
-    // Encode each MetricRecord into bytes and make it an individual kafka message in a message set.
-    recordWriter.encode(metric, encoder);
+    MetricValues metric = getExpectedMetricValues(i, metricsContext, expected, metricType);
     // partitioning by the context
     preparer.add(ByteBuffer.wrap(encoderOutputStream.toByteArray()), metric.getTags().hashCode());
     encoderOutputStream.reset();
@@ -225,29 +229,61 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
     encoderOutputStream.reset();
   }
 
-  private void publishMessagingMetrics(int i, Map<String, String> metricsContext, Map<String, Long> expected)
+  private void publishMessagingMetrics(int i, Map<String, String> metricsContext, Map<String, Long> expected,
+                                       MetricType metricType)
     throws IOException, TopicNotFoundException {
-    MetricValues metric = getExpectedMetricValues(i, metricsContext, expected);
+    MetricValues metric = getExpectedMetricValues(i, metricsContext, expected, metricType);
     messagingService.publish(StoreRequestBuilder.of(metricsTopics[i % PARTITION_SIZE])
                                .addPayloads(encoderOutputStream.toByteArray()).build());
     LOG.info("Published metric: {}", metric);
     encoderOutputStream.reset();
   }
 
-  private MetricValues getExpectedMetricValues(int i, Map<String, String> metricsContext, Map<String, Long> expected)
+  private MetricValues getExpectedMetricValues(int i, Map<String, String> metricsContext,
+                                               Map<String, Long> expected, MetricType metricType)
     throws TopicNotFoundException, IOException {
-    String metricName = "processed" + i;
-    MetricValues metric =
-      new MetricValues(metricsContext, metricName, START_TIME + i * 100, i, MetricType.GAUGE);
+    MetricValues metric;
+    if (MetricType.GAUGE.equals(metricType)) {
+      metric = getExpectedGaugeMetricValues(i, metricsContext, expected);
+    } else {
+      metric = getExpectedCounterMetricValues(i, metricsContext, expected);
+    }
     recordWriter.encode(metric, encoder);
-    expected.put("system." + metricName, (long) i);
+    return metric;
+  }
+
+  private MetricValues getExpectedGaugeMetricValues(int i, Map<String, String> metricsContext,
+                                                    Map<String, Long> expected)
+    throws TopicNotFoundException, IOException {
+    String metricName = "gauge_metric" + i;
+    MetricValues metric =
+      new MetricValues(metricsContext, metricName, START_TIME + i, i, MetricType.GAUGE);
+    expected.put(EXPECTED_METRIC_PREFIX + metricName, (long) i);
+    return metric;
+  }
+
+  private MetricValues getExpectedCounterMetricValues(int i, Map<String, String> metricsContext,
+                                                    Map<String, Long> expected)
+    throws TopicNotFoundException, IOException {
+    MetricValues metric =
+      new MetricValues(metricsContext, COUNTER_METRIC_NAME, START_TIME + i, 1, MetricType.COUNTER);
+    Long currentValue = expected.get(EXPECTED_COUNTER_METRIC_NAME);
+    if (currentValue == null) {
+      expected.put(EXPECTED_COUNTER_METRIC_NAME , 1L);
+    } else {
+      expected.put(EXPECTED_COUNTER_METRIC_NAME, currentValue + 1);
+    }
     return metric;
   }
 
   private boolean canQueryAllMetrics(MetricStore metricStore, Map<String, String> metricsContext,
                                      Map<String, Long> expected) {
     for (Map.Entry<String, Long> metric : expected.entrySet()) {
-      if (getQueryResult(metricStore, metricsContext, metric.getKey()).size() == 0) {
+      Collection<MetricTimeSeries> queryResult =
+        metricStore.query(new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE,
+                                              metric.getKey(), AggregationFunction.SUM,
+                                              metricsContext, ImmutableList.<String>of()));
+      if (queryResult.size() == 0) {
         return false;
       }
     }
@@ -257,20 +293,16 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
   private void assertMetricsResult(MetricStore metricStore, Map<String, String> metricsContext,
                                    Map<String, Long> expected) {
     for (Map.Entry<String, Long> metric : expected.entrySet()) {
-      Collection<MetricTimeSeries> query = getQueryResult(metricStore, metricsContext, metric.getKey());
-      MetricTimeSeries timeSeries = Iterables.getOnlyElement(query);
+      Collection<MetricTimeSeries> queryResult =
+        metricStore.query(new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE,
+                                              metric.getKey(), AggregationFunction.SUM,
+                                              metricsContext, ImmutableList.<String>of()));
+      MetricTimeSeries timeSeries = Iterables.getOnlyElement(queryResult);
       List<TimeValue> timeValues = timeSeries.getTimeValues();
       TimeValue timeValue = Iterables.getOnlyElement(timeValues);
+      LOG.debug("Expected metrics {} with value {}", metric.getKey(), metric.getValue());
       Assert.assertEquals(metric.getValue().longValue(), timeValue.getValue());
     }
-  }
-
-  private Collection<MetricTimeSeries> getQueryResult(MetricStore metricStore, Map<String, String> metricsContext,
-                                                      String metricName) {
-    MetricDataQuery metricDataQuery =
-      new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
-                          metricsContext, ImmutableList.<String>of());
-    return metricStore.query(metricDataQuery);
   }
 
   @Override
