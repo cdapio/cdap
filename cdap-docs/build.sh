@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2016 Cask Data, Inc.
+# Copyright © 2016-2017 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -54,12 +54,15 @@ function usage() {
   echo "    javadocs-all      Build Javadocs for all modules"
   echo "    licenses          Clean build of License Dependency PDFs"
   echo "    version           Print the version information"
+  echo
+  echo "    check             Runs build without running Sphinx, to check all downloads and includes"
   echo 
   return ${warnings}
 }
 
 function run_command() {
   case ${1} in
+    check )             build_docs_check; warnings=$?;;
     clean )             clean_targets;;
     docs )              build_docs_only; warnings=$?;;
     docs-all )          build_docs_set; warnings=$?;;
@@ -100,6 +103,12 @@ function display_end_title_bell() {
   echo "========================================================"
   echo "========================================================"
   echo
+}
+
+function build_docs_check() {
+  USE_SPHINX_BUILD="${FALSE}"
+  export USE_SPHINX_BUILD
+  build_docs_only
 }
 
 function build_docs_set() {
@@ -271,8 +280,13 @@ function build_docs_outer_level() {
   cp ${SCRIPT_PATH}/${COMMON_HIGHLEVEL_PY}  ${TARGET_PATH}/${SOURCE}/conf.py
   cp -R ${SCRIPT_PATH}/${COMMON_IMAGES}     ${TARGET_PATH}/${SOURCE}/
   cp ${SCRIPT_PATH}/${COMMON_SOURCE}/*.rst  ${TARGET_PATH}/${SOURCE}/
-  
-  ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_options} ${TARGET_PATH}/${SOURCE} ${TARGET_PATH}/${HTML}
+  if [[ ${USE_SPHINX_BUILD} == ${FALSE} ]]; then
+    echo "Not building using Sphinx."
+    mkdir -p ${TARGET_PATH}/${HTML}
+  else
+    echo "Building using Sphinx."
+    ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_options} ${TARGET_PATH}/${SOURCE} ${TARGET_PATH}/${HTML}
+  fi
   consolidate_messages
   echo
 }
@@ -294,11 +308,16 @@ function copy_docs_inner_level() {
   else
     project_dir=${PROJECT_VERSION}
   fi
-  local source_404="${TARGET_PATH}/${HTML}/404.html"
-  rewrite ${source_404} "src=\"_static"  "src=\"/cdap/${project_dir}/en/_static"
-  rewrite ${source_404} "src=\"_images"  "src=\"/cdap/${project_dir}/en/_images"
-  rewrite ${source_404} "/href=\"http/!s|href=\"|href=\"/cdap/${project_dir}/en/|g"
-  rewrite ${source_404} "action=\"search.html"  "action=\"/cdap/${project_dir}/en/search.html"
+  if [[ ${USE_SPHINX_BUILD} == ${FALSE} ]]; then
+    echo "Not building using Sphinx. Skipping re-writing 404 file."
+  else
+    echo "Rewriting 404 file."
+    local source_404="${TARGET_PATH}/${HTML}/404.html"
+    rewrite ${source_404} "src=\"_static"  "src=\"/cdap/${project_dir}/en/_static"
+    rewrite ${source_404} "src=\"_images"  "src=\"/cdap/${project_dir}/en/_images"
+    rewrite ${source_404} "/href=\"http/!s|href=\"|href=\"/cdap/${project_dir}/en/|g"
+    rewrite ${source_404} "action=\"search.html"  "action=\"/cdap/${project_dir}/en/search.html"
+  fi
   echo
 }
 

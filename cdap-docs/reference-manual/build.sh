@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2014-2016 Cask Data, Inc.
+# Copyright © 2014-2017 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -33,16 +33,20 @@ CLI_TABLE_RST="cdap-cli-table.rst"
 CHECK_INCLUDES=${TRUE}
 
 function download_includes() {
-  local target_includes_dir=${1}
-  echo "Copying CLI Docs: building rst file from cli-docs results..." 
-  python "${CLI_DOC_TOOL}" "${CLI_INPUT_TXT}" "${target_includes_dir}/${CLI_TABLE_RST}"
-  warnings=$?
-  if [[ ${warnings} -eq 0 ]]; then
-    echo "CLI rst file written to ${CLI_TABLE_RST}"
+  if [[ ${USE_SPHINX_BUILD} == ${FALSE} ]]; then
+    echo "Not building using Sphinx: skipping building rst file from cli-docs results."
   else
-    local m="Error ${warnings} building CLI docs table"
-    echo_red_bold "${m}"
-    set_message "${m}"
+    local target_includes_dir=${1}
+    echo "Copying CLI Docs: building rst file from cli-docs results..." 
+    python "${CLI_DOC_TOOL}" "${CLI_INPUT_TXT}" "${target_includes_dir}/${CLI_TABLE_RST}"
+    warnings=$?
+    if [[ ${warnings} -eq 0 ]]; then
+      echo "CLI rst file written to ${CLI_TABLE_RST}"
+    else
+      local m="Error ${warnings} building CLI docs table"
+      echo_red_bold "${m}"
+      set_message "${m}"
+    fi
   fi
   return ${warnings}
 }
@@ -70,12 +74,24 @@ function build_extras() {
     echo "Not using Javadocs."
   fi
 
-  cp ${SCRIPT_PATH}/licenses-pdf/*.pdf ${TARGET_PATH}/html/licenses
-  warnings=$?
-  if [[ ${warnings} -eq 0 ]]; then
-    echo "Copied license PDFs."
+  if [[ ${USE_SPHINX_BUILD} == ${FALSE} ]]; then
+    echo "Not building using Sphinx: creating license directory."
+    mkdir -p ${TARGET_PATH}/html/licenses
+  fi  
+
+  if [ -d ${TARGET_PATH}/html/licenses ]; then
+    cp ${SCRIPT_PATH}/licenses-pdf/*.pdf ${TARGET_PATH}/html/licenses
+    warnings=$?
+    if [[ ${warnings} -eq 0 ]]; then
+      echo "Copied license PDFs."
+    else
+      local m="Error ${warnings} copying license PDFs."
+      echo_red_bold "${m}"
+      set_message "${m}"
+      return ${warnings}
+    fi
   else
-    local m="Error ${warnings} copying license PDFs."
+    local m="Error TARGET_PATH ${TARGET_PATH}/html/licenses does not exist."
     echo_red_bold "${m}"
     set_message "${m}"
     return ${warnings}

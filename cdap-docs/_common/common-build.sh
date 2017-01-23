@@ -1,4 +1,4 @@
-# Copyright © 2014-2016 Cask Data, Inc.
+# Copyright © 2014-2017 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -86,6 +86,7 @@ function usage() {
   echo "    docs             alias for 'build-docs'"
   echo "    docs-local       Clean build of docs (no extras or Javadocs), using local copies of downloaded files"
   echo
+  echo "    check            Runs build without running Sphinx, to check all downloads and includes"
   echo "    license-pdfs     Clean build of License Dependency PDFs"
   echo "    check-includes   Check if included files have changed from source"
   echo "    version          Print the version information"
@@ -125,7 +126,13 @@ function build_docs() {
   if [[ ${errors} -ne 0 ]]; then
     echo_set_message "Error in check_includes: ${errors}"
   fi
-  ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_tag} ${SOURCE} ${TARGET}/${HTML}
+  if [[ ${USE_SPHINX_BUILD} == ${FALSE} ]]; then
+    echo "Not building using Sphinx."
+    mkdir -p ${TARGET}/${HTML}
+  else
+    echo "Building using Sphinx."
+    ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_tag} ${SOURCE} ${TARGET}/${HTML}
+  fi  
   build_extras
   consolidate_messages
 }
@@ -146,6 +153,13 @@ function build_extras() {
   # Currently performed in reference-manual
   echo "No extras being built or copied."
 }
+
+function check() {
+  USE_SPHINX_BUILD="${FALSE}"
+  export USE_SPHINX_BUILD
+  build_docs
+}
+
 
 function check_build_rst() {
   pushd ${PROJECT_PATH} > /dev/null
@@ -547,11 +561,12 @@ function rewrite() {
 function run_command() {
   set_version
   case ${1} in
-    build-web|build-docs)            "${1/-/_}";;
-    check-includes|display-version)  "${1/-/_}";;
-    license-pdfs)                    "build_license_pdfs";;
-    docs)                            "build_docs";;
-    docs-local)                      "build_docs_local";;
-    *)                               usage;;
+    build-web|build-docs)  "${1/-/_}";;
+    check|check-includes)  "${1/-/_}";;
+    display-version)       "${1/-/_}";;
+    license-pdfs)          "build_license_pdfs";;
+    docs)                  "build_docs";;
+    docs-local)            "build_docs_local";;
+    *)                     usage;;
   esac
 }
