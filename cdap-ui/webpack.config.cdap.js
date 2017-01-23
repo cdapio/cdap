@@ -117,7 +117,7 @@ module.exports = {
   cache: true,
   context: __dirname + '/app/cdap',
   entry: {
-    'cdap': ['./cdap.js']
+    'cdap': ['./cdap.js', 'rx', 'rx-dom']
   },
   module: {
     preLoaders: [

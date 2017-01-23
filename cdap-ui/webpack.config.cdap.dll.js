@@ -19,7 +19,23 @@ var path = require('path');
 
 module.exports = {
   entry: {
-    vendor: [path.join(__dirname, 'app', 'lib', 'cdap-vendor.js')]
+    vendor: [
+      'react-addons-css-transition-group',
+      'whatwg-fetch',
+      'node-uuid',
+      'sockjs-client',
+      'fuse.js',
+      'react-dropzone',
+      'react-redux',
+      'react-router',
+      'moment',
+      'react-file-download',
+      'mousetrap',
+      'papaparse',
+      'd3',
+      'chart.js',
+      'cdap-avsc'
+    ]
   },
   output: {
     path: path.join(__dirname, 'dll'),

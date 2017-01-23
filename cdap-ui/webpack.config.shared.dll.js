@@ -19,7 +19,17 @@ var path = require('path');
 
 module.exports = {
   entry: {
-    vendor: [path.join(__dirname, 'app', 'lib', 'shared-vendor.js')]
+    vendor: [
+      'react',
+      'react-dom',
+      'redux',
+      'lodash',
+      'classnames',
+      'reactstrap',
+      'i18n-react',
+      'react-cookie',
+      'whatwg-fetch'
+    ]
   },
   output: {
     path: path.join(__dirname, 'dll'),
