@@ -41,7 +41,7 @@ import java.util.Map;
  * Class including logic for getting avro files to write to. Used by {@link CDAPLogAppender}
  */
 class AvroFileManager {
-  private static final Logger LOG = LoggerFactory.getLogger(CDAPLogAppender.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AvroFileManager.class);
 
   private final long maxLifetimeMillis;
   private final Map<LogPathIdentifier, LogFileOutputStream> fileMap;

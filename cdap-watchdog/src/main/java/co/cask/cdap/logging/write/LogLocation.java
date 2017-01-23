@@ -65,18 +65,38 @@ public class LogLocation {
     this.impersonator = impersonator;
   }
 
+  /**
+   * get logging framework version
+   * @return version string, currently V0 or V1
+   */
   public String getFrameworkVersion() {
     return frameworkVersion;
   }
 
+  /**
+   * get start timestamp for this logging file
+   * @return timestamp in long
+   */
   public long getTimestamp() {
     return timestamp;
   }
 
+  /**
+   * get location of log file
+   * @return Location
+   */
   public Location getLocation() {
     return location;
   }
 
+  /**
+   * Return closeable iterator of {@link LogEvent}
+   * @param logFilter filter
+   * @param fromTimeMs start timestamp in millis
+   * @param toTimeMs end timestamp in millis
+   * @param maxEvents max events to return
+   * @return closeable iterator of log events
+   */
   public CloseableIterator<LogEvent> readLog(Filter logFilter, long fromTimeMs, long toTimeMs, int maxEvents) {
     return new LogEventIterator(logFilter, fromTimeMs, toTimeMs, maxEvents);
   }

@@ -29,14 +29,26 @@ public class LogPathIdentifier {
     this.logFilePrefix = logFilePrefix;
   }
 
+  /**
+   * NamespaceId String
+   * @return namespace string
+   */
   public String getNamespaceId() {
     return namespaceId;
   }
 
+  /**
+   * Identifier used for the log files. Uniquely identifies the context in the namespace
+   * @return log file identifier string
+   */
   public String getLogFilePrefix() {
     return logFilePrefix;
   }
 
+  /**
+   * Rowkey combining the namespace and log file identifier separated by separator ":"
+   * @return rowkey string
+   */
   public String getRowKey() {
     return namespaceId + SEPARATOR + logFilePrefix;
   }

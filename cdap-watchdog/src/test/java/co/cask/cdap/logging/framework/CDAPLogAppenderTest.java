@@ -186,9 +186,10 @@ public class CDAPLogAppenderTest {
     properties.put(FlowletLoggingContext.TAG_FLOW_ID, "testFlow");
     properties.put(FlowletLoggingContext.TAG_FLOWLET_ID, "testFlowet");
 
-    LoggingEvent event1 = getLoggingEvent("co.cask.Test1",
-                       (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME),
-                       Level.ERROR , "test message 1", properties);
+    LoggingEvent event1 =
+      getLoggingEvent("co.cask.Test1",
+                      (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME),
+                      Level.ERROR , "test message 1", properties);
 
 
     cdapLogAppender.doAppend(event1);

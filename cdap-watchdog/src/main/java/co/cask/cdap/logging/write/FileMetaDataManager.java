@@ -180,7 +180,7 @@ public final class FileMetaDataManager {
    * Returns a list of log files for a logging context.
    *
    * @param logPathIdentifier logging context identifier.
-   * @return Sorted map containing key as start time, and value as log file.
+   * @return List of {@link LogLocation}
    */
   public List<LogLocation> listFiles(final LogPathIdentifier logPathIdentifier) throws Exception {
     return execute(new TransactionExecutor.Function<Table, List<LogLocation>>() {
