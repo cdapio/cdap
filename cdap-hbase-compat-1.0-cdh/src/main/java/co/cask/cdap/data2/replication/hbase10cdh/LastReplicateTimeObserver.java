@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.replication.hbase11;
+package co.cask.cdap.data2.replication.hbase10cdh;
 
 import co.cask.cdap.replication.ReplicationConstants;
 import co.cask.cdap.replication.StatusUtils;
@@ -26,7 +26,6 @@ import org.apache.hadoop.hbase.coprocessor.BaseRegionServerObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionServerCoprocessorEnvironment;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +37,7 @@ import java.util.List;
  * For each region the writeTime from the last WAL Entry replicated is updated to the REPLICATION_STATE table.
  */
 public class LastReplicateTimeObserver extends BaseRegionServerObserver {
-  private HBase11TableUpdater hBase11TableUpdater = null;
+  private HBase10CDHTableUpdater hBase10CDHTableUpdater = null;
   private static final Logger LOG = LoggerFactory.getLogger(LastReplicateTimeObserver.class);
 
   @Override
@@ -46,14 +45,15 @@ public class LastReplicateTimeObserver extends BaseRegionServerObserver {
     LOG.info("LastReplicateTimeObserver Start received.");
     String tableName = StatusUtils.getReplicationStateTableName(env.getConfiguration());
     HTableInterface htableInterface = env.getTable(TableName.valueOf(tableName));
-    hBase11TableUpdater = new HBase11TableUpdater(ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE,
-                                                  env.getConfiguration(), htableInterface);
+    hBase10CDHTableUpdater =
+      new HBase10CDHTableUpdater(ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE,
+                                 env.getConfiguration(), htableInterface);
   }
 
   @Override
   public void stop(CoprocessorEnvironment env) throws IOException {
     LOG.info("LastReplicateTimeObserver Stop received.");
-    hBase11TableUpdater.cancelTimer();
+    hBase10CDHTableUpdater.cancelTimer();
   }
 
   @Override
@@ -64,8 +64,8 @@ public class LastReplicateTimeObserver extends BaseRegionServerObserver {
                 entry.getKey().getTableName().toStringUtf8(),
                 entry.getKey().getWriteTime(),
                 entry.getKey().getEncodedRegionName().toStringUtf8());
-      hBase11TableUpdater.updateTime(entry.getKey().getEncodedRegionName().toStringUtf8(),
-                                     entry.getKey().getWriteTime());
+      hBase10CDHTableUpdater.updateTime(entry.getKey().getEncodedRegionName().toStringUtf8(),
+                                        entry.getKey().getWriteTime());
     }
   }
 }

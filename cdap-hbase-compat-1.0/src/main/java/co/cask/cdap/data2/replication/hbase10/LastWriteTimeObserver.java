@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.replication.hbase11;
+package co.cask.cdap.data2.replication.hbase10;
 
 import co.cask.cdap.replication.ReplicationConstants;
 import co.cask.cdap.replication.StatusUtils;
@@ -35,9 +35,9 @@ import java.io.IOException;
 /**
  * HBase coprocessor that tracks WAL writes for all tables to track replication status.
  * For each region the writeTime of the last WAL entry is written to the REPLICATION_STATE table.
-*/
+ */
 public class LastWriteTimeObserver extends BaseWALObserver {
-  private HBase11TableUpdater hBase11TableUpdater = null;
+  private HBase10TableUpdater hBase10TableUpdater = null;
   private static final Logger LOG = LoggerFactory.getLogger(LastWriteTimeObserver.class);
 
   @Override
@@ -45,14 +45,14 @@ public class LastWriteTimeObserver extends BaseWALObserver {
     LOG.info("LastWriteTimeObserver Start received.");
     String tableName = StatusUtils.getReplicationStateTableName(env.getConfiguration());
     HTableInterface htableInterface = env.getTable(TableName.valueOf(tableName));
-    hBase11TableUpdater = new HBase11TableUpdater(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE,
+    hBase10TableUpdater = new HBase10TableUpdater(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE,
                                                   env.getConfiguration(), htableInterface);
   }
 
   @Override
   public void stop(CoprocessorEnvironment e) throws IOException {
     LOG.info("LastWriteTimeObserver Stop received.");
-    hBase11TableUpdater.cancelTimer();
+    hBase10TableUpdater.cancelTimer();
   }
 
   @Override
@@ -68,6 +68,6 @@ public class LastWriteTimeObserver extends BaseWALObserver {
               logKey.getTablename().toString(),
               logKey.getWriteTime(),
               logKey.getEncodedRegionName().toString());
-    hBase11TableUpdater.updateTime(new String(logKey.getEncodedRegionName(), "UTF-8"), logKey.getWriteTime());
+    hBase10TableUpdater.updateTime(new String(logKey.getEncodedRegionName(), "UTF-8"), logKey.getWriteTime());
   }
 }
