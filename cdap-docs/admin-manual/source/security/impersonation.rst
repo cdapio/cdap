@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. _admin-impersonation:
 
@@ -47,7 +47,3 @@ The configured HDFS delegation token timeout must be longer than the configured 
 partition duration (``stream.partition.duration``), which has a default value of
 one hour (3600000). It must also be larger than the log saver's maximum file
 lifetime (``log.saver.max.file.lifetime.ms``), which has a value of six hours (21600000).
-
-Known Issues
-============
-- :cask-issue:`CDAP-6587` - Explore is not supported when impersonation is enabled.
