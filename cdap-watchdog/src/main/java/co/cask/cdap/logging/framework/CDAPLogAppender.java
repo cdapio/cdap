@@ -36,7 +36,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   private static final Logger LOG = LoggerFactory.getLogger(CDAPLogAppender.class);
 
   private boolean isStarted;
-  private final AvroFileManager avroFileManager;
+  private final LogFileManager logFileManager;
 
   /**
    * TODO: start a separate cleanup thread to remove files that has passed the TTL
@@ -52,8 +52,8 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
    */
   public CDAPLogAppender(FileMetaDataManager fileMetaDataManager, LocationFactory locationFactory,
                          Schema schema, int syncIntervalBytes, long maxFileLifetimeMs) {
-    this.avroFileManager = new AvroFileManager(maxFileLifetimeMs, syncIntervalBytes,
-                                               schema, fileMetaDataManager, locationFactory);
+    this.logFileManager = new LogFileManager(maxFileLifetimeMs, syncIntervalBytes,
+                                             schema, fileMetaDataManager, locationFactory);
     this.isStarted = false;
   }
 
@@ -61,9 +61,9 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     long timestamp = eventObject.getTimeStamp();
 
     LogPathIdentifier logPathIdentifier = LoggingUtil.getLoggingPath(eventObject.getMDCPropertyMap());
-    AvroFileManager.LogFileOutputStream outputStream;
+    LogFileOutputStream outputStream;
     try {
-      outputStream = avroFileManager.getAvroFile(logPathIdentifier, timestamp);
+      outputStream = logFileManager.getLogFileOutputStream(logPathIdentifier, timestamp);
     } catch (IOException ioe) {
       // if there's exception while creating the file, we keep retrying
       LOG.debug("Exception while creating avro file", ioe);
@@ -82,12 +82,12 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
 
   @Override
   public void flush() throws IOException {
-    avroFileManager.flush();
+    logFileManager.flush();
   }
 
   @Override
   public void stop() {
-    avroFileManager.close();
+    logFileManager.close();
     this.isStarted = false;
   }
 
