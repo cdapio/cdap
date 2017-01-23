@@ -40,7 +40,7 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
   protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(RegionCoprocessorEnvironment env) {
     HTableDescriptor htd = env.getRegion().getTableDesc();
     String tablePrefix = htd.getValue(Constants.Dataset.TABLE_PREFIX);
-    String sysConfigTablePrefix = new HTableNameConverter().getSysConfigTablePrefix(tablePrefix);
+    String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(tablePrefix);
     return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, env.getConfiguration());
   }
 

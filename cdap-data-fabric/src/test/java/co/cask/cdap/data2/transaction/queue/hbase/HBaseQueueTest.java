@@ -55,6 +55,7 @@ import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationRead
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
@@ -63,6 +64,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -131,6 +133,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   protected static HBaseTableUtil tableUtil;
   private static HBaseAdmin hbaseAdmin;
   private static ZKClientService zkClientService;
+  private static HBaseDDLExecutor ddlExecutor;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -173,10 +176,11 @@ public abstract class HBaseQueueTest extends QueueTest {
 
     //create HBase namespace
     hbaseAdmin = TEST_HBASE.getHBaseAdmin();
+    ddlExecutor = new HBaseDDLExecutorFactory(cConf, hbaseAdmin.getConfiguration()).get();
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    tableUtil.createNamespaceIfNotExists(hbaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
-    tableUtil.createNamespaceIfNotExists(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID));
-    tableUtil.createNamespaceIfNotExists(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID1));
+    ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NAMESPACE_ID));
+    ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NAMESPACE_ID1));
 
     ConfigurationTable configTable = new ConfigurationTable(hConf);
     configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
@@ -658,9 +662,9 @@ public abstract class HBaseQueueTest extends QueueTest {
     try (HTable hTable = tableUtil.createHTable(hConf, hTableId)) {
       HTableDescriptor htd = hTable.getTableDescriptor();
       final TableName configTableName = htd.getTableName();
-      HTableNameConverter nameConverter = new HTableNameConverter();
       String prefix = htd.getValue(Constants.Dataset.TABLE_PREFIX);
-      CConfigurationReader cConfReader = new CConfigurationReader(hConf, nameConverter.getSysConfigTablePrefix(prefix));
+      CConfigurationReader cConfReader
+        = new CConfigurationReader(hConf, HTableNameConverter.getSysConfigTablePrefix(prefix));
       return ConsumerConfigCache.getInstance(configTableName,
                                              cConfReader, new Supplier<TransactionVisibilityState>() {
           @Override
@@ -695,11 +699,11 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @AfterClass
   public static void finish() throws Exception {
-    tableUtil.deleteAllInNamespace(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID));
-    tableUtil.deleteNamespaceIfExists(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID));
+    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(NAMESPACE_ID));
+    ddlExecutor.deleteNamespaceIfExists(tableUtil.getHBaseNamespace(NAMESPACE_ID));
 
-    tableUtil.deleteAllInNamespace(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID1));
-    tableUtil.deleteNamespaceIfExists(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID1));
+    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(NAMESPACE_ID1));
+    ddlExecutor.deleteNamespaceIfExists(tableUtil.getHBaseNamespace(NAMESPACE_ID1));
 
     hbaseAdmin.close();
     txService.stop();

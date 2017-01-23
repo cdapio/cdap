@@ -51,6 +51,7 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.client.ExploreClient;
@@ -77,6 +78,7 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
@@ -455,8 +457,8 @@ public class MasterServiceMain extends DaemonMain {
    */
   private void createSystemHBaseNamespace() {
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      tableUtil.createNamespaceIfNotExists(admin, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    try (HBaseDDLExecutor ddlExecutor = new HBaseDDLExecutorFactory(cConf, hConf).get()) {
+      ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

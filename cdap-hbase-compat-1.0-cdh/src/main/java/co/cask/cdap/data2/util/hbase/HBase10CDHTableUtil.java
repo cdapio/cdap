@@ -24,6 +24,7 @@ import co.cask.cdap.data2.transaction.queue.coprocessor.hbase10cdh.DequeueScanOb
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase10cdh.HBaseQueueRegionObserver;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import co.cask.cdap.spi.hbase.TableDescriptor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -31,8 +32,8 @@ import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.NamespaceNotFoundException;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.io.compress.Compression;
@@ -45,23 +46,16 @@ import java.util.List;
  */
 public class HBase10CDHTableUtil extends HBaseTableUtil {
 
-  private final HTableNameConverter nameConverter = new HTableNameConverter();
-
-  @Override
-  public HBaseDDLExecutor getHBaseDDLExecutor(Configuration hConf) {
-    return new DefaultHBase10CDHDDLExecutor(hConf);
-  }
-
   @Override
   public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTable(conf, nameConverter.toTableName(tablePrefix, tableId));
+    return new HTable(conf, HTableNameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public HTableDescriptorBuilder buildHTableDescriptor(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTableDescriptorBuilder(nameConverter.toTableName(tablePrefix, tableId));
+    return new HTableDescriptorBuilder(HTableNameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
@@ -74,7 +68,7 @@ public class HBase10CDHTableUtil extends HBaseTableUtil {
   public HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.getTableDescriptor(nameConverter.toTableName(tablePrefix, tableId));
+    return admin.getTableDescriptor(HTableNameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
@@ -82,7 +76,7 @@ public class HBase10CDHTableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     try {
-      admin.getNamespaceDescriptor(nameConverter.encodeHBaseEntity(namespace));
+      admin.getNamespaceDescriptor(HTableNameConverter.encodeHBaseEntity(namespace));
       return true;
     } catch (NamespaceNotFoundException e) {
       return false;
@@ -90,75 +84,45 @@ public class HBase10CDHTableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public void createNamespaceIfNotExists(HBaseAdmin admin, String namespace) throws IOException {
-    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
-    Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
-    if (!hasNamespace(admin, namespace)) {
-      NamespaceDescriptor namespaceDescriptor =
-        NamespaceDescriptor.create(nameConverter.encodeHBaseEntity(namespace)).build();
-      admin.createNamespace(namespaceDescriptor);
-    }
-  }
-
-  @Override
-  public void deleteNamespaceIfExists(HBaseAdmin admin, String namespace) throws IOException {
-    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
-    Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
-    if (hasNamespace(admin, namespace)) {
-      admin.deleteNamespace(nameConverter.encodeHBaseEntity(namespace));
-    }
-  }
-
-  @Override
-  public void disableTable(HBaseAdmin admin, TableId tableId) throws IOException {
-    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
-    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.disableTable(nameConverter.toTableName(tablePrefix, tableId));
-  }
-
-  @Override
-  public void enableTable(HBaseAdmin admin, TableId tableId) throws IOException {
-    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
-    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.enableTable(nameConverter.toTableName(tablePrefix, tableId));
-  }
-
-  @Override
   public boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.tableExists(nameConverter.toTableName(tablePrefix, tableId));
+    return admin.tableExists(HTableNameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
-  public void deleteTable(HBaseAdmin admin, TableId tableId) throws IOException {
-    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
+  public void deleteTable(HBaseDDLExecutor ddlExecutor, TableId tableId) throws IOException {
+    Preconditions.checkArgument(ddlExecutor != null, "HBaseDDLExecutor should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.deleteTable(nameConverter.toTableName(tablePrefix, tableId));
+    TableName tableName = HTableNameConverter.toTableName(tablePrefix, tableId);
+    ddlExecutor.deleteTableIfExists(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
   }
 
   @Override
-  public void modifyTable(HBaseAdmin admin, HTableDescriptor tableDescriptor) throws IOException {
-    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
+  public void modifyTable(HBaseDDLExecutor ddlExecutor, HTableDescriptor tableDescriptor) throws IOException {
+    Preconditions.checkArgument(ddlExecutor != null, "HBaseDDLExecutor should not be null");
     Preconditions.checkArgument(tableDescriptor != null, "Table descriptor should not be null.");
-    admin.modifyTable(tableDescriptor.getTableName(), tableDescriptor);
+    TableName tableName = tableDescriptor.getTableName();
+    // TODO This will be fixed in the next PR when we pass TableDescriptor to the modifyTable method.
+    TableDescriptor tbd = ((DefaultHBaseDDLExecutor) ddlExecutor).getTableDescriptor(tableDescriptor);
+    ddlExecutor.modifyTable(tableName.getNamespaceAsString(), tableName.getQualifierAsString(), tbd);
   }
 
   @Override
   public List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.getTableRegions(nameConverter.toTableName(tablePrefix, tableId));
+    return admin.getTableRegions(HTableNameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public List<TableId> listTablesInNamespace(HBaseAdmin admin, String namespaceId) throws IOException {
     List<TableId> tableIds = Lists.newArrayList();
     HTableDescriptor[] hTableDescriptors =
-      admin.listTableDescriptorsByNamespace(nameConverter.encodeHBaseEntity(namespaceId));
+      admin.listTableDescriptorsByNamespace(HTableNameConverter.encodeHBaseEntity(namespaceId));
     for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
       if (isCDAPTable(hTableDescriptor)) {
-        tableIds.add(nameConverter.from(hTableDescriptor));
+        tableIds.add(HTableNameConverter.from(hTableDescriptor));
       }
     }
     return tableIds;
@@ -170,7 +134,7 @@ public class HBase10CDHTableUtil extends HBaseTableUtil {
     HTableDescriptor[] hTableDescriptors = admin.listTables();
     for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
       if (isCDAPTable(hTableDescriptor)) {
-        tableIds.add(nameConverter.from(hTableDescriptor));
+        tableIds.add(HTableNameConverter.from(hTableDescriptor));
       }
     }
     return tableIds;
@@ -273,10 +237,5 @@ public class HBase10CDHTableUtil extends HBaseTableUtil {
   @Override
   public Class<? extends Coprocessor> getPayloadTableRegionObserverClassForVersion() {
     return PayloadTableRegionObserver.class;
-  }
-
-  @Override
-  protected HTableNameConverter getHTableNameConverter() {
-    return nameConverter;
   }
 }

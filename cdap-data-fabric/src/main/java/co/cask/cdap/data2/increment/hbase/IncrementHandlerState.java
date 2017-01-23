@@ -57,7 +57,6 @@ public class IncrementHandlerState {
 
   public static final Log LOG = LogFactory.getLog(IncrementHandlerState.class);
   private final HTableDescriptor hTableDescriptor;
-  private final HTableNameConverter hTableNameConverter;
 
   private TransactionStateCache cache;
   private TimestampOracle timeOracle = new TimestampOracle();
@@ -65,11 +64,9 @@ public class IncrementHandlerState {
   protected final Set<byte[]> txnlFamilies = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
   protected Map<byte[], Long> ttlByFamily = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
-  public IncrementHandlerState(Configuration conf, HTableDescriptor hTableDescriptor,
-                               HTableNameConverter hTableNameConverter) {
+  public IncrementHandlerState(Configuration conf, HTableDescriptor hTableDescriptor) {
     this.conf = conf;
     this.hTableDescriptor = hTableDescriptor;
-    this.hTableNameConverter = hTableNameConverter;
   }
 
   @VisibleForTesting
@@ -79,7 +76,7 @@ public class IncrementHandlerState {
 
   protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(HTableDescriptor htd, Configuration conf) {
     String tablePrefix = htd.getValue(Constants.Dataset.TABLE_PREFIX);
-    String sysConfigTablePrefix = hTableNameConverter.getSysConfigTablePrefix(tablePrefix);
+    String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(tablePrefix);
     return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
   }
 

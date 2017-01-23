@@ -22,8 +22,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.test.SlowTests;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -48,18 +50,20 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
   private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory(CConfiguration.create(),
                                                                            new SimpleNamespaceQueryAdmin()).get();
 
+  private static HBaseDDLExecutor ddlExecutor;
+
   @BeforeClass
   public static void beforeClass() throws Exception {
-    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
-                                              hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
+    ddlExecutor = new HBaseDDLExecutorFactory(CConfiguration.create(),
+                                              TEST_HBASE.getHBaseAdmin().getConfiguration()).get();
+    ddlExecutor.createNamespaceIfNotExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(),
+    hBaseTableUtil.deleteAllInNamespace(ddlExecutor,
                                         hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
-    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(),
-                                           hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
+    ddlExecutor.deleteNamespaceIfExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
   }
 
   @Override

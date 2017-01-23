@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.stream.hbase;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
@@ -23,9 +24,11 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -41,11 +44,13 @@ import java.util.concurrent.TimeUnit;
 public final class HBaseStreamConsumerStateStoreFactory implements StreamConsumerStateStoreFactory {
   private final Configuration hConf;
   private final HBaseTableUtil tableUtil;
+  private final HBaseDDLExecutorFactory ddlExecutorFactory;
 
   @Inject
-  HBaseStreamConsumerStateStoreFactory(Configuration hConf, HBaseTableUtil tableUtil) {
+  HBaseStreamConsumerStateStoreFactory(CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) {
     this.hConf = hConf;
     this.tableUtil = tableUtil;
+    this.ddlExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
   }
 
   @Override
@@ -54,7 +59,9 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
     TableId streamStateStoreTableId = StreamUtils.getStateStoreTableId(namespace);
     TableId hbaseTableId = tableUtil.createHTableId(new NamespaceId(streamStateStoreTableId.getNamespace()),
                                                     streamStateStoreTableId.getTableName());
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    try (HBaseDDLExecutor executor = ddlExecutorFactory.get();
+         // TODO should tableExists be part of HBaseDDLExecutor??
+         HBaseAdmin admin = new HBaseAdmin(hConf)) {
       if (!tableUtil.tableExists(admin, hbaseTableId)) {
 
         HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(hbaseTableId);
@@ -63,7 +70,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
         htd.addFamily(hcd);
         hcd.setMaxVersions(1);
 
-        tableUtil.createTableIfNotExists(admin, hbaseTableId, htd.build(), null,
+        tableUtil.createTableIfNotExists(executor, hbaseTableId, htd.build(), null,
                                          QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
       }
     }
@@ -76,11 +83,11 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
 
   @Override
   public synchronized void dropAllInNamespace(NamespaceId namespace) throws IOException {
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    try (HBaseDDLExecutor executor = ddlExecutorFactory.get(); HBaseAdmin admin = new HBaseAdmin(hConf)) {
       TableId tableId = StreamUtils.getStateStoreTableId(namespace);
       TableId hbaseTableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
       if (tableUtil.tableExists(admin, hbaseTableId)) {
-        tableUtil.dropTable(admin, hbaseTableId);
+        tableUtil.dropTable(executor, hbaseTableId);
       }
     }
   }

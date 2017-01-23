@@ -38,12 +38,14 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -73,6 +75,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
 
   private static HBaseTableUtil tableUtil;
   private static DatasetFramework dsFramework;
+  private static HBaseDDLExecutor ddlExecutor;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -99,13 +102,14 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
 
     dsFramework = injector.getInstance(DatasetFramework.class);
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    ddlExecutor = new HBaseDDLExecutorFactory(conf, TEST_HBASE.getHBaseAdmin().getConfiguration()).get();
+    ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
-    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
-    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    ddlExecutor.deleteNamespaceIfExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
   }
 
   @Override

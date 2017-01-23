@@ -27,6 +27,7 @@ import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase98.MessageTable
 import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase98.PayloadTableRegionObserver;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.messaging.MessagingUtils;
@@ -39,6 +40,7 @@ import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
@@ -104,6 +106,7 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
   private static HBaseAdmin hBaseAdmin;
   private static HBaseTableUtil tableUtil;
   private static TableFactory tableFactory;
+  private static HBaseDDLExecutor ddlExecutor;
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
@@ -118,7 +121,8 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
     hBaseAdmin.getConfiguration().set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION,
                                       HBaseTableUtil.CompressionType.NONE.name());
     tableUtil = new HBaseTableUtilFactory(cConf).get();
-    tableUtil.createNamespaceIfNotExists(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    ddlExecutor = new HBaseDDLExecutorFactory(cConf, hBaseAdmin.getConfiguration()).get();
+    ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
 
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     tableFactory = new HBaseTableFactory(cConf, hBaseAdmin.getConfiguration(), tableUtil, locationFactory);
@@ -199,8 +203,9 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
 
   @AfterClass
   public static void teardownAfterClass() throws Exception {
-    tableUtil.deleteAllInNamespace(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
-    tableUtil.deleteNamespaceIfExists(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    ddlExecutor.deleteNamespaceIfExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    ddlExecutor.close();
     hBaseAdmin.close();
   }
 

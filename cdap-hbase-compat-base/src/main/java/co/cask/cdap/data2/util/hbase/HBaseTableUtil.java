@@ -24,7 +24,6 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
@@ -100,10 +99,12 @@ public abstract class HBaseTableUtil {
 
 
   protected String tablePrefix;
+  protected CConfiguration cConf;
   protected NamespaceQueryAdmin namespaceQueryAdmin;
 
   public void setCConf(CConfiguration cConf) {
     this.tablePrefix = getTablePrefix(cConf);
+    this.cConf = cConf;
   }
 
   public void setNamespaceQueryAdmin(NamespaceQueryAdmin namespaceQueryAdmin) {
@@ -190,44 +191,43 @@ public abstract class HBaseTableUtil {
   /**
    * Create a hbase table if it does not exist. Deals with race conditions when two clients concurrently attempt to
    * create the table.
-   * @param admin the hbase admin
+   * @param executor the {@link HBaseDDLExecutor} instance used to perform HBase DDL operations
    * @param tableId the {@link TableId} for the table to create
    * @param tableDescriptor hbase table descriptor for the new table
    */
-  public void createTableIfNotExists(HBaseAdmin admin, TableId tableId,
+  public void createTableIfNotExists(HBaseDDLExecutor executor, TableId tableId,
                                      HTableDescriptor tableDescriptor) throws IOException {
-    createTableIfNotExists(admin, tableId, tableDescriptor, null);
+    createTableIfNotExists(executor, tableId, tableDescriptor, null);
   }
 
   /**
    * Creates a hbase table if it does not exists. Same as calling
-   * {@link #createTableIfNotExists(HBaseAdmin, TableId, HTableDescriptor, byte[][], long, TimeUnit)}
+   * {@link #createTableIfNotExists(HBaseDDLExecutor, TableId, HTableDescriptor, byte[][], long, TimeUnit)}
    * with timeout = {@link #MAX_CREATE_TABLE_WAIT} milliseconds.
    */
-  public void createTableIfNotExists(HBaseAdmin admin, TableId tableId,
-                                     HTableDescriptor tableDescriptor,
+  public void createTableIfNotExists(HBaseDDLExecutor executor, TableId tableId, HTableDescriptor tableDescriptor,
                                      @Nullable byte[][] splitKeys) throws IOException {
-    createTableIfNotExists(admin, tableId, tableDescriptor, splitKeys,
-                           MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
+    createTableIfNotExists(executor, tableId, tableDescriptor, splitKeys, MAX_CREATE_TABLE_WAIT,
+                           TimeUnit.MILLISECONDS);
   }
 
   /**
    * Create a hbase table if it does not exist. Deals with race conditions when two clients concurrently attempt to
    * create the table.
-   * @param admin the hbase admin
+   * @param executor the {@link HBaseDDLExecutor} instance used to perform HBase DDL operations
    * @param tableId {@link TableId} representing the table
    * @param tableDescriptor hbase table descriptor for the new table
    * @param timeout Maximum time to wait for table creation.
    * @param timeoutUnit The TimeUnit for timeout.
    */
-  public void createTableIfNotExists(HBaseAdmin admin, TableId tableId, HTableDescriptor tableDescriptor,
+  public void createTableIfNotExists(HBaseDDLExecutor executor, TableId tableId, HTableDescriptor tableDescriptor,
                                      @Nullable byte[][] splitKeys,
                                      long timeout, TimeUnit timeoutUnit) throws IOException {
-    setDefaultConfiguration(tableDescriptor, admin.getConfiguration());
+    Configuration hConf = executor.getConf();
+    setDefaultConfiguration(tableDescriptor, hConf);
     tableDescriptor = setVersion(tableDescriptor);
     tableDescriptor = setTablePrefix(tableDescriptor);
-    DefaultHBaseDDLExecutor executor = (DefaultHBaseDDLExecutor) getHBaseDDLExecutor(admin.getConfiguration());
-    TableDescriptor descriptor = executor.getTableDescriptor(tableDescriptor);
+    TableDescriptor descriptor = ((DefaultHBaseDDLExecutor) executor).getTableDescriptor(tableDescriptor);
     executor.createTableIfNotExists(descriptor, splitKeys);
   }
 
@@ -369,13 +369,6 @@ public abstract class HBaseTableUtil {
   }
 
   /**
-   * Get the instance of the {@link HBaseDDLExecutor}.
-   * @param hConf the hadoop configurations
-   * @return the instance of DDL executor
-   */
-  public abstract HBaseDDLExecutor getHBaseDDLExecutor(Configuration hConf);
-
-  /**
    * Creates a new {@link HTable} which may contain an HBase namespace depending on the HBase version
    *
    * @param conf the hadoop configuration
@@ -419,44 +412,6 @@ public abstract class HBaseTableUtil {
   public abstract boolean hasNamespace(HBaseAdmin admin, String namespace) throws IOException;
 
   /**
-   * Creates an HBase namespace, if it does not already exist
-   * This method uses {@link Id.Namespace} here to cover for a future case when CDAP namespaces may push down namespace
-   * properties to HBase
-   *
-   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
-   * @param namespace the namespace to create
-   * @throws IOException if an I/O error occurs during the operation
-   */
-  public abstract void createNamespaceIfNotExists(HBaseAdmin admin, String namespace) throws IOException;
-
-  /**
-   * Creates an HBase namespace, if it exists
-   *
-   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
-   * @param namespace the namespace to delete
-   * @throws IOException if an I/O error occurs during the operation
-   */
-  public abstract void  deleteNamespaceIfExists(HBaseAdmin admin, String namespace) throws IOException;
-
-  /**
-   * Disable an HBase table
-   *
-   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
-   * @param tableId {@link TableId} for the specified table
-   * @throws IOException
-   */
-  public abstract void disableTable(HBaseAdmin admin, TableId tableId) throws IOException;
-
-  /**
-   * Enable an HBase table
-   *
-   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
-   * @param tableId {@link TableId} for the specified table
-   * @throws IOException
-   */
-  public abstract void enableTable(HBaseAdmin admin, TableId tableId) throws IOException;
-
-  /**
    * Check if an HBase table exists
    *
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
@@ -468,20 +423,20 @@ public abstract class HBaseTableUtil {
   /**
    * Delete an HBase table
    *
-   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
    * @param tableId {@link TableId} for the specified table
    * @throws IOException
    */
-  public abstract void deleteTable(HBaseAdmin admin, TableId tableId) throws IOException;
+  public abstract void deleteTable(HBaseDDLExecutor ddlExecutor, TableId tableId) throws IOException;
 
   /**
    * Modify an HBase table
    *
-   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
    * @param tableDescriptor the modified {@link HTableDescriptor}
    * @throws IOException
    */
-  public abstract void modifyTable(HBaseAdmin admin, HTableDescriptor tableDescriptor) throws IOException;
+  public abstract void modifyTable(HBaseDDLExecutor ddlExecutor, HTableDescriptor tableDescriptor) throws IOException;
 
   /**
    * Returns a list of {@link HRegionInfo} for the specified {@link TableId}
@@ -496,16 +451,17 @@ public abstract class HBaseTableUtil {
   /**
    * Deletes all tables in the specified namespace that satisfy the given {@link Predicate}.
    *
-   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param ddlExecutor the {@link HBaseAdmin} to use to communicate with HBase
    * @param namespaceId namespace for which the tables are being deleted
    * @param predicate The {@link Predicate} to decide whether to drop a table or not
    * @throws IOException
    */
-  public void deleteAllInNamespace(HBaseAdmin admin, String namespaceId,
+  public void deleteAllInNamespace(HBaseDDLExecutor ddlExecutor, String namespaceId,
                                    Predicate<TableId> predicate) throws IOException {
+    HBaseAdmin admin = new HBaseAdmin((Configuration) ddlExecutor.getConf());
     for (TableId tableId : listTablesInNamespace(admin, namespaceId)) {
       if (predicate.apply(tableId)) {
-        dropTable(admin, tableId);
+        dropTable(ddlExecutor, tableId);
       }
     }
   }
@@ -513,12 +469,12 @@ public abstract class HBaseTableUtil {
   /**
    * Deletes all tables in the specified namespace
    *
-   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
    * @param namespaceId namespace for which the tables are being deleted
    * @throws IOException
    */
-  public void deleteAllInNamespace(HBaseAdmin admin, String namespaceId) throws IOException {
-    deleteAllInNamespace(admin, namespaceId, Predicates.<TableId>alwaysTrue());
+  public void deleteAllInNamespace(HBaseDDLExecutor ddlExecutor, String namespaceId) throws IOException {
+    deleteAllInNamespace(ddlExecutor, namespaceId, Predicates.<TableId>alwaysTrue());
   }
 
   /**
@@ -537,13 +493,14 @@ public abstract class HBaseTableUtil {
 
   /**
    * Disables and deletes a table.
-   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
    * @param tableId  {@link TableId} for the specified table
    * @throws IOException
    */
-  public void dropTable(HBaseAdmin admin, TableId tableId) throws IOException {
-    disableTable(admin, tableId);
-    deleteTable(admin, tableId);
+  public void dropTable(HBaseDDLExecutor ddlExecutor, TableId tableId) throws IOException {
+    TableName tableName = HTableNameConverter.toTableName(getTablePrefix(cConf), tableId);
+    ddlExecutor.disableTableIfEnabled(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
+    deleteTable(ddlExecutor, tableId);
   }
 
   /**
@@ -554,8 +511,10 @@ public abstract class HBaseTableUtil {
    */
   public void truncateTable(HBaseAdmin admin, TableId tableId) throws IOException {
     HTableDescriptor tableDescriptor = getHTableDescriptor(admin, tableId);
-    dropTable(admin, tableId);
-    createTableIfNotExists(admin, tableId, tableDescriptor);
+    // TODO truncateTable should also accept HBaseDDLExecutor
+    HBaseDDLExecutor executor = new HBaseDDLExecutorFactory(cConf, admin.getConfiguration()).get();
+    dropTable(executor, tableId);
+    createTableIfNotExists(executor, tableId, tableDescriptor);
   }
 
   /**
@@ -636,8 +595,6 @@ public abstract class HBaseTableUtil {
   public abstract Class<? extends Coprocessor> getMessageTableRegionObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getPayloadTableRegionObserverClassForVersion();
 
-  protected abstract HTableNameConverter getHTableNameConverter();
-
   /**
    * Collects HBase table stats
    * //TODO: Explore the possiblitity of returning a {@code Map<TableId, TableStats>}
@@ -651,7 +608,6 @@ public abstract class HBaseTableUtil {
     Map<TableId, TableStats> datasetStat = Maps.newHashMap();
     ClusterStatus clusterStatus = admin.getClusterStatus();
 
-    HTableNameConverter hTableNameConverter = getHTableNameConverter();
     for (ServerName serverName : clusterStatus.getServers()) {
       Map<byte[], RegionLoad> regionsLoad = clusterStatus.getLoad(serverName).getRegionsLoad();
 
@@ -661,7 +617,7 @@ public abstract class HBaseTableUtil {
         if (!isCDAPTable(tableDescriptor)) {
           continue;
         }
-        TableId tableId = hTableNameConverter.from(tableDescriptor);
+        TableId tableId = HTableNameConverter.from(tableDescriptor);
         TableStats stat = datasetStat.get(tableId);
         if (stat == null) {
           stat = new TableStats(regionLoad.getStorefileSizeMB(), regionLoad.getMemStoreSizeMB());

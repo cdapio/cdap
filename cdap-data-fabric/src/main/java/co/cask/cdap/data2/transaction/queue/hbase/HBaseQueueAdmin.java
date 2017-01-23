@@ -39,6 +39,7 @@ import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
@@ -49,6 +50,7 @@ import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -101,6 +103,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final Impersonator impersonator;
   private final CoprocessorManager coprocessorManager;
+  private final HBaseDDLExecutorFactory ddlExecutorFactory;
 
   @Inject
   HBaseQueueAdmin(Configuration hConf,
@@ -135,6 +138,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.impersonator = impersonator;
     this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
+    this.ddlExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
   }
 
   @Override
@@ -321,9 +325,10 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   }
 
   private void drop(TableId tableId) throws IOException {
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get();
+         HBaseAdmin admin = new HBaseAdmin(hConf)) {
       if (tableUtil.tableExists(admin, tableId)) {
-        tableUtil.dropTable(admin, tableId);
+        tableUtil.dropTable(ddlExecutor, tableId);
       }
     }
   }
@@ -395,14 +400,14 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     Set<QueueConstants.QueueType> queueTypes = EnumSet.of(QueueConstants.QueueType.QUEUE,
                                                           QueueConstants.QueueType.SHARDED_QUEUE);
 
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
       for (QueueConstants.QueueType queueType : queueTypes) {
         // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
         // It's important to keep config table enabled while disabling and dropping  queue tables.
         final String queueTableNamePrefix = String.format("%s.%s.", NamespaceId.SYSTEM.getNamespace(), queueType);
         final String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceId);
         final TableId configTableId = TableId.from(hbaseNamespace, getConfigTableName());
-        tableUtil.deleteAllInNamespace(admin, hbaseNamespace, new Predicate<TableId>() {
+        tableUtil.deleteAllInNamespace(ddlExecutor, hbaseNamespace, new Predicate<TableId>() {
           @Override
           public boolean apply(TableId tableId) {
             // It's a bit hacky here since we know how the Dataset System names tables
@@ -551,8 +556,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
       htd.setValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES, Integer.toString(prefixBytes));
       LOG.info("Create queue table with prefix bytes {}", htd.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES));
 
-      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-        tableUtil.createTableIfNotExists(admin, tableId, htd.build(), splitKeys);
+      try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
+        tableUtil.createTableIfNotExists(ddlExecutor, tableId, htd.build(), splitKeys);
       }
     }
   }

@@ -30,8 +30,6 @@ import org.junit.experimental.categories.Category;
 @Category(XSlowTests.class)
 public class HBase96TableUtilTest extends AbstractHBaseTableUtilTest {
 
-  private final HTableNameConverter nameConverter = new HTableNameConverter();
-
   @Override
   protected HBaseTableUtil getTableUtil() {
     HBase96TableUtil hBaseTableUtil = new HBase96TableUtil();
@@ -41,18 +39,13 @@ public class HBase96TableUtilTest extends AbstractHBaseTableUtilTest {
   }
 
   @Override
-  protected HTableNameConverter getNameConverter() {
-    return nameConverter;
-  }
-
-  @Override
   protected String getTableNameAsString(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "TableId should not be null.");
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     if (NamespaceId.DEFAULT.getNamespace().equals(tableId.getNamespace())) {
-      return nameConverter.toHBaseTableName(tablePrefix, tableId);
+      return HTableNameConverter.toHBaseTableName(tablePrefix, tableId);
     }
-    return Joiner.on(':').join(tableId.getNamespace(), nameConverter.toHBaseTableName(tablePrefix, tableId));
+    return Joiner.on(':').join(tableId.getNamespace(), HTableNameConverter.toHBaseTableName(tablePrefix, tableId));
   }
 
   @Override

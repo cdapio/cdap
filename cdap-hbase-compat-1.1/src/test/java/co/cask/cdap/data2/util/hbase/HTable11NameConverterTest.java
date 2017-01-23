@@ -26,7 +26,6 @@ public class HTable11NameConverterTest {
   public void testGetSysConfigTablePrefix() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
-    HTableNameConverter hBaseNameConversionUtil = new HTableNameConverter();
-    Assert.assertEquals(tablePrefix + "_system:", hBaseNameConversionUtil.getSysConfigTablePrefix(tablePrefix));
+    Assert.assertEquals(tablePrefix + "_system:", HTableNameConverter.getSysConfigTablePrefix(tablePrefix));
   }
 }

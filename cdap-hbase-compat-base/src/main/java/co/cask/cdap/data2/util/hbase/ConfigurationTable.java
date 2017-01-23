@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -27,7 +28,6 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -70,14 +70,13 @@ public class ConfigurationTable {
    */
   public void write(Type type, CConfiguration cConf) throws IOException {
     // must create the table if it doesn't exist
-    HBaseAdmin admin = new HBaseAdmin(hbaseConf);
     HTable table = null;
-    try {
+    try (HBaseDDLExecutor executor = new HBaseDDLExecutorFactory(cConf, hbaseConf).get()) {
       HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
       TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, TABLE_NAME);
       HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
       htd.addFamily(new HColumnDescriptor(FAMILY));
-      tableUtil.createTableIfNotExists(admin, tableId, htd.build());
+      tableUtil.createTableIfNotExists(executor, tableId, htd.build());
 
       long now = System.currentTimeMillis();
       long previous = now - 1;
@@ -97,11 +96,6 @@ public class ConfigurationTable {
       d.deleteFamily(FAMILY, previous);
       table.delete(d);
     } finally {
-      try {
-        admin.close();
-      } catch (IOException ioe) {
-        LOG.error("Error closing HBaseAdmin: ", ioe);
-      }
       if (table != null) {
         try {
           table.close();

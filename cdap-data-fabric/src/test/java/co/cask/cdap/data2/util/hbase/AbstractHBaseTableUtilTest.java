@@ -28,6 +28,7 @@ import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -36,6 +37,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -67,6 +69,7 @@ public abstract class AbstractHBaseTableUtilTest {
 
   protected static CConfiguration cConf;
   private static HBaseAdmin hAdmin;
+  private static HBaseDDLExecutor ddlExecutor;
 
   private static final String CDAP_NS = "ns1";
   private static final String HBASE_NS = "custns1";
@@ -77,6 +80,7 @@ public abstract class AbstractHBaseTableUtilTest {
   public static void beforeClass() throws Exception {
     hAdmin = new HBaseAdmin(TEST_HBASE.getConfiguration());
     cConf = CConfiguration.create();
+    ddlExecutor = new HBaseDDLExecutorFactory(cConf, TEST_HBASE.getConfiguration()).get();
   }
 
   @AfterClass
@@ -89,8 +93,6 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   protected abstract HBaseTableUtil getTableUtil();
-
-  protected abstract HTableNameConverter getNameConverter();
 
   protected abstract String getTableNameAsString(TableId tableId);
 
@@ -191,7 +193,7 @@ public abstract class AbstractHBaseTableUtilTest {
     HTableDescriptorBuilder newDesc = getTableUtil().buildHTableDescriptor(desc);
     newDesc.setValue("mykey", "myvalue");
     disable("namespace2", "table1");
-    getTableUtil().modifyTable(hAdmin, newDesc.build());
+    getTableUtil().modifyTable(ddlExecutor, newDesc.build());
     desc = getTableDescriptor("namespace2", "table1");
     Assert.assertTrue(desc.getValue("mykey").equals("myvalue"));
     enable("namespace2", "table1");
@@ -229,8 +231,9 @@ public abstract class AbstractHBaseTableUtilTest {
     HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(hAdmin, tableId);
     Assert.assertEquals(ProjectInfo.getVersion().toString(), tableDescriptor.getValue(HBaseTableUtil.CDAP_VERSION));
     Assert.assertEquals(getPrefix(), tableDescriptor.getValue(Constants.Dataset.TABLE_PREFIX));
-    tableUtil.disableTable(hAdmin, tableId);
-    tableUtil.deleteTable(hAdmin, tableId);
+    TableName tableName = HTableNameConverter.toTableName(getPrefix(), tableId);
+    ddlExecutor.disableTableIfEnabled(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
+    tableUtil.deleteTable(ddlExecutor, tableId);
   }
 
   @Test
@@ -244,7 +247,7 @@ public abstract class AbstractHBaseTableUtilTest {
     TableId resultTableId = getTableId("default", "my.dataset");
     Assert.assertNotNull(resultTableId);
     Assert.assertEquals("default", resultTableId.getNamespace());
-    Assert.assertEquals("cdap.user.my.dataset", getNameConverter().toHBaseTableName(tablePrefix, resultTableId));
+    Assert.assertEquals("cdap.user.my.dataset", HTableNameConverter.toHBaseTableName(tablePrefix, resultTableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), hTableId).getTableName()));
     drop(tableId);
@@ -254,7 +257,7 @@ public abstract class AbstractHBaseTableUtilTest {
 
     resultTableId = getTableId("default", "system.queue.config");
     Assert.assertEquals("default", resultTableId.getNamespace());
-    Assert.assertEquals("cdap.system.queue.config", getNameConverter().toHBaseTableName(tablePrefix, resultTableId));
+    Assert.assertEquals("cdap.system.queue.config", HTableNameConverter.toHBaseTableName(tablePrefix, resultTableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), hTableId).getTableName()));
     drop(tableId);
@@ -264,7 +267,7 @@ public abstract class AbstractHBaseTableUtilTest {
     create(tableId);
     resultTableId = getTableId("myspace", "could.be.any.table.name");
     Assert.assertEquals("cdap_myspace", resultTableId.getNamespace());
-    Assert.assertEquals("could.be.any.table.name", getNameConverter().toHBaseTableName(tablePrefix, resultTableId));
+    Assert.assertEquals("could.be.any.table.name", HTableNameConverter.toHBaseTableName(tablePrefix, resultTableId));
     Assert.assertEquals(getTableNameAsString(hTableId),
                         Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), hTableId).getTableName()));
     drop(tableId);
@@ -316,7 +319,7 @@ public abstract class AbstractHBaseTableUtilTest {
     Assert.assertEquals(allTableIds, ImmutableSet.copyOf(tableUtil.listTables(hAdmin)));
 
     Assert.assertEquals(4, hAdmin.listTables().length);
-    tableUtil.deleteAllInNamespace(hAdmin, tableUtil.getHBaseNamespace(new NamespaceId("foo")));
+    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(new NamespaceId("foo")));
     Assert.assertEquals(1, hAdmin.listTables().length);
 
     drop(tableIdInOtherNamespace);
@@ -339,7 +342,7 @@ public abstract class AbstractHBaseTableUtilTest {
     ).get(60, TimeUnit.SECONDS);
 
     Assert.assertEquals(4, hAdmin.listTables().length);
-    tableUtil.deleteAllInNamespace(hAdmin, NamespaceId.DEFAULT.getEntityName());
+    tableUtil.deleteAllInNamespace(ddlExecutor, NamespaceId.DEFAULT.getEntityName());
     Assert.assertEquals(1, hAdmin.listTables().length);
 
     drop(tableIdInOtherNamespace);
@@ -361,7 +364,7 @@ public abstract class AbstractHBaseTableUtilTest {
     List<TableId> actualTableIds = getTableUtil().listTablesInNamespace(hAdmin, HBASE_NS);
     Assert.assertEquals(1, actualTableIds.size());
 
-    getTableUtil().deleteAllInNamespace(hAdmin, HBASE_NS);
+    getTableUtil().deleteAllInNamespace(ddlExecutor, HBASE_NS);
     actualTableIds = getTableUtil().listTablesInNamespace(hAdmin, HBASE_NS);
     Assert.assertTrue(actualTableIds.isEmpty());
     deleteNamespace(CDAP_NS);
@@ -385,7 +388,7 @@ public abstract class AbstractHBaseTableUtilTest {
     ).get(60, TimeUnit.SECONDS);
 
     Assert.assertEquals(4, hAdmin.listTables().length);
-    tableUtil.deleteAllInNamespace(hAdmin, tableUtil.getHBaseNamespace(new NamespaceId("foonamespace")),
+    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(new NamespaceId("foonamespace")),
                                    new Predicate<TableId>() {
       @Override
       public boolean apply(TableId input) {
@@ -419,13 +422,13 @@ public abstract class AbstractHBaseTableUtilTest {
 
   private void createNamespace(String namespace) throws IOException {
     String hbaseNamespace = getTableUtil().getHBaseNamespace(new NamespaceId(namespace));
-    getTableUtil().createNamespaceIfNotExists(hAdmin, hbaseNamespace);
+    ddlExecutor.createNamespaceIfNotExists(hbaseNamespace);
   }
 
 
   private void deleteNamespace(String namespace) throws IOException {
     String hbaseNamespace = getTableUtil().getHBaseNamespace(new NamespaceId(namespace));
-    getTableUtil().deleteNamespaceIfExists(hAdmin, hbaseNamespace);
+    ddlExecutor.deleteNamespaceIfExists(hbaseNamespace);
   }
 
   private void create(TableId tableId) throws IOException {
@@ -433,7 +436,7 @@ public abstract class AbstractHBaseTableUtilTest {
     TableId htableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
     HTableDescriptorBuilder desc = tableUtil.buildHTableDescriptor(htableId);
     desc.addFamily(new HColumnDescriptor("d"));
-    tableUtil.createTableIfNotExists(hAdmin, htableId, desc.build());
+    tableUtil.createTableIfNotExists(ddlExecutor, htableId, desc.build());
   }
 
   private ListenableFuture<TableId> createAsync(final TableId tableId) {
@@ -478,13 +481,15 @@ public abstract class AbstractHBaseTableUtilTest {
   private void disable(String namespace, String tableName) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
     TableId hTableId = tableUtil.createHTableId(new NamespaceId(namespace), tableName);
-    tableUtil.disableTable(hAdmin, hTableId);
+    TableName name = HTableNameConverter.toTableName(getPrefix(), hTableId);
+    ddlExecutor.disableTableIfEnabled(name.getNamespaceAsString(), name.getQualifierAsString());
   }
 
   private void enable(String namespace, String tableName) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
     TableId hTableId = tableUtil.createHTableId(new NamespaceId(namespace), tableName);
-    tableUtil.enableTable(hAdmin, hTableId);
+    TableName name = HTableNameConverter.toTableName(getPrefix(), hTableId);
+    ddlExecutor.enableTableIfDisabled(name.getNamespaceAsString(), name.getQualifierAsString());
   }
 
   private void drop(String namespace, String tableName) throws IOException {
@@ -494,7 +499,7 @@ public abstract class AbstractHBaseTableUtilTest {
   private void drop(TableId tableId) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
     TableId hTableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
-    tableUtil.dropTable(hAdmin, hTableId);
+    tableUtil.dropTable(ddlExecutor, hTableId);
   }
 
   private ListenableFuture<TableId> dropAsync(final TableId tableId) {

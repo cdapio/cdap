@@ -17,13 +17,29 @@
 package co.cask.cdap.spi.hbase;
 
 
+import java.io.Closeable;
 import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
  * Interface providing the HBase DDL operations.
  */
-public interface HBaseDDLExecutor {
+public interface HBaseDDLExecutor extends Closeable {
+
+  /**
+   * Initialize the {@link HBaseDDLExecutor} with the configuration object provided
+   * @param conf the configurations with which to initialize
+   * @param <T>
+   */
+  <T> void initialize(T conf);
+
+  /**
+   * Returns the conf with which the {@link HBaseDDLExecutor} was initialized.
+   * @param <T>
+   * @return the conf
+   */
+  <T> T getConf();
+
   /**
    * Create the specified namespace if it does not exist.
    *

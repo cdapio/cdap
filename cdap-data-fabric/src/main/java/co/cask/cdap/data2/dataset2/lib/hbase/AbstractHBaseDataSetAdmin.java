@@ -20,9 +20,12 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -33,6 +36,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.Location;
@@ -68,6 +72,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   protected final Configuration hConf;
   protected final CConfiguration cConf;
   protected final HBaseTableUtil tableUtil;
+  protected final HBaseDDLExecutorFactory ddlExecutorFactory;
 
   protected AbstractHBaseDataSetAdmin(TableId tableId, Configuration hConf, CConfiguration cConf,
                                       HBaseTableUtil tableUtil) {
@@ -75,6 +80,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     this.hConf = hConf;
     this.cConf = cConf;
     this.tableUtil = tableUtil;
+    this.ddlExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
   }
 
   @Override
@@ -98,8 +104,8 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
   @Override
   public void drop() throws IOException {
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      tableUtil.dropTable(admin, tableId);
+    try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
+      tableUtil.dropTable(ddlExecutor, tableId);
     }
   }
 
@@ -118,8 +124,12 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
    */
   public void updateTable(boolean force) throws IOException {
 
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);
+    try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
+      HTableDescriptor tableDescriptor;
+
+      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+        tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);
+      }
 
       // update any table properties if necessary
       boolean needUpdate = needsUpdate(tableDescriptor) || force;
@@ -170,9 +180,10 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       HBaseTableUtil.setTablePrefix(newDescriptor, cConf);
 
       LOG.info("Updating table '{}'...", tableId);
+      TableName tableName = HTableNameConverter.toTableName(cConf.get(Constants.Dataset.TABLE_PREFIX), tableId);
       boolean enableTable = false;
       try {
-        tableUtil.disableTable(admin, tableId);
+        ddlExecutor.disableTableIfEnabled(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
         enableTable = true;
       } catch (TableNotEnabledException e) {
         // TODO (CDAP-7324) This is a workaround and should be removed once we have pure hbase coprocessor upgrade
@@ -185,10 +196,10 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
         }
       }
 
-      tableUtil.modifyTable(admin, newDescriptor.build());
+      tableUtil.modifyTable(ddlExecutor, newDescriptor.build());
       if (enableTable) {
         LOG.debug("Enabling table '{}'...", tableId);
-        tableUtil.enableTable(admin, tableId);
+        ddlExecutor.enableTableIfDisabled(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
       }
     }
 

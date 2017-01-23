@@ -38,10 +38,6 @@ import java.util.Set;
  */
 public class DefaultHBase98DDLExecutor extends DefaultHBaseDDLExecutor {
 
-  public DefaultHBase98DDLExecutor(Configuration hConf) {
-    super(hConf);
-  }
-
   private HColumnDescriptor getHColumnDesciptor(ColumnFamilyDescriptor descriptor) {
     HColumnDescriptor hFamily = new HColumnDescriptor(descriptor.getName());
     hFamily.setMaxVersions(descriptor.getMaxVersions());
