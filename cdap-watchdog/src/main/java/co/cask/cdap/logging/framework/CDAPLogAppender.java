@@ -21,6 +21,9 @@ import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.core.LogbackException;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.write.FileMetaDataManager;
+import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
@@ -29,12 +32,24 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Flushable;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Log Appender implementation for CDAP Log framework
  */
 public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flushable {
   private static final Logger LOG = LoggerFactory.getLogger(CDAPLogAppender.class);
+  public static final String TAG_NAMESPACE_ID = ".namespaceId";
+  public static final String TAG_APPLICATION_ID = ".applicationId";
+  public static final String TAG_FLOW_ID = ".flowId";
+  public static final String TAG_COMPONENT_ID = ".componentId";
+  public static final String TAG_MAP_REDUCE_JOB_ID = ".mapReduceId";
+  public static final String TAG_SPARK_JOB_ID = ".sparkId";
+  public static final String TAG_USER_SERVICE_ID = ".userserviceid";
+  public static final String TAG_WORKER_ID = ".workerid";
+  public static final String TAG_WORKFLOW_ID = ".workflowId";
 
   private LogFileManager logFileManager;
 
@@ -74,41 +89,25 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   }
 
   @Override
-  public synchronized void doAppend(ILoggingEvent eventObject) throws LogbackException {
+  public void doAppend(ILoggingEvent eventObject) throws LogbackException {
     long timestamp = eventObject.getTimeStamp();
-    LogPathIdentifier logPathIdentifier = LoggingUtil.getLoggingPath(eventObject.getMDCPropertyMap());
-    LogFileOutputStream outputStream;
-
     try {
-      outputStream = logFileManager.getLogFileOutputStream(logPathIdentifier, timestamp);
-    } catch (IOException ioe) {
-      throw Throwables.propagate(ioe);
-    }
-
-    try {
+      LogPathIdentifier logPathIdentifier = getLoggingPath(eventObject.getMDCPropertyMap());
+      LogFileOutputStream outputStream = logFileManager.getLogFileOutputStream(logPathIdentifier, timestamp);
       outputStream.append(eventObject);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
+    } catch (IllegalArgumentException iae) {
+      // this shouldn't happen
+      LOG.error("Unrecognized context ", iae);
+    } catch (IOException ioe) {
+      throw new LogbackException("Excepting during append", ioe);
     }
   }
 
-  public void append(ILoggingEvent eventObject) {
-    long timestamp = eventObject.getTimeStamp();
-    LogPathIdentifier logPathIdentifier = LoggingUtil.getLoggingPath(eventObject.getMDCPropertyMap());
-    LogFileOutputStream outputStream;
-
-    try {
-      outputStream = logFileManager.getLogFileOutputStream(logPathIdentifier, timestamp);
-    } catch (IOException ioe) {
-      throw Throwables.propagate(ioe);
-    }
-
-    try {
-      outputStream.append(eventObject);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
+  @Override
+  protected void append(ILoggingEvent eventObject) {
+    // no-op - this wont be called as we are overriding doAppend
   }
+
 
   @Override
   public void flush() throws IOException {
@@ -123,4 +122,44 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
       super.stop();
     }
   }
+
+  @VisibleForTesting
+  LogPathIdentifier getLoggingPath(Map<String, String> propertyMap) throws IllegalArgumentException {
+    // from the property map, get namespace values
+    // if the namespace is system : get component-id and return that as path
+    // if the namespace is non-system : get "app" and "program-name" and return that as path
+
+    String namespaceId = propertyMap.get(TAG_NAMESPACE_ID);
+
+    if (namespaceId.equals(NamespaceId.SYSTEM)) {
+      // adding services to be consistent with the old format
+      Preconditions.checkArgument(propertyMap.containsKey(TAG_COMPONENT_ID),
+                                  String.format("%s is expected but not found in the context %s",
+                                                TAG_COMPONENT_ID, propertyMap));
+
+
+      return new LogPathIdentifier(namespaceId, "services", propertyMap.get(TAG_COMPONENT_ID));
+    } else {
+      Preconditions.checkArgument(propertyMap.containsKey(TAG_APPLICATION_ID),
+                                  String.format("%s is expected but not found in the context %s",
+                                                TAG_APPLICATION_ID, propertyMap));
+      String application = propertyMap.get(TAG_APPLICATION_ID);
+
+      List<String> programIdKeys = Arrays.asList(TAG_FLOW_ID, TAG_MAP_REDUCE_JOB_ID, TAG_SPARK_JOB_ID,
+                                                 TAG_USER_SERVICE_ID, TAG_WORKER_ID, TAG_WORKFLOW_ID);
+      String program = null;
+      for (String programId : programIdKeys) {
+        if (propertyMap.containsKey(programId)) {
+          program = propertyMap.get(programId);
+          break;
+        }
+      }
+
+      Preconditions.checkArgument(program != null, String.format("Unrecognized program in the context %s",
+                                                                 propertyMap));
+
+      return new LogPathIdentifier(namespaceId, application, program);
+    }
+  }
+
 }

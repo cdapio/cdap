@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,9 +81,10 @@ class LogFileManager implements Flushable {
 
   private LogFileOutputStream createOutputStream(final LogPathIdentifier identifier,
                                                  long timestamp) throws IOException {
-    Location location = getLocation(identifier, timestamp);
+    Location location = getLocation(identifier);
     try {
-      fileMetaDataManager.writeMetaData(identifier, timestamp, location);
+      int seqId = getSequenceId(location);
+      fileMetaDataManager.writeMetaData(identifier, timestamp, seqId, location);
     } catch (Throwable e) {
       throw new IOException(e);
     }
@@ -92,7 +92,7 @@ class LogFileManager implements Flushable {
     // if the create output stream step fails, we will have metadata entry but not actual file,
     // this should be handled and cleaned by Logcleanup thread
     LogFileOutputStream logFileOutputStream = new LogFileOutputStream(location, schema, syncIntervalBytes,
-                                                                      new Closeable(){
+                                                                      new Closeable() {
                                                                         @Override
                                                                         public void close() throws IOException {
                                                                           outputStreamMap.remove(identifier);
@@ -151,18 +151,30 @@ class LogFileManager implements Flushable {
     }
   }
 
-  private Location getLocation(LogPathIdentifier logPathIdentifier, long timestamp) throws IOException {
+  private Location getLocation(LogPathIdentifier logPathIdentifier) throws IOException {
     ensureDirectoryCheck(logsDirectoryLocation);
 
     String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-    Location namespaceLocation = logsDirectoryLocation.append(logPathIdentifier.getNamespaceId()).append(date);
-    ensureDirectoryCheck(namespaceLocation);
+    Location contextLocation =
+      logsDirectoryLocation.append(logPathIdentifier.getNamespaceId())
+        .append(date)
+        .append(logPathIdentifier.getPathId1())
+        .append(logPathIdentifier.getPathId2());
+    ensureDirectoryCheck(contextLocation);
 
-    String fileName = String.format("%s:%s.avro", logPathIdentifier.getLogFilePrefix(), timestamp);
-    Location fileLocation = namespaceLocation.append(fileName);
-    if (fileLocation.exists()) {
-      throw new FileAlreadyExistsException("File already extists");
-    }
-    return fileLocation;
+    int sequenceId = contextLocation.list().size();
+    String fileName = String.format("%s.avro", sequenceId);
+    return contextLocation.append(fileName);
+  }
+
+
+  /**
+   * file name is of the format <seq-id-integer>.avro, we return the sequence id from the location name.
+   * @param location
+   * @return sequenceId
+   */
+  private int getSequenceId(Location location) {
+    String[] fileName = location.getName().split("\\.");
+    return Integer.valueOf(fileName[0]);
   }
 }

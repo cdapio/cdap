@@ -52,14 +52,16 @@ public class LogLocation {
   public static final String VERSION_1 = "V1";
   private final String frameworkVersion;
   private final long timestamp;
+  private final int sequenceId;
   private final Location location;
   private final NamespaceId namespaceId;
   private final Impersonator impersonator;
 
-  public LogLocation(String frameworkVersion, long timestamp, Location location,
+  public LogLocation(String frameworkVersion, long timestamp, int sequenceId, Location location,
                      String namespaceId, Impersonator impersonator) {
     this.frameworkVersion = frameworkVersion;
     this.timestamp = timestamp;
+    this.sequenceId = sequenceId;
     this.location = location;
     this.namespaceId = new NamespaceId(namespaceId);
     this.impersonator = impersonator;
@@ -87,6 +89,14 @@ public class LogLocation {
    */
   public Location getLocation() {
     return location;
+  }
+
+  /**
+   * get the sequence id associated with the file
+   * @return
+   */
+  public int getSequenceId() {
+    return sequenceId;
   }
 
   /**

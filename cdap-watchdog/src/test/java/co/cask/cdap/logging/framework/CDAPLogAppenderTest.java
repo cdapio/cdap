@@ -139,7 +139,7 @@ public class CDAPLogAppenderTest {
     cdapLogAppender.stop();
 
     try {
-      List<LogLocation> files = fileMetaDataManager.listFiles(LoggingUtil.getLoggingPath(properties));
+      List<LogLocation> files = fileMetaDataManager.listFiles(cdapLogAppender.getLoggingPath(properties));
       Assert.assertEquals(1, files.size());
       LogLocation logLocation = files.get(0);
       Assert.assertEquals(LogLocation.VERSION_1, logLocation.getFrameworkVersion());
@@ -179,31 +179,31 @@ public class CDAPLogAppenderTest {
     cdapLogAppender.start();
 
     Map<String, String> properties = new HashMap<>();
-    properties.put(NamespaceLoggingContext.TAG_NAMESPACE_ID, "default");
+    properties.put(NamespaceLoggingContext.TAG_NAMESPACE_ID, "testRotation");
     properties.put(ApplicationLoggingContext.TAG_APPLICATION_ID, "testApp");
     properties.put(FlowletLoggingContext.TAG_FLOW_ID, "testFlow");
     properties.put(FlowletLoggingContext.TAG_FLOWLET_ID, "testFlowet");
+
+    long timestamp = System.currentTimeMillis();
 
     LoggingEvent event1 =
       getLoggingEvent("co.cask.Test1",
                       (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME),
                       Level.ERROR , "test message 1", properties);
 
-
+    event1.setTimeStamp(timestamp);
     cdapLogAppender.doAppend(event1);
-
-    // sleep more than the delay unit, so next append gets written to new file
-    TimeUnit.MILLISECONDS.sleep(600);
 
 
     LoggingEvent event2 = getLoggingEvent("co.cask.Test2",
                                           (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(
                                             Logger.ROOT_LOGGER_NAME), Level.ERROR , "test message 2", properties);
+    event2.setTimeStamp(timestamp + 1000);
     cdapLogAppender.doAppend(event2);
     cdapLogAppender.stop();
 
     try {
-      List<LogLocation> files = fileMetaDataManager.listFiles(LoggingUtil.getLoggingPath(properties));
+      List<LogLocation> files = fileMetaDataManager.listFiles(cdapLogAppender.getLoggingPath(properties));
       Assert.assertEquals(2, files.size());
       assertLogEventDetails(event1, files.get(0));
       assertLogEventDetails(event2, files.get(1));
@@ -218,6 +218,67 @@ public class CDAPLogAppenderTest {
       });
     }
   }
+
+  @Test
+  public void testCDAPLogAppenderSequenceId() throws Exception {
+    int syncInterval =
+      injector.getInstance(CConfiguration.class).getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES,
+                                                        2 * 1024 * 1024);
+    FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
+    CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
+    injector.injectMembers(cdapLogAppender);
+    cdapLogAppender.setSyncIntervalBytes(syncInterval);
+    cdapLogAppender.setMaxFileLifetimeMs(500);
+    cdapLogAppender.start();
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put(NamespaceLoggingContext.TAG_NAMESPACE_ID, "testseq");
+    properties.put(ApplicationLoggingContext.TAG_APPLICATION_ID, "testApp");
+    properties.put(FlowletLoggingContext.TAG_FLOW_ID, "testFlow");
+    properties.put(FlowletLoggingContext.TAG_FLOWLET_ID, "testFlowet");
+
+    long timestamp = System.currentTimeMillis();
+
+    LoggingEvent event1 =
+      getLoggingEvent("co.cask.Test1",
+                      (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME),
+                      Level.ERROR , "test message 1", properties);
+
+    event1.setTimeStamp(timestamp);
+    cdapLogAppender.doAppend(event1);
+
+    // sleep longer than rotation time, then use the same timestamp as event1 to test new sequence id generation.
+    TimeUnit.MILLISECONDS.sleep(600);
+    LoggingEvent event2 = getLoggingEvent("co.cask.Test2",
+                                          (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(
+                                            Logger.ROOT_LOGGER_NAME), Level.ERROR , "test message 2", properties);
+    event2.setTimeStamp(timestamp);
+    cdapLogAppender.doAppend(event2);
+    cdapLogAppender.stop();
+
+    try {
+      List<LogLocation> files = fileMetaDataManager.listFiles(cdapLogAppender.getLoggingPath(properties));
+      Assert.assertEquals(2, files.size());
+      assertLogEventDetails(event1, files.get(0));
+      assertLogEventDetails(event2, files.get(1));
+      // test sequence id
+      Assert.assertEquals(0, files.get(0).getSequenceId());
+      Assert.assertEquals(1, files.get(1).getSequenceId());
+      // test timestamp
+      Assert.assertEquals(timestamp, files.get(0).getTimestamp());
+      Assert.assertEquals(timestamp, files.get(1).getTimestamp());
+    } catch (Exception e) {
+      Assert.fail();
+    } finally {
+      fileMetaDataManager.cleanMetaData(Long.MAX_VALUE, new FileMetaDataManager.DeleteCallback() {
+        @Override
+        public void handle(NamespaceId namespaceId, Location location, String namespacedLogBaseDir) {
+          // no-op
+        }
+      });
+    }
+  }
+
 
   private void assertLogEventDetails(LoggingEvent expectedLoggingEvent, LogLocation logLocation) throws IOException {
     Assert.assertEquals(LogLocation.VERSION_1, logLocation.getFrameworkVersion());

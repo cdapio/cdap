@@ -20,13 +20,15 @@ package co.cask.cdap.logging.framework;
  * Identifier for CDAP Logging Context
  */
 public class LogPathIdentifier {
-  private static final String SEPARATOR = ":";
+  private static final String META_SEPARATOR = ":";
   private final String namespaceId;
-  private final String logFilePrefix;
+  private final String pathId1;
+  private final String pathId2;
 
-  public LogPathIdentifier(String namespaceId, String logFilePrefix) {
+  public LogPathIdentifier(String namespaceId, String pathId1, String pathId2) {
     this.namespaceId = namespaceId;
-    this.logFilePrefix = logFilePrefix;
+    this.pathId1 = pathId1;
+    this.pathId2 = pathId2;
   }
 
   /**
@@ -38,11 +40,19 @@ public class LogPathIdentifier {
   }
 
   /**
-   * Identifier used for the log files. Uniquely identifies the context in the namespace
-   * @return log file identifier string
+   * first part of path id
+   * @return first path id of logging context in a namespace
    */
-  public String getLogFilePrefix() {
-    return logFilePrefix;
+  String getPathId1() {
+    return pathId1;
+  }
+
+  /**
+   * second part of path id - used by {@link LogFileManager} to create directory
+   * @return second path id of logging context in a namespace
+   */
+  String getPathId2() {
+    return pathId2;
   }
 
   /**
@@ -50,6 +60,6 @@ public class LogPathIdentifier {
    * @return rowkey string
    */
   public String getRowKey() {
-    return namespaceId + SEPARATOR + logFilePrefix;
+    return String.format("%s%s%s%s%s", namespaceId, META_SEPARATOR, pathId1, META_SEPARATOR, pathId2);
   }
 }

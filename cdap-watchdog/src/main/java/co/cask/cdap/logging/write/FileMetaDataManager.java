@@ -36,6 +36,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutorFactory;
@@ -97,7 +98,7 @@ public final class FileMetaDataManager {
   public void writeMetaData(final LoggingContext loggingContext,
                             final long startTimeMs,
                             final Location location) throws Exception {
-    writeMetaData(loggingContext.getLogPartition(), startTimeMs, location, false);
+    writeMetaData(loggingContext.getLogPartition(), startTimeMs, location);
   }
 
   /**
@@ -105,12 +106,25 @@ public final class FileMetaDataManager {
    *
    * @param identifier logging context identifier.
    * @param startTimeMs start log time associated with the file.
+   * @param sequenceId sequence Id associated with the file
    * @param location log file.
    */
   public void writeMetaData(final LogPathIdentifier identifier,
                             final long startTimeMs,
+                            final int sequenceId,
                             final Location location) throws Exception {
-    writeMetaData(identifier.getRowKey(), startTimeMs, location, true);
+    LOG.debug("Writing meta data for logging context {} with startTimeMs {} sequence Id {} and location {}",
+               identifier.getRowKey(), startTimeMs, sequenceId, location);
+
+    execute(new TransactionExecutor.Procedure<Table>() {
+      @Override
+      public void apply(Table table) throws Exception {
+        // add column version prefix for new format
+        byte[] columnKey = Bytes.add(COLUMN_PREFIX_VERSION, Bytes.toBytes(startTimeMs), Bytes.toBytes(sequenceId));
+        table.put(getRowKey(identifier),
+                  new byte[][] {columnKey}, new byte[][]{Bytes.toBytes(location.toURI().toString())});
+      }
+    });
   }
 
   /**
@@ -122,8 +136,7 @@ public final class FileMetaDataManager {
    */
   private void writeMetaData(final String logPartition,
                              final long startTimeMs,
-                             final Location location,
-                             final boolean newFormat) throws Exception {
+                             final Location location) throws Exception {
     LOG.debug("Writing meta data for logging context {} as startTimeMs {} and location {}",
               logPartition, startTimeMs, location);
 
@@ -131,11 +144,8 @@ public final class FileMetaDataManager {
       @Override
       public void apply(Table table) throws Exception {
         byte[] timestampBytes = Bytes.toBytes(startTimeMs);
-        // add column version prefix for new format
-        // todo : we will write with only the new format after having log framework in place
-        byte[] columnKey = newFormat ? Bytes.add(COLUMN_PREFIX_VERSION, timestampBytes) : timestampBytes;
         table.put(getRowKey(logPartition),
-                  new byte[][] {columnKey}, new byte[][]{Bytes.toBytes(location.toURI().toString())});
+                  new byte[][] {timestampBytes}, new byte[][]{Bytes.toBytes(location.toURI().toString())});
       }
     });
   }
@@ -201,13 +211,16 @@ public final class FileMetaDataManager {
             // old format
             files.add(new LogLocation(LogLocation.VERSION_0,
                                       Bytes.toLong(entry.getKey()),
+                                      // use 0 as sequence id for the old format
+                                      0,
                                       rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
                                       logPathIdentifier.getNamespaceId(), impersonator));
-          } else if  (entry.getKey().length == 9) {
+          } else if  (entry.getKey().length == 13) {
             // new format
             files.add(new LogLocation(LogLocation.VERSION_1,
                                       // skip the first (version) byte
                                       Bytes.toLong(entry.getKey(), 1, Bytes.SIZEOF_LONG),
+                                      Bytes.toInt(entry.getKey(), 9, Bytes.SIZEOF_INT),
                                       rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
                                       logPathIdentifier.getNamespaceId(), impersonator));
           }
