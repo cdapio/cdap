@@ -28,7 +28,7 @@
                     "label": "Training Data",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "1.5.0",
+                        "version": "1.5.1",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -51,7 +51,7 @@
                     "artifact": {
                         "scope": "SYSTEM",
                         "name": "core-plugins",
-                        "version": "1.5.0"
+                        "version": "1.5.1"
                     },
                     "properties": {
                         "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"label\",\"type\":\"double\"},{\"name\":\"text\",\"type\":\"string\"}]}",
@@ -95,7 +95,7 @@
                     "artifact": {
                         "scope": "SYSTEM",
                         "name": "spark-plugins",
-                        "version": "1.5.0"
+                        "version": "1.5.1"
                     },
                     "properties": {
                         "fieldToClassify": "text",
