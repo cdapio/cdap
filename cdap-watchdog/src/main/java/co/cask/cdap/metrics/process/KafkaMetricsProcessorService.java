@@ -16,8 +16,10 @@
 
 package co.cask.cdap.metrics.process;
 
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
@@ -30,11 +32,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Process metrics by consuming metrics being published to kafka.
  */
-public final class KafkaMetricsProcessorService extends AbstractMetricsProcessorService {
+public final class KafkaMetricsProcessorService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsProcessorService.class);
 
@@ -43,6 +46,14 @@ public final class KafkaMetricsProcessorService extends AbstractMetricsProcessor
   private final String topicPrefix;
   private final Set<Integer> partitions;
   private Cancellable unsubscribe;
+  private final MetricDatasetFactory metricDatasetFactory;
+
+  @Nullable
+  private MetricsContext metricsContext;
+
+  private volatile boolean stopping = false;
+
+  private MetricsConsumerMetaTable metaTable;
 
   @Inject
   public KafkaMetricsProcessorService(KafkaClientService kafkaClient,
@@ -50,11 +61,15 @@ public final class KafkaMetricsProcessorService extends AbstractMetricsProcessor
                                       MessageCallbackFactory callbackFactory,
                                       @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX) String topicPrefix,
                                       @Assisted Set<Integer> partitions) {
-    super(metricDatasetFactory);
     this.kafkaClient = kafkaClient;
     this.callbackFactory = callbackFactory;
     this.topicPrefix = topicPrefix;
     this.partitions = partitions;
+    this.metricDatasetFactory = metricDatasetFactory;
+  }
+
+  public void setMetricsContext(MetricsContext metricsContext) {
+    this.metricsContext = metricsContext;
   }
 
   @Override
@@ -77,6 +92,13 @@ public final class KafkaMetricsProcessorService extends AbstractMetricsProcessor
   }
 
   @Override
+  protected void triggerShutdown() {
+    LOG.info("Shutdown is triggered.");
+    stopping = true;
+    super.triggerShutdown();
+  }
+
+  @Override
   protected void shutDown() {
     LOG.info("Stopping Metrics Processing Service.");
 
@@ -85,6 +107,29 @@ public final class KafkaMetricsProcessorService extends AbstractMetricsProcessor
       unsubscribe.cancel();
     }
     LOG.info("Metrics Processing Service stopped.");
+  }
+
+  private MetricsConsumerMetaTable getMetaTable() {
+
+    while (metaTable == null) {
+      if (stopping) {
+        LOG.info("We are shutting down, giving up on acquiring consumer metaTable.");
+        break;
+      }
+      try {
+        metaTable = metricDatasetFactory.createConsumerMeta();
+      } catch (Exception e) {
+        LOG.warn("Cannot access consumer metaTable, will retry in 1 sec.");
+        try {
+          TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          break;
+        }
+      }
+    }
+
+    return metaTable;
   }
 
   private boolean subscribe() {

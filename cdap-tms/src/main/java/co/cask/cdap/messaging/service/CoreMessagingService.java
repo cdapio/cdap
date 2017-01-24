@@ -270,7 +270,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       topicId = NamespaceId.SYSTEM.topic(topicName);
     } catch (IllegalArgumentException e) {
       // Ignore invalid topic
-      LOG.error(String.format("Ignore creation of invalid topic '%s'", topicName), e);
+      LOG.warn(String.format("Ignore creation of invalid topic '%s'", topicName), e);
       return;
     }
 

@@ -245,6 +245,7 @@ public class DefaultMetricStore implements MetricStore {
         metrics.add(new Measurement(measureName, type, metric.getValue()));
       }
 
+      System.out.println(String.format("Persisting metricValue:%s", metricValue));
       CubeFact fact = new CubeFact(metricValue.getTimestamp())
         .addDimensionValues(metricValue.getTags())
         .addMeasurements(metrics);

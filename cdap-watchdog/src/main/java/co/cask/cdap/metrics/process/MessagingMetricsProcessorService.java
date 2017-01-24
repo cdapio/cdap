@@ -41,6 +41,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
@@ -56,15 +57,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Process metrics by consuming metrics being published to TMS.
  */
-public class MessagingMetricsProcessorService extends AbstractMetricsProcessorService {
+public class MessagingMetricsProcessorService extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsProcessorService.class);
 
   private static final byte[] INITIAL_LAST_MESSAGE_ID = Bytes.toBytes(-1L);
 
+  @Nullable
+  private MetricsContext metricsContext;
+
+  private final MetricDatasetFactory metricDatasetFactory;
   private final TopicId[] metricsTopics;
   private final TopicIdMetaKey[] metricsTopicMetaKeys;
   private final MessagingService messagingService;
@@ -78,6 +84,9 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
 
   private Map<String, String> metricsContextMap;
   private List<ProcessMetricsThread> processMetricsThreadList;
+  private MetricsConsumerMetaTable metaTable;
+
+  private volatile boolean stopping = false;
 
   @Inject
   public MessagingMetricsProcessorService(MetricDatasetFactory metricDatasetFactory,
@@ -89,7 +98,7 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
                                           MetricStore metricStore,
                                           @Named(Constants.Metrics.MESSAGING_FETCHER_LIMIT)
                                             int fetcherLimit) {
-    super(metricDatasetFactory);
+    this.metricDatasetFactory = metricDatasetFactory;
     this.metricsTopics = new TopicId[topicNumbers.size()];
     this.metricsTopicMetaKeys = new TopicIdMetaKey[topicNumbers.size()];
     int i = 0;
@@ -112,11 +121,32 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
     processMetricsThreadList = new ArrayList<>();
   }
 
-  @Override
   public void setMetricsContext(MetricsContext metricsContext) {
     this.metricsContext = metricsContext;
     this.metricsContextMap = metricsContext.getTags();
     metricStore.setMetricsContext(metricsContext);
+  }
+
+  final MetricsConsumerMetaTable getMetaTable() {
+
+    while (metaTable == null) {
+      if (stopping) {
+        LOG.info("We are shutting down, giving up on acquiring consumer metaTable.");
+        break;
+      }
+      try {
+        metaTable = metricDatasetFactory.createConsumerMeta();
+      } catch (Exception e) {
+        LOG.warn("Cannot access consumer metaTable, will retry in 1 sec.");
+        try {
+          TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          break;
+        }
+      }
+    }
+    return metaTable;
   }
 
   @Override
@@ -176,6 +206,13 @@ public class MessagingMetricsProcessorService extends AbstractMetricsProcessorSe
       thread.terminate();
     }
     LOG.info("Metrics Processing Service stopped.");
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    LOG.info("Shutdown is triggered.");
+    stopping = true;
+    super.triggerShutdown();
   }
 
   private class ProcessMetricsThread extends Thread {

@@ -45,6 +45,7 @@ import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.metrics.MessagingMetricsTestBase;
+import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
@@ -53,6 +54,7 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
@@ -103,7 +105,7 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
   private EmbeddedKafkaServer kafkaServer;
 
   private static final int PARTITION_SIZE = 2;
-  private static final long START_TIME = System.currentTimeMillis() / 1000;
+  private static final long START_TIME = 1;
   private static final String EXPECTED_METRIC_PREFIX = "system.";
   private static final String COUNTER_METRIC_NAME = "counter_metric";
   private static final String EXPECTED_COUNTER_METRIC_NAME = EXPECTED_METRIC_PREFIX + COUNTER_METRIC_NAME;
@@ -134,11 +136,12 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
       partitions.add(i);
     }
 
-    final Map<String, String> metricsContext = new HashMap<>();
-    metricsContext.put(Constants.Metrics.Tag.NAMESPACE, "NS_1");
-    metricsContext.put(Constants.Metrics.Tag.APP, "APP_1");
-    metricsContext.put(Constants.Metrics.Tag.FLOW, "FLOW_1");
-    MetricsContext context = new NoopMetricsContext(metricsContext);
+    final Map<String, String> metricsContext = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, "NS_1")
+      .put(Constants.Metrics.Tag.APP, "APP_1")
+      .put(Constants.Metrics.Tag.FLOW, "FLOW_1")
+      .put(Constants.Metrics.Tag.RUN_ID, "RUN_1")
+      .put(Constants.Metrics.Tag.FLOWLET, "FLOWLET_1").build();
 
     KafkaPublisher publisher = kafkaClient.getPublisher(KafkaPublisher.Ack.FIRE_AND_FORGET, Compression.SNAPPY);
     KafkaPublisher.Preparer preparer = publisher.prepare(topicPrefix);
@@ -146,10 +149,10 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
     final Map<String, Long> expected = new HashMap<>();
     // Publish metrics to Kafka and record expected metrics before kafkaMetricsProcessorService starts
     for (int i = 1; i < 5; i++) {
-      addKafkaMetrics(i, metricsContext, expected, preparer, MetricType.GAUGE);
+      addKafkaMetrics(i, metricsContext, expected, preparer, MetricType.COUNTER);
     }
     for (int i = 5; i < 10; i++) {
-      addKafkaMetrics(i, metricsContext, expected, preparer, MetricType.COUNTER);
+      addKafkaMetrics(i, metricsContext, expected, preparer, MetricType.GAUGE);
     }
     preparer.send();
 
@@ -164,8 +167,20 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
                                                                          injector.getInstance(DatumReaderFactory.class),
                                                                          metricStore, 4), topicPrefix, partitions);
 
-    kafkaMetricsProcessorService.setMetricsContext(context);
     kafkaMetricsProcessorService.startAndWait();
+
+    // Sleep to make sure metrics get published
+    Thread.sleep(5000);
+    Collection<MetricTimeSeries> queryResult = metricStore.query(new MetricDataQuery(0, Integer.MAX_VALUE, 1,
+                                                                                     EXPECTED_COUNTER_METRIC_NAME,
+                                                                                     AggregationFunction.SUM,
+                                                                                     metricsContext,
+                                                                                     ImmutableList.<String>of()));
+    for (MetricTimeSeries timeSeries : queryResult) {
+      for (TimeValue timeValue : timeSeries.getTimeValues()) {
+        LOG.info("timeValue = {}", timeValue);
+      }
+    }
 
     // Intentionally set fetcher persist threshold to a small value, so that MessagingMetricsProcessorService
     // internally can persist metrics when more messages are to be fetched
@@ -178,7 +193,6 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
 
 
 
-    messagingMetricsProcessorService.setMetricsContext(context);
     messagingMetricsProcessorService.startAndWait();
 
     // Publish metrics and record expected metrics
@@ -213,6 +227,60 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
     // Query metrics from the metricStore and compare them with the expected ones
     assertMetricsResult(metricStore, metricsContext, expected);
 
+    // Query for the last 5 aggregated counter values and their sum should be 5
+//    Collection<MetricTimeSeries> queryResult =
+//      metricStore.query(new MetricDataQuery(0, Integer.MAX_VALUE, 1,
+//                                            EXPECTED_COUNTER_METRIC_NAME, AggregationFunction.SUM,
+//                                            metricsContext, ImmutableList.<String>of()));
+//    long sum = 0;
+//    for (MetricTimeSeries timeSeries : queryResult) {
+//      List<TimeValue> timeValues = timeSeries.getTimeValues();
+//      sum += Iterables.getOnlyElement(timeValues).getValue();
+//    }
+//    Assert.assertEquals(5L, sum);
+//    MetricTimeSeries timeSeries = Iterables.getOnlyElement(queryResult);
+//    List<TimeValue> timeValues = timeSeries.getTimeValues();
+//    TimeValue timeValue = Iterables.getOnlyElement(timeValues);
+//    Assert.assertEquals(5L, timeValue.getValue());
+
+//    Thread.sleep(2000);
+//    assertMetricsResult(metricStore, metricsContext, expected);
+    queryResult = metricStore.query(new MetricDataQuery(0, Integer.MAX_VALUE, 1,
+                                                        EXPECTED_COUNTER_METRIC_NAME, AggregationFunction.SUM,
+                                                        metricsContext, ImmutableList.<String>of()));
+    for (MetricTimeSeries timeSeries : queryResult) {
+      for (TimeValue timeValue : timeSeries.getTimeValues()) {
+        LOG.info("timeValue = {}", timeValue);
+      }
+    }
+
+    queryResult =
+      metricStore.query(new MetricDataQuery(0, Integer.MAX_VALUE, 60,
+                                            EXPECTED_COUNTER_METRIC_NAME, AggregationFunction.SUM,
+                                            metricsContext, ImmutableList.<String>of()));
+    MetricTimeSeries timeSeries = Iterables.getOnlyElement(queryResult);
+    TimeValue timeValue = Iterables.getOnlyElement(timeSeries.getTimeValues());
+    LOG.info("startTime = {}, timeValue = {}", START_TIME, timeValue);
+
+
+
+//    Tasks.waitFor(true, new Callable<Boolean>() {
+//      @Override
+//      public Boolean call() {
+//        Collection<MetricTimeSeries> queryResult =
+//          metricStore.query(new MetricDataQuery(START_TIME + 10, START_TIME + 20, 60,
+//                                                EXPECTED_COUNTER_METRIC_NAME, AggregationFunction.SUM,
+//                                                metricsContext, ImmutableList.<String>of()));
+//        try {
+//          MetricTimeSeries timeSeries = Iterables.getOnlyElement(queryResult);
+//          TimeValue timeValue = Iterables.getOnlyElement(timeSeries.getTimeValues());
+//          LOG.info("timeValue = {}", timeValue);
+//          return timeValue.getValue() == 10;
+//        } catch (Exception e) {
+//          return false;
+//        }
+//      }
+//    }, 10, TimeUnit.SECONDS);
     messagingMetricsProcessorService.stopAndWait();
     kafkaServer.stopAndWait();
     zkServer.stopAndWait();
@@ -344,7 +412,7 @@ public class MetricsProcessorServiceTest extends MessagingMetricsTestBase {
     prop.setProperty("socket.receive.buffer.bytes", "1048576");
     prop.setProperty("socket.request.max.bytes", "104857600");
     prop.setProperty("log.dir", tmpFolder.newFolder().getAbsolutePath());
-    prop.setProperty("num.partitions", "1");
+    prop.setProperty("num.partitions", String.valueOf(PARTITION_SIZE));
     prop.setProperty("log.flush.interval.messages", "10000");
     prop.setProperty("log.flush.interval.ms", "1000");
     prop.setProperty("log.retention.hours", "1");

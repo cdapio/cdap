@@ -516,8 +516,12 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     // 1 second
     metricStore.add(new MetricValues(sliceBy, "reads", start, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 1, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 2, 1, MetricType.COUNTER));
     // 30 second
     metricStore.add(new MetricValues(sliceBy, "reads", start + 30, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 31, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 32, 1, MetricType.COUNTER));
     // 1 minute
     metricStore.add(new MetricValues(sliceBy, "reads", start + 60, 1, MetricType.COUNTER));
     // 10 minutes
