@@ -18,9 +18,9 @@ package co.cask.cdap.logging.framework;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+import ch.qos.logback.core.LogbackException;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import org.apache.avro.Schema;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -57,25 +57,39 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     this.isStarted = false;
   }
 
-  public void append(ILoggingEvent eventObject) {
+  @Override
+  public synchronized void doAppend(ILoggingEvent eventObject) throws LogbackException {
     long timestamp = eventObject.getTimeStamp();
-
     LogPathIdentifier logPathIdentifier = LoggingUtil.getLoggingPath(eventObject.getMDCPropertyMap());
     LogFileOutputStream outputStream;
+
     try {
       outputStream = logFileManager.getLogFileOutputStream(logPathIdentifier, timestamp);
     } catch (IOException ioe) {
-      // if there's exception while creating the file, we keep retrying
-      LOG.debug("Exception while creating avro file", ioe);
       throw Throwables.propagate(ioe);
     }
+
     try {
       outputStream.append(eventObject);
-    } catch (Exception e) {
-      LOG.trace("Exception while appending to file", e);
-      if (outputStream != null) {
-        Closeables.closeQuietly(outputStream);
-      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public void append(ILoggingEvent eventObject) {
+    long timestamp = eventObject.getTimeStamp();
+    LogPathIdentifier logPathIdentifier = LoggingUtil.getLoggingPath(eventObject.getMDCPropertyMap());
+    LogFileOutputStream outputStream;
+
+    try {
+      outputStream = logFileManager.getLogFileOutputStream(logPathIdentifier, timestamp);
+    } catch (IOException ioe) {
+      throw Throwables.propagate(ioe);
+    }
+
+    try {
+      outputStream.append(eventObject);
+    } catch (IOException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -83,6 +97,11 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   @Override
   public void flush() throws IOException {
     logFileManager.flush();
+  }
+
+  @Override
+  public void start() {
+    this.isStarted = true;
   }
 
   @Override

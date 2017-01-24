@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -39,7 +40,7 @@ class LogFileManager implements Flushable {
   private static final Logger LOG = LoggerFactory.getLogger(LogFileManager.class);
 
   private final long maxLifetimeMillis;
-  private final Map<LogPathIdentifier, LogFileOutputStream> fileMap;
+  private final Map<LogPathIdentifier, LogFileOutputStream> outputStreamMap;
   private final Location logsDirectoryLocation;
   private final FileMetaDataManager fileMetaDataManager;
   private final int syncIntervalBytes;
@@ -53,7 +54,7 @@ class LogFileManager implements Flushable {
     this.schema = schema;
     this.fileMetaDataManager = fileMetaDataManager;
     this.logsDirectoryLocation = locationFactory.create("logs");
-    this.fileMap = new HashMap<>();
+    this.outputStreamMap = new HashMap<>();
   }
 
   /**
@@ -66,7 +67,7 @@ class LogFileManager implements Flushable {
    */
   public LogFileOutputStream getLogFileOutputStream(LogPathIdentifier logPathIdentifier,
                                                     long timestamp) throws IOException {
-    LogFileOutputStream logFileOutputStream = fileMap.get(logPathIdentifier);
+    LogFileOutputStream logFileOutputStream = outputStreamMap.get(logPathIdentifier);
     // If the file is not open then set reference to null so that a new one gets created
     if (logFileOutputStream == null) {
       logFileOutputStream = createOutputStream(logPathIdentifier, timestamp);
@@ -77,7 +78,8 @@ class LogFileManager implements Flushable {
     return logFileOutputStream;
   }
 
-  private LogFileOutputStream createOutputStream(final LogPathIdentifier identifier, long timestamp) throws IOException {
+  private LogFileOutputStream createOutputStream(final LogPathIdentifier identifier,
+                                                 long timestamp) throws IOException {
     Location location = getLocation(identifier, timestamp);
     try {
       fileMetaDataManager.writeMetaData(identifier, timestamp, location);
@@ -91,11 +93,11 @@ class LogFileManager implements Flushable {
                                                                       new Closeable(){
                                                                         @Override
                                                                         public void close() throws IOException {
-                                                                          fileMap.remove(identifier);
+                                                                          outputStreamMap.remove(identifier);
                                                                         }
                                                                       });
 
-    fileMap.put(identifier, logFileOutputStream);
+    outputStreamMap.put(identifier, logFileOutputStream);
     return logFileOutputStream;
   }
 
@@ -114,48 +116,48 @@ class LogFileManager implements Flushable {
    * closes all the open avro files in the map
    */
   public void close() {
-    // close all the files in fileMap
+    // close all the files in outputStreamMap
     // clear the map
-    for (LogFileOutputStream file : fileMap.values()) {
+    for (LogFileOutputStream file : outputStreamMap.values()) {
       Closeables.closeQuietly(file);
     }
-    fileMap.clear();
   }
 
   /**
-   * flushes the contents of all the open avro files
+   * flushes the contents of all the open log files
    * @throws IOException
    */
   @Override
   public void flush() throws IOException {
-    // perform flush on all the files in the fileMap
-    for (LogFileOutputStream file : fileMap.values()) {
-      try {
-        file.flush();
-      } catch (IOException e) {
-        Closeables.closeQuietly(file);
-        throw e;
+    // perform flush on all the files in the outputStreamMap
+    for (LogFileOutputStream file : outputStreamMap.values()) {
+      file.flush();
+    }
+  }
+
+  void ensureDirectoryCheck(Location location) throws IOException {
+    if (!location.exists()) {
+      location.mkdirs();
+    } else {
+      if (!location.isDirectory()) {
+        throw new IOException(
+          String.format("File Exists at the logging location %s, Expected to be a directory", location.getName()));
       }
     }
   }
 
   private Location getLocation(LogPathIdentifier logPathIdentifier, long timestamp) throws IOException {
-    if (!logsDirectoryLocation.exists()) {
-      try {
-        logsDirectoryLocation.mkdirs();
-      } catch (IOException e) {
-        LOG.error("Unable to create logging base directory at {} ", logsDirectoryLocation, e);
-        throw e;
-      }
-    }
+    ensureDirectoryCheck(logsDirectoryLocation);
 
     String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
     Location namespaceLocation = logsDirectoryLocation.append(logPathIdentifier.getNamespaceId()).append(date);
+    ensureDirectoryCheck(namespaceLocation);
 
-    if (!namespaceLocation.exists()) {
-      namespaceLocation.mkdirs();
-    }
     String fileName = String.format("%s:%s.avro", logPathIdentifier.getLogFilePrefix(), timestamp);
-    return namespaceLocation.append(fileName);
+    Location fileLocation = namespaceLocation.append(fileName);
+    if (fileLocation.exists()) {
+      throw new FileAlreadyExistsException("File already extists");
+    }
+    return fileLocation;
   }
 }
