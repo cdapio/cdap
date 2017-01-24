@@ -1,6 +1,6 @@
 :: ##############################################################################
 :: ##
-:: ## Copyright (c) 2014-2016 Cask Data, Inc.
+:: ## Copyright (c) 2014-2017 Cask Data, Inc.
 :: ##
 :: ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 :: ## use this file except in compliance with the License. You may obtain a copy
@@ -65,7 +65,7 @@ GOTO USAGE
 :SDK_DEPRECATED
 REM Process deprecated SDK arguments
 ECHO:
-ECHO [WARN] %0 is deprecated and will be removed in CDAP 5.0. Please use 'cdap sdk' for CDAP command line."
+ECHO [WARN] %0 is deprecated and will be removed in CDAP 5.0. Please use 'cdap cli' for the CDAP command line.
 ECHO:
 ECHO   cdap sdk %*
 ECHO:
