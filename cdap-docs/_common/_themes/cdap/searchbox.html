@@ -4,8 +4,8 @@
 
     Sphinx sidebar template: quick search box.
 
-    :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+    :copyright: Copyright 2017 Cask Data, Inc.
+    :license: Apache 2.0 License, see LICENSE for details.
 #}
 {%- if pagename != "search" and builder != "singlehtml" %}
   {# Force all pages to use top-level search index #}
@@ -13,15 +13,13 @@
     {%- set search_root = '../' %}
   {%- endif %}
 <div id="searchbox" style="display: none" role="search">
-  <h3>{{ _('Quick search') }}</h3>
+  <h3>Search</h3>
     <form class="search" action="{{ search_root }}{{ pathto('search') }}" method="get">
       <input type="text" name="q" />
       <input type="submit" value="{{ _('Go') }}" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     <p class="searchtip" style="font-size: 90%">
-    {{ _('Enter search terms or a module, class or function name.') }}
+    Enter search terms or phrase
     </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
