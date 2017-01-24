@@ -274,7 +274,7 @@ features:
       headers:
         apps: Apps
         blocks: Blocks
-        connections: Connections
+        lasthourload: Load (last hour)
         entities: Entities
         load: Load
         nodes: Nodes
