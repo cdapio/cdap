@@ -19,9 +19,10 @@ package co.cask.cdap.logging.framework;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.core.LogbackException;
+import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import com.google.common.base.Throwables;
-import org.apache.avro.Schema;
+import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,26 +36,41 @@ import java.io.IOException;
 public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flushable {
   private static final Logger LOG = LoggerFactory.getLogger(CDAPLogAppender.class);
 
-  private boolean isStarted;
-  private final LogFileManager logFileManager;
+  private LogFileManager logFileManager;
+
+  @Inject
+  private FileMetaDataManager fileMetaDataManager;
+  @Inject
+  private LocationFactory locationFactory;
+
+  private int syncIntervalBytes;
+  private long maxFileLifetimeMs;
+
 
   /**
    * TODO: start a separate cleanup thread to remove files that has passed the TTL
    */
+  public CDAPLogAppender() {
+    setName(getClass().getName());
+  }
 
-  /**
-   * Constructs an AvroFileWriter object.
-   * @param fileMetaDataManager used to store file meta data.
-   * @param locationFactory the location factory
-   * @param schema schema of the Avro data to be written.
-   * @param syncIntervalBytes the approximate number of uncompressed bytes to write in each block.
-   * @param maxFileLifetimeMs files that are older than maxFileLifetimeMs will be closed.
-   */
-  public CDAPLogAppender(FileMetaDataManager fileMetaDataManager, LocationFactory locationFactory,
-                         Schema schema, int syncIntervalBytes, long maxFileLifetimeMs) {
-    this.logFileManager = new LogFileManager(maxFileLifetimeMs, syncIntervalBytes,
-                                             schema, fileMetaDataManager, locationFactory);
-    this.isStarted = false;
+  public void setSyncIntervalBytes(int syncIntervalBytes) {
+    this.syncIntervalBytes = syncIntervalBytes;
+  }
+
+  public void setMaxFileLifetimeMs(long maxFileLifetimeMs) {
+    this.maxFileLifetimeMs = maxFileLifetimeMs;
+  }
+
+  @Override
+  public void start() {
+    super.start();
+    try {
+      this.logFileManager = new LogFileManager(maxFileLifetimeMs, syncIntervalBytes, new LogSchema().getAvroSchema(),
+                                               fileMetaDataManager, locationFactory);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -100,24 +116,11 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   }
 
   @Override
-  public void start() {
-    this.isStarted = true;
-  }
-
-  @Override
   public void stop() {
-    logFileManager.close();
-    this.isStarted = false;
+    try {
+      logFileManager.close();
+    } finally {
+      super.stop();
+    }
   }
-
-  @Override
-  public boolean isStarted() {
-    return isStarted;
-  }
-
-  @Override
-  public String getName() {
-    return this.getClass().getName();
-  }
-
 }

@@ -39,7 +39,6 @@ import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogLocation;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -54,7 +53,6 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -119,10 +117,10 @@ public class CDAPLogAppenderTest {
       injector.getInstance(CConfiguration.class).getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES,
                                                         2 * 1024 * 1024);
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
-    CDAPLogAppender cdapLogAppender = new CDAPLogAppender(fileMetaDataManager,
-                                                          injector.getInstance(LocationFactory.class),
-                                                          new LogSchema().getAvroSchema(),
-                                                          syncInterval, TimeUnit.DAYS.toMillis(1));
+    CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
+    injector.injectMembers(cdapLogAppender);
+    cdapLogAppender.setSyncIntervalBytes(syncInterval);
+    cdapLogAppender.setMaxFileLifetimeMs(TimeUnit.DAYS.toMillis(1));
     cdapLogAppender.start();
 
     LoggingEvent event =
@@ -174,10 +172,10 @@ public class CDAPLogAppenderTest {
       injector.getInstance(CConfiguration.class).getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES,
                                                         2 * 1024 * 1024);
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
-    CDAPLogAppender cdapLogAppender = new CDAPLogAppender(fileMetaDataManager,
-                                                          injector.getInstance(LocationFactory.class),
-                                                          new LogSchema().getAvroSchema(),
-                                                          syncInterval, TimeUnit.MILLISECONDS.toMillis(500));
+    CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
+    injector.injectMembers(cdapLogAppender);
+    cdapLogAppender.setSyncIntervalBytes(syncInterval);
+    cdapLogAppender.setMaxFileLifetimeMs(500);
     cdapLogAppender.start();
 
     Map<String, String> properties = new HashMap<>();

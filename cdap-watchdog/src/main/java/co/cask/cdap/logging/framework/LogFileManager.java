@@ -29,6 +29,8 @@ import java.io.Flushable;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -118,7 +120,10 @@ class LogFileManager implements Flushable {
   public void close() {
     // close all the files in outputStreamMap
     // clear the map
-    for (LogFileOutputStream file : outputStreamMap.values()) {
+    Collection<LogFileOutputStream> streams = new ArrayList<>(outputStreamMap.values());
+    outputStreamMap.clear();
+
+    for (LogFileOutputStream file : streams) {
       Closeables.closeQuietly(file);
     }
   }
