@@ -39,6 +39,7 @@ import java.util.Map;
 
 /**
  * Log Appender implementation for CDAP Log framework
+ * TODO : Refactor package CDAP-8196
  */
 public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flushable {
   private static final Logger LOG = LoggerFactory.getLogger(CDAPLogAppender.class);
@@ -146,12 +147,10 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     String namespaceId = propertyMap.get(TAG_NAMESPACE_ID);
 
     if (namespaceId.equals(NamespaceId.SYSTEM)) {
-      // adding services to be consistent with the old format
       Preconditions.checkArgument(propertyMap.containsKey(TAG_COMPONENT_ID),
                                   String.format("%s is expected but not found in the context %s",
                                                 TAG_COMPONENT_ID, propertyMap));
-
-
+      // adding services to be consistent with the old format
       return new LogPathIdentifier(namespaceId, "services", propertyMap.get(TAG_COMPONENT_ID));
     } else {
       Preconditions.checkArgument(propertyMap.containsKey(TAG_APPLICATION_ID),
@@ -168,12 +167,9 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
           break;
         }
       }
-
       Preconditions.checkArgument(program != null, String.format("Unrecognized program in the context %s",
                                                                  propertyMap));
-
       return new LogPathIdentifier(namespaceId, application, program);
     }
   }
-
 }

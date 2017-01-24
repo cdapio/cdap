@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -38,7 +39,7 @@ import java.io.OutputStream;
  * all methods of this class assume that the file state is bad on any exception and close the file.
  */
 
-class LogFileOutputStream implements Closeable {
+class LogFileOutputStream implements Closeable, Flushable {
   private static final Logger LOG = LoggerFactory.getLogger(LogFileOutputStream.class);
 
   private final Location location;
@@ -60,6 +61,7 @@ class LogFileOutputStream implements Closeable {
       this.dataFileWriter.setSyncInterval(syncIntervalBytes);
       this.createTime = System.currentTimeMillis();
     } catch (IOException e) {
+      Closeables.closeQuietly(outputStream);
       Closeables.closeQuietly(dataFileWriter);
       throw e;
     }
@@ -81,7 +83,8 @@ class LogFileOutputStream implements Closeable {
     return createTime;
   }
 
-  void flush() throws IOException {
+  @Override
+  public void flush() throws IOException {
     dataFileWriter.flush();
     if (outputStream instanceof Syncable) {
       ((Syncable) outputStream).hsync();

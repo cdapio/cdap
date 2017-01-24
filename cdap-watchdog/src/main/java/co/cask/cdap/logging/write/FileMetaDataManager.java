@@ -36,7 +36,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutorFactory;
@@ -121,8 +120,7 @@ public final class FileMetaDataManager {
       public void apply(Table table) throws Exception {
         // add column version prefix for new format
         byte[] columnKey = Bytes.add(COLUMN_PREFIX_VERSION, Bytes.toBytes(startTimeMs), Bytes.toBytes(sequenceId));
-        table.put(getRowKey(identifier),
-                  new byte[][] {columnKey}, new byte[][]{Bytes.toBytes(location.toURI().toString())});
+        table.put(getRowKey(identifier), columnKey, Bytes.toBytes(location.toURI().toString()));
       }
     });
   }
@@ -143,9 +141,9 @@ public final class FileMetaDataManager {
     execute(new TransactionExecutor.Procedure<Table>() {
       @Override
       public void apply(Table table) throws Exception {
-        byte[] timestampBytes = Bytes.toBytes(startTimeMs);
         table.put(getRowKey(logPartition),
-                  new byte[][] {timestampBytes}, new byte[][]{Bytes.toBytes(location.toURI().toString())});
+                  Bytes.toBytes(startTimeMs),
+                  Bytes.toBytes(location.toURI().toString()));
       }
     });
   }

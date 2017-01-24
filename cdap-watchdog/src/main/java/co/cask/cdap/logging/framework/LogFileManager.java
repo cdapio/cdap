@@ -69,7 +69,6 @@ class LogFileManager implements Flushable {
   public LogFileOutputStream getLogFileOutputStream(LogPathIdentifier logPathIdentifier,
                                                     long timestamp) throws IOException {
     LogFileOutputStream logFileOutputStream = outputStreamMap.get(logPathIdentifier);
-    // If the file is not open then set reference to null so that a new one gets created
     if (logFileOutputStream == null) {
       logFileOutputStream = createOutputStream(logPathIdentifier, timestamp);
     } else {
@@ -115,7 +114,7 @@ class LogFileManager implements Flushable {
   }
 
   /**
-   * closes all the open avro files in the map
+   * closes all the open output streams in the map
    */
   public void close() {
     // close all the files in outputStreamMap
@@ -123,8 +122,8 @@ class LogFileManager implements Flushable {
     Collection<LogFileOutputStream> streams = new ArrayList<>(outputStreamMap.values());
     outputStreamMap.clear();
 
-    for (LogFileOutputStream file : streams) {
-      Closeables.closeQuietly(file);
+    for (LogFileOutputStream stream : streams) {
+      Closeables.closeQuietly(stream);
     }
   }
 
@@ -146,7 +145,7 @@ class LogFileManager implements Flushable {
     } else {
       if (!location.isDirectory()) {
         throw new IOException(
-          String.format("File Exists at the logging location %s, Expected to be a directory", location.getName()));
+          String.format("File Exists at the logging location %s, Expected to be a directory", location));
       }
     }
   }
