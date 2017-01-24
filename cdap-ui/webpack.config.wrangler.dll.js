@@ -19,7 +19,19 @@ var path = require('path');
 
 module.exports = {
   entry: {
-    vendor: [path.join(__dirname, 'app', 'lib', 'wrangler-vendor.js')]
+    vendor: [
+      'react-addons-css-transition-group',
+      'react-dropzone',
+      'react-redux',
+      'react-file-download',
+      'papaparse',
+      'd3',
+      'chart.js',
+      'reactabular-table',
+      'reactabular-sticky',
+      'reactabular-virtualized',
+      'reactabular-resizable'
+    ]
   },
   output: {
     path: path.join(__dirname, 'dll'),

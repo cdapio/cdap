@@ -17,6 +17,7 @@ var webpack = require('webpack');
 
 var plugins = [
   new webpack.optimize.DedupePlugin(),
+  new webpack.optimize.CommonsChunkPlugin("common-lib", "common-lib.js", Infinity),
   // by default minify it.
   new webpack.DefinePlugin({
     'process.env':{
@@ -75,6 +76,7 @@ module.exports = {
       'i18n-react',
       'sockjs-client',
       'rx',
+      'rx-dom',
       'react-dropzone',
       'react-redux'
     ]
