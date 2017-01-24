@@ -402,10 +402,11 @@ export default class Wrangler extends Component {
                 </label>
               </div>
 
-              <div className="checkbox">
+              <div className="checkbox form-check">
                 {/* convertToSchema */}
-                <label>
+                <label className="form-check-label">
                   <input type="checkbox"
+                    className="form-check-input"
                     onChange={this.handleSetConvertToSchema}
                     checked={this.state.convertToSchema}
                   /> {T.translate('features.Wrangler.InputScreen.Options.convertToSchema')}
