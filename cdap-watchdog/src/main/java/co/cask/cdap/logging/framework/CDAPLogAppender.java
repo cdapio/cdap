@@ -19,12 +19,13 @@ package co.cask.cdap.logging.framework;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.core.LogbackException;
+import ch.qos.logback.core.spi.FilterReply;
+import ch.qos.logback.core.status.WarnStatus;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -92,6 +93,19 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   public void doAppend(ILoggingEvent eventObject) throws LogbackException {
     long timestamp = eventObject.getTimeStamp();
     try {
+      // logic from AppenderBase
+      if (!this.started) {
+        addStatus(new WarnStatus(
+          "Attempted to append to non started appender [" + name + "].",
+          this));
+        return;
+      }
+
+      // logic from AppenderBase
+      if (getFilterChainDecision(eventObject) == FilterReply.DENY) {
+        return;
+      }
+
       LogPathIdentifier logPathIdentifier = getLoggingPath(eventObject.getMDCPropertyMap());
       LogFileOutputStream outputStream = logFileManager.getLogFileOutputStream(logPathIdentifier, timestamp);
       outputStream.append(eventObject);
