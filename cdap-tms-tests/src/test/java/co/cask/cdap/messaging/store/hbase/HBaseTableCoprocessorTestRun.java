@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -138,18 +138,6 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
     tmpStorage.startAndWait();
     tmpStorage.writeSnapshot(txSnapshot);
     tmpStorage.stopAndWait();
-  }
-
-  private void checkTopicMetadata(TopicMetadataCache cache, String topicPrefix, int maxIds, int expectedGenId) {
-    for (int i = 1; i <= maxIds; i++) {
-      String id = Integer.toString(i);
-      Map<String, String> props = cache.getTopicMetadata(ByteBuffer.wrap(
-        MessagingUtils.toMetadataRowKey(new TopicId(NamespaceId.DEFAULT.getNamespace(), topicPrefix + id))));
-      Assert.assertNotNull(props);
-      Assert.assertEquals(2, props.size());
-      Assert.assertEquals(Integer.parseInt(id) * 1000, Integer.parseInt(props.get(TopicMetadata.TTL_KEY)));
-      Assert.assertEquals(Integer.toString(expectedGenId), props.get(TopicMetadata.GENERATION_KEY));
-    }
   }
 
   @Test
