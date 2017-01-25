@@ -95,8 +95,11 @@ $datapipeline-entity-header-bg: $hydrator-blue;
 $datasetinstance-entity-header-bg: #5DAFDB;
 $stream-entity-header-bg:  #336699;
 
-
 $streamview-entity-header-bg: #1abc9c;
-$program-entity-header-bg: #2c3e50;
+$program-entity-header-bg: rgba(41, 177, 159,1);
 $height-of-header: 50px;
 $height-of-footer: 53px;
+
+// EntityListView variables
+$overview-width: 626px;
+$card-border-width: 3px;

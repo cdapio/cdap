@@ -165,9 +165,112 @@
     padding: 10px 30px;
 
     > div {
-      display: flex;
-      flex-wrap: wrap;
-      width: 100%;
+      &:first-child {
+        display: inline-flex;
+        flex-wrap: wrap;
+        height: 100%;
+        flex: 1;
+        // FIXME: For later use.
+        // transition: 1s ease-in width, 1s ease-in flex;
+      }
+    }
+    .overview-container {
+      // transition: 1s ease-in width;
+      flex: 0;
+      position: relative;
+      right: 0;
+      // FIXME: For later use.
+      // transition: 1s ease-in flex, 1s ease-in opacity, 1s ease-in right;
+      width: 0;
+      opacity: 0;
+    }
+    &.show-overview {
+      > div {
+        &:first-child {
+          flex: 1 1;
+        }
+        .entity-cards {
+          min-width: 250px;
+          max-width: 350px;
+
+          /*
+            width of each card = 100% - (padding of parent) - (combined margin of all cards in the row)
+            margin for each card is 5px (as mentioned above).
+            So the combined margin for all cards in say ,
+              4 column layout : 5px + (5px + 5px) + (5px + 5px) + 5px = (3 * 10px)
+              5 column layout : 5px + (5px + 5px) + (5px + 5px) + (5px + 5px) + 5px = (4 * 10px)
+              6 column layout : 5px + (5px + 5px) + (5px + 5px) + (5px + 5px) + (5px + 5px) + 5px = (5 * 10px)
+              n column layout : (n-1 * 10px);
+          */
+          @media (min-width: 1601px) {
+            width: calc((100% - 20px - 10px - (2 * 10px)) / 3);
+          }
+
+          @media (min-width: 1201px) and (max-width: 1600px) {
+            width: calc((100% - 20px - 10px - (10px)) / 2);
+          }
+
+          @media (min-width: 768px) and (max-width: 1200px) {
+            width: calc(100% - 20px - 10px);
+          }
+
+        }
+      }
+      .overview-container {
+        flex: 0 0 $overview-width;
+        display: block;
+        right: 0;
+        opacity: 1;
+
+        .overview-wrapper {
+          position: fixed;
+          width: $overview-width;
+          height: calc(100vh - 154px);
+          border: 1px solid;
+        }
+      }
+    }
+    .entity-cards {
+
+      &.active {
+        .cask-card {
+          .card-header {
+            .entity-card-header {
+              border-right: 0;
+              border-left: 0;
+              border-top: 0;
+            }
+          }
+          .card-body {
+            border-bottom: 0;
+          }
+        }
+      }
+
+      /*
+        width of each card = 100% - (padding of parent) - (combined margin of all cards in the row)
+        margin for each card is 5px (as mentioned above).
+        So the combined margin for all cards in say ,
+          4 column layout : 5px + (5px + 5px) + (5px + 5px) + 5px = (3 * 10px)
+          5 column layout : 5px + (5px + 5px) + (5px + 5px) + (5px + 5px) + 5px = (4 * 10px)
+          6 column layout : 5px + (5px + 5px) + (5px + 5px) + (5px + 5px) + (5px + 5px) + 5px = (5 * 10px)
+          n column layout : (n-1 * 10px);
+      */
+      @media (min-width: 1601px) {
+        width: calc((100% - 20px - 10px - (5 * 10px)) / 6);
+      }
+
+      @media (min-width: 1201px) and (max-width: 1600px) {
+        width: calc((100% - 20px - 10px - (3 * 10px)) / 4);
+      }
+
+      @media (min-width: 993px) and (max-width: 1200px) {
+        width: calc((100% - 20px - 10px - (2 * 10px)) / 3);
+      }
+
+      @media(min-width: 768px) and (max-width: 992px) {
+        width: calc((100% - 20px - 10px - 10px) / 2);
+      }
     }
   }
   .loading-spinner {
@@ -191,5 +294,4 @@
       }
     }
   }
-
 }

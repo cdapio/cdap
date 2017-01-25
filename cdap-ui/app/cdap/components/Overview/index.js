@@ -15,24 +15,36 @@
  */
 
 import React, {PropTypes, Component} from 'react';
+import AppOverview from 'components/Overview/AppOverview';
+import {objectQuery} from 'services/helpers';
+import isNil from 'lodash/isNil';
+import classnames from 'classnames';
+require('./Overview.scss');
 
-export default class AppOverview extends Component {
+export default class Overview extends Component {
   constructor(props) {
     super(props);
     this.state = {
       toggleOverview: this.props.toggleOverview,
-      entity: this.props.entity
+      entity: this.props.entity,
+      tag: null
+    };
+    this.typeToComponentMap = {
+      'application': AppOverview
     };
   }
   componentWillReceiveProps(nextProps) {
     let {toggleOverview, entity } = nextProps;
+    let hasEntityChanged = !isNil(entity) && objectQuery(this.props.entity, 'id') !== objectQuery(entity, 'id');
     if (
       this.props.toggleOverview !== toggleOverview ||
-      this.props.entity !== entity
+      hasEntityChanged
     ) {
+      let tag = this.typeToComponentMap[objectQuery(entity, 'type')];
       this.setState({
         toggleOverview,
-        entity
+        entity,
+        tag
       });
     }
   }
@@ -46,19 +58,26 @@ export default class AppOverview extends Component {
     }
   }
   render() {
+    let Tag = this.state.tag || 'div';
     return (
-      <div className="overview-container">
-        <div className="overview-wrapper" onClick={this.hideOverview.bind(this, null)}>
-          <pre>
-            {JSON.stringify(this.state.entity, null, 2)}
-          </pre>
+      <div className={classnames("overview-container", {"show-overview": this.state.toggleOverview })}>
+        <div className="overview-wrapper" >
+          {
+            React.createElement(
+              Tag,
+              {
+                entity: this.state.entity,
+                onClose: this.hideOverview.bind(this)
+              }
+            )
+          }
         </div>
       </div>
     );
   }
 }
 
-AppOverview.propTypes = {
+Overview.propTypes = {
   toggleOverview: PropTypes.bool,
   entity: PropTypes.object,
   onClose: PropTypes.func

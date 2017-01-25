@@ -29,6 +29,9 @@ import {fetchTables} from 'services/ExploreTables/ActionCreator';
 import MyUserStoreApi from 'api/userstore';
 import PlusButtonStore from 'services/PlusButtonStore';
 import globalEvents from 'services/global-events';
+import isNil from 'lodash/isNil';
+import AppOverview from 'components/AppOverview';
+import {objectQuery} from 'services/helpers';
 
 require('./EntityListView.scss');
 import ee from 'event-emitter';
@@ -425,8 +428,8 @@ class EntityListView extends Component {
     });
   }
 
-  handleEntityClick(uniqueId) {
-    this.setState({selectedEntity: uniqueId});
+  handleEntityClick(entity) {
+    this.setState({selectedEntity: entity});
   }
 
   // Set query string using current application state
@@ -589,12 +592,12 @@ class EntityListView extends Component {
             <EntityCard
               className={
                 classNames('entity-card-container',
-                  { active: entity.uniqueId === this.state.selectedEntity }
+                  { active: entity.uniqueId === objectQuery(this.state, 'selectedEntity', 'uniqueId') }
                 )
               }
               activeEntity={this.state.selectedEntity}
               key={entity.uniqueId}
-              onClick={this.handleEntityClick.bind(this, entity.uniqueId)}
+              onClick={this.handleEntityClick.bind(this, entity)}
               entity={entity}
               onUpdate={this.search.bind(this)}
             />
@@ -627,7 +630,7 @@ class EntityListView extends Component {
           currentPage={this.state.currentPage}
           setDirection={this.setAnimationDirection}
         >
-          <div className="entities-container">
+          <div className={classNames("entities-container", {"show-overview": !isNil(this.state.selectedEntity)})}>
             <ReactCSSTransitionGroup
               component="div"
               transitionName={"entity-animation--" + this.state.animationDirection}
@@ -636,6 +639,11 @@ class EntityListView extends Component {
             >
               {bodyContent}
             </ReactCSSTransitionGroup>
+            <AppOverview
+              toggleOverview={!isNil(this.state.selectedEntity)}
+              entity={this.state.selectedEntity}
+              onClose={this.handleEntityClick.bind(this)}
+            />
           </div>
         </Pagination>
       </div>

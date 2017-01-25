@@ -38,12 +38,12 @@ export default class EntityCard extends Component {
     this.cardRef = null;
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.activeEntity !== this.props.entity.uniqueId) {
-      this.setState({
-        overviewMode: false
-      });
-    }
+  componentWillReceiveProps() {
+    // if (nextProps.activeEntity !== this.props.entity.uniqueId) {
+    //   this.setState({
+    //     overviewMode: false
+    //   });
+    // }
   }
 
   renderEntityStatus() {
@@ -82,9 +82,9 @@ export default class EntityCard extends Component {
     if (this.props.entity.type !== 'application') {
       return;
     }
-    this.setState({
-      overviewMode: !this.state.overviewMode
-    });
+    // this.setState({
+    //   overviewMode: !this.state.overviewMode
+    // });
     if (this.props.onClick) {
       this.props.onClick();
     }

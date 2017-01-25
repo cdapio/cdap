@@ -29,10 +29,31 @@
 
   .entity-type { margin-left: 5px; }
   &.artifact { background-color: $artifact-entity-header-bg; }
-  &.application { background-color: $application-entity-header-bg; }
-  &.datapipeline { background-color: $datapipeline-entity-header-bg; }
-  &.datasetinstance { background-color: $datasetinstance-entity-header-bg; }
-  &.stream { background-color: $stream-entity-header-bg; }
+
+  &.application {
+    background-color: $application-entity-header-bg;
+    border: $card-border-width solid $application-entity-header-bg;
+  }
+
+  &.datapipeline {
+    background-color: $datapipeline-entity-header-bg;
+    border: $card-border-width solid $datapipeline-entity-header-bg;
+  }
+
+  &.datasetinstance {
+    background-color: $datasetinstance-entity-header-bg;
+    border: $card-border-width solid $datasetinstance-entity-header-bg;
+  }
+
+  &.stream {
+    background-color: $stream-entity-header-bg;
+    border: $card-border-width solid $stream-entity-header-bg;
+  }
+
   &.view { background-color: #1abc9c; }
-  &.program { background-color: #2c3e50; }
+
+  &.program {
+    background-color: $program-entity-header-bg;
+    border: $card-border-width solid $program-entity-header-bg;
+  }
 }

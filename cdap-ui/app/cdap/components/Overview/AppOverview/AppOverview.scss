@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,13 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-.app-datasets-tab {
-  padding: 10px;
-  .home-cards {
-    display: inline-block;
-    margin: 10px 10px 10px 0;
-    width: 300px;
+@import "../../../styles/variables.scss";
+
+.app-overview {
+  .overview-header {
+    background: $application-entity-header-bg;
   }
 }

@@ -14,6 +14,7 @@
  * the License.
  */
 
+@import "../../styles/variables.scss";
 $entity-card-border: 1px solid #cccccc;
 $jump-button-container-size: 80px;
 
@@ -28,9 +29,7 @@ $jump-button-container-size: 80px;
   display: inline-block;
 
   &.active {
-    -webkit-box-shadow: 0px 0px 8px 0 rgba(255, 102, 0, 1);
-    -moz-box-shadow: 0px 0px 8px 0 rgba(255, 102, 0, 1);
-    box-shadow: 0px 0px 8px 0 rgba(255, 102, 0, 1);
+    border: 3px solid $cdap-orange;
   }
 
   // FIXME: This will be eventually removed when all the entities are clickable.
@@ -46,7 +45,10 @@ $jump-button-container-size: 80px;
       color: white;
       padding: 0;
     }
-    .card-body { padding: 0; }
+    .card-body {
+      padding: 0;
+      border-bottom: 3px solid transparent;
+    }
   }
   .entity-information {
     height: 35px;

@@ -15,44 +15,37 @@
  */
 
 import React, {PropTypes, Component} from 'react';
+import isNil from 'lodash/isNil';
+import OverviewHeader from 'components/Overview/OverviewHeader';
+require('./AppOverview.scss');
 
 export default class AppOverview extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      toggleOverview: this.props.toggleOverview,
       entity: this.props.entity
     };
   }
   componentWillReceiveProps(nextProps) {
-    let {toggleOverview, entity } = nextProps;
-    if (
-      this.props.toggleOverview !== toggleOverview ||
-      this.props.entity !== entity
-    ) {
+    let {entity} = nextProps;
+    if (!isNil(entity)) {
       this.setState({
-        toggleOverview,
         entity
       });
     }
   }
-  hideOverview() {
-    this.setState({
-      toggleOverview: false,
-      entity: null
-    });
-    if (this.props.onClose) {
-      this.props.onClose();
-    }
-  }
   render() {
     return (
-      <div className="overview-container">
-        <div className="overview-wrapper" onClick={this.hideOverview.bind(this, null)}>
-          <pre>
-            {JSON.stringify(this.state.entity, null, 2)}
-          </pre>
-        </div>
+      <div className="app-overview">
+        <OverviewHeader
+          icon="icon-fist"
+          title="Application"
+          linkTo="/"
+          onClose={this.props.onClose}
+        />
+        <pre>
+          {JSON.stringify(this.state.entity, null, 2)}
+        </pre>
       </div>
     );
   }

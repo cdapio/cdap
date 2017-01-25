@@ -145,6 +145,7 @@ module.exports = {
     filename: './[name].js',
     path: __dirname + '/cdap_dist/cdap_assets'
   },
+  devtool: 'source-map',
   plugins: plugins,
   resolve: {
     alias: {
