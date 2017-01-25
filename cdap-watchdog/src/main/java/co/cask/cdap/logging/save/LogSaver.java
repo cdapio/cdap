@@ -33,6 +33,7 @@ import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.kafka.client.KafkaConsumer;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +53,7 @@ public final class LogSaver extends AbstractIdleService {
   private static final int TIMEOUT_SECONDS = 10;
 
   private final String topic;
+  private final ZKClientService zkClient;
   private final KafkaClientService kafkaClient;
   private final Set<Integer> partitions;
 
@@ -63,7 +65,8 @@ public final class LogSaver extends AbstractIdleService {
   private final MetricsContext metricsContext;
 
   @Inject
-  LogSaver(KafkaClientService kafkaClient,
+  LogSaver(ZKClientService zkClient,
+           KafkaClientService kafkaClient,
            CConfiguration cConf,
            @Named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES)
            Set<KafkaLogProcessorFactory> messageProcessorFactories,
@@ -76,6 +79,7 @@ public final class LogSaver extends AbstractIdleService {
     this.partitions = partitions;
     LOG.info(String.format("Kafka topic: %s, partitions: %s", this.topic, this.partitions));
 
+    this.zkClient = zkClient;
     this.kafkaClient = kafkaClient;
     this.kafkaCancelMap = new HashMap<>();
     this.kafkaCancelCallbackLatchMap = new HashMap<>();
