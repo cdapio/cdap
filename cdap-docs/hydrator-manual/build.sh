@@ -282,15 +282,7 @@ function download_includes() {
   download_md_file mongodb-plugins MongoDB-realtimesink.md
   download_md_file solrsearch-plugins SolrSearch-batchsink.md
   download_md_file solrsearch-plugins SolrSearch-realtimesink.md
-  download_md_file spark-plugins DecisionTreePredictor-sparkcompute.md '' "analytic"
-  download_md_file spark-plugins DecisionTreeTrainer-sparksink.md '' "analytic"
   download_md_file spark-plugins Kafka-streamingsource.md
-  download_md_file spark-plugins LogisticRegressionClassifier-sparkcompute.md '' "analytic"
-  download_md_file spark-plugins LogisticRegressionTrainer-sparksink.md '' "analytic"
-  download_md_file spark-plugins NaiveBayesClassifier-sparkcompute.md '' "analytic"
-  download_md_file spark-plugins NaiveBayesTrainer-sparksink.md       '' "analytic" "DPB-naivebayestrainer-sparksink.md" # Currently only for batch
-  download_md_file spark-plugins NGramTransform-sparkcompute.md '' "analytic"
-  download_md_file spark-plugins Tokenizer-sparkcompute.md '' "analytic"
   download_md_file spark-plugins Twitter-streamingsource.md
   download_md_file transform-plugins CloneRecord-transform.md
   download_md_file transform-plugins Compressor-transform.md
