@@ -129,7 +129,6 @@ public class FileMetaDataManager {
 
   /**
    * Persists meta data associated with a log file.
-   *
    * @param logPartition partition name that is used to group log messages
    * @param startTimeMs start log time associated with the file.
    * @param location log file.

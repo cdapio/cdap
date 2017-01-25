@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.framework;
 
 import co.cask.cdap.common.io.Locations;
+
 import co.cask.cdap.logging.meta.FileMetaDataWriter;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Uninterruptibles;

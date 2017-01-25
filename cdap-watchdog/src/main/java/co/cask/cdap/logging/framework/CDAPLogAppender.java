@@ -49,7 +49,6 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
                                                                      Constants.Logging.TAG_WORKER_ID,
                                                                      Constants.Logging.TAG_WORKFLOW_ID);
   private LogFileManager logFileManager;
-
   private int syncIntervalBytes;
   private long maxFileLifetimeMs;
 

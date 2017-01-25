@@ -27,6 +27,7 @@ import co.cask.cdap.logging.filter.AndFilter;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.MdcExpression;
 import co.cask.cdap.logging.filter.OrFilter;
+import co.cask.cdap.logging.framework.LogPathIdentifier;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -165,6 +166,27 @@ public final class LoggingContextHelper {
     }
 
     throw new IllegalArgumentException("Unsupported logging context");
+  }
+
+  /**
+   * get log path identifier from the logging context
+   * @param loggingContext
+   * @return
+   */
+  public static LogPathIdentifier getLogPathIdentifier(LoggingContext loggingContext) {
+    Map<String, LoggingContext.SystemTag> tagMap = loggingContext.getSystemTagsMap();
+    String namespace = tagMap.containsKey(NamespaceLoggingContext.TAG_NAMESPACE_ID) ?
+      tagMap.get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue() :
+      tagMap.get(ServiceLoggingContext.TAG_SYSTEM_ID).getValue();
+
+    if (loggingContext instanceof ServiceLoggingContext) {
+      String entityId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID).getValue();
+      return new LogPathIdentifier(namespace, Constants.Logging.COMPONENT_NAME, entityId);
+    } else {
+      String appId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue();
+      String entityId = LoggingContextHelper.getEntityId(loggingContext).getValue();
+      return new LogPathIdentifier(namespace, appId, entityId);
+    }
   }
 
   public static LoggingContext getLoggingContext(String systemId, String componentId, String serviceId) {
