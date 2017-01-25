@@ -39,7 +39,6 @@ import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.logging.framework.LogPathIdentifier;
 import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.Impersonator;
@@ -58,13 +57,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -128,7 +123,6 @@ public class FileMetaDataManager {
 
   /**
    * Persists meta data associated with a log file.
-   *
    * @param logPartition partition name that is used to group log messages
    * @param startTimeMs start log time associated with the file.
    * @param location log file.
@@ -145,89 +139,6 @@ public class FileMetaDataManager {
         getMetaTable(context).put(getRowKey(logPartition),
                                   Bytes.toBytes(startTimeMs),
                                   Bytes.toBytes(location.toURI().getPath()));
-      }
-    });
-  }
-
-  /**
-   * Returns a list of log files for a logging context.
-   *
-   * @param loggingContext logging context.
-   * @return Sorted map containing key as start time, and value as log file.
-   */
-  public NavigableMap<Long, Location> listFiles(final LoggingContext loggingContext) throws Exception {
-    return Transactions.execute(transactional, new TxCallable<NavigableMap<Long, Location>>() {
-      @Override
-      public NavigableMap<Long, Location> call(DatasetContext context) throws Exception {
-        NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
-        final Row cols = getMetaTable(context).get(getRowKey(loggingContext));
-
-        if (cols.isEmpty()) {
-          //noinspection unchecked
-          return (NavigableMap<Long, Location>) EMPTY_MAP;
-        }
-
-        final NavigableMap<Long, Location> files = new TreeMap<>();
-        impersonator.doAs(namespaceId, new Callable<Void>() {
-          @Override
-          public Void call() throws Exception {
-            for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
-              String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
-              // the location can be any location from on the filesystem for custom mapped namespaces
-              files.put(Bytes.toLong(entry.getKey()),
-                        Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath));
-            }
-            return null;
-          }
-        });
-        return files;
-      }
-    });
-  }
-
-  /**
-   * // TODO refactor this with the above method after Log handler changes.
-   * Returns a list of log files for a logging context.
-   *
-   * @param logPathIdentifier logging context identifier.
-   * @return List of {@link LogLocation}
-   */
-  public List<LogLocation> listFiles(final LogPathIdentifier logPathIdentifier) throws Exception {
-    return Transactions.execute(transactional, new TxCallable<List<LogLocation>>() {
-
-      @Override
-      public List<LogLocation> call(DatasetContext context) throws Exception {
-        final Row cols = getMetaTable(context).get(getRowKey(logPathIdentifier));
-
-        if (cols.isEmpty()) {
-          //noinspection unchecked
-          return new ArrayList<>();
-        }
-
-        final List<LogLocation> files = new ArrayList<>();
-
-        for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
-          String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
-          // the location can be any location from on the filesystem for custom mapped namespaces
-          if (entry.getKey().length == 8) {
-            // old format
-            files.add(new LogLocation(LogLocation.VERSION_0,
-                                      Bytes.toLong(entry.getKey()),
-                                      // use 0 as sequence id for the old format
-                                      0,
-                                      Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath),
-                                      logPathIdentifier.getNamespaceId(), impersonator));
-          } else if (entry.getKey().length == 17) {
-            // new format
-            files.add(new LogLocation(LogLocation.VERSION_1,
-                                      // skip the first (version) byte
-                                      Bytes.toLong(entry.getKey(), 1, Bytes.SIZEOF_LONG),
-                                      Bytes.toLong(entry.getKey(), 9, Bytes.SIZEOF_LONG),
-                                      Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath),
-                                      logPathIdentifier.getNamespaceId(), impersonator));
-          }
-        }
-        return files;
       }
     });
   }
@@ -419,30 +330,8 @@ public class FileMetaDataManager {
     return LoggingContextHelper.getNamespaceId(new GenericLoggingContext(partitions[0], partitions[1], partitions[2]));
   }
 
-  private byte[] getRowKey(LoggingContext loggingContext) {
-    return getRowKey(loggingContext.getLogPartition());
-  }
-
   private byte[] getRowKey(String logPartition) {
     return Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(logPartition));
-  }
-
-  private byte[] getRowKey(LogPathIdentifier logPathIdentifier) {
-    return Bytes.add(ROW_KEY_PREFIX, logPathIdentifier.getRowKey().getBytes(StandardCharsets.UTF_8));
-  }
-
-  private byte [] getMaxKey(Map<byte[], byte[]> map) {
-    if (map instanceof SortedMap) {
-      return ((SortedMap<byte [], byte []>) map).lastKey();
-    }
-
-    byte [] max = Bytes.EMPTY_BYTE_ARRAY;
-    for (byte [] elem : map.keySet()) {
-      if (Bytes.compareTo(max, elem) < 0) {
-        max = elem;
-      }
-    }
-    return max;
   }
 
   /**

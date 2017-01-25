@@ -39,6 +39,7 @@ import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.meta.FileMetaDataReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogLocation;
@@ -121,6 +122,7 @@ public class CDAPLogAppenderTest {
     int syncInterval = 1024 * 1024;
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
     CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
+
     cdapLogAppender.setSyncIntervalBytes(syncInterval);
     cdapLogAppender.setMaxFileLifetimeMs(TimeUnit.DAYS.toMillis(1));
     cdapLogAppender.setDirPermissions("700");
@@ -133,6 +135,7 @@ public class CDAPLogAppenderTest {
     cdapLogAppender.setContext(context);
     cdapLogAppender.start();
 
+    FileMetaDataReader fileMetaDataReader = injector.getInstance(FileMetaDataReader.class);
     LoggingEvent event =
       new LoggingEvent("co.cask.Test",
                        (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME),
@@ -150,7 +153,8 @@ public class CDAPLogAppenderTest {
     context.stop();
 
     try {
-      List<LogLocation> files = fileMetaDataManager.listFiles(cdapLogAppender.getLoggingPath(properties));
+      List<LogLocation> files = fileMetaDataReader.listFiles(cdapLogAppender.getLoggingPath(properties),
+                                                             0, Long.MAX_VALUE);
       Assert.assertEquals(1, files.size());
       LogLocation logLocation = files.get(0);
       Assert.assertEquals(LogLocation.VERSION_1, logLocation.getFrameworkVersion());
@@ -187,6 +191,7 @@ public class CDAPLogAppenderTest {
   public void testCDAPLogAppenderRotation() throws Exception {
     int syncInterval = 1024 * 1024;
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
+    FileMetaDataReader fileMetaDataReader = injector.getInstance(FileMetaDataReader.class);
     CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
     AppenderContext context = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
                                                        injector.getInstance(TransactionSystemClient.class),
@@ -231,7 +236,8 @@ public class CDAPLogAppenderTest {
     context.stop();
 
     try {
-      List<LogLocation> files = fileMetaDataManager.listFiles(cdapLogAppender.getLoggingPath(properties));
+      List<LogLocation> files = fileMetaDataReader.listFiles(cdapLogAppender.getLoggingPath(properties),
+                                                             0, Long.MAX_VALUE);
       Assert.assertEquals(2, files.size());
       assertLogEventDetails(event1, files.get(0));
       assertLogEventDetails(event2, files.get(1));

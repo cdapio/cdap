@@ -46,14 +46,11 @@ import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
+import co.cask.cdap.logging.meta.FileMetaDataReader;
 import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
-import co.cask.cdap.logging.read.AvroFileReader;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.serialize.LogSchema;
-import co.cask.cdap.logging.write.FileMetaDataManager;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.Impersonator;
+import co.cask.cdap.logging.write.LogLocation;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
@@ -74,8 +71,6 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import org.apache.tephra.TransactionManager;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -92,7 +87,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
@@ -111,18 +105,15 @@ public class LogSaverPluginTest extends KafkaTestBase {
   private static Injector injector;
   private static TransactionManager txManager;
   private static LogSaver logSaver;
-  private static String namespaceDir;
   private static KafkaLogAppender appender;
   private static Gson gson;
   private static MetricStore metricStore;
   private static MetricsCollectionService metricsCollectionService;
   private static CConfiguration cConf;
-  private static Impersonator impersonator;
 
   @BeforeClass
   public static void initialize() throws IOException {
     cConf = KAFKA_TESTER.getCConf();
-    namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
 
     injector = KAFKA_TESTER.getInjector();
     appender = injector.getInstance(KafkaLogAppender.class);
@@ -133,7 +124,6 @@ public class LogSaverPluginTest extends KafkaTestBase {
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
     txManager = injector.getInstance(TransactionManager.class);
-    impersonator = injector.getInstance(Impersonator.class);
     txManager.startAndWait();
     metricsCollectionService.startAndWait();
   }
@@ -177,12 +167,15 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
       publishLogs();
 
-      LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
       String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
-      Location ns1LogBaseDir = locationFactory.create(namespaceDir).append("NS_1").append(logBaseDir);
 
-      FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
-      waitTillLogSaverDone(fileMetaDataManager, loggingContext, "Test log message 59 arg1 arg2");
+      LoggingStoreTableUtil.setMetaTableName("log.meta");
+      FileMetaDataReader fileMetadataReader = injector.getInstance(FileMetaDataReader.class);
+
+      // Read the logs back. They should be sorted by timestamp order.
+      final FileMetaDataReader fileMetaDataReader = injector.getInstance(FileMetaDataReader.class);
+
+      waitTillLogSaverDone(fileMetaDataReader, loggingContext, "Test log message 59 arg1 arg2");
 
       testLogRead(loggingContext, logBaseDir);
 
@@ -199,6 +192,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
       // Now reset the logsaver to start reading from reset offset
       // Change the log meta table so that checkpoints are new, and old log files are not read during read later
+
       LoggingStoreTableUtil.setMetaTableName("log.meta1");
 
       // Reset checkpoint for log saver plugin
@@ -207,20 +201,18 @@ public class LogSaverPluginTest extends KafkaTestBase {
       // Change base dir so that new files get written and read from a different location (makes it easy for asserting)
       String logBaseDir1 = logBaseDir + "1";
       cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir1);
-      Location ns1LogBaseDir1 = locationFactory.create(namespaceDir).append("NS_1").append(logBaseDir1);
 
       // Start log saver again
       startLogSaver();
       // Reset the log base dir back to original value
       cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
-      fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
-      waitTillLogSaverDone(fileMetaDataManager, loggingContext, "Test log message 59 arg1 arg2");
+      waitTillLogSaverDone(fileMetaDataReader, loggingContext, "Test log message 59 arg1 arg2");
       stopLogSaver();
 
 
       //Verify that more records are processed by LogWriter plugin
-      fileLogReader = injector.getInstance(FileLogReader.class);
+      fileLogReader = new FileLogReader(fileMetaDataReader);
       events =
         Lists.newArrayList(fileLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "",
                                                                           null, "INSTANCE"),
@@ -491,21 +483,21 @@ public class LogSaverPluginTest extends KafkaTestBase {
     }
   }
 
-  private static void waitTillLogSaverDone(FileMetaDataManager fileMetaDataManager, LoggingContext loggingContext,
+  private static void waitTillLogSaverDone(FileMetaDataReader fileMetadataReader, LoggingContext loggingContext,
                                            String logLine) throws Exception {
     long start = System.currentTimeMillis();
 
     while (true) {
-      NavigableMap<Long, Location> files = fileMetaDataManager.listFiles(loggingContext);
-      Map.Entry<Long, Location> lastEntry = files.lastEntry();
+      List<LogLocation> files =
+        fileMetadataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(loggingContext), 0, Long.MAX_VALUE);
+      if (files.isEmpty()) {
+        continue;
+      }
+      LogLocation lastEntry = files.get(files.size() - 1);
       if (lastEntry != null) {
-        Location latestFile = lastEntry.getValue();
-        AvroFileReader logReader = new AvroFileReader(LogSchema.LoggingEvent.SCHEMA);
         LogCallback logCallback = new LogCallback();
         logCallback.init();
-        NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
-        logReader.readLog(latestFile, Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, Integer.MAX_VALUE, logCallback,
-                          namespaceId, impersonator);
+        lastEntry.readLog(Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, Integer.MAX_VALUE, logCallback);
         logCallback.close();
         List<LogEvent> events = logCallback.getEvents();
         if (events.size() > 0) {

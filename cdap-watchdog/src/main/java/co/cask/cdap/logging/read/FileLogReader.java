@@ -18,25 +18,18 @@ package co.cask.cdap.logging.read;
 
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.AndFilter;
 import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.serialize.LogSchema;
-import co.cask.cdap.logging.write.FileMetaDataManager;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.Impersonator;
-import com.google.common.annotations.VisibleForTesting;
+import co.cask.cdap.logging.meta.FileMetaDataReader;
+import co.cask.cdap.logging.write.LogLocation;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
-import org.apache.avro.Schema;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +37,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NavigableMap;
 import java.util.NoSuchElementException;
 
 /**
@@ -53,23 +45,11 @@ import java.util.NoSuchElementException;
 public class FileLogReader implements LogReader {
   private static final Logger LOG = LoggerFactory.getLogger(FileLogReader.class);
 
-  private final FileMetaDataManager fileMetaDataManager;
-  private final Schema schema;
-  private final Impersonator impersonator;
+  private final FileMetaDataReader fileMetadataReader;
 
   @Inject
-  public FileLogReader(CConfiguration cConf, FileMetaDataManager fileMetaDataManager, Impersonator impersonator) {
-    String baseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
-    Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
-
-    try {
-      this.schema = LogSchema.LoggingEvent.SCHEMA;
-      this.fileMetaDataManager = fileMetaDataManager;
-      this.impersonator = impersonator;
-    } catch (Exception e) {
-      LOG.error("Got exception", e);
-      throw Throwables.propagate(e);
-    }
+  public FileLogReader(FileMetaDataReader fileMetadataReader) {
+    this.fileMetadataReader = fileMetadataReader;
   }
 
   @Override
@@ -88,24 +68,18 @@ public class FileLogReader implements LogReader {
       long fromTimeMs = readRange.getFromMillis() + 1;
 
       LOG.trace("Using fromTimeMs={}, readRange={}", fromTimeMs, readRange);
-      NavigableMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
-      if (sortedFiles.isEmpty()) {
+      List<LogLocation> sortedFilesInRange =
+        fileMetadataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(loggingContext),
+                                     readRange.getFromMillis(), readRange.getToMillis());
+      if (sortedFilesInRange.isEmpty()) {
         return;
       }
 
-      List<Location> filesInRange = getFilesInRange(sortedFiles, readRange.getFromMillis(), readRange.getToMillis());
-      AvroFileReader logReader = new AvroFileReader(schema);
-      NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
-      for (Location file : filesInRange) {
-        try {
-          LOG.trace("Reading file {}", file);
-          logReader.readLog(file, logFilter, fromTimeMs,
-                            Long.MAX_VALUE, maxEvents - callback.getCount(), callback, namespaceId, impersonator);
-          if (callback.getCount() >= maxEvents) {
-            break;
-          }
-        } catch (IOException e) {
-          LOG.warn("Got exception reading log file {}", file, e);
+      for (LogLocation file : sortedFilesInRange) {
+        LOG.trace("Reading file {}", file);
+        file.readLog(logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - callback.getCount(), callback);
+        if (callback.getCount() >= maxEvents) {
+          break;
         }
       }
     } catch (Throwable e) {
@@ -122,25 +96,24 @@ public class FileLogReader implements LogReader {
       Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
                                                         filter));
 
-      NavigableMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
-      if (sortedFiles.isEmpty()) {
+
+      List<LogLocation> sortedFilesInRange =
+        fileMetadataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(loggingContext),
+                                     readRange.getFromMillis(), readRange.getToMillis());
+      if (sortedFilesInRange.isEmpty()) {
         return;
       }
 
       long fromTimeMs = readRange.getToMillis() - 1;
 
       LOG.trace("Using fromTimeMs={}, readRange={}", fromTimeMs, readRange);
-      List<Location> filesInRange = getFilesInRange(sortedFiles, readRange.getFromMillis(), readRange.getToMillis());
       List<Collection<LogEvent>> logSegments = Lists.newLinkedList();
-      AvroFileReader logReader = new AvroFileReader(schema);
       int count = 0;
-      NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
-      for (Location file : Lists.reverse(filesInRange)) {
+      for (LogLocation file : Lists.reverse(sortedFilesInRange)) {
         try {
           LOG.trace("Reading file {}", file);
 
-          Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs, maxEvents - count,
-                                                              namespaceId, impersonator);
+          Collection<LogEvent> events = file.readLogPrev(logFilter, fromTimeMs, maxEvents - count);
           logSegments.add(events);
           count += events.size();
           if (count >= maxEvents) {
@@ -168,8 +141,10 @@ public class FileLogReader implements LogReader {
                                                               filter));
 
       LOG.trace("Using fromTimeMs={}, toTimeMs={}", fromTimeMs, toTimeMs);
-      NavigableMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
-      if (sortedFiles.isEmpty()) {
+      List<LogLocation> sortedFilesInRange =
+        fileMetadataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(loggingContext), fromTimeMs, toTimeMs);
+
+      if (sortedFilesInRange.isEmpty()) {
         // return empty iterator
         return new AbstractCloseableIterator<LogEvent>() {
           @Override
@@ -185,11 +160,7 @@ public class FileLogReader implements LogReader {
         };
       }
 
-      List<Location> filesInRange = getFilesInRange(sortedFiles, fromTimeMs, toTimeMs);
-
-      final AvroFileReader avroFileReader = new AvroFileReader(schema);
-      final Iterator<Location> filesIter = filesInRange.iterator();
-      final NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
+      final Iterator<LogLocation> filesIter = sortedFilesInRange.iterator();
 
       CloseableIterator closeableIterator = new CloseableIterator() {
         private CloseableIterator<LogEvent> curr = null;
@@ -211,10 +182,9 @@ public class FileLogReader implements LogReader {
           if (curr != null) {
             curr.close();
           }
-          Location file = filesIter.next();
+          LogLocation file = filesIter.next();
           LOG.trace("Reading file {}", file);
-          curr = avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE,
-                                        namespaceId, impersonator);
+          curr = file.readLog(logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE);
           return curr;
         }
 
@@ -305,25 +275,5 @@ public class FileLogReader implements LogReader {
         removeFrom = null;
       }
     };
-  }
-
-  @VisibleForTesting
-  static List<Location> getFilesInRange(NavigableMap<Long, Location> sortedFiles, long fromTimeMs, long toTimeMs) {
-    // Get a list of files to read based on fromMillis and toMillis.
-    // Each file is associated with the time of the first log message in it.
-    // Let c be the file with the largest timestamp smaller than readRange.getFromMillis().
-    // We need to select all the files within the range [c, readRange.toMillis()).
-    Long start = sortedFiles.floorKey(fromTimeMs);
-    if (start == null) {
-      start = sortedFiles.firstKey();
-
-      // It is possible that the log files for the requested range are already
-      // deleted, in case of old program runs. For such requests both the start and toTimeMs
-      // will fall outside the range sortedFiles. In that case return empty list.
-      if (start > toTimeMs) {
-        return ImmutableList.of();
-      }
-    }
-    return ImmutableList.copyOf(sortedFiles.subMap(start, toTimeMs).values());
   }
 }
