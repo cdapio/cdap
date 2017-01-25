@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.transaction.AbstractTransactionContext;
@@ -37,6 +38,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
@@ -171,10 +173,12 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       } else {
         try {
           dataset = datasetCache.get(key);
-        } catch (ExecutionException e) {
+        } catch (ExecutionException | UncheckedExecutionException e) {
           throw e.getCause();
         }
       }
+    } catch (DatasetInstantiationException | ServiceUnavailableException e) {
+      throw e;
     } catch (Throwable t) {
       throw new DatasetInstantiationException(
         String.format("Could not instantiate dataset '%s:%s'", key.getNamespace(), key.getName()), t);

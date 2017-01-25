@@ -17,16 +17,22 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
+import co.cask.cdap.api.retry.RetryableException;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Exception thrown when the service is not running.
  */
-public class ServiceUnavailableException extends RuntimeException implements HttpErrorStatusProvider {
+public class ServiceUnavailableException extends RetryableException implements HttpErrorStatusProvider {
   private final String serviceName;
 
   public ServiceUnavailableException(String serviceName) {
     super("Service '" + serviceName + "' is not available. Please wait until it is up and running.");
+    this.serviceName = serviceName;
+  }
+
+  public ServiceUnavailableException(String serviceName, Throwable cause) {
+    super("Service '" + serviceName + "' is not available. Please wait until it is up and running.", cause);
     this.serviceName = serviceName;
   }
 

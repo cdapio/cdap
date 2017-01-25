@@ -22,6 +22,7 @@ import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
@@ -177,7 +178,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
                                                                   classLoaderProvider, owners, accessType);
           }
         });
-    } catch (IOException | DatasetManagementException e) {
+    } catch (IOException | DatasetManagementException | ServiceUnavailableException e) {
       throw e;
     } catch (Exception e) {
       throw new DatasetManagementException("Failed to create dataset instance: " + datasetInstanceId, e);

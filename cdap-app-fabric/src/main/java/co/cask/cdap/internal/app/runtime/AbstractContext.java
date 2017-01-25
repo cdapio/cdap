@@ -50,6 +50,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
@@ -104,6 +106,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final int defaultTxTimeout;
   private final MultiThreadMessagingContext messagingContext;
   protected final DynamicDatasetCache datasetCache;
+  protected final RetryStrategy retryStrategy;
 
   private final DataTracerFactory dataTracerFactory = new DataTracerFactory() {
     @Override
@@ -145,6 +148,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.owners = createOwners(program.getId());
     this.programMetrics = createProgramMetrics(program, runId, metricsService, metricsTags);
     this.userMetrics = new ProgramUserMetrics(programMetrics);
+    this.retryStrategy = SystemArguments.getRetryStrategy(programOptions.getUserArguments().asMap(),
+                                                          program.getType(),
+                                                          cConf);
 
     Map<String, String> runtimeArgs = new HashMap<>(programOptions.getUserArguments().asMap());
     this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
@@ -168,7 +174,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
     this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespaceId(), secureStoreManager,
-                                  new BasicMessagingAdmin(messagingService, program.getId().getNamespaceId()));
+                                  new BasicMessagingAdmin(messagingService, program.getId().getNamespaceId()),
+                                  retryStrategy);
     this.secureStore = secureStore;
     this.defaultTxTimeout = determineTransactionTimeout(cConf);
     this.transactional = Transactions.createTransactional(getDatasetCache(), defaultTxTimeout);
@@ -290,19 +297,33 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return getDataset(namespace, name, arguments, AccessType.UNKNOWN);
   }
 
-  protected <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
-                                             AccessType accessType) throws DatasetInstantiationException {
+  protected <T extends Dataset> T getDataset(final String namespace, final String name,
+                                             final Map<String, String> arguments,
+                                             final AccessType accessType) throws DatasetInstantiationException {
     if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)) {
       throw new DatasetInstantiationException(String.format("Dataset %s cannot be instantiated from %s namespace. " +
                                                               "Cannot access %s namespace.",
                                                             name, NamespaceId.SYSTEM, NamespaceId.SYSTEM));
     }
-    return datasetCache.getDataset(namespace, name, arguments, accessType);
+
+    return Retries.callWithRetries(new Retries.Callable<T, DatasetInstantiationException>() {
+      @Override
+      public T call() throws DatasetInstantiationException {
+        return datasetCache.getDataset(namespace, name, arguments, accessType);
+      }
+    }, retryStrategy);
   }
 
-  protected <T extends Dataset> T getDataset(String name, Map<String, String> arguments, AccessType accessType)
+  protected <T extends Dataset> T getDataset(final String name, final Map<String, String> arguments,
+                                             final AccessType accessType)
     throws DatasetInstantiationException {
-    return datasetCache.getDataset(name, arguments, accessType);
+
+    return Retries.callWithRetries(new Retries.Callable<T, DatasetInstantiationException>() {
+      @Override
+      public T call() throws DatasetInstantiationException {
+        return datasetCache.getDataset(name, arguments, accessType);
+      }
+    }, retryStrategy);
   }
 
   @Override

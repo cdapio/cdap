@@ -328,10 +328,10 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
     // Get dataset from a non existing namespace
     try {
-      final ObjectStore<String> inputwrong = datasetCache.getDataset("nonExistingNameSpace", "keys");
+      datasetCache.getDataset("nonExistingNameSpace", "keys");
       Assert.fail("getDataset() should throw an exception when accessing dataset from a non-existing namespace.");
     } catch (DatasetInstantiationException e) {
-      Assert.assertTrue(e.getMessage().equals("Could not instantiate dataset 'nonExistingNameSpace:keys'"));
+      // expected
     }
 
     final String testString = "persisted data";
@@ -374,10 +374,10 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     final java.io.File outputDir = new java.io.File(TEMP_FOLDER.newFolder(), "output");
 
     try {
-      final KeyValueTable jobConfigTable = datasetCache.getDataset("someOtherNameSpace", "jobConfig");
+      datasetCache.getDataset("someOtherNameSpace", "jobConfig");
       Assert.fail("getDataset() should throw an exception when accessing a non-existing dataset.");
     } catch (DatasetInstantiationException e) {
-      Assert.assertTrue(e.getMessage().equals("Could not instantiate dataset 'someOtherNameSpace:jobConfig'"));
+      // expected
     }
     // Should work if explicitly specify the default namespace
     final KeyValueTable jobConfigTable = datasetCache.getDataset(NamespaceId.DEFAULT.getNamespace(), "jobConfig");
