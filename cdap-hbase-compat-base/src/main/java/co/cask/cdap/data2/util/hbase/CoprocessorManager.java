@@ -22,8 +22,6 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.ProjectInfo;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
 import com.google.common.io.OutputSupplier;
 import org.apache.hadoop.hbase.Coprocessor;
@@ -51,7 +49,7 @@ import java.util.jar.JarOutputStream;
  */
 public class CoprocessorManager {
   private static final Logger LOG = LoggerFactory.getLogger(CoprocessorManager.class);
-  protected final Location jarDir;
+  private final Location jarDir;
   private final Map<Type, Set<Class<? extends Coprocessor>>> coprocessors;
 
   /**
@@ -76,13 +74,12 @@ public class CoprocessorManager {
 
   /**
    * Get the location of the specified type of coprocessor and ensure it exists.
-   * In distributed mode, the coprocessor jars are loaded onto hdfs by the CoprocessBuildTool,
+   * In distributed mode, the coprocessor jars are loaded onto hdfs by the CoprocessorBuildTool,
    * but in other modes it is still useful to create the jar on demand.
    *
    * @param type the type of coprocessor
    * @return the location of the coprocessor
    * @throws IOException if there was an issue accessing the location
-   * @throws IllegalStateException if the coprocessor jar does not exist
    */
   public synchronized Location ensureCoprocessorExists(Type type) throws IOException {
 
@@ -102,13 +99,8 @@ public class CoprocessorManager {
     for (Class<? extends Coprocessor> c : classes) {
       buf.append(c.getName()).append(", ");
     }
-    if (buf.length() == 0) {
-      return null;
-    }
 
-    LOG.debug("Creating jar file for coprocessor classes: " + buf.toString());
-    final Hasher hasher = Hashing.md5().newHasher();
-    final byte[] buffer = new byte[4 * 1024];
+    LOG.debug("Creating jar file for coprocessor classes: {}", buf.toString());
 
     final Map<String, URL> dependentClasses = new HashMap<>();
     for (Class<? extends Coprocessor> clz : classes) {
@@ -136,6 +128,7 @@ public class CoprocessorManager {
     // create the coprocessor jar on local filesystem
     LOG.debug("Adding " + dependentClasses.size() + " classes to jar");
     File jarFile = File.createTempFile(type.name().toLowerCase(), ".jar");
+    byte[] buffer = new byte[4 * 1024];
     try (JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarFile))) {
       for (Map.Entry<String, URL> entry : dependentClasses.entrySet()) {
         jarOutput.putNextEntry(new JarEntry(entry.getKey().replace('.', File.separatorChar) + ".class"));
@@ -143,7 +136,6 @@ public class CoprocessorManager {
         try (InputStream inputStream = entry.getValue().openStream()) {
           int len = inputStream.read(buffer);
           while (len >= 0) {
-            hasher.putBytes(buffer, 0, len);
             jarOutput.write(buffer, 0, len);
             len = inputStream.read(buffer);
           }
