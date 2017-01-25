@@ -22,6 +22,9 @@ import { PublishStream } from 'services/WizardStores/CreateStream/ActionCreator'
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import NamespaceStore from 'services/NamespaceStore';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
+
 
 import CreateStreamWizardConfig, {CreateStreamUploadWizardConfig} from 'services/WizardConfigs/CreateStreamWizardConfig';
 import T from 'i18n-react';
@@ -54,6 +57,7 @@ export default class StreamCreateWizard extends Component {
           break;
       }
     });
+    this.eventEmitter = ee(ee);
   }
 
   toggleWizard(returnResult) {
@@ -100,7 +104,11 @@ export default class StreamCreateWizard extends Component {
           }
           return Promise.resolve(state.general.name);
         }
-      );
+      )
+      .map((res) => {
+        this.eventEmitter.emit(globalEvents.STREAMCREATE);
+        return res;
+      });
   }
   render() {
     let input = this.props.input || {};

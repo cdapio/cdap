@@ -22,10 +22,13 @@ import ApplicationUploadStore from 'services/WizardStores/ApplicationUpload/Appl
 import ApplicationUploadActions from 'services/WizardStores/ApplicationUpload/ApplicationUploadActions';
 import {UploadApplication} from 'services/WizardStores/ApplicationUpload/ActionCreator';
 import T from 'i18n-react';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 export default class ApplicationUploadWizard extends Component {
   constructor(props) {
     super(props);
+    this.eventEmitter = ee(ee);
     this.state = {
       showWizard: props.isOpen || false
     };
@@ -44,7 +47,10 @@ export default class ApplicationUploadWizard extends Component {
     });
   }
   onSubmit() {
-    return UploadApplication();
+    return UploadApplication().map((res) => {
+      this.eventEmitter.emit(globalEvents.APPUPLOAD);
+      return res;
+    });
   }
   render() {
     let input = this.props.input;

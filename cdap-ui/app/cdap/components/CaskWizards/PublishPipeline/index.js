@@ -25,6 +25,8 @@ import shortid from 'shortid';
 import MyUserStoreApi from 'api/userstore';
 import NamespaceStore from 'services/NamespaceStore';
 import {MyPipelineApi} from 'api/pipeline';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 import T from 'i18n-react';
 
@@ -48,6 +50,7 @@ export default class PublishPipelineWizard extends Component {
         }
       }
     });
+    this.eventEmitter = ee(ee);
   }
 
   setDefaultConfig() {
@@ -115,6 +118,10 @@ export default class PublishPipelineWizard extends Component {
           res.property.hydratorDrafts[currentNamespace] = res.property.hydratorDrafts[currentNamespace] || {};
           res.property.hydratorDrafts[currentNamespace][draftId] = draftConfig;
           return MyUserStoreApi.set({}, res.property);
+        })
+        .map((res) => {
+          this.eventEmitter.emit(globalEvents.PUBLISHPIPELINE);
+          return res;
         });
     }
     if (this.props.input.action.type === 'create_pipeline') {
@@ -126,7 +133,11 @@ export default class PublishPipelineWizard extends Component {
             artifact,
             config: pipelineConfig
           }
-        );
+        )
+        .map((res) => {
+          this.eventEmitter.emit(globalEvents.PUBLISHPIPELINE);
+          return res;
+        });
     }
   }
   render() {

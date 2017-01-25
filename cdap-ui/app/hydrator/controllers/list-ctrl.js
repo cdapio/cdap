@@ -36,7 +36,11 @@ angular.module(PKG.name + '.feature.hydrator')
       }
       vm.goToPage();
     };
-
+    var eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
+    vm.reloadState = function() {
+      $state.reload();
+    };
+    eventEmitter.on(window.CaskCommon.globalEvents.PUBLISHPIPELINE, vm.reloadState);
     vm.goToPage = function () {
       if (!vm.currentPage) {
         return;
@@ -45,6 +49,10 @@ angular.module(PKG.name + '.feature.hydrator')
       vm.pipelineListLoaded = true;
       $state.go('hydrator.list', $stateParams, {notify: false});
     };
+
+    $scope.$on('$destroy', function() {
+      eventEmitter.off(window.CaskCommon.globalEvents.PUBLISHPIPELINE, vm.reloadState);
+    });
 
     vm.statusCount = {
       running: 0,
@@ -207,7 +215,7 @@ angular.module(PKG.name + '.feature.hydrator')
     }
 
     function fetchDrafts() {
-      return mySettings.get('hydratorDrafts')
+      return mySettings.get('hydratorDrafts', true)
         .then(function(res) {
           let draftsList = myHelpers.objectQuery(res, $stateParams.namespace);
           if (!angular.isObject(draftsList)) {
