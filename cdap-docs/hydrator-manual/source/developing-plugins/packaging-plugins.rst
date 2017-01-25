@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. _cask-hydrator-packaging-plugins:
 
@@ -201,74 +201,100 @@ Cask Hydrator as of version |version|:
      - Description
      - Attributes
      - Output Data Type
-   * - ``textbox``
-     - Default HTML textbox, used to enter any string
-     - ``default``: default value for the widget
-     - ``string``
-   * - ``number``
-     - Default HTML number textbox that only accepts valid numbers
-     - | ``default``: default value for the widget
-       | ``min``: minimum value for the number box
-       | ``max``: maximum value for the number box
-     - ``string``
-   * - ``passwordbox``
-     - Default HTML password entry box
-     - No attributes
-     - ``string``
+     
    * - ``csv``
      - Comma-separated values; each value is entered in a separate box
      - No attributes
      - Comma-separated ``string``
-   * - ``dsv``
-     - Delimiter-separated values; each value is entered in a separate box
-     - ``delimiter``: delimiter used to separate the values
-     - Delimiter-separated ``string``
-   * - ``json-editor``
-     - JSON editor that pretty-prints and auto-formats JSON while it is being entered
-     - ``default``: default serialized JSON value for the widget
-     - ``string``
-   * - ``javascript-editor``, ``python-editor``
-     - An editor to write JavaScript (``javascript-editor``) or Python (``python-editor``)
-       code as a value for a property
-     - ``default``: default ``string`` value for the widget
-     - ``string``
-   * - ``keyvalue``
-     - A key-value editor for constructing maps of key-value pairs
-     - | ``delimiter``: delimiter for the key-value pairs
-       | ``kv-delimiter``: delimiter between key and value
-     - ``string``
-   * - ``keyvalue-dropdown``
-     - Similar to *keyvalue* widget, but with a drop-down value list
-     - | ``delimiter``: delimiter for the key-value pairs
-       | ``kv-delimiter``: delimiter between key and value
-       | ``dropdownOptions``: list of drop-down options to display
-     - ``string``
-   * - ``select``
-     - An HTML drop-down with a list of values; allows one choice from the list
-     - | ``values``: list of values for the drop-down
-       | ``default``: default value from the list
-     - ``string``
+     
    * - ``dataset-selector``, ``stream-selector``
      - A type-ahead textbox with a list of datasets (``dataset-selector``) or streams
        (``stream-selector``) from the CDAP instance
      - No attributes
      - ``string``
-   * - ``schema``
-     - A four-column, editable table to represent a schema of a plugin
-     - | ``schema-types``: list of schema types for each field from which the user can chose when setting the schema
-       | ``schema-default-type``: default type for each newly-added field in the schema
+     
+   * - ``ds-multiplevalues``
+     - A delimiter-separated values widget that allows specifying lists of values separated by delimiters
+     - | ``delimiter``: the delimiter between each *set* of values
+       | ``numValues``: number of values (number of delimiter-separated values)
+       | ``placeholders``: array of placeholders for each value's textbox
+       | ``values-delimiter``: the delimiter between each value
      - ``string``
+
+   * - ``dsv``
+     - Delimiter-separated values; each value is entered in a separate box
+     - ``delimiter``: delimiter used to separate the values
+     - Delimiter-separated ``string``
+     
+   * - ``input-field-selector``
+     - A dropdown widget with a list of columns taken from the input schema. Selecting sets the input column for that plugin property.
+     - No attributes
+     - ``string``
+     
+   * - ``javascript-editor``, ``python-editor``
+     - An editor to write JavaScript (``javascript-editor``) or Python (``python-editor``)
+       code as a value for a property
+     - ``default``: default ``string`` value for the widget
+     - ``string``
+     
+   * - ``json-editor``
+     - JSON editor that pretty-prints and auto-formats JSON while it is being entered
+     - ``default``: default serialized JSON value for the widget
+     - ``string``
+     
+   * - ``keyvalue``
+     - A key-value editor for constructing maps of key-value pairs
+     - | ``delimiter``: delimiter for the key-value pairs
+       | ``kv-delimiter``: delimiter between key and value
+     - ``string``
+     
+   * - ``keyvalue-dropdown``
+     - Similar to *keyvalue* widget, but with a drop-down value list
+     - | ``delimiter``: delimiter for the key-value pairs
+       | ``dropdownOptions``: list of drop-down options to display
+       | ``kv-delimiter``: delimiter between key and value
+     - ``string``
+     
    * - ``non-editable-schema-editor``
      - A non-editable widget for displaying a schema
      - ``schema``: schema that will be used as the output schema for the plugin
      - ``string``
-   * - ``ds-multiplevalues``
-     - A delimiter-separated values widget that allows specifying lists of values separated by delimiters
-     - | ``numValues``: number of values (number of delimiter-separated values)
-       | ``values-delimiter``: the delimiter between each value
-       | ``delimiter``: the delimiter between each *set* of values
-       | ``placeholders``: array of placeholders for each value's textbox
+     
+   * - ``number``
+     - Default HTML number textbox that only accepts valid numbers
+     - | ``default``: default value for the widget
+       | ``max``: maximum value for the number box
+       | ``min``: minimum value for the number box
      - ``string``
+     
+   * - ``passwordbox``
+     - Default HTML password entry box
+     - No attributes
+     - ``string``
+     
+   * - ``schema``
+     - A four-column, editable table to represent a schema of a plugin
+     - | ``schema-default-type``: default type for each newly-added field in the schema
+       | ``schema-types``: list of schema types for each field from which the user can chose when setting the schema
+     - ``string``
+     
+   * - ``select``
+     - An HTML drop-down with a list of values; allows one choice from the list
+     - | ``default``: default value from the list
+       | ``values``: list of values for the drop-down
+     - ``string``
+     
+   * - ``textarea``
+     - An HTML ``textarea`` element which accepts ``default`` and ``rows`` attributes
+     - | ``default``: default value for the widget
+       | ``rows``: height of the ``textarea``
+     - ``string``
+     
+   * - ``textbox``
+     - Default HTML textbox, used to enter any string
+     - ``default``: default value for the widget
+     - ``string``
+     
 
 .. _cask-hydrator-creating-custom-plugins-custom-plugin-function:
 
