@@ -32,7 +32,7 @@ import sys
 
 SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_INPUT_RELEASE_NOTES_RST_FILE = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, '../reference-manual/source/release-notes.rst'))
-DEFAULT_OUTPUT_RELEASE_NOTES_TXT_FILE = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, '../reference-manual/target/html/github-release-notes.txt'))
+DEFAULT_OUTPUT_RELEASE_NOTES_TXT_FILE = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, '../reference-manual/target/html/release-notes.txt'))
 
 CASK_ISSUE_START = ':cask-issue:`'
 CASK_ISSUE_END = '` - '
