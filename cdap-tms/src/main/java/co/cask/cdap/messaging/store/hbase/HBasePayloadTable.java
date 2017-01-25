@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,16 +50,18 @@ final class HBasePayloadTable extends AbstractPayloadTable {
   private final AbstractRowKeyDistributor rowKeyDistributor;
   private final ExecutorService scanExecutor;
   private final int scanCacheRows;
+  private final HBaseExceptionHandler exceptionHandler;
 
   HBasePayloadTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
                     AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor,
-                    int scanCacheRows) {
+                    int scanCacheRows, HBaseExceptionHandler exceptionHandler) {
     this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);
     this.rowKeyDistributor = rowKeyDistributor;
     this.scanExecutor = scanExecutor;
     this.scanCacheRows = scanCacheRows;
+    this.exceptionHandler = exceptionHandler;
   }
 
   @Override
@@ -70,9 +72,8 @@ final class HBasePayloadTable extends AbstractPayloadTable {
       .setStopRow(stopRow)
       .setCaching(scanCacheRows)
       .build();
-    final ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor);
-    final Iterator<Result> results = scanner.iterator();
 
+    final ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor);
     return new AbstractCloseableIterator<RawPayloadTableEntry>() {
       private final RawPayloadTableEntry tableEntry = new RawPayloadTableEntry();
       private boolean closed = false;
@@ -80,11 +81,19 @@ final class HBasePayloadTable extends AbstractPayloadTable {
 
       @Override
       protected RawPayloadTableEntry computeNext() {
-        if (closed || maxLimit <= 0 || (!results.hasNext())) {
+        if (closed || maxLimit <= 0) {
           return endOfData();
         }
 
-        Result result = results.next();
+        Result result;
+        try {
+          result = scanner.next();
+        } catch (IOException e) {
+          throw exceptionHandler.handleAndWrap(e);
+        }
+        if (result == null) {
+          return endOfData();
+        }
         maxLimit--;
         return tableEntry.set(rowKeyDistributor.getOriginalKey(result.getRow()), result.getValue(columnFamily, COL));
       }
@@ -112,11 +121,15 @@ final class HBasePayloadTable extends AbstractPayloadTable {
       batchPuts.add(put);
     }
 
-    if (!batchPuts.isEmpty()) {
-      hTable.put(batchPuts);
-      if (!hTable.isAutoFlush()) {
-        hTable.flushCommits();
+    try {
+      if (!batchPuts.isEmpty()) {
+        hTable.put(batchPuts);
+        if (!hTable.isAutoFlush()) {
+          hTable.flushCommits();
+        }
       }
+    } catch (IOException e) {
+      throw exceptionHandler.handle(e);
     }
   }
 
