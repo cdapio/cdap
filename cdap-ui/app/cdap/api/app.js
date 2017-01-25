@@ -18,11 +18,13 @@ import {apiCreator} from 'services/resource-helper';
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/apps';
+let appPath = `${basepath}/:appId`;
 
 export const MyAppApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:appId`),
+  get: apiCreator(dataSrc, 'GET', 'REQUEST', appPath),
+  getVersions: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}/versions`),
   getDeployedApp: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
   batchStatus: apiCreator(dataSrc, 'POST', 'REQUEST', '/namespaces/:namespace/status'),
-  delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/:appId`)
+  delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', appPath)
 };

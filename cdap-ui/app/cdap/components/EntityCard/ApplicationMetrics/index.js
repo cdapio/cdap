@@ -33,7 +33,7 @@ export default class ApplicationMetrics extends Component {
      this.updateState = this.updateState.bind(this);
   }
   componentWillReceiveProps(nextProps) {
-    if (nextProps.entity.id) {
+    if (nextProps.entity.id !== this.props.entity.id) {
       this.fetchApplicationMetrics();
     }
   }

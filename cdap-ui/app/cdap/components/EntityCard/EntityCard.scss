@@ -14,8 +14,34 @@
  * the License.
  */
 
+@import "../../styles/variables.scss";
 $entity-card-border: 1px solid #cccccc;
 $jump-button-container-size: 80px;
+
+@mixin selected-card($color) {
+  border: 3px solid $color;
+  .card-body {
+    background: $color;
+    color: white;
+
+    .entity-id-container small {
+      color: white;
+    }
+    .metrics-container {
+      .metric-item {
+        p {
+          color: white;
+        }
+      }
+    }
+    .fast-actions-container {
+      background: $color;
+      .btn-link {
+        color: white;
+      }
+    }
+  }
+}
 
 .entity-cards {
   padding: 0;
@@ -23,14 +49,18 @@ $jump-button-container-size: 80px;
   border-radius: 0;
   position: relative;
   box-shadow: 0px 1px 10px 0 rgba(0, 0, 0, 0.3);
-  width: 300px;
+  // width: 300px;
   margin: 5px;
   display: inline-block;
 
   &.active {
-    -webkit-box-shadow: 0px 0px 8px 0 rgba(255, 102, 0, 1);
-    -moz-box-shadow: 0px 0px 8px 0 rgba(255, 102, 0, 1);
-    box-shadow: 0px 0px 8px 0 rgba(255, 102, 0, 1);
+
+    &.datapipeline {
+      @include selected-card($hydrator-blue);
+    }
+    &.application {
+      @include selected-card($application-entity-header-bg);
+    }
   }
 
   // FIXME: This will be eventually removed when all the entities are clickable.
@@ -46,7 +76,10 @@ $jump-button-container-size: 80px;
       color: white;
       padding: 0;
     }
-    .card-body { padding: 0; }
+    .card-body {
+      padding: 0;
+      border-bottom: 3px solid transparent;
+    }
   }
   .entity-information {
     height: 35px;
