@@ -292,7 +292,7 @@ public class AvroFileReader {
    * find out a sync position less than currentSyncPosition
    */
   private long skipToPosition(DataFileReader<GenericRecord> dataFileReader,
-                             long startPosition, long endSyncPosition, long skipLen) throws IOException {
+                              long startPosition, long endSyncPosition, long skipLen) throws IOException {
     long currentSync = endSyncPosition;
     while (startPosition > 0 && currentSync == endSyncPosition) {
       startPosition = startPosition < skipLen ? 0 : startPosition - skipLen;

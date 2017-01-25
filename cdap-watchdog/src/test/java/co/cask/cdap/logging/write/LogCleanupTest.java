@@ -35,6 +35,8 @@ import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
+import co.cask.cdap.logging.context.LoggingContextHelper;
+import co.cask.cdap.logging.read.FileMetadataReader;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -77,7 +79,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.Random;
 import java.util.Set;
 
@@ -157,6 +158,7 @@ public class LogCleanupTest {
   public void testCleanup() throws Exception {
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
     NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    FileMetadataReader fileMetadataReader = injector.getInstance(FileMetadataReader.class);
 
     // Deletion boundary
     long deletionBoundary = System.currentTimeMillis() - RETENTION_DURATION_MS;
@@ -205,7 +207,9 @@ public class LogCleanupTest {
     }
 
     Assert.assertEquals(locationListsToString(toDelete, notDelete),
-                        toDelete.size() + notDelete.size(), fileMetaDataManager.listFiles(dummyContext).size());
+                        toDelete.size() + notDelete.size(),
+                        fileMetadataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(dummyContext),
+                                                     0, Long.MAX_VALUE).size());
 
     // Randomly pick one file from toDelete list and delete it before running log cleanup
     // This is to make sure that when a file is not present, but its metadata is present,
@@ -234,9 +238,14 @@ public class LogCleanupTest {
     }
 
     // Assert metadata for all deleted files is gone
-    NavigableMap<Long, Location> remainingFilesMap = fileMetaDataManager.listFiles(dummyContext);
+    List<LogLocation> remainingFilesList =
+      fileMetadataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(dummyContext), 0, Long.MAX_VALUE);
+    Set<Location> remainingFilesSet = new HashSet<>();
+    for (LogLocation logLocation : remainingFilesList) {
+      remainingFilesSet.add(logLocation.getLocation());
+    }
     Set<Location> metadataForDeletedFiles =
-      Sets.intersection(new HashSet<>(remainingFilesMap.values()), new HashSet<>(toDelete)).immutableCopy();
+      Sets.intersection(remainingFilesSet, new HashSet<>(toDelete)).immutableCopy();
     Assert.assertEquals(ImmutableSet.of(), metadataForDeletedFiles);
   }
 
@@ -393,9 +402,15 @@ public class LogCleanupTest {
     }
 
     // Assert metadata for all deleted files is deleted
-    NavigableMap<Long, Location> remainingFilesMap = fileMetaDataManager.listFiles(dummyContext);
+    FileMetadataReader fileMetadataReader = injector.getInstance(FileMetadataReader.class);
+    List<LogLocation> remainingFilesList =
+      fileMetadataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(dummyContext), 0, Long.MAX_VALUE);
+    Set<Location> remainingFilesSet = new HashSet<>();
+    for (LogLocation logLocation : remainingFilesList) {
+      remainingFilesSet.add(logLocation.getLocation());
+    }
     Set<Location> metadataForDeletedFiles =
-      Sets.intersection(new HashSet<>(remainingFilesMap.values()), new HashSet<>(withMetaFiles)).immutableCopy();
+      Sets.intersection(remainingFilesSet, new HashSet<>(withMetaFiles)).immutableCopy();
     Assert.assertEquals(ImmutableSet.of(), metadataForDeletedFiles);
   }
 

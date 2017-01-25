@@ -17,7 +17,7 @@
 package co.cask.cdap.logging.framework;
 
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.logging.write.FileMetaDataManager;
+import co.cask.cdap.logging.write.FileMetaDataWriter;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.avro.Schema;
@@ -46,17 +46,17 @@ class LogFileManager implements Flushable {
   private final long maxLifetimeMillis;
   private final Map<LogPathIdentifier, LogFileOutputStream> outputStreamMap;
   private final Location logsDirectoryLocation;
-  private final FileMetaDataManager fileMetaDataManager;
+  private final FileMetaDataWriter fileMetaDataWriter;
   private final int syncIntervalBytes;
   private final Schema schema;
 
   LogFileManager(long maxFileLifetimeMs, int syncIntervalBytes, Schema schema,
-                 FileMetaDataManager fileMetaDataManager,
+                 FileMetaDataWriter fileMetaDataWriter,
                  LocationFactory locationFactory) {
     this.maxLifetimeMillis = maxFileLifetimeMs;
     this.syncIntervalBytes = syncIntervalBytes;
     this.schema = schema;
-    this.fileMetaDataManager = fileMetaDataManager;
+    this.fileMetaDataWriter = fileMetaDataWriter;
     this.logsDirectoryLocation = locationFactory.create("logs");
     this.outputStreamMap = new HashMap<>();
   }
@@ -85,7 +85,7 @@ class LogFileManager implements Flushable {
                                                  long timestamp) throws IOException {
     TimeStampLocation location = createLocation(identifier);
     try {
-      fileMetaDataManager.writeMetaData(identifier, timestamp, location.getTimeStamp(), location.getLocation());
+      fileMetaDataWriter.writeMetaData(identifier, timestamp, location.getTimeStamp(), location.getLocation());
     } catch (Throwable e) {
       // delete created file as there was exception while writing meta data
       Locations.deleteQuietly(location.getLocation());

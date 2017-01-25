@@ -23,7 +23,7 @@ import ch.qos.logback.core.spi.FilterReply;
 import ch.qos.logback.core.status.WarnStatus;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.logging.serialize.LogSchema;
-import co.cask.cdap.logging.write.FileMetaDataManager;
+import co.cask.cdap.logging.write.FileMetaDataWriter;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -57,7 +57,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   private LogFileManager logFileManager;
 
   @Inject
-  private FileMetaDataManager fileMetaDataManager;
+  private FileMetaDataWriter fileMetaDataWriter;
   @Inject
   private LocationFactory locationFactory;
 
@@ -84,7 +84,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   public void start() {
     super.start();
     this.logFileManager = new LogFileManager(maxFileLifetimeMs, syncIntervalBytes, LogSchema.LoggingEvent.SCHEMA,
-                                             fileMetaDataManager, locationFactory);
+                                             fileMetaDataWriter, locationFactory);
   }
 
   @Override
