@@ -645,11 +645,7 @@ cdap_start_java() {
     __startup_checks=${CDAP_STARTUP_CHECKS:-$(cdap_get_conf "master.startup.checks.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
 
     # Build and upload coprocessor jars
-    logecho "$(date) Ensuring required HBase coprocessors are on HDFS"
-    "${JAVA}" ${JAVA_HEAPMAX} ${OPTS} -cp ${CLASSPATH} co.cask.cdap.data.tools.CoprocessorBuildTool </dev/null >>${__logfile} 2>&1
-    if [ $? -ne 0 ]; then
-      die "Unable to build and upload coprocessors to HDFS. Please check ${__logfile} for more information."
-    fi
+    cdap_hbase_setup || die "Could not setup HBase coprocessors required by CDAP"
 
     if [[ ${__startup_checks} == true ]]; then
       logecho "$(date) Running CDAP Master startup checks -- this may take a few minutes"
@@ -1088,11 +1084,12 @@ cdap_upgrade_tool() {
 }
 
 #
-# cdap_setup_tool [arguments]
+# cdap_hbase_setup [arguments]
 #
-cdap_setup_tool() {
+cdap_hbase_setup() {
   local readonly __ret __class=co.cask.cdap.data.tools.CoprocessorBuildTool
 
+  logecho "$(date) Ensuring required HBase coprocessors are on HDFS"
   cdap_run_class ${__class} ${@}
   __ret=${?}
   return ${__ret}
