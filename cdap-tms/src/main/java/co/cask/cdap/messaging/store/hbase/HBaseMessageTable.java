@@ -52,15 +52,18 @@ final class HBaseMessageTable extends AbstractMessageTable {
   private final AbstractRowKeyDistributor rowKeyDistributor;
   private final ExecutorService scanExecutor;
   private final int scanCacheRows;
+  private final HBaseExceptionHandler exceptionHandler;
 
   HBaseMessageTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
-                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor, int scanCacheRows) {
+                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor, int scanCacheRows,
+                    HBaseExceptionHandler exceptionHandler) {
     this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);
     this.rowKeyDistributor = rowKeyDistributor;
     this.scanExecutor = scanExecutor;
     this.scanCacheRows = scanCacheRows;
+    this.exceptionHandler = exceptionHandler;
   }
 
   @Override
@@ -71,33 +74,46 @@ final class HBaseMessageTable extends AbstractMessageTable {
       .setCaching(scanCacheRows)
       .build();
 
-    final ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor);
-    final Iterator<Result> results = scanner.iterator();
-    final RawMessageTableEntry tableEntry = new RawMessageTableEntry();
-    return new AbstractCloseableIterator<RawMessageTableEntry>() {
-      private boolean closed = false;
+    try {
+      final ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor);
+      final RawMessageTableEntry tableEntry = new RawMessageTableEntry();
+      return new AbstractCloseableIterator<RawMessageTableEntry>() {
+        private boolean closed = false;
 
-      @Override
-      protected RawMessageTableEntry computeNext() {
-        if (closed || (!results.hasNext())) {
-          return endOfData();
+        @Override
+        protected RawMessageTableEntry computeNext() {
+          if (closed) {
+            return endOfData();
+          }
+
+          Result result;
+          try {
+            result = scanner.next();
+          } catch (IOException e) {
+            throw exceptionHandler.handleAndWrap(e);
+          }
+          if (result == null) {
+            return endOfData();
+          }
+
+          return tableEntry.set(rowKeyDistributor.getOriginalKey(result.getRow()),
+                                result.getValue(columnFamily, TX_COL),
+                                result.getValue(columnFamily, PAYLOAD_COL));
         }
 
-        Result result = results.next();
-        return tableEntry.set(rowKeyDistributor.getOriginalKey(result.getRow()), result.getValue(columnFamily, TX_COL),
-                              result.getValue(columnFamily, PAYLOAD_COL));
-      }
-
-      @Override
-      public void close() {
-        try {
-          scanner.close();
-        } finally {
-          endOfData();
-          closed = true;
+        @Override
+        public void close() {
+          try {
+            scanner.close();
+          } finally {
+            endOfData();
+            closed = true;
+          }
         }
-      }
-    };
+      };
+    } catch (IOException e) {
+      throw exceptionHandler.handle(e);
+    }
   }
 
   @Override
@@ -116,11 +132,15 @@ final class HBaseMessageTable extends AbstractMessageTable {
       batchPuts.add(putBuilder.build());
     }
 
-    if (!batchPuts.isEmpty()) {
-      hTable.put(batchPuts);
-      if (!hTable.isAutoFlush()) {
-        hTable.flushCommits();
+    try {
+      if (!batchPuts.isEmpty()) {
+        hTable.put(batchPuts);
+        if (!hTable.isAutoFlush()) {
+          hTable.flushCommits();
+        }
       }
+    } catch (IOException e) {
+      throw exceptionHandler.handle(e);
     }
   }
 
@@ -142,11 +162,15 @@ final class HBaseMessageTable extends AbstractMessageTable {
       }
     }
 
-    if (!batchPuts.isEmpty()) {
-      hTable.put(batchPuts);
-      if (!hTable.isAutoFlush()) {
-        hTable.flushCommits();
+    try {
+      if (!batchPuts.isEmpty()) {
+        hTable.put(batchPuts);
+        if (!hTable.isAutoFlush()) {
+          hTable.flushCommits();
+        }
       }
+    } catch (IOException e) {
+      throw exceptionHandler.handle(e);
     }
   }
 
