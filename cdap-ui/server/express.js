@@ -150,33 +150,18 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
    *    sourceMethod: HTTP method to obtain content (default to GET)
    *    target: CDAP API
    *    targetMethod: HTTP method for the CDAP API (default to POST)
-   *    headers: JSON of custom headers for CDAP
    **/
   app.get('/forwardMarketToCdap', function(req, res) {
-    var sourceLink = req.query.content,
-        targetLink = req.query.stream,
+    var sourceLink = req.query.source,
+        targetLink = req.query.target,
         sourceMethod = req.query.sourceMethod || 'GET',
-        targetMethod = req.query.targetMethod || 'POST',
-        headers;
-
-    if (req.query.headers) {
-      try {
-        headers = JSON.parse(req.query.headers);
-      } catch (e) {
-        res.status(500).send(e);
-        log.error('/forwardMarketToCDAP failed to parse headers');
-        return;
-      }
-    }
+        targetMethod = req.query.targetMethod || 'POST';
 
     var forwardRequestObject = {
       url: targetLink,
-      method: targetMethod
+      method: targetMethod,
+      headers: req.headers
     };
-
-    if (headers) {
-      forwardRequestObject.headers = headers;
-    }
 
     request({
       url: sourceLink,

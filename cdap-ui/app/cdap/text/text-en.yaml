@@ -332,6 +332,10 @@ features:
         name: Deploy
       load_datapack:
         name: Load
+      one_step_deploy_app:
+        name: Deploy
+      one_step_deploy_plugin:
+        name: Deploy
   MarketPlaceEntity:
     Metadata:
       version: Version
@@ -457,6 +461,13 @@ features:
       headerlabel: Download Information
     MarketHydratorPluginUpload:
       headerlabel: Add Hydrator Plugin
+    OneStepDeploy:
+      headerlabel: Deploy
+      Step1:
+        description: One step deploy
+        shorttitle: Deploy
+        title: Deploy
+        content: Deploy
     Skip: Skipped
     FailedMessage: Failed to {step}
     StreamCreate:
