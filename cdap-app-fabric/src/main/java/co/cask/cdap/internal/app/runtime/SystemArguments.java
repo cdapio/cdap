@@ -20,13 +20,19 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.service.RetryStrategies;
+import co.cask.cdap.common.service.RetryStrategy;
+import co.cask.cdap.common.service.RetryStrategyType;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
+import co.cask.cdap.proto.ProgramType;
 import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -39,6 +45,11 @@ public final class SystemArguments {
   private static final String MEMORY_KEY = "system.resources.memory";
   private static final String CORES_KEY = "system.resources.cores";
   private static final String LOG_LEVEL = "system.log.level";
+  private static final String RETRY_POLICY_TYPE = "system." + Constants.Retry.TYPE;
+  private static final String RETRY_POLICY_MAX_TIME_SECS = "system." + Constants.Retry.MAX_TIME_SECS;
+  private static final String RETRY_POLICY_MAX_RETRIES = "system." + Constants.Retry.MAX_RETRIES;
+  private static final String RETRY_POLICY_DELAY_BASE_MS = "system." + Constants.Retry.DELAY_BASE_MS;
+  private static final String RETRY_POLICY_DELAY_MAX_MS = "system." + Constants.Retry.DELAY_MAX_MS;
   public static final String TRANSACTION_TIMEOUT = "system.data.tx.timeout";
 
   public static Map<String, String> getLogLevels(Map<String, String> args) {
@@ -139,6 +150,82 @@ public final class SystemArguments {
   }
 
   /**
+   * Get the retry strategy for a program given its arguments and the CDAP defaults for the program type.
+   *
+   * @return the retry strategy to use for internal calls
+   * @throws IllegalArgumentException if there is an invalid value for an argument
+   */
+  public static RetryStrategy getRetryStrategy(Map<String, String> args, ProgramType programType,
+                                               CConfiguration cConf) {
+    String keyPrefix;
+    switch (programType) {
+      case MAPREDUCE:
+        keyPrefix = Constants.Retry.MAPREDUCE_PREFIX;
+        break;
+      case SPARK:
+        keyPrefix = Constants.Retry.SPARK_PREFIX;
+        break;
+      case WORKFLOW:
+        keyPrefix = Constants.Retry.WORKFLOW_PREFIX;
+        break;
+      case WORKER:
+        keyPrefix = Constants.Retry.WORKER_PREFIX;
+        break;
+      case SERVICE:
+        keyPrefix = Constants.Retry.SERVICE_PREFIX;
+        break;
+      case FLOW:
+        keyPrefix = Constants.Retry.FLOW_PREFIX;
+        break;
+      case CUSTOM_ACTION:
+        keyPrefix = Constants.Retry.CUSTOM_ACTION_PREFIX;
+        break;
+      default:
+        throw new IllegalArgumentException("Invalid program type " + programType);
+    }
+    String typeKey = keyPrefix + Constants.Retry.TYPE;
+    String maxRetriesKey = keyPrefix + Constants.Retry.MAX_RETRIES;
+    String maxTimeKey = keyPrefix + Constants.Retry.MAX_TIME_SECS;
+    String baseDelayKey = keyPrefix + Constants.Retry.DELAY_BASE_MS;
+    String maxDelayKey = keyPrefix + Constants.Retry.DELAY_MAX_MS;
+
+
+    String typeStr = args.get(RETRY_POLICY_TYPE);
+    if (typeStr == null) {
+      typeStr = cConf.get(typeKey);
+    }
+    RetryStrategyType type = RetryStrategyType.from(typeStr);
+
+    if (type == RetryStrategyType.NONE) {
+      return RetryStrategies.noRetry();
+    }
+
+    int maxRetries = getNonNegativeInt(args, RETRY_POLICY_MAX_RETRIES, RETRY_POLICY_MAX_RETRIES,
+                                       cConf.getInt(maxRetriesKey));
+    long maxTimeSecs = getNonNegativeLong(args, RETRY_POLICY_MAX_TIME_SECS, RETRY_POLICY_MAX_TIME_SECS,
+                                          cConf.getLong(maxTimeKey));
+    long baseDelay = getNonNegativeLong(args, RETRY_POLICY_DELAY_BASE_MS, RETRY_POLICY_DELAY_BASE_MS,
+                                        cConf.getLong(baseDelayKey));
+
+    RetryStrategy baseStrategy;
+    switch (type) {
+      case FIXED_DELAY:
+        baseStrategy = RetryStrategies.fixDelay(baseDelay, TimeUnit.MILLISECONDS);
+        break;
+      case EXPONENTIAL_BACKOFF:
+        long maxDelay = getNonNegativeLong(args, RETRY_POLICY_DELAY_MAX_MS, RETRY_POLICY_DELAY_MAX_MS,
+                                           cConf.getLong(maxDelayKey));
+        baseStrategy = RetryStrategies.exponentialDelay(baseDelay, maxDelay, TimeUnit.MILLISECONDS);
+        break;
+      default:
+        // not possible
+        throw new IllegalStateException("Unknown retry type " + type);
+    }
+
+    return RetryStrategies.limit(maxRetries, RetryStrategies.timeLimit(maxTimeSecs, TimeUnit.SECONDS, baseStrategy));
+  }
+
+  /**
    * Returns the {@link Resources} based on configurations in the given arguments.
    *
    * Same as calling {@link #getResources(Map, Resources)} with first argument from {@link Arguments#asMap()}.
@@ -168,23 +255,80 @@ public final class SystemArguments {
 
   /**
    * Gets a positive integer value from the given map using the given key.
-   * If there is no such key or if the value is negative, returns {@code null}.
+   * If there is no such key or if the value is not positive, returns {@code null}.
    */
   private static Integer getPositiveInt(Map<String, String> map, String key, String description) {
+    Integer val = getInt(map, key, description);
+    if (val != null && val <= 0) {
+      LOG.warn("Ignoring invalid {} '{}' from runtime arguments. It must be a positive integer.",
+               description, val);
+      return null;
+    }
+    return val;
+  }
+
+  /**
+   * Gets a non-negative (can be 0) integer value from the given map using the given key.
+   * If there is no such key or if the value is negative, returns the default.
+   */
+  private static int getNonNegativeInt(Map<String, String> map, String key, String description, int defaultVal) {
+    Integer val = getInt(map, key, description);
+    if (val == null) {
+      return defaultVal;
+    } else if (val < 0) {
+      LOG.warn("Ignoring invalid {} '{}' from runtime arguments. It must be a non-negative integer.",
+               description, val);
+      return defaultVal;
+    }
+    return val;
+  }
+
+  /**
+   * Gets a non-negative (can be 0) long value from the given map using the given key.
+   * If there is no such key or if the value is negative, returns the default.
+   */
+  private static long getNonNegativeLong(Map<String, String> map, String key, String description, long defaultVal) {
+    Long val = getLong(map, key, description);
+    if (val == null) {
+      return defaultVal;
+    } else if (val < 0) {
+      LOG.warn("Ignoring invalid {} '{}' from runtime arguments. It must be a non-negative long.",
+               description, val);
+      return defaultVal;
+    }
+    return val;
+  }
+
+  private static Integer getInt(Map<String, String> map, String key, String description) {
     String value = map.get(key);
     if (value == null) {
       return null;
     }
 
     try {
-      int intValue = Integer.parseInt(value);
-      if (intValue <= 0) {
-        throw new IllegalArgumentException("Negative " + description + " is not allowed.");
-      }
-      return intValue;
-    } catch (Exception e) {
+      return Integer.parseInt(value);
+    } catch (NumberFormatException e) {
       // Only the log the stack trace as debug, as usually it's not needed.
-      LOG.warn("Ignoring invalid {} '{}' from runtime arguments. It must be a positive integer.", description, value);
+      LOG.warn("Ignoring invalid {} '{}' from runtime arguments. It could not be parsed as an integer.",
+               description, value);
+      LOG.debug("Invalid {}", description, e);
+    }
+
+    return null;
+  }
+
+  private static Long getLong(Map<String, String> map, String key, String description) {
+    String value = map.get(key);
+    if (value == null) {
+      return null;
+    }
+
+    try {
+      return Long.parseLong(value);
+    } catch (NumberFormatException e) {
+      // Only the log the stack trace as debug, as usually it's not needed.
+      LOG.warn("Ignoring invalid {} '{}' from runtime arguments. It could not be parsed as a long.",
+               description, value);
       LOG.debug("Invalid {}", description, e);
     }
 

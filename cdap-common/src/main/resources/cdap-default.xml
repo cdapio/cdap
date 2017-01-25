@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Copyright © 2014-2016 Cask Data, Inc.
+  Copyright © 2014-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -840,7 +840,7 @@
     <name>app.connection.backlog</name>
     <value>20000</value>
     <description>
-      Max connection backlog of CDAP Master
+      Maximum connection backlog of CDAP Master
     </description>
   </property>
 
@@ -1073,7 +1073,7 @@
     <name>http.service.connection.backlog</name>
     <value>20000</value>
     <description>
-      Max connection backlog of master HTTP service
+      Maximum connection backlog of master HTTP service
     </description>
   </property>
 
@@ -1399,7 +1399,7 @@
     <name>metrics.connection.backlog</name>
     <value>${http.service.connection.backlog}</value>
     <description>
-      Max connection backlog of metrics HTTP service
+      Maximum connection backlog of metrics HTTP service
     </description>
   </property>
 
@@ -1673,6 +1673,289 @@
     <value>${http.service.worker.threads}</value>
     <description>
       Number of Netty service IO worker threads for the remote system operation HTTP service
+    </description>
+  </property>
+
+
+  <!-- Retry Policies Configuration -->
+
+  <property>
+    <name>custom.action.retry.policy.base.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>custom.action.retry.policy.max.delay.ms</name>
+    <value>30000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>custom.action.retry.policy.max.retries</name>
+    <value>1000</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>custom.action.retry.policy.max.time.secs</name>
+    <value>600</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>custom.action.retry.policy.type</name>
+    <value>exponential.backoff</value>
+    <description>
+      The type of retry policy for custom actions
+    </description>
+  </property>
+
+  <property>
+    <name>flow.retry.policy.base.delay.ms</name>
+    <value>100</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>flow.retry.policy.max.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>flow.retry.policy.max.retries</name>
+    <value>3</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>flow.retry.policy.max.time.secs</name>
+    <value>10</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>flow.retry.policy.type</name>
+    <value>none</value>
+    <description>
+      The type of retry policy for flows
+    </description>
+  </property>
+
+  <property>
+    <name>mapreduce.retry.policy.base.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>mapreduce.retry.policy.max.delay.ms</name>
+    <value>30000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>mapreduce.retry.policy.max.retries</name>
+    <value>1000</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>mapreduce.retry.policy.max.time.secs</name>
+    <value>600</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>mapreduce.retry.policy.type</name>
+    <value>exponential.backoff</value>
+    <description>
+      The type of retry policy for mapreduce
+    </description>
+  </property>
+
+  <property>
+    <name>service.retry.policy.base.delay.ms</name>
+    <value>100</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>service.retry.policy.max.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>service.retry.policy.max.retries</name>
+    <value>3</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>service.retry.policy.max.time.secs</name>
+    <value>10</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>service.retry.policy.type</name>
+    <value>none</value>
+    <description>
+      The type of retry policy for services
+    </description>
+  </property>
+
+  <property>
+    <name>spark.retry.policy.base.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>spark.retry.policy.max.delay.ms</name>
+    <value>30000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>spark.retry.policy.max.retries</name>
+    <value>1000</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>spark.retry.policy.max.time.secs</name>
+    <value>600</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>spark.retry.policy.type</name>
+    <value>exponential.backoff</value>
+    <description>
+      The type of retry policy for spark
+    </description>
+  </property>
+
+  <property>
+    <name>worker.retry.policy.base.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>worker.retry.policy.max.delay.ms</name>
+    <value>30000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>worker.retry.policy.max.retries</name>
+    <value>1000</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>worker.retry.policy.max.time.secs</name>
+    <value>600</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>worker.retry.policy.type</name>
+    <value>exponential.backoff</value>
+    <description>
+      The type of retry policy for workers
+    </description>
+  </property>
+
+  <property>
+    <name>workflow.retry.policy.base.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>workflow.retry.policy.max.delay.ms</name>
+    <value>30000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>workflow.retry.policy.max.retries</name>
+    <value>1000</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>workflow.retry.policy.max.time.secs</name>
+    <value>600</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>workflow.retry.policy.type</name>
+    <value>exponential.backoff</value>
+    <description>
+      The type of retry policy for workflows
     </description>
   </property>
 

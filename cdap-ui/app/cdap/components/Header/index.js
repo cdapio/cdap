@@ -35,6 +35,12 @@ export default class Header extends Component {
     e.nativeEvent.stopImmediatePropagation();
     return false;
   }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      navbarItemList: nextProps.navbarItemList
+    });
+  }
   render() {
 
     return (

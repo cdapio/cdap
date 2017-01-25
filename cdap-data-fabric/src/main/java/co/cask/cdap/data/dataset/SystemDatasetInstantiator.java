@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
@@ -29,6 +30,7 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -103,6 +105,7 @@ public class SystemDatasetInstantiator implements Closeable {
       }
       return dataset;
     } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, ServiceUnavailableException.class);
       throw new DatasetInstantiationException("Failed to access dataset: " + datasetId, e);
     }
   }

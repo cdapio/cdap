@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2015-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -19,9 +19,9 @@ for i in motd welcome.txt issue issue.net ; do
 cat > /etc/$i << EOF
 			Welcome to the CDAP SDK VM
 
-This virtual machine uses a simple graphical interface. The menu can be accessed
-by clicking the icon at the bottom left. Included are the Eclipse and IntelliJ
-IDEs, Chromium Browser, Git, Subversion and the CDAP Standalone SDK.
+This virtual machine uses a simple graphical interface. The menu can be accessed by
+clicking the icon at the bottom left. Included are the Eclipse and IntelliJ IDEs,
+Chromium Browser, Git, Java, Maven, Subversion, and the CDAP SDK with the Standalone CDAP.
 
 The login and password to the machine is 'cdap' and the user has sudo privileges
 without a password.

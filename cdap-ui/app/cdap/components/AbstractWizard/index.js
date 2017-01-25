@@ -25,6 +25,8 @@ import ApplicationUploadWizard from 'components/CaskWizards/ApplicationUpload';
 
 import MarketArtifactUploadWizard from 'components/CaskWizards/MarketArtifactUpload';
 import MarketHydratorPluginUpload from 'components/CaskWizards/MarketHydratorPluginUpload';
+import OneStepDeployApp from 'components/CaskWizards/OneStepDeploy/OneStepDeployApp';
+import OneStepDeployPlugin from 'components/CaskWizards/OneStepDeploy/OneStepDeployPlugin';
 
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
@@ -34,6 +36,7 @@ import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceSt
 import InformationalStore from 'services/WizardStores/Informational/InformationalStore';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import ApplicationUploadStore from 'services/WizardStores/ApplicationUpload/ApplicationUploadStore';
+import OneStepDeployStore from 'services/WizardStores/OneStepDeploy/OneStepDeployStore';
 
 const WizardTypesMap = {
   'create_app': {
@@ -87,6 +90,14 @@ const WizardTypesMap = {
   'create_stream': {
     tag: StreamCreateWizard,
     store: CreateStreamStore
+  },
+  'one_step_deploy_app': {
+    tag: OneStepDeployApp,
+    store: OneStepDeployStore
+  },
+  'one_step_deploy_plugin': {
+    tag: OneStepDeployPlugin,
+    store: OneStepDeployStore
   }
 };
 

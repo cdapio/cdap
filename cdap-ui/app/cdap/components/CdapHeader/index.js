@@ -14,25 +14,25 @@
  * the License.
  */
 
-import React from 'react';
+import React, {PropTypes} from 'react';
 
-import Header from '../Header';
+import Header from 'components/Header';
 import T from 'i18n-react';
+import NamespaceStore from 'services/NamespaceStore';
+import {Provider, connect} from 'react-redux';
 
-export default function CdapHeader() {
+const mapStateToProps = (state) => {
+  return {
+    namespace: state.selectedNamespace
+  };
+};
 
+function HeaderComponent({namespace}) {
   var navbarItemList = [
     {
-      linkTo: '/ns',
+      linkTo: `/ns/${namespace}`,
       title: T.translate('features.Navbar.CDAP.home')
     },
-    // FIXME: Add later.
-    // {
-    //   linkTo: '/dashboard',
-    //   disabled: true,
-    //   className: 'disabled',
-    //   title: T.translate('features.Navbar.CDAP.dashboard')
-    // },
     {
       linkTo: '/management',
       title: T.translate('features.Navbar.CDAP.management')
@@ -40,8 +40,22 @@ export default function CdapHeader() {
   ];
 
   return (
-    <Header
-      navbarItemList={navbarItemList}
-    />
+    <Header navbarItemList={navbarItemList}/>
   );
 }
+HeaderComponent.propTypes = {
+  namespace: PropTypes.string
+};
+
+const CdapHeaderConnected = connect(mapStateToProps)(HeaderComponent);
+
+function CdapHeader() {
+
+  return (
+    <Provider store={NamespaceStore}>
+      <CdapHeaderConnected />
+    </Provider>
+  );
+}
+
+export default CdapHeader;

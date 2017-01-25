@@ -78,7 +78,9 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.loggingContext = createLoggingContext(program.getId().toId(), getRunId());
-    this.streamWriter = streamWriterFactory.create(new Id.Run(program.getId().toId(), getRunId().getId()), getOwners());
+    this.streamWriter = streamWriterFactory.create(new Id.Run(program.getId().toId(), getRunId().getId()),
+                                                   getOwners(),
+                                                   retryStrategy);
   }
 
   private LoggingContext createLoggingContext(Id.Program programId, RunId runId) {

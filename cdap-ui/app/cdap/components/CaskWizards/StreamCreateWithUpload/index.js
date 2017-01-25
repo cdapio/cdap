@@ -26,6 +26,9 @@ import CreateStreamUploadWizardConfig from 'services/WizardConfigs/CreateStreamW
 import T from 'i18n-react';
 require('./StreamCreate.scss');
 import cookie from 'react-cookie';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
+
 
 export default class StreamCreateWithUploadWizard extends Component {
   constructor(props) {
@@ -33,6 +36,7 @@ export default class StreamCreateWithUploadWizard extends Component {
     this.state = {
       showWizard: this.props.isOpen
     };
+    this.eventEmitter = ee(ee);
   }
   toggleWizard(returnResult) {
     if (this.state.showWizard) {
@@ -79,7 +83,11 @@ export default class StreamCreateWithUploadWizard extends Component {
           }
           return Promise.resolve(state.general.name);
         }
-      );
+      )
+      .map((res) => {
+        this.eventEmitter.emit(globalEvents.STREAMCREATE);
+        return res;
+      });
   }
   render() {
     let input = this.props.input || {};

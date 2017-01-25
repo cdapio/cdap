@@ -46,7 +46,13 @@
         }
 
         .send-event-button {
+          display: flex;
+          justify-content: space-between;
           margin-top: 10px;
+
+          .btn:last-child {
+            margin-left: 10px;
+          }
 
           .fa-spinner {
             margin-right: 10px;

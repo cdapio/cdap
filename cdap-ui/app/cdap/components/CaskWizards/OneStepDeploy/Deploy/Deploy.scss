@@ -12,15 +12,9 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
-require('react');
-require('react-dom');
-require('redux');
-require('lodash');
-require('classnames');
-require('rx');
-require('reactstrap');
-require('i18n-react');
-require('react-cookie');
-require('whatwg-fetch');
+.deploy-step {
+  height: calc(100% - 45px);
+  width: 100%;
+}

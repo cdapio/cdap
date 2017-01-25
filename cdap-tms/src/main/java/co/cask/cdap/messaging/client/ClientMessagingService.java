@@ -294,7 +294,7 @@ public final class ClientMessagingService implements MessagingService {
   private URL createURL(String path) throws MalformedURLException {
     Discoverable discoverable = endpointStrategy.get().pick(DISCOVERY_PICK_TIMEOUT_SECS, TimeUnit.SECONDS);
     if (discoverable == null) {
-      throw new ServiceUnavailableException("No endpoint available for messaging service");
+      throw new ServiceUnavailableException(Constants.Service.MESSAGING_SERVICE);
     }
 
     InetSocketAddress address = discoverable.getSocketAddress();

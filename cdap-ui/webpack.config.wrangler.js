@@ -119,7 +119,7 @@ var loaders = [
 module.exports = {
   context: __dirname + '/app/wrangler',
   entry: {
-    'wrangler': ['./wrangler.js']
+    'wrangler': ['./wrangler.js', 'rx', 'rx-dom']
   },
   module: {
     preLoaders: [

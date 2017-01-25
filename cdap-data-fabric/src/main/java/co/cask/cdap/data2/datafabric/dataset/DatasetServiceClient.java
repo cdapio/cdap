@@ -70,7 +70,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -390,7 +389,7 @@ class DatasetServiceClient {
   }
 
   private String resolve(String resource) throws DatasetManagementException {
-    Discoverable discoverable = endpointStrategySupplier.get().pick(3, TimeUnit.SECONDS);
+    Discoverable discoverable = endpointStrategySupplier.get().pick();
     if (discoverable == null) {
       throw new ServiceUnavailableException("DatasetService");
     }

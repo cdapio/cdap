@@ -1135,4 +1135,23 @@ public final class Constants {
   public static final class Replication {
     public static final String CDAP_SHUTDOWN_TIME_FILENAME = "cdap_shutdown_time";
   }
+
+  /**
+   * Constants for retry policies.
+   */
+  public static final class Retry {
+    private static final String PREFIX = "retry.policy.";
+    public static final String TYPE = PREFIX + "type";
+    public static final String MAX_TIME_SECS = PREFIX + "max.time.secs";
+    public static final String MAX_RETRIES = PREFIX + "max.retries";
+    public static final String DELAY_BASE_MS = PREFIX + "base.delay.ms";
+    public static final String DELAY_MAX_MS = PREFIX + "max.delay.ms";
+    public static final String MAPREDUCE_PREFIX = "mapreduce.";
+    public static final String SPARK_PREFIX = "spark.";
+    public static final String WORKFLOW_PREFIX = "workflow.";
+    public static final String CUSTOM_ACTION_PREFIX = "custom.action.";
+    public static final String WORKER_PREFIX = "worker.";
+    public static final String SERVICE_PREFIX = "service.";
+    public static final String FLOW_PREFIX = "flow.";
+  }
 }

@@ -15,7 +15,7 @@
  */
 
 class HydratorDetailTopPanelController {
-  constructor(HydratorPlusPlusDetailRunsStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailActions, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium, myPipelineExportModalService, myPipelineApi, myHelpers, myPreferenceApi, $q) {
+  constructor(HydratorPlusPlusDetailRunsStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailActions, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium, myPipelineExportModalService, myPipelineApi, myHelpers, myPreferenceApi, $q, $interval) {
     this.GLOBALS = GLOBALS;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.myAlertOnValium = myAlertOnValium;
@@ -33,6 +33,7 @@ class HydratorDetailTopPanelController {
     this.myLoadingService = myLoadingService;
     this.myPreferenceApi = myPreferenceApi;
     this.$q = $q;
+    this.$interval = $interval;
     this.app = {
       name: HydratorPlusPlusDetailNonRunsStore.getPipelineName(),
       description: this.config.description,
@@ -48,6 +49,7 @@ class HydratorDetailTopPanelController {
     this.tooltipDescription = (this.app.description && this.app.description.replace(/\n/g, '<br />')) || '' ;
     this.setState();
     this.setAppStatus();
+    this.pipelineDurationTimer = null;
     var appType = HydratorPlusPlusDetailNonRunsStore.getAppType();
     if (GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
       HydratorPlusPlusDetailActions.fetchScheduleStatus(
@@ -81,6 +83,7 @@ class HydratorDetailTopPanelController {
     this.fetchMacros();
     this.$scope.$on('$destroy', () => {
       this.$timeout.cancel(this.scheduleTimeout);
+      this.$interval.cancel(this.pipelineDurationTimer);
     });
   }
 
@@ -160,19 +163,49 @@ class HydratorDetailTopPanelController {
   setState() {
     var latestRun = this.HydratorPlusPlusDetailRunsStore.getLatestRun();
     var lastRunDuration;
+
     if (latestRun) {
       this.lastFinished = latestRun;
     }
+
     if (this.lastFinished) {
+
+      if (this.lastFinished.status === 'RUNNING') {
+
+        if (!this.pipelineDurationTimer) {
+          this.pipelineDurationTimer = this.$interval(() => {
+
+            if (this.lastFinished.end) {
+              let endDuration = this.lastFinished.end - this.lastFinished.start;
+              this.lastRunTime = typeof this.lastFinished.end === 'number' ? this.moment.utc(endDuration * 1000).format('HH:mm:ss') : 'N/A';
+            } else {
+              let runningDuration = new Date().getTime() - (this.lastFinished.start * 1000);
+              this.lastRunTime = this.moment.utc(runningDuration).format('HH:mm:ss');
+            }
+          }, 1000);
+        }
+      }
+
       lastRunDuration = this.lastFinished.end - this.lastFinished.start;
-      this.lastRunTime = typeof this.lastFinished.end === 'number' ? this.moment.utc(lastRunDuration * 1000).format('HH:mm:ss') : 'N/A';
+
+      let setInitialTimer = new Date().getTime() - (this.lastFinished.start * 1000);
+      this.lastRunTime = typeof this.lastFinished.end === 'number' ?
+                          this.moment.utc(lastRunDuration * 1000).format('HH:mm:ss') :
+                          this.moment.utc(setInitialTimer).format('HH:mm:ss');
     } else {
       this.lastRunTime = 'N/A';
     }
     this.config = this.HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
   }
+
   setAppStatus() {
     this.appStatus = this.HydratorPlusPlusDetailRunsStore.getStatus();
+
+    if (this.appStatus === 'COMPLETED' || this.appStatus === 'KILLED') {
+      this.$interval.cancel(this.pipelineDurationTimer);
+      this.pipelineDurationTimer = null;
+    }
+
     this.config = this.HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
   }
   setScheduleStatus() {
@@ -246,6 +279,8 @@ class HydratorDetailTopPanelController {
     }
   }
   startPipeline() {
+    this.lastRunTime = 'N/A';
+    this.lastFinished = null;
     this.appStatus = 'STARTING';
     this.runPlayer.view = false;
     this.runPlayer.action = null;
@@ -377,6 +412,6 @@ class HydratorDetailTopPanelController {
   }
 }
 
-HydratorDetailTopPanelController.$inject = ['HydratorPlusPlusDetailRunsStore', 'HydratorPlusPlusDetailNonRunsStore', 'HydratorPlusPlusDetailActions', 'GLOBALS', '$state', 'myLoadingService', '$timeout', '$scope', 'moment', 'myAlertOnValium', 'myPipelineExportModalService', 'myPipelineApi', 'myHelpers', 'myPreferenceApi', '$q'];
+HydratorDetailTopPanelController.$inject = ['HydratorPlusPlusDetailRunsStore', 'HydratorPlusPlusDetailNonRunsStore', 'HydratorPlusPlusDetailActions', 'GLOBALS', '$state', 'myLoadingService', '$timeout', '$scope', 'moment', 'myAlertOnValium', 'myPipelineExportModalService', 'myPipelineApi', 'myHelpers', 'myPreferenceApi', '$q', '$interval'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorDetailTopPanelController', HydratorDetailTopPanelController);

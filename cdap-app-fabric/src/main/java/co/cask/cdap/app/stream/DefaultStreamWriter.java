@@ -19,11 +19,14 @@ package co.cask.cdap.app.stream;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.stream.StreamEventData;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
@@ -35,6 +38,7 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.net.HttpHeaders;
@@ -53,7 +57,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Default implementation of {@link StreamWriter}
@@ -75,10 +78,12 @@ public class DefaultStreamWriter implements StreamWriter {
   private final LineageWriter lineageWriter;
   private final AuthenticationContext authenticationContext;
   private final boolean authorizationEnabled;
+  private final RetryStrategy retryStrategy;
 
   @Inject
   public DefaultStreamWriter(@Assisted("run") Id.Run run,
                              @Assisted("owners") Iterable<? extends EntityId> owners,
+                             @Assisted("retryStrategy") RetryStrategy retryStrategy,
                              RuntimeUsageRegistry runtimeUsageRegistry,
                              LineageWriter lineageWriter,
                              DiscoveryServiceClient discoveryServiceClient,
@@ -93,6 +98,7 @@ public class DefaultStreamWriter implements StreamWriter {
     this.runtimeUsageRegistry = runtimeUsageRegistry;
     this.authenticationContext = authenticationContext;
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
+    this.retryStrategy = retryStrategy;
   }
 
   private URL getStreamURL(String stream) throws IOException {
@@ -100,10 +106,16 @@ public class DefaultStreamWriter implements StreamWriter {
   }
 
   private URL getStreamURL(String stream, boolean batch) throws IOException {
-    Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
-    if (discoverable == null) {
-      throw new IOException("Stream Service Endpoint not found");
-    }
+    Discoverable discoverable = Retries.supplyWithRetries(new Supplier<Discoverable>() {
+      @Override
+      public Discoverable get() {
+        Discoverable discoverable = endpointStrategy.pick();
+        if (discoverable == null) {
+          throw new ServiceUnavailableException(Constants.Service.STREAMS);
+        }
+        return discoverable;
+      }
+    }, retryStrategy);
 
     InetSocketAddress address = discoverable.getSocketAddress();
     String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?

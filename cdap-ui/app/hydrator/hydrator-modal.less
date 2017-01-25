@@ -393,23 +393,77 @@ body.theme-cdap {
   overflow-y: hidden;
   .modal-dialog {
     width: 100vw;
-    margin-top: 50px;
+    margin-top: 0;
 
     .modal-content {
-      height: calc(~"100vh - 50px");
+      height: 100vh;
       border-radius: 0;
 
+      .modal-header {
+        @header-height: 50px;
+        height: @header-height;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: #ebecf1;
+        border-bottom: 1px solid #c9ccd6;
+        padding: 0;
+
+        > h4,
+        .modal-title {
+          padding-left: 15px;
+          max-width: 80%;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
+          font-weight: 500;
+          margin-right: auto;
+        }
+
+        div.btn-group { margin-left: auto; }
+        a.btn {
+          background: transparent;
+          border: 0;
+          border-radius: 0;
+          background-clip: padding-box;
+          color: @cdap-header;
+          font-size: 18px;
+          outline: none;
+          padding: 0;
+          white-space: normal;
+          border-left: 1px solid #c9ccd6;
+          width: 61px;
+          height: @header-height;
+          line-height: @header-height;
+          &:last-child { margin-right: -1px; }
+          &:hover {
+            background-color: @cdap-header;
+            border: 0;
+            color: white;
+            background-clip: padding-box;
+          }
+        }
+      }
+
       .modal-body {
-        height: 100%;
+        height: calc(~"100vh - 50px");
         max-height: initial;
         padding: 0;
         overflow: hidden;
 
         .data-table {
           overflow-y: hidden;
+          height: calc(~"100% - 62px");
         }
 
-        .table { margin-top: 0; }
+        .table {
+          margin-top: 0;
+
+          th {
+            padding: 8px;
+            font-size: 13px;
+          }
+        }
       }
     }
   }

@@ -20,4 +20,6 @@
  var HeaderBrand = require('../cdap/components/HeaderBrand').default;
  var Store = require('../cdap/services/NamespaceStore').default;
  var Wrangler = require('../wrangler/components/Wrangler').default;
- export {Store, HeaderBrand, HeaderActions, Wrangler};
+ var globalEvents = require('../cdap/services/global-events').default;
+ var ee = require('event-emitter');
+ export {Store, HeaderBrand, HeaderActions, Wrangler, globalEvents, ee};

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,19 +14,8 @@
  * the License.
  */
 
-require('react-addons-css-transition-group');
-require('whatwg-fetch');
-require('node-uuid');
-require('sockjs-client');
-require('fuse.js');
-require('react-dropzone');
-require('react-redux');
-require('react-router');
-require('moment');
-require('react-file-download');
-require('mousetrap');
-require('papaparse');
-require('rx-dom');
-require('d3');
-require('chart.js');
-require('cdap-avsc');
+export default {
+  APPUPLOAD: 'APPICATION_UPLOAD',
+  STREAMCREATE: 'STREAM_CREATE',
+  PUBLISHPIPELINE: 'PUBLISH_PIPELINE'
+};

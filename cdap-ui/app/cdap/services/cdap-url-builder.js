@@ -14,15 +14,26 @@
  * the License.
  */
 
-require('react-addons-css-transition-group');
-require('react-dropzone');
-require('react-redux');
-require('react-file-download');
-require('papaparse');
-require('rx-dom');
-require('d3');
-require('chart.js');
-require('reactabular-table');
-require('reactabular-sticky');
-require('reactabular-virtualized');
-require('reactabular-resizable');
+
+/**
+ *  Should be able to refactor other places to use this shared function instead
+ **/
+export function constructCdapUrl(resource) {
+  let url;
+
+  // further sugar for building absolute url
+  if (resource._cdapPath) {
+    url = [
+      window.CDAP_CONFIG.sslEnabled ? 'https://' : 'http://',
+      window.CDAP_CONFIG.cdap.routerServerUrl,
+      ':',
+      window.CDAP_CONFIG.sslEnabled ? window.CDAP_CONFIG.cdap.routerSSLServerPort : window.CDAP_CONFIG.cdap.routerServerPort,
+      '/v3',
+      resource._cdapPath
+    ].join('');
+
+    delete resource._cdapPath;
+  }
+
+  return url;
+}
