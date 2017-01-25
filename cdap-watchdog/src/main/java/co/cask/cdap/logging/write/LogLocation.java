@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.SeekableInputStream;
 import co.cask.cdap.logging.filter.Filter;
+import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.serialize.LogSchema;
@@ -28,6 +29,9 @@ import co.cask.cdap.logging.serialize.LoggingEvent;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.SeekableInput;
 import org.apache.avro.generic.GenericDatumReader;
@@ -37,6 +41,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 
@@ -45,7 +52,7 @@ import java.util.concurrent.Callable;
  */
 public class LogLocation {
   private static final Logger LOG = LoggerFactory.getLogger(LogLocation.class);
-
+  private static final long DEFAULT_SKIP_LEN = 10 * 1024 * 1024;
   // old version
   public static final String VERSION_0 = "V0";
   // new version
@@ -101,7 +108,7 @@ public class LogLocation {
 
   /**
    * Return closeable iterator of {@link LogEvent}
-   * @param logFilter filter
+   * @param logFilter filter for filtering log events
    * @param fromTimeMs start timestamp in millis
    * @param toTimeMs end timestamp in millis
    * @param maxEvents max events to return
@@ -109,6 +116,139 @@ public class LogLocation {
    */
   public CloseableIterator<LogEvent> readLog(Filter logFilter, long fromTimeMs, long toTimeMs, int maxEvents) {
     return new LogEventIterator(logFilter, fromTimeMs, toTimeMs, maxEvents);
+  }
+
+  /**
+   * @param logFilter filter for filtering log events
+   * @param fromTimeMs start timestamp in millis
+   * @param toTimeMs end timestamp in millis
+   * @param maxEvents max events to return
+   * @param callback callback to call with log event
+   */
+  public void readLog(Filter logFilter, long fromTimeMs, long toTimeMs, int maxEvents,
+                      Callback callback) {
+    try (CloseableIterator<LogEvent> logEventIter =
+           readLog(logFilter, fromTimeMs, toTimeMs, maxEvents)) {
+      while (logEventIter.hasNext()) {
+        callback.handle(logEventIter.next());
+      }
+    }
+  }
+
+  /**
+   * Return closeable iterator of {@link LogEvent}
+   * @param logFilter filter for filtering log events
+   * @param fromTimeMs start timestamp in millis
+   * @param maxEvents max events to return
+   * @return closeable iterator of previous log events
+   */
+  @SuppressWarnings("WeakerAccess")
+  public Collection<LogEvent> readLogPrev(Filter logFilter, long fromTimeMs, final int maxEvents) throws IOException {
+    DataFileReader<GenericRecord> dataFileReader = createReader();
+
+    try {
+      if (!dataFileReader.hasNext()) {
+        return ImmutableList.of();
+      }
+
+      List<List<LogEvent>> logSegments = Lists.newArrayList();
+      List<LogEvent> logSegment;
+      int count = 0;
+
+      // Calculate skipLen based on fileLength
+      long length = location.length();
+      LOG.trace("Got file length {}", length);
+      long skipLen = length / 10;
+      if (skipLen > DEFAULT_SKIP_LEN || skipLen <= 0) {
+        skipLen = DEFAULT_SKIP_LEN;
+      }
+
+      // For open file, endPosition sync marker is unknown so start from file length and read up to the actual EOF
+      dataFileReader.sync(length);
+      long finalSync = dataFileReader.previousSync();
+      logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, -1);
+
+      if (!logSegment.isEmpty()) {
+        logSegments.add(logSegment);
+        count = count + logSegment.size();
+      }
+
+      LOG.trace("Read logevents {} from position {}", count, finalSync);
+
+      long startPosition = finalSync;
+      long endPosition = startPosition;
+      long currentSync;
+
+      while (startPosition > 0 && count < maxEvents) {
+        // Skip to sync position less than current sync position
+        startPosition = skipToPosition(dataFileReader, startPosition, endPosition, skipLen);
+        currentSync = dataFileReader.previousSync();
+        logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, endPosition);
+
+        if (!logSegment.isEmpty()) {
+          logSegments.add(logSegment);
+          count = count + logSegment.size();
+        }
+        LOG.trace("Read logevents {} from position {} to endPosition {}", count, currentSync, endPosition);
+
+        endPosition = currentSync;
+      }
+
+      int skip = count >= maxEvents ? count - maxEvents : 0;
+      return Lists.newArrayList(Iterables.skip(Iterables.concat(Lists.reverse(logSegments)), skip));
+    } finally {
+      try {
+        dataFileReader.close();
+      } catch (IOException e) {
+        LOG.error("Got exception while closing log file {}", location, e);
+      }
+    }
+  }
+
+  /**
+   *  Read current block in Avro file from current block sync marker to next block sync marker
+   */
+  private List<LogEvent> readToEndSyncPosition(DataFileReader<GenericRecord> dataFileReader, Filter logFilter,
+                                               long fromTimeMs, long endSyncPosition) throws IOException {
+
+    List<LogEvent> logSegment = new ArrayList<>();
+    GenericRecord datum = null;
+    long currentSyncPosition = dataFileReader.previousSync();
+    // Read up to the end if endSyncPosition is not known (in case of an open file)
+    // or read until endSyncPosition has been reached
+    while (dataFileReader.hasNext() && (endSyncPosition == -1 || (currentSyncPosition < endSyncPosition))) {
+      datum = dataFileReader.next(datum);
+      ILoggingEvent loggingEvent = LoggingEvent.decode(datum);
+
+      // Stop when reached fromTimeMs
+      if (loggingEvent.getTimeStamp() > fromTimeMs) {
+        break;
+      }
+
+      if (logFilter.match(loggingEvent)) {
+        logSegment.add(new LogEvent(loggingEvent,
+                                    new LogOffset(LogOffset.INVALID_KAFKA_OFFSET, loggingEvent.getTimeStamp())));
+      }
+      currentSyncPosition = dataFileReader.previousSync();
+    }
+
+    return logSegment;
+  }
+
+  /**
+   * Starting from currentSyncPosition, move backwards by skipLen number of positions in each iteration to
+   * find out a sync position less than currentSyncPosition
+   */
+  private long skipToPosition(DataFileReader<GenericRecord> dataFileReader,
+                              long startPosition, long endSyncPosition, long skipLen) throws IOException {
+    long currentSync = endSyncPosition;
+    while (startPosition > 0 && currentSync == endSyncPosition) {
+      startPosition = startPosition < skipLen ? 0 : startPosition - skipLen;
+      dataFileReader.sync(startPosition);
+      currentSync = dataFileReader.previousSync();
+      LOG.trace("Got position {} after skipping {} positions from currentSync {}", startPosition, skipLen, currentSync);
+    }
+    return startPosition;
   }
 
   private final class LogEventIterator implements CloseableIterator<LogEvent> {

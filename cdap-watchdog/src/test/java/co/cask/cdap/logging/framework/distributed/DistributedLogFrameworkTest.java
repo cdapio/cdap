@@ -46,8 +46,8 @@ import co.cask.cdap.logging.framework.LogPathIdentifier;
 import co.cask.cdap.logging.guice.DistributedLogFrameworkModule;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManagerFactory;
+import co.cask.cdap.logging.meta.FileMetaDataReader;
 import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogLocation;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -149,13 +149,13 @@ public class DistributedLogFrameworkTest {
     }
 
     // Read the logs back. They should be sorted by timestamp order.
-    final FileMetaDataManager metaDataManager = injector.getInstance(FileMetaDataManager.class);
+    final FileMetaDataReader metaDataReader = injector.getInstance(FileMetaDataReader.class);
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        List<LogLocation> locations = metaDataManager.listFiles(new LogPathIdentifier(NamespaceId.SYSTEM.getNamespace(),
+        List<LogLocation> locations = metaDataReader.listFiles(new LogPathIdentifier(NamespaceId.SYSTEM.getNamespace(),
                                                                                       Constants.Logging.COMPONENT_NAME,
-                                                                                      "test"));
+                                                                                     "test"), 0, Long.MAX_VALUE);
         if (locations.size() != 1) {
           return false;
         }
