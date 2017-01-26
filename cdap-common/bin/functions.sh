@@ -645,7 +645,8 @@ cdap_start_java() {
     __startup_checks=${CDAP_STARTUP_CHECKS:-$(cdap_get_conf "master.startup.checks.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
 
     # Build and upload coprocessor jars
-    cdap_hbase_setup || die "Could not setup HBase coprocessors required by CDAP"
+    logecho "$(date) Ensuring required HBase coprocessors are on HDFS"
+    cdap_setup_coprocessors </dev/null >>${__logfile} 2>&1 || die "Could not setup coprocessors. Please check ${__logfile} for more information."
 
     if [[ ${__startup_checks} == true ]]; then
       logecho "$(date) Running CDAP Master startup checks -- this may take a few minutes"
@@ -1084,12 +1085,28 @@ cdap_upgrade_tool() {
 }
 
 #
-# cdap_hbase_setup [arguments]
+# cdap_setup [component] [arguments]
 #
-cdap_hbase_setup() {
+cdap_setup() {
+  local __component=${1}
+  shift
+
+  # currently, only ever need to setup coprocessors
+  # in the future, we might want to add more commands, like 'smoketest'
+  if [[ ${__component} != 'coprocessors' ]]; then
+    die "Setup component must be 'coprocessors'"
+  fi
+
+  cdap_setup_${__component} ${@}
+  return $?
+}
+
+#
+# cdap_setup_coprocessors [arguments]
+#
+cdap_setup_coprocessors() {
   local readonly __ret __class=co.cask.cdap.data.tools.CoprocessorBuildTool
 
-  logecho "$(date) Ensuring required HBase coprocessors are on HDFS"
   cdap_run_class ${__class} ${@}
   __ret=${?}
   return ${__ret}
