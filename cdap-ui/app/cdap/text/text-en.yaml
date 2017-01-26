@@ -688,4 +688,10 @@ features:
     nodeserverDown: 'User interface service is down'
   StatusAlertMessage:
     message: 'Services are back online'
+  Tags:
+    label: Tags
+    notags: No Tags added
+  Description:
+    label: Description
+    nodescription: No Description available
 ...

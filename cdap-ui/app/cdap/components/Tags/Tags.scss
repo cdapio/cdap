@@ -14,31 +14,15 @@
  * the License.
  */
 
-.overview-header {
-  display: flex;
-  color: white;
-  padding: 10px 16px;
+.tags-holder {
+  margin-top: 8px;
+  .btn.btn-secondary {
+    background-color: lightgray;
+    padding: 3px 5px;
+    font-size: 12px;
 
-  .header {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    i,
-    h4 {
-      margin: 0 2px;
-      font-size: 17px;
+    .fa.fa-times {
+      margin-left: 5px;
     }
-    i {
-      font-size: 15px;
-    }
-  }
-  .link-to-detail {
-    margin-right: 50px;
-    color: white;
-    text-decoration: underline;
-  }
-  .fa.fa-times {
-    font-size: 19px;
-    cursor: pointer;
   }
 }

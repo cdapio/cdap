@@ -17,6 +17,8 @@
 import React, {PropTypes, Component} from 'react';
 import isNil from 'lodash/isNil';
 import OverviewHeader from 'components/Overview/OverviewHeader';
+import OverviewMetaSection from 'components/Overview/OverviewMetaSection';
+
 require('./AppOverview.scss');
 
 export default class AppOverview extends Component {
@@ -42,6 +44,9 @@ export default class AppOverview extends Component {
           title="Application"
           linkTo="/"
           onClose={this.props.onClose}
+        />
+        <OverviewMetaSection
+          entity={this.state.entity}
         />
         <pre>
           {JSON.stringify(this.state.entity, null, 2)}
