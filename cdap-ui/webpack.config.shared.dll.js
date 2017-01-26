@@ -16,8 +16,21 @@
 
 var webpack = require('webpack');
 var path = require('path');
-
-module.exports = {
+var mode = process.env.NODE_ENV;
+var plugins = [
+  new webpack.DefinePlugin({
+    'process.env':{
+      'NODE_ENV': JSON.stringify("production"),
+      '__DEVTOOLS__': false
+    },
+  }),
+  new webpack.DllPlugin({
+    path: path.join(__dirname, 'dll', 'shared-[name]-manifest.json'),
+    name: 'shared_[name]',
+    context: path.resolve(__dirname, 'dll')
+  })
+];
+var webpackConfig = {
   entry: {
     vendor: [
       'react',
@@ -36,25 +49,31 @@ module.exports = {
     filename: 'dll.shared.[name].js',
     library: 'shared_[name]'
   },
-  plugins: [
-    new webpack.DefinePlugin({
-      'process.env':{
-        'NODE_ENV': JSON.stringify("production"),
-        '__DEVTOOLS__': false
-      },
-    }),
-    new webpack.DllPlugin({
-      path: path.join(__dirname, 'dll', 'shared-[name]-manifest.json'),
-      name: 'shared_[name]',
-      context: path.resolve(__dirname, 'dll')
-    }),
+  stats: {
+    chunks: false
+  },
+  plugins,
+  resolve: {
+    modules: ['node_modules']
+  }
+};
+
+if (mode === 'production') {
+  plugins.push(
     new webpack.optimize.UglifyJsPlugin({
       compress: {
         warnings: false
       }
     })
-  ],
-  resolve: {
-    modules: ['node_modules']
-  }
-};
+  );
+  webpackConfig = Object.assign({}, webpackConfig, {
+    plugins
+  });
+}
+if (mode !== 'production') {
+  webpackConfig = Object.assign({}, webpackConfig, {
+    devtool: 'source-map'
+  });
+}
+
+module.exports = webpackConfig;

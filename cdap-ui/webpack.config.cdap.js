@@ -58,22 +58,6 @@ var plugins = [
 ];
 var mode = process.env.NODE_ENV;
 
-if (mode === 'production' || mode === 'build') {
-  plugins.push(
-    new webpack.DefinePlugin({
-      'process.env':{
-        'NODE_ENV': JSON.stringify("production"),
-        '__DEVTOOLS__': false
-      },
-    }),
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false
-      }
-    })
-  );
-}
-
 var loaders = [
   {
     test: /\.scss$/,
@@ -113,7 +97,7 @@ var loaders = [
   }
 ];
 
-module.exports = {
+var webpackConfig = {
   cache: true,
   context: __dirname + '/app/cdap',
   entry: {
@@ -145,6 +129,9 @@ module.exports = {
     filename: './[name].js',
     path: __dirname + '/cdap_dist/cdap_assets'
   },
+  stats: {
+    chunks: false
+  },
   plugins: plugins,
   resolve: {
     alias: {
@@ -155,3 +142,30 @@ module.exports = {
     }
   }
 };
+if (mode === 'production' || mode === 'build') {
+  plugins.push(
+    new webpack.DefinePlugin({
+      'process.env':{
+        'NODE_ENV': JSON.stringify("production"),
+        '__DEVTOOLS__': false
+      },
+    }),
+    new webpack.optimize.UglifyJsPlugin({
+      compress: {
+        warnings: false
+      }
+    })
+  );
+  webpackConfig = Object.assign({}, webpackConfig, {
+    plugins
+  });
+}
+
+if (mode !== 'production') {
+  webpackConfig = Object.assign({}, webpackConfig, {
+    devtool: 'source-map'
+  });
+}
+
+
+module.exports = webpackConfig;
