@@ -38,9 +38,11 @@ started correctly.
      :languages: console,shell-session
      
      $ docker-machine create --driver virtualbox cdap
+     . . .
      $ docker-machine env cdap
      
-   This will create a new Docker virtual machine using VirtualBox named ``cdap`` and print out the environment.
+   This will create a new Docker virtual machine using VirtualBox named ``cdap``; once
+   created, the second command will print out the environment.
 
 #. When you run ``docker-machine env cdap``, it will print a message on the screen such as::
 
@@ -51,14 +53,17 @@ started correctly.
      # Run this command to configure your shell: 
      # eval $(docker-machine env cdap)
  
-   It is essential to run these export commands (or the single ``eval`` command). Otherwise,
-   subsequent Docker commands will fail because they won't be able to connect to the correct
-   Docker VM.
+   It is essential to run these export commands (or the single ``eval`` command, ``eval
+   $(docker-machine env cdap)``). Otherwise, subsequent Docker commands will fail because
+   they won't be able to connect to the correct Docker VM.
   
 #. If you are running **Docker on either Mac OS X or Microsoft Windows**, Docker is running a
    virtual Linux machine on top of your host OS. You will need to use the address shown
    above (such as ``192.168.99.100``) as the host name when either connecting to the CDAP
    UI or making an HTTP request.
+
+#. If you are running **Docker on Microsoft Windows**, note that paths used employ Linux
+   forward-slashes (``/``) and not the Microsoft Windows back-slashes (``\\``).
 
 #. Once Docker has started, pull down the *CDAP Docker Image* from the Docker Hub using:
 
@@ -86,7 +91,20 @@ started correctly.
  
      $ docker run -d --name cdap-standalone -p 11011:11011 -p 11015:11015 caskdata/cdap-standalone:|release|
      
-   This will start the container, name it ``cdap-standalone``, and setup the proxying of ports.
+   This will start the container (in the background), name it ``cdap-standalone``, and set the proxying of ports.
+
+#. Start the *CDAP Standalone Docker container* with:
+
+   .. tabbed-parsed-literal::
+     :tabs: "Linux or Mac OS X",Windows
+     :mapping: linux,windows
+     :dependent: linux-windows
+     :languages: console,shell-session
+ 
+     $ docker run -it --name cdap-sdk-debugging -p 11011:11011 -p 11015:11015 caskdata/cdap-standalone:|release| cdap.sh start --enable-debug 
+     
+   This will start the container (in the foreground, the default), :ref:`enable debugging
+   <debugging-standalone>`, name it ``cdap-sdk-debugging``, and set the proxying of ports.
 
 #. CDAP will start automatically once the container starts. CDAP’s software
    directory is under ``/opt/cdap/sdk``.
@@ -98,43 +116,104 @@ started correctly.
    with the Docker VM's IP address (such as ``192.168.99.100``) that you obtained earlier.
    Start a browser and enter the address to access the CDAP UI from outside Docker.
 
-#. To control the CDAP instance, use this command, substituting one of ``start``, ``restart``, ``status``,
-   or ``stop`` for ``<command>``:
 
-   .. tabbed-parsed-literal::
-     :tabs: "Linux or Mac OS X",Windows
-     :mapping: linux,windows
-     :dependent: linux-windows
-     :languages: console,shell-session
-     
-     .. Linux or Mac OS X
-     
-     $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk <command>
+Options when Starting CDAP Containers
+-------------------------------------
 
-     .. Windows
-     
-     > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk <command>
+- Starting the Standalone CDAP, in the background::
 
-#. When you are finished, stop CDAP and then shutdown Docker:
+    $ docker run -d --name cdap-standalone caskdata/cdap-standalone
 
-   .. tabbed-parsed-literal::
-     :tabs: "Linux or Mac OS X",Windows
-     :mapping: linux,windows
-     :dependent: linux-windows
-     :languages: console,shell-session
-     
-     .. Linux or Mac OS X
-     
-     $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
-     $ docker-machine stop cdap
+- Use the CDAP CLI within the above *cdap-standalone* container::
 
-     .. Windows
-     
-     > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
-     > docker-machine stop cdap
+    $ docker exec -it cdap-standalone cdap-cli.sh
 
-#. For a full list of Docker Commands, see the `Docker Command Line Documentation.
-   <https://docs.docker.com/reference/commandline/cli/>`__
+- Use the CDAP CLI in its own container (*cdap-cli*), against a remote CDAP instance at ``${CDAP_HOST}``::
+
+    $ docker run -it --name cdap-cli --rm caskdata/cdap-standalone cdap-cli.sh -u http://${CDAP_HOST}:11011
+
+- Use the CDAP CLI in its own container (*cdap-cli*), against the above *cdap-standalone* container using container linking::
+
+    $ docker run -it --link cdap-sdk:sdk --name cdap-cli --rm caskdata/cdap-standalone sh -c 'exec cdap-cli.sh -u http://${SDK_PORT_11011_TCP_ADDR}:${SDK_PORT_11011_TCP_PORT}'
+
+- Starting the Standalone CDAP, in the foreground, with ports forwarded::
+
+    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-standalone caskdata/cdap-standalone cdap.sh start
+    
+- Starting the Standalone CDAP, in the foreground, with ports forwarded, and with debugging enabled::
+
+    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-sdk-debugging caskdata/cdap-standalone cdap.sh start --enable-debug
+
+  .. tabbed-parsed-literal::
+    :tabs: "Linux or Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    :languages: console,shell-session
+    
+    .. Linux or Mac OS X
+    
+    $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk <command>
+
+    .. Windows
+    
+    > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk <command>
+
+
+Controlling the CDAP Instance
+-----------------------------
+
+- To control the CDAP instance, use this command, substituting one of ``start``, ``restart``, ``status``,
+  or ``stop`` for ``<command>``:
+
+  .. tabbed-parsed-literal::
+    :tabs: "Linux or Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    :languages: console,shell-session
+    
+    .. Linux or Mac OS X
+    
+    $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk <command>
+
+    $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk start
+    $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk restart
+    $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk status
+    $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
+
+    .. Windows
+    
+    > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk <command>
+
+    > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk start
+    > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk restart
+    > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk status
+    > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
+
+
+- When you are finished, stop CDAP and then shutdown Docker:
+
+  .. tabbed-parsed-literal::
+    :tabs: "Linux or Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    :languages: console,shell-session
+    
+    .. Linux or Mac OS X
+    
+    $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
+    $ docker-machine stop cdap
+
+    .. Windows
+    
+    > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
+    > docker-machine stop cdap
+
+
+Docker Resources
+----------------
+
+- For a full list of Docker Commands, see the `Docker Command Line Documentation.
+  <https://docs.docker.com/engine/reference/commandline/cli/>`__
 
 
 .. _docker-kitematic:
@@ -143,19 +222,29 @@ Docker using Kitematic
 ======================
 
 `Docker Kitematic <https://www.docker.com/docker-kitematic>`__ is available as part of the
-`Docker Toolbox <https://www.docker.com/docker-toolbox>`__ for either Mac OS X or Microsoft Windows.
+`Docker <https://www.docker.com/products/overview>`__ for either Mac OS X or Microsoft Windows.
 It is a graphical user interface for running Docker containers. Follow these steps to install 
 Kitematic and then download, start, and connect to a CDAP container.
 
-#. Download and install the `Docker Toolbox <https://www.docker.com/docker-toolbox>`__ for 
+#. Download and install `Docker <https://www.docker.com/products/overview>`__ for 
    either Mac OS X or Microsoft Windows.
+   
+#. Download and install Kitematic for either Mac OS X or Microsoft Windows. The easiest
+   method is to select *Open Kitematic* from the *Docker* menu, and follow the
+   instructions for downloading and installing it:
+   
+     .. figure:: ../../_images/kitematic/kitematic-0-installing.png
+        :figwidth: 100%
+        :width: 300px
+        :align: center
+        :class: bordered-image
 
 #. Start Kitematic. On Mac OS X, it will be installed in ``/Applications/Docker/Kitematic``; on 
    Windows, in ``Start Menu > Docker > Kitematic``.
    
-#. Once Kitematic has started, search for the **CDAP image** using the search box at the
-   top of the window and ``caskdata:cdap-standalone``. Then click on the repository menu,
-   circled in red here:
+#. Once Kitematic has started, search for the **CDAP image** by using the search box at the
+   top of the window and entering ``caskdata:cdap-standalone``. Once you have found the page, 
+   click on the **repository menu**, circled in red here:
  
      .. figure:: ../../_images/kitematic/kitematic-1-searching.png
         :figwidth: 100%
@@ -163,7 +252,7 @@ Kitematic and then download, start, and connect to a CDAP container.
         :align: center
         :class: bordered-image
 
-#. Click on the tags button:
+#. Click on the **tags** button:
  
      .. figure:: ../../_images/kitematic/kitematic-2-tags.png
         :figwidth: 100%
@@ -171,9 +260,9 @@ Kitematic and then download, start, and connect to a CDAP container.
         :align: center
         :class: bordered-image
 
-#. Select the desired version.
-   Note that the tag **latest** is the last version that was put up at Docker Hub, which is not the 
-   necessarily the desired version, which is |literal-version|:
+#. Select the **desired version**. Note that the tag *latest* is the last version that
+   was put up at Docker Hub, which is not the necessarily the desired version, which is
+   |bold-version| (*3.5.0* shown as an illustration):
  
      .. figure:: ../../_images/kitematic/kitematic-3-select-tag.png
         :figwidth: 100%
@@ -181,7 +270,7 @@ Kitematic and then download, start, and connect to a CDAP container.
         :align: center
         :class: bordered-image
 
-#. Close the menu by pressing the ``X`` in the circle. Press "Create" to download and start the CDAP image. 
+#. Close the menu by pressing the ``X`` in the circle. Click "Create" to download and start the CDAP image. 
    When it has started up, you will see in the logs a message that the CDAP UI is listening on port 11011:
  
      .. figure:: ../../_images/kitematic/kitematic-4-cdap-started.png
@@ -191,19 +280,19 @@ Kitematic and then download, start, and connect to a CDAP container.
         :class: bordered-image
 
 #. To connect a web browser for the CDAP UI, you'll need to find the external IP addresses
-   and ports that the Docker host is exposing. The easiest way to do that is click on the
-   *Settings* tab, and then the *Ports* tab:
+   and ports that the Docker host is exposing. These are listed on the right-hand side of
+   the previous illustration:
  
      .. figure:: ../../_images/kitematic/kitematic-5-links.png
         :figwidth: 100%
-        :width: 800px
+        :width: 400px
         :align: center
         :class: bordered-image
 
 #. This shows that the CDAP container is listening on the internal port ``11011`` within the
    Docker host, while the Docker host proxies that port on the virtual machine IP address
-   and port (``192.168.99.100:32769``). Enter that address and port into your system web browser to
-   connect to the CDAP UI:
+   and port (``localhost:32773``). Enter that address and port into your system web browser to
+   connect to the CDAP UI, such as http://localhost:32773:
    
      .. figure:: ../../_images/kitematic/kitematic-6-cdap-ui.png
         :figwidth: 100%
