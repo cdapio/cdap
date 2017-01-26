@@ -69,6 +69,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     }
   };
 
+  private final boolean manageCoprocessors;
   protected final TableId tableId;
   protected final Configuration hConf;
   protected final CConfiguration cConf;
@@ -84,6 +85,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     this.tableUtil = tableUtil;
     this.tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     this.ddlExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
+    this.manageCoprocessors = cConf.getBoolean(Constants.HBase.MANAGE_COPROCESSORS);
   }
 
   @Override
@@ -219,7 +221,10 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     if (priority == null) {
       priority = Coprocessor.PRIORITY_USER;
     }
-    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI().getPath()), priority, null);
+    // if coprocessors are not managed by CDAP, it is up to the cluster admin to install them on every regionserver
+    // and ensure they are in the classpath for every regionserver
+    Path path = manageCoprocessors ? new Path(jarFile.toURI().getPath()) : null;
+    tableDescriptor.addCoprocessor(coprocessor.getName(), path, priority, null);
   }
 
   protected CoprocessorDescriptor getCoprocessorDescriptor(Class<? extends  Coprocessor> coprocessor, Location jarFile,
@@ -228,7 +233,8 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       priority = Coprocessor.PRIORITY_USER;
     }
 
-    return new CoprocessorDescriptor(coprocessor.getName(), jarFile.toURI(), priority, null);
+    String jarPath = manageCoprocessors ? jarFile.toURI().getPath() : null;
+    return new CoprocessorDescriptor(coprocessor.getName(), jarPath, priority, null);
   }
 
   protected abstract CoprocessorJar createCoprocessorJar() throws IOException;
