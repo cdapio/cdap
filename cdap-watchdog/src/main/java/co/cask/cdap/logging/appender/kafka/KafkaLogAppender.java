@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,12 +19,10 @@ package co.cask.cdap.logging.appender.kafka;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -45,12 +43,7 @@ public final class KafkaLogAppender extends LogAppender {
     addInfo("Initializing KafkaLogAppender...");
 
     this.producer = new SimpleKafkaProducer(cConf);
-    try {
-      this.loggingEventSerializer = new LoggingEventSerializer();
-    } catch (IOException e) {
-      addError("Error initializing KafkaLogAppender.", e);
-      throw Throwables.propagate(e);
-    }
+    this.loggingEventSerializer = new LoggingEventSerializer();
     addInfo("Successfully initialized KafkaLogAppender.");
   }
 

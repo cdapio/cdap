@@ -83,12 +83,8 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   @Override
   public void start() {
     super.start();
-    try {
-      this.logFileManager = new LogFileManager(maxFileLifetimeMs, syncIntervalBytes, new LogSchema().getAvroSchema(),
-                                               fileMetaDataManager, locationFactory);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    this.logFileManager = new LogFileManager(maxFileLifetimeMs, syncIntervalBytes, LogSchema.LoggingEvent.SCHEMA,
+                                             fileMetaDataManager, locationFactory);
   }
 
   @Override

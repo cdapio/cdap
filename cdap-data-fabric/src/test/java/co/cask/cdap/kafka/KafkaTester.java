@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,7 +36,6 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
-import org.apache.twill.internal.kafka.client.ZKBrokerService;
 import org.apache.twill.internal.utils.Networks;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.kafka.client.BrokerService;
@@ -92,7 +91,6 @@ public class KafkaTester extends ExternalResource {
    * Create a {@link KafkaTester} with default configurations and {@link Module Guice modules} and a single
    * Kafka partition.
    */
-  @SuppressWarnings("unused")
   public KafkaTester() {
     this(ImmutableMap.<String, String>of(), ImmutableList.<Module>of(), 1);
   }
@@ -135,7 +133,7 @@ public class KafkaTester extends ExternalResource {
     zkClient.startAndWait();
     kafkaClient = injector.getInstance(KafkaClientService.class);
     kafkaClient.startAndWait();
-    brokerService = new ZKBrokerService(zkClient);
+    brokerService = injector.getInstance(BrokerService.class);
     brokerService.startAndWait();
     LOG.info("Waiting for Kafka server to startup...");
     waitForKafkaStartup();

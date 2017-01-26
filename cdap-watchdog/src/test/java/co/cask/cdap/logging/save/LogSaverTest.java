@@ -440,7 +440,7 @@ public class LogSaverTest extends KafkaTestBase {
       Map.Entry<Long, Location> lastEntry = files.lastEntry();
       if (lastEntry != null) {
         Location latestFile = lastEntry.getValue();
-        AvroFileReader logReader = new AvroFileReader(new LogSchema().getAvroSchema());
+        AvroFileReader logReader = new AvroFileReader(LogSchema.LoggingEvent.SCHEMA);
         LogCallback logCallback = new LogCallback();
         logCallback.init();
         NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);

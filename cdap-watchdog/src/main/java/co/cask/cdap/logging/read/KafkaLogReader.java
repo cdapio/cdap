@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -134,7 +134,7 @@ public class KafkaLogReader implements LogReader {
     }
 
     int partition = partitioner.partition(loggingContext.getLogPartition(), -1);
-    LOG.trace("Reading from kafka partiton {}", partition);
+    LOG.trace("Reading from kafka partition {}", partition);
 
     callback.init();
 
@@ -224,7 +224,7 @@ public class KafkaLogReader implements LogReader {
       if (kafkaCallback.getEventsRead() > MAX_READ_EVENTS_KAFKA) {
         break;
       }
-      startOffset = kafkaCallback.getLastOffset().getKafkaOffset() + 1;
+      startOffset = lastOffset.getKafkaOffset() + 1;
     }
 
     return kafkaCallback.getEventsMatched();
@@ -256,10 +256,17 @@ public class KafkaLogReader implements LogReader {
     @Override
     public void handle(long offset, ByteBuffer msgBuffer) {
       ++eventsRead;
-      ILoggingEvent event = serializer.fromBytes(msgBuffer);
-      LogOffset logOffset = new LogOffset(offset, event.getTimeStamp());
+      ILoggingEvent event = null;
+      try {
+        event = serializer.fromBytes(msgBuffer);
+      } catch (IOException e) {
+        LOG.warn("Ignore logging event due to decode failure: {}", e.getMessage());
+        LOG.debug("Ignore logging event stack trace", e);
+      }
 
-      if (offset < stopOffset && eventsMatched < maxEvents && logFilter.match(event) &&
+      LogOffset logOffset = new LogOffset(offset, event == null ? 0L : event.getTimeStamp());
+
+      if (event != null && offset < stopOffset && eventsMatched < maxEvents && logFilter.match(event) &&
         event.getTimeStamp() > fromTimeMs) {
         ++eventsMatched;
         callback.handle(new LogEvent(event, logOffset));

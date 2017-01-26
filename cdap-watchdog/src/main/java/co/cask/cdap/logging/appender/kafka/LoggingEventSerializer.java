@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,11 @@
 package co.cask.cdap.logging.appender.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.serialize.LoggingEvent;
 import com.google.common.base.Throwables;
-import kafka.utils.VerifiableProperties;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -31,65 +31,67 @@ import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.EncoderFactory;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Avro serializer for ILoggingEvent.
+ * Method of this class is not thread safe, hence cannot be called from multiple threads concurrently.
  */
+@NotThreadSafe
 public final class LoggingEventSerializer {
-  private final LogSchema logSchema;
 
-  public LoggingEventSerializer() throws IOException {
-    this.logSchema = new LogSchema();
-  }
+  private final GenericDatumReader<GenericRecord> datumReader = new GenericDatumReader<>(getAvroSchema());
+  private BinaryDecoder decoder;
 
-  public LoggingEventSerializer(VerifiableProperties props) throws IOException {
-    this();
-  }
-
+  /**
+   * Returns the {@link Schema} for logging event, which is the same as {@link LogSchema.LoggingEvent#SCHEMA}.
+   */
   public Schema getAvroSchema() {
-    return logSchema.getAvroSchema();
+    return LogSchema.LoggingEvent.SCHEMA;
   }
 
   public byte[] toBytes(ILoggingEvent loggingEvent, LoggingContext loggingContext) {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     BinaryEncoder encoder = EncoderFactory.get().directBinaryEncoder(out, null);
-    GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(logSchema.getAvroSchema());
+    GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(getAvroSchema());
     try {
-      writer.write(LoggingEvent.encode(logSchema.getAvroSchema(), loggingEvent, loggingContext), encoder);
+      writer.write(LoggingEvent.encode(getAvroSchema(), loggingEvent, loggingContext), encoder);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
     return out.toByteArray();
   }
 
-  public ILoggingEvent fromBytes(ByteBuffer buffer) {
+  /**
+   * Decodes the content of the given {@link ByteBuffer} into {@link ILoggingEvent}, based on the
+   * schema returned by the {@link #getAvroSchema()} method.
+   *
+   * @param buffer the buffer to decode
+   * @return a new instance of {@link ILoggingEvent} decoded from the buffer
+   * @throws IOException if fail to decode
+   */
+  public ILoggingEvent fromBytes(ByteBuffer buffer) throws IOException {
     return LoggingEvent.decode(toGenericRecord(buffer));
   }
 
-  public GenericRecord toGenericRecord(ByteBuffer buffer) {
-    ByteArrayInputStream in;
+  /**
+   * Decodes the content of the given {@link ByteBuffer} into {@link GenericRecord}, based on the schema
+   * returned by the {@link #getAvroSchema()} method.
+   *
+   * @param buffer the buffer to decode
+   * @return a {@link GenericRecord} representing the decoded content.
+   * @throws IOException if fail to decode
+   */
+  public GenericRecord toGenericRecord(ByteBuffer buffer) throws IOException {
     if (buffer.hasArray()) {
-      in = new ByteArrayInputStream(buffer.array(), buffer.arrayOffset(), buffer.limit());
+      decoder = DecoderFactory.get().binaryDecoder(buffer.array(), buffer.arrayOffset() + buffer.position(),
+                                                   buffer.remaining(), decoder);
     } else {
-      byte [] bytes = new byte[buffer.limit()];
-      buffer.get(bytes);
-      in = new ByteArrayInputStream(bytes);
+      decoder = DecoderFactory.get().binaryDecoder(Bytes.toBytes(buffer), decoder);
     }
-
-    BinaryDecoder decoder = DecoderFactory.get().directBinaryDecoder(in, null);
-    GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(logSchema.getAvroSchema());
-    try {
-      return reader.read(null, decoder);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  public ILoggingEvent fromGenericRecord(GenericRecord datum) {
-    return LoggingEvent.decode(datum);
+    return datumReader.read(null, decoder);
   }
 }
