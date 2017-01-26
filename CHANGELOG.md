@@ -1,6 +1,11 @@
 cdap CHANGELOG
 ==============
 
+v2.28.0 (Jan 19, 2017)
+----------------------
+- Use krb5_principal and krb5_keytab LWRPs ( Issue: #181 )
+- Add 3.5.2 and 4.0.0 and make 4.0.0 default ( Issues: #194 #195 )
+
 v2.27.0 (Dec 14, 2016)
 ----------------------
 - Do not set kafka.server.log.dirs so kafka.log.dir can be used ( Issue: #187 )
