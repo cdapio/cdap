@@ -8,8 +8,6 @@
 Debugging a CDAP Application
 ============================
 
-.. _debugging-standalone:
-
 Debugging an Application in Standalone CDAP
 ===========================================
 Any CDAP application can be debugged in the Standalone CDAP
