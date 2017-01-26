@@ -28,6 +28,7 @@ import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.serialize.LoggingEvent;
+import co.cask.cdap.logging.serialize.LoggingEventImpl;
 import co.cask.cdap.logging.write.AvroFileWriter;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogCleanup;
@@ -125,7 +126,7 @@ public class FileLogAppender extends LogAppender {
     }
 
     checkpointIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_CHECKPOINT_INTERVAL_MS,
-                                                LoggingConfiguration.DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS);
+                                           LoggingConfiguration.DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS);
     Preconditions.checkArgument(checkpointIntervalMs > 0,
                                 "Checkpoint interval is invalid: %s", checkpointIntervalMs);
 
@@ -167,7 +168,9 @@ public class FileLogAppender extends LogAppender {
     try {
       GenericRecord datum = LoggingEvent.encode(logSchema, logMessage.getLoggingEvent(),
                                                 logMessage.getLoggingContext());
-      logFileWriter.append(ImmutableList.of(new LogWriteEvent(datum, logMessage.getLoggingEvent(),
+      logFileWriter.append(ImmutableList.of(new LogWriteEvent(datum,
+                                                              LoggingEventImpl.getLoggingEvent(
+                                                                logMessage.getLoggingEvent()),
                                                               logMessage.getLoggingContext())));
     } catch (Throwable t) {
       LOG.error("Got exception while serializing log event {}.", logMessage.getLoggingEvent(), t);

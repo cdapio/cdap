@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,13 @@
 package co.cask.cdap.api.log;
 
 /**
- * Defines log messages to select.
- * See {@link LogService} for more info.
- * See {@link LogQueryBuilder} for a way to define {@link LogQuery}.
+ * Replica of IThrowableProxy interface in Logback
  */
-public interface LogQuery {
+public interface ThrowableProxy {
+  String getMessage();
+  String getClassName();
+  StackTraceElementProxy[] getStackTraceElementProxyArray();
+  int getCommonFrames();
+  ThrowableProxy getCause();
+  ThrowableProxy[] getSuppressed();
 }

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.logging.write;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.api.log.LoggingEvent;
 import co.cask.cdap.common.logging.LoggingContext;
 import com.google.common.primitives.Longs;
 import org.apache.avro.generic.GenericRecord;
@@ -27,10 +27,10 @@ import org.apache.avro.generic.GenericRecord;
 public class LogWriteEvent implements Comparable<LogWriteEvent> {
 
   protected final GenericRecord  genericRecord;
-  protected final ILoggingEvent logEvent;
+  protected final LoggingEvent logEvent;
   protected final LoggingContext loggingContext;
 
-  public LogWriteEvent(GenericRecord genericRecord, ILoggingEvent logEvent, LoggingContext loggingContext) {
+  public LogWriteEvent(GenericRecord genericRecord, LoggingEvent logEvent, LoggingContext loggingContext) {
     this.genericRecord = genericRecord;
     this.logEvent = logEvent;
     this.loggingContext = loggingContext;
@@ -40,7 +40,7 @@ public class LogWriteEvent implements Comparable<LogWriteEvent> {
     return genericRecord;
   }
 
-  public ILoggingEvent getLogEvent() {
+  public LoggingEvent getLogEvent() {
     return logEvent;
   }
 

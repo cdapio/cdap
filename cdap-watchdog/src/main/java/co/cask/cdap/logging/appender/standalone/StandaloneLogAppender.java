@@ -21,6 +21,7 @@ import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.logging.save.KafkaLogProcessor;
+import co.cask.cdap.logging.serialize.LoggingEventImpl;
 import com.google.common.collect.Iterators;
 
 import java.util.Set;
@@ -64,6 +65,6 @@ public class StandaloneLogAppender extends LogAppender {
 
   private KafkaLogEvent getKafkaLogEvent(LogMessage message) {
     // Create a Kafkalog event based on ILoggingEvent, dummy values for GenericRecord, partition and offset.
-    return new KafkaLogEvent(null, message, message.getLoggingContext(), 0, -1);
+    return new KafkaLogEvent(null, LoggingEventImpl.getLoggingEvent(message), message.getLoggingContext(), 0, -1);
   }
 }

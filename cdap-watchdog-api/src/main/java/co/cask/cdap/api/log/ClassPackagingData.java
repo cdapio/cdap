@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,18 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package co.cask.cdap.api.log;
 
 /**
- * Filter that checks if specific marker exists in log message.
+ * Replica of Logback ClassPackagingData
  */
-public class ContainsMarkerFilter implements LogMarkerFilter {
-  /**
-   * Constructor that takes marker value to look for in log messages.
-   * @param marker marker value
-   */
-  public ContainsMarkerFilter(String marker) {
-    // TODO
+public final class ClassPackagingData {
+  private final String codeLocation;
+  private final String version;
+  private final boolean exact;
+
+  public ClassPackagingData(String codeLocation, String version, boolean exact) {
+    this.codeLocation = codeLocation;
+    this.version = version;
+    this.exact = exact;
+  }
+  public String getCodeLocation() {
+    return codeLocation;
+  }
+  public String getVersion() {
+    return version;
+  }
+  public boolean isExact() {
+    return exact;
   }
 }

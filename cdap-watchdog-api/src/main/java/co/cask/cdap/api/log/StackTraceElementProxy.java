@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,16 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package co.cask.cdap.api.log;
 
-import org.slf4j.Marker;
-import org.slf4j.MarkerFactory;
-
 /**
- *
+ * Replica of Logback StackTraceElementProxy
  */
-public class SystemLoggerConstants {
-  public static final Marker USER = MarkerFactory.getMarker("USER");
-  public static final Marker SYSTEM = MarkerFactory.getMarker("SYSTEM");
+public interface StackTraceElementProxy {
+  ClassPackagingData getClassPackagingData();
+  StackTraceElement getStackTraceElement();
 }

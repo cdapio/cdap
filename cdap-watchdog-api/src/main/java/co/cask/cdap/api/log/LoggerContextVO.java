@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,42 +13,34 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package co.cask.cdap.api.log;
 
-/**
- *
- */
-public interface LogMessage {
+import java.util.Map;
 
-  /**
-   *
-   */
-  enum LogLevel {
-    TRACE,
-    DEBUG,
-    INFO,
-    WARN,
-    ERROR
+/**
+ * Replica of Logback LoggerContextVO
+ */
+public class LoggerContextVO {
+  private final String name;
+  private final Map<String, String> propertyMap;
+  private final long birthTime;
+
+  public LoggerContextVO(String name, Map<String, String> propertyMap, long birthTime) {
+    this.name = name;
+    this.propertyMap = propertyMap;
+    this.birthTime = birthTime;
   }
 
-  /**
-   * @return log message timestamp
-   */
-  long getTimestamp();
+  public String getName() {
+    return name;
+  }
 
-  /**
-   * @return log message text
-   */
-  String getText();
+  public Map<String, String> getPropertyMap() {
+    return propertyMap;
+  }
 
-  /**
-   * @return log level
-   */
-  LogLevel getLogLevel();
+  public long getBirthTime() {
+    return birthTime;
+  }
 
-  /**
-   * @return user markers this log message is tagged with
-   */
-  String[] getMarkers();
 }
