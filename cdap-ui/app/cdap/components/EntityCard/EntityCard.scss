@@ -75,6 +75,11 @@ $jump-button-container-size: 80px;
     .card-header {
       color: white;
       padding: 0;
+
+      .card-header-wrapper {
+        width: 100%;
+        display: flex;
+      }
     }
     .card-body {
       padding: 0;

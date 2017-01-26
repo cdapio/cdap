@@ -28,7 +28,8 @@ export default class SetPreferenceAction extends Component {
     super(props);
 
     this.state = {
-      modal: false
+      modal: false,
+      preferencesSaved: false
     };
 
     this.namespace = NamespaceStore.getState().selectedNamespace;
@@ -39,6 +40,23 @@ export default class SetPreferenceAction extends Component {
 
     this.toggleModal = this.toggleModal.bind(this);
     this.toggleTooltip = this.toggleTooltip.bind(this);
+    this.onPreferencesSaved = this.onPreferencesSaved.bind(this);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({preferencesSaved: nextProps.savedMessageState});
+  }
+
+  componentWillUnmount() {
+    this.subscription();
+  }
+
+  onPreferencesSaved() {
+    this.props.onSuccess();
+    this.setState({preferencesSaved: true});
+    setTimeout(() => {
+      this.setState({preferencesSaved: false});
+    }, 3000);
   }
 
   toggleTooltip() {
@@ -52,13 +70,9 @@ export default class SetPreferenceAction extends Component {
     this.setState({modal: !this.state.modal});
   }
 
-  componentWillUnmount() {
-    this.subscription();
-  }
-
   render() {
     const actionLabel = T.translate('features.FastAction.setPreferencesActionLabel');
-    let wrenchClasses = classnames('fa fa-wrench', {'fa-lg': this.props.setAtNamespaceLevel}, {'saved-success': this.props.savedMessageState});
+    let wrenchClasses = classnames('fa fa-wrench', {'fa-lg': this.props.setAtNamespaceLevel}, {'saved-success': this.state.preferencesSaved});
     let tooltipID = `${this.namespace}-setpreferences`;
     if (this.props.entity) {
       tooltipID = `${this.props.entity.uniqueId}-setpreferences`;
@@ -87,9 +101,7 @@ export default class SetPreferenceAction extends Component {
               isOpen={this.state.modal}
               toggleModal={this.toggleModal}
               entity={this.props.entity}
-              setAtNamespaceLevel={this.props.setAtNamespaceLevel}
-              onSuccess={this.props.onSuccess}
-              savedMessageState={this.props.savedMessageState}
+              onPreferencesSaved={this.onPreferencesSaved}
             />
           :
             null
@@ -113,7 +125,7 @@ SetPreferenceAction.propTypes = {
   savedMessageState: PropTypes.bool
 };
 
-SetPreferenceModal.defaultProps = {
+SetPreferenceAction.defaultProps = {
   setAtNamespaceLevel: false,
   modalIsOpen: () => {},
   onSuccess: () => {},

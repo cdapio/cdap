@@ -56,4 +56,9 @@
     background-color: $program-entity-header-bg;
     border: $card-border-width solid $program-entity-header-bg;
   }
+
+  &.success-message {
+    background-color: $success-message-bg;
+    border: $card-border-width solid $success-message-bg;
+  }
 }

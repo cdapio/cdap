@@ -153,7 +153,10 @@ features:
       origin: ORIGIN
     setPreferencesReset: Reset
     setPreferencesFailed: Error - Set Preferences Failed.
-    setPreferencesSuccess: Preferences Saved
+    setPreferencesSuccess:
+      default: Preferences Saved
+      application: Application Preferences Saved
+      program: Program Preferences Saved
     start: Start
     stop: Stop
     sendEventsButtonLabel: Send
