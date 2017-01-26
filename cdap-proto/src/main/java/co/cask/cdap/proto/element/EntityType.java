@@ -25,6 +25,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.FlowletQueueId;
 import co.cask.cdap.proto.id.InstanceId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -53,6 +54,7 @@ import javax.annotation.Nullable;
 public enum EntityType {
 
   INSTANCE(InstanceId.class, null),
+  KERBEROSPRINCIPAL(KerberosPrincipalId.class, null),
   NAMESPACE(NamespaceId.class, Id.Namespace.class),
   APPLICATION(ApplicationId.class, Id.Application.class),
   PROGRAM(ProgramId.class, Id.Program.class),

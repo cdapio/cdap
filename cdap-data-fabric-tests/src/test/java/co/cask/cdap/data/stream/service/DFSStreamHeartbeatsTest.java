@@ -24,6 +24,8 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
@@ -158,6 +160,8 @@ public class DFSStreamHeartbeatsTest {
           bind(HeartbeatPublisher.class).to(MockHeartbeatPublisher.class).in(Scopes.SINGLETON);
 
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+
+          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
       }));
 

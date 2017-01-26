@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,10 @@ package co.cask.cdap.common.kerberos;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.hadoop.security.authentication.util.KerberosUtil;
 import org.apache.twill.common.Threads;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
@@ -166,5 +168,34 @@ public final class SecurityUtil {
           }
         }, delaySec, delaySec, TimeUnit.SECONDS);
     }
+  }
+
+  /**
+   * Returns a {@link KerberosName} from the given {@link KerberosPrincipalId} if the given kerberos principal id
+   * is valid. Refer to
+   * <a href="https://web.mit.edu/kerberos/krb5-1.5/krb5-1.5.4/doc/krb5-user/What-is-a-Kerberos-Principal_003f.html">
+   * Kerberos Principal</a> for details.
+   *
+   * @param principalId The {@link KerberosPrincipalId} from which {@link KerberosName} needs to be created
+   * @return {@link KerberosName} for the given {@link KerberosPrincipalId}
+   * @throws IllegalArgumentException if failed to create a {@link KerberosName} from the given
+   * {@link KerberosPrincipalId}
+   */
+  public static KerberosName getKerberosName(KerberosPrincipalId principalId) {
+    return new KerberosName(principalId.getPrincipal());
+  }
+
+
+  /**
+   * Checks if the given {@link KerberosPrincipalId} is valid or not by calling
+   * {@link #getKerberosName(KerberosPrincipalId)}. This is just a wrapper around
+   * {@link #getKerberosName(KerberosPrincipalId)} to not return an object to the caller for simplicity.
+   *
+   * @param principalId {@link KerberosPrincipalId} which needs to be validated
+   * @throws IllegalArgumentException if failed to create a {@link KerberosName} from the given
+   * {@link KerberosPrincipalId}
+   */
+  public static void validateKerberosPrincipal(KerberosPrincipalId principalId) {
+    getKerberosName(principalId);
   }
 }

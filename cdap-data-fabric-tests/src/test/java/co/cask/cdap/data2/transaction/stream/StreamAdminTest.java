@@ -22,6 +22,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.data.file.FileWriter;
@@ -36,6 +37,7 @@ import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -54,6 +56,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -69,9 +72,11 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 public abstract class StreamAdminTest {
+  private static final Gson GSON = new Gson();
   private static final Principal USER = new Principal(System.getProperty("user.name"), Principal.PrincipalType.USER);
 
   protected static CConfiguration cConf = CConfiguration.create();
@@ -85,6 +90,8 @@ public abstract class StreamAdminTest {
   protected abstract InMemoryAuditPublisher getInMemoryAuditPublisher();
 
   protected abstract Authorizer getAuthorizer();
+
+  protected abstract OwnerAdmin getOwnerAdmin();
 
   protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
     namespacedLocationFactory.get(FOO_NAMESPACE.toId()).mkdirs();
@@ -252,6 +259,39 @@ public abstract class StreamAdminTest {
     streamAdmin.truncate(stream);
     Assert.assertEquals(0, getStreamSize(stream));
     streamAdmin.drop(stream);
+  }
+
+  @Test
+  public void testOwner() throws Exception {
+    // crate a stream with owner
+    StreamAdmin streamAdmin = getStreamAdmin();
+    OwnerAdmin ownerAdmin = getOwnerAdmin();
+    grantAndAssertSuccess(FOO_NAMESPACE, USER, ImmutableSet.of(Action.WRITE));
+    StreamId stream = FOO_NAMESPACE.stream("stream");
+    Properties properties = new Properties();
+    KerberosPrincipalId ownerPrincipal = new KerberosPrincipalId("user/somehost@somekdc.net");
+    properties.put(Constants.Security.OWNER_PRINCIPAL, GSON.toJson(ownerPrincipal));
+    streamAdmin.create(stream, properties);
+    Assert.assertTrue(streamAdmin.exists(stream));
+
+    // Check that the owner information got stored in owner store
+    Assert.assertTrue(ownerAdmin.exists(stream));
+
+    // also verify that we are able to get owner information back in properties
+    Assert.assertEquals(ownerPrincipal, streamAdmin.getProperties(stream).getOwnerPrincipal());
+
+    // updating stream owner should fail
+    try {
+      streamAdmin.updateConfig(stream, new StreamProperties(1L, null, null, null,
+                                                            new KerberosPrincipalId("user/somekdc.net")));
+      Assert.fail();
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+
+    // drop the stream which should also delete the owner info
+    streamAdmin.drop(stream);
+    Assert.assertFalse(ownerAdmin.exists(stream));
   }
 
   @Test

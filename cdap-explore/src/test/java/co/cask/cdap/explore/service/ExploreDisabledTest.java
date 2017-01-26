@@ -25,6 +25,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
@@ -243,6 +245,7 @@ public class ExploreDisabledTest {
           protected void configure() {
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
             bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           }
         }
     );

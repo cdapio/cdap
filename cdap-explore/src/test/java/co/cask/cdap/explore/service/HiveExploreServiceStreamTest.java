@@ -296,7 +296,6 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
       Double yPrice = 1.23;
       Double zPrice = 50 * 45.67 + 100 * 98.76;
 
-
       ExploreExecutionResult result = exploreClient.submit(
         NAMESPACE_ID,
         "SELECT `user`, sum(num) as total_num, sum(price * num) as total_price " +

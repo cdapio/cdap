@@ -19,6 +19,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.security.UGIProvider;
@@ -95,6 +97,7 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
             bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           }
         })
     );

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.metadata.dataset;
 
+import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -48,26 +49,26 @@ final class MdsKey {
     keySplitter.skipString();
 
     // Skip targetId
-    if (type.equals(KeyHelper.TYPE_MAP.get(ProgramId.class))) {
+    if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(ProgramId.class))) {
       keySplitter.skipString();
       keySplitter.skipString();
       keySplitter.skipString();
       keySplitter.skipString();
-    } else if (type.equals(KeyHelper.TYPE_MAP.get(ApplicationId.class))) {
+    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(ApplicationId.class))) {
       keySplitter.skipString();
       keySplitter.skipString();
-    } else if (type.equals(KeyHelper.TYPE_MAP.get(DatasetId.class))) {
+    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(DatasetId.class))) {
       keySplitter.skipString();
       keySplitter.skipString();
-    } else if (type.equals(KeyHelper.TYPE_MAP.get(StreamId.class))) {
+    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(StreamId.class))) {
       keySplitter.skipString();
       keySplitter.skipString();
-    } else if (type.equals(KeyHelper.TYPE_MAP.get(StreamViewId.class))) {
+    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(StreamViewId.class))) {
       // skip namespace, stream, view
       keySplitter.skipString();
       keySplitter.skipString();
       keySplitter.skipString();
-    } else if (type.equals(KeyHelper.TYPE_MAP.get(ArtifactId.class))) {
+    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(ArtifactId.class))) {
       // skip namespace, name, version
       keySplitter.skipString();
       keySplitter.skipString();
@@ -121,7 +122,7 @@ final class MdsKey {
     // so skip the first two.
     keySplitter.skipBytes();
     keySplitter.skipString();
-    return KeyHelper.getTargetIdIdFromKey(keySplitter, type);
+    return EntityIdKeyHelper.getTargetIdIdFromKey(keySplitter, type);
   }
 
   static String getNamespaceId(MDSKey key) {
@@ -148,11 +149,11 @@ final class MdsKey {
   }
 
   private static MDSKey.Builder getMDSKeyPrefix(NamespacedEntityId targetId, byte[] rowPrefix) {
-    String targetType = KeyHelper.getTargetType(targetId);
+    String targetType = EntityIdKeyHelper.getTargetType(targetId);
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(rowPrefix);
     builder.add(targetType);
-    KeyHelper.addTargetIdToKey(builder, targetId);
+    EntityIdKeyHelper.addTargetIdToKey(builder, targetId);
     return builder;
   }
 

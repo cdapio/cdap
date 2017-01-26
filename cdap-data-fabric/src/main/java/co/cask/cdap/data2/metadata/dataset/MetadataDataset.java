@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.metadata.indexer.DefaultValueIndexer;
@@ -241,7 +242,7 @@ public class MetadataDataset extends AbstractDataset {
    * @return a Map representing the metadata for the specified {@link NamespacedEntityId}
    */
   private Map<String, String> getMetadata(NamespacedEntityId targetId) {
-    String targetType = KeyHelper.getTargetType(targetId);
+    String targetType = EntityIdKeyHelper.getTargetType(targetId);
     MDSKey mdsKey = MdsKey.getMDSValueKey(targetId, null);
     byte[] startKey = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
@@ -314,7 +315,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param filter the {@link Predicate} that should be satisfied to remove a key
    */
   private void removeMetadata(NamespacedEntityId targetId, Predicate<String> filter) {
-    String targetType = KeyHelper.getTargetType(targetId);
+    String targetType = EntityIdKeyHelper.getTargetType(targetId);
     MDSKey mdsKey = MdsKey.getMDSValueKey(targetId, null);
     byte[] prefix = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(prefix);

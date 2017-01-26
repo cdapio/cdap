@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -83,6 +84,7 @@ import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.store.DefaultOwnerStore;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
@@ -289,8 +291,16 @@ public class UpgradeTool {
 
   /**
    * Do the start up work
+   * Note: includeNewDatasets boolean is required because upgrade tool has two mode: 1. Normal CDAP upgrade and
+   * 2. Upgrading co processor for tables after hbase upgrade. This parameter specifies whether new system dataset
+   * which were added in the current release needs to be added in the dataset framework or not.
+   * During Normal CDAP upgrade (1) we don't need these datasets to be added in the ds framework as they will get
+   * created during upgrade rather than when cdap starts after upgrade which is what we want.
+   * Whereas during Hbase upgrade (2) we want these new tables to be added so that the co processor of these tables
+   * can be upgraded when the user runs CDAP's Hbase Upgrade after upgrading to a newer version of Hbase.
+   * @param includeNewDatasets boolean which specifies whether to add new datasets in ds framework or not
    */
-  private void startUp() throws Exception {
+  private void startUp(boolean includeNewDatasets) throws Exception {
     // Start all the services.
     LOG.info("Starting Zookeeper Client...");
     Services.startAndWait(zkClientService, cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
@@ -302,7 +312,7 @@ public class UpgradeTool {
     txService.startAndWait();
     authorizationService.startAndWait();
     LOG.info("Initializing Dataset Framework...");
-    initializeDSFramework(cConf, dsFramework);
+    initializeDSFramework(cConf, dsFramework, includeNewDatasets);
     LOG.info("Building and uploading new HBase coprocessors...");
     for (CoprocessorManager.Type type : CoprocessorManager.Type.values()) {
       coprocessorManager.ensureCoprocessorExists(type);
@@ -354,7 +364,7 @@ public class UpgradeTool {
           if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
             System.out.println("Starting upgrade ...");
             try {
-              startUp();
+              startUp(false);
               performUpgrade();
               System.out.println("\nUpgrade completed successfully.\n");
             } finally {
@@ -371,7 +381,7 @@ public class UpgradeTool {
           if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
             System.out.println("Starting upgrade ...");
             try {
-              startUp();
+              startUp(true);
               performHBaseUpgrade();
               System.out.println("\nUpgrade completed successfully.\n");
             } finally {
@@ -537,13 +547,28 @@ public class UpgradeTool {
 
   /**
    * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
+   * Note: includeNewDatasets boolean is required because upgrade tool has two mode: 1. Normal CDAP upgrade and
+   * 2. Upgrading co processor for tables after hbase upgrade. This parameter specifies whether new system dataset
+   * which were added in the current release needs to be added in the dataset framework or not.
+   * During Normal CDAP upgrade (1) we don't need these datasets to be added in the ds framework as they will get
+   * created during upgrade rather than when cdap starts after upgrade which is what we want.
+   * Whereas during Hbase upgrade (2) we want these new tables to be added so that the co processor of these tables
+   * can be upgraded when the user runs CDAP's Hbase Upgrade after upgrading to a newer version of Hbase.
    */
   private void initializeDSFramework(CConfiguration cConf,
-                                     DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
+                                     DatasetFramework datasetFramework, boolean includeNewDatasets)
+    throws IOException, DatasetManagementException {
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
     // artifacts
     ArtifactStore.setupDatasets(datasetFramework);
+    // Note: do no remove this if block even if it's empty. Read comment below and function doc above
+    if (includeNewDatasets) {
+      // Add all new system dataset introduced in the current release in this block. If no new dataset was introduced
+      // then leave this block empty but do not remove block so that it can be used in next release if needed
+      // owner meta
+      DefaultOwnerStore.setupDatasets(datasetFramework);
+    }
     // metadata and lineage
     DefaultMetadataStore.setupDatasets(datasetFramework);
     LineageStore.setupDatasets(datasetFramework);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Objects;
@@ -28,21 +29,29 @@ public class StreamProperties {
 
   private final Long ttl;
   private final FormatSpecification format;
+  @SerializedName("owner.principal")
+  private final KerberosPrincipalId ownerPrincipal;
 
   @SerializedName("notification.threshold.mb")
   private final Integer notificationThresholdMB;
   private final String description;
 
   public StreamProperties(Long ttl, FormatSpecification format, Integer notificationThresholdMB) {
-    this(ttl, format, notificationThresholdMB, null);
+    this(ttl, format, notificationThresholdMB, null, null);
   }
 
   public StreamProperties(Long ttl, FormatSpecification format, Integer notificationThresholdMB,
                           @Nullable String description) {
+    this(ttl, format, notificationThresholdMB, description, null);
+  }
+
+  public StreamProperties(Long ttl, FormatSpecification format, Integer notificationThresholdMB,
+                          @Nullable String description, @Nullable KerberosPrincipalId ownerPrincipal) {
     this.ttl = ttl;
     this.format = format;
     this.notificationThresholdMB = notificationThresholdMB;
     this.description = description;
+    this.ownerPrincipal = ownerPrincipal;
   }
 
   /**
@@ -75,6 +84,14 @@ public class StreamProperties {
     return description;
   }
 
+  /**
+   * @return The {@link KerberosPrincipalId} of the stream owner
+   */
+  @Nullable
+  public KerberosPrincipalId getOwnerPrincipal() {
+    return ownerPrincipal;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -87,14 +104,15 @@ public class StreamProperties {
     StreamProperties that = (StreamProperties) o;
 
     return Objects.equals(ttl, that.ttl) &&
-      Objects.equals(format, that.format) &
-      Objects.equals(notificationThresholdMB, that.notificationThresholdMB) &
-      Objects.equals(description, that.description);
+      Objects.equals(format, that.format) &&
+      Objects.equals(notificationThresholdMB, that.notificationThresholdMB) &&
+      Objects.equals(description, that.description) &&
+      Objects.equals(ownerPrincipal, that.ownerPrincipal);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(ttl, format, notificationThresholdMB, description);
+    return Objects.hash(ttl, format, notificationThresholdMB, description, ownerPrincipal);
   }
 
   @Override
@@ -104,6 +122,7 @@ public class StreamProperties {
       ", format=" + format +
       ", notificationThresholdMB=" + notificationThresholdMB +
       ", description=" + description +
+      ", ownerPrincipal=" + ownerPrincipal +
       '}';
   }
 }

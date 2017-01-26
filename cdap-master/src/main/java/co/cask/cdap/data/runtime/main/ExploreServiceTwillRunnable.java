@@ -25,6 +25,8 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
@@ -422,6 +424,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
           bind(Store.class).to(DefaultStore.class);
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
           bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
+          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
       });
   }
