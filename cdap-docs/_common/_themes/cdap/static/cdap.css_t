@@ -568,7 +568,7 @@ div.code.code-tab {
 }
 
 div.tab-contents {
-    padding-bottom: 16px;
+    margin-bottom: 16px;
 }
 
 
