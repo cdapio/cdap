@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2015-2016 Cask Data, Inc.
+# Copyright © 2015-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,9 @@
 
 # CDAP config
 # The git branch to clone
-CDAP_BRANCH=${CDAP_BRANCH:-develop}
+CDAP_BRANCH=${CDAP_BRANCH:-release/4.0}
 # Optional tag to checkout - All released versions of this script should set this
-CDAP_TAG=''
+CDAP_TAG='v4.0.1'
 # The CDAP package version passed to Chef
 CDAP_VERSION=${CDAP_VERSION:-4.0.1-1}
 # The version of Chef to install
