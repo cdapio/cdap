@@ -17,6 +17,6 @@
 # limitations under the License.
 
 # Version of CDAP Ambari Service
-default['cdap']['ambari']['version'] = '4.0.0-1'
+default['cdap']['ambari']['version'] = '4.0.2-1'
 # Should cdap::ambari recipe install/manage Ambari
 default['cdap']['ambari']['install_ambari'] = node['cdap']['ambari']['install'] || false

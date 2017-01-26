@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Attribute:: sdk
 #
-# Copyright © 2015-2016 Cask Data, Inc.
+# Copyright © 2015-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -81,10 +81,14 @@ default['cdap']['sdk']['checksum'] =
     '9629fce59e4c413c1bf5609dd46f13a439be07becf406a69ef54374ad7763e12'
   when '3.5.2'
     'de2c7c319d9c850a125d3aacaddcf05c02fb2bf756033b4c43e3d1122c2cc6c4'
+  when '3.5.3'
+    '8b0a35f806ec0986efdce5faf39a8b1fd5417dcb09ff90037a8087da76be890c'
   when '3.6.0'
     '8b09a8f9865ff9752216d324e5d9a1c882b827677e058f3f32bb56ceac131ea0'
   when '4.0.0'
     '57b5733f7a2a828fe589bc89feeb7e318464e2e270b4bccd081c54981c83e859'
+  when '4.0.1'
+    'df20d9d0bf21f5337f47bf92d317b5d759f0221ba69ebe0a129b0d2d965cf82f'
   end
 default['cdap']['sdk']['install_path'] = '/opt/cdap'
 default['cdap']['sdk']['user'] = 'cdap'
