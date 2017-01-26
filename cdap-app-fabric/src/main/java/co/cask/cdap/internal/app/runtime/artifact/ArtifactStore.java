@@ -1104,7 +1104,7 @@ public class ArtifactStore {
     private final ArtifactMeta meta;
 
     ArtifactData(Location location, ArtifactMeta meta) {
-      this(location.toURI().getPath(), meta);
+      this(Locations.getRelativePath(location), meta);
     }
 
     ArtifactData(String locationPath, ArtifactMeta meta) {
@@ -1120,7 +1120,7 @@ public class ArtifactStore {
     private final String artifactLocationPath;
 
     PluginData(PluginClass pluginClass, ArtifactRange usableBy, Location artifactLocation) {
-      this(pluginClass, usableBy, artifactLocation.toURI().getPath());
+      this(pluginClass, usableBy, Locations.getRelativePath(artifactLocation));
     }
 
     PluginData(PluginClass pluginClass, ArtifactRange usableBy, String artifactLocationPath) {
@@ -1136,7 +1136,7 @@ public class ArtifactStore {
     private final String artifactLocationPath;
 
     AppData(ApplicationClass appClass, Location artifactLocation) {
-      this(appClass, artifactLocation.toURI().getPath());
+      this(appClass, Locations.getRelativePath(artifactLocation));
     }
 
     AppData(ApplicationClass appClass, String artifactLocationPath) {

@@ -341,6 +341,18 @@ public final class Locations {
   }
 
   /**
+   * Returns the relative path for a given location
+   * @param location
+   * @return
+   */
+  public static String getRelativePath(Location location) {
+    URI baseURI = location.getLocationFactory().create("").toURI();
+    URI locationURI = location.toURI();
+    URI relativeURI = baseURI.relativize(locationURI);
+    return relativeURI.getPath();
+  }
+
+  /**
    * Create the directory represented by the location if not exists.
    *
    * @param location the location for the directory.
