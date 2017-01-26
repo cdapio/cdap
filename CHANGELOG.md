@@ -1,6 +1,11 @@
 cdap CHANGELOG
 ==============
 
+v2.28.1 (Jan 26, 2017)
+----------------------
+- Properly constrain version of base package installed with CLI ( Issue: #198 )
+- Add CDAP 4.0.1, 3.5.3, and Ambari Service 4.0.2 ( Issue: #199 )
+
 v2.28.0 (Jan 19, 2017)
 ----------------------
 - Use krb5_principal and krb5_keytab LWRPs ( Issue: #181 )
