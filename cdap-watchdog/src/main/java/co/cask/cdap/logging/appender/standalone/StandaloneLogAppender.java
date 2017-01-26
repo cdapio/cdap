@@ -17,13 +17,19 @@
 package co.cask.cdap.logging.appender.standalone;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.api.log.LogProcessor;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.logging.save.KafkaLogProcessor;
+import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.Properties;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Wrapper around LogAppender and LogProcessor plugins to make plugins work in standalone.
@@ -32,18 +38,35 @@ public class StandaloneLogAppender extends LogAppender {
 
   private final LogAppender appender;
   private final Set<KafkaLogProcessor> plugins;
+  private final List<LogProcessor> logProcessorExtensions;
+  private final Properties logProcessorExtensionsProperties;
 
-  public StandaloneLogAppender(LogAppender appender, Set<KafkaLogProcessor> plugins) {
+  public StandaloneLogAppender(LogAppender appender, Set<KafkaLogProcessor> plugins,
+                               List<LogProcessor> logProcessorExtensions,
+                               Properties logProcessorExtensionsProperties) {
     this.appender = appender;
     this.plugins = plugins;
+    this.logProcessorExtensions = logProcessorExtensions;
+    this.logProcessorExtensionsProperties = logProcessorExtensionsProperties;
     setName("standalone-log-appender");
   }
 
   @Override
   protected void append(LogMessage logMessage) {
     appender.append(logMessage);
+    Iterator<KafkaLogEvent> eventIterator = Iterators.singletonIterator(getKafkaLogEvent(logMessage));
     for (KafkaLogProcessor plugin : plugins) {
-      plugin.process(Iterators.singletonIterator(getKafkaLogEvent(logMessage)));
+      plugin.process(eventIterator);
+    }
+
+    for (LogProcessor logProcessorExtension : logProcessorExtensions) {
+      logProcessorExtension.process(Iterators.transform(eventIterator, new Function<KafkaLogEvent, ILoggingEvent>() {
+        @Nullable
+        @Override
+        public ILoggingEvent apply(@Nullable KafkaLogEvent input) {
+          return input.getLogEvent();
+        }
+      }));
     }
   }
 
@@ -54,11 +77,17 @@ public class StandaloneLogAppender extends LogAppender {
 
   @Override
   public void start() {
+    for (LogProcessor logProcessorExtension : logProcessorExtensions) {
+      logProcessorExtension.initialize(logProcessorExtensionsProperties);
+    }
     appender.start();
   }
 
   @Override
   public void stop() {
+    for (LogProcessor logProcessorExtension : logProcessorExtensions) {
+      logProcessorExtension.stop();
+    }
     appender.stop();
   }
 

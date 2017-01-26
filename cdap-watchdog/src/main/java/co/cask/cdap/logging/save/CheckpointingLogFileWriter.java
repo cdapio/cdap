@@ -16,9 +16,13 @@
 
 package co.cask.cdap.logging.save;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.api.log.LogProcessor;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.logging.write.AvroFileWriter;
 import co.cask.cdap.logging.write.LogFileWriter;
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +31,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.Nullable;
 
 /**
  * LogFileWriter that checkpoints kafka offsets for each partition.
@@ -37,6 +42,7 @@ public class CheckpointingLogFileWriter implements LogFileWriter<KafkaLogEvent> 
   private final AvroFileWriter avroFileWriter;
   private final CheckpointManager checkpointManager;
   private final long flushIntervalMs;
+  private final List<LogProcessor> logProcessorExtensions;
 
   private long lastCheckpointTime = System.currentTimeMillis();
   private final Map<Integer, Checkpoint> partitionCheckpointMap = Maps.newHashMap();
@@ -44,10 +50,11 @@ public class CheckpointingLogFileWriter implements LogFileWriter<KafkaLogEvent> 
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
   public CheckpointingLogFileWriter(AvroFileWriter avroFileWriter, CheckpointManager checkpointManager,
-                                    long flushIntervalMs) {
+                                    long flushIntervalMs, List<LogProcessor> logProcessorExtensions) {
     this.avroFileWriter = avroFileWriter;
     this.checkpointManager = checkpointManager;
     this.flushIntervalMs = flushIntervalMs;
+    this.logProcessorExtensions = logProcessorExtensions;
   }
 
   @Override
@@ -68,8 +75,19 @@ public class CheckpointingLogFileWriter implements LogFileWriter<KafkaLogEvent> 
     }
 
     partitionCheckpointMap.put(partition, maxCheckpoint);
-
     avroFileWriter.append(events);
+
+    // call process on extensions
+    for (LogProcessor logProcessorExtension : logProcessorExtensions) {
+      logProcessorExtension.process(Iterators.transform(events.iterator(),
+                                                        new Function<KafkaLogEvent, ILoggingEvent>() {
+                                                          @Nullable
+                                                          @Override
+                                                          public ILoggingEvent apply(@Nullable KafkaLogEvent input) {
+                                                            return input.getLogEvent();
+                                                          }
+                                                        }));
+    }
   }
 
   @Override

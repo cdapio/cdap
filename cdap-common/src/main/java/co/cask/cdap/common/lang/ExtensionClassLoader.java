@@ -14,12 +14,8 @@
  * the License.
  */
 
-package co.cask.cdap.security.authorization;
+package co.cask.cdap.common.lang;
 
-import co.cask.cdap.common.lang.ClassPathResources;
-import co.cask.cdap.common.lang.DirectoryClassLoader;
-import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.security.spi.authorization.Authorizer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
@@ -30,17 +26,16 @@ import java.io.IOException;
 import java.util.Set;
 
 /**
- * {@link DirectoryClassLoader} for {@link Authorizer} extensions.
+ * {@link DirectoryClassLoader} for extensions.
  */
-public class AuthorizerClassLoader extends DirectoryClassLoader {
+public class ExtensionClassLoader extends DirectoryClassLoader {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AuthorizerClassLoader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ExtensionClassLoader.class);
 
   @VisibleForTesting
-  static ClassLoader createParent() {
-    ClassLoader baseClassLoader = AuthorizerClassLoader.class.getClassLoader();
+  static ClassLoader createParent(ClassLoader baseClassLoader, Class traceFor) {
 
-    final Set<String> authorizerResources = traceSecurityDependencies(baseClassLoader);
+    final Set<String> extensionResources = traceExtensionDependencies(baseClassLoader, traceFor);
     // by default, FilterClassLoader's defaultFilter allows all hadoop classes, which makes it so that
     // the authorizer extension can share the same instance of UserGroupInformation. This allows kerberos credential
     // renewal to also renew for any extension
@@ -49,7 +44,7 @@ public class AuthorizerClassLoader extends DirectoryClassLoader {
     return new FilterClassLoader(baseClassLoader, new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {
-        return defaultFilter.acceptResource(resource) || authorizerResources.contains(resource);
+        return defaultFilter.acceptResource(resource) || extensionResources.contains(resource);
       }
 
       @Override
@@ -59,19 +54,18 @@ public class AuthorizerClassLoader extends DirectoryClassLoader {
     });
   }
 
-  private static Set<String> traceSecurityDependencies(ClassLoader baseClassLoader) {
+  private static Set<String> traceExtensionDependencies(ClassLoader baseClassLoader, Class traceFor) {
     try {
-      // Trace dependencies for Authorizer class. This will make classes from cdap-security-spi as well as cdap-proto
-      // and other dependencies of cdap-security-spi available to the authorizer extension.
-      return ClassPathResources.getResourcesWithDependencies(baseClassLoader, Authorizer.class);
+      // Trace dependencies for the traceFor class. This will make classes required for extensions available to it.
+      return ClassPathResources.getResourcesWithDependencies(baseClassLoader, traceFor);
     } catch (IOException e) {
-      LOG.error("Failed to determine resources for authorizer class loader while tracing dependencies of " +
-                  "Authorizer.", e);
+      LOG.error("Failed to determine resources for class loader while tracing dependencies of " +
+                  traceFor, e);
       return ImmutableSet.of();
     }
   }
 
-  AuthorizerClassLoader(File unpackedJarDir) {
-    super(unpackedJarDir, createParent(), "lib");
+  public ExtensionClassLoader(File unpackedJarDir, ClassLoader baseClassLoader, Class traceFor) {
+    super(unpackedJarDir, createParent(baseClassLoader, traceFor), "lib");
   }
 }

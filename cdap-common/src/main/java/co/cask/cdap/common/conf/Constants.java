@@ -681,6 +681,8 @@ public final class Constants {
 
     public static final String SERVICE_DESCRIPTION = "Service to collect and store logs.";
     public static final String MESSAGE_PROCESSOR_FACTORIES =  "log.saver.message.processor.factories";
+    public static final String LOG_PROCESSOR_EXTENSION_JAR_PATH =  "log.saver.processor.extension.jar";
+    public static final String EXTENSION_CONFIG_PREFIX = "log.saver.processor.extension.config.";
   }
 
   /**
