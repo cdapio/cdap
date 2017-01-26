@@ -32,12 +32,14 @@ import java.util.Objects;
 public class StructuredRecord implements Serializable {
   private final Schema schema;
   private final Map<String, Object> fields;
+  private final Error error;
 
   private static final long serialVersionUID = -4648752378975451591L;
 
-  private StructuredRecord(Schema schema, Map<String, Object> fields) {
+  private StructuredRecord(Schema schema, Map<String, Object> fields, Error error) {
     this.schema = schema;
     this.fields = fields;
+    this.error = error;
   }
 
   /**
@@ -47,6 +49,13 @@ public class StructuredRecord implements Serializable {
    */
   public Schema getSchema() {
     return schema;
+  }
+
+  /**
+   * @return {@link Error} state of the this {@link StructuredRecord}.
+   */
+  public Error getError() {
+    return error;
   }
 
   /**
@@ -76,16 +85,47 @@ public class StructuredRecord implements Serializable {
   }
 
   /**
+   * Defines a error object in the {@link StructuredRecord}.
+   */
+  public static class Error {
+    private boolean error;
+    private String description;
+
+    public Error (boolean error, String description) {
+      this.error = error;
+      this.description = description;
+    }
+
+    /**
+     * @return if this {@link StructuredRecord} is marked as error record.
+     */
+    public boolean isError() {
+      return error;
+    }
+
+    /**
+     * @return if this {@link StructuredRecord} is marked as error record, then description of error if defined.
+     */
+    public String getDescription() {
+      return description;
+    }
+  }
+
+  /**
    * Builder for creating a {@link StructuredRecord}.
    * TODO: enforce schema correctness?
    */
   public static class Builder {
     private final Schema schema;
     private Map<String, Object> fields;
+    private boolean error;
+    private String description;
 
     private Builder(Schema schema) {
       this.schema = schema;
       this.fields = new HashMap<>();
+      this.error = false;
+      this.description = "";
     }
 
     /**
@@ -100,6 +140,18 @@ public class StructuredRecord implements Serializable {
     public Builder set(String fieldName, Object value) {
       validateAndGetField(fieldName, value);
       fields.put(fieldName, value);
+      return this;
+    }
+
+    /**
+     * Sets the error flag along with description for this record.
+     *
+     * @param description of the error.
+     * @return This builder.
+     */
+    public Builder error(String description) {
+      error = true;
+      this.description = description;
       return this;
     }
 
@@ -139,7 +191,7 @@ public class StructuredRecord implements Serializable {
           }
         }
       }
-      return new StructuredRecord(schema, fields);
+      return new StructuredRecord(schema, fields, new Error(error, description));
     }
 
     private Object convertString(Schema schema, String strVal) throws UnexpectedFormatException {
@@ -184,10 +236,10 @@ public class StructuredRecord implements Serializable {
     private Schema.Field validateAndGetField(String fieldName, Object val) {
       Schema.Field field = schema.getField(fieldName);
       if (field == null) {
-        throw new UnexpectedFormatException("field " + fieldName + " is not in the schema.");
+        throw new UnexpectedFormatException("Field " + fieldName + " is not in the schema.");
       }
       if (!field.getSchema().isNullable() && val == null) {
-        throw new UnexpectedFormatException("field " + fieldName + " cannot be set to a null value.");
+        throw new UnexpectedFormatException("Field " + fieldName + " cannot be set to a null value.");
       }
       return field;
     }
