@@ -30,7 +30,7 @@ import MyUserStoreApi from 'api/userstore';
 import PlusButtonStore from 'services/PlusButtonStore';
 import globalEvents from 'services/global-events';
 import isNil from 'lodash/isNil';
-import AppOverview from 'components/AppOverview';
+import Overview from 'components/Overview';
 import {objectQuery} from 'services/helpers';
 
 require('./EntityListView.scss');
@@ -639,7 +639,7 @@ class EntityListView extends Component {
             >
               {bodyContent}
             </ReactCSSTransitionGroup>
-            <AppOverview
+            <Overview
               toggleOverview={!isNil(this.state.selectedEntity)}
               entity={this.state.selectedEntity}
               onClose={this.handleEntityClick.bind(this)}

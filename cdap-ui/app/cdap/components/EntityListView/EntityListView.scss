@@ -162,7 +162,7 @@
   .entities-container {
     display: flex;
     flex-wrap: wrap;
-    padding: 10px 30px;
+    padding: 10px 0px 0 5px;
 
     > div {
       &:first-child {
@@ -174,16 +174,7 @@
         // transition: 1s ease-in width, 1s ease-in flex;
       }
     }
-    .overview-container {
-      // transition: 1s ease-in width;
-      flex: 0;
-      position: relative;
-      right: 0;
-      // FIXME: For later use.
-      // transition: 1s ease-in flex, 1s ease-in opacity, 1s ease-in right;
-      width: 0;
-      opacity: 0;
-    }
+
     &.show-overview {
       > div {
         &:first-child {
@@ -214,19 +205,6 @@
             width: calc(100% - 20px - 10px);
           }
 
-        }
-      }
-      .overview-container {
-        flex: 0 0 $overview-width;
-        display: block;
-        right: 0;
-        opacity: 1;
-
-        .overview-wrapper {
-          position: fixed;
-          width: $overview-width;
-          height: calc(100vh - 154px);
-          border: 1px solid;
         }
       }
     }

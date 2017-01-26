@@ -25,25 +25,13 @@ import StreamMetrics from './StreamMetrics';
 import classnames from 'classnames';
 import FastActions from 'components/EntityCard/FastActions';
 import JumpButton from 'components/JumpButton';
-import AppOverview from 'components/AppOverview';
 
 require('./EntityCard.scss');
 
 export default class EntityCard extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      overviewMode: false
-    };
     this.cardRef = null;
-  }
-
-  componentWillReceiveProps() {
-    // if (nextProps.activeEntity !== this.props.entity.uniqueId) {
-    //   this.setState({
-    //     overviewMode: false
-    //   });
-    // }
   }
 
   renderEntityStatus() {
@@ -78,13 +66,10 @@ export default class EntityCard extends Component {
     );
   }
 
-  toggleOverviewMode() {
+  onClick() {
     if (this.props.entity.type !== 'application') {
       return;
     }
-    // this.setState({
-    //   overviewMode: !this.state.overviewMode
-    // });
     if (this.props.onClick) {
       this.props.onClick();
     }
@@ -96,42 +81,12 @@ export default class EntityCard extends Component {
     }
     const header = (
       <EntityCardHeader
-        onClick={this.toggleOverviewMode.bind(this)}
+        onClick={this.onClick.bind(this)}
         className={this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type}
         entity={this.props.entity}
         systemTags={this.props.entity.metadata.metadata.SYSTEM.tags}
       />
     );
-    let position = 'left';
-    let parentdimension = {};
-    if (this.cardRef && this.state.overviewMode) {
-      let cardDimension = this.cardRef.getBoundingClientRect();
-      let parentDimension = this.cardRef.parentElement.getBoundingClientRect();
-      let spaceOnLeft = cardDimension.left - parentDimension.left;
-      let spaceOnRight = parentDimension.right - cardDimension.right;
-      let spaceOnTop = cardDimension.top - parentDimension.top;
-      let spaceOnBottom = parentDimension.bottom - cardDimension.bottom;
-      let maxSpace = Math.max(spaceOnLeft, spaceOnRight, spaceOnBottom, spaceOnTop);
-      parentdimension = parentDimension;
-      // FIXME: ALERT! Magic number. This is the minimum width needed for the overview popover to look nice.
-      // Definitely needs to be more adaptive & come from css.
-      if (maxSpace < 400) {
-        position = 'bottom';
-      } else {
-        if (spaceOnLeft === maxSpace) {
-          position = 'left';
-        }
-        if (spaceOnRight === maxSpace) {
-          position = 'right';
-        }
-        if (spaceOnBottom === maxSpace) {
-          position = 'bottom';
-        }
-        if (spaceOnTop === maxSpace) {
-          position = 'top';
-        }
-      }
-    }
     return (
       <div
         className={
@@ -178,17 +133,6 @@ export default class EntityCard extends Component {
             />
           </div>
         </Card>
-        {
-          this.state.overviewMode ?
-            <AppOverview
-              onClose={this.toggleOverviewMode.bind(this)}
-              position={position}
-              parentdimension={parentdimension}
-              entity={this.props.entity}
-            />
-          :
-            null
-        }
       </div>
     );
   }
