@@ -175,7 +175,7 @@ function download_includes() {
   
   test_an_include 38789a70a89c188443f7cfd05b2ea0db ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineApp.java
   
-  test_an_include 5154138de03f9fab4311858225f18dca ../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
+  test_an_include cfe55afe338b6c4aa40debc840594e0b ../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
 
   echo_red_bold "Rewriting the Apps-Packs file"
   rewrite ${includes}/../../source/_includes/apps-packs.txt      ${includes}/apps-packs.txt      "<placeholder-version>" ${source2}
