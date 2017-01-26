@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 
 /**
  * Word count sample Application. Includes a configuration class which can be used to pass in a configuration during
@@ -96,7 +97,10 @@ public class WordCount extends AbstractApplication<WordCount.WordCountConfig> {
 
     // Store processed data in Datasets
     createDataset(config.getWordStatsTable(), Table.class,
-                  DatasetProperties.builder().setDescription("Stats of total counts and lengths of words").build());
+                  TableProperties.builder()
+                    .setReadlessIncrementSupport(true)
+                    .setDescription("Stats of total counts and lengths of words")
+                    .build());
     createDataset(config.getWordCountTable(), KeyValueTable.class,
                   DatasetProperties.builder().setDescription("Words and corresponding counts").build());
     createDataset(config.getUniqueCountTable(), UniqueCountTable.class,

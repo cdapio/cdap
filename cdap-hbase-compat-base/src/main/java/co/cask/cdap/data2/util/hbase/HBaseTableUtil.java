@@ -33,13 +33,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-import com.google.common.io.Files;
-import com.google.common.io.OutputSupplier;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.ClusterStatus;
@@ -58,24 +54,15 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 import java.util.regex.Matcher;
 import javax.annotation.Nullable;
 
@@ -327,94 +314,6 @@ public abstract class HBaseTableUtil {
 
     return splitKeys;
   }
-
-  public static Location createCoProcessorJar(String filePrefix, Location jarDir,
-                                              Iterable<? extends Class<? extends Coprocessor>> classes)
-                                              throws IOException {
-    StringBuilder buf = new StringBuilder();
-    for (Class<? extends Coprocessor> c : classes) {
-      buf.append(c.getName()).append(", ");
-    }
-    if (buf.length() == 0) {
-      return null;
-    }
-
-    LOG.debug("Creating jar file for coprocessor classes: " + buf.toString());
-    final Hasher hasher = Hashing.md5().newHasher();
-    final byte[] buffer = new byte[COPY_BUFFER_SIZE];
-
-    final Map<String, URL> dependentClasses = new HashMap<>();
-    for (Class<? extends Coprocessor> clz : classes) {
-      Dependencies.findClassDependencies(clz.getClassLoader(), new ClassAcceptor() {
-        @Override
-        public boolean accept(String className, final URL classUrl, URL classPathUrl) {
-          // Assuming the endpoint and protocol class doesn't have dependencies
-          // other than those comes with HBase, Java and fastutil.
-          if (className.startsWith("co.cask") || className.startsWith("it.unimi.dsi.fastutil")
-            || className.startsWith("org.apache.tephra") || className.startsWith("com.google.gson")) {
-            if (!dependentClasses.containsKey(className)) {
-              dependentClasses.put(className, classUrl);
-            }
-            return true;
-          }
-          return false;
-        }
-      }, clz.getName());
-    }
-
-    if (!dependentClasses.isEmpty()) {
-      LOG.debug("Adding " + dependentClasses.size() + " classes to jar");
-      File jarFile = File.createTempFile(filePrefix, ".jar");
-      try {
-        try (JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarFile))) {
-          for (Map.Entry<String, URL> entry : dependentClasses.entrySet()) {
-            try {
-              jarOutput.putNextEntry(new JarEntry(entry.getKey().replace('.', File.separatorChar) + ".class"));
-
-              try (InputStream inputStream = entry.getValue().openStream()) {
-                int len = inputStream.read(buffer);
-                while (len >= 0) {
-                  hasher.putBytes(buffer, 0, len);
-                  jarOutput.write(buffer, 0, len);
-                  len = inputStream.read(buffer);
-                }
-              }
-            } catch (IOException e) {
-              LOG.info("Error writing to jar", e);
-              throw Throwables.propagate(e);
-            }
-          }
-        }
-
-        // Copy jar file into HDFS
-        // Target path is the jarDir + jarMD5.jar
-        final Location targetPath = jarDir.append("coprocessor-" + ProjectInfo.getVersion()
-                                                    + "-" + hasher.hash().toString() + ".jar");
-
-        // If the file exists and having same since, assume the file doesn't changed
-        if (targetPath.exists() && targetPath.length() == jarFile.length()) {
-          return targetPath;
-        }
-
-        // Copy jar file into filesystem
-        if (!jarDir.mkdirs() && !jarDir.exists()) {
-          throw new IOException("Fails to create directory: " + jarDir);
-        }
-        Files.copy(jarFile, new OutputSupplier<OutputStream>() {
-          @Override
-          public OutputStream getOutput() throws IOException {
-            return targetPath.getOutputStream();
-          }
-        });
-        return targetPath;
-      } finally {
-        jarFile.delete();
-      }
-    }
-    // no dependent classes to add
-    return null;
-  }
-
 
   /**
    * Returns information for all coprocessor configured for the table.

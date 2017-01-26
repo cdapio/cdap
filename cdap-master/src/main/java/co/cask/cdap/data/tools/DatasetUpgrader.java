@@ -26,6 +26,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
@@ -131,11 +132,12 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
     final boolean supportsIncrement = HBaseTableAdmin.supportsReadlessIncrements(desc);
     final boolean transactional = HBaseTableAdmin.isTransactional(desc);
+    final CoprocessorManager coprocessorManager = new CoprocessorManager(cConf, locationFactory, hBaseTableUtil);
     DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableId, hConf, cConf, hBaseTableUtil) {
       @Override
       protected CoprocessorJar createCoprocessorJar() throws IOException {
         return HBaseTableAdmin.createCoprocessorJarInternal(cConf,
-                                                            locationFactory,
+                                                            coprocessorManager,
                                                             hBaseTableUtil,
                                                             transactional,
                                                             supportsIncrement);
