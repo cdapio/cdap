@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -88,7 +89,7 @@ public class RemoteOpsClient {
   }
 
   private String resolve(String resource) {
-    Discoverable discoverable = endpointStrategySupplier.get().pick();
+    Discoverable discoverable = endpointStrategySupplier.get().pick(1L, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new ServiceUnavailableException(discoverableServiceName);
     }
