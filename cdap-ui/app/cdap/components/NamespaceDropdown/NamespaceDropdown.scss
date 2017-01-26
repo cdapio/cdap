@@ -15,13 +15,18 @@
 */
 
 @import "../../styles/variables.scss";
-$namespace-action-bg: #e7e7e7;
-$namespace-dropdown-color: #333333;
-$namespace-hover-bg: #262933;
+$namespace-action-bg: #d8d8d8;
+$namespace-dropdown-color: #f3f3f3;
+$current-namespace-hover-bg: #262933;
+$namespace-hover-bg: #9b9b9b;
+$dark-font: #666666;
+$grey-font: #bbbbbb;
+$success-color: #7ed321;
+$star-color: #373a3c;
 
 .namespace-dropdown {
   width: 160px;
-  border-left: 1px solid #666666;
+  border-left: 1px solid $dark-font;
   padding: 0;
   font-size: 14px;
   user-select: none;
@@ -31,7 +36,7 @@ $namespace-hover-bg: #262933;
   .dropdown {
     &.open {
       .current-namespace {
-        background-color: $namespace-hover-bg;
+        background-color: $current-namespace-hover-bg;
       }
     }
   }
@@ -50,18 +55,12 @@ $namespace-hover-bg: #262933;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .no-namespace {
-    .dropdown-menu {
-      width: 160px;
-      left: 0;
-    }
-  }
   .current-namespace {
     padding-left: 10px;
     height: 50px;
     cursor: pointer;
     &:hover {
-      background-color: $namespace-hover-bg;
+      background-color: $current-namespace-hover-bg;
     }
     span {
       padding-right: 10px;
@@ -89,13 +88,154 @@ $namespace-hover-bg: #262933;
     overflow-x: hidden;
     padding: 0;
     margin: 0;
-    color: $namespace-dropdown-color;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
 
+    div {
+      padding: 0 10px;
+      line-height: 28px;
+    }
+
+    .current-namespace-details {
+      padding: 0;
+      border-top: 6px solid $namespace-action-bg;
+      border-bottom: 3px solid $namespace-action-bg;
+
+      .preferences-saved-message {
+        font-size: 12px;
+        background-color: $success-color;
+
+        .fa-times {
+          float: right;
+          cursor: pointer;
+          line-height: 28px;
+        }
+      }
+
+      .current-namespace-metadata {
+        height: 80px;
+        padding: 0;
+        border-bottom: 1px solid $namespace-action-bg;
+
+        .current-namespace-name {
+          float: left;
+          font-weight: bold;
+          font-size: 14px;
+          color: $dark-font;
+        }
+
+        .current-namespace-default {
+          float: right;
+          height: 28px;
+
+          .default-status {
+            color: $grey-font;
+            font-size: 9px;
+            margin-right: 5px;
+          }
+
+          i {
+            cursor: pointer;
+            color: $star-color;
+          }
+        }
+      }
+
+      .current-namespace-entities {
+        table {
+          width: 100%;
+          background-color: #ffffff;
+
+          th,
+          td {
+            text-align: center;
+          }
+
+          th {
+            color: $grey-font;
+            font-size: 10px;
+            font-weight: initial;
+            line-height: 20px;
+
+            &:first-of-type {
+              width: 30%;
+            }
+
+            &:nth-of-type(2) {
+              width: 50%;
+            }
+          }
+
+          td {
+            color: $dark-font;
+            text-align: center;
+            line-height: 8px;
+          }
+        }
+      }
+
+      .current-namespace-preferences {
+        line-height: 20px;
+        padding: 0;
+
+        .fa-wrench {
+          width: 100%;
+          color: #333333;
+
+          &.saved-success {
+            color: $success-color;
+          }
+        }
+      }
+    }
+
     .namespace-list {
+      clear: both;
       padding: 0;
       max-height: 200px;
       overflow: auto;
+
+      .namespace-container {
+        color: $dark-font;
+        background-color: $namespace-dropdown-color;
+        border-bottom: 1px solid $namespace-action-bg;
+
+        a.namespace-link {
+          color: inherit;
+          text-decoration: inherit;
+          cursor: auto;
+          padding-right: 0;
+          display: block;
+          font-size: 12px;
+
+          &:hover {
+            color: #ffffff;
+          }
+
+          .namespace-name {
+            width: calc(100% - 12.5px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+
+        .default-ns-section {
+          cursor: pointer;
+          position: relative;
+          .fa-star-o {
+            display: none;
+          }
+        }
+
+        &:hover {
+          background-color: $namespace-hover-bg;
+          color: #ffffff;
+          .fa-star-o {
+            display: inline-block;
+          }
+        }
+      }
+
       .modal-backdrop {
         position: fixed;
         top: 0;
@@ -106,67 +246,17 @@ $namespace-hover-bg: #262933;
         background-color: #000000;
         opacity: 0.5;
       }
-      a.namespace-link {
-        color: $namespace-dropdown-color;
-        text-decoration: inherit;
-        cursor: auto;
-        padding-right: 0;
-        border-bottom: 1px solid $namespace-action-bg;
-        display: block;
-        font-size: 13px;
-      }
     }
-    div {
+
+    .namespace-action {
       padding: 0 10px;
-      line-height: 39px;
-      &.namespace-action {
-        padding: 0 10px;
-        color: #666666;
-        background: $namespace-action-bg;
-        cursor: pointer;
-        &:hover {
-          background-color: #d8d8d8;
-          color: #333333;
-        }
-      }
-
-      &.namespace-container {
-        color: #333333;
-        .namespace-name {
-          width: calc(100% - 15px);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .default-ns-section {
-          position: relative;
-          .default-btn {
-            display: none;
-            position: absolute;
-            right: 0;
-
-            .btn.btn-secondary {
-              background: #464a57;
-              border: 0;
-              color: white;
-              font-size: 11px;
-              border-radius: 4px;
-            }
-
-            .small-button {
-              // Bootstrap 4 does not have btn-xs anymore
-              padding: 1px 5px;
-              line-height: 1.5;
-            }
-          }
-        }
-      }
-    }
-    div.namespace-container:hover {
-      background-color: $namespace-hover-bg;
-      color: white;
-      .default-btn {
-        display: inline-block;
+      color: $dark-font;
+      background: $namespace-action-bg;
+      font-size: 12px;
+      cursor: pointer;
+      &:hover {
+        background-color: $namespace-action-bg;
+        color: $dark-font;
       }
     }
   }
