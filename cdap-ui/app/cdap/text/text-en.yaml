@@ -363,6 +363,13 @@ features:
       extension: "Extensions:"
     NamespaceDropdown:
       addNS: "Add Namespace"
+  Overview:
+    ProgramTab:
+      emptyMessage: No Programs found.
+      title: "Progarms in {appId}:"
+      runningProgramLabel: "Number of programs running: {programCount}"
+    DatasetTab:
+      title: "Dataset Used by {appId}:"
   Pagination:
     dropdown-label: Page
   Resource-Center:

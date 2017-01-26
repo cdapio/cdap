@@ -119,19 +119,13 @@ export default class Pagination extends Component {
         <div onClick={this.goToPrev}
           className={pageChangeLeftClass}
         >
-          <div className="page-change-arrow-container">
-            <span className="page-change-arrow fa fa-chevron-left fa-2x"></span>
           </div>
-        </div>
-        <div className="pagination-content">
-          {this.props.children}
-        </div>
-        <div onClick={this.goToNext}
-          className={pageChangeRightClass}
-        >
-          <div className="page-change-arrow-container">
-            <span className="page-change-arrow fa fa-chevron-right fa-2x"></span>
+          <div className="pagination-content">
+            {this.props.children}
           </div>
+          <div onClick={this.goToNext}
+            className={pageChangeRightClass}
+          >
         </div>
       </div>
     );

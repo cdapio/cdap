@@ -49,7 +49,7 @@ export default class OverviewMetaSection extends Component {
     let description =  objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'description');
     return (
       <div className="overview-meta-section">
-        <h3>{this.props.entity.id}</h3>
+        <h2>{this.props.entity.id}</h2>
         <div className="fast-actions-container">
           <div>
             {

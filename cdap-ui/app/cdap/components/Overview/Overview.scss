@@ -30,6 +30,7 @@
     display: block;
     right: 0;
     opacity: 1;
+    margin-top: 5px;
 
     .overview-wrapper {
       position: fixed;
@@ -38,6 +39,12 @@
       border-top: 1px solid rgba(219, 219, 219, 1);
       background: rgba(238, 238, 238, 1);
       box-shadow: 0px 1px 10px 0 rgba(0, 0, 0, 0.3);
+
+      > .fa.fa-spinner.fa-spin {
+        margin-top: 50%;
+        margin-left: 50%;
+        color: gray;
+      }
     }
   }
 }

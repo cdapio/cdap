@@ -18,18 +18,49 @@
 $entity-card-border: 1px solid #cccccc;
 $jump-button-container-size: 80px;
 
+@mixin selected-card($color) {
+  border: 3px solid $color;
+  .card-body {
+    background: $color;
+    color: white;
+
+    .entity-id-container small {
+      color: white;
+    }
+    .metrics-container {
+      .metric-item {
+        p {
+          color: white;
+        }
+      }
+    }
+    .fast-actions-container {
+      background: $color;
+      .btn-link {
+        color: white;
+      }
+    }
+  }
+}
+
 .entity-cards {
   padding: 0;
   text-align: left;
   border-radius: 0;
   position: relative;
   box-shadow: 0px 1px 10px 0 rgba(0, 0, 0, 0.3);
-  width: 300px;
+  // width: 300px;
   margin: 5px;
   display: inline-block;
 
   &.active {
-    border: 3px solid $cdap-orange;
+
+    &.datapipeline {
+      @include selected-card($hydrator-blue);
+    }
+    &.application {
+      @include selected-card($application-entity-header-bg);
+    }
   }
 
   // FIXME: This will be eventually removed when all the entities are clickable.

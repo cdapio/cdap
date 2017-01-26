@@ -630,8 +630,9 @@ class EntityListView extends Component {
           currentPage={this.state.currentPage}
           setDirection={this.setAnimationDirection}
         >
-          <div className={classNames("entities-container", {"show-overview": !isNil(this.state.selectedEntity)})}>
+          <div className={classNames("entities-container")}>
             <ReactCSSTransitionGroup
+              className={classNames({"show-overview-main-container": !isNil(this.state.selectedEntity)})}
               component="div"
               transitionName={"entity-animation--" + this.state.animationDirection}
               transitionEnterTimeout={1000}

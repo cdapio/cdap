@@ -18,39 +18,106 @@ import React, {PropTypes, Component} from 'react';
 import isNil from 'lodash/isNil';
 import OverviewHeader from 'components/Overview/OverviewHeader';
 import OverviewMetaSection from 'components/Overview/OverviewMetaSection';
-
-require('./AppOverview.scss');
+import AppOverviewTab from 'components/Overview/AppOverview/AppOverviewTab';
+import {MyAppApi} from 'api/app';
+import NamespaceStore from 'services/NamespaceStore';
+import {objectQuery} from 'services/helpers';
+import shortid from 'shortid';
+import T from 'i18n-react';
 
 export default class AppOverview extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      entity: this.props.entity
+      entity: this.props.entity,
+      activeTab: '1',
+      entityDetail: null,
+      loading: false
     };
+  }
+  componentWillMount() {
+    this.fetchAppDetail();
   }
   componentWillReceiveProps(nextProps) {
     let {entity} = nextProps;
     if (!isNil(entity)) {
       this.setState({
-        entity
-      });
+        entity,
+      }, this.fetchAppDetail.bind(this));
+    }
+  }
+  fetchAppDetail() {
+    this.setState({
+      loading: true
+    });
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    if (objectQuery(this.props, 'entity', 'id')) {
+      MyAppApi
+        .get({
+          namespace,
+          appId: this.props.entity.id
+        })
+        .subscribe(entityDetail => {
+          let programs = entityDetail.programs.map(prog => {
+            prog.uniqueId = shortid.generate();
+            return prog;
+          });
+          let datasets = entityDetail.datasets.map(dataset => {
+            dataset.entityId = {
+              id: {
+                instanceId: dataset.name
+              },
+              type: 'datasetinstance'
+            };
+            dataset.uniqueId = shortid.generate();
+            return dataset;
+          });
+          let streams = entityDetail.streams.map(stream => {
+            stream.entityId = {
+              id: {
+                streamName: stream.name
+              },
+              type: 'stream'
+            };
+            stream.uniqueId = shortid.generate();
+            return stream;
+          });
+          entityDetail.streams = streams;
+          entityDetail.datasets = datasets;
+          entityDetail.programs = programs;
+
+          this.setState({
+            entityDetail
+          }, () => {
+            setTimeout(() => {
+              this.setState({
+                loading: false
+              });
+            }, 1000);
+          });
+        });
     }
   }
   render() {
+    if (this.state.loading) {
+      return (
+        <div className="fa fa-spinner fa-spin fa-3x"></div>
+      );
+    }
+    let title = this.state.entity.isHydrator ?
+      T.translate('commons.entity.cdap-data-pipeline.singular')
+    :
+      T.translate('commons.entity.application.singular');
     return (
       <div className="app-overview">
         <OverviewHeader
           icon="icon-fist"
-          title="Application"
+          title={title}
           linkTo="/"
           onClose={this.props.onClose}
         />
-        <OverviewMetaSection
-          entity={this.state.entity}
-        />
-        <pre>
-          {JSON.stringify(this.state.entity, null, 2)}
-        </pre>
+        <OverviewMetaSection entity={this.state.entity} />
+        <AppOverviewTab entity={this.state.entityDetail} />
       </div>
     );
   }

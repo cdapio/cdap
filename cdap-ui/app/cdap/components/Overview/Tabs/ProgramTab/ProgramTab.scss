@@ -13,34 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-@import '../../../styles/variables.scss';
+.program-tab {
+  padding: 10px;
+  overflow-y: auto;
+  height: 100%;
 
-.overview-header {
-  display: flex;
-  color: black;
-  padding: 10px 16px 5px;
-  background: white;
-
-  .header {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    i,
-    h4 {
-      margin: 0 2px;
-      font-size: 17px;
-    }
-    i {
-      font-size: 15px;
-    }
-  }
-  .link-to-detail {
-    margin-right: 50px;
-    color: $cdap-orange;
-    text-decoration: underline;
-  }
-  .fa.fa-times {
-    font-size: 19px;
-    cursor: pointer;
+  .message-section {
+    margin-left: 5px;
+    color: rgba(102, 102, 102, 1);
   }
 }
