@@ -1157,4 +1157,11 @@ public final class Constants {
     public static final String SERVICE_PREFIX = "service.";
     public static final String FLOW_PREFIX = "flow.";
   }
+
+  /**
+   * Constants for HBase DDL executor
+   */
+  public static final class HBaseDDLExecutor {
+    public static final String EXTENSIONS_DIR = "hbase.ddlexecutor.extension.dir";
+  }
 }

@@ -27,11 +27,13 @@ import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -60,7 +62,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final Pattern defaultNSUserTablePrefix;
   private final String datasetTablePrefix;
-  private final HTableNameConverter hTableNameConverter = new HTableNameConverter();
+  private final HBaseDDLExecutorFactory ddlExecutorFactory;
 
 
   @Inject
@@ -78,6 +80,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
     this.impersonator = impersonator;
     this.datasetTablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     this.defaultNSUserTablePrefix = Pattern.compile(String.format("^%s\\.user\\..*", datasetTablePrefix));
+    this.ddlExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
   }
 
   @Override
@@ -114,20 +117,20 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
   private void upgradeUserTables(NamespaceMeta namespaceMeta) throws Exception {
     String hBaseNamespace = hBaseTableUtil.getHBaseNamespace(namespaceMeta);
-    try (HBaseAdmin hAdmin = new HBaseAdmin(hConf)) {
+    try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get(); HBaseAdmin hAdmin = new HBaseAdmin(hConf)) {
       for (HTableDescriptor desc :
-        hAdmin.listTableDescriptorsByNamespace(hTableNameConverter.encodeHBaseEntity(hBaseNamespace))) {
+        hAdmin.listTableDescriptorsByNamespace(HTableNameConverter.encodeHBaseEntity(hBaseNamespace))) {
         if (isCDAPUserTable(desc)) {
           upgradeUserTable(desc);
         } else if (isStreamOrQueueTable(desc.getNameAsString())) {
-          updateTableDesc(desc, hAdmin);
+          updateTableDesc(desc, ddlExecutor);
         }
       }
     }
   }
 
   private void upgradeUserTable(HTableDescriptor desc) throws IOException {
-    TableId tableId = hTableNameConverter.from(desc);
+    TableId tableId = HTableNameConverter.from(desc);
     LOG.info("Upgrading hbase table: {}, desc: {}", tableId, desc);
 
     final boolean supportsIncrement = HBaseTableAdmin.supportsReadlessIncrements(desc);
@@ -158,10 +161,10 @@ public class DatasetUpgrader extends AbstractUpgrader {
     LOG.info("Upgraded hbase table: {}", tableId);
   }
 
-  private void updateTableDesc(HTableDescriptor desc, HBaseAdmin hBaseAdmin) throws IOException {
+  private void updateTableDesc(HTableDescriptor desc, HBaseDDLExecutor ddlExecutor) throws IOException {
     hBaseTableUtil.setVersion(desc);
     hBaseTableUtil.setTablePrefix(desc);
-    hBaseTableUtil.modifyTable(hBaseAdmin, desc);
+    hBaseTableUtil.modifyTable(ddlExecutor, desc);
   }
 
   private boolean isCDAPUserTable(HTableDescriptor desc) {

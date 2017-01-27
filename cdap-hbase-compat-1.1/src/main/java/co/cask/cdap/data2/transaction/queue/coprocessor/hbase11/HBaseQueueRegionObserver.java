@@ -95,14 +95,13 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         this.prefixBytes = SaltedHBaseQueueStrategy.SALT_BYTES;
       }
 
-      HTableNameConverter nameConverter = new HTableNameConverter();
-      namespaceId = nameConverter.from(tableDesc).getNamespace();
+      namespaceId = HTableNameConverter.from(tableDesc).getNamespace();
       appName = HBaseQueueAdmin.getApplicationName(hTableName);
       flowName = HBaseQueueAdmin.getFlowName(hTableName);
 
       Configuration conf = env.getConfiguration();
       String hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
-      final String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
+      final String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
       txStateCache = new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf).get();
       txSnapshotSupplier = new Supplier<TransactionVisibilityState>() {
         @Override
@@ -111,7 +110,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         }
       };
       String queueConfigTableId = HBaseQueueAdmin.getConfigTableName();
-      configTableName = nameConverter.toTableName(hbaseNamespacePrefix, TableId.from(namespaceId, queueConfigTableId));
+      configTableName = HTableNameConverter.toTableName(hbaseNamespacePrefix,
+                                                        TableId.from(namespaceId, queueConfigTableId));
       cConfReader = new CConfigurationReader(conf, sysConfigTablePrefix);
       configCache = createConfigCache(env);
     }

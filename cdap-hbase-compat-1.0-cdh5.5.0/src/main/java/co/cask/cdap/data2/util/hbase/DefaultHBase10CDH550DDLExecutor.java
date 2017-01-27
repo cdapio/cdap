@@ -39,10 +39,6 @@ import java.util.Set;
  */
 public class DefaultHBase10CDH550DDLExecutor extends DefaultHBaseDDLExecutor {
 
-  public DefaultHBase10CDH550DDLExecutor(Configuration hConf) {
-    super(hConf);
-  }
-
   private HColumnDescriptor getHColumnDesciptor(ColumnFamilyDescriptor descriptor) {
     HColumnDescriptor hFamily = new HColumnDescriptor(descriptor.getName());
     hFamily.setMaxVersions(descriptor.getMaxVersions());

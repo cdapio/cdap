@@ -87,8 +87,7 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
       prefixLength = Integer.valueOf(tableDesc.getValue(
         Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES));
 
-      nameConverter = new HTableNameConverter();
-      String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
+      String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
       cConfReader = new CConfigurationReader(env.getConfiguration(), sysConfigTablePrefix);
 
       Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(hbaseNamespacePrefix,

@@ -16,7 +16,9 @@
 
 package co.cask.cdap.master.startup;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.startup.Check;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.HBaseVersion;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import com.google.inject.Inject;
@@ -36,10 +38,12 @@ import java.io.IOException;
 @SuppressWarnings("unused")
 class HBaseCheck extends Check {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseCheck.class);
+  private final CConfiguration cConf;
   private final Configuration hConf;
 
   @Inject
-  private HBaseCheck(Configuration hConf) {
+  private HBaseCheck(CConfiguration cConf, Configuration hConf) {
+    this.cConf = cConf;
     this.hConf = hConf;
   }
 
@@ -47,7 +51,7 @@ class HBaseCheck extends Check {
   public void run() {
     LOG.info("Checking HBase version.");
     try {
-      new HTableNameConverter();
+      new HBaseTableUtilFactory(cConf).get();
     } catch (ProvisionException e) {
       throw new RuntimeException("Unsupported Hbase version " + HBaseVersion.getVersionString());
     }

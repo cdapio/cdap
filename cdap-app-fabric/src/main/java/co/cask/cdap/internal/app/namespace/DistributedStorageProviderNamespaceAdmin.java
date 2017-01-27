@@ -19,12 +19,14 @@ package co.cask.cdap.internal.app.namespace;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -46,6 +48,7 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
   private final Configuration hConf;
   private final HBaseTableUtil tableUtil;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final HBaseDDLExecutorFactory hBaseDDLExecutorFactory;
 
   @Inject
   DistributedStorageProviderNamespaceAdmin(CConfiguration cConf,
@@ -56,6 +59,7 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
     this.hConf = HBaseConfiguration.create();
     this.tableUtil = tableUtil;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.hBaseDDLExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
   }
 
   @Override
@@ -69,20 +73,22 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
     // TODO: CDAP-1519: Create base directory for filesets under namespace home
     // create HBase namespace
     String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceMeta);
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      if (Strings.isNullOrEmpty(namespaceMeta.getConfig().getHbaseNamespace())) {
+
+    if (Strings.isNullOrEmpty(namespaceMeta.getConfig().getHbaseNamespace())) {
+      try (HBaseDDLExecutor executor = hBaseDDLExecutorFactory.get()) {
+        executor.createNamespaceIfNotExists(hbaseNamespace);
+      } catch (Throwable t) {
         try {
-          tableUtil.createNamespaceIfNotExists(admin, hbaseNamespace);
-        } catch (Throwable t) {
-          try {
-            // if we failed to create a namespace in hbase then do clean up for above creations
-            super.delete(namespaceMeta.getNamespaceId());
-          } catch (Exception e) {
-            t.addSuppressed(e);
-          }
-          throw t;
+          // if we failed to create a namespace in hbase then do clean up for above creations
+          super.delete(namespaceMeta.getNamespaceId());
+        } catch (Exception e) {
+          t.addSuppressed(e);
         }
+        throw t;
       }
+    }
+
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       if (!tableUtil.hasNamespace(admin, hbaseNamespace)) {
         throw new IOException(String.format("Custom mapped HBase namespace doesn't exist %s for namespace %s",
                                             hbaseNamespace, namespaceMeta.getName()));
@@ -115,8 +121,8 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
     }
     // delete HBase namespace
     String namespace = tableUtil.getHBaseNamespace(namespaceId);
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      tableUtil.deleteNamespaceIfExists(admin, namespace);
+    try (HBaseDDLExecutor executor = hBaseDDLExecutorFactory.get()) {
+      executor.deleteNamespaceIfExists(namespace);
     }
   }
 }

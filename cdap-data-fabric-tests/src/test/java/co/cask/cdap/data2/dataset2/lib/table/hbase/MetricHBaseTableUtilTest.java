@@ -25,9 +25,11 @@ import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -55,8 +57,8 @@ public class MetricHBaseTableUtilTest {
   public static void beforeClass() throws Exception {
     cConf = CConfiguration.create();
     hBaseTableUtil = new HBaseTableUtilFactory(cConf, new SimpleNamespaceQueryAdmin()).get();
-    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
-                                              hBaseTableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    HBaseDDLExecutor executor = new HBaseDDLExecutorFactory(cConf, TEST_HBASE.getHBaseAdmin().getConfiguration()).get();
+    executor.createNamespaceIfNotExists(hBaseTableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
   }
 
   @AfterClass

@@ -30,9 +30,11 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -73,8 +75,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   }
 
   @Override
-  public DatasetSpecification reconfigure(String name,
-                                          DatasetProperties properties,
+  public DatasetSpecification reconfigure(String name, DatasetProperties properties,
                                           DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     return DatasetSpecification.builder(name, getName())
       .properties(properties.getProperties())
@@ -84,7 +85,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    return new DatasetAdminImpl(datasetContext, spec.getName(), tableUtil, hConf);
+    return new DatasetAdminImpl(datasetContext, spec.getName(), tableUtil, hConf, cConf);
   }
 
   @Override
@@ -95,14 +96,18 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
 
   private static final class DatasetAdminImpl implements DatasetAdmin {
     private final Configuration hConf;
+    private final CConfiguration cConf;
     private final TableId tableId;
+    private final HBaseDDLExecutorFactory ddlExecutorFactory;
     protected final HBaseTableUtil tableUtil;
 
     private DatasetAdminImpl(DatasetContext datasetContext, String tableName, HBaseTableUtil tableUtil,
-                             Configuration hConf) throws IOException {
+                             Configuration hConf, CConfiguration cConf) throws IOException {
       this.hConf = hConf;
+      this.cConf = cConf;
       this.tableUtil = tableUtil;
       this.tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), tableName);
+      this.ddlExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
     }
 
     @Override
@@ -121,15 +126,15 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
       HTableDescriptorBuilder tableDescriptor = tableUtil.buildHTableDescriptor(tableId);
       tableDescriptor.addFamily(columnDescriptor);
 
-      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-        tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor.build());
+      try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
+        tableUtil.createTableIfNotExists(ddlExecutor, tableId, tableDescriptor.build());
       }
     }
 
     @Override
     public void drop() throws IOException {
-      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-        tableUtil.dropTable(admin, tableId);
+      try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
+        tableUtil.dropTable(ddlExecutor, tableId);
       }
     }
 

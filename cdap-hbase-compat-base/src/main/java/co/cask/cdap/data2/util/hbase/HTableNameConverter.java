@@ -29,14 +29,18 @@ import java.net.URLEncoder;
 /**
  * Common utility methods for dealing with HBase table name conversions.
  */
-public class HTableNameConverter {
+public final class HTableNameConverter {
+
+  private HTableNameConverter() {
+
+  }
 
   /**
    * Encode a HBase entity name to ASCII encoding using {@link URLEncoder}.
    * @param entityName entity string to be encoded
    * @return encoded string
    */
-  public String encodeHBaseEntity(String entityName) {
+  public static String encodeHBaseEntity(String entityName) {
     try {
       return URLEncoder.encode(entityName, "ASCII");
     } catch (UnsupportedEncodingException e) {
@@ -45,7 +49,7 @@ public class HTableNameConverter {
     }
   }
 
-  private String getBackwardCompatibleTableName(String tablePrefix, TableId tableId) {
+  private static String getBackwardCompatibleTableName(String tablePrefix, TableId tableId) {
     String tableName = tableId.getTableName();
     // handle table names in default namespace so we do not have to worry about upgrades
     // cdap default namespace always maps to hbase default namespace and vice versa
@@ -69,7 +73,7 @@ public class HTableNameConverter {
   /**
    * @return Backward compatible, ASCII encoded table name
    */
-  protected String toHBaseTableName(String tablePrefix, TableId tableId) {
+  public static String toHBaseTableName(String tablePrefix, TableId tableId) {
     Preconditions.checkArgument(tablePrefix != null, "Table prefix should not be null.");
     return encodeHBaseEntity(getBackwardCompatibleTableName(tablePrefix, tableId));
   }
@@ -82,14 +86,14 @@ public class HTableNameConverter {
    * Example input: "cdap.table.name"     -->  output: "cdap_system."   (input table is in default namespace)
    * Example input: "cdap_ns:table.name"  -->  output: "cdap_system:"   (input table is in a custom namespace)
    */
-  public String getSysConfigTablePrefix(String prefix) {
+  public static String getSysConfigTablePrefix(String prefix) {
     return prefix + "_" + NamespaceId.SYSTEM.getNamespace() + ":";
   }
 
   /**
    * Returns {@link TableId} for the table represented by the given {@link HTableDescriptor}.
    */
-  public TableId from(HTableDescriptor htd) {
+  public static TableId from(HTableDescriptor htd) {
     TableName tableName = htd.getTableName();
     return fromHBaseTableName(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
   }
@@ -97,11 +101,11 @@ public class HTableNameConverter {
   /**
    * Construct and return the HBase tableName from {@link TableId} and tablePrefix.
    */
-  public TableName toTableName(String tablePrefix, TableId tableId) {
+  public static TableName toTableName(String tablePrefix, TableId tableId) {
     return TableName.valueOf(tableId.getNamespace(), toHBaseTableName(tablePrefix, tableId));
   }
 
-  protected TableId fromHBaseTableName(String namespace, String qualifier) {
+  private static TableId fromHBaseTableName(String namespace, String qualifier) {
     Preconditions.checkArgument(namespace != null, "Table namespace should not be null.");
     Preconditions.checkArgument(qualifier != null, "Table qualifier should not be null.");
 

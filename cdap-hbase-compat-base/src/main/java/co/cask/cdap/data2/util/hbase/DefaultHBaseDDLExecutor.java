@@ -45,14 +45,27 @@ import javax.annotation.Nullable;
 public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
   public static final Logger LOG = LoggerFactory.getLogger(DefaultHBaseDDLExecutor.class);
   public static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
-  private final Configuration hConf;
+  private HBaseAdmin admin;
 
-  public DefaultHBaseDDLExecutor(Configuration hConf) {
-    this.hConf = hConf;
+
+  @Override
+  public <T> void initialize(T conf) {
+    try {
+      this.admin = new HBaseAdmin((Configuration) conf);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to create HBaseAdmin.", e);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public <T> T getConf() {
+    return (T) admin.getConfiguration();
   }
 
   /**
    * Encode a HBase entity name to ASCII encoding using {@link URLEncoder}.
+   *
    * @param entityName entity string to be encoded
    * @return encoded string
    */
@@ -64,8 +77,8 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
       throw new RuntimeException(e);
     }
   }
-  
-  private boolean hasNamespace(HBaseAdmin admin, String name) throws IOException {
+
+  private boolean hasNamespace(String name) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(name != null, "Namespace should not be null.");
     try {
@@ -79,22 +92,18 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
   @Override
   public void createNamespaceIfNotExists(String name) throws IOException {
     Preconditions.checkArgument(name != null, "Namespace should not be null.");
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      if (!hasNamespace(admin, name)) {
-        NamespaceDescriptor namespaceDescriptor =
-          NamespaceDescriptor.create(encodeHBaseEntity(name)).build();
-        admin.createNamespace(namespaceDescriptor);
-      }
+    if (!hasNamespace(name)) {
+      NamespaceDescriptor namespaceDescriptor =
+        NamespaceDescriptor.create(encodeHBaseEntity(name)).build();
+      admin.createNamespace(namespaceDescriptor);
     }
   }
 
   @Override
   public void deleteNamespaceIfExists(String name) throws IOException {
     Preconditions.checkArgument(name != null, "Namespace should not be null.");
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      if (hasNamespace(admin, name)) {
-        admin.deleteNamespace(encodeHBaseEntity(name));
-      }
+    if (hasNamespace(name)) {
+      admin.deleteNamespace(encodeHBaseEntity(name));
     }
   }
 
@@ -106,41 +115,40 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
   public void createTableIfNotExists(TableDescriptor descriptor, @Nullable byte[][] splitKeys)
     throws IOException {
     HTableDescriptor htd = getHTableDescriptor(descriptor);
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      if (admin.tableExists(htd.getName())) {
-        return;
-      }
-      try {
-        LOG.debug("Attempting to create table '{}' if it does not exist", Bytes.toString(htd.getName()));
-        admin.createTable(htd, splitKeys);
-        LOG.info("Table created '{}'", Bytes.toString(htd.getName()));
-      } catch (TableExistsException e) {
-        // table may exist because someone else is creating it at the same
-        // time. But it may not be available yet, and opening it might fail.
-        LOG.debug("Table '{}' already exists.", Bytes.toString(htd.getName()), e);
-      }
-
-      // Wait for table to materialize
-      try {
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.start();
-        long sleepTime = TimeUnit.MILLISECONDS.toNanos(5000L) / 10;
-        sleepTime = sleepTime <= 0 ? 1 : sleepTime;
-        do {
-          if (admin.tableExists(descriptor.getName())) {
-            LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.",
-                     Bytes.toString(htd.getName()));
-            return;
-          } else {
-            TimeUnit.NANOSECONDS.sleep(sleepTime);
-          }
-        } while (stopwatch.elapsedTime(TimeUnit.MILLISECONDS) < 5000L);
-      } catch (InterruptedException e) {
-        LOG.warn("Sleeping thread interrupted.");
-      }
-      LOG.error("Table '{}' does not exist after waiting {} ms. Giving up.", Bytes.toString(htd.getName()),
-                MAX_CREATE_TABLE_WAIT);
+    if (admin.tableExists(htd.getName())) {
+      return;
     }
+
+    try {
+      LOG.debug("Attempting to create table '{}' if it does not exist", Bytes.toString(htd.getName()));
+      admin.createTable(htd, splitKeys);
+      LOG.info("Table created '{}'", Bytes.toString(htd.getName()));
+    } catch (TableExistsException e) {
+      // table may exist because someone else is creating it at the same
+      // time. But it may not be available yet, and opening it might fail.
+      LOG.debug("Table '{}' already exists.", Bytes.toString(htd.getName()), e);
+    }
+
+    // Wait for table to materialize
+    try {
+      Stopwatch stopwatch = new Stopwatch();
+      stopwatch.start();
+      long sleepTime = TimeUnit.MILLISECONDS.toNanos(5000L) / 10;
+      sleepTime = sleepTime <= 0 ? 1 : sleepTime;
+      do {
+        if (admin.tableExists(descriptor.getName())) {
+          LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.",
+                   Bytes.toString(htd.getName()));
+          return;
+        } else {
+          TimeUnit.NANOSECONDS.sleep(sleepTime);
+        }
+      } while (stopwatch.elapsedTime(TimeUnit.MILLISECONDS) < 5000L);
+    } catch (InterruptedException e) {
+      LOG.warn("Sleeping thread interrupted.");
+    }
+    LOG.error("Table '{}' does not exist after waiting {} ms. Giving up.", Bytes.toString(htd.getName()),
+              MAX_CREATE_TABLE_WAIT);
   }
 
   @Override
@@ -148,7 +156,7 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
     Preconditions.checkArgument(namespace != null, "Namespace should not be null");
     Preconditions.checkArgument(name != null, "Table name should not be null.");
 
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    try {
       admin.enableTable(TableName.valueOf(namespace, encodeHBaseEntity(name)));
     } catch (TableNotDisabledException e) {
       LOG.debug("Attempt to enable already enabled table {} in the namespace {}.", name, namespace);
@@ -160,7 +168,7 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
     Preconditions.checkArgument(namespace != null, "Namespace should not be null");
     Preconditions.checkArgument(name != null, "Table name should not be null.");
 
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    try {
       admin.disableTable(TableName.valueOf(namespace, encodeHBaseEntity(name)));
     } catch (TableNotEnabledException e) {
       LOG.debug("Attempt to disable already disabled table {} in the namespace {}.", name, namespace);
@@ -173,31 +181,34 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
     Preconditions.checkArgument(namespace != null, "Namespace should not be null");
     Preconditions.checkArgument(name != null, "Table name should not be null.");
     Preconditions.checkArgument(descriptor != null, "Descriptor should not be null.");
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      HTableDescriptor htd = getHTableDescriptor(descriptor);
-      admin.modifyTable(htd.getTableName(), htd);
-    }
+
+    HTableDescriptor htd = getHTableDescriptor(descriptor);
+    admin.modifyTable(htd.getTableName(), htd);
   }
 
   @Override
   public void truncateTable(String namespace, String name) throws IOException {
     Preconditions.checkArgument(namespace != null, "Namespace should not be null");
     Preconditions.checkArgument(name != null, "Table name should not be null.");
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      HTableDescriptor descriptor = admin.getTableDescriptor(TableName.valueOf(namespace, encodeHBaseEntity(name)));
-      TableDescriptor tbd = getTableDescriptor(descriptor);
-      disableTableIfEnabled(namespace, name);
-      deleteTableIfExists(namespace, name);
-      createTableIfNotExists(tbd, null);
-    }
+
+    HTableDescriptor descriptor = admin.getTableDescriptor(TableName.valueOf(namespace, encodeHBaseEntity(name)));
+    TableDescriptor tbd = getTableDescriptor(descriptor);
+    disableTableIfEnabled(namespace, name);
+    deleteTableIfExists(namespace, name);
+    createTableIfNotExists(tbd, null);
   }
 
   @Override
   public void deleteTableIfExists(String namespace, String name) throws IOException {
     Preconditions.checkArgument(namespace != null, "Namespace should not be null");
     Preconditions.checkArgument(name != null, "Table name should not be null.");
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      admin.deleteTable(TableName.valueOf(namespace, encodeHBaseEntity(name)));
+    admin.deleteTable(TableName.valueOf(namespace, encodeHBaseEntity(name)));
+  }
+
+  @Override
+  public void close() throws IOException {
+    if (admin != null) {
+      admin.close();
     }
   }
 }

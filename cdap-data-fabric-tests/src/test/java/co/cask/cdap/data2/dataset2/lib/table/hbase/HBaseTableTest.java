@@ -35,9 +35,11 @@ import co.cask.cdap.data2.dataset2.lib.table.BufferingTableTest;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase98.IncrementHandler;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
@@ -90,24 +92,24 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
 
   private static HBaseTableUtil hBaseTableUtil;
   private static CConfiguration cConf;
+  private static HBaseDDLExecutor ddlExecutor;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     cConf = CConfiguration.create();
     hBaseTableUtil = new HBaseTableUtilFactory(cConf, new SimpleNamespaceQueryAdmin()).get();
     // TODO: CDAP-1634 - Explore a way to not have every HBase test class do this.
-    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
-                                              hBaseTableUtil.getHBaseNamespace(NAMESPACE1));
-    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
-                                              hBaseTableUtil.getHBaseNamespace(NAMESPACE2));
+    ddlExecutor = new HBaseDDLExecutorFactory(cConf, TEST_HBASE.getHBaseAdmin().getConfiguration()).get();
+    ddlExecutor.createNamespaceIfNotExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE1));
+    ddlExecutor.createNamespaceIfNotExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE2));
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), hBaseTableUtil.getHBaseNamespace(NAMESPACE1));
-    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), hBaseTableUtil.getHBaseNamespace(NAMESPACE2));
-    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), hBaseTableUtil.getHBaseNamespace(NAMESPACE1));
-    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), hBaseTableUtil.getHBaseNamespace(NAMESPACE2));
+    hBaseTableUtil.deleteAllInNamespace(ddlExecutor, hBaseTableUtil.getHBaseNamespace(NAMESPACE1));
+    hBaseTableUtil.deleteAllInNamespace(ddlExecutor, hBaseTableUtil.getHBaseNamespace(NAMESPACE2));
+    ddlExecutor.deleteNamespaceIfExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE1));
+    ddlExecutor.deleteNamespaceIfExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE2));
   }
 
   @Override
