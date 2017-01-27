@@ -86,9 +86,9 @@ started correctly.
      :languages: console,shell-session
      :keepslashes:
  
-     $ docker run -d --name cdap-standalone -p 11011:11011 -p 11015:11015 caskdata/cdap-standalone:|release|
+     $ docker run -d --name cdap-sdk -p 11011:11011 -p 11015:11015 caskdata/cdap-standalone:|release|
      
-   This will start the container (in the background), name it ``cdap-standalone``, and set the proxying of ports.
+   This will start the container (in the background), name it ``cdap-sdk``, and set the proxying of ports.
 
 #. Start the *CDAP Standalone Docker container* with:
 
@@ -148,7 +148,7 @@ Options Starting CDAP Containers
     :languages: console,shell-session
     :keepslashes:
  
-    $ docker run -it --name cdap-cli --rm caskdata/cdap-standalone cdap cli -u http://${CDAP_HOST}:11011
+    $ docker run -it --name cdap-cli --rm caskdata/cdap-standalone cdap cli -u http://${CDAP_HOST}:11015
 
 - Use the CDAP CLI in its own container (*cdap-cli*), against the above *cdap-sdk* container using container linking:
 
@@ -191,7 +191,7 @@ Options Starting CDAP Containers
   <https://docs.docker.com/engine/tutorials/dockervolumes/#/mount-a-host-directory-as-a-data-volume>`__.
   However, if you mount a host directory, you must make sure that it exists and that
   permissions are set correctly. You pass such a directory using ``-v
-  /my/own/datadir:/opt/my/own/datadir``, where mounts the ``/my/own/datadir`` from the
+  /my/own/datadir:/opt/cdap/sdk/my/own/datadir``, which mounts the ``/my/own/datadir`` from the
   host system as ``/opt/cdap/sdk/my/own/datadir`` in the container.
 
 Controlling the CDAP Instance
