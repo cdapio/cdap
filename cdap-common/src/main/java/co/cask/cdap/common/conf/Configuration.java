@@ -858,6 +858,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     }
     return Float.parseFloat(valueString);
   }
+
   /**
    * Set the value of the <code>name</code> property to a <code>float</code>.
    *
@@ -866,6 +867,52 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    */
   public void setFloat(String name, float value) {
     set(name, Float.toString(value));
+  }
+
+  /**
+   * Get the value of the <code>name</code> property as a <code>double</code>.
+   * If no such property exists or if the specified value is not a valid <code>double</code>,
+   * then an error is thrown.
+   *
+   * @param name property name.
+   * @throws NumberFormatException when the value is invalid
+   * @throws NullPointerException if the configuration property does not exist
+   * @return property value as a <code>double</code>
+   */
+  public double getDouble(String name) {
+    String valueString = getTrimmed(name);
+    Preconditions.checkNotNull(valueString);
+    return Double.parseDouble(valueString);
+  }
+
+  /**
+   * Get the value of the <code>name</code> property as a <code>double</code>.
+   * If no such property exists, the provided default value is returned,
+   * or if the specified value is not a valid <code>double</code>,
+   * then an error is thrown.
+   *
+   * @param name property name.
+   * @param defaultValue default value.
+   * @throws NumberFormatException when the value is invalid
+   * @return property value as a <code>double</code>,
+   *         or <code>defaultValue</code>.
+   */
+  public double getDouble(String name, double defaultValue) {
+    String valueString = getTrimmed(name);
+    if (valueString == null) {
+      return defaultValue;
+    }
+    return Double.parseDouble(valueString);
+  }
+
+  /**
+   * Set the value of the <code>name</code> property to a <code>double</code>.
+   *
+   * @param name property name.
+   * @param value property value.
+   */
+  public void setDouble(String name, double value) {
+    set(name, Double.toString(value));
   }
 
   /**
