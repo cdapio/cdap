@@ -107,9 +107,9 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
     }
   }
 
-  public abstract HTableDescriptor getHTableDescriptor(TableDescriptor descriptor);
+  protected abstract HTableDescriptor getHTableDescriptor(TableDescriptor descriptor);
 
-  public abstract TableDescriptor getTableDescriptor(HTableDescriptor descriptor);
+  protected abstract TableDescriptor getTableDescriptor(HTableDescriptor descriptor);
 
   @Override
   public void createTableIfNotExists(TableDescriptor descriptor, @Nullable byte[][] splitKeys)
@@ -136,7 +136,7 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
       long sleepTime = TimeUnit.MILLISECONDS.toNanos(5000L) / 10;
       sleepTime = sleepTime <= 0 ? 1 : sleepTime;
       do {
-        if (admin.tableExists(descriptor.getName())) {
+        if (admin.tableExists(htd.getName())) {
           LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.",
                    Bytes.toString(htd.getName()));
           return;

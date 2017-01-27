@@ -38,10 +38,11 @@ import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.ColumnFamilyDescriptorBuilder;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.data2.util.hbase.TableDescriptorBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -318,9 +319,13 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
 
   private void truncate(TableId tableId) throws IOException {
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      if (tableUtil.tableExists(admin, tableId)) {
-        tableUtil.truncateTable(admin, tableId);
+      if (!tableUtil.tableExists(admin, tableId)) {
+        return;
       }
+    }
+
+    try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
+      tableUtil.truncateTable(ddlExecutor, tableId);
     }
   }
 
@@ -524,19 +529,21 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     @Override
     public void create() throws IOException {
       // Create the queue table
-      HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
+      TableDescriptorBuilder tdBuilder = HBaseTableUtil.getTableDescriptorBuilder(tableId, cConf);
       for (String key : properties.stringPropertyNames()) {
-        htd.setValue(key, properties.getProperty(key));
+        tdBuilder.addProperty(key, properties.getProperty(key));
       }
 
-      HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
-      hcd.setMaxVersions(1);
-      htd.addFamily(hcd);
+      ColumnFamilyDescriptorBuilder cfdBuilder
+        = HBaseTableUtil.getColumnFamilyDescriptorBuilder(Bytes.toString(QueueEntryRow.COLUMN_FAMILY), hConf);
+
+      tdBuilder.addColumnFamily(cfdBuilder.build());
 
       // Add coprocessors
       CoprocessorJar coprocessorJar = createCoprocessorJar();
       for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-        addCoprocessor(htd, coprocessor, coprocessorJar.getJarLocation(), coprocessorJar.getPriority(coprocessor));
+        tdBuilder.addCoprocessor(getCoprocessorDescriptor(coprocessor, coprocessorJar.getJarLocation(),
+                                                          coprocessorJar.getPriority(coprocessor)));
       }
 
       // Create queue table with splits. The distributor bucket size is the same as splits.
@@ -545,19 +552,20 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
         new RowKeyDistributorByHashPrefix.OneByteSimpleHash(splits));
 
       byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits, splits, distributor);
-      htd.setValue(QueueConstants.DISTRIBUTOR_BUCKETS, Integer.toString(splits));
-      createQueueTable(tableId, htd, splitKeys);
+      tdBuilder.addProperty(QueueConstants.DISTRIBUTOR_BUCKETS, Integer.toString(splits));
+      createQueueTable(tableId, tdBuilder, splitKeys);
     }
 
-    private void createQueueTable(TableId tableId, HTableDescriptorBuilder htd, byte[][] splitKeys)
+    private void createQueueTable(TableId tableId, TableDescriptorBuilder tdBuilder, byte[][] splitKeys)
       throws IOException {
       int prefixBytes = (type == QueueConstants.QueueType.SHARDED_QUEUE) ? ShardedHBaseQueueStrategy.PREFIX_BYTES
                                                                          : SaltedHBaseQueueStrategy.SALT_BYTES;
-      htd.setValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES, Integer.toString(prefixBytes));
-      LOG.info("Create queue table with prefix bytes {}", htd.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES));
+      String prefix = Integer.toString(prefixBytes);
+      tdBuilder.addProperty(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES, prefix);
+      LOG.info("Create queue table with prefix bytes {}", prefix);
 
       try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
-        tableUtil.createTableIfNotExists(ddlExecutor, tableId, htd.build(), splitKeys);
+        ddlExecutor.createTableIfNotExists(tdBuilder.build(), splitKeys);
       }
     }
   }

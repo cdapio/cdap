@@ -30,15 +30,15 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.ColumnFamilyDescriptorBuilder;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.data2.util.hbase.TableDescriptorBuilder;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -119,15 +119,14 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
 
     @Override
     public void create() throws IOException {
-      HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
-      columnDescriptor.setMaxVersions(1);
-      tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
+      ColumnFamilyDescriptorBuilder cfdBuilder =
+        HBaseTableUtil.getColumnFamilyDescriptorBuilder(Bytes.toString(DATA_COLUMN_FAMILY), hConf);
 
-      HTableDescriptorBuilder tableDescriptor = tableUtil.buildHTableDescriptor(tableId);
-      tableDescriptor.addFamily(columnDescriptor);
+      TableDescriptorBuilder tdBuilder = HBaseTableUtil.getTableDescriptorBuilder(tableId, cConf)
+        .addColumnFamily(cfdBuilder.build());
 
       try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
-        tableUtil.createTableIfNotExists(ddlExecutor, tableId, tableDescriptor.build());
+        ddlExecutor.createTableIfNotExists(tdBuilder.build(), null);
       }
     }
 
@@ -140,8 +139,8 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
 
     @Override
     public void truncate() throws IOException {
-      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-        tableUtil.truncateTable(admin, tableId);
+      try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
+        tableUtil.truncateTable(ddlExecutor, tableId);
       }
     }
 

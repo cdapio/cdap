@@ -111,6 +111,8 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
     hConf = HBASE_TEST_BASE.getConfiguration();
+    hConf.set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION, HBaseTableUtil.CompressionType.NONE.name());
+
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.CFG_HDFS_NAMESPACE, cConf.get(Constants.CFG_LOCAL_DATA_DIR));
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
@@ -121,7 +123,7 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
     hBaseAdmin.getConfiguration().set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION,
                                       HBaseTableUtil.CompressionType.NONE.name());
     tableUtil = new HBaseTableUtilFactory(cConf).get();
-    ddlExecutor = new HBaseDDLExecutorFactory(cConf, hBaseAdmin.getConfiguration()).get();
+    ddlExecutor = new HBaseDDLExecutorFactory(cConf, hConf).get();
     ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
 
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);

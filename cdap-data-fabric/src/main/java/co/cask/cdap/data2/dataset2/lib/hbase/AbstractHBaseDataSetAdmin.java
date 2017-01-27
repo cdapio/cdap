@@ -25,6 +25,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.hbase.CoprocessorDescriptor;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -73,6 +74,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   protected final CConfiguration cConf;
   protected final HBaseTableUtil tableUtil;
   protected final HBaseDDLExecutorFactory ddlExecutorFactory;
+  protected final String tablePrefix;
 
   protected AbstractHBaseDataSetAdmin(TableId tableId, Configuration hConf, CConfiguration cConf,
                                       HBaseTableUtil tableUtil) {
@@ -80,6 +82,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     this.hConf = hConf;
     this.cConf = cConf;
     this.tableUtil = tableUtil;
+    this.tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     this.ddlExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
   }
 
@@ -97,8 +100,8 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
   @Override
   public void truncate() throws IOException {
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      tableUtil.truncateTable(admin, tableId);
+    try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
+      tableUtil.truncateTable(ddlExecutor, tableId);
     }
   }
 
@@ -217,6 +220,15 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       priority = Coprocessor.PRIORITY_USER;
     }
     tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI().getPath()), priority, null);
+  }
+
+  protected CoprocessorDescriptor getCoprocessorDescriptor(Class<? extends  Coprocessor> coprocessor, Location jarFile,
+                                                           Integer priority) throws IOException {
+    if (priority == null) {
+      priority = Coprocessor.PRIORITY_USER;
+    }
+
+    return new CoprocessorDescriptor(coprocessor.getName(), jarFile.toURI(), priority, null);
   }
 
   protected abstract CoprocessorJar createCoprocessorJar() throws IOException;

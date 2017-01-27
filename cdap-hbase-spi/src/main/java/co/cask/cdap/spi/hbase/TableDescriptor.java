@@ -18,7 +18,6 @@ package co.cask.cdap.spi.hbase;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,44 +69,5 @@ public final class TableDescriptor {
 
   public Map<String, String> getProperties() {
     return properties;
-  }
-
-  /**
-   * A Builder to construct TableDescriptor.
-   */
-  public static class Builder {
-    private final String namespace;
-    private final String tableName;
-
-    private Set<ColumnFamilyDescriptor> families = new HashSet<>();
-    private Set<CoprocessorDescriptor> coprocessors = new HashSet<>();
-    private final Map<String, String> properties;
-
-    // TODO should we call tableName as qualifier
-    // TODO should caller always set prefix and cdap version in properties
-    public Builder(String namespace, String tableName) {
-      this.namespace = namespace;
-      this.tableName = tableName;
-      this.properties = new HashMap<>();
-    }
-
-    public Builder addCoprocessor(CoprocessorDescriptor coprocessor) {
-      this.coprocessors.add(coprocessor);
-      return this;
-    }
-
-    public Builder addColumnFamily(ColumnFamilyDescriptor family) {
-      this.families.add(family);
-      return this;
-    }
-
-    public Builder addProperty(String key, String value) {
-      this.properties.put(key, value);
-      return this;
-    }
-
-    public TableDescriptor build() {
-      return new TableDescriptor(namespace, tableName, families, coprocessors, properties);
-    }
   }
 }

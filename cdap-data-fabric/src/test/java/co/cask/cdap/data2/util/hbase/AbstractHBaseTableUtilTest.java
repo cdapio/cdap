@@ -35,7 +35,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -434,9 +433,14 @@ public abstract class AbstractHBaseTableUtilTest {
   private void create(TableId tableId) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
     TableId htableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
-    HTableDescriptorBuilder desc = tableUtil.buildHTableDescriptor(htableId);
-    desc.addFamily(new HColumnDescriptor("d"));
-    tableUtil.createTableIfNotExists(ddlExecutor, htableId, desc.build());
+
+    ColumnFamilyDescriptorBuilder cfdBuilder =
+      HBaseTableUtil.getColumnFamilyDescriptorBuilder("d", hAdmin.getConfiguration());
+
+    TableDescriptorBuilder tdBuilder = HBaseTableUtil.getTableDescriptorBuilder(htableId, cConf);
+    tdBuilder.addColumnFamily(cfdBuilder.build());
+
+    ddlExecutor.createTableIfNotExists(tdBuilder.build(), null);
   }
 
   private ListenableFuture<TableId> createAsync(final TableId tableId) {
@@ -475,7 +479,7 @@ public abstract class AbstractHBaseTableUtilTest {
   private void truncate(String namespace, String tableName) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
     TableId hTableId = tableUtil.createHTableId(new NamespaceId(namespace), tableName);
-    tableUtil.truncateTable(hAdmin, hTableId);
+    tableUtil.truncateTable(ddlExecutor, hTableId);
   }
 
   private void disable(String namespace, String tableName) throws IOException {

@@ -33,8 +33,6 @@ public final class QueueConstants {
   // This is a hardcoded value for the row key distributor bucket size before CDAP-1946
   public static final int DEFAULT_ROW_KEY_BUCKETS = 16;
 
-  public static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
-
   // How frequently (in seconds) to update the ConsumerConfigCache data for the HBaseQueueRegionObserver
   public static final String QUEUE_CONFIG_UPDATE_FREQUENCY = "data.queue.config.update.interval";
   public static final Long DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY = 5L; // default to 5 seconds

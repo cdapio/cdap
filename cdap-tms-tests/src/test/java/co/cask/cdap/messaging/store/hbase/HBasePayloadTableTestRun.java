@@ -35,7 +35,6 @@ import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -58,7 +57,6 @@ public class HBasePayloadTableTestRun extends PayloadTableTest {
   private static final CConfiguration cConf = CConfiguration.create();
 
   private static Configuration hConf;
-  private static HBaseAdmin hBaseAdmin;
   private static HBaseTableUtil tableUtil;
   private static TableFactory tableFactory;
   private static HBaseDDLExecutor ddlExecutor;
@@ -66,19 +64,18 @@ public class HBasePayloadTableTestRun extends PayloadTableTest {
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
     hConf = HBASE_TEST_BASE.getConfiguration();
+    hConf.set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION, HBaseTableUtil.CompressionType.NONE.name());
+
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.CFG_HDFS_NAMESPACE, cConf.get(Constants.CFG_LOCAL_DATA_DIR));
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
 
-    hBaseAdmin = HBASE_TEST_BASE.getHBaseAdmin();
-    hBaseAdmin.getConfiguration().set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION,
-                                      HBaseTableUtil.CompressionType.NONE.name());
     tableUtil = new HBaseTableUtilFactory(cConf).get();
-    ddlExecutor = new HBaseDDLExecutorFactory(cConf, hBaseAdmin.getConfiguration()).get();
+    ddlExecutor = new HBaseDDLExecutorFactory(cConf, hConf).get();
     ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
 
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
-    tableFactory = new HBaseTableFactory(cConf, hBaseAdmin.getConfiguration(), tableUtil, locationFactory);
+    tableFactory = new HBaseTableFactory(cConf, hConf, tableUtil, locationFactory);
 
     ConfigurationTable configTable = new ConfigurationTable(hConf);
     configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
@@ -89,7 +86,6 @@ public class HBasePayloadTableTestRun extends PayloadTableTest {
     tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
     ddlExecutor.deleteNamespaceIfExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
     ddlExecutor.close();
-    hBaseAdmin.close();
   }
 
   @Override
