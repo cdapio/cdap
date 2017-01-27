@@ -40,8 +40,12 @@
             <a href=""
                 class="list-group-item"
                 ng-repeat="field in inputSchema.fields"
-                ng-click="!isDisabled && ValidatorsCtrl.addFieldGroup(field.name)">
-              {{field.name}}
+                ng-click="!isDisabled && ValidatorsCtrl.addFieldGroup(field.name)"
+                uib-tooltip="{{::field.name}}"
+                tooltip-enable="field.name.length > 30"
+                tooltip-placement="right"
+                tooltip-append-to-body="true">
+              {{field.name | myEllipsis: 30}}
             </a>
           </div>
         </div>
