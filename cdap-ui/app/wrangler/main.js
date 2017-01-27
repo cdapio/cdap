@@ -25,6 +25,9 @@ import RouteToNamespace from 'components/RouteToNamespace';
 import Match from 'react-router/Match';
 import Router from 'react-router/BrowserRouter';
 import Home from 'wrangler/components/Home';
+import MyCDAPVersionApi from 'api/version.js';
+import VersionStore from 'services/VersionStore';
+import VersionActions from 'services/VersionStore/VersionActions';
 
 require('font-awesome-sass-loader!./styles/font-awesome.config.js');
 require('./styles/lib-styles.scss');
@@ -50,6 +53,18 @@ class WranglerParent extends Component {
           }
         }
       );
+
+    if (!VersionStore.getState().version) {
+      MyCDAPVersionApi.get().subscribe((res) => {
+        this.setState({ version : res.version });
+        VersionStore.dispatch({
+          type: VersionActions.updateVersion,
+          payload: {
+            version: res.version
+          }
+        });
+      });
+    }
   }
 
   render () {

@@ -52,7 +52,8 @@ const market = (state=initialState, action) => {
 };
 
 function filterEntities(list) {
-  const cdapVersion = new Version(VersionStore.getState().version);
+  let store = window.CaskCommon ? window.CaskCommon.VersionStore : VersionStore;
+  const cdapVersion = new Version(store.getState().version);
 
   let filteredList = list.filter((entity) => {
     if (!entity.cdapVersion) { return true; }

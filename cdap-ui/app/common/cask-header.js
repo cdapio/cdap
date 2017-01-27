@@ -22,4 +22,15 @@
  var Wrangler = require('../wrangler/components/Wrangler').default;
  var globalEvents = require('../cdap/services/global-events').default;
  var ee = require('event-emitter');
- export {Store, HeaderBrand, HeaderActions, Wrangler, globalEvents, ee};
+ var VersionStore = require('../cdap/services/VersionStore').default;
+ var VersionActions = require('../cdap/services/VersionStore/VersionActions').default;
+ export {
+  Store,
+  HeaderBrand,
+  HeaderActions,
+  Wrangler,
+  globalEvents,
+  ee,
+  VersionStore,
+  VersionActions
+};
