@@ -73,14 +73,9 @@ started correctly.
      :mapping: linux,windows
      :dependent: linux-windows
      :languages: console,shell-session
- 
-     .. Linux or Mac OS X
-     
-     $ docker pull caskdata/cdap-standalone:|release|
+     :keepslashes:
 
-     .. Windows
-    
-     > docker pull caskdata/cdap-standalone:|release|
+     $ docker pull caskdata/cdap-standalone:|release|
 
 #. Start the *CDAP Standalone* Docker container with:
 
@@ -89,6 +84,7 @@ started correctly.
      :mapping: linux,windows
      :dependent: linux-windows
      :languages: console,shell-session
+     :keepslashes:
  
      $ docker run -d --name cdap-standalone -p 11011:11011 -p 11015:11015 caskdata/cdap-standalone:|release|
      
@@ -101,8 +97,9 @@ started correctly.
      :mapping: linux,windows
      :dependent: linux-windows
      :languages: console,shell-session
+     :keepslashes:
  
-     $ docker run -it --name cdap-sdk-debugging -p 11011:11011 -p 11015:11015 caskdata/cdap-standalone:|release| cdap.sh start --enable-debug 
+     $ docker run -it --name cdap-sdk-debugging -p 11011:11011 -p 11015:11015 caskdata/cdap-standalone:|release| cdap sdk start --enable-debug 
      
    This will start the container (in the foreground, the default), :ref:`enable debugging
    <debugging-standalone>`, name it ``cdap-sdk-debugging``, and set the proxying of ports.
@@ -120,36 +117,78 @@ started correctly.
 Options Starting CDAP Containers
 --------------------------------
 
-- Starting the Standalone CDAP, in the background (default execution)::
+- Starting the Standalone CDAP, in the background (default execution) 
+
+  .. tabbed-parsed-literal::
+    :tabs: "Linux or Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    :languages: console,shell-session
+    :keepslashes:
 
     $ docker run -d --name cdap-sdk caskdata/cdap-standalone
 
-- Use the CDAP CLI within the above *cdap-standalone* container::
+- Use the CDAP CLI within the above *cdap-sdk* container:
 
-    $ docker exec -it cdap-sdk cdap-cli.sh
+  .. tabbed-parsed-literal::
+    :tabs: "Linux or Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    :languages: console,shell-session
+    :keepslashes:
 
-- Use the CDAP CLI in its own container (*cdap-cli*), against a remote CDAP instance at ``${CDAP_HOST}``::
+    $ docker exec -it cdap-sdk cdap cli
 
-    $ docker run -it --name cdap-cli --rm caskdata/cdap-standalone cdap-cli.sh -u http://${CDAP_HOST}:11011
+- Use the CDAP CLI in its own container (*cdap-cli*), against a remote CDAP instance at ``${CDAP_HOST}``:
 
-- Use the CDAP CLI in its own container (*cdap-cli*), against the above *cdap-standalone* container using container linking::
+  .. tabbed-parsed-literal::
+    :tabs: "Linux or Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    :languages: console,shell-session
+    :keepslashes:
+ 
+    $ docker run -it --name cdap-cli --rm caskdata/cdap-standalone cdap cli -u http://${CDAP_HOST}:11011
 
-    $ docker run -it --link cdap-sdk:sdk --name cdap-cli --rm caskdata/cdap-standalone sh -c 'exec cdap-cli.sh -u http://${SDK_PORT_11011_TCP_ADDR}:${SDK_PORT_11011_TCP_PORT}'
+- Use the CDAP CLI in its own container (*cdap-cli*), against the above *cdap-sdk* container using container linking:
 
-- Starting the Standalone CDAP, in the foreground, with ports forwarded::
+  .. tabbed-parsed-literal::
+    :tabs: "Linux or Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    :languages: console,shell-session
+    :keepslashes:
+ 
+    $ docker run -it --link cdap-sdk:sdk --name cdap-cli --rm caskdata/cdap-standalone sh -c 'exec cdap cli -u http://${SDK_PORT_11011_TCP_ADDR}:${SDK_PORT_11011_TCP_PORT}'
 
-    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-sdk caskdata/cdap-standalone cdap.sh start
+- Starting the Standalone CDAP, in the foreground, with ports forwarded:
+
+  .. tabbed-parsed-literal::
+    :tabs: "Linux or Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    :languages: console,shell-session
+    :keepslashes:
+ 
+    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-sdk caskdata/cdap-standalone cdap sdk start
     
-- Starting the Standalone CDAP, in the foreground, with ports forwarded, and with debugging enabled::
+- Starting the Standalone CDAP, in the foreground, with ports forwarded, and with debugging enabled:
 
-    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-sdk caskdata/cdap-standalone cdap.sh start --enable-debug
+  .. tabbed-parsed-literal::
+    :tabs: "Linux or Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    :languages: console,shell-session
+    :keepslashes:
+ 
+    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-sdk caskdata/cdap-standalone cdap sdk start --enable-debug
 
 - For information on mounting volumes and sharing data with the container, see the
   examples in Docker's documentation on `data volumes
   <https://docs.docker.com/engine/tutorials/dockervolumes/#/adding-a-data-volume>`__.
   You can either let Docker manage the storage in the container (the easiest) or you can 
   `mount a host directory as a data volume
-  <https://docs.docker.com/engine/tutorials/dockervolumes/#/mount-a-host-directory-as-a-data-volume>`.
+  <https://docs.docker.com/engine/tutorials/dockervolumes/#/mount-a-host-directory-as-a-data-volume>`__.
   However, if you mount a host directory, you must make sure that it exists and that
   permissions are set correctly. You pass such a directory using ``-v
   /my/own/datadir:/opt/my/own/datadir``, where mounts the ``/my/own/datadir`` from the
@@ -167,27 +206,14 @@ Controlling the CDAP Instance
     :dependent: linux-windows
     :languages: console,shell-session
     
-    .. Linux or Mac OS X
-    
-    $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk <command>
+    $ docker exec -d cdap-sdk cdap sdk <command>
 
-    $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk start
-    $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk restart
-    $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
+    $ docker exec -d cdap-sdk cdap sdk start
+    $ docker exec -d cdap-sdk cdap sdk restart
+    $ docker exec -d cdap-sdk cdap sdk stop
 
     # To see the status:
-    $ docker exec -it cdap-standalone /opt/cdap/sdk/bin/cdap sdk status
-
-    .. Windows
-    
-    > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk <command>
-
-    > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk start
-    > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk restart
-    > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
-
-    # To see the status:
-    > docker exec -it cdap-standalone /opt/cdap/sdk/bin/cdap sdk status
+    $ docker exec -it cdap-sdk cdap sdk status
 
 - When you are finished, stop CDAP and then shutdown the Docker machine:
 
@@ -197,15 +223,8 @@ Controlling the CDAP Instance
     :dependent: linux-windows
     :languages: console,shell-session
     
-    .. Linux or Mac OS X
-    
-    $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
+    $ docker exec -d cdap-sdk cdap sdk stop
     $ docker-machine stop cdap
-
-    .. Windows
-    
-    > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
-    > docker-machine stop cdap-standalone
 
 Docker Resources
 ----------------
