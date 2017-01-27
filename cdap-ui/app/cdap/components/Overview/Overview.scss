@@ -1,0 +1,50 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../styles/variables.scss";
+
+.overview-container {
+  flex: 0;
+  position: relative;
+  right: 0;
+  // FIXME: For later use.
+  // transition: 1s ease-in flex, 1s ease-in opacity, 1s ease-in right;
+  width: 0;
+  opacity: 0;
+
+  &.show-overview {
+    flex: 0 0 $overview-width;
+    display: block;
+    right: 0;
+    opacity: 1;
+    margin-top: 5px;
+
+    .overview-wrapper {
+      position: fixed;
+      width: $overview-width;
+      height: calc(100vh - 144px);
+      border-top: 1px solid rgba(219, 219, 219, 1);
+      background: rgba(238, 238, 238, 1);
+      box-shadow: 0px 1px 10px 0 rgba(0, 0, 0, 0.3);
+
+      > .fa.fa-spinner.fa-spin {
+        margin-top: 50%;
+        margin-left: 50%;
+        color: gray;
+      }
+    }
+  }
+}

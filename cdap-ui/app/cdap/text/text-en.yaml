@@ -374,6 +374,13 @@ features:
       datasets: Datasets
       streams: Streams
       addNS: "Add Namespace"
+  Overview:
+    ProgramTab:
+      emptyMessage: No Programs found.
+      title: "Programs in {appId}:"
+      runningProgramLabel: "Number of programs running: {programCount}"
+    DatasetTab:
+      title: "Dataset Used by {appId}:"
   Pagination:
     dropdown-label: Page
   Resource-Center:
@@ -699,4 +706,10 @@ features:
     nodeserverDown: 'User interface service is down'
   StatusAlertMessage:
     message: 'Services are back online'
+  Tags:
+    label: Tags
+    notags: No Tags added
+  Description:
+    label: Description
+    nodescription: No Description available
 ...
