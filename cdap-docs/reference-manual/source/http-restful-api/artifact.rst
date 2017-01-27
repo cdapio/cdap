@@ -117,7 +117,7 @@ List Artifact Versions
 ======================
 To list all versions of a specific artifact, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace-id>/artifact/<artifact-name>[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-name>[?scope=<scope>]
   
 .. list-table::
    :widths: 20 80
@@ -178,7 +178,7 @@ artifact (pretty-printed and reformatted to fit):
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET /v3/namespaces/default/artifact/WordCount/versions/|release|?scope=system
+    |$| GET /v3/namespaces/default/artifacts/WordCount/versions/|release|?scope=system
     {
       "classes": {
         "apps": [
@@ -233,7 +233,7 @@ defined, they will be overwritten.
 .. container:: highlight
 
   .. parsed-literal::
-    |$| PUT /v3/namespaces/default/artifact/WordCount/versions/|release|/properties -d 
+    |$| PUT /v3/namespaces/default/artifacts/WordCount/versions/|release|/properties -d 
     {
         "author": "samuel",
         "company": "cask"
@@ -268,7 +268,7 @@ the previous value will be overwritten.
 .. container:: highlight
 
   .. parsed-literal::
-    |$| PUT /v3/namespaces/default/artifact/WordCount/versions/|release|/properties/author -d
+    |$| PUT /v3/namespaces/default/artifacts/WordCount/versions/|release|/properties/author -d
     samuel
 
 .. _http-restful-api-artifact-retrieve-properties:
@@ -301,7 +301,7 @@ This will return a JSON object that contains the properties of the artifact.
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET /v3/namespaces/default/artifact/WordCount/versions/|release|/properties?keys=author,company
+    |$| GET /v3/namespaces/default/artifacts/WordCount/versions/|release|/properties?keys=author,company
     { "author": "samuel", "company": "cask" }
 
 .. _http-restful-api-artifact-retrieve-property:
@@ -330,7 +330,7 @@ To retrieve a specific property for a specific version of an artifact, submit an
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET /v3/namespaces/default/artifact/WordCount/versions/|release|/properties/author
+    |$| GET /v3/namespaces/default/artifacts/WordCount/versions/|release|/properties/author
     samuel
 
 .. _http-restful-api-artifact-delete-properties:
@@ -357,7 +357,7 @@ To delete all properties for a specific version of an artifact, submit an HTTP D
 .. container:: highlight
 
   .. parsed-literal::
-    |$| DELETE /v3/namespaces/default/artifact/WordCount/versions/|release|/properties
+    |$| DELETE /v3/namespaces/default/artifacts/WordCount/versions/|release|/properties
 
 .. _http-restful-api-artifact-delete-property:
 
@@ -385,7 +385,7 @@ To delete a specific property for a specific version of an artifact, submit an H
 .. container:: highlight
 
   .. parsed-literal::
-    |$| DELETE /v3/namespaces/default/artifact/WordCount/versions/|release|/properties/author
+    |$| DELETE /v3/namespaces/default/artifacts/WordCount/versions/|release|/properties/author
 
 .. _http-restful-api-artifact-extensions:
 
