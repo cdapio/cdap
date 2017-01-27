@@ -20,4 +20,14 @@
  var HeaderBrand = require('../cdap/components/HeaderBrand').default;
  var Store = require('../cdap/services/NamespaceStore').default;
  var Wrangler = require('../wrangler/components/Wrangler').default;
- export {Store, HeaderBrand, HeaderActions, Wrangler};
+ var VersionStore = require('../cdap/services/VersionStore').default;
+ var VersionActions = require('../cdap/services/VersionStore/VersionActions').default;
+ export {
+  Store,
+  HeaderBrand,
+  HeaderActions,
+  Wrangler,
+  VersionStore,
+  VersionActions
+};
+
