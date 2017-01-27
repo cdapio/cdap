@@ -81,6 +81,7 @@ public class CConfigurationTest {
     conf.setLong("test.property.long", 1L);
     conf.set("test.property.longbytes", "1k");
     conf.setFloat("test.property.float", 1.1f);
+    conf.setDouble("test.property.double", 1.2d);
     conf.set("test.property.boolean", "true");
     conf.set("test.property.enum", TestEnum.FIRST.name());
     String testRegex = ".*";
@@ -118,6 +119,14 @@ public class CConfigurationTest {
       // expected
     }
     Assert.assertEquals(1.1f, conf.getFloat("test.property.float"), 0.01f);
+
+    try {
+      conf.getDouble("missing.property");
+      Assert.fail("Expected getDouble() to throw NullPointerException");
+    } catch (NullPointerException e) {
+      // expected
+    }
+    Assert.assertEquals(1.2d, conf.getDouble("test.property.double"), 0.01d);
 
     try {
       conf.getBoolean("missing.property");
