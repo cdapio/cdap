@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: CDAP Docker Image
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 ============
 Docker Image
@@ -38,11 +38,12 @@ started correctly.
      :languages: console,shell-session
      
      $ docker-machine create --driver virtualbox cdap
-     . . .
+       . . .
+       
      $ docker-machine env cdap
      
    This will create a new Docker virtual machine using VirtualBox named ``cdap``; once
-   created, the second command will print out the environment.
+   created and running, the second command will print out the environment.
 
 #. When you run ``docker-machine env cdap``, it will print a message on the screen such as::
 
@@ -62,8 +63,8 @@ started correctly.
    above (such as ``192.168.99.100``) as the host name when either connecting to the CDAP
    UI or making an HTTP request.
 
-#. If you are running **Docker on Microsoft Windows**, note that paths used employ Linux
-   forward-slashes (``/``) and not the Microsoft Windows back-slashes (``\\``).
+#. If you are running **Docker on Microsoft Windows**, note that paths used employ Linux's
+   forward-slashes (``/``) and not back-slashes (``\``).
 
 #. Once Docker has started, pull down the *CDAP Docker Image* from the Docker Hub using:
 
@@ -81,7 +82,7 @@ started correctly.
     
      > docker pull caskdata/cdap-standalone:|release|
 
-#. Start the *CDAP Standalone Docker container* with:
+#. Start the *CDAP Standalone* Docker container with:
 
    .. tabbed-parsed-literal::
      :tabs: "Linux or Mac OS X",Windows
@@ -116,17 +117,16 @@ started correctly.
    with the Docker VM's IP address (such as ``192.168.99.100``) that you obtained earlier.
    Start a browser and enter the address to access the CDAP UI from outside Docker.
 
+Options Starting CDAP Containers
+--------------------------------
 
-Options when Starting CDAP Containers
--------------------------------------
+- Starting the Standalone CDAP, in the background (default execution)::
 
-- Starting the Standalone CDAP, in the background::
-
-    $ docker run -d --name cdap-standalone caskdata/cdap-standalone
+    $ docker run -d --name cdap-sdk caskdata/cdap-standalone
 
 - Use the CDAP CLI within the above *cdap-standalone* container::
 
-    $ docker exec -it cdap-standalone cdap-cli.sh
+    $ docker exec -it cdap-sdk cdap-cli.sh
 
 - Use the CDAP CLI in its own container (*cdap-cli*), against a remote CDAP instance at ``${CDAP_HOST}``::
 
@@ -138,32 +138,28 @@ Options when Starting CDAP Containers
 
 - Starting the Standalone CDAP, in the foreground, with ports forwarded::
 
-    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-standalone caskdata/cdap-standalone cdap.sh start
+    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-sdk caskdata/cdap-standalone cdap.sh start
     
 - Starting the Standalone CDAP, in the foreground, with ports forwarded, and with debugging enabled::
 
-    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-sdk-debugging caskdata/cdap-standalone cdap.sh start --enable-debug
+    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-sdk caskdata/cdap-standalone cdap.sh start --enable-debug
 
-  .. tabbed-parsed-literal::
-    :tabs: "Linux or Mac OS X",Windows
-    :mapping: linux,windows
-    :dependent: linux-windows
-    :languages: console,shell-session
-    
-    .. Linux or Mac OS X
-    
-    $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk <command>
-
-    .. Windows
-    
-    > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk <command>
-
+- For information on mounting volumes and sharing data with the container, see the
+  examples in Docker's documentation on `data volumes
+  <https://docs.docker.com/engine/tutorials/dockervolumes/#/adding-a-data-volume>`__.
+  You can either let Docker manage the storage in the container (the easiest) or you can 
+  `mount a host directory as a data volume
+  <https://docs.docker.com/engine/tutorials/dockervolumes/#/mount-a-host-directory-as-a-data-volume>`.
+  However, if you mount a host directory, you must make sure that it exists and that
+  permissions are set correctly. You pass such a directory using ``-v
+  /my/own/datadir:/opt/my/own/datadir``, where mounts the ``/my/own/datadir`` from the
+  host system as ``/opt/cdap/sdk/my/own/datadir`` in the container.
 
 Controlling the CDAP Instance
 -----------------------------
 
-- To control the CDAP instance, use this command, substituting one of ``start``, ``restart``, ``status``,
-  or ``stop`` for ``<command>``:
+- To control the CDAP instance, use this command, substituting one of ``start``, ``restart``, ``stop``,
+  or ``status`` for ``<command>``:
 
   .. tabbed-parsed-literal::
     :tabs: "Linux or Mac OS X",Windows
@@ -177,8 +173,10 @@ Controlling the CDAP Instance
 
     $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk start
     $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk restart
-    $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk status
     $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
+
+    # To see the status:
+    $ docker exec -it cdap-standalone /opt/cdap/sdk/bin/cdap sdk status
 
     .. Windows
     
@@ -186,11 +184,12 @@ Controlling the CDAP Instance
 
     > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk start
     > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk restart
-    > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk status
     > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
 
+    # To see the status:
+    > docker exec -it cdap-standalone /opt/cdap/sdk/bin/cdap sdk status
 
-- When you are finished, stop CDAP and then shutdown Docker:
+- When you are finished, stop CDAP and then shutdown the Docker machine:
 
   .. tabbed-parsed-literal::
     :tabs: "Linux or Mac OS X",Windows
@@ -206,8 +205,7 @@ Controlling the CDAP Instance
     .. Windows
     
     > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
-    > docker-machine stop cdap
-
+    > docker-machine stop cdap-standalone
 
 Docker Resources
 ----------------
@@ -299,7 +297,6 @@ Kitematic and then download, start, and connect to a CDAP container.
         :width: 800px
         :align: center
         :class: bordered-image
-
 
 
 .. _docker-cdap-applications:
