@@ -16,8 +16,22 @@
 
 var webpack = require('webpack');
 var path = require('path');
+var mode = process.env.NODE_ENV;
+var plugins = [
+  new webpack.DefinePlugin({
+    'process.env':{
+      'NODE_ENV': JSON.stringify("production"),
+      '__DEVTOOLS__': false
+    },
+  }),
+  new webpack.DllPlugin({
+    path: path.join(__dirname, 'dll', 'wrangler-[name]-manifest.json'),
+    name: 'wrangler_[name]',
+    context: path.resolve(__dirname, 'dll')
+  })
+];
 
-module.exports = {
+var webpackConfig = {
   entry: {
     vendor: [
       'react-addons-css-transition-group',
@@ -38,25 +52,30 @@ module.exports = {
     filename: 'dll.wrangler.[name].js',
     library: 'wrangler_[name]'
   },
-  plugins: [
-    new webpack.DefinePlugin({
-      'process.env':{
-        'NODE_ENV': JSON.stringify("production"),
-        '__DEVTOOLS__': false
-      },
-    }),
-    new webpack.DllPlugin({
-      path: path.join(__dirname, 'dll', 'wrangler-[name]-manifest.json'),
-      name: 'wrangler_[name]',
-      context: path.resolve(__dirname, 'dll')
-    }),
+  plugins,
+  stats: {
+    chunks: false
+  },
+  resolve: {
+    modules: ['node_modules']
+  }
+};
+if (mode === 'production') {
+  plugins.push(
     new webpack.optimize.UglifyJsPlugin({
       compress: {
         warnings: false
       }
     })
-  ],
-  resolve: {
-    modules: ['node_modules']
-  }
-};
+  );
+  webpackConfig = Object.assign({}, webpackConfig, {
+    plugins
+  });
+}
+if (mode !== 'production') {
+  webpackConfig = Object.assign({}, webpackConfig, {
+    devtool: 'source-map'
+  });
+}
+
+module.exports = webpackConfig;

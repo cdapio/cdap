@@ -63,22 +63,6 @@ var plugins = [
 ];
 var mode = process.env.NODE_ENV;
 
-if (mode === 'production' || mode === 'build') {
-  plugins.push(
-    new webpack.DefinePlugin({
-      'process.env':{
-        'NODE_ENV': JSON.stringify("production"),
-        '__DEVTOOLS__': false
-      },
-    }),
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-          warnings: false
-      }
-    })
-  );
-}
-
 var loaders = [
   {
     test: /\.scss$/,
@@ -116,7 +100,7 @@ var loaders = [
   }
 ];
 
-module.exports = {
+var webpackConfig = {
   context: __dirname + '/app/wrangler',
   entry: {
     'wrangler': ['./wrangler.js', 'rx', 'rx-dom']
@@ -147,7 +131,7 @@ module.exports = {
     filename: './[name].js',
     path: __dirname + '/wrangler_dist/wrangler_assets'
   },
-  plugins: plugins,
+  plugins,
   resolve: {
     alias: {
       components: __dirname + '/app/cdap/components',
@@ -155,5 +139,34 @@ module.exports = {
       api: __dirname + '/app/cdap/api',
       wrangler: __dirname + '/app/wrangler'
     }
-  }
+  },
+  stats: {
+    chunks: false
+  },
 };
+
+if (mode === 'production') {
+  plugins.push(
+    new webpack.DefinePlugin({
+      'process.env':{
+        'NODE_ENV': JSON.stringify("production"),
+        '__DEVTOOLS__': false
+      },
+    }),
+    new webpack.optimize.UglifyJsPlugin({
+      compress: {
+          warnings: false
+      }
+    })
+  );
+  webpackConfig = Object.assign({}, webpackConfig, {
+    plugins
+  });
+}
+if (mode !== 'production') {
+  webpackConfig = Object.assign({}, webpackConfig, {
+    devtool: 'source-map'
+  });
+}
+
+module.exports = webpackConfig;
