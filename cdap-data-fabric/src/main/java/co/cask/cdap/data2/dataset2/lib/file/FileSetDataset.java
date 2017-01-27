@@ -339,6 +339,11 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     return location.mkdirs();
   }
 
+  @WriteOnly
+  private boolean mkdirs(Location location, String permissions) throws IOException {
+    return location.mkdirs(permissions);
+  }
+
   @ReadOnly
   private long length(Location location) throws IOException {
     return location.length();
@@ -428,6 +433,11 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     @Override
     public boolean mkdirs() throws IOException {
       return FileSetDataset.this.mkdirs(getDelegate());
+    }
+
+    @Override
+    public boolean mkdirs(String permissions) throws IOException {
+      return FileSetDataset.this.mkdirs(getDelegate(), permissions);
     }
 
     @Override
