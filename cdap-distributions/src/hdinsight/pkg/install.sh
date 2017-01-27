@@ -74,7 +74,7 @@ echo "{\"cdap\": {\"version\": \"${CDAP_VERSION}\"}}" > ${__tmpdir}/cli-conf.jso
 chef-solo -o 'recipe[cdap::cli]' -j ${__tmpdir}/cli-conf.json || die 'Failed during Chef CDAP CLI install'
 
 # Read zookeeper quorum from hbase-site.xml, using sourced init script function
-source ${__gitdir}/cdap-common/bin/common.sh || die "Cannot source CDAP common script"
+source ${__gitdir}/cdap-common/bin/functions.sh || die "Cannot source CDAP common script"
 __zk_quorum=$(cdap_get_conf 'hbase.zookeeper.quorum' '/etc/hbase/conf/hbase-site.xml') || die "Cannot determine zookeeper quorum"
 
 # Get HDP version, catch any errors from hdp-select
