@@ -223,7 +223,7 @@ public final class MapReduceContextConfig {
    * Returns the {@link CConfiguration} stored inside the job {@link Configuration}.
    */
   CConfiguration getCConf() {
-    String conf = hConf.get(HCONF_ATTR_CCONF);
+    String conf = hConf.getRaw(HCONF_ATTR_CCONF);
     Preconditions.checkArgument(conf != null, "No CConfiguration available");
     return CConfiguration.create(new ByteArrayInputStream(conf.getBytes(Charsets.UTF_8)));
   }
