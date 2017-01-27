@@ -92,6 +92,11 @@ features:
     emptyMessage: No entities found in the system.
     Cards:
       type: "Type: "
+    Errors:
+      retryNow: Retry now
+      secondsLabel: seconds.
+      tryAgain: Unable to communicate with CDAP services. Retrying in
+      timeOut: Timed out while attempting to communicate with CDAP services. Please contact your system administrator.
     SplashScreen:
       welcomeMessage: Welcome to CDAP 4.0
       welcomeMessage1: New User Interface

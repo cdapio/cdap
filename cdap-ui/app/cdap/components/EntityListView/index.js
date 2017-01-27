@@ -29,6 +29,7 @@ import {fetchTables} from 'services/ExploreTables/ActionCreator';
 import MyUserStoreApi from 'api/userstore';
 import PlusButtonStore from 'services/PlusButtonStore';
 import globalEvents from 'services/global-events';
+import Timer from 'components/Timer';
 
 require('./EntityListView.scss');
 import ee from 'event-emitter';
@@ -119,6 +120,8 @@ class EntityListView extends Component {
       userStoreObj : ''
     };
 
+    this.retryCounter = 0; // being used for search API retry
+
     // By default, expect a single page -- update when search is performed and we can parse it
     this.pageSize = 1;
     this.dismissSplash = this.dismissSplash.bind(this);
@@ -127,6 +130,7 @@ class EntityListView extends Component {
     this.getQueryObject = this.getQueryObject.bind(this);
     this.handlePageChange = this.handlePageChange.bind(this);
     this.setAnimationDirection = this.setAnimationDirection.bind(this);
+    this.retryNow = this.retryNow.bind(this);
     this.eventEmitter = ee(ee);
     this.refreshSearchByCreationTime = this.refreshSearchByCreationTime.bind(this);
     this.eventEmitter.on(globalEvents.APPUPLOAD, this.refreshSearchByCreationTime);
@@ -334,6 +338,7 @@ class EntityListView extends Component {
       params.query = '*';
       params.numCursors = 10;
     }
+
     let total;
     MySearchApi.search(params)
       .map((res) => {
@@ -352,15 +357,21 @@ class EntityListView extends Component {
           entities: res,
           loading: false,
           entityErr: false,
+          errStatusCode: null,
           numPages: Math.ceil(total / this.pageSize)
         });
+
+        this.retryCounter = 0;
       }, (err) => {
+        this.retryCounter++;
+
         // On Error: render page as if there are no results found
         this.setState({
           isSortDisabled,
           isSearchDisabled,
-          loading : false,
-          entityErr : typeof err === 'object' ? err.response : err
+          loading: false,
+          entityErr: typeof err === 'object' ? err.response : err,
+          errStatusCode: err.statusCode
         });
       });
   }
@@ -504,6 +515,72 @@ class EntityListView extends Component {
     });
   }
 
+  retryNow() {
+    this.retryCounter = 0;
+    this.updateData();
+  }
+
+  renderError() {
+    const retryMap = {
+      1: 10,
+      2: 60,
+      3: 120,
+      4: 300,
+      5: 600
+    };
+
+    const normalError = (
+      <h3 className="text-xs-center empty-message text-danger">
+        <span className="fa fa-exclamation-triangle"></span>
+        <span>{this.state.entityErr}</span>
+      </h3>
+    );
+
+    const retryNow = (
+      <button
+        className="btn btn-primary retry-now"
+        onClick={this.retryNow}
+      >
+        {T.translate('features.EntityListView.Errors.retryNow')}
+      </button>
+    );
+
+    const tryAgainError = (
+      <h3 className="text-xs-center empty-message text-danger">
+        <span className="fa fa-exclamation-triangle"></span>
+        <span>
+          {T.translate('features.EntityListView.Errors.tryAgain')}
+          <Timer
+            time={retryMap[this.retryCounter]}
+            onDone={this.updateData.bind(this)}
+          />
+          {T.translate('features.EntityListView.Errors.secondsLabel')}
+          <br/>
+          {retryNow}
+        </span>
+      </h3>
+    );
+
+    const timeOut = (
+      <h3 className="text-xs-center empty-message text-danger">
+        <span className="fa fa-exclamation-triangle"></span>
+        <span>
+          {T.translate('features.EntityListView.Errors.timeOut')}
+        </span>
+      </h3>
+    );
+
+    const CHECK_ERROR_CODE = 500;
+
+    if (this.retryCounter > 5 && this.state.errStatusCode >= CHECK_ERROR_CODE) {
+      return timeOut;
+    } else if (this.state.errStatusCode >= CHECK_ERROR_CODE) {
+      return tryAgainError;
+    } else {
+      return normalError;
+    }
+  }
+
   render() {
 
     if (!this.state.showSplash) {
@@ -548,17 +625,9 @@ class EntityListView extends Component {
       );
     }
 
-
     const empty = (
       <h3 className="text-xs-center empty-message">
         {T.translate('features.EntityListView.emptyMessage')}
-      </h3>
-    );
-
-    const errorContainer = (
-      <h3 className="text-xs-center empty-message text-danger">
-        <span className="fa fa-exclamation-triangle"></span>
-        <span>{this.state.entityErr}</span>
       </h3>
     );
 
@@ -574,7 +643,7 @@ class EntityListView extends Component {
     if (this.state.loading) {
       bodyContent = loading;
     } else if (this.state.entities.length === 0) {
-      entitiesToBeRendered = this.state.entityErr ? errorContainer : empty;
+      entitiesToBeRendered = this.state.entityErr ? this.renderError() : empty;
 
       bodyContent = (
         <div className="entities-container">
