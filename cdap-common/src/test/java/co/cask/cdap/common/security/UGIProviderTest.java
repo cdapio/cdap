@@ -44,6 +44,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
@@ -149,6 +150,7 @@ public class UGIProviderTest {
     }
   }
 
+  @Ignore // TODO (CDAP-8244) fix this test case and un-ignore this test.
   @Test
   public void testRemoteUGIProvider() throws Exception {
     // Starts a mock server to handle remote UGI requests
