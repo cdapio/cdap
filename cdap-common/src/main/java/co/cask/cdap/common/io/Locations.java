@@ -341,6 +341,35 @@ public final class Locations {
   }
 
   /**
+   * Returns the relative path for a given location
+   * @param location
+   * @return
+   */
+  public static String getRelativePath(Location location) {
+    URI baseURI = location.getLocationFactory().create("").toURI();
+    URI locationURI = location.toURI();
+    URI relativeURI = baseURI.relativize(locationURI);
+    return relativeURI.getPath();
+  }
+
+
+  /**
+   * For backward compatibility with URIs, this method creates a location based on uri or path
+   * one of them should be non-null
+   * @param locationFactory corresponding to the uri and path
+   * @param path if path is available
+   * @param uri if uri is available
+   * @return
+   */
+  public static Location getCompatibleLocation(LocationFactory locationFactory,
+                                               @Nullable String path, @Nullable URI uri) {
+    Location artifactLocation = uri != null
+      ? locationFactory.create(Locations.getRelativePath(locationFactory.create(uri)))
+      : locationFactory.create(path);
+    return artifactLocation;
+  }
+
+  /**
    * Create the directory represented by the location if not exists.
    *
    * @param location the location for the directory.
