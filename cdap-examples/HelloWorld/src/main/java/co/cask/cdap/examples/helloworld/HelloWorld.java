@@ -113,7 +113,7 @@ public class HelloWorld extends AbstractApplication {
   }
 
   /**
-   * Greeting Service handler.
+   * Greeting {@link Service} handler.
    */
   public static final class GreetingHandler extends AbstractHttpServiceHandler {
 

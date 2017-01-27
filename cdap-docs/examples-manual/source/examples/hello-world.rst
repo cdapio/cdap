@@ -26,7 +26,7 @@ The *HelloWorld* Application
    :language: java
    :lines: 48-58
    :append: ...
-   
+
 The application uses a stream called *who* to ingest data through a flow *WhoFlow* to a dataset *whom*.
 
 The *WhoFlow*
@@ -37,7 +37,7 @@ This is a trivial flow with a single flowlet named *saver* of type ``NameSaver``
    :language: java
    :lines: 63-72
    :dedent: 2
-   
+
 The flowlet uses a dataset of type ``KeyValueTable`` to store the names it reads from the stream. Every time a new
 name is received, it is stored in the table under the key ``name``, and it overwrites any name that was previously
 stored:
@@ -46,20 +46,30 @@ stored:
    :language: java
    :lines: 77-98
    :dedent: 2
-  
+
 Note that the flowlet also emits metrics: every time a name longer than 10 characters is received,
 the counter ``names.longnames`` is incremented by one, and the metric ``names.bytes`` is incremented
-by the length of the name. We will see below how to retrieve these metrics using the 
+by the length of the name. We will see below how to retrieve these metrics using the
 :ref:`http-restful-api-metrics`.
 
 The *Greeting* Service
 ----------------------
-This service has a single endpoint called ``greet`` that does not accept arguments. When invoked, it
-reads the name stored by the ``NameSaver`` from the key-value table. It return a simple greeting with that name:
+This is a simple service. It has only one handler, the class ``GreetingHandler``.
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
    :lines: 103-113
+   :dedent: 2
+
+The *GreetingHandler* Handler
+-----------------------------
+This has a single endpoint called ``greet`` that does not accept arguments. When invoked, it
+reads the name stored by the ``NameSaver`` from the key-value table. It returns a simple
+greeting containing that name:
+
+.. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
+   :language: java
+   :lines: 118-135
    :dedent: 2
 
 Note that the service, like the flowlet, also emits metrics: every time the name *Jane Doe* is received,
@@ -96,7 +106,7 @@ Running the Example
 
 Injecting a Name
 ----------------
-In the |application-overview-page|, click on |example-flow-italic|. 
+In the |application-overview-page|, click on |example-flow-italic|.
 This takes you to the flow details page. (If you haven't already started the flow, click
 on the *Start* button in the right-side, below the green arrow.) The flow's *status* will
 read *Running* when it is ready to receive events.
@@ -124,7 +134,7 @@ You can also use the CDAP CLI:
   $ cdap cli send stream who "'Jane Doe'"
   $ cdap cli send stream who "Tom"
   ...
-  
+
 
 Using the Service
 -----------------
@@ -162,7 +172,7 @@ To see the value of the ``names.bytes`` metric, you can make an HTTP request to 
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X POST "http://localhost:11015/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true"
-  
+
   {"startTime":0,"endTime":1458877439,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":79}]}],"resolution":"2147483647s"}
 
 To see the value of the ``names.longnames`` metric (the number of names, each of which is greater than 10 characters in length),
@@ -171,16 +181,16 @@ you can use:
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X POST "http://localhost:11015/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.longnames&aggregate=true"
-  
+
   {"startTime":0,"endTime":1458877544,"series":[{"metricName":"user.names.longnames","grouping":{},"data":[{"time":0,"value":3}]}],"resolution":"2147483647s"}
-  
+
 To see the value of the ``greetings.count.jane_doe`` metric (the number of times the specific name *Jane Doe* has been "greeted"),
 you can use:
 
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X POST "http://localhost:11015/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting&metric=user.greetings.count.jane_doe&aggregate=true"
-  
+
   {"startTime":0,"endTime":1458877575,"series":[{"metricName":"user.greetings.count.jane_doe","grouping":{},"data":[{"time":0,"value":2}]}],"resolution":"2147483647s"}
 
 
