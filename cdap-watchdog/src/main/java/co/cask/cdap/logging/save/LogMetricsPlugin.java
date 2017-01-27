@@ -28,6 +28,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -136,6 +137,15 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
   public Checkpoint getCheckpoint() {
     try {
       return checkpointManager.getCheckpoint(partition);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void resetCheckpoint(Checkpoint checkpoint) {
+    try {
+      this.checkpointManager.saveCheckpoint(ImmutableMap.of(partition, checkpoint));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
