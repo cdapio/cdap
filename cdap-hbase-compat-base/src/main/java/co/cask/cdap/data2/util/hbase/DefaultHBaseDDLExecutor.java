@@ -18,6 +18,7 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutorContext;
 import co.cask.cdap.spi.hbase.TableDescriptor;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -47,20 +48,13 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
   public static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
   private HBaseAdmin admin;
 
-
   @Override
-  public <T> void initialize(T conf) {
+  public void initialize(HBaseDDLExecutorContext context) {
     try {
-      this.admin = new HBaseAdmin((Configuration) conf);
+      this.admin = new HBaseAdmin((Configuration) context.getConf());
     } catch (Exception e) {
       throw new RuntimeException("Failed to create HBaseAdmin.", e);
     }
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <T> T getConf() {
-    return (T) admin.getConfiguration();
   }
 
   /**

@@ -168,7 +168,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   }
 
   private static void deleteNamespace(NamespaceId namespace) throws IOException {
-    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(namespace));
+    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(namespace), TEST_HBASE.getConfiguration());
     ddlExecutor.deleteNamespaceIfExists(tableUtil.getHBaseNamespace(namespace));
   }
 
