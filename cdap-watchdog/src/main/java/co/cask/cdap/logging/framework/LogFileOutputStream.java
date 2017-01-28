@@ -50,7 +50,8 @@ class LogFileOutputStream implements Closeable, Flushable {
   private OutputStream outputStream;
   private DataFileWriter<GenericRecord> dataFileWriter;
 
-  LogFileOutputStream(Location location, Schema schema, int syncIntervalBytes, Closeable closeable) throws IOException {
+  LogFileOutputStream(Location location, Schema schema, int syncIntervalBytes, long createTime,
+                      Closeable closeable) throws IOException {
     this.location = location;
     this.schema = schema;
     this.closeable = closeable;
@@ -59,7 +60,7 @@ class LogFileOutputStream implements Closeable, Flushable {
       this.dataFileWriter = new DataFileWriter<>(new GenericDatumWriter<GenericRecord>(schema));
       this.dataFileWriter.create(schema, outputStream);
       this.dataFileWriter.setSyncInterval(syncIntervalBytes);
-      this.createTime = System.currentTimeMillis();
+      this.createTime = createTime;
     } catch (IOException e) {
       Closeables.closeQuietly(outputStream);
       Closeables.closeQuietly(dataFileWriter);
@@ -98,10 +99,9 @@ class LogFileOutputStream implements Closeable, Flushable {
   public void close() throws IOException {
     LOG.trace("Closing file {}", location);
     try {
-      flush();
+      dataFileWriter.close();
     } finally {
       closeable.close();
-      dataFileWriter.close();
     }
   }
 }

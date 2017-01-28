@@ -51,17 +51,17 @@ public class LogLocation {
   // new version
   public static final String VERSION_1 = "V1";
   private final String frameworkVersion;
-  private final long timestamp;
-  private final int sequenceId;
+  private final long eventTimeMs;
+  private final long fileCreationTimeMs;
   private final Location location;
   private final NamespaceId namespaceId;
   private final Impersonator impersonator;
 
-  public LogLocation(String frameworkVersion, long timestamp, int sequenceId, Location location,
+  public LogLocation(String frameworkVersion, long eventTimeMs, long fileCreationTimeMs, Location location,
                      String namespaceId, Impersonator impersonator) {
     this.frameworkVersion = frameworkVersion;
-    this.timestamp = timestamp;
-    this.sequenceId = sequenceId;
+    this.eventTimeMs = eventTimeMs;
+    this.fileCreationTimeMs = fileCreationTimeMs;
     this.location = location;
     this.namespaceId = new NamespaceId(namespaceId);
     this.impersonator = impersonator;
@@ -76,11 +76,11 @@ public class LogLocation {
   }
 
   /**
-   * get start timestamp for this logging file
-   * @return timestamp in long
+   * get start eventTimeMs for this logging file
+   * @return eventTimeMs in long
    */
-  public long getTimestamp() {
-    return timestamp;
+  public long getEventTimeMs() {
+    return eventTimeMs;
   }
 
   /**
@@ -92,11 +92,11 @@ public class LogLocation {
   }
 
   /**
-   * get the sequence id associated with the file
+   * get the timestamp associated with the file
    * @return
    */
-  public int getSequenceId() {
-    return sequenceId;
+  public long getFileCreationTimeMs() {
+    return fileCreationTimeMs;
   }
 
   /**

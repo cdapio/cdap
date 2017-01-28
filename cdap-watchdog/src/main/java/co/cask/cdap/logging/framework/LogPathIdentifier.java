@@ -62,26 +62,4 @@ public class LogPathIdentifier {
   public String getRowKey() {
     return String.format("%s%s%s%s%s", namespaceId, META_SEPARATOR, pathId1, META_SEPARATOR, pathId2);
   }
-
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    LogPathIdentifier that = (LogPathIdentifier) o;
-
-    if (namespaceId != null ? !namespaceId.equals(that.namespaceId) : that.namespaceId != null) return false;
-    if (pathId1 != null ? !pathId1.equals(that.pathId1) : that.pathId1 != null) return false;
-    return pathId2 != null ? pathId2.equals(that.pathId2) : that.pathId2 == null;
-
-  }
-
-  @Override
-  public int hashCode() {
-    int result = namespaceId != null ? namespaceId.hashCode() : 0;
-    result = 31 * result + (pathId1 != null ? pathId1.hashCode() : 0);
-    result = 31 * result + (pathId2 != null ? pathId2.hashCode() : 0);
-    return result;
-  }
 }

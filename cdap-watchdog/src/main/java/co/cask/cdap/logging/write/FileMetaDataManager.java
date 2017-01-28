@@ -104,22 +104,22 @@ public final class FileMetaDataManager {
    * Persists meta data associated with a log file.
    *
    * @param identifier logging context identifier.
-   * @param startTimeMs start log time associated with the file.
-   * @param sequenceId sequence Id associated with the file
-   * @param location log file.
+   * @param eventTimeMs start log time associated with the file.
+   * @param currentTimeMs current time during file creation.
+   * @param location log file location.
    */
   public void writeMetaData(final LogPathIdentifier identifier,
-                            final long startTimeMs,
-                            final int sequenceId,
+                            final long eventTimeMs,
+                            final long currentTimeMs,
                             final Location location) throws Exception {
     LOG.debug("Writing meta data for logging context {} with startTimeMs {} sequence Id {} and location {}",
-               identifier.getRowKey(), startTimeMs, sequenceId, location);
+               identifier.getRowKey(), eventTimeMs, currentTimeMs, location);
 
     execute(new TransactionExecutor.Procedure<Table>() {
       @Override
       public void apply(Table table) throws Exception {
         // add column version prefix for new format
-        byte[] columnKey = Bytes.add(COLUMN_PREFIX_VERSION, Bytes.toBytes(startTimeMs), Bytes.toBytes(sequenceId));
+        byte[] columnKey = Bytes.add(COLUMN_PREFIX_VERSION, Bytes.toBytes(eventTimeMs), Bytes.toBytes(currentTimeMs));
         table.put(getRowKey(identifier), columnKey, Bytes.toBytes(location.toURI().toString()));
       }
     });
@@ -213,12 +213,12 @@ public final class FileMetaDataManager {
                                       0,
                                       rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
                                       logPathIdentifier.getNamespaceId(), impersonator));
-          } else if  (entry.getKey().length == 13) {
+          } else if  (entry.getKey().length == 17) {
             // new format
             files.add(new LogLocation(LogLocation.VERSION_1,
                                       // skip the first (version) byte
                                       Bytes.toLong(entry.getKey(), 1, Bytes.SIZEOF_LONG),
-                                      Bytes.toInt(entry.getKey(), 9, Bytes.SIZEOF_INT),
+                                      Bytes.toLong(entry.getKey(), 9, Bytes.SIZEOF_LONG),
                                       rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
                                       logPathIdentifier.getNamespaceId(), impersonator));
           }

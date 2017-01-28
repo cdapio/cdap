@@ -16,8 +16,10 @@
 
 package co.cask.cdap.logging.framework;
 
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.avro.Schema;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -33,6 +35,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Class including logic for getting log file to write to. Used by {@link CDAPLogAppender}
@@ -61,45 +64,64 @@ class LogFileManager implements Flushable {
   /**
    * Get log file output stream for the give logging context and timestamp - return an already open file,
    * or create and return a new file or rotate a file based on time and return the corresponding stream.
-   * @param logPathIdentifier
-   * @param timestamp
-   * @return LogFileOutputStream
-   * @throws IOException
+   * @param logPathIdentifier identify logging context
+   * @param eventTimestamp timestamp from logging event
+   * @return LogFileOutputStream output stream to the log file
+   * @throws IOException if there is exception while getting location or while writing meta data
    */
   public LogFileOutputStream getLogFileOutputStream(LogPathIdentifier logPathIdentifier,
-                                                    long timestamp) throws IOException {
+                                                    long eventTimestamp) throws IOException {
     LogFileOutputStream logFileOutputStream = outputStreamMap.get(logPathIdentifier);
     if (logFileOutputStream == null) {
-      logFileOutputStream = createOutputStream(logPathIdentifier, timestamp);
+      logFileOutputStream = createOutputStream(logPathIdentifier, eventTimestamp);
     } else {
       // rotate the file if needed (time has passed)
-      logFileOutputStream = rotateOutputStream(logFileOutputStream, logPathIdentifier, timestamp);
+      logFileOutputStream = rotateOutputStream(logFileOutputStream, logPathIdentifier, eventTimestamp);
     }
     return logFileOutputStream;
   }
 
   private LogFileOutputStream createOutputStream(final LogPathIdentifier identifier,
                                                  long timestamp) throws IOException {
-    Location location = getLocation(identifier);
+    TimeStampLocation location = createLocation(identifier);
     try {
-      int seqId = getSequenceId(location);
-      fileMetaDataManager.writeMetaData(identifier, timestamp, seqId, location);
+      fileMetaDataManager.writeMetaData(identifier, timestamp, location.getTimeStamp(), location.getLocation());
     } catch (Throwable e) {
+      // delete created file as there was exception while writing meta data
+      Locations.deleteQuietly(location.getLocation());
       throw new IOException(e);
     }
-    LOG.info("Creating Avro file {}", location);
-    // if the create output stream step fails, we will have metadata entry but not actual file,
-    // this should be handled and cleaned by Logcleanup thread
-    LogFileOutputStream logFileOutputStream = new LogFileOutputStream(location, schema, syncIntervalBytes,
-                                                                      new Closeable() {
-                                                                        @Override
-                                                                        public void close() throws IOException {
-                                                                          outputStreamMap.remove(identifier);
-                                                                        }
-                                                                      });
+
+    LOG.info("Created Avro file at {}", location);
+    LogFileOutputStream logFileOutputStream = new LogFileOutputStream(
+      location.getLocation(), schema, syncIntervalBytes, location.getTimeStamp(), new Closeable() {
+      @Override
+      public void close() throws IOException {
+        outputStreamMap.remove(identifier);
+      }
+    });
 
     outputStreamMap.put(identifier, logFileOutputStream);
     return logFileOutputStream;
+  }
+
+
+  private TimeStampLocation createLocation(LogPathIdentifier logPathIdentifier) throws IOException {
+    // if createNew fails, we retry after sleeping for a milli second as we use current timestamp for fileName.
+    // this retry should succeed on any potential conflicts, though the likelihood of conflict is very small.
+    TimeStampLocation location = getLocation(logPathIdentifier);
+    // NOTE : we are creating a file before writing meta data, so if there are simultaneous write to same folder from
+    // multiple instance of log appender, they wouldn't overwrite the meta data and would fail early,
+    // so we can retry with different timestamp for file creation.
+    // however there is a possibility for the log.saver could crash after file was created
+    // but before meta data was written, log clean up should handle this scenario.
+    // log cleanup shouldn't rely on metadata table for cleaning up old files.
+    while (!location.getLocation().createNew()) {
+      Uninterruptibles.sleepUninterruptibly(1L, TimeUnit.MILLISECONDS);
+      location = getLocation(logPathIdentifier);
+    }
+    LOG.trace("created new file at Location {}", location);
+    return location;
   }
 
   private LogFileOutputStream rotateOutputStream(LogFileOutputStream logFileOutputStream,
@@ -140,20 +162,16 @@ class LogFileManager implements Flushable {
   }
 
   void ensureDirectoryCheck(Location location) throws IOException {
-    if (!location.exists()) {
-      location.mkdirs();
-    } else {
-      if (!location.isDirectory()) {
-        throw new IOException(
-          String.format("File Exists at the logging location %s, Expected to be a directory", location));
-      }
+    if (!location.isDirectory() && !location.mkdirs() && !location.isDirectory()) {
+      throw new IOException(
+        String.format("File Exists at the logging location %s, Expected to be a directory", location));
     }
   }
 
-  private Location getLocation(LogPathIdentifier logPathIdentifier) throws IOException {
+  private TimeStampLocation getLocation(LogPathIdentifier logPathIdentifier) throws IOException {
     ensureDirectoryCheck(logsDirectoryLocation);
-
-    String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+    long currentTime = System.currentTimeMillis();
+    String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date(currentTime));
     Location contextLocation =
       logsDirectoryLocation.append(logPathIdentifier.getNamespaceId())
         .append(date)
@@ -161,19 +179,24 @@ class LogFileManager implements Flushable {
         .append(logPathIdentifier.getPathId2());
     ensureDirectoryCheck(contextLocation);
 
-    int sequenceId = contextLocation.list().size();
-    String fileName = String.format("%s.avro", sequenceId);
-    return contextLocation.append(fileName);
+
+    String fileName = String.format("%s.avro", currentTime);
+    return new TimeStampLocation(contextLocation.append(fileName), currentTime);
   }
 
+  private class TimeStampLocation {
+    private final Location location;
+    private final long timeStamp;
 
-  /**
-   * file name is of the format <seq-id-integer>.avro, we return the sequence id from the location name.
-   * @param location
-   * @return sequenceId
-   */
-  private int getSequenceId(Location location) {
-    String[] fileName = location.getName().split("\\.");
-    return Integer.valueOf(fileName[0]);
+    private TimeStampLocation(final Location location, final long timeStamp) {
+      this.location = location;
+      this.timeStamp = timeStamp;
+    }
+    private Location getLocation() {
+      return location;
+    }
+    private long getTimeStamp() {
+      return timeStamp;
+    }
   }
 }

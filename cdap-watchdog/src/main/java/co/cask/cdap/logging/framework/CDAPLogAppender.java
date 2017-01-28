@@ -21,6 +21,7 @@ import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.spi.FilterReply;
 import ch.qos.logback.core.status.WarnStatus;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -46,7 +47,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   public static final String TAG_NAMESPACE_ID = ".namespaceId";
   public static final String TAG_APPLICATION_ID = ".applicationId";
   public static final String TAG_FLOW_ID = ".flowId";
-  public static final String TAG_COMPONENT_ID = ".componentId";
+  public static final String TAG_SERVICE_ID = ".serviceId";
   public static final String TAG_MAP_REDUCE_JOB_ID = ".mapReduceId";
   public static final String TAG_SPARK_JOB_ID = ".sparkId";
   public static final String TAG_USER_SERVICE_ID = ".userserviceid";
@@ -114,7 +115,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
       // this shouldn't happen
       LOG.error("Unrecognized context ", iae);
     } catch (IOException ioe) {
-      throw new LogbackException("Excepting during append", ioe);
+      throw new LogbackException("Exception during append", ioe);
     }
   }
 
@@ -146,12 +147,12 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
 
     String namespaceId = propertyMap.get(TAG_NAMESPACE_ID);
 
-    if (namespaceId.equals(NamespaceId.SYSTEM.getEntityName())) {
-      Preconditions.checkArgument(propertyMap.containsKey(TAG_COMPONENT_ID),
+    if (namespaceId.equals(NamespaceId.SYSTEM)) {
+      Preconditions.checkArgument(propertyMap.containsKey(TAG_SERVICE_ID),
                                   String.format("%s is expected but not found in the context %s",
-                                                TAG_COMPONENT_ID, propertyMap));
+                                                TAG_SERVICE_ID, propertyMap));
       // adding services to be consistent with the old format
-      return new LogPathIdentifier(namespaceId, "services", propertyMap.get(TAG_COMPONENT_ID));
+      return new LogPathIdentifier(namespaceId, Constants.Logging.COMPONENT_NAME, propertyMap.get(TAG_SERVICE_ID));
     } else {
       Preconditions.checkArgument(propertyMap.containsKey(TAG_APPLICATION_ID),
                                   String.format("%s is expected but not found in the context %s",
