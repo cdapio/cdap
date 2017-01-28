@@ -16,6 +16,8 @@
 
 import React, {PropTypes, Component} from 'react';
 import AppOverview from 'components/Overview/AppOverview';
+import DatasetOverview from 'components/Overview/DatasetOverview';
+import StreamOverview from 'components/Overview/StreamOverview';
 import {objectQuery} from 'services/helpers';
 import isNil from 'lodash/isNil';
 import classnames from 'classnames';
@@ -30,7 +32,9 @@ export default class Overview extends Component {
       tag: null
     };
     this.typeToComponentMap = {
-      'application': AppOverview
+      'application': AppOverview,
+      'datasetinstance': DatasetOverview,
+      'stream': StreamOverview
     };
   }
   componentWillReceiveProps(nextProps) {

@@ -86,9 +86,10 @@ export default class EntityCard extends Component {
   }
 
   onClick() {
-    if (this.props.entity.type !== 'application') {
+    if (this.props.entity.type === 'artifact' || this.props.entity.type === 'program') {
       return;
     }
+
     if (this.props.onClick) {
       this.props.onClick();
     }

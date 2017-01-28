@@ -14,16 +14,19 @@
  * the License.
  */
 
-.tags-holder {
-  margin-top: 8px;
-  .btn.btn-secondary {
-    background-color: lightgray;
-    padding: 3px 5px;
-    font-size: 12px;
-    margin-right: 3px;
+.schema-tab {
+  padding: 10px;
+  overflow-y: auto;
+  height: 100%;
 
-    .fa.fa-times {
-      margin-left: 5px;
+  .disable-schema {
+    .fa-trash,
+    .fa-plus {
+      display: none;
     }
+  }
+
+  .schema-body .schema-row.nested > .field-name:before {
+    background-color: rgba(238, 238, 238, 1);
   }
 }

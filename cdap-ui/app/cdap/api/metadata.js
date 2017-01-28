@@ -14,16 +14,12 @@
  * the License.
  */
 
-.tags-holder {
-  margin-top: 8px;
-  .btn.btn-secondary {
-    background-color: lightgray;
-    padding: 3px 5px;
-    font-size: 12px;
-    margin-right: 3px;
+import {apiCreator} from 'services/resource-helper';
+import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
+let dataSrc = DataSourceConfigurer.getInstance();
+let basepath = '/namespaces/:namespace/:entityType/:entityId/metadata';
 
-    .fa.fa-times {
-      margin-left: 5px;
-    }
-  }
-}
+export const MyMetadataApi = {
+  getMetadata: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
+  getProperties: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/properties`),
+};
