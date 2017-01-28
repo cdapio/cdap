@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -272,7 +272,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
       if (processor instanceof  KafkaLogWriterPlugin) {
         KafkaLogWriterPlugin plugin = (KafkaLogWriterPlugin) processor;
         CheckpointManager manager = plugin.getCheckPointManager();
-        manager.saveCheckpoint(ImmutableMap.of(0, new Checkpoint(offset, -1)));
+        manager.saveCheckpoints(ImmutableMap.of(0, new Checkpoint(offset, -1)));
       }
     }
   }
@@ -498,7 +498,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
       Map.Entry<Long, Location> lastEntry = files.lastEntry();
       if (lastEntry != null) {
         Location latestFile = lastEntry.getValue();
-        AvroFileReader logReader = new AvroFileReader(new LogSchema().getAvroSchema());
+        AvroFileReader logReader = new AvroFileReader(LogSchema.LoggingEvent.SCHEMA);
         LogCallback logCallback = new LogCallback();
         logCallback.init();
         NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);

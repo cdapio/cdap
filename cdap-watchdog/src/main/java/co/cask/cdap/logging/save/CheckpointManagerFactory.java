@@ -20,7 +20,7 @@ import com.google.inject.Inject;
 import org.apache.tephra.TransactionExecutorFactory;
 
 /**
- * Creates {@link CheckpointManager}s.
+ * Creates {@link DefaultCheckpointManager}s.
  */
 public class CheckpointManagerFactory {
   private final LogSaverTableUtil tableUtil;
@@ -33,6 +33,6 @@ public class CheckpointManagerFactory {
   }
 
   public CheckpointManager create(String topic, int prefix) {
-    return new CheckpointManager(tableUtil, txExecutorFactory, topic, prefix);
+    return new DefaultCheckpointManager(tableUtil, txExecutorFactory, topic, prefix);
   }
 }

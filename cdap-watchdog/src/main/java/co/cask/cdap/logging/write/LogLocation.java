@@ -227,7 +227,7 @@ public class LogLocation {
   private DataFileReader<GenericRecord> createReader() throws IOException {
     boolean shouldImpersonate = this.getFrameworkVersion().equals(VERSION_0);
     return new DataFileReader<>(new LocationSeekableInput(location, namespaceId, impersonator, shouldImpersonate),
-                                new GenericDatumReader<GenericRecord>(new LogSchema().getAvroSchema()));
+                                new GenericDatumReader<GenericRecord>(LogSchema.LoggingEvent.SCHEMA));
   }
 
   /**

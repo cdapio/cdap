@@ -23,6 +23,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
+import co.cask.cdap.logging.serialize.LoggingEvent;
 import com.google.common.collect.Lists;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.twill.kafka.client.FetchedMessage;
@@ -83,7 +84,7 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
       nextOffset = message.getNextOffset();
       try {
         GenericRecord genericRecord = serializer.toGenericRecord(message.getPayload());
-        ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
+        ILoggingEvent event = LoggingEvent.decode(genericRecord);
         LOG.trace("Got event {} for partition {}", event, partition);
 
         LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,68 +17,44 @@
 package co.cask.cdap.logging.serialize;
 
 import org.apache.avro.Schema;
-import org.apache.hadoop.io.MD5Hash;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 
 /**
  * Handles generation of schema for logging.
  */
 public final class LogSchema {
-  private static final String SCHEMA_LOCATION = "/logging/schema/LoggingEvent.avsc";
-  private static final URL SCHEMA_URL = LogSchema.class.getResource(SCHEMA_LOCATION);
-  private final Schema schema;
-  private final SchemaHash schemaHash;
 
-  public LogSchema() throws IOException {
-    this.schema = new Schema.Parser().parse(getClass().getResourceAsStream(SCHEMA_LOCATION));
-    this.schemaHash = new SchemaHash(MD5Hash.digest(getClass().getResourceAsStream(SCHEMA_LOCATION)));
-  }
-
-  public Schema getAvroSchema() {
-    return schema;
-  }
-
-  public SchemaHash getSchemaHash() {
-    return schemaHash;
-  }
-
-  public static URL getSchemaURL() {
-    return SCHEMA_URL;
-  }
+  private static final Logger LOG = LoggerFactory.getLogger(LogSchema.class);
 
   /**
-   * Used to generate hash for schema.
+   * Contains {@link Schema} for logging event.
    */
-  public static final class SchemaHash {
-    private final MD5Hash md5Hash;
+  public static final class LoggingEvent {
+    public static final Schema SCHEMA = loadSchema("logging/schema/LoggingEvent.avsc");
+  }
 
-    public SchemaHash(MD5Hash md5Hash) {
-      this.md5Hash = md5Hash;
+  private static Schema loadSchema(String resource) {
+    URL url = LogSchema.class.getClassLoader().getResource(resource);
+    if (url == null) {
+      // This shouldn't happen
+      LOG.error("Failed to find schema resource at " + resource);
+      throw new IllegalStateException("Failed to find schema resource at " + resource);
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      SchemaHash that = (SchemaHash) o;
-      return !(md5Hash != null ? !md5Hash.equals(that.md5Hash) : that.md5Hash != null);
+    try (InputStream input = url.openStream()) {
+      return new Schema.Parser().parse(input);
+    } catch (IOException e) {
+      // This shouldn't happen
+      LOG.error("Failed to load schema at " + resource);
+      throw new IllegalStateException("Failed to load schema at " + resource);
     }
+  }
 
-    @Override
-    public int hashCode() {
-      return md5Hash != null ? md5Hash.hashCode() : 0;
-    }
-
-    @Override
-    public String toString() {
-      return md5Hash.toString();
-    }
+  private LogSchema() {
   }
 }

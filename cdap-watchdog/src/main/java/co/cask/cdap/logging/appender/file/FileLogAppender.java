@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -143,7 +143,7 @@ public class FileLogAppender extends LogAppender {
   public void start() {
     super.start();
     try {
-      logSchema = new LogSchema().getAvroSchema();
+      logSchema = LogSchema.LoggingEvent.SCHEMA;
       FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil, txExecutorFactory,
                                                                         rootLocationFactory, namespacedLocationFactory,
                                                                         cConf, impersonator);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,6 @@ import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import kafka.utils.VerifiableProperties;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -53,7 +52,7 @@ public class LoggingEventSerializerTest {
   @Test
   public void testEmptySerialization() throws Exception {
     Logger logger = LoggerFactory.getLogger(LoggingEventSerializerTest.class);
-    LoggingEventSerializer serializer = new LoggingEventSerializer(new VerifiableProperties());
+    LoggingEventSerializer serializer = new LoggingEventSerializer();
     ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent(
       getClass().getName(), (ch.qos.logback.classic.Logger) logger, Level.ERROR, "message", null, null);
     iLoggingEvent.setThreadName("thread-1");
@@ -80,7 +79,7 @@ public class LoggingEventSerializerTest {
     contextMap.put("p2", null);
     contextMap.put(null, null);
 
-    LoggingEventSerializer serializer = new LoggingEventSerializer(new VerifiableProperties());
+    LoggingEventSerializer serializer = new LoggingEventSerializer();
     ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent();
     iLoggingEvent.setThreadName("threadName1");
     iLoggingEvent.setLevel(Level.INFO);
@@ -141,7 +140,7 @@ public class LoggingEventSerializerTest {
   @Test
   public void testNullSerialization() throws Exception {
     Logger logger = LoggerFactory.getLogger(LoggingEventSerializerTest.class);
-    LoggingEventSerializer serializer = new LoggingEventSerializer(new VerifiableProperties());
+    LoggingEventSerializer serializer = new LoggingEventSerializer();
     ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent(
       null, (ch.qos.logback.classic.Logger) logger, null, null, null, null);
     iLoggingEvent.setThreadName(null);

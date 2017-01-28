@@ -63,7 +63,7 @@ public class FileLogReader implements LogReader {
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
 
     try {
-      this.schema = new LogSchema().getAvroSchema();
+      this.schema = LogSchema.LoggingEvent.SCHEMA;
       this.fileMetaDataManager = fileMetaDataManager;
       this.impersonator = impersonator;
     } catch (Exception e) {
