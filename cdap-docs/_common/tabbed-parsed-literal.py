@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright © 2016 Cask Data, Inc.
+# Copyright © 2016-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 """Simple, inelegant Sphinx extension which adds a directive for a set of
 tabbed parsed-literals that may be switched between in HTML.
 
-version: 0.4.1
+version: 0.4.2
 
 The directive adds these parameters, both optional:
 
@@ -34,6 +34,8 @@ The directive adds these parameters, both optional:
     :independent: flag to indicate that this tab set does not link to another tabs
     
     :dependent: name of tab set this tab belongs to; default "linux-windows"
+    
+    :keepslashes: flag to indicate that slashes should not be changed from forward to backward
 
 Separate the code blocks with matching comment lines. Tabs must follow in order of :tabs:
 option. Comment labels are for convenience, and don't need to match. Note example uses a
@@ -236,13 +238,13 @@ def clean_alphanumeric(text):
         text_clean += charc if charc.isalnum() else '-'
     return text_clean
     
-def convert(c, state={}):
+def convert(c, state={}, keep_slashes=False):
     """
     Converts a Linux command to a Windows-equivalent following a few simple rules:
 
     - Converts a starting '$' to '>'
     - Forward-slashes in 'http[s]' and 'localhost' URIs are preserved
-    - Other forward-slashes become backslashes
+    - Other forward-slashes become backslashes, unless keep_slashes=True
     - A lone backslash (the Linux line continuation character) becomes a '^'
     - '.sh' commands become '.bat' commands
     - removes a "-w'\n'" option from curl commands
@@ -379,7 +381,7 @@ def convert(c, state={}):
             if DEBUG: print "v.startswith('\"')"
             w.append(v)
             continue
-        if v.find('/') != -1:
+        if not keep_slashes and v.find('/') != -1:
             if DEBUG: print "found slash: IN_CLI: %s v: %s" % (IN_CLI, v)
             if (v.startswith('localhost') or v.startswith('"localhost') or v.startswith('"http:') 
                     or v.startswith('"https:') or v.startswith('http:') or v.startswith('https:')):
@@ -424,11 +426,12 @@ class TabbedParsedLiteral(ParsedLiteral):
                         mapping=directives.unchanged_required,
                         tabs=directives.unchanged_required,
                         copyable=directives.flag,
+                        keepslashes=directives.flag,
                         single=directives.flag,
                         **ParsedLiteral.option_spec)
     has_content = True
 
-    def cleanup_content(self):
+    def cleanup_content(self, keep_slashes=False):
         """Parses content, looks for comment markers, removes them, prepares backslashes.
            Calculates size for each block.
         """
@@ -444,7 +447,7 @@ class TabbedParsedLiteral(ParsedLiteral):
             state = {}
             for line in self.content:
                 old_content.append(line)
-                new_line, state = convert(line, state)
+                new_line, state = convert(line, state, keep_slashes)
                 new_content.append(new_line)
             content = LINUX + old_content + WINDOWS + new_content
 #             print "old_content:\n%s\n" % ('\n'.join(old_content))
@@ -509,7 +512,7 @@ class TabbedParsedLiteral(ParsedLiteral):
         set_classes(self.options)
         self.assert_has_content()
 
-        line_counts, lines = self.cleanup_content()
+        line_counts, lines = self.cleanup_content(keep_slashes=self.options.has_key('keepslashes'))
         text = '\n'.join(lines)
         # Sending text to state machine for inline text replacement
         text_nodes, messages = self.state.inline_text(text, self.lineno)
