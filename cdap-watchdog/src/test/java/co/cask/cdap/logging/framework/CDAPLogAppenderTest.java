@@ -136,6 +136,20 @@ public class CDAPLogAppenderTest {
     event.setMDCPropertyMap(properties);
 
     cdapLogAppender.doAppend(event);
+
+    event =
+      new LoggingEvent("co.cask.Test",
+                       (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME),
+                       Level.ERROR , "test message1", null, null);
+    properties = new HashMap<>();
+    properties.put(NamespaceLoggingContext.TAG_NAMESPACE_ID, "default");
+    properties.put(ApplicationLoggingContext.TAG_APPLICATION_ID, "testApp");
+    properties.put(FlowletLoggingContext.TAG_FLOW_ID, "testFlow");
+    properties.put(FlowletLoggingContext.TAG_FLOWLET_ID, "testFlowet");
+
+
+    cdapLogAppender.doAppend(event);
+
     cdapLogAppender.stop();
 
     try {
@@ -249,7 +263,7 @@ public class CDAPLogAppenderTest {
 
     // sleep longer than rotation time, then use the same timestamp as event1 to test new sequence id generation.
     TimeUnit.MILLISECONDS.sleep(600);
-    LoggingEvent event2 = getLoggingEvent("co.cask.Test2",
+    LoggingEvent event2 = getLoggingEvent("co.cask.Test1",
                                           (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(
                                             Logger.ROOT_LOGGER_NAME), Level.ERROR , "test message 2", properties);
     event2.setTimeStamp(timestamp);

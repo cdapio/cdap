@@ -146,7 +146,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
 
     String namespaceId = propertyMap.get(TAG_NAMESPACE_ID);
 
-    if (namespaceId.equals(NamespaceId.SYSTEM)) {
+    if (namespaceId.equals(NamespaceId.SYSTEM.getEntityName())) {
       Preconditions.checkArgument(propertyMap.containsKey(TAG_COMPONENT_ID),
                                   String.format("%s is expected but not found in the context %s",
                                                 TAG_COMPONENT_ID, propertyMap));
