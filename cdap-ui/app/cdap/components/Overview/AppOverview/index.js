@@ -108,12 +108,19 @@ export default class AppOverview extends Component {
       T.translate('commons.entity.cdap-data-pipeline.singular')
     :
       T.translate('commons.entity.application.singular');
+
+    let namespace = NamespaceStore.getState().selectedNamespace;
     return (
       <div className="app-overview">
         <OverviewHeader
           icon="icon-fist"
           title={title}
-          linkTo="/"
+          linkTo={{
+            pathname: `/ns/${namespace}/apps/${this.props.entity.id}`,
+            state: {
+              entityDetail: this.state.entityDetail
+            }
+          }}
           onClose={this.props.onClose}
         />
         <OverviewMetaSection entity={this.state.entity} />

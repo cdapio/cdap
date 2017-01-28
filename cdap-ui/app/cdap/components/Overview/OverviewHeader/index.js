@@ -26,23 +26,33 @@ export default function OverviewHeader({icon, title, linkTo, onClose}) {
         <i className={classnames("fa", icon)} />
         <h4>{title}</h4>
       </div>
-      <Link
-        className="link-to-detail"
-        to={linkTo}
-      >
-        View Details
-      </Link>
-      <span
-        className="fa fa-times"
-        onClick={onClose}
-      >
-      </span>
+      {
+        linkTo ?
+          <Link
+            className="link-to-detail"
+            to={linkTo}
+          >
+            View Details
+          </Link>
+        :
+          null
+      }
+      {
+        onClose ?
+          <span
+            className="fa fa-times"
+            onClick={onClose}
+          >
+          </span>
+        :
+          null
+      }
     </div>
   );
 }
 OverviewHeader.propTypes = {
   icon: PropTypes.string,
   title: PropTypes.string,
-  linkTo: PropTypes.string,
+  linkTo: PropTypes.object,
   onClose: PropTypes.func
 };
