@@ -115,7 +115,9 @@ with the name of the JAR file as a header::
 
 This will add the JAR file as an artifact and then create an application from that artifact.
 The archive name must be in the form ``<artifact-name>-<artifact-version>.jar``.
-An optional header can supply a configuration object as a serialized JSON string::
+An optional header can supply a configuration object as a serialized JSON string:
+
+::
 
   X-App-Config: <JSON Serialization String of the Configuration Object>
 
@@ -235,11 +237,11 @@ Delete an Application
 To delete an application |---| together with all of its flows, MapReduce or Spark
 programs, schedules, custom services, and workflows |---| submit an HTTP DELETE::
 
-  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>
+  DELETE /v3/namespaces/<namespace-id>/apps/<application-name>
 
 To delete a specific version of an application, submit an HTTP DELETE that includes the version::
 
-  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>
+  DELETE /v3/namespaces/<namespace-id>/apps/<application-name>/versions/<version-id>
 
 .. list-table::
    :widths: 20 80
@@ -249,12 +251,12 @@ To delete a specific version of an application, submit an HTTP DELETE that inclu
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``app-id``
+   * - ``application-name``
      - Name of the application to be deleted
    * - ``version-id``
      - Version of the application to be deleted
 
-**Note:** The ``app-id`` in this URL is the name of the application
+**Note:** The ``application-name`` in this URL is the name of the application
 as configured by the application Specification,
 and not necessarily the same as the name of the JAR file that was used to deploy the application.
 This does not delete the streams and datasets associated with the application
@@ -1181,8 +1183,8 @@ As a schedule is initially deployed in a *suspended* state, a call to this API i
 
 To suspend or resume a schedule use::
 
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/suspend
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/resume
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-name>/suspend
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-name>/resume
 
 .. list-table::
    :widths: 20 80
@@ -1194,7 +1196,7 @@ To suspend or resume a schedule use::
      - Namespace ID
    * - ``app-id``
      - Name of the application
-   * - ``schedule-id``
+   * - ``schedule-name``
      - Name of the schedule
 
 .. container:: table-block-example
@@ -1246,8 +1248,8 @@ either a currently running or suspended workflow.
 
 To suspend or resume a workflow, use::
   
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/suspend
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/resume
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/suspend
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/resume
 
 .. list-table::
    :widths: 20 80
@@ -1259,7 +1261,7 @@ To suspend or resume a workflow, use::
      - Namespace ID
    * - ``app-id``
      - Name of the application
-   * - ``workflow-id``
+   * - ``workflow-name``
      - Name of the workflow
    * - ``run-id``
      - UUID of the workflow run
