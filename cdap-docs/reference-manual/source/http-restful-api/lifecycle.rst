@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _http-restful-api-lifecycle:
 
@@ -115,9 +115,7 @@ with the name of the JAR file as a header::
 
 This will add the JAR file as an artifact and then create an application from that artifact.
 The archive name must be in the form ``<artifact-name>-<artifact-version>.jar``.
-An optional header can supply a configuration object as a serialized JSON string:
-
-::
+An optional header can supply a configuration object as a serialized JSON string::
 
   X-App-Config: <JSON Serialization String of the Configuration Object>
 
@@ -200,7 +198,7 @@ Listing Versions of an Application
 
 To list all the versions of an application, submit an HTTP GET::
 
-  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/versions
 
 .. list-table::
    :widths: 20 80
@@ -212,24 +210,17 @@ To list all the versions of an application, submit an HTTP GET::
      - Namespace ID
    * - ``app-id``
      - Name of the application being called
-   * - ``program-type``
-     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
-   * - ``program-id``
-     - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
-       being listed
 
-The response will be a JSON array containing details about the program. The details
-returned depend on the program type.
+The response will be a JSON array containing details about the application. The details
+returned depend on the application.
 
-For example::
+For example, depending on the versions deployed::
 
-  GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow
+  GET /v3/namespaces/default/apps/HelloWorld/versions
 
-will return in a JSON array information of the versions of the application::
+could return in a JSON array a list of the versions of the application::
 
-  {
-    "1.0.1", "2.0.3"
-  }
+  ["1.0.1", "2.0.3"]
 
 
 Delete an Application
@@ -237,11 +228,11 @@ Delete an Application
 To delete an application |---| together with all of its flows, MapReduce or Spark
 programs, schedules, custom services, and workflows |---| submit an HTTP DELETE::
 
-  DELETE /v3/namespaces/<namespace-id>/apps/<application-name>
+  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>
 
 To delete a specific version of an application, submit an HTTP DELETE that includes the version::
 
-  DELETE /v3/namespaces/<namespace-id>/apps/<application-name>/versions/<version-id>
+  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>
 
 .. list-table::
    :widths: 20 80
@@ -251,17 +242,18 @@ To delete a specific version of an application, submit an HTTP DELETE that inclu
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``application-name``
+   * - ``app-id``
      - Name of the application to be deleted
    * - ``version-id``
      - Version of the application to be deleted
 
-**Note:** The ``application-name`` in this URL is the name of the application
-as configured by the application Specification,
-and not necessarily the same as the name of the JAR file that was used to deploy the application.
-This does not delete the streams and datasets associated with the application
-because they belong to the namespace, not the application.
-Also, this does not delete the artifact used to create the application.
+**Note:** The ``app-id`` in this URL is the name of the application as
+configured by the application specification, and not necessarily the same as the name of
+the JAR file that was used to deploy the application.
+
+This does not delete the streams and datasets associated with the application because they
+belong to the namespace, not the application. Also, this does not delete the artifact used
+to create the application.
 
 .. _http-restful-api-program-lifecycle:
 
@@ -1183,8 +1175,8 @@ As a schedule is initially deployed in a *suspended* state, a call to this API i
 
 To suspend or resume a schedule use::
 
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-name>/suspend
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-name>/resume
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/suspend
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/resume
 
 .. list-table::
    :widths: 20 80
@@ -1196,7 +1188,7 @@ To suspend or resume a schedule use::
      - Namespace ID
    * - ``app-id``
      - Name of the application
-   * - ``schedule-name``
+   * - ``schedule-id``
      - Name of the schedule
 
 .. container:: table-block-example
@@ -1248,8 +1240,8 @@ either a currently running or suspended workflow.
 
 To suspend or resume a workflow, use::
   
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/suspend
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/resume
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/suspend
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/resume
 
 .. list-table::
    :widths: 20 80
@@ -1261,7 +1253,7 @@ To suspend or resume a workflow, use::
      - Namespace ID
    * - ``app-id``
      - Name of the application
-   * - ``workflow-name``
+   * - ``workflow-id``
      - Name of the workflow
    * - ``run-id``
      - UUID of the workflow run
