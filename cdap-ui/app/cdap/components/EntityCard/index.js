@@ -31,7 +31,26 @@ require('./EntityCard.scss');
 export default class EntityCard extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      successMessage: false
+    };
     this.cardRef = null;
+    this.onSuccess = this.onSuccess.bind(this);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.activeEntity !== this.props.entity.uniqueId) {
+      this.setState({
+        overviewMode: false
+      });
+    }
+  }
+
+  onSuccess() {
+    this.setState({successMessage: true});
+    setTimeout(() => {
+      this.setState({successMessage: false});
+    }, 3000);
   }
 
   renderEntityStatus() {
@@ -85,6 +104,7 @@ export default class EntityCard extends Component {
         className={this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type}
         entity={this.props.entity}
         systemTags={this.props.entity.metadata.metadata.SYSTEM.tags}
+        successMessage={this.state.successMessage}
       />
     );
     return (
@@ -130,6 +150,7 @@ export default class EntityCard extends Component {
             <FastActions
               entity={this.props.entity}
               onUpdate={this.props.onUpdate}
+              onSuccess={this.onSuccess}
             />
           </div>
         </Card>

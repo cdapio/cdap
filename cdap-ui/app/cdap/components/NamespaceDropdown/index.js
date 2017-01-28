@@ -35,7 +35,7 @@ export default class NamespaceDropdown extends Component {
       openDropdown: false,
       openWizard: false,
       openPreferenceWizard: false,
-      savedMessage: false,
+      preferencesSavedMessage: false,
       namespaceList: sortBy(NamespaceStore.getState().namespaces, this.lowerCaseNamespace),
       currentNamespace: NamespaceStore.getState().selectedNamespace,
       defaultNamespace: localStorage.getItem('DefaultNamespace')
@@ -94,9 +94,9 @@ export default class NamespaceDropdown extends Component {
     this.toggle();
   }
   preferencesAreSaved() {
-    this.setState({savedMessage: true});
+    this.setState({preferencesSavedMessage: true});
     setTimeout(() => {
-      this.setState({savedMessage: false});
+      this.setState({preferencesSavedMessage: false});
     }, 3000);
   }
   setDefault(clickedNamespace, event) {
@@ -180,13 +180,13 @@ export default class NamespaceDropdown extends Component {
             <div className="current-namespace-details">
               <div className="current-namespace-metadata">
                 {
-                  this.state.savedMessage === true ?
+                  this.state.preferencesSavedMessage === true ?
                     (
                       <div className="preferences-saved-message text-white">
-                        <span>{T.translate('features.FastAction.setPreferencesSuccess')}</span>
+                        <span>{T.translate('features.FastAction.setPreferencesSuccess.default')}</span>
                         <span
                           className='fa fa-times'
-                          onClick={() => this.setState({savedMessage: false})}
+                          onClick={() => this.setState({preferencesSavedMessage: false})}
                         />
                       </div>
                     )
@@ -267,7 +267,7 @@ export default class NamespaceDropdown extends Component {
                   setAtNamespaceLevel={true}
                   modalIsOpen={this.preferenceWizardIsOpen.bind(this)}
                   onSuccess={this.preferencesAreSaved.bind(this)}
-                  savedMessageState={this.state.savedMessage}/>
+                  savedMessageState={this.state.preferencesSavedMessage}/>
               </div>
             </div>
             <div className="namespace-list">

@@ -50,6 +50,11 @@ export default class FastActions extends Component {
   onSuccess(action) {
     if (action === 'startStop') { return; }
 
+    if (action === 'setPreferences') {
+      this.props.onSuccess();
+      return;
+    }
+
     if (this.props.onUpdate) {
       this.props.onUpdate();
     }
@@ -82,5 +87,6 @@ export default class FastActions extends Component {
 FastActions.propTypes = {
   entity: PropTypes.object,
   onUpdate: PropTypes.func,
-  className: PropTypes.string
+  className: PropTypes.string,
+  onSuccess: PropTypes.func
 };

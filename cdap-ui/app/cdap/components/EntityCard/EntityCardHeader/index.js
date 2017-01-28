@@ -44,16 +44,38 @@ export default class EntityCardHeader extends Component {
 
   render() {
     return (
-      <div
-        onClick={this.props.onClick}
-        className={classnames("entity-card-header", this.props.className)}
-      >
-        <h4>
-          <span className={classNames('entity-icon', this.props.entity.icon)}></span>
-          <span className="entity-type">
-            {T.translate(`commons.entity.${this.getType()}.singular`)}
-          </span>
-        </h4>
+      <div className="card-header-wrapper">
+        {
+          this.props.successMessage ?
+            (
+              <div className="entity-card-header success-message">
+                <h4>
+                  <span>
+                    {
+                      this.props.entity.type === 'program' ?
+                        T.translate(`features.FastAction.setPreferencesSuccess.program`)
+                      :
+                        T.translate(`features.FastAction.setPreferencesSuccess.application`)
+                    }
+                  </span>
+                </h4>
+              </div>
+            )
+          :
+            (
+              <div
+                onClick={this.props.onClick}
+                className={classnames("entity-card-header", this.props.className)}
+              >
+                <h4>
+                  <span className={classNames('entity-icon', this.props.entity.icon)}></span>
+                  <span className="entity-type">
+                    {T.translate(`commons.entity.${this.getType()}.singular`)}
+                  </span>
+                </h4>
+              </div>
+            )
+        }
       </div>
     );
   }
@@ -67,5 +89,6 @@ EntityCardHeader.propTypes = {
   entity: PropTypes.object,
   systemTags: PropTypes.array,
   className: PropTypes.string,
-  onClick: PropTypes.func
+  onClick: PropTypes.func,
+  successMessage: PropTypes.bool
 };

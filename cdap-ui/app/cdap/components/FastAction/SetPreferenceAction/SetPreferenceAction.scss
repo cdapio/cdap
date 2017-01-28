@@ -14,6 +14,8 @@
  * the License.
  */
 
+@import "../../../styles/variables.scss";
+
 $normal-text-font-size: 14px;
 $label-text-font-size: 18px;
 $text-field-width: 300px;
@@ -28,6 +30,14 @@ $link-color: #0275d8;
     .tooltip-inner {
       background-color: #000000;
       color: white;
+    }
+  }
+}
+
+.fast-actions-container {
+  .fa-wrench {
+    &.saved-success {
+      color: $success-message-bg;
     }
   }
 }
@@ -162,6 +172,15 @@ $link-color: #0275d8;
                 clear: left;
                 margin-top: 10px;
               }
+            }
+          }
+
+          .preferences-error {
+            transform: translateY(20px);
+
+            .bg-danger {
+              padding: 0 20px;
+              line-height: 30px;
             }
           }
 

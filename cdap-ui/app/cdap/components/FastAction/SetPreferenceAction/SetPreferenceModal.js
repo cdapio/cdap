@@ -33,7 +33,6 @@ export default class SetPreferenceModal extends Component {
 
     this.state = {
       saving: false,
-      savedMessage: false,
       fieldsResetted: false,
       keyValues: {},
       inheritedPreferences: [],
@@ -154,9 +153,7 @@ export default class SetPreferenceModal extends Component {
       this.setPreferencesApi(this.params, this.getKeyValObject())
         .subscribe(
           () => {
-            if (this.props.onSuccess && this.props.setAtNamespaceLevel) {
-              this.props.onSuccess();
-            }
+            this.props.onPreferencesSaved();
             this.props.toggleModal();
           },
           (error) => {
@@ -416,9 +413,11 @@ export default class SetPreferenceModal extends Component {
                 <span className="float-xs-left reset">
                   <a onClick = {this.resetFields}>{resetLink}</a>
                 </span>
+              </div>
+              <div className="preferences-error">
                 {
                   this.state.error ?
-                    <div className="float-xs-left text-danger">{this.state.error}</div>
+                    <div className="bg-danger text-white">{this.state.error}</div>
                   :
                     null
                 }
@@ -446,12 +445,10 @@ SetPreferenceModal.propTypes = {
   isOpen: PropTypes.func.isRequired,
   toggleModal: PropTypes.func.isRequired,
   setAtNamespaceLevel: PropTypes.bool,
-  onSuccess: PropTypes.func,
-  savedMessageState: PropTypes.bool
+  onPreferencesSaved: PropTypes.func
 };
 
 SetPreferenceModal.defaultProps = {
   setAtNamespaceLevel: false,
-  onSuccess: () => {},
-  savedMessageState: false
+  onPreferencesSaved: () => {}
 };
