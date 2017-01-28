@@ -117,10 +117,13 @@ $star-color: #373a3c;
         border-bottom: 1px solid $namespace-action-bg;
 
         .current-namespace-name {
+          width: 60%;
           float: left;
           font-weight: bold;
           font-size: 14px;
           color: $dark-font;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .current-namespace-default {
@@ -140,7 +143,7 @@ $star-color: #373a3c;
         }
       }
 
-      .current-namespace-entities {
+      .current-namespace-metrics {
         table {
           width: 100%;
           background-color: #ffffff;

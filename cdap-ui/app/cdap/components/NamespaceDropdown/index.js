@@ -20,14 +20,14 @@ import AbstractWizard from 'components/AbstractWizard';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import SetPreferenceAction from 'components/FastAction/SetPreferenceAction';
-import {MyAppApi} from 'api/app';
-import {MyDatasetApi} from 'api/dataset';
-import {MyStreamApi} from 'api/stream';
+import {MySearchApi} from 'api/search';
 import isObject from 'lodash/isObject';
+import sortBy from 'lodash/sortBy';
 import T from 'i18n-react';
 import {Link} from 'react-router';
 const shortid = require('shortid');
 require('./NamespaceDropdown.scss');
+
 export default class NamespaceDropdown extends Component {
   constructor(props) {
     super(props);
@@ -36,42 +36,35 @@ export default class NamespaceDropdown extends Component {
       openWizard: false,
       openPreferenceWizard: false,
       savedMessage: false,
-      namespaceList: NamespaceStore.getState().namespaces,
+      namespaceList: sortBy(NamespaceStore.getState().namespaces, this.lowerCaseNamespace),
       currentNamespace: NamespaceStore.getState().selectedNamespace,
-      currentDefaultNamespace: localStorage.getItem('DefaultNamespace'),
-      previousDefaultNamespace: null
+      defaultNamespace: localStorage.getItem('DefaultNamespace')
     };
 
     this.subscription = NamespaceStore.subscribe(() => {
       this.setState({
         currentNamespace : NamespaceStore.getState().selectedNamespace,
-        namespaceList : NamespaceStore.getState().namespaces
+        namespaceList : sortBy(NamespaceStore.getState().namespaces, this.lowerCaseNamespace)
       });
-      this.getNumApplications();
-      this.getNumDatasets();
-      this.getNumStreams();
     });
 
-    this.apiSubscriptions = [];
     this.toggle = this.toggle.bind(this);
     this.showNamespaceWizard = this.showNamespaceWizard.bind(this);
     this.hideNamespaceWizard = this.hideNamespaceWizard.bind(this);
-
-  }
-  componentWillMount() {
-    this.getNumApplications();
-    this.getNumDatasets();
-    this.getNumStreams();
   }
   componentWillUnmount() {
     this.subscription();
-    this.apiSubscriptions.forEach(apiSubscription => apiSubscription.dispose());
+    this.apiSubscription.dispose();
   }
   toggle() {
     if (!this.state.openPreferenceWizard) {
+      if (this.state.openDropdown === false) {
+        this.getNumMetrics();
+      }
       this.setState({
         openDropdown: !this.state.openDropdown
       });
+      document.querySelector('.namespace-list').scrollTop = 0;
     }
   }
   showNamespaceWizard() {
@@ -85,6 +78,9 @@ export default class NamespaceDropdown extends Component {
       openWizard: false
     });
   }
+  lowerCaseNamespace(namespace) {
+    return namespace.name.toLowerCase();
+  }
   preferenceWizardIsOpen(openState) {
     this.setState({openPreferenceWizard: openState});
   }
@@ -95,6 +91,7 @@ export default class NamespaceDropdown extends Component {
         selectedNamespace : name
       }
     });
+    this.toggle();
   }
   preferencesAreSaved() {
     this.setState({savedMessage: true});
@@ -102,34 +99,47 @@ export default class NamespaceDropdown extends Component {
       this.setState({savedMessage: false});
     }, 3000);
   }
-  toggleDefault(clickedNamespace, event) {
+  setDefault(clickedNamespace, event) {
     event.preventDefault();
     event.stopPropagation();
     event.nativeEvent.stopImmediatePropagation();
-
-    if (this.state.currentDefaultNamespace === clickedNamespace) {
+    if (this.state.defaultNamespace !== clickedNamespace) {
       this.setState({
-        currentDefaultNamespace: this.state.previousDefaultNamespace,
-        previousDefaultNamespace: this.state.currentDefaultNamespace
-      });
-    } else {
-      this.setState({
-        previousDefaultNamespace: this.state.currentDefaultNamespace,
-        currentDefaultNamespace: clickedNamespace
+        defaultNamespace: clickedNamespace
       });
       localStorage.setItem('DefaultNamespace', clickedNamespace);
     }
-    return false;
   }
-  getNumApplications() {
-    this.setState({numApplicationsLoading: true});
-    this.apiSubscriptions.push(
-      MyAppApi.list({namespace: NamespaceStore.getState().selectedNamespace})
+  getNumMetrics() {
+    this.setState({numMetricsLoading: true});
+    let params = {
+      namespace: NamespaceStore.getState().selectedNamespace,
+      target: ['app', 'dataset', 'stream'],
+      query: "*"
+    };
+    let numApplications = 0;
+    let numStreams = 0;
+    let numDatasets = 0;
+    this.apiSubscription =
+      MySearchApi
+        .search(params)
         .subscribe(
           (res) => {
+            res.results.forEach((entity) => {
+              let entityType = entity.entityId.type;
+              if (entityType === 'application') {
+                numApplications += 1;
+              } else if (entityType === 'stream') {
+                numStreams += 1;
+              } else {
+                numDatasets += 1;
+              }
+            });
             this.setState({
-              numApplications: res.length,
-              numApplicationsLoading: false
+              numApplications,
+              numStreams,
+              numDatasets,
+              numMetricsLoading: false
             });
           },
           (error) => {
@@ -137,46 +147,7 @@ export default class NamespaceDropdown extends Component {
               error: isObject(error) ? error.response : error
             });
           }
-        )
-    );
-  }
-  getNumDatasets() {
-    this.setState({numDatasetsLoading: true});
-    this.apiSubscriptions.push(
-      MyDatasetApi.list({namespace: NamespaceStore.getState().selectedNamespace})
-        .subscribe(
-          (res) => {
-            this.setState({
-              numDatasets: res.length,
-              numDatasetsLoading: false
-            });
-          },
-          (error) => {
-            this.setState({
-              error: isObject(error) ? error.response : error
-            });
-          }
-        )
-    );
-  }
-  getNumStreams() {
-    this.setState({numStreamsLoading: true});
-    this.apiSubscriptions.push(
-      MyStreamApi.list({namespace: NamespaceStore.getState().selectedNamespace})
-        .subscribe(
-          (res) => {
-            this.setState({
-              numStreams: res.length,
-              numStreamsLoading: false
-            });
-          },
-          (error) => {
-            this.setState({
-              error: isObject(error) ? error.response : error
-            });
-          }
-        )
-    );
+        );
   }
   render() {
     let LinkEl = Link;
@@ -187,8 +158,9 @@ export default class NamespaceDropdown extends Component {
       LinkEl = this.props.tag;
       baseurl = `${basename}`;
     }
-    const defaultNamespace = this.state.currentDefaultNamespace;
+    const defaultNamespace = this.state.defaultNamespace;
     const currentNamespace = this.state.currentNamespace;
+
     return (
       <div>
         <Dropdown
@@ -230,9 +202,8 @@ export default class NamespaceDropdown extends Component {
                                   <span className="default-status">(Default)</span>
                                   <i
                                     className="fa fa-star"
-                                    onClick={this.toggleDefault.bind(this, currentNamespace)}
-                                  >
-                                  </i>
+                                    onClick={this.setDefault.bind(this, currentNamespace)}
+                                  />
                                 </span>
                               )
                             :
@@ -241,9 +212,8 @@ export default class NamespaceDropdown extends Component {
                                   <span className="default-status">(Set Default)</span>
                                   <i
                                     className="fa fa-star-o"
-                                    onClick={this.toggleDefault.bind(this, currentNamespace)}
-                                  >
-                                  </i>
+                                    onClick={this.setDefault.bind(this, currentNamespace)}
+                                  />
                                 </span>
                               )
                           }
@@ -252,7 +222,7 @@ export default class NamespaceDropdown extends Component {
                     )
                 }
 
-                <div className="current-namespace-entities">
+                <div className="current-namespace-metrics">
                   <table>
                     <thead>
                       <tr>
@@ -265,7 +235,7 @@ export default class NamespaceDropdown extends Component {
                       <tr>
                         <td>
                           {
-                            this.state.numApplicationsLoading ?
+                            this.state.numMetricsLoading ?
                               <span className = "fa fa-spinner fa-spin" />
                             :
                               this.state.numApplications
@@ -273,7 +243,7 @@ export default class NamespaceDropdown extends Component {
                         </td>
                         <td>
                           {
-                            this.state.numDatasetsLoading ?
+                            this.state.numMetricsLoading ?
                               <span className = "fa fa-spinner fa-spin" />
                             :
                               this.state.numDatasets
@@ -281,7 +251,7 @@ export default class NamespaceDropdown extends Component {
                         </td>
                         <td>
                           {
-                            this.state.numStreamsLoading ?
+                            this.state.numMetricsLoading ?
                               <span className = "fa fa-spinner fa-spin" />
                             :
                               this.state.numStreams
@@ -307,13 +277,14 @@ export default class NamespaceDropdown extends Component {
                   .map( (item) => {
                     let starClass = defaultNamespace === item.name ? "fa fa-star": "fa fa-star-o";
                     return (
-
-                      <div className="clearfix namespace-container">
+                      <div
+                        className="clearfix namespace-container"
+                        key={shortid.generate()}
+                      >
                         <LinkEl
                           href={baseurl + `/ns/${item.name}`}
                           to={baseurl + `/ns/${item.name}`}
                           className="namespace-link"
-                          key={shortid.generate()}
                         >
                           <span
                             className="namespace-name float-xs-left"
@@ -324,7 +295,7 @@ export default class NamespaceDropdown extends Component {
                         </LinkEl>
                         <span
                           className="default-ns-section float-xs-right"
-                          onClick={this.toggleDefault.bind(this, item.name)}
+                          onClick={this.setDefault.bind(this, item.name)}
                         >
                           <span className={starClass} />
                         </span>
