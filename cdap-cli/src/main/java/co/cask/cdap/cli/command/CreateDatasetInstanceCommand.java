@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,8 +53,10 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
     String datasetPropertiesString = arguments.getOptional(ArgumentName.DATASET_PROPERTIES.toString(), "");
     String datasetDescription = arguments.getOptional(ArgumentName.DATASET_DESCRIPTON.toString(), null);
     Map<String, String> datasetProperties = ArgumentParser.parseMap(datasetPropertiesString);
+    // TODO: CDAP-8110 (Rohit) Support owner principal in CLI by deprecating this command and introducing a more user
+    // friendly create dataset instance command
     DatasetInstanceConfiguration datasetConfig =
-      new DatasetInstanceConfiguration(datasetType, datasetProperties, datasetDescription);
+      new DatasetInstanceConfiguration(datasetType, datasetProperties, datasetDescription, null);
 
     datasetClient.create(cliConfig.getCurrentNamespace().dataset(datasetName), datasetConfig);
     output.printf("Successfully created dataset named '%s' with type '%s' and properties '%s'",

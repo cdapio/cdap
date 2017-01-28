@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,9 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerStore;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
@@ -69,6 +72,7 @@ import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
+import co.cask.cdap.store.InMemoryOwnerStore;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -134,6 +138,7 @@ public abstract class DatasetServiceTestBase {
   private static DiscoveryServiceClient discoveryServiceClient;
   private static DatasetOpExecutorService opExecutorService;
   private static DatasetService service;
+  protected static OwnerAdmin ownerAdmin;
 
   private int port = -1;
 
@@ -170,6 +175,8 @@ public abstract class DatasetServiceTestBase {
                     .build(DatasetDefinitionRegistryFactory.class));
           // through the injector, we only need RemoteDatasetFramework in these tests
           bind(RemoteDatasetFramework.class);
+          bind(OwnerStore.class).to(InMemoryOwnerStore.class);
+          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
       });
 
@@ -221,6 +228,7 @@ public abstract class DatasetServiceTestBase {
     ExploreFacade exploreFacade = new ExploreFacade(exploreClient, cConf);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
+    ownerAdmin = injector.getInstance(OwnerAdmin.class);
     NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
     TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txSystemClient);
     DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
@@ -235,7 +243,7 @@ public abstract class DatasetServiceTestBase {
       cConf, impersonator, txSystemClientService, inMemoryDatasetFramework, txExecutorFactory, defaultModules);
 
     instanceService = new DatasetInstanceService(typeService, instanceManager, opExecutor, exploreFacade,
-                                                 namespaceQueryAdmin, authEnforcer, privilegesManager,
+                                                 namespaceQueryAdmin, ownerAdmin, authEnforcer, privilegesManager,
                                                  authenticationContext);
 
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,

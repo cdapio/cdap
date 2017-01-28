@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,6 +35,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerStore;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -65,9 +68,12 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.auth.context.AuthenticationTestContext;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
+import co.cask.cdap.store.InMemoryOwnerStore;
 import com.google.common.collect.Maps;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
@@ -120,6 +126,7 @@ public abstract class AbstractDatasetFrameworkTest {
   private static final DatasetTypeId DOUBLE_KV_TYPE = NAMESPACE_ID.datasetType(DoubleWrappedKVTable.class.getName());
   protected static NamespaceAdmin namespaceAdmin;
   protected static NamespaceQueryAdmin namespaceQueryAdmin;
+  protected static OwnerAdmin ownerAdmin;
   protected static DatasetDefinitionRegistryFactory registryFactory;
   protected static CConfiguration cConf;
   protected static TransactionExecutorFactory txExecutorFactory;
@@ -142,7 +149,15 @@ public abstract class AbstractDatasetFrameworkTest {
       new NonCustomLocationUnitTestModule().getModule(),
       new TransactionInMemoryModule(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
-      new AuditModule().getInMemoryModules());
+      new AuditModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(OwnerStore.class).to(InMemoryOwnerStore.class).in(Scopes.SINGLETON);
+          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+        }
+      }
+    );
 
     locationFactory = injector.getInstance(LocationFactory.class);
     namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
@@ -158,6 +173,7 @@ public abstract class AbstractDatasetFrameworkTest {
     };
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
+    ownerAdmin = injector.getInstance(OwnerAdmin.class);
     inMemoryAuditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
   }

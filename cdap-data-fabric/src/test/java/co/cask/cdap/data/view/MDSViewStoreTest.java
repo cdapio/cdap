@@ -21,6 +21,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
@@ -76,6 +78,7 @@ public class MDSViewStoreTest extends ViewStoreTestBase {
           bind(ExploreClient.class).to(MockExploreClient.class);
           bind(ViewStore.class).to(MDSViewStore.class).in(Scopes.SINGLETON);
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
       }
     );

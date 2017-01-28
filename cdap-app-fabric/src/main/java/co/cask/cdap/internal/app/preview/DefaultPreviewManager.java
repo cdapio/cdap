@@ -31,6 +31,9 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerStore;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.PreferencesStore;
@@ -57,6 +60,7 @@ import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.guice.preview.PreviewSecureStoreModule;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
+import co.cask.cdap.store.DefaultOwnerStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
@@ -230,6 +234,8 @@ public class DefaultPreviewManager implements PreviewManager {
       new AbstractModule() {
         @Override
         protected void configure() {
+          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+          bind(OwnerStore.class).to(DefaultOwnerStore.class);
         }
 
         @Provides
