@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ public interface CheckpointManager {
   /**
    * Persists the given map of {@link Checkpoint}s.
    */
-  void saveCheckpoint(Map<Integer, Checkpoint> checkpoints) throws Exception;
+  void saveCheckpoints(Map<Integer, Checkpoint> checkpoints) throws Exception;
 
   /**
    * Reads the set of {@link Checkpoint}s for the given set of partitions.

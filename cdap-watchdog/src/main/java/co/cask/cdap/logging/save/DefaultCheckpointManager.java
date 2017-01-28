@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -88,7 +88,7 @@ final class DefaultCheckpointManager implements CheckpointManager {
   }
 
   @Override
-  public void saveCheckpoint(final Map<Integer, Checkpoint> checkpoints) throws Exception {
+  public void saveCheckpoints(final Map<Integer, Checkpoint> checkpoints) throws Exception {
     // if the checkpoints have not changed, we skip writing to table and return.
     if (lastCheckpoint.equals(checkpoints)) {
       return;
