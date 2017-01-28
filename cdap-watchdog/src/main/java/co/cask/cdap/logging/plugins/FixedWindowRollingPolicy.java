@@ -39,6 +39,7 @@ public class FixedWindowRollingPolicy extends RollingPolicyBase {
     "The \"FileNamePattern\" property must be set before using FixedWindowRollingPolicy. ";
   private int maxIndex;
   private int minIndex;
+  // TODO Support compression
 //  private Compressor compressor;
 
   private static final String ZIP_ENTRY_DATE_PATTERN = "yyyy-MM-dd_HHmm";
@@ -95,8 +96,8 @@ public class FixedWindowRollingPolicy extends RollingPolicyBase {
       zipEntryFileNamePattern = new FileNamePattern(zipEntryFileNamePatternStr, context);
     }
 
-    compressor = new Compressor(compressionMode);
-    compressor.setContext(this.context);
+//    compressor = new Compressor(compressionMode);
+//    compressor.setContext(this.context);
     super.start();
   }
 
@@ -157,19 +158,19 @@ public class FixedWindowRollingPolicy extends RollingPolicyBase {
       }
 
       // move active file name to min
-      switch (compressionMode) {
-        case NONE:
-          util.rename(getActiveFileName(), fileNamePattern
-            .convertInt(minIndex));
-          break;
-        case GZ:
-          compressor.compress(getActiveFileName(), fileNamePattern.convertInt(minIndex), null);
-          break;
-        case ZIP:
-          compressor.compress(getActiveFileName(), fileNamePattern.convertInt(minIndex),
-                              zipEntryFileNamePattern.convert(new Date()));
-          break;
-      }
+//      switch (compressionMode) {
+//        case NONE:
+//          util.rename(getActiveFileName(), fileNamePattern
+//            .convertInt(minIndex));
+//          break;
+//        case GZ:
+//          compressor.compress(getActiveFileName(), fileNamePattern.convertInt(minIndex), null);
+//          break;
+//        case ZIP:
+//          compressor.compress(getActiveFileName(), fileNamePattern.convertInt(minIndex),
+//                              zipEntryFileNamePattern.convert(new Date()));
+//          break;
+//      }
     }
   }
 
