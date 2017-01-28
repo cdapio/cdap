@@ -106,8 +106,10 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
 
   @AfterClass
   public static void afterClass() throws Exception {
-    hBaseTableUtil.deleteAllInNamespace(ddlExecutor, hBaseTableUtil.getHBaseNamespace(NAMESPACE1));
-    hBaseTableUtil.deleteAllInNamespace(ddlExecutor, hBaseTableUtil.getHBaseNamespace(NAMESPACE2));
+    hBaseTableUtil.deleteAllInNamespace(ddlExecutor, hBaseTableUtil.getHBaseNamespace(NAMESPACE1),
+                                        TEST_HBASE.getHBaseAdmin().getConfiguration());
+    hBaseTableUtil.deleteAllInNamespace(ddlExecutor, hBaseTableUtil.getHBaseNamespace(NAMESPACE2),
+                                        TEST_HBASE.getHBaseAdmin().getConfiguration());
     ddlExecutor.deleteNamespaceIfExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE1));
     ddlExecutor.deleteNamespaceIfExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE2));
   }

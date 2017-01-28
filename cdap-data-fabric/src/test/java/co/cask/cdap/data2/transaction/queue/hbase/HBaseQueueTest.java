@@ -699,10 +699,12 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @AfterClass
   public static void finish() throws Exception {
-    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(NAMESPACE_ID));
+    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(NAMESPACE_ID),
+                                   hbaseAdmin.getConfiguration());
     ddlExecutor.deleteNamespaceIfExists(tableUtil.getHBaseNamespace(NAMESPACE_ID));
 
-    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(NAMESPACE_ID1));
+    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(NAMESPACE_ID1),
+                                   hbaseAdmin.getConfiguration());
     ddlExecutor.deleteNamespaceIfExists(tableUtil.getHBaseNamespace(NAMESPACE_ID1));
 
     hbaseAdmin.close();

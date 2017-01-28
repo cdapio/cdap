@@ -62,7 +62,8 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
   @AfterClass
   public static void afterClass() throws Exception {
     hBaseTableUtil.deleteAllInNamespace(ddlExecutor,
-                                        hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
+                                        hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID),
+                                        TEST_HBASE.getHBaseAdmin().getConfiguration());
     ddlExecutor.deleteNamespaceIfExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
   }
 
