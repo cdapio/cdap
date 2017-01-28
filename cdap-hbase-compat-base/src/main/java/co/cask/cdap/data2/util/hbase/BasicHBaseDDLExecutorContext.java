@@ -37,7 +37,7 @@ class BasicHBaseDDLExecutorContext implements HBaseDDLExecutorContext {
   }
 
   @Override
-  public <T> T getConf() {
+  public <T> T getConfiguration() {
     return (T) hConf;
   }
 

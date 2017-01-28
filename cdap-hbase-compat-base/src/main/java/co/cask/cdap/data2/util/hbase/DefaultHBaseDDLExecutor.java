@@ -51,7 +51,7 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
   @Override
   public void initialize(HBaseDDLExecutorContext context) {
     try {
-      this.admin = new HBaseAdmin((Configuration) context.getConf());
+      this.admin = new HBaseAdmin((Configuration) context.getConfiguration());
     } catch (Exception e) {
       throw new RuntimeException("Failed to create HBaseAdmin.", e);
     }

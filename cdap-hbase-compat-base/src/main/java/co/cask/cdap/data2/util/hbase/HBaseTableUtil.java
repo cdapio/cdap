@@ -439,10 +439,11 @@ public abstract class HBaseTableUtil {
    */
   public void deleteAllInNamespace(HBaseDDLExecutor ddlExecutor, String namespaceId,
                                    Configuration hConf, Predicate<TableId> predicate) throws IOException {
-    HBaseAdmin admin = new HBaseAdmin(hConf);
-    for (TableId tableId : listTablesInNamespace(admin, namespaceId)) {
-      if (predicate.apply(tableId)) {
-        dropTable(ddlExecutor, tableId);
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      for (TableId tableId : listTablesInNamespace(admin, namespaceId)) {
+        if (predicate.apply(tableId)) {
+          dropTable(ddlExecutor, tableId);
+        }
       }
     }
   }
