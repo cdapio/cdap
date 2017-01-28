@@ -20,14 +20,12 @@ import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.rolling.RollingPolicyBase;
 import ch.qos.logback.core.rolling.RolloverFailure;
 import ch.qos.logback.core.rolling.helper.CompressionMode;
-import ch.qos.logback.core.rolling.helper.Compressor;
 import ch.qos.logback.core.rolling.helper.FileFilterUtil;
 import ch.qos.logback.core.rolling.helper.FileNamePattern;
 import ch.qos.logback.core.rolling.helper.IntegerTokenConverter;
 import org.apache.twill.filesystem.Location;
 
-import java.io.File;
-import java.util.Date;
+import java.io.IOException;
 
 /**
  * When rolling over, <code>FixedWindowRollingPolicy</code> renames files
@@ -135,26 +133,28 @@ public class FixedWindowRollingPolicy extends RollingPolicyBase {
     // closed.
     // If maxIndex <= 0, then there is no file renaming to be done.
     if (maxIndex >= 0) {
-
-      Location parentLocation = getParent();
-
-      // Delete the oldest file, to keep Windows happy.
-      File file = new File(fileNamePattern.convertInt(maxIndex));
-
-      if (file.exists()) {
-        file.delete();
-      }
-
-      // Map {(maxIndex - 1), ..., minIndex} to {maxIndex, ..., minIndex+1}
-      for (int i = maxIndex - 1; i >= minIndex; i--) {
-        String toRenameStr = fileNamePattern.convertInt(i);
-        File toRename = new File(toRenameStr);
-        // no point in trying to rename an inexistent file
-        if (toRename.exists()) {
-          util.rename(toRenameStr, fileNamePattern.convertInt(i + 1));
-        } else {
-          addInfo("Skipping roll-over for inexistent file " + toRenameStr);
+      try {
+        // Delete the oldest file, to keep Windows happy.
+        String fileName = fileNamePattern.convertInt(maxIndex);
+        Location deleteLocation = activeLocation.append(fileName);
+        if (deleteLocation.exists()) {
+          deleteLocation.delete();
         }
+
+        // Map {(maxIndex - 1), ..., minIndex} to {maxIndex, ..., minIndex+1}
+        for (int i = maxIndex - 1; i >= minIndex; i--) {
+          String toRenameStr = fileNamePattern.convertInt(i);
+          Location toRename = activeLocation.append(toRenameStr);
+          // no point in trying to rename an inexistent file
+          if (toRename.exists()) {
+            Location newName = activeLocation.append(fileNamePattern.convertInt(i + 1));
+            toRename.renameTo(newName);
+          } else {
+            addInfo("Skipping roll-over for inexistent file " + toRenameStr);
+          }
+        }
+      } catch (IOException e) {
+        throw new RolloverFailure(e.getMessage());
       }
 
       // move active file name to min
@@ -178,7 +178,8 @@ public class FixedWindowRollingPolicy extends RollingPolicyBase {
    * Return the value of the parent's RawFile property.
    */
   public String getActiveFileName() {
-
+    // not used in our implementation
+    return "";
   }
 
   public int getMaxIndex() {
@@ -199,15 +200,5 @@ public class FixedWindowRollingPolicy extends RollingPolicyBase {
 
   public void updateActiveFileLocation(Location location) {
     activeLocation = location;
-  }
-
-  public String getParent() {
-    int index = path.lastIndexOf(separatorChar);
-    if (index < prefixLength) {
-      if ((prefixLength > 0) && (path.length() > prefixLength))
-        return path.substring(0, prefixLength);
-      return null;
-    }
-    return path.substring(0, index);
   }
 }
