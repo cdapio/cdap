@@ -26,6 +26,7 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.hbase.ColumnFamilyDescriptor;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.spi.hbase.TableDescriptor;
 import com.google.common.base.Preconditions;
@@ -34,7 +35,6 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.hash.Hasher;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.ClusterStatus;
@@ -53,7 +53,6 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +60,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import javax.annotation.Nullable;
 
@@ -87,14 +85,15 @@ public abstract class HBaseTableUtil {
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableUtil.class);
-
-  public static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
-
   // 4Mb
   public static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
   private static final int COPY_BUFFER_SIZE = 0x1000;    // 4K
-  private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
+  public static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
+
+  /**
+   * This property is ONLY used in test cases.
+   */
   public static final String CFG_HBASE_TABLE_COMPRESSION = "hbase.table.compression.default";
 
 
@@ -188,61 +187,6 @@ public abstract class HBaseTableUtil {
       !Strings.isNullOrEmpty(value);
   }
 
-  /**
-   * Create a hbase table if it does not exist. Deals with race conditions when two clients concurrently attempt to
-   * create the table.
-   * @param executor the {@link HBaseDDLExecutor} instance used to perform HBase DDL operations
-   * @param tableId the {@link TableId} for the table to create
-   * @param tableDescriptor hbase table descriptor for the new table
-   */
-  public void createTableIfNotExists(HBaseDDLExecutor executor, TableId tableId,
-                                     HTableDescriptor tableDescriptor) throws IOException {
-    createTableIfNotExists(executor, tableId, tableDescriptor, null);
-  }
-
-  /**
-   * Creates a hbase table if it does not exists. Same as calling
-   * {@link #createTableIfNotExists(HBaseDDLExecutor, TableId, HTableDescriptor, byte[][], long, TimeUnit)}
-   * with timeout = {@link #MAX_CREATE_TABLE_WAIT} milliseconds.
-   */
-  public void createTableIfNotExists(HBaseDDLExecutor executor, TableId tableId, HTableDescriptor tableDescriptor,
-                                     @Nullable byte[][] splitKeys) throws IOException {
-    createTableIfNotExists(executor, tableId, tableDescriptor, splitKeys, MAX_CREATE_TABLE_WAIT,
-                           TimeUnit.MILLISECONDS);
-  }
-
-  /**
-   * Create a hbase table if it does not exist. Deals with race conditions when two clients concurrently attempt to
-   * create the table.
-   * @param executor the {@link HBaseDDLExecutor} instance used to perform HBase DDL operations
-   * @param tableId {@link TableId} representing the table
-   * @param tableDescriptor hbase table descriptor for the new table
-   * @param timeout Maximum time to wait for table creation.
-   * @param timeoutUnit The TimeUnit for timeout.
-   */
-  public void createTableIfNotExists(HBaseDDLExecutor executor, TableId tableId, HTableDescriptor tableDescriptor,
-                                     @Nullable byte[][] splitKeys,
-                                     long timeout, TimeUnit timeoutUnit) throws IOException {
-    Configuration hConf = executor.getConf();
-    setDefaultConfiguration(tableDescriptor, hConf);
-    tableDescriptor = setVersion(tableDescriptor);
-    tableDescriptor = setTablePrefix(tableDescriptor);
-    TableDescriptor descriptor = ((DefaultHBaseDDLExecutor) executor).getTableDescriptor(tableDescriptor);
-    executor.createTableIfNotExists(descriptor, splitKeys);
-  }
-
-  // This is a workaround for unit-tests which should run even if compression is not supported
-  // todo: this should be addressed on a general level: CDAP may use HBase cluster (or multiple at a time some of)
-  //       which doesn't support certain compression type
-  private void setDefaultConfiguration(HTableDescriptor tableDescriptor, Configuration conf) {
-    String compression = conf.get(CFG_HBASE_TABLE_COMPRESSION, DEFAULT_COMPRESSION_TYPE.name());
-    CompressionType compressionAlgo = CompressionType.valueOf(compression);
-    for (HColumnDescriptor hcd : tableDescriptor.getColumnFamilies()) {
-      setCompression(hcd, compressionAlgo);
-      setBloomFilter(hcd, BloomType.ROW);
-    }
-  }
-
   public HTableDescriptor setVersion(HTableDescriptor tableDescriptor) {
     HTableDescriptorBuilder builder = buildHTableDescriptor(tableDescriptor);
     setVersion(builder);
@@ -253,6 +197,43 @@ public abstract class HBaseTableUtil {
     HTableDescriptorBuilder builder = buildHTableDescriptor(tableDescriptor);
     builder.setValue(Constants.Dataset.TABLE_PREFIX, tablePrefix);
     return builder.build();
+  }
+
+  /**
+   * Get {@link ColumnFamilyDescriptorBuilder} with default properties set.
+   * @param columnFamilyName name of the column family
+   * @param hConf hadoop configurations
+   * @return the builder with default properties set
+   */
+  public static ColumnFamilyDescriptorBuilder getColumnFamilyDescriptorBuilder(String columnFamilyName,
+                                                                               Configuration hConf) {
+    ColumnFamilyDescriptorBuilder cfdBuilder = new ColumnFamilyDescriptorBuilder(columnFamilyName);
+    String compression = hConf.get(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION,
+                                   HBaseTableUtil.DEFAULT_COMPRESSION_TYPE.name());
+    cfdBuilder
+      .setMaxVersions(1)
+      .setBloomType(ColumnFamilyDescriptor.BloomType.ROW)
+      .setCompressionType(ColumnFamilyDescriptor.CompressionType.valueOf(compression.toUpperCase()));
+
+    return cfdBuilder;
+  }
+
+  /**
+   * Get {@link TableDescriptorBuilder} with default properties set.
+   * @param tableId id of the table for which the descriptor is to be returned
+   * @param cConf the instance of the {@link CConfiguration}
+   * @return the builder with default properties set
+   */
+  public static TableDescriptorBuilder getTableDescriptorBuilder(TableId tableId, CConfiguration cConf) {
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    TableName tableName = HTableNameConverter.toTableName(tablePrefix, tableId);
+    TableDescriptorBuilder tdBuilder = new TableDescriptorBuilder(tableName.getNamespaceAsString(),
+                                                                  tableName.getQualifierAsString());
+    tdBuilder
+      .addProperty(Constants.Dataset.TABLE_PREFIX, tablePrefix)
+      .addProperty(HBaseTableUtil.CDAP_VERSION, ProjectInfo.getVersion().toString());
+
+    return tdBuilder;
   }
 
   // For simplicity we allow max 255 splits per bucket for now
@@ -505,16 +486,13 @@ public abstract class HBaseTableUtil {
 
   /**
    * Truncates a table
-   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
    * @param tableId  {@link TableId} for the specified table
    * @throws IOException
    */
-  public void truncateTable(HBaseAdmin admin, TableId tableId) throws IOException {
-    HTableDescriptor tableDescriptor = getHTableDescriptor(admin, tableId);
-    // TODO truncateTable should also accept HBaseDDLExecutor
-    HBaseDDLExecutor executor = new HBaseDDLExecutorFactory(cConf, admin.getConfiguration()).get();
-    dropTable(executor, tableId);
-    createTableIfNotExists(executor, tableId, tableDescriptor);
+  public void truncateTable(HBaseDDLExecutor ddlExecutor, TableId tableId) throws IOException {
+    TableName tableName = HTableNameConverter.toTableName(getTablePrefix(cConf), tableId);
+    ddlExecutor.truncateTable(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
   }
 
   /**

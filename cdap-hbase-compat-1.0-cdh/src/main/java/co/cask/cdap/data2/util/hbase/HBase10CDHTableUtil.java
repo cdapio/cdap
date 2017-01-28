@@ -103,8 +103,7 @@ public class HBase10CDHTableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(ddlExecutor != null, "HBaseDDLExecutor should not be null");
     Preconditions.checkArgument(tableDescriptor != null, "Table descriptor should not be null.");
     TableName tableName = tableDescriptor.getTableName();
-    // TODO This will be fixed in the next PR when we pass TableDescriptor to the modifyTable method.
-    TableDescriptor tbd = ((DefaultHBaseDDLExecutor) ddlExecutor).getTableDescriptor(tableDescriptor);
+    TableDescriptor tbd = HBase10CDHTableDescriptorUtil.getTableDescriptor(tableDescriptor);
     ddlExecutor.modifyTable(tableName.getNamespaceAsString(), tableName.getQualifierAsString(), tbd);
   }
 

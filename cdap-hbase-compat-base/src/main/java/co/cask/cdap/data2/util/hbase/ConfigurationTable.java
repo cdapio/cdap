@@ -24,7 +24,6 @@ import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -71,12 +70,17 @@ public class ConfigurationTable {
   public void write(Type type, CConfiguration cConf) throws IOException {
     // must create the table if it doesn't exist
     HTable table = null;
-    try (HBaseDDLExecutor executor = new HBaseDDLExecutorFactory(cConf, hbaseConf).get()) {
+    try (HBaseDDLExecutor ddlExecutor = new HBaseDDLExecutorFactory(cConf, hbaseConf).get()) {
       HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
       TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, TABLE_NAME);
-      HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
-      htd.addFamily(new HColumnDescriptor(FAMILY));
-      tableUtil.createTableIfNotExists(executor, tableId, htd.build());
+
+      ColumnFamilyDescriptorBuilder cfdBuilder =
+        HBaseTableUtil.getColumnFamilyDescriptorBuilder(Bytes.toString(FAMILY), hbaseConf);
+
+      TableDescriptorBuilder tdBuilder =
+        HBaseTableUtil.getTableDescriptorBuilder(tableId, cConf).addColumnFamily(cfdBuilder.build());
+
+      ddlExecutor.createTableIfNotExists(tdBuilder.build(), null);
 
       long now = System.currentTimeMillis();
       long previous = now - 1;

@@ -17,11 +17,10 @@
 package co.cask.cdap.spi.hbase;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Descripbes HBase table column family.
+ * Describes HBase table column family.
  */
 public final class ColumnFamilyDescriptor {
 
@@ -73,53 +72,5 @@ public final class ColumnFamilyDescriptor {
 
   public Map<String, String> getProperties() {
     return properties;
-  }
-
-  /**
-   * Builder for {@link ColumnFamilyDescriptor}.
-   */
-  public static class Builder {
-    private final String name;
-    private final Map<String, String> properties;
-
-    private int maxVersions;
-    private CompressionType compressionType;
-    private BloomType bloomType;
-
-    public Builder(String name) {
-      this.name = name;
-      this.properties = new HashMap<>();
-
-      // Default maxVersions is 1
-      this.maxVersions = 1;
-      // Default compression type
-      this.compressionType = CompressionType.SNAPPY;
-      // Default bloom type
-      this.bloomType = BloomType.ROW;
-    }
-
-    public Builder setMaxVersions(int n) {
-      this.maxVersions = n;
-      return this;
-    }
-
-    public Builder setCompressionType(CompressionType compressionType) {
-      this.compressionType = compressionType;
-      return this;
-    }
-
-    public Builder setBloomType(BloomType bloomType) {
-      this.bloomType = bloomType;
-      return this;
-    }
-
-    public Builder addProperty(String key, String value) {
-      this.properties.put(key, value);
-      return this;
-    }
-
-    public ColumnFamilyDescriptor build() {
-      return new ColumnFamilyDescriptor(name, maxVersions, compressionType, bloomType, properties);
-    }
   }
 }

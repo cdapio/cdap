@@ -16,15 +16,18 @@
 
 package co.cask.cdap.messaging.store.hbase;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.ColumnFamilyDescriptorBuilder;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
+import co.cask.cdap.data2.util.hbase.TableDescriptorBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix.OneByteSimpleHash;
@@ -34,13 +37,12 @@ import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.hbase.CoprocessorDescriptor;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotDisabledException;
@@ -128,12 +130,14 @@ public final class HBaseTableFactory implements TableFactory {
       synchronized (this) {
         if (!tableDescriptors.containsKey(tableId)) {
           try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
-            HTableDescriptor htd = tableUtil
-              .buildHTableDescriptor(tableId)
-              // Only stores the latest version
-              .addFamily(new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(1))
-              .build();
-            tableUtil.createTableIfNotExists(ddlExecutor, tableId, htd);
+
+            ColumnFamilyDescriptorBuilder cfdBuilder =
+              HBaseTableUtil.getColumnFamilyDescriptorBuilder(Bytes.toString(COLUMN_FAMILY), hConf);
+
+            TableDescriptorBuilder tdBuilder =
+              HBaseTableUtil.getTableDescriptorBuilder(tableId, cConf).addColumnFamily(cfdBuilder.build());
+
+            ddlExecutor.createTableIfNotExists(tdBuilder.build(), null);
             hTable = tableUtil.createHTable(hConf, tableId);
             tableDescriptors.put(tableId, hTable.getTableDescriptor());
           }
@@ -260,7 +264,7 @@ public final class HBaseTableFactory implements TableFactory {
       LOG.debug("TMS Table {} was already in disabled state.", tableId, ex);
     }
   }
-  
+
   private void upgradeCoProcessor(TableId tableId, Class<? extends Coprocessor> coprocessor) throws IOException {
     try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
       HTableDescriptor tableDescriptor;
@@ -327,11 +331,11 @@ public final class HBaseTableFactory implements TableFactory {
       synchronized (this) {
         htd = tableDescriptors.get(tableId);
         if (htd == null) {
-          boolean tableExists = false;
+          boolean tableExists;
           try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
             tableExists = tableUtil.tableExists(admin, tableId);
           }
-          
+
           // Create the table if the table doesn't exist
           try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
             // If table exists, then skip creating coprocessor etc
@@ -339,23 +343,21 @@ public final class HBaseTableFactory implements TableFactory {
               TableId metadataTableId = tableUtil.createHTableId(NamespaceId.SYSTEM, cConf.get(
                 Constants.MessagingSystem.METADATA_TABLE_NAME));
 
-              HTableDescriptorBuilder htdBuilder = tableUtil
-                .buildHTableDescriptor(tableId)
-                // Only stores the latest version
-                .addFamily(new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(1))
-                // since we use 'OneByteSimpleHash', we set the number of prefix bytes attribute to 1
-                .setValue(Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES, Integer.toString(1))
-                .setValue(Constants.MessagingSystem.KEY_DISTRIBUTOR_BUCKETS_ATTR, Integer.toString(splits))
-                .setValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE, metadataTableId.getNamespace());
+              ColumnFamilyDescriptorBuilder cfdBuilder =
+                HBaseTableUtil.getColumnFamilyDescriptorBuilder(Bytes.toString(COLUMN_FAMILY), hConf);
 
-              addCoprocessor(coprocessor, htdBuilder);
-              htd = htdBuilder.build();
+              TableDescriptorBuilder tdBuilder = HBaseTableUtil.getTableDescriptorBuilder(tableId, cConf);
+              tdBuilder.addColumnFamily(cfdBuilder.build())
+                .addProperty(Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES, Integer.toString(1))
+                .addProperty(Constants.MessagingSystem.KEY_DISTRIBUTOR_BUCKETS_ATTR, Integer.toString(splits))
+                .addProperty(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE, metadataTableId.getNamespace())
+                .addCoprocessor(getCoprocessorDescriptor(coprocessor));
 
               // Set the key distributor size the same as the initial number of splits,
               // essentially one bucket per split.
               byte[][] splitKeys = HBaseTableUtil.getSplitKeys(
                 splits, splits, new RowKeyDistributorByHashPrefix(new OneByteSimpleHash(splits)));
-              tableUtil.createTableIfNotExists(ddlExecutor, tableId, htd, splitKeys);
+              ddlExecutor.createTableIfNotExists(tdBuilder.build(), splitKeys);
 
               hTable = tableUtil.createHTable(hConf, tableId);
               htd = hTable.getTableDescriptor();
@@ -403,6 +405,11 @@ public final class HBaseTableFactory implements TableFactory {
     Location jarFile = coprocessorManager.ensureCoprocessorExists(CoprocessorManager.Type.MESSAGING);
     tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI().getPath()),
                                    Coprocessor.PRIORITY_USER, null);
+  }
+
+  private CoprocessorDescriptor getCoprocessorDescriptor(Class<? extends Coprocessor> coprocessor) throws IOException {
+    Location jarFile = coprocessorManager.ensureCoprocessorExists(CoprocessorManager.Type.MESSAGING);
+    return new CoprocessorDescriptor(coprocessor.getName(), jarFile.toURI(), Coprocessor.PRIORITY_USER, null);
   }
 
   /**
