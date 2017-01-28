@@ -18,11 +18,14 @@ package co.cask.cdap.data2.dataset2.lib.file;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -33,7 +36,7 @@ import java.io.IOException;
  */
 public class FileSetAdmin implements DatasetAdmin, Updatable {
 
-  private final String name;
+  private final DatasetSpecification spec;
   private final boolean isExternal;
   private final Location baseLocation;
   private final CConfiguration cConf;
@@ -46,7 +49,7 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
                NamespacedLocationFactory namespacedLocationFactory,
                DatasetSpecification spec) throws IOException {
 
-    this.name = spec.getName();
+    this.spec = spec;
     this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
     this.baseLocation = FileSetDataset.determineBaseLocation(datasetContext, cConf, spec,
                                                              absoluteLocationFactory, namespacedLocationFactory);
@@ -66,12 +69,37 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
     if (!isExternal) {
       if (exists()) {
         throw new IOException(String.format(
-          "Base location for file set '%s' at %s already exists", name, baseLocation));
+          "Base location for file set '%s' at %s already exists", spec.getName(), baseLocation));
       }
-      baseLocation.mkdirs();
+      String permissions = spec.getProperties().get(DatasetProperties.PROPERTY_PERMISSIONS);
+      String group = spec.getProperties().get(DatasetProperties.PROPERTY_PERMISSIONS_GROUP);
+      group = group != null ? group : UserGroupInformation.getCurrentUser().getPrimaryGroupName();
+
+      // we can't simply mkdirs() the base location, because we need to set the group id on
+      // every directory we create. Thus find the first ancestor of the base that does not exist:
+      Location ancestor = baseLocation;
+      Location firstDirToCreate = null;
+      while (ancestor != null && !ancestor.exists()) {
+        firstDirToCreate = ancestor;
+        ancestor = Locations.getParent(ancestor);
+      }
+      // it is unlikely to be null: only if it was created after the exists() call above
+      if (firstDirToCreate != null) {
+        if (null == permissions) {
+          firstDirToCreate.mkdirs();
+          firstDirToCreate.setGroup(group);
+          // all following directories are created with the same group id as their parent
+          baseLocation.mkdirs();
+        } else {
+          firstDirToCreate.mkdirs(permissions);
+          firstDirToCreate.setGroup(group);
+          // all following directories are created with the same group id as their parent
+          baseLocation.mkdirs(permissions);
+        }
+      }
     } else if (!exists()) {
         throw new IOException(String.format(
-          "Base location for external file set '%s' at %s does not exist", name, baseLocation));
+          "Base location for external file set '%s' at %s does not exist", spec.getName(), baseLocation));
     }
   }
 

@@ -18,21 +18,24 @@ package co.cask.cdap.data2.dataset2.lib;
 
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -51,8 +54,6 @@ public class FileSetTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  static FileSet fileSet1;
-  static FileSet fileSet2;
   private static final NamespaceId OTHER_NAMESPACE = new NamespaceId("yourspace");
   private static final DatasetId testFileSetInstance1 =
     DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testFileSet");
@@ -66,41 +67,26 @@ public class FileSetTest {
   private static final DatasetId testFileSetInstance6 =
     DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("nonExternalFileSet1");
 
-  @Before
-  public void before() throws Exception {
-    dsFrameworkUtil.createInstance("fileSet", testFileSetInstance1, FileSetProperties.builder()
+  @After
+  public void after() throws Exception {
+    dsFrameworkUtil.getFramework().deleteAllInstances(DatasetFrameworkTestUtil.NAMESPACE_ID);
+    dsFrameworkUtil.getFramework().deleteAllInstances(OTHER_NAMESPACE);
+  }
+
+  // helper to create a commonly used file set instance and return its Java instance.
+  private FileSet createFileset(DatasetId dsid) throws IOException, DatasetManagementException {
+    dsFrameworkUtil.createInstance("fileSet", dsid, FileSetProperties.builder()
       .setBasePath("testDir").build());
     Map<String, String> fileArgs = Maps.newHashMap();
     FileSetArguments.setInputPath(fileArgs, "some?File1");
     FileSetArguments.setOutputPath(fileArgs, "some?File1");
-    fileSet1 = dsFrameworkUtil.getInstance(testFileSetInstance1, fileArgs);
-
-    dsFrameworkUtil.createInstance("fileSet", testFileSetInstance2, FileSetProperties.builder()
-      .setBasePath("testDir").build());
-    fileArgs = Maps.newHashMap();
-    FileSetArguments.setInputPath(fileArgs, "some?File2");
-    FileSetArguments.setOutputPath(fileArgs, "some?File2");
-    fileSet2 = dsFrameworkUtil.getInstance(testFileSetInstance2, fileArgs);
-  }
-
-  @After
-  public void after() throws Exception {
-    deleteInstance(testFileSetInstance1);
-    deleteInstance(testFileSetInstance2);
-    deleteInstance(testFileSetInstance3);
-    deleteInstance(testFileSetInstance4);
-    deleteInstance(testFileSetInstance5);
-    deleteInstance(testFileSetInstance6);
-  }
-
-  static void deleteInstance(DatasetId id) throws Exception {
-    if (dsFrameworkUtil.getInstance(id) != null) {
-      dsFrameworkUtil.deleteInstance(id);
-    }
+    return dsFrameworkUtil.getInstance(dsid, fileArgs);
   }
 
   @Test
-  public void testWriteRead() throws IOException {
+  public void testWriteRead() throws IOException, DatasetManagementException {
+    FileSet fileSet1 = createFileset(testFileSetInstance1);
+    FileSet fileSet2 = createFileset(testFileSetInstance2);
     Location fileSet1Output = fileSet1.getOutputLocation();
     Location fileSet2Output = fileSet2.getOutputLocation();
     Location fileSet1NsDir = Locations.getParent(Locations.getParent(Locations.getParent(fileSet1Output)));
@@ -127,6 +113,83 @@ public class FileSetTest {
     try (InputStream in = fileSet2.getInputLocations().get(0).getInputStream()) {
       Assert.assertEquals(54, in.read());
     }
+  }
+
+  @Test
+  public void testPermissions() throws Exception {
+
+    String fsPermissions = "rwxrwx--x";
+    String customPermissions = "rwx--x--x";
+    String group = UserGroupInformation.getCurrentUser().getPrimaryGroupName();
+
+    // create one file set with default permission so that the namespace data dir exists
+    dsFrameworkUtil.createInstance("fileSet", OTHER_NAMESPACE.dataset("dummy"), DatasetProperties.EMPTY);
+
+    // determine the default permissions of created directories (we want to test with different perms)
+    String defaultPermissions = dsFrameworkUtil.getInjector().getInstance(NamespacedLocationFactory.class)
+      .get(OTHER_NAMESPACE.toId()).getPermissions();
+    if (fsPermissions.equals(defaultPermissions)) {
+      // swap the permissions so we can test with different file set permissions than the default
+      customPermissions = "rwxrwx--x";
+      fsPermissions = "rwx--x--x";
+    }
+
+    // create a dataset with configured permissions that are different from the default
+    DatasetId datasetId = OTHER_NAMESPACE.dataset("testPermFS");
+    dsFrameworkUtil.createInstance("fileSet", datasetId, FileSetProperties.builder()
+      .setBasePath("perm/test/path")
+      .add(DatasetProperties.PROPERTY_PERMISSIONS, fsPermissions)
+      .add(DatasetProperties.PROPERTY_PERMISSIONS_GROUP, group)
+      .build());
+    FileSet fs = dsFrameworkUtil.getInstance(datasetId);
+
+    // validate that the entire hierarchy of directories was created with the correct permissions
+    Location base = fs.getBaseLocation();
+    Assert.assertEquals(group, base.getGroup());
+    Assert.assertEquals(fsPermissions, base.getPermissions());
+    Location parent = Locations.getParent(base);
+    Assert.assertNotNull(parent);
+    Assert.assertEquals(group, parent.getGroup());
+    Assert.assertEquals(fsPermissions, parent.getPermissions());
+    parent = Locations.getParent(parent);
+    Assert.assertNotNull(parent);
+    Assert.assertEquals(group, parent.getGroup());
+    Assert.assertEquals(fsPermissions, parent.getPermissions());
+    Location nsRoot = Locations.getParent(parent);
+    Assert.assertNotNull(nsRoot);
+    Assert.assertNotEquals(fsPermissions, nsRoot.getPermissions());
+
+    // create an empty file and validate it is created with the fileset's permissions
+    Location child = base.append("a");
+    Location grandchild = child.append("b");
+    grandchild.getOutputStream().close();
+    Assert.assertEquals(group, child.getGroup());
+    Assert.assertEquals(group, grandchild.getGroup());
+    Assert.assertEquals(fsPermissions, child.getPermissions());
+    Assert.assertEquals(fsPermissions, grandchild.getPermissions());
+
+    // create an empty file with custom permissions and validate them
+    child = base.append("x");
+    grandchild = child.append("y");
+    grandchild.getOutputStream(customPermissions).close();
+    Assert.assertEquals(group, child.getGroup());
+    Assert.assertEquals(group, grandchild.getGroup());
+    Assert.assertEquals(customPermissions, child.getPermissions());
+    Assert.assertEquals(customPermissions, grandchild.getPermissions());
+
+    // instantiate the dataset with custom permissions in the runtime arguments
+    fs = dsFrameworkUtil.getInstance(datasetId, ImmutableMap.of(
+      DatasetProperties.PROPERTY_PERMISSIONS, customPermissions));
+
+    // create an empty file with custom permissions and validate them
+    base = fs.getBaseLocation();
+    child = base.append("p");
+    grandchild = child.append("q");
+    grandchild.getOutputStream().close();
+    Assert.assertEquals(group, child.getGroup());
+    Assert.assertEquals(group, grandchild.getGroup());
+    Assert.assertEquals(customPermissions, child.getPermissions());
+    Assert.assertEquals(customPermissions, grandchild.getPermissions());
   }
 
   @Test
@@ -231,23 +294,29 @@ public class FileSetTest {
   }
 
 
-  @Test(expected = IOException.class)
+  @Test
   public void testNonExternalExistentPath() throws Exception {
     // Create an instance at a location
     String absolutePath = tmpFolder.newFolder() + "/some/existing/location";
     File file = new File(absolutePath);
     Assert.assertTrue(file.mkdirs());
     // Try to add another instance of non external fileset at the same location
-    dsFrameworkUtil.createInstance("fileSet", testFileSetInstance6,
-                                   FileSetProperties.builder()
-                                     .setBasePath(absolutePath)
-                                     .setDataExternal(false)
-                                     .build());
+    try {
+      dsFrameworkUtil.createInstance("fileSet", testFileSetInstance6,
+                                     FileSetProperties.builder()
+                                       .setBasePath(absolutePath)
+                                       .setDataExternal(false)
+                                       .build());
+      Assert.fail("Expected IOException form createInstance()");
+    } catch (IOException e) {
+      // expected
+    }
   }
 
   @Test
-   public void testRollback() throws IOException, TransactionFailureException {
+   public void testRollback() throws IOException, TransactionFailureException, DatasetManagementException {
     // test deletion of an empty output directory
+    FileSet fileSet1 = createFileset(testFileSetInstance1);
     Location outputLocation = fileSet1.getOutputLocation();
     Assert.assertFalse(outputLocation.exists());
 
@@ -260,8 +329,10 @@ public class FileSetTest {
   }
 
   @Test
-  public void testRollbackOfNonDirectoryOutput() throws IOException, TransactionFailureException {
+  public void testRollbackOfNonDirectoryOutput()
+    throws IOException, TransactionFailureException, DatasetManagementException {
     // test deletion of an output location, pointing to a non-directory file
+    FileSet fileSet1 = createFileset(testFileSetInstance1);
     Location outputFile = fileSet1.getOutputLocation();
     Assert.assertFalse(outputFile.exists());
 
@@ -275,7 +346,9 @@ public class FileSetTest {
   }
 
   @Test
-  public void testRollbackWithNonEmptyDir() throws IOException, TransactionFailureException {
+  public void testRollbackWithNonEmptyDir()
+    throws IOException, TransactionFailureException, DatasetManagementException {
+    FileSet fileSet1 = createFileset(testFileSetInstance1);
     Location outputDir = fileSet1.getOutputLocation();
     Assert.assertFalse(outputDir.exists());
 

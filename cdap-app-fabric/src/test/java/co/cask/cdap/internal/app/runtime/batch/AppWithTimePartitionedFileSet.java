@@ -16,20 +16,15 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -85,20 +80,6 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
       job.setNumReduceTasks(0);
       context.addInput(Input.ofDataset(INPUT));
       context.addOutput(Output.ofDataset(TIME_PARTITIONED));
-    }
-
-    @Override
-    public void destroy() {
-      // here we also test backward compatibility for existing apps that add the partition in the onFinish
-      // (this was necessary up to 2.8.0 and fixed in CDAP-1227).
-      if (getContext().getState().getStatus() == ProgramStatus.COMPLETED
-        && getContext().getRuntimeArguments().get(COMPAT_ADD_PARTITION) != null) {
-        TimePartitionedFileSet ds = getContext().getDataset(TIME_PARTITIONED);
-        String outputPath = FileSetArguments.getOutputPath(ds.getEmbeddedFileSet().getRuntimeArguments());
-        Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(ds.getRuntimeArguments());
-        Preconditions.checkNotNull(time, "Output partition time is null.");
-        ds.addPartition(time, outputPath);
-      }
     }
   }
 
