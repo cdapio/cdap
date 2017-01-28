@@ -1107,7 +1107,7 @@ public class ArtifactStore {
 
     ArtifactData(Location location, ArtifactMeta meta) {
       this.locationURI = null;
-      this.locationPath = Locations.getRelativePath(location);
+      this.locationPath = Locations.getRelativePath(location.getLocationFactory(), location.toURI());
       this.meta = meta;
     }
   }
@@ -1124,7 +1124,8 @@ public class ArtifactStore {
       this.pluginClass = pluginClass;
       this.usableBy = usableBy;
       this.artifactLocationURI = null;
-      this.artifactLocationPath = Locations.getRelativePath(artifactLocation);
+      this.artifactLocationPath = Locations.getRelativePath(artifactLocation.getLocationFactory(),
+                                                            artifactLocation.toURI());
     }
   }
 
@@ -1138,7 +1139,8 @@ public class ArtifactStore {
     AppData(ApplicationClass appClass, Location artifactLocation) {
       this.appClass = appClass;
       this.artifactLocationURI = null;
-      this.artifactLocationPath = Locations.getRelativePath(artifactLocation);
+      this.artifactLocationPath = Locations.getRelativePath(artifactLocation.getLocationFactory(),
+                                                            artifactLocation.toURI());
     }
   }
 }
