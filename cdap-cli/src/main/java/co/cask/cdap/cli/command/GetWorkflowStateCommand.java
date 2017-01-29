@@ -74,7 +74,8 @@ public class GetWorkflowStateCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the state of all nodes associated with the workflow for a given run id.";
+    return String.format("Gets the state of all nodes associated with the workflow for a given '<%s>'",
+                         ArgumentName.RUN_ID);
   }
 
   private Table getWorkflowNodeStates(ProgramRunId programRunId)

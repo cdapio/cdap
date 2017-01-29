@@ -59,7 +59,7 @@ public class DeleteRouteConfigCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Delete the route configuration for %s.",
+    return String.format("Delete the route configuration for %s",
                          Fragment.of(Article.A, ElementType.SERVICE.getName()));
   }
 }

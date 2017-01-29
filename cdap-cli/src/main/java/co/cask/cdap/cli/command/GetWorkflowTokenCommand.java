@@ -97,7 +97,8 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the workflow token of a workflow for a given run ID";
+    return String.format("Gets the workflow token of a workflow for a given '<%s>'",
+                         ArgumentName.RUN_ID);
   }
 
   private Table getWorkflowToken(ProgramRunId runId, WorkflowToken.Scope workflowTokenScope, String key)

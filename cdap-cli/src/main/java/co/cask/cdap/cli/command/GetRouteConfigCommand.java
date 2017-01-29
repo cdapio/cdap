@@ -59,6 +59,6 @@ public class GetRouteConfigCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Get the route configuration for %s.", Fragment.of(Article.A, ElementType.SERVICE.getName()));
+    return String.format("Get the route configuration for %s", Fragment.of(Article.A, ElementType.SERVICE.getName()));
   }
 }

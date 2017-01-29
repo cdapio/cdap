@@ -67,6 +67,6 @@ public class ListAppVersionsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all versions of a specific %s.", ElementType.APP.getName());
+    return String.format("Lists all versions of a specific %s", ElementType.APP.getName());
   }
 }
