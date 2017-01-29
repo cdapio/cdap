@@ -56,7 +56,7 @@ public class DeleteAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes %s with an optional version. If version is not provided, default version \"%s\" " +
+    return String.format("Deletes %s with an optional version. If version is not provided, default version '%s' " +
                            "will be used", Fragment.of(Article.A, ElementType.APP.getName()),
                          ApplicationId.DEFAULT_VERSION);
   }

@@ -95,7 +95,7 @@ def create_parsed_line(line):
         i +=1 
         if c == QUOTE:
             if not in_literal:
-                if i and line[i-1] != SPACE: # Preceding character
+                if i and line[i-1] not in (SPACE, "("): # Preceding character
                     new_line += c
                 else:
                     new_line += opening_literal_quote

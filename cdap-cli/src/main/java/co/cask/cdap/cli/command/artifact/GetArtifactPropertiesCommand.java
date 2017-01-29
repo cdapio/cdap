@@ -90,7 +90,7 @@ public class GetArtifactPropertiesCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return String.format("Gets the properties of %s. If no scope is provided, properties are looked for first in " +
-                         "the SYSTEM and then in the USER scope.",
+                         "the 'SYSTEM' and then in the 'USER' scope.",
                          Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
   }
 }

@@ -76,7 +76,7 @@ public class ListArtifactVersionsCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return String.format("Lists all versions of a specific %s. If no scope is provided, %s are looked " +
-                           "for first in the SYSTEM and then in the USER scope.",
+                           "for first in the 'SYSTEM' and then in the 'USER' scope.",
                          ElementType.ARTIFACT.getName(), ElementType.ARTIFACT.getNamePlural());
   }
 }

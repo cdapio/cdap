@@ -98,6 +98,6 @@ public class GetProgramRunsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the run history of %s.", Fragment.of(Article.A, elementType.getName()));
+    return String.format("Gets the run history of %s", Fragment.of(Article.A, elementType.getName()));
   }
 }

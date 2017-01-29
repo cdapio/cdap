@@ -77,6 +77,6 @@ public class CreateNamespaceCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Creates a %s in CDAP.", ElementType.NAMESPACE.getName());
+    return String.format("Creates a %s in CDAP", ElementType.NAMESPACE.getName());
   }
 }
