@@ -574,8 +574,6 @@
   <property>
     <name>data.tx.snapshot.codecs</name>
     <value>
-      co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1,
-      co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2,
       org.apache.tephra.snapshot.SnapshotCodecV3,
       org.apache.tephra.snapshot.SnapshotCodecV4
     </value>
