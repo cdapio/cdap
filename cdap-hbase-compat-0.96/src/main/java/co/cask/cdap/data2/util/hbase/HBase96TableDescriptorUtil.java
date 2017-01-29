@@ -66,7 +66,8 @@ public class HBase96TableDescriptorUtil {
     for (Map.Entry<String, CoprocessorDescriptor> coprocessor : descriptor.getCoprocessors().entrySet()) {
       CoprocessorDescriptor cpd = coprocessor.getValue();
       try {
-        htd.addCoprocessor(cpd.getClassName(), new Path(cpd.getPath()), cpd.getPriority(), cpd.getProperties());
+        Path path = cpd.getPath() == null ? null : new Path(cpd.getPath());
+        htd.addCoprocessor(cpd.getClassName(), path, cpd.getPriority(), cpd.getProperties());
       } catch (IOException e) {
         LOG.error("Error adding coprocessor.", e);
       }

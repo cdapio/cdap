@@ -96,6 +96,16 @@
   </property>
 
   <property>
+    <name>master.manage.hbase.coprocessors</name>
+    <value>true</value>
+    <description>
+      Whether CDAP master should manage HBase coprocessors. This should only
+      be set to false if you are managing coprocessors yourself in order to
+      support rolling HBase upgrades
+    </description>
+  </property>
+
+  <property>
     <name>master.startup.checks.classes</name>
     <value></value>
     <description>

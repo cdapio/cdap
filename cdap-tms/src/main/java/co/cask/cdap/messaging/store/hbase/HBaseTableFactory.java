@@ -88,6 +88,7 @@ public final class HBaseTableFactory implements TableFactory {
   private final Map<TableId, HTableDescriptor> tableDescriptors;
   private final CoprocessorManager coprocessorManager;
   private final HBaseDDLExecutorFactory ddlExecutorFactory;
+  private final boolean manageCoprocessors;
 
   @Inject
   HBaseTableFactory(CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil,
@@ -97,6 +98,7 @@ public final class HBaseTableFactory implements TableFactory {
     this.tableUtil = tableUtil;
     this.tableDescriptors = new ConcurrentHashMap<>();
     this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
+    this.manageCoprocessors = cConf.getBoolean(Constants.HBase.MANAGE_COPROCESSORS);
 
     RejectedExecutionHandler callerRunsPolicy = new RejectedExecutionHandler() {
       @Override
@@ -403,13 +405,15 @@ public final class HBaseTableFactory implements TableFactory {
   private void addCoprocessor(Class<? extends Coprocessor> coprocessor,
                               HTableDescriptorBuilder tableDescriptor) throws IOException {
     Location jarFile = coprocessorManager.ensureCoprocessorExists(CoprocessorManager.Type.MESSAGING);
-    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI().getPath()),
+    Path path = manageCoprocessors ? new Path(jarFile.toURI().getPath()) : null;
+    tableDescriptor.addCoprocessor(coprocessor.getName(), path,
                                    Coprocessor.PRIORITY_USER, null);
   }
 
   private CoprocessorDescriptor getCoprocessorDescriptor(Class<? extends Coprocessor> coprocessor) throws IOException {
     Location jarFile = coprocessorManager.ensureCoprocessorExists(CoprocessorManager.Type.MESSAGING);
-    return new CoprocessorDescriptor(coprocessor.getName(), jarFile.toURI(), Coprocessor.PRIORITY_USER, null);
+    String jarPath = manageCoprocessors ? jarFile.toURI().getPath() : null;
+    return new CoprocessorDescriptor(coprocessor.getName(), jarPath, Coprocessor.PRIORITY_USER, null);
   }
 
   /**
