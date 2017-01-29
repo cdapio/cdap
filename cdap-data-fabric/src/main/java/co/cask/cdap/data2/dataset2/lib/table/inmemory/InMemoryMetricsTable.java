@@ -71,7 +71,16 @@ public class InMemoryMetricsTable implements MetricsTable {
   public void put(SortedMap<byte[], ? extends SortedMap<byte[], Long>> updates) {
     SortedMap<byte[], SortedMap<byte[], Update>> convertedUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (NavigableMap.Entry<byte[], ? extends SortedMap<byte[], Long>> entry : updates.entrySet()) {
-      convertedUpdates.put(entry.getKey(), Maps.transformValues(entry.getValue(), Updates.LONG_TO_PUTS));
+      convertedUpdates.put(entry.getKey(), Maps.transformValues(entry.getValue(), Updates.LONG_TO_UPDATE));
+    }
+    InMemoryTableService.merge(tableName, convertedUpdates, System.currentTimeMillis());
+  }
+
+  @Override
+  public void putBytes(SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> updates) {
+    SortedMap<byte[], SortedMap<byte[], Update>> convertedUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (NavigableMap.Entry<byte[], ? extends SortedMap<byte[], byte[]>> entry : updates.entrySet()) {
+      convertedUpdates.put(entry.getKey(), Maps.transformValues(entry.getValue(), Updates.BYTES_TO_UPDATE));
     }
     InMemoryTableService.merge(tableName, convertedUpdates, System.currentTimeMillis());
   }

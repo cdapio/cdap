@@ -41,6 +41,14 @@ public interface MetricsTable extends Dataset {
   void put(SortedMap<byte[], ? extends SortedMap<byte[], Long>> updates);
 
   /**
+   * Write multiple rows, each with multiple individual columns of byte array type to write.
+   * TODO: (CDAP-8216) This method is only for storing messageId for
+   * {@link cdap-watchdog.co.cask.cdap.metrics.process.MetricsConsumerMetaTable}. Once (CDAP-8216) is resolved, this
+   * method can be removed.
+   */
+  void putBytes(SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> updates);
+
+  /**
    * Atomically compare a single column of a row with a expected value, and if it matches, replace it with a new value.
    * @param oldValue the expected value of the column. If null, this means that the column must not exist.
    * @param newValue the new value of the column. If null, the effect to delete the column if the comparison succeeds.

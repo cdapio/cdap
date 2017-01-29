@@ -93,6 +93,16 @@ public class MetricsTableOnTableTest extends MetricsTableTest {
     }
 
     @Override
+    public void putBytes(final SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> updates) {
+      txnl.executeUnchecked(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          delegate.putBytes(updates);
+        }
+      });
+    }
+
+    @Override
     public boolean swap(final byte[] row, final byte[] column,
                         final byte[] oldValue, final byte[] newValue) {
       return txnl.executeUnchecked(new Callable<Boolean>() {
