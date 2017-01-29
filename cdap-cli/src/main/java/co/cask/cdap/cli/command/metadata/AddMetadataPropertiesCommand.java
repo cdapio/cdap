@@ -34,7 +34,7 @@ public class AddMetadataPropertiesCommand extends AbstractCommand {
 
   private final MetadataClient client;
 
-  public static String ENTITY_DESCRIPTION_STRING = String.format("'<%s>' is of the form " +
+  public static final String ENTITY_DESCRIPTION_STRING = String.format("'<%s>' is of the form " +
     "'<entity-type>:<namespace-id>.<entity-name>', where <entity-type> is one of " +
     "'artifact', 'app', 'dataset', 'program', 'stream', or 'view'.", ArgumentName.ENTITY);
 
