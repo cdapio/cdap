@@ -192,6 +192,7 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   public static void main(final String[] args) throws Exception {
+    /*
     ClassLoader classLoader = MainClassLoader.createFromContext();
     if (classLoader == null) {
       LOG.warn("Failed to create CDAP system ClassLoader. AuthEnforce annotation will not be rewritten.");
@@ -203,7 +204,7 @@ public class MasterServiceMain extends DaemonMain {
       Method method = cls.getSuperclass().getDeclaredMethod("doMain", String[].class);
       method.setAccessible(true);
       method.invoke(cls.newInstance(), new Object[]{args});
-    }
+    }*/
   }
 
   public MasterServiceMain() {

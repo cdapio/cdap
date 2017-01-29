@@ -97,19 +97,7 @@ public class MasterStartupTool {
   }
 
   public boolean canStartMaster() {
-    List<CheckRunner.Failure> failures = checkRunner.runChecks();
-    if (!failures.isEmpty()) {
-      for (CheckRunner.Failure failure : failures) {
-        LOG.error("{} failed: {}", failure.getName(), failure.getException().getMessage());
-        if (failure.getException().getCause() != null) {
-          LOG.error("  Root cause: {}", ExceptionUtils.getRootCauseMessage(failure.getException().getCause()));
-        }
-      }
-      LOG.error("Errors detected while starting up master. " +
-                  "Please check the logs, address all errors, then try again.");
-      return false;
-    }
-    return true;
+    return false;
   }
 
   private CheckRunner createCheckRunner(Injector injector) {
