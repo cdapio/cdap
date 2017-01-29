@@ -274,7 +274,8 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   }
 
   @Override
-  public Checkpoint getCheckpoint() {
+  public Checkpoint
+  getCheckpoint() {
     try {
       return checkpointManager.getCheckpoint(partition);
     } catch (Exception e) {
@@ -285,7 +286,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   @Override
   public void resetCheckpoint(Checkpoint checkpoint) {
     try {
-      this.checkpointManager.saveCheckpoint(ImmutableMap.of(partition, checkpoint));
+      this.checkpointManager.saveCheckpoints(ImmutableMap.of(partition, checkpoint));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

@@ -65,7 +65,7 @@ public class KafkaOffsetFinder {
     this.serializer = new LoggingEventSerializer();
   }
 
-  public long getMatchingOffset(final Checkpoint checkpoint, int partition) {
+  public long getMatchingOffset(final Checkpoint checkpoint, final int partition) {
     if (checkpoint.getNextOffset() < 0) {
       return checkpoint.getNextOffset();
     }
@@ -84,7 +84,15 @@ public class KafkaOffsetFinder {
             }
             FetchedMessage message = messages.next();
             long offset = message.getOffset();
-            long timestamp = serializer.fromBytes(message.getPayload()).getTimeStamp();
+            ILoggingEvent event;
+            try {
+              event = serializer.fromBytes(message.getPayload());
+            } catch (IOException e) {
+              LOG.warn("Message with offset {} in topic {} partition {} is ignored because of failure to decode.",
+                       offset, topic, partition, e);
+              return message.getNextOffset();
+            }
+            long timestamp = event.getTimeStamp();
             if (offset == checkpoint.getNextOffset()) {
               matchFound.set(timestamp == checkpoint.getMaxEventTime() ? TIME_MATCH : TIME_NOT_MATCH);
             }
@@ -181,8 +189,15 @@ public class KafkaOffsetFinder {
       }
       FetchedMessage message = messages.next();
       long offset = message.getOffset();
-      ILoggingEvent event = serializer.fromBytes(message.getPayload());
-      LOG.trace("Received event {} for partition {}", event, partition);
+      ILoggingEvent event;
+      try {
+        event = serializer.fromBytes(message.getPayload());
+      } catch (IOException e) {
+        LOG.warn("Message with offset {} in topic {} partition {} is ignored because of failure to decode.",
+                 offset, topic, partition, e);
+        return message.getNextOffset();
+      }
+      LOG.trace("Received event {} for topic {} partition {}", event, topic, partition);
       long timeStamp = event.getTimeStamp();
       if (timeStamp == targetTimestamp) {
         if (offsetQueue.isEmpty()) {
