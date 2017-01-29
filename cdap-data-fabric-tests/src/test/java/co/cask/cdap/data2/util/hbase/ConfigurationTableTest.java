@@ -56,7 +56,8 @@ public class ConfigurationTableTest {
 
   @AfterClass
   public static void teardownAfterClass() throws Exception {
-    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM),
+                                   TEST_HBASE.getHBaseAdmin().getConfiguration());
     ddlExecutor.deleteNamespaceIfExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
   }
 
