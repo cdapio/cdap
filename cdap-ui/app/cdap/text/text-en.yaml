@@ -151,7 +151,6 @@ features:
     setPreferencesColumnLabel:
       key: KEY
       value: VALUE
-      origin: ORIGIN
     setPreferencesReset: Reset
     setPreferencesFailed: Error - Set Preferences Failed.
     setPreferencesSuccess:

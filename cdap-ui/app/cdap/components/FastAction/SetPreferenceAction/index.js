@@ -40,7 +40,7 @@ export default class SetPreferenceAction extends Component {
 
     this.toggleModal = this.toggleModal.bind(this);
     this.toggleTooltip = this.toggleTooltip.bind(this);
-    this.onPreferencesSaved = this.onPreferencesSaved.bind(this);
+    this.onSuccess = this.onSuccess.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -51,7 +51,7 @@ export default class SetPreferenceAction extends Component {
     this.subscription();
   }
 
-  onPreferencesSaved() {
+  onSuccess() {
     if (this.props.onSuccess) {
       this.props.onSuccess();
     }
@@ -91,7 +91,7 @@ export default class SetPreferenceAction extends Component {
           isOpen={this.state.tooltipOpen}
           target={tooltipID}
           toggle={this.toggleTooltip}
-          className="preferences-tooltip"
+          className="preferences-action-tooltip"
           delay={0}
         >
           {actionLabel}
@@ -103,7 +103,7 @@ export default class SetPreferenceAction extends Component {
               isOpen={this.state.modal}
               toggleModal={this.toggleModal}
               entity={this.props.entity}
-              onPreferencesSaved={this.onPreferencesSaved}
+              onSuccess={this.onSuccess}
             />
           :
             null

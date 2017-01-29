@@ -50,7 +50,9 @@ export default class FastActions extends Component {
     if (action === 'startStop') { return; }
 
     if (action === 'setPreferences') {
-      this.props.onSuccess();
+      if (this.props.onSuccess) {
+        this.props.onSuccess();
+      }
       return;
     }
 

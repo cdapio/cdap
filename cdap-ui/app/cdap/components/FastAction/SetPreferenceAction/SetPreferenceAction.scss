@@ -24,12 +24,20 @@ $modal-max-height: 750px;
 $modal-header-color: #464a57;
 $cell-height: 2.5em;
 $link-color: #0275d8;
+$focused-input-color: #66afe9;
 
 .tooltip {
-  &.preferences-tooltip {
-    .tooltip-inner {
+  .tooltip-inner {
+    &.preferences-action-tooltip {
       background-color: #000000;
       color: white;
+    }
+    &.entity-preferences-modal {
+      transform: translateY(20px);
+
+      &:before {
+        display: none;
+      }
     }
   }
 }
@@ -106,6 +114,12 @@ $link-color: #0275d8;
           }
 
           .specify-preferences-container {
+            .specify-preferences-description {
+              h4 {
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+            }
             .specify-preferences-list {
               margin-top: 15px;
 
@@ -114,21 +128,26 @@ $link-color: #0275d8;
                 font-size: 12px;
 
                 .key-label {
-                  margin-right: 325px;
+                  margin-right: 315px;
                 }
               }
 
               .specify-preferences-values {
                 max-height: calc(5 * (32px + 20px));
-                overflow: scroll;
+                overflow: auto;
 
                 .key-value-pair-preference {
+                  margin: 0;
                   justify-content: initial;
 
                   input {
                     border: 1px solid #cccccc;
                     width: 36%;
                     margin: 5px 50px 15px 0px;
+
+                    &:focus {
+                      border-color: $focused-input-color;
+                    }
                   }
 
                   input:last-of-type {
@@ -146,19 +165,40 @@ $link-color: #0275d8;
                     }
                   }
                 }
+
+                div {
+                  div:first-child {
+                    .key-value-pair-preference {
+                      margin-top: 3px;
+                    }
+                  }
+                }
               }
             }
 
             .clearfix {
+              .not-saving {
+                &:disabled {
+                  background-color: rgba(0, 0, 0, 0.25);
+                  border-color: #ffffff;
+                }
+              }
+
               .fa-spinner {
                 margin-right: 10px;
               }
 
+              .reset,
+              .reset-success,
+              .num-rows {
+                position: relative;
+                top: 0.5em;
+              }
+
               .reset {
+                left: 2em;
+
                 a {
-                  position: relative;
-                  top: 0.5em;
-                  left: 2em;
                   cursor: pointer;
                   color: $link-color;
 
@@ -168,9 +208,16 @@ $link-color: #0275d8;
                 }
               }
 
-              .text-danger {
-                clear: left;
-                margin-top: 10px;
+              .reset-success {
+                left: 3em;
+              }
+
+              .num-rows {
+                margin-right: 5.5em;
+
+                span {
+                  color: #999999;
+                }
               }
             }
           }
@@ -204,11 +251,7 @@ $link-color: #0275d8;
                 word-break: break-all;
 
                 &:first-child {
-                  width: 45%;
-                }
-
-                &:last-child {
-                  display: none;
+                  width: 340px;
                 }
               }
 
@@ -240,7 +283,7 @@ $link-color: #0275d8;
 
               tbody {
                 display: block;
-                overflow: scroll;
+                overflow: auto;
                 max-height: ($cell-height * 5);
               }
             }
