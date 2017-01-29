@@ -31,7 +31,9 @@ public class DatasetModuleMeta {
   private final String name;
   private final String className;
   // TODO: change type to Location
+  // URI jarLocation for Backward Compatibility
   private final URI jarLocation;
+  private final String jarLocationPath;
 
   private final List<String> types;
   private final List<String> usesModules;
@@ -68,7 +70,8 @@ public class DatasetModuleMeta {
                            Collection<String> usedByModules) {
     this.name = name;
     this.className = className;
-    this.jarLocation = jarLocation;
+    this.jarLocation = null;
+    this.jarLocationPath = jarLocation == null ? null : jarLocation.getPath();
     this.types = Collections.unmodifiableList(new ArrayList<>(types));
     this.usesModules = Collections.unmodifiableList(new ArrayList<>(usesModules));
     this.usedByModules = new ArrayList<>(usedByModules);
@@ -91,10 +94,16 @@ public class DatasetModuleMeta {
   /**
    * @return location of the dataset module jar, {@code null} means this is "system module" which classes always present
    *         in classpath. This helps to minimize redundant copying of jars
+   *         For Backward Compatibility, if DatasetModuleMeta was read from the table and only has jarLocation URI,
+   *         get the Path from URI and return.
    */
   @Nullable
-  public URI getJarLocation() {
-    return jarLocation;
+  public String getJarLocationPath() {
+    // Check URI jarLocation for Backward Compatibility
+    if (jarLocationPath == null && jarLocation != null) {
+      return jarLocation.getPath();
+    }
+    return jarLocationPath;
   }
 
   /**
@@ -140,6 +149,7 @@ public class DatasetModuleMeta {
       "name='" + name + '\'' +
       ", className='" + className + '\'' +
       ", jarLocation=" + jarLocation +
+      ", jarLocationPath=" + jarLocationPath +
       ", types=" + types +
       ", usesModules=" + usesModules +
       ", usedByModules=" + usedByModules +

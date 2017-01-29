@@ -43,12 +43,10 @@ import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +55,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
-
 import javax.annotation.Nullable;
 
 /**
@@ -126,7 +123,7 @@ public final class FileMetaDataManager {
       public void apply(Table table) throws Exception {
         // add column version prefix for new format
         byte[] columnKey = Bytes.add(COLUMN_PREFIX_VERSION, Bytes.toBytes(eventTimeMs), Bytes.toBytes(currentTimeMs));
-        table.put(getRowKey(identifier), columnKey, Bytes.toBytes(location.toURI().toString()));
+        table.put(getRowKey(identifier), columnKey, Bytes.toBytes(location.toURI().getPath()));
       }
     });
   }
@@ -147,10 +144,9 @@ public final class FileMetaDataManager {
     execute(new TransactionExecutor.Procedure<Table>() {
       @Override
       public void apply(Table table) throws Exception {
-        String locationPath = Locations.getRelativePath(rootLocationFactory, location.toURI());
         table.put(getRowKey(logPartition),
                   Bytes.toBytes(startTimeMs),
-                  Bytes.toBytes(locationPath));
+                  Bytes.toBytes(location.toURI().getPath()));
       }
     });
   }
@@ -178,9 +174,10 @@ public final class FileMetaDataManager {
           @Override
           public Void call() throws Exception {
             for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
+              String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
               // the location can be any location from on the filesystem for custom mapped namespaces
               files.put(Bytes.toLong(entry.getKey()),
-                        getCompatibleLocationFromValue(entry.getValue()));
+                        Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath));
             }
             return null;
           }
@@ -211,6 +208,7 @@ public final class FileMetaDataManager {
         final List<LogLocation> files = new ArrayList<>();
 
         for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
+          String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
           // the location can be any location from on the filesystem for custom mapped namespaces
           if (entry.getKey().length == 8) {
             // old format
@@ -218,7 +216,7 @@ public final class FileMetaDataManager {
                                       Bytes.toLong(entry.getKey()),
                                       // use 0 as sequence id for the old format
                                       0,
-                                      rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
+                                      Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath),
                                       logPathIdentifier.getNamespaceId(), impersonator));
           } else if  (entry.getKey().length == 17) {
             // new format
@@ -226,7 +224,7 @@ public final class FileMetaDataManager {
                                       // skip the first (version) byte
                                       Bytes.toLong(entry.getKey(), 1, Bytes.SIZEOF_LONG),
                                       Bytes.toLong(entry.getKey(), 9, Bytes.SIZEOF_LONG),
-                                      rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
+                                      Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath),
                                       logPathIdentifier.getNamespaceId(), impersonator));
           }
         }
@@ -281,7 +279,8 @@ public final class FileMetaDataManager {
 
               stopCol = colName;
               colCount++;
-              processor.process(new URI(Bytes.toString(colValue)));
+              String absolutePath = URI.create(Bytes.toString(colValue)).getPath();
+              processor.process(Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath).toURI());
             }
             startColumn = null;
           }
@@ -352,7 +351,8 @@ public final class FileMetaDataManager {
             for (final Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
               try {
                 byte[] colName = entry.getKey();
-                URI file = new URI(Bytes.toString(entry.getValue()));
+                String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
+                URI file = Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath).toURI();
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Got file {} with start time {}", file, Bytes.toLong(colName));
                 }
@@ -368,7 +368,8 @@ public final class FileMetaDataManager {
                 Location fileLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
                   @Override
                   public Location call() throws Exception {
-                    return getCompatibleLocationFromValue(entry.getValue());
+                    String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
+                    return Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath);
                   }
                 });
 
@@ -479,10 +480,5 @@ public final class FileMetaDataManager {
    */
   public interface DeleteCallback {
     void handle(NamespaceId namespaceId, Location location, String namespacedLogBaseDir);
-  }
-
-  private Location getCompatibleLocationFromValue(byte[] value) throws URISyntaxException {
-    URI locationURI = new URI(Bytes.toString(value));
-    return rootLocationFactory.create(Locations.getRelativePath(rootLocationFactory, locationURI));
   }
 }

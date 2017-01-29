@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
@@ -281,8 +282,8 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     Assert.assertArrayEquals(Sets.newTreeSet(usedByModules).toArray(),
                              Sets.newTreeSet(moduleMeta.getUsedByModules()).toArray());
     // note: we know it is local
-    Assert.assertNotNull(moduleMeta.getJarLocation());
-    Assert.assertTrue(new File(moduleMeta.getJarLocation()).exists());
+    Assert.assertNotNull(moduleMeta.getJarLocationPath());
+    Assert.assertTrue(new File(moduleMeta.getJarLocationPath()).exists());
   }
 
   private ObjectResponse<List<DatasetTypeMeta>> getTypes() throws IOException {

@@ -457,7 +457,7 @@ public class DatasetTypeService extends AbstractIdleService {
       public void apply() throws Exception {
         Collection<DatasetModuleMeta> allDatasets = datasetTypeMDS.getModules(NamespaceId.SYSTEM);
         for (DatasetModuleMeta ds : allDatasets) {
-          if (ds.getJarLocation() == null) {
+          if (ds.getJarLocationPath() == null) {
             LOG.debug("Deleting system dataset module: {}", ds.toString());
             DatasetModuleId moduleId = NamespaceId.SYSTEM.datasetModule(ds.getName());
             datasetTypeMDS.deleteModule(moduleId);

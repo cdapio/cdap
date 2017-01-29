@@ -18,6 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset.type;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.DatasetModuleMeta;
@@ -64,7 +65,7 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
 
   @Override
   public ClassLoader get(DatasetModuleMeta moduleMeta, ClassLoader parentClassLoader) throws IOException {
-    URI jarLocation = moduleMeta.getJarLocation();
+    URI jarLocation = moduleMeta.getJarLocationPath() == null ? null : URI.create(moduleMeta.getJarLocationPath());
     return jarLocation == null ?
       parentClassLoader : classLoaders.getUnchecked(new CacheKey(jarLocation, parentClassLoader));
   }
@@ -131,7 +132,7 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
       if (key.uri == null) {
         return key.parentClassLoader;
       }
-      Location jarLocation = locationFactory.create(key.uri);
+      Location jarLocation = Locations.getLocationFromAbsolutePath(locationFactory, key.uri.getPath());
       File unpackedDir = DirUtils.createTempDir(tmpDir);
       BundleJarUtil.unJar(jarLocation, unpackedDir);
       LOG.trace("unpacking dataset jar from {} to {}.", key.uri.toString(), unpackedDir.getAbsolutePath());
