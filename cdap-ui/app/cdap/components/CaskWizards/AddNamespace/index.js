@@ -20,6 +20,7 @@ import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceSt
 import AddNamespaceActions from 'services/WizardStores/AddNamespace/AddNamespaceActions';
 import AddNamespaceWizardConfig from 'services/WizardConfigs/AddNamespaceWizardConfig';
 import { PublishNamespace, PublishPreferences } from 'services/WizardStores/AddNamespace/ActionCreator';
+import Rx from 'rx';
 
 export default class AddNamespaceWizard extends Component {
   constructor(props) {
@@ -36,8 +37,12 @@ export default class AddNamespaceWizard extends Component {
   createNamespace() {
     return PublishNamespace()
       .flatMap(
-        () => {
-          return PublishPreferences();
+        (res) => {
+          if (res.includes('already exists')) {
+            return Rx.Observable.throw(res);
+          } else {
+            return PublishPreferences();
+          }
         }
       );
   }
