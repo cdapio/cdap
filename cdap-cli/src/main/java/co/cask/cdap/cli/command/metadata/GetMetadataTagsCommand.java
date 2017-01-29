@@ -77,6 +77,6 @@ public class GetMetadataTagsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the metadata tags of an entity";
+    return "Gets the metadata tags of an entity. " + AddMetadataPropertiesCommand.ENTITY_DESCRIPTION_STRING;
   }
 }
