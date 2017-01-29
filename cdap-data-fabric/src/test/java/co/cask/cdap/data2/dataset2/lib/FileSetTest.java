@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -293,7 +293,6 @@ public class FileSetTest {
                                      .build());
   }
 
-
   @Test
   public void testNonExternalExistentPath() throws Exception {
     // Create an instance at a location
@@ -307,10 +306,117 @@ public class FileSetTest {
                                        .setBasePath(absolutePath)
                                        .setDataExternal(false)
                                        .build());
-      Assert.fail("Expected IOException form createInstance()");
+      Assert.fail("Expected IOException from createInstance()");
     } catch (IOException e) {
       // expected
     }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testReuseAndExternal() throws IOException, DatasetManagementException {
+    dsFrameworkUtil.createInstance("fileSet",
+                                   DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("badFileSet"),
+                                   FileSetProperties.builder()
+                                     .setDataExternal(true)
+                                     .setUseExisting(true)
+                                     .build());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testPossessAndExternal() throws IOException, DatasetManagementException {
+    dsFrameworkUtil.createInstance("fileSet",
+                                   DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("badFileSet"),
+                                   FileSetProperties.builder()
+                                     .setDataExternal(true)
+                                     .setPossessExisting(true)
+                                     .build());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testPossessAndReuse() throws IOException, DatasetManagementException {
+    dsFrameworkUtil.createInstance("fileSet",
+                                   DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("badFileSet"),
+                                   FileSetProperties.builder()
+                                     .setUseExisting(true)
+                                     .setPossessExisting(true)
+                                     .build());
+  }
+
+  @Test(expected = IOException.class)
+  public void testReuseNonExistentPath() throws IOException, DatasetManagementException {
+    // create an external dir and create a file in it
+    String absolutePath = tmpFolder.newFolder() + "/not/there";
+    // attempt to create an external dataset - should fail
+    dsFrameworkUtil.createInstance("fileSet", testFileSetInstance5,
+                                   FileSetProperties.builder()
+                                     .setBasePath(absolutePath)
+                                     .setUseExisting(true)
+                                     .build());
+  }
+
+  @Test(expected = IOException.class)
+  public void testPossessNonExistentPath() throws IOException, DatasetManagementException {
+    // create an external dir and create a file in it
+    String absolutePath = tmpFolder.newFolder() + "/not/there";
+    // attempt to create an external dataset - should fail
+    dsFrameworkUtil.createInstance("fileSet", testFileSetInstance5,
+                                   FileSetProperties.builder()
+                                     .setBasePath(absolutePath)
+                                     .setPossessExisting(true)
+                                     .build());
+  }
+
+  @Test
+  public void testReuseDoesNotDelete() throws IOException, DatasetManagementException {
+    String existingPath = tmpFolder.newFolder() + "/existing/path";
+    File existingDir = new File(existingPath);
+    existingDir.mkdirs();
+    File someFile = new File(existingDir, "some.file");
+    someFile.createNewFile();
+
+    // create an external dataset
+    dsFrameworkUtil.createInstance("fileSet", testFileSetInstance5,
+                                   FileSetProperties.builder()
+                                     .setBasePath(existingPath)
+                                     .setUseExisting(true)
+                                     .build());
+    Assert.assertTrue(someFile.exists());
+
+    // truncate the file set
+    dsFrameworkUtil.getFramework().truncateInstance(testFileSetInstance5);
+    Assert.assertTrue(someFile.exists());
+
+    // truncate the file set
+    dsFrameworkUtil.getFramework().deleteInstance(testFileSetInstance5);
+    Assert.assertTrue(someFile.exists());
+  }
+
+  @Test
+  public void testPossessDoesDelete() throws IOException, DatasetManagementException {
+    String existingPath = tmpFolder.newFolder() + "/existing/path";
+    File existingDir = new File(existingPath);
+    existingDir.mkdirs();
+    File someFile = new File(existingDir, "some.file");
+    someFile.createNewFile();
+
+    // create an external dataset
+    dsFrameworkUtil.createInstance("fileSet", testFileSetInstance5,
+                                   FileSetProperties.builder()
+                                     .setBasePath(existingPath)
+                                     .setPossessExisting(true)
+                                     .build());
+    Assert.assertTrue(someFile.exists());
+
+    // truncate the file set
+    dsFrameworkUtil.getFramework().truncateInstance(testFileSetInstance5);
+    Assert.assertFalse(someFile.exists());
+    Assert.assertTrue(existingDir.exists());
+    someFile.createNewFile();
+
+    // truncate the file set
+    dsFrameworkUtil.getFramework().deleteInstance(testFileSetInstance5);
+    Assert.assertFalse(someFile.exists());
+    Assert.assertFalse(existingDir.exists());
   }
 
   @Test

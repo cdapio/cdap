@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -67,6 +68,7 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmi
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     Map<String, String> newProperties = new HashMap<>(properties.getProperties());
+    validateProperties(properties.getProperties());
     newProperties.put(FileSetDataset.FILESET_VERSION_PROPERTY, FileSetDataset.FILESET_VERSION);
     return DatasetSpecification
       .builder(instanceName, getName())
@@ -74,10 +76,23 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmi
       .build();
   }
 
+  private void validateProperties(Map<String, String> props) {
+    checkMutualExclusive(props, FileSetProperties.DATA_EXTERNAL, FileSetProperties.DATA_USE_EXISTING);
+    checkMutualExclusive(props, FileSetProperties.DATA_EXTERNAL, FileSetProperties.DATA_POSSESS_EXISTING);
+    checkMutualExclusive(props, FileSetProperties.DATA_USE_EXISTING, FileSetProperties.DATA_POSSESS_EXISTING);
+  }
+
+  private void checkMutualExclusive(Map<String, String> props, String key1, String key2) {
+    Preconditions.checkArgument(!(Boolean.valueOf(props.get(key1)) && Boolean.valueOf(props.get(key2))),
+                                "Only one of '%s' and '%s' may be set to true",
+                                FileSetProperties.DATA_EXTERNAL, FileSetProperties.DATA_USE_EXISTING);
+  }
+
   @Override
   public DatasetSpecification reconfigure(String instanceName,
                                           DatasetProperties newProperties,
                                           DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+    validateProperties(newProperties.getProperties());
     boolean wasExternal = FileSetProperties.isDataExternal(currentSpec.getProperties());
     boolean isExternal = FileSetProperties.isDataExternal(newProperties.getProperties());
     String oldPath = FileSetProperties.getBasePath(currentSpec.getProperties());

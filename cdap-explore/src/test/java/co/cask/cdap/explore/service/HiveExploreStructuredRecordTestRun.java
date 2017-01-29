@@ -142,7 +142,7 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
 
     DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId);
     try {
-      exploreTableManager.enableDataset(instanceId, spec);
+      exploreTableManager.enableDataset(instanceId, spec, false);
     } finally {
       datasetFramework.deleteInstance(instanceId);
     }
@@ -158,7 +158,7 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
 
     DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId);
     try {
-      exploreTableManager.enableDataset(instanceId, spec);
+      exploreTableManager.enableDataset(instanceId, spec, false);
       runCommand(NAMESPACE_ID, "describe dataset_tabul",
         true,
         Lists.newArrayList(

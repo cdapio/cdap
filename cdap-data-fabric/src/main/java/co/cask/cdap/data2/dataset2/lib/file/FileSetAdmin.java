@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,6 +38,8 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
 
   private final DatasetSpecification spec;
   private final boolean isExternal;
+  private final boolean useExisting;
+  private final boolean possessExisting;
   private final Location baseLocation;
   private final CConfiguration cConf;
   private final DatasetContext datasetContext;
@@ -51,6 +53,8 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
 
     this.spec = spec;
     this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
+    this.useExisting = FileSetProperties.isUseExisting(spec.getProperties());
+    this.possessExisting = FileSetProperties.isPossessExisting(spec.getProperties());
     this.baseLocation = FileSetDataset.determineBaseLocation(datasetContext, cConf, spec,
                                                              absoluteLocationFactory, namespacedLocationFactory);
     this.datasetContext = datasetContext;
@@ -66,7 +70,24 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
 
   @Override
   public void create() throws IOException {
-    if (!isExternal) {
+    create(false);
+  }
+
+  /**
+   * @param truncating whether this call to create() is part of a truncate() operation. The effect is:
+   *                   If possessExisting is true, then the truncate() has just dropped this
+   *                   dataset and that deleted the base directory: we must recreate it.
+   *
+   *
+   */
+  private void create(boolean truncating) throws IOException {
+    if (isExternal) {
+      validateExists(FileSetProperties.DATA_EXTERNAL);
+    } else if (useExisting) {
+      validateExists(FileSetProperties.DATA_USE_EXISTING);
+    } else if (!truncating && possessExisting) {
+      validateExists(FileSetProperties.DATA_POSSESS_EXISTING);
+    } else {
       if (exists()) {
         throw new IOException(String.format(
           "Base location for file set '%s' at %s already exists", spec.getName(), baseLocation));
@@ -97,15 +118,20 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
           baseLocation.mkdirs(permissions);
         }
       }
-    } else if (!exists()) {
-        throw new IOException(String.format(
-          "Base location for external file set '%s' at %s does not exist", spec.getName(), baseLocation));
+    }
+  }
+
+  private void validateExists(String property) throws IOException {
+    if (!exists()) {
+      throw new IOException(String.format(
+        "Property '%s' for file set '%s' is true, but Base location at %s does not exist",
+        property, spec.getName(), baseLocation));
     }
   }
 
   @Override
   public void drop() throws IOException {
-    if (!isExternal) {
+    if (!isExternal && !useExisting) {
       baseLocation.delete(true);
     }
   }
@@ -113,7 +139,7 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
   @Override
   public void truncate() throws IOException {
     drop();
-    create();
+    create(true);
   }
 
   @Override

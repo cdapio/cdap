@@ -169,7 +169,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                              @PathParam("dataset") String datasetName)
     throws BadRequestException, IOException {
 
-    enableDataset(responder, new DatasetId(namespace, datasetName), readEnableParameters(request).getSpec());
+    EnableExploreParameters params = readEnableParameters(request);
+    enableDataset(responder, new DatasetId(namespace, datasetName), params.getSpec(), params.isTruncating());
   }
 
   /**
@@ -184,7 +185,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     if (datasetSpec == null) {
       return; // this means the spec could not be retrieved and retrievedDatasetSpec() already responded
     }
-    enableDataset(responder, datasetId, datasetSpec);
+    enableDataset(responder, datasetId, datasetSpec, false);
   }
 
   private DatasetSpecification retrieveDatasetSpec(HttpResponder responder, DatasetId datasetId) {
@@ -203,13 +204,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   private void enableDataset(HttpResponder responder, final DatasetId datasetId,
-                             final DatasetSpecification datasetSpec) {
+                             final DatasetSpecification datasetSpec, final boolean truncating) {
     LOG.debug("Enabling explore for dataset instance {}", datasetId);
     try {
       QueryHandle handle = impersonator.doAs(datasetId.getParent(), new Callable<QueryHandle>() {
         @Override
         public QueryHandle call() throws Exception {
-          return exploreTableManager.enableDataset(datasetId, datasetSpec);
+          return exploreTableManager.enableDataset(datasetId, datasetSpec, truncating);
         }
       });
       JsonObject json = new JsonObject();

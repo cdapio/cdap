@@ -167,6 +167,9 @@ public class ExploreTableManager {
    *
    * @param datasetId the ID of the dataset to enable
    * @param spec the specification for the dataset to enable
+   * @param truncating whether this call to create() is part of a truncate() operation, which is in some
+   *                   case implemented using disableExplore() followed by enableExplore()
+   *
    * @return query handle for creating the Hive table for the dataset
    * @throws IllegalArgumentException if some required dataset property like schema is not set
    * @throws UnsupportedTypeException if the schema of the dataset is not compatible with Hive
@@ -175,11 +178,11 @@ public class ExploreTableManager {
    * @throws DatasetNotFoundException if the dataset had to be instantiated, but could not be found
    * @throws ClassNotFoundException if the was a missing class when instantiating the dataset
    */
-  public QueryHandle enableDataset(DatasetId datasetId, DatasetSpecification spec)
+  public QueryHandle enableDataset(DatasetId datasetId, DatasetSpecification spec, boolean truncating)
     throws IllegalArgumentException, ExploreException, SQLException,
     UnsupportedTypeException, DatasetNotFoundException, ClassNotFoundException {
 
-    String createStatement = generateEnableStatement(datasetId, spec);
+    String createStatement = generateEnableStatement(datasetId, spec, truncating);
     if (createStatement != null) {
       return exploreService.execute(datasetId.getParent(), createStatement);
     } else {
@@ -188,14 +191,14 @@ public class ExploreTableManager {
     }
   }
 
-  private String generateEnableStatement(DatasetId datasetId, DatasetSpecification spec)
+  private String generateEnableStatement(DatasetId datasetId, DatasetSpecification spec, boolean truncating)
     throws UnsupportedTypeException, ExploreException {
 
     Dataset dataset = null;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       dataset = datasetInstantiator.getDataset(datasetId);
       return generateEnableStatement(dataset, spec, datasetId,
-                                     tableNaming.getTableName(datasetId, spec.getProperties()));
+                                     tableNaming.getTableName(datasetId, spec.getProperties()), truncating);
     } catch (IOException e) {
       LOG.error("Exception instantiating dataset {}.", datasetId, e);
       throw new ExploreException("Exception while trying to instantiate dataset " + datasetId);
@@ -234,7 +237,7 @@ public class ExploreTableManager {
     } catch (TableNotFoundException e) {
       // the dataset was not enabled for explore before;
       // but the new spec may be explorable, so attempt to enable it
-      return enableDataset(datasetId, spec);
+      return enableDataset(datasetId, spec, false);
     }
 
     List<String> alterStatements;
@@ -245,7 +248,7 @@ public class ExploreTableManager {
       if (disableStatement != null) {
         alterStatements.add(disableStatement);
       }
-      String enableStatement = generateEnableStatement(datasetId, spec);
+      String enableStatement = generateEnableStatement(datasetId, spec, false);
       if (enableStatement != null) {
         alterStatements.add(enableStatement);
       }
@@ -309,6 +312,12 @@ public class ExploreTableManager {
     Dataset dataset = null;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       dataset = datasetInstantiator.getDataset(datasetId);
+      if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
+        // do not drop the explore table that dataset is reusing an existing table
+        if (FileSetProperties.isUseExisting(spec.getProperties())) {
+          return null;
+        }
+      }
       return generateDeleteStatement(dataset, databaseName, tableName);
     } catch (IOException e) {
       LOG.error("Exception creating dataset classLoaderProvider for dataset {}.", datasetId, e);
@@ -385,12 +394,16 @@ public class ExploreTableManager {
    * @param dataset the instantiated dataset
    * @param spec the dataset specification
    * @param datasetId the dataset id
+   * @param truncating whether this call to create() is part of a truncate() operation, which is in some
+   *                   case implemented using disableExplore() followed by enableExplore()
+   *
    * @return a CREATE TABLE statement, or null if the dataset is not explorable
    * @throws UnsupportedTypeException if the dataset is a RecordScannable of a type that is not supported by Hive
    */
   @Nullable
   private String generateEnableStatement(Dataset dataset, DatasetSpecification spec,
-                                         DatasetId datasetId, String tableName) throws UnsupportedTypeException {
+                                         DatasetId datasetId, String tableName, boolean truncating)
+    throws UnsupportedTypeException, ExploreException {
 
     String datasetName = datasetId.getDataset();
     Map<String, String> serdeProperties = ImmutableMap.of(
@@ -434,7 +447,7 @@ public class ExploreTableManager {
       Map<String, String> properties = spec.getProperties();
       if (FileSetProperties.isExploreEnabled(properties)) {
         LOG.debug("Enabling explore for dataset instance {}", datasetName);
-        return generateFileSetCreateStatement(datasetId, dataset, properties);
+        return generateFileSetCreateStatement(datasetId, dataset, properties, truncating);
       }
     }
     // dataset is not explorable
@@ -512,17 +525,36 @@ public class ExploreTableManager {
    * @param dataset the instantiated dataset
    * @param datasetId the dataset id
    * @param properties the properties from dataset specification
+   * @param truncating whether this call to create() is part of a truncate() operation. The effect is:
+   *                   If possessExisting is true, then the truncate() has just dropped this
+   *                   dataset and that deleted the explore table: we must recreate it.
+
    * @return a CREATE TABLE statement, or null if the dataset is not explorable
    * @throws IllegalArgumentException if the schema cannot be parsed, or if shouldErrorOnMissingSchema is true and
    *                                  the dataset spec does not contain a schema.
    */
   @Nullable
   private String generateFileSetCreateStatement(DatasetId datasetId, Dataset dataset,
-                                                Map<String, String> properties) throws IllegalArgumentException {
+                                                Map<String, String> properties, boolean truncating)
+    throws IllegalArgumentException, ExploreException {
 
     String tableName = tableNaming.getTableName(datasetId, properties);
     String databaseName = ExploreProperties.getExploreDatabaseName(properties);
     Map<String, String> tableProperties = FileSetProperties.getTableProperties(properties);
+
+    // if this dataset reuses an existing table, do not attempt to create it
+    if (FileSetProperties.isUseExisting(tableProperties)
+      || (FileSetProperties.isPossessExisting(tableProperties) && !truncating)) {
+      try {
+        exploreService.getTableInfo(datasetId.getNamespace(), databaseName, tableName);
+        // table exists: do not attempt to create
+        return null;
+      } catch (TableNotFoundException e) {
+        throw new ExploreException(String.format(
+          "Dataset '%s' is configured to use an existing explore table, but table '%s' does not " +
+            "exist in database '%s'. ", datasetId.getDataset(), tableName, databaseName));
+      }
+    }
 
     Location baseLocation;
     Partitioning partitioning = null;
@@ -607,13 +639,17 @@ public class ExploreTableManager {
   @Nullable
   private List<String> generateAlterStatements(DatasetId datasetId, String tableName, Dataset dataset,
                                                DatasetSpecification spec, DatasetSpecification oldSpec)
-    throws UnsupportedTypeException {
+    throws UnsupportedTypeException, ExploreException {
 
     Map<String, String> properties = spec.getProperties();
     String databaseName = ExploreProperties.getExploreDatabaseName(properties);
 
     if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
       if (FileSetProperties.isExploreEnabled(properties)) {
+        // if the dataset is reusing an existing explore table, do not attempt top alter it
+        if (FileSetProperties.isUseExisting(spec.getProperties())) {
+          return null;
+        }
         return generateFileSetAlterStatements(datasetId, tableName, properties, oldSpec.getProperties());
       } else {
         // old spec was explorable but new spec is not -> disable explore
@@ -624,9 +660,9 @@ public class ExploreTableManager {
     // all other dataset types use DatasetStorageHandler and DatasetSerDe. ALTER TABLE is not supported for these
     // datasets (because Hive does not allow altering a table in non-native format).
     // see: https://cwiki.apache.org/confluence/display/Hive/StorageHandlers#StorageHandlers-DDL
-    // therefore we have no choice but to drop and recreate the dataset
+    // therefore we have no choice but to drop and recreate the dataset as if the dataset were truncated.
     String deleteStatement = generateDeleteStatement(dataset, databaseName, tableName);
-    String createStatement = generateEnableStatement(dataset, spec, datasetId, tableName);
+    String createStatement = generateEnableStatement(dataset, spec, datasetId, tableName, true);
     List<String> statements = new ArrayList<>();
     if (deleteStatement != null) {
       statements.add(deleteStatement);
