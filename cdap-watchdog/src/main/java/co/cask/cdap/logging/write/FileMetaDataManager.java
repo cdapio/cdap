@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.Processor;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -42,10 +43,12 @@ import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +57,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+
 import javax.annotation.Nullable;
 
 /**
@@ -143,9 +147,10 @@ public final class FileMetaDataManager {
     execute(new TransactionExecutor.Procedure<Table>() {
       @Override
       public void apply(Table table) throws Exception {
+        String locationPath = Locations.getRelativePath(rootLocationFactory, location.toURI());
         table.put(getRowKey(logPartition),
                   Bytes.toBytes(startTimeMs),
-                  Bytes.toBytes(location.toURI().toString()));
+                  Bytes.toBytes(locationPath));
       }
     });
   }
@@ -175,7 +180,7 @@ public final class FileMetaDataManager {
             for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
               // the location can be any location from on the filesystem for custom mapped namespaces
               files.put(Bytes.toLong(entry.getKey()),
-                        rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))));
+                        getCompatibleLocationFromValue(entry.getValue()));
             }
             return null;
           }
@@ -363,7 +368,7 @@ public final class FileMetaDataManager {
                 Location fileLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
                   @Override
                   public Location call() throws Exception {
-                    return rootLocationFactory.create(new URI(Bytes.toString(entry.getValue())));
+                    return getCompatibleLocationFromValue(entry.getValue());
                   }
                 });
 
@@ -474,5 +479,10 @@ public final class FileMetaDataManager {
    */
   public interface DeleteCallback {
     void handle(NamespaceId namespaceId, Location location, String namespacedLogBaseDir);
+  }
+
+  private Location getCompatibleLocationFromValue(byte[] value) throws URISyntaxException {
+    URI locationURI = new URI(Bytes.toString(value));
+    return rootLocationFactory.create(Locations.getRelativePath(rootLocationFactory, locationURI));
   }
 }
