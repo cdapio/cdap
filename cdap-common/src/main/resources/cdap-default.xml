@@ -101,7 +101,7 @@
     <description>
       Whether CDAP master should manage HBase coprocessors. This should only
       be set to false if you are managing coprocessors yourself in order to
-      support rolling HBase upgrades
+      support rolling HBase upgrades.
     </description>
   </property>
 
@@ -913,8 +913,8 @@
     <name>kafka.server.log.flush.interval.messages</name>
     <value>10000</value>
     <description>
-      The interval length (in number of messages) at which to force an fsync of data
-      written to the log
+      The interval length (in number of messages in the CDAP Kafka service) at which to
+      force an fsync of data written to the log 
     </description>
   </property>
 
@@ -922,7 +922,9 @@
     <name>kafka.server.log.retention.hours</name>
     <value>24</value>
     <description>
-      The number of hours to keep a log file before deleting it
+      The number of hours to keep a log file before deleting it; this is the time-to-live
+      in the CDAP Kafka service, while a log is in-flight between the container and the
+      CDAP log saver
     </description>
   </property>
 
@@ -930,7 +932,7 @@
     <name>kafka.server.num.partitions</name>
     <value>10</value>
     <description>
-      Default number of partitions for a topic
+      Default number of partitions for a topic in the CDAP Kafka service
     </description>
   </property>
 
@@ -946,7 +948,7 @@
     <name>kafka.server.zookeeper.connection.timeout.ms</name>
     <value>1000000</value>
     <description>
-      Maximum time in milliseconds that the client will wait to
+      Maximum time in milliseconds that the CDAP Kafka service will wait to
       establish a connection to ZooKeeper
     </description>
   </property>
@@ -1020,7 +1022,7 @@
     <name>log.retention.duration.days</name>
     <value>7</value>
     <description>
-      Duration in days of log file HDFS retention
+      Duration (the time-to-live) in days of saved log files in HDFS retention
     </description>
   </property>
 
@@ -1106,8 +1108,8 @@
     <value>ERROR</value>
     <description>
       The log level of application container logs that are streamed back to
-      the CDAP Master process log. The levels supported are [ ALL, TRACE,
-      DEBUG, INFO, WARN, ERROR, OFF ].
+      the CDAP Master process log. The levels supported are "ALL", "TRACE",
+      "DEBUG", "INFO", "WARN", "ERROR", and "OFF".
     </description>
   </property>
 
@@ -1208,7 +1210,8 @@
     <name>messaging.local.data.cleanup.frequency.secs</name>
     <value>3600</value>
     <description>
-      Scheduling frequency of TTL cleanup thread in seconds (only used in Standalone CDAP)
+      Scheduling frequency of time-to-live cleanup thread in seconds (only used in
+      Standalone CDAP)
     </description>
   </property>
 
@@ -1318,7 +1321,7 @@
       Multiple topics sharing the same prefix and distinguished by different numerical suffices
       can be specified with the syntax &lt;common.prefix&gt;:&lt;total.topic.number&gt;,
       where the &lt;total.topic.number&gt; is the total number of topics sharing the &lt;common.prefix&gt;,
-      and the numerical suffices will range from 0 to (&lt;total.topic.number&gt; - 1)
+      and the numerical suffices will range from 0 to (&lt;total.topic.number&gt; - 1).
     </description>
   </property>
 
@@ -1526,9 +1529,9 @@
     <name>metrics.messaging.fetcher.limit</name>
     <value>200</value>
     <description>
-      Maximum limit on number of metrics messages to be fetched from messaging fetcher at once.
-      It's also the maximum number of MetricValues to be persisted in metrics store after the
-      number of fetched messages reaches the limit
+      Maximum number of metrics messages to be fetched from the messaging fetcher at once.
+      It is also the maximum number of metric values to be persisted in the metrics store after the
+      number of fetched messages reaches the limit.
     </description>
   </property>
   
@@ -1544,10 +1547,11 @@
     <name>metrics.messaging.topic.num</name>
     <value>10</value>
     <description>
-      Number of topics for metrics in messaging. This number controls how many topics in messaging
-      which metrics are sent to, and the number of threads fetching from messaging service
-      and processing metrics in parallel. With the default value 10, 10 topics will be created for metrics
-      with names: ${metrics.topic.prefix}0, ${metrics.topic.prefix}1, ... ${metrics.topic.prefix}9
+      Number of topics for metrics messages. This property also sets the number of threads
+      used to fetch and process metrics in parallel from the messaging service. For a
+      value of N, topics will be created for metrics with names beginning at
+      ${metrics.topic.prefix}0, ${metrics.topic.prefix}1, up to
+      ${metrics.topic.prefix}(N-1).
     </description>
   </property>
 
@@ -1860,7 +1864,7 @@
     <name>mapreduce.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for mapreduce
+      The type of retry policy for MapReduce programs
     </description>
   </property>
 
@@ -1940,7 +1944,7 @@
     <name>spark.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for spark
+      The type of retry policy for Spark programs
     </description>
   </property>
 

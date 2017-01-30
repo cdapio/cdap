@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#  Copyright © 2015-2016 Cask Data, Inc.
+#  Copyright © 2015-2017 Cask Data, Inc.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ SDL_OTHER         = "        Current:"
 SDL_DESCRIPTION   = "          \"description\": \"%s\","
 SDL_DEFAULT       = "          \"default\": \"%s\","
 
-
+        
 class Item:
     MAX_RST_VALUE_CHAR_LENGTH = 40
 
@@ -159,6 +159,36 @@ class Item:
             block = "``%s``" % block
         return block
 
+    @staticmethod
+    def literals_in_description(text, literals=('${', '}')):
+        if not literals:
+            return text
+        t = ''
+        in_literal = False
+        past_close = False
+        for c in xrange(0, len(text)):
+            if text[c:c+len(literals[0])] == literals[0]:
+                if not in_literal:
+                    t += '``' + text[c]
+                    in_literal = True
+                    past_close = False
+                else:
+                    t += text[c]
+                continue
+            if in_literal and text[c:c+len(literals[1])] == literals[1]:
+                t += text[c]
+                past_close = True
+                continue
+            if in_literal and past_close and text[c] == ' ':
+                t += '``' + text[c]
+                in_literal = False
+                past_close = False
+            else:
+                t += text[c]
+        if in_literal:
+            t += '``'
+        return t 
+
     def __init__(self, name='', value='', description ='', final=None):
         self.name = name
         self.value = self.encode(value)
@@ -194,6 +224,17 @@ class Item:
         description = self.description
         if description.count('@'):
             description = description.replace('@', '\@')
+        if description.count('&lt;'):
+            description = description.replace('"&lt;', '""<')
+            description = description.replace('&lt;', '<')
+            description = description.replace('""<', '"&lt;')
+        if description.count('&gt;'):
+            description = description.replace('&gt;"', '>""')
+            description = description.replace('&gt;', '>')
+            description = description.replace('>""', '&gt;"')
+        
+        description = self.literals_in_description(description, ('${', '}'))
+        description = self.literals_in_description(description, ('<', '>'))
             
         rst = "%s%s\n%s%s\n%s%s\n" % (NAME_START, name,
                                       VALUE_START, value,
