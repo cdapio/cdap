@@ -587,6 +587,11 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     public int hashCode() {
       return delegate.hashCode();
     }
+
+    @Override
+    public String toString() {
+      return delegate.toString();
+    }
   }
 
   private final class FileSetLocationFactory extends ForwardingLocationFactory {
