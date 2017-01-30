@@ -1549,10 +1549,11 @@
     <name>metrics.messaging.topic.num</name>
     <value>10</value>
     <description>
-      Number of topics for metrics in messaging. This property controls how many topics in messaging
-      that metrics are sent to, and the number of threads used to fetch from the messaging service
-      and process metrics in parallel. With the default value of 10, ten topics will be created for metrics
-      with the names ${metrics.topic.prefix}0, ${metrics.topic.prefix}1, ... and ${metrics.topic.prefix}9.
+      Number of topics for metrics messages. This property also sets the number of threads
+      used to fetch and process metrics in parallel from the messaging service. For a
+      value of N, topics will be created for metrics with names beginning at
+      ${metrics.topic.prefix}0, ${metrics.topic.prefix}1, up to
+      ${metrics.topic.prefix}(N-1).
     </description>
   </property>
 
