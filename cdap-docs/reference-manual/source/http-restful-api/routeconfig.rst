@@ -55,7 +55,7 @@ For example, to upload a route configuration for the service *MyService*, with d
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X PUT "http://example.com:10000/v3/namespaces/default/apps/MyApp/services/MyService/routeconfig" \
+  $ curl -w"\n" -X PUT "http://example.com:11015/v3/namespaces/default/apps/MyApp/services/MyService/routeconfig" \
     -H 'Content-Type: application/json' -d \
     '{
       "v1" : 50,
@@ -106,7 +106,7 @@ For example, to retrieve the route configuration of the service *MyService*, use
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X GET "http://example.com:10000/v3/namespaces/default/apps/MyApp/services/MyService/routeconfig"
+  $ curl -w"\n" -X GET "http://example.com:11015/v3/namespaces/default/apps/MyApp/services/MyService/routeconfig"
 
   { "v1" : 50, "v2" : 50 }
 
@@ -147,7 +147,7 @@ For example, to delete the route configuration of the service *MyService*, use:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X DELETE "http://example.com:10000/v3/namespaces/default/apps/MyApp/services/MyService/routeconfig"
+  $ curl -w"\n" -X DELETE "http://example.com:11015/v3/namespaces/default/apps/MyApp/services/MyService/routeconfig"
 
 .. rubric:: HTTP Responses
 
