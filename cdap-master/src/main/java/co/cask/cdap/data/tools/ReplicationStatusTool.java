@@ -419,8 +419,8 @@ public class ReplicationStatusTool {
       System.out.println("Number of HDFS files on the Master and Slave Clusters do not match.");
     }
 
-    // Verify all files on Master are present on Slave. Ignore any extra files on slave. This could happen
-    // when old snapshot files are pruned by cdap on Master cluster.
+    // Verify that all files on Master are present on Slave. Ignore any extra files on Slave. This could
+    // happen when old snapshot files are pruned by CDAP on the Master cluster.
     complete = !checkDifferences(masterChecksumMap.keySet(), slaveChecksumMap.keySet(), "File", false);
 
     for (Map.Entry<String, String> checksumEntry : masterChecksumMap.entrySet()) {
