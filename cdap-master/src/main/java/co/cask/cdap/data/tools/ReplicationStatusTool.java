@@ -242,7 +242,7 @@ public class ReplicationStatusTool {
       System.out.println("Number of regions on the Master and Slave Clusters do not match.");
     }
 
-    complete = !checkDifferences(masterTimeMap.keySet(), slaveTimeMap.keySet(), "Region");
+    complete = !checkDifferences(masterTimeMap.keySet(), slaveTimeMap.keySet(), "Region", true);
 
     //Check the maps for all regions
     for (Map.Entry<String, Long> writeTimeEntry : masterTimeMap.entrySet()) {
@@ -264,7 +264,7 @@ public class ReplicationStatusTool {
     }
   }
 
-  static boolean checkDifferences(Set<String> masterMap, Set<String> slaveMap, String keyName) {
+  static boolean checkDifferences(Set<String> masterMap, Set<String> slaveMap, String keyName, boolean checkSlave) {
     boolean different = false;
     Set<String> extraInMaster = Sets.difference(masterMap, slaveMap);
     Set<String> extraInSlave = Sets.difference(slaveMap, masterMap);
@@ -274,9 +274,11 @@ public class ReplicationStatusTool {
       different = true;
     }
 
-    for (String key : extraInSlave) {
-      System.out.println(keyName + " "  + key + " found on Slave but not on Master Cluster.");
-      different = true;
+    if (checkSlave) {
+      for (String key : extraInSlave) {
+        System.out.println(keyName + " " + key + " found on Slave but not on Master Cluster.");
+        different = true;
+      }
     }
     return different;
   }
@@ -417,7 +419,9 @@ public class ReplicationStatusTool {
       System.out.println("Number of HDFS files on the Master and Slave Clusters do not match.");
     }
 
-    complete = !checkDifferences(masterChecksumMap.keySet(), slaveChecksumMap.keySet(), "File");
+    // Verify all files on Master are present on Slave. Ignore any extra files on slave. This could happen
+    // when old snapshot files are pruned by cdap on Master cluster.
+    complete = !checkDifferences(masterChecksumMap.keySet(), slaveChecksumMap.keySet(), "File", false);
 
     for (Map.Entry<String, String> checksumEntry : masterChecksumMap.entrySet()) {
       String file = checksumEntry.getKey();
