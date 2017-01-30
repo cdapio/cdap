@@ -19,13 +19,17 @@ package co.cask.cdap.common.guice;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.KafkaConstants;
+import co.cask.cdap.common.utils.Tasks;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
+import org.apache.twill.internal.zookeeper.DefaultZKClientService;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.kafka.client.BrokerService;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.zookeeper.CreateMode;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,6 +45,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Unit test for the {@link KafkaClientModule}.
@@ -52,13 +58,28 @@ public class KafkaClientModuleTest {
 
   private InMemoryZKServer zkServer;
   private EmbeddedKafkaServer kafkaServer;
+  private String kafkaZKConnect;
 
   @Before
   public void beforeTest() throws Exception {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
     zkServer.startAndWait();
 
-    kafkaServer = createKafkaServer(zkServer.getConnectionStr(), TEMP_FOLDER.newFolder());
+    CConfiguration cConf = CConfiguration.create();
+    String kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+    kafkaZKConnect = zkServer.getConnectionStr();
+
+    if (kafkaZKNamespace != null) {
+      ZKClientService zkClient = new DefaultZKClientService(zkServer.getConnectionStr(), 2000, null,
+                                                            ImmutableMultimap.<String, byte[]>of());
+      zkClient.startAndWait();
+      zkClient.create("/" + kafkaZKNamespace, null, CreateMode.PERSISTENT);
+      zkClient.stopAndWait();
+
+      kafkaZKConnect += "/" + kafkaZKNamespace;
+    }
+
+    kafkaServer = createKafkaServer(kafkaZKConnect, TEMP_FOLDER.newFolder());
     kafkaServer.startAndWait();
   }
 
@@ -69,10 +90,9 @@ public class KafkaClientModuleTest {
   }
 
   @Test
-  public void testWithSharedZKClient() throws IOException {
+  public void testWithSharedZKClient() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
-    cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -87,7 +107,7 @@ public class KafkaClientModuleTest {
     int baseZKConns = getZKConnections();
 
     KafkaClientService kafkaClientService = injector.getInstance(KafkaClientService.class);
-    BrokerService brokerService = injector.getInstance(BrokerService.class);
+    final BrokerService brokerService = injector.getInstance(BrokerService.class);
 
     // Start both kafka and broker services, it shouldn't affect the state of the shared zk client
     kafkaClientService.startAndWait();
@@ -98,6 +118,14 @@ public class KafkaClientModuleTest {
 
     // It shouldn't increase the number of zk client connections
     Assert.assertEquals(baseZKConns, getZKConnections());
+
+    // Make sure it is talking to Kafka.
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return brokerService.getBrokers().iterator().hasNext();
+      }
+    }, 5L, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // Stop both, still shouldn't affect the state of the shared zk client
     kafkaClientService.stopAndWait();
@@ -113,12 +141,11 @@ public class KafkaClientModuleTest {
   }
 
   @Test
-  public void testWithDedicatedZKClient() throws IOException {
+  public void testWithDedicatedZKClient() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
     // Set the zk quorum for the kafka client, expects it to create and start/stop it's own zk client service
-    cConf.set(KafkaConstants.ConfigKeys.ZOOKEEPER_QUORUM, zkServer.getConnectionStr());
-    cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+    cConf.set(KafkaConstants.ConfigKeys.ZOOKEEPER_QUORUM, kafkaZKConnect);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -133,7 +160,7 @@ public class KafkaClientModuleTest {
     int baseZKConns = getZKConnections();
 
     KafkaClientService kafkaClientService = injector.getInstance(KafkaClientService.class);
-    BrokerService brokerService = injector.getInstance(BrokerService.class);
+    final BrokerService brokerService = injector.getInstance(BrokerService.class);
 
     // Start the kafka client, it should increase the zk connections by 1
     kafkaClientService.startAndWait();
@@ -143,6 +170,15 @@ public class KafkaClientModuleTest {
     // it shouldn't affect the zk connections, as it share the same zk client with kafka client
     brokerService.startAndWait();
     Assert.assertEquals(baseZKConns + 1, getZKConnections());
+
+    // Make sure it is talking to Kafka.
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return brokerService.getBrokers().iterator().hasNext();
+      }
+    }, 5L, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
 
     // Shouldn't affect the shared zk client state
     Assert.assertTrue(zkClientService.isRunning());
