@@ -242,6 +242,7 @@ public class ReplicationStatusTool {
       System.out.println("Number of regions on the Master and Slave Clusters do not match.");
     }
 
+    // Verify that all regions on the Master cluster are present on the Slave cluster
     complete = !checkDifferences(masterTimeMap.keySet(), slaveTimeMap.keySet(), "Region");
 
     //Check the maps for all regions
@@ -264,18 +265,12 @@ public class ReplicationStatusTool {
     }
   }
 
+  // Verify that all entries on the Master Cluster are present on the Slave Cluster
   static boolean checkDifferences(Set<String> masterMap, Set<String> slaveMap, String keyName) {
     boolean different = false;
     Set<String> extraInMaster = Sets.difference(masterMap, slaveMap);
-    Set<String> extraInSlave = Sets.difference(slaveMap, masterMap);
-
     for (String key : extraInMaster) {
       System.out.println(keyName + " " + key + " found on Master but not on Slave Cluster.");
-      different = true;
-    }
-
-    for (String key : extraInSlave) {
-      System.out.println(keyName + " "  + key + " found on Slave but not on Master Cluster.");
       different = true;
     }
     return different;
@@ -417,6 +412,8 @@ public class ReplicationStatusTool {
       System.out.println("Number of HDFS files on the Master and Slave Clusters do not match.");
     }
 
+    // Verify that all files on Master are present on Slave. Ignore any extra files on Slave. This could
+    // happen when old snapshot files are pruned by CDAP on the Master cluster.
     complete = !checkDifferences(masterChecksumMap.keySet(), slaveChecksumMap.keySet(), "File");
 
     for (Map.Entry<String, String> checksumEntry : masterChecksumMap.entrySet()) {
