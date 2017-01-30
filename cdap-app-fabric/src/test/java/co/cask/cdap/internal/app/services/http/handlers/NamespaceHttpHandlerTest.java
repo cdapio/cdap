@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,6 +45,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -74,6 +75,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String INVALID_NAME = "!nv@l*d/";
   private static final String OTHER_NAME = "test1";
   private static final Gson GSON = new Gson();
+
+  private static LocationFactory baseLocationFactory;
 
   private void assertResponseCode(int expected, HttpResponse response) {
     Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
@@ -141,14 +144,14 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testCreateWithConfig() throws Exception {
     // create the custom namespace location first since we will set the root directory the location needs to exists
-    NamespacedLocationFactory namespacedLocationFactory = getInjector().getInstance(NamespacedLocationFactory.class);
-    Location customLocation = namespacedLocationFactory.get(NAME_ID);
+    String customRoot = "/custom/root/" + NAME;
+    Location customLocation = getInjector().getInstance(LocationFactory.class).create(customRoot);
     Assert.assertTrue(customLocation.mkdirs());
     // prepare - create namespace with config in its properties
     Map<String, String> namespaceConfigString = ImmutableMap.of(NamespaceConfig.SCHEDULER_QUEUE_NAME,
                                                                 "testSchedulerQueueName",
                                                                 NamespaceConfig.ROOT_DIRECTORY,
-                                                                customLocation.toString());
+                                                                customRoot);
 
     String propertiesString = GSON.toJson(ImmutableMap.of(NAME_FIELD, NAME, DESCRIPTION_FIELD, DESCRIPTION,
                                                           CONFIG_FIELD, namespaceConfigString));
@@ -162,7 +165,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(DESCRIPTION, namespace.get(DESCRIPTION_FIELD).getAsString());
     Assert.assertEquals("testSchedulerQueueName",
                         namespace.get(CONFIG_FIELD).getAsJsonObject().get("scheduler.queue.name").getAsString());
-    Assert.assertEquals(customLocation.toString(),
+    Assert.assertEquals(customRoot,
                         namespace.get(CONFIG_FIELD).getAsJsonObject().get("root.directory").getAsString());
     response = deleteNamespace(NAME);
     assertResponseCode(200, response);
