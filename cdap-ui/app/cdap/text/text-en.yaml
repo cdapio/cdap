@@ -384,6 +384,8 @@ features:
       runningProgramLabel: "Number of programs running: {programCount}"
     DatasetTab:
       title: "Dataset Used by {appId}:"
+    SchemaTab:
+      emptyMessage: No Schema found.
   Pagination:
     dropdown-label: Page
   Resource-Center:
