@@ -16,7 +16,6 @@
 
 import React, {Component, PropTypes} from 'react';
 import FastAction from 'components/FastAction';
-import classnames from 'classnames';
 
 export default class FastActions extends Component {
   constructor(props) {
@@ -62,9 +61,9 @@ export default class FastActions extends Component {
 
   render () {
     const fastActions = this.listOfFastActions();
-
+    let className = this.props.className || 'text-xs-center';
     return (
-      <h4 className={classnames("text-xs-center", this.props.className)}>
+      <h4 className={className}>
         <span>
           {
             fastActions.map((action) => {

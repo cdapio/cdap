@@ -14,18 +14,6 @@
  * the License.
  */
 
-.schema-tab {
-  padding: 10px;
-  height: calc(100% - 26px);
-
-  .disable-schema {
-    .fa-trash,
-    .fa-plus {
-      display: none;
-    }
-  }
-
-  .schema-body .schema-row.nested > .field-name:before {
-    background-color: rgba(238, 238, 238, 1);
-  }
+.app-overview {
+  height: inherit;
 }

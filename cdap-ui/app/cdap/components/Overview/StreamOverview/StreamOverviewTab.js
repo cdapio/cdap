@@ -22,7 +22,7 @@ import classnames from 'classnames';
 import isNil from 'lodash/isNil';
 require('../Tabs/OverviewTab.scss');
 
-export default class DatasetOverviewTab extends Component {
+export default class StreamOverviewTab extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -72,7 +72,12 @@ export default class DatasetOverviewTab extends Component {
             <TabPane tabId="1">
               <Row>
                 <Col sm="12">
-                  <ProgramTab entity={this.state.entity} />
+                  {
+                    this.state.activeTab === '1' ?
+                      <ProgramTab entity={this.state.entity} />
+                    :
+                      null
+                  }
                 </Col>
               </Row>
             </TabPane>
@@ -80,7 +85,12 @@ export default class DatasetOverviewTab extends Component {
             <TabPane tabId="2">
               <Row>
                 <Col sm="12">
-                  <SchemaTab entity={this.state.entity} />
+                  {
+                    this.state.activeTab === '2' ?
+                      <SchemaTab entity={this.state.entity} />
+                    :
+                      null
+                  }
                 </Col>
               </Row>
             </TabPane>
@@ -92,6 +102,6 @@ export default class DatasetOverviewTab extends Component {
     return null;
   }
 }
-DatasetOverviewTab.propTypes = {
+StreamOverviewTab.propTypes = {
   entity: PropTypes.object
 };

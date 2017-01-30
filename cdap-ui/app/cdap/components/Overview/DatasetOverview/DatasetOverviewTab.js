@@ -72,7 +72,12 @@ export default class DatasetOverviewTab extends Component {
             <TabPane tabId="1">
               <Row>
                 <Col sm="12">
-                  <ProgramTab entity={this.state.entity} />
+                  {
+                    this.state.activeTab === '1'?
+                      <ProgramTab entity={this.state.entity} />
+                    :
+                      null
+                  }
                 </Col>
               </Row>
             </TabPane>
@@ -80,7 +85,12 @@ export default class DatasetOverviewTab extends Component {
             <TabPane tabId="2">
               <Row>
                 <Col sm="12">
-                  <SchemaTab entity={this.state.entity} />
+                  {
+                    this.state.activeTab === '2'?
+                      <SchemaTab entity={this.state.entity} />
+                    :
+                      null
+                  }
                 </Col>
               </Row>
             </TabPane>

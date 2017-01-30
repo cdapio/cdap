@@ -70,14 +70,24 @@ export default class AppOverviewTab extends Component {
             <TabPane tabId="1">
               <Row>
                 <Col sm="12">
-                  <ProgramTab entity={this.state.entity} />
+                  {
+                    this.state.activeTab === '1' ?
+                      <ProgramTab entity={this.state.entity} />
+                    :
+                      null
+                  }
                 </Col>
               </Row>
             </TabPane>
             <TabPane tabId="2">
               <Row>
                 <Col sm="12">
-                  <DatasetTab entity={this.state.entity} />
+                  {
+                    this.state.activeTab === '2' ?
+                      <DatasetTab entity={this.state.entity} />
+                    :
+                      null
+                  }
                 </Col>
               </Row>
             </TabPane>

@@ -15,8 +15,7 @@
  */
 .dataset-tab {
   padding: 10px;
-  overflow-y: auto;
-  height: 100%;
+  height: calc(100% - 26px);
 
   .message-section {
     margin-left: 5px;
