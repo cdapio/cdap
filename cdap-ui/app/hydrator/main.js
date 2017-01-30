@@ -292,6 +292,13 @@ angular
         .then(function(res) {
           $scope.version = res.version;
           $rootScope.cdapVersion = $scope.version;
+
+          window.CaskCommon.VersionStore.dispatch({
+            type: window.CaskCommon.VersionActions.updateVersion,
+            payload: {
+              version: res.version
+            }
+          });
         });
     }
 
