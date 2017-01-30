@@ -32,33 +32,27 @@
 
   &.application {
     background-color: $application-entity-header-bg;
-    border: $card-border-width solid $application-entity-header-bg;
   }
 
   &.datapipeline {
     background-color: $datapipeline-entity-header-bg;
-    border: $card-border-width solid $datapipeline-entity-header-bg;
   }
 
   &.datasetinstance {
     background-color: $datasetinstance-entity-header-bg;
-    border: $card-border-width solid $datasetinstance-entity-header-bg;
   }
 
   &.stream {
     background-color: $stream-entity-header-bg;
-    border: $card-border-width solid $stream-entity-header-bg;
   }
 
   &.view { background-color: #1abc9c; }
 
   &.program {
     background-color: $program-entity-header-bg;
-    border: $card-border-width solid $program-entity-header-bg;
   }
 
   &.success-message {
     background-color: $success-message-bg;
-    border: $card-border-width solid $success-message-bg;
   }
 }

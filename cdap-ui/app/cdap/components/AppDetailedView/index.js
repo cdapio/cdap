@@ -14,24 +14,22 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
-import Helmet from 'react-helmet';
-import classnames from 'classnames';
-import T from 'i18n-react';
+import React, {PropTypes, Component} from 'react';
 import {objectQuery} from 'services/helpers';
 import {MyAppApi} from 'api/app';
-import shortid from 'shortid';
-import Router from 'react-router/BrowserRouter';
-import Miss from 'react-router/Miss';
-import Page404 from 'components/404';
-import {getIcon} from 'services/helpers';
-import AppDetailedViewTabConfig from './AppDetailedViewTabConfig';
-import ConfigurableTab from 'components/ConfigurableTab';
-import ApplicationMetrics from 'components/EntityCard/ApplicationMetrics';
-
-require('./AppDetailedView.scss');
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import {fetchTables} from 'services/ExploreTables/ActionCreator';
+import OverviewHeader from 'components/Overview/OverviewHeader';
+import OverviewMetaSection from 'components/Overview/OverviewMetaSection';
+import T from 'i18n-react';
+import {MySearchApi} from 'api/search';
+import isNil from 'lodash/isNil';
+import isEmpty from 'lodash/isEmpty';
+import NamespaceStore from 'services/NamespaceStore';
+import {parseMetadata} from 'services/metadata-parser';
+import AppDetailedViewTab from 'components/AppDetailedView/Tabs';
+import shortid from 'shortid';
+require('./AppDetailedView.scss');
 
 export default class AppDetailedView extends Component {
   constructor(props) {
@@ -40,29 +38,29 @@ export default class AppDetailedView extends Component {
       entityDetail: objectQuery(this.props, 'location', 'state', 'entityDetail') || {
         programs: [],
         datasets: [],
-        streams: []
+        streams: [],
       },
-      entityMetata: objectQuery(this.props, 'location', 'state', 'entityMetadata') || {},
+      loading: true,
+      entityMetadata: objectQuery(this.props, 'location', 'state', 'entityMetadata') || {},
       isInvalid: false
-    };
-  }
-  getChildContext() {
-    return {
-      entity: this.state.entityDetail
     };
   }
   componentWillMount() {
     let {namespace, appId} = this.props.params;
+    if (!namespace) {
+      namespace = NamespaceStore.getState().selectedNamespace;
+    }
     ExploreTablesStore.dispatch(
-     fetchTables(namespace)
-   );
+      fetchTables(namespace)
+    );
+
     if (this.state.entityDetail.programs.length === 0) {
       MyAppApi
         .get({
           namespace,
           appId
         })
-        .map(entityDetail => {
+        .subscribe(entityDetail => {
           let programs = entityDetail.programs.map(prog => {
             prog.uniqueId = shortid.generate();
             return prog;
@@ -77,7 +75,6 @@ export default class AppDetailedView extends Component {
             dataset.uniqueId = shortid.generate();
             return dataset;
           });
-
           let streams = entityDetail.streams.map(stream => {
             stream.entityId = {
               id: {
@@ -91,74 +88,70 @@ export default class AppDetailedView extends Component {
           entityDetail.streams = streams;
           entityDetail.datasets = datasets;
           entityDetail.programs = programs;
-          return entityDetail;
+          this.setState({
+            entityDetail
+          });
+        });
+    }
+    if (
+      isNil(this.state.entityMetadata) ||
+      isEmpty(this.state.entityMetadata)
+    ) {
+      // FIXME: This is NOT the right way. Need to figure out a way to be more efficient and correct.
+      MySearchApi
+        .search({
+          namespace,
+          query: this.props.params.appId
         })
-        .subscribe(
-          entityDetail => {
-            this.setState({ entityDetail });
-          },
-          (err) => {
-            if (err.statusCode === 404) {
-              this.setState({isInvalid: true});
-            }
-          }
-        );
+        .map(res => res.results.map(parseMetadata))
+        .subscribe(entityMetadata => {
+          this.setState({
+            entityMetadata: entityMetadata[0],
+            loading: false
+          });
+        });
+    }
+
+    if (
+      isNil(this.state.entityMetadata) ||
+      isEmpty(this.state.entityMetadata) ||
+      isNil(this.state.entity) ||
+      isEmpty(this.state.entity)
+    ) {
+      this.setState({
+        loading: true
+      });
     }
   }
   render() {
-    return (
-      <Router>
-        <div>
-          <Helmet
-            title={T.translate('features.AppDetailedView.Title', {appId: this.props.params.appId})}
-          />
-          <div className={
-              classnames(
-                "app-detailed-view",
-                this.state.entityDetail.configuration ?
-                  'datapipeline'
-                :
-                  'application'
-              )}>
-            <div className="app-detailed-view-header">
-              <i className={`fa ${getIcon('application')}`}></i>
-              <span>
-                {this.state.entityDetail.name}
-                <small>1.0.0</small>
-              </span>
-              <span className="text-xs-right hidden">
-                <i className="fa fa-info fa-lg"></i>
-              </span>
-            </div>
-            {
-              this.state.entityDetail.description ?
-                <div className="app-detailed-view-description">
-                  {this.state.entityDetail.description}
-                </div>
-              :
-                null
-            }
-            <div className="app-detailed-view-content">
-              {
-                <ApplicationMetrics entity={{
-                  id: this.props.params.appId
-                }}/>
-              }
-              <ConfigurableTab
-                tabConfig={AppDetailedViewTabConfig}
-              />
-            </div>
-          </div>
-          {
-            this.state.isInvalid ?
-              <Miss component={Page404} />
-            :
-              null
-          }
+    let title = this.state.entityDetail.isHydrator ?
+      T.translate('commons.entity.cdap-data-pipeline.singular')
+    :
+      T.translate('commons.entity.application.singular');
+
+    if (this.state.loading) {
+      return (
+        <div className="app-detailed-view">
+          <div className="fa fa-spinner fa-spin fa-3x"></div>
         </div>
-      </Router>
+      );
+    }
+    return (
+      <div className="app-detailed-view">
+        <OverviewHeader
+          icon="icon-fist"
+          title={title}
+        />
+        <OverviewMetaSection entity={this.state.entityMetadata} />
+        <AppDetailedViewTab
+          params={this.props.params}
+          pathname={this.props.location.pathname}
+          entity={this.state.entityDetail}/
+        >
+      </div>
     );
   }
+
 }
 
 const entityDetailType = PropTypes.shape({
@@ -175,19 +168,10 @@ const entityDetailType = PropTypes.shape({
   plugins: PropTypes.arrayOf(PropTypes.object),
   programs: PropTypes.arrayOf(PropTypes.object),
 });
-const entityMetadataType = PropTypes.shape({
-  id: PropTypes.string,
-  type: PropTypes.string,
-  version: PropTypes.string,
-  metadata: PropTypes.object, // FIXME: Shouldn't be an object
-  icon: PropTypes.string,
-  isHydrator: PropTypes.bool
-});
-AppDetailedView.childContextTypes = {
-  entity: PropTypes.object
-};
+
 
 AppDetailedView.propTypes = {
+  entity: PropTypes.object,
   params: PropTypes.shape({
     appId: PropTypes.string,
     namespace: PropTypes.string
@@ -199,7 +183,7 @@ AppDetailedView.propTypes = {
     search: PropTypes.string,
     state: PropTypes.shape({
       entityDetail: entityDetailType,
-      entityMetadata: entityMetadataType
+      entityMetadata: PropTypes.object
     })
   })
 };

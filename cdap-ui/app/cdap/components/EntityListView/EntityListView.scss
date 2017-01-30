@@ -75,86 +75,6 @@
   }
 }
 
-.splash-screen-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: calc(100vh - 80px);
-
-  .splash-screen-first-time {
-    color: $cdap-orange;
-    display: inline-flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-
-    .app-store-bd {
-      font-size: 20px;
-    }
-    .welcome-message {
-      font-weight: bold;
-      font-size: 50px;
-    }
-    .beta-notice {
-      font-size: 40px;
-    }
-    .cdap-fist-icon {
-      margin-top: 20px;
-      margin-bottom: 20px;
-      span {
-        color: $cdap-orange;
-        font-size: 10rem;
-      }
-    }
-    .introducing {
-      font-size: 30px;
-    }
-    .go-to-cdap {
-      color: $cdap-orange;
-      cursor: pointer;
-      font-size: 16px;
-      text-decoration: underline;
-    }
-    .splash-screen-first-time-btn {
-      width: 50%;
-      height: 40px;
-      padding: 1px;
-      border-radius: 4px;
-      box-shadow: 0 0 2px black;
-      margin-top: 30px;
-      margin-bottom: 15px;
-      font-size: 15px;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: $cdap-orange;
-      cursor: pointer;
-
-      .icon-CaskMarket {
-        margin-right: 5px;
-      }
-
-      &:hover {
-        color: $cdap-orange;
-        background-color: white;
-        box-shadow: 0 0 2px $cdap-orange;
-      }
-    }
-
-    .splash-screen-disclaimer {
-      color: black;
-      margin-top: 15px;
-
-      p {
-        margin: 0;
-        text-align: center;
-      }
-    }
-  }
-}
-
 .entity-list-view {
   height: calc(100vh - 132px);
   align-items: flex-start;
@@ -164,65 +84,62 @@
     flex-wrap: wrap;
     padding: 10px 0px 0 5px;
 
-    > div {
-      &:first-child {
-        display: inline-flex;
-        flex-wrap: wrap;
-        height: 100%;
-        flex: 1;
-        // FIXME: For later use.
-        // transition: 1s ease-in width, 1s ease-in flex;
+    .transition-container {
+      display: inline-flex;
+      flex-wrap: wrap;
+      height: 100%;
+      flex: 1;
+    }
 
-        /*
-          width of each card = 100% - (padding of parent) - (combined margin of all cards in the row)
-          margin for each card is 5px (as mentioned above).
-          So the combined margin for all cards in say ,
-            4 column layout : 5px + (5px + 5px) + (5px + 5px) + 5px = (3 * 10px)
-            5 column layout : 5px + (5px + 5px) + (5px + 5px) + (5px + 5px) + 5px = (4 * 10px)
-            6 column layout : 5px + (5px + 5px) + (5px + 5px) + (5px + 5px) + (5px + 5px) + 5px = (5 * 10px)
-            n column layout : (n-1 * 10px);
-        */
+    .home-list-view-container {
+      display: inline-flex;
+      flex-wrap: wrap;
+      height: 100%;
+      flex: 1;
+      // FIXME: For later use.
+      // transition: 1s ease-in width, 1s ease-in flex;
 
-        // @media (min-width: 2001px) and (max-width: 2000px) {
-        //   .entity-cards {
-        //     width: calc((100% - 20px - 10px - (6 * 10px)) / 8);
-        //   }
-        // }
+      /*
+        width of each card = 100% - (padding of parent) - (combined margin of all cards in the row)
+        margin for each card is 5px (as mentioned above).
+        So the combined margin for all cards in say ,
+          4 column layout : 5px + (5px + 5px) + (5px + 5px) + 5px = (3 * 10px)
+          5 column layout : 5px + (5px + 5px) + (5px + 5px) + (5px + 5px) + 5px = (4 * 10px)
+          6 column layout : 5px + (5px + 5px) + (5px + 5px) + (5px + 5px) + (5px + 5px) + 5px = (5 * 10px)
+          n column layout : (n-1 * 10px);
+      */
 
-        @media (min-width: 1701px) {
-          .entity-cards {
-            width: calc((100% - 20px - 10px - (6 * 10px)) / 7);
-          }
+      @media (min-width: 1701px) {
+        .entity-cards {
+          width: calc((100% - 20px - 10px - (6 * 10px)) / 7);
         }
+      }
 
-        @media (min-width: 1601px) and (max-width: 1700px) {
-          .entity-cards {
-            width: calc((100% - 20px - 10px - (5 * 10px)) / 6);
-          }
+      @media (min-width: 1601px) and (max-width: 1700px) {
+        .entity-cards {
+          width: calc((100% - 20px - 10px - (5 * 10px)) / 6);
         }
+      }
 
-        @media (min-width: 1201px) and (max-width: 1600px) {
-          .entity-cards {
-            width: calc((100% - 20px - 10px - (4 * 10px)) / 5);
-          }
+      @media (min-width: 1201px) and (max-width: 1600px) {
+        .entity-cards {
+          width: calc((100% - 20px - 10px - (4 * 10px)) / 5);
         }
+      }
 
-        @media (min-width: 993px) and (max-width: 1200px) {
-          .entity-cards {
-            width: calc((100% - 20px - 10px - (3 * 10px)) / 4);
-          }
+      @media (min-width: 993px) and (max-width: 1200px) {
+        .entity-cards {
+          width: calc((100% - 20px - 10px - (3 * 10px)) / 4);
         }
+      }
 
-        @media(min-width: 768px) and (max-width: 992px) {
-          .entity-cards {
-            width: calc((100% - 20px - 10px - (2 * 10px)) / 3);
-          }
+      @media(min-width: 768px) and (max-width: 992px) {
+        .entity-cards {
+          width: calc((100% - 20px - 10px - (2 * 10px)) / 3);
         }
       }
       &.show-overview-main-container {
-        &:first-child {
-          flex: 1 1;
-        }
+        flex: 1 1;
 
         /*
           width of each card = 100% - (padding of parent) - (combined margin of all cards in the row)

@@ -59,7 +59,12 @@ export default class OverviewMetaSection extends Component {
                 null
             }
             <small>
-              <TimeAgo date={parseInt(creationTime, 10)} />
+              {
+                creationTime ?
+                  <TimeAgo date={parseInt(creationTime, 10)} />
+                :
+                  null
+              }
             </small>
           </div>
           <FastActions
