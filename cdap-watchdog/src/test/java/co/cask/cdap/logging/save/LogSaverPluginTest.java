@@ -117,6 +117,8 @@ public class LogSaverPluginTest extends KafkaTestBase {
   private static CConfiguration cConf;
   private static Impersonator impersonator;
 
+  private static final long UNREACHABLE_TIME = Long.MAX_VALUE;
+
   @BeforeClass
   public static void initialize() throws IOException {
     cConf = KAFKA_TESTER.getCConf();
@@ -198,34 +200,35 @@ public class LogSaverPluginTest extends KafkaTestBase {
       verifyCheckpoint();
       verifyMetricsPlugin(60L);
 
-      // Since we started from offset 10, we should have only saved 50 messages this time.
+      long timestamp10 = events.get(10).getLoggingEvent().getTimeStamp();
+      // Since we started from event 10, we should have only saved 50 messages this time.
       // Metrics should be 60 for first run + 50 for second run
-      verifyLogSaverReset(locationFactory, allEvents, loggingContext, logBaseDir, 1, 10L, 0L, 110L);
+      verifyLogSaverReset(locationFactory, loggingContext, logBaseDir, 1, new Checkpoint(0L, timestamp10), 50, 110L);
 
-      // Since we started from offset 10, we should have only saved 50 messages this time.
+      // Since we started from event 10, we should have only saved 50 messages this time.
       // Metrics count should be 60 + 50 + 50 for three runs
-      verifyLogSaverReset(locationFactory, allEvents, loggingContext, logBaseDir, 2, 10L, 10L, 160L);
+      verifyLogSaverReset(locationFactory, loggingContext, logBaseDir, 2, new Checkpoint(10L, timestamp10), 50, 160L);
 
-      // Since we started from offset 10, we should have only saved 50 messages this time.
+      // Since we started from event 10, we should have only saved 50 messages this time.
       // Metrics count should be 60 + 50 + 50 + 50 for four runs
-      verifyLogSaverReset(locationFactory, allEvents, loggingContext, logBaseDir, 3, 10L, 40L, 210L);
+      verifyLogSaverReset(locationFactory, loggingContext, logBaseDir, 3, new Checkpoint(40L, timestamp10), 50, 210L);
 
-      // Intentionally set the mismatch offset larger than the size of allEvents.
-      // Since we started from offset 10, we should have only saved 50 messages this time.
+      // Intentionally set the new checkpoint offset larger than the size of allEvents.
+      // Since we started from event 10, we should have only saved 50 messages this time.
       // Metrics count should be 60 + 50 + 50 + 50 + 50 for five runs
-      verifyLogSaverReset(locationFactory, allEvents, loggingContext, logBaseDir, 4, 10L, 111L, 260L);
+      verifyLogSaverReset(locationFactory, loggingContext, logBaseDir, 4, new Checkpoint(111L, timestamp10), 50, 260L);
 
-      // Intentionally set the target offset to Long.MAX_VALUE in order to use Long.MAX_VALUE as the
-      // target timestamp to cover the edge case that the target timestamp is larger than the timestamps of
+      // Intentionally set the new checkpoint timestamp to UNREACHABLE_TIME to cover the edge case
+      // that the target timestamp is larger than the timestamps of
       // all existing messages. No additional message will be processed by LogSaver in this case.
-      verifyLogSaverReset(locationFactory, allEvents, loggingContext, logBaseDir, 5, Long.MAX_VALUE, 10L, 260L);
+      verifyLogSaverReset(locationFactory, loggingContext, logBaseDir, 5,
+                          new Checkpoint(10L, UNREACHABLE_TIME), 0, 260L);
 
-      // Intentionally set the target offset to -1 in order to use 0 as the
-      // target timestamp to cover the edge case that the target timestamp is smaller than the timestamps of
-      // all existing messages. LogSaver will start processing from the beginning in this case,
-      // so we should have saved 60 messages this time.
+      // Use 0 as the new checkpoint timestamp to cover the edge case that
+      // the new checkpoint timestamp is smaller than the timestamps of all existing messages.
+      // LogSaver will start processing from the beginning in this case, so we should have saved 60 messages this time.
       // Metrics count should be 60 + 50 + 50 + 50 + 50 + 0 + 60 for seven runs
-      verifyLogSaverReset(locationFactory, allEvents, loggingContext, logBaseDir, 5, -1, 10L, 320L);
+      verifyLogSaverReset(locationFactory, loggingContext, logBaseDir, 6, new Checkpoint(10L, 0), 60, 320L);
     } catch (Throwable t) {
       try {
         final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
@@ -237,24 +240,21 @@ public class LogSaverPluginTest extends KafkaTestBase {
     }
   }
 
-  private void verifyLogSaverReset(LocationFactory locationFactory, List<LogEvent> allEvents,
-                                   LoggingContext loggingContext, String logBaseDir,
-                                   int i, long targetOffset, long mismatchOffset,
+  /**
+   * Reset the logSaver to start reading from the log message with the same timestamp as in the given
+   * {@code newCheckpoint}. Also verify the saved logs and checkpoints.
+   */
+  private void verifyLogSaverReset(LocationFactory locationFactory, LoggingContext loggingContext, String logBaseDir,
+                                   int newSuffix, Checkpoint newCheckpoint, int expectedEventsSize,
                                    long expectedMetricsCount) throws Exception {
-    // Now reset the logSaver to start reading from reset offset
     // Change the log meta table so that checkpoints are new, and old log files are not read during read later
-    LogSaverTableUtilOverride.setLogMetaTableName("log.meta" + i);
+    LogSaverTableUtilOverride.setLogMetaTableName("log.meta" + newSuffix);
 
-    // Reset checkpoint for log saver plugin to Checkpoint{nextOffset=mismatchOffset, maxEventTime=<targetTime>}
-    // where <targetTime> is the timestamp of the event with targetOffset in Kafka,
-    // or Long.MAX_VALUE if targetOffset exceeds the largest index of allEvents, or 0 if targetOffset is -1.
-    // The KafkaOffsetFinder called in LogSaver should be able to discover the targetTime
-    // different from the timestamp of the message fetched with the mismatchOffset,
-    // and KafkaOffsetFinder should find the correct offset of the message with the same timestamp as the targetTime.
-    resetLogSaverPluginCheckpoint(allEvents, targetOffset, mismatchOffset);
+    // Reset checkpoint for log saver plugin to newCheckpoint
+    resetLogSaverPluginCheckpoint(newCheckpoint);
 
     // Change base dir so that new files get written and read from a different location (makes it easy for asserting)
-    String newLogBaseDir = logBaseDir + i;
+    String newLogBaseDir = logBaseDir + newSuffix;
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, newLogBaseDir);
     locationFactory.create(namespaceDir).append("NS_1").append(newLogBaseDir);
 
@@ -262,7 +262,9 @@ public class LogSaverPluginTest extends KafkaTestBase {
     startLogSaver();
 
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
-    if (targetOffset == Long.MAX_VALUE) {
+    // If newCheckpoint has timestamp UNREACHABLE_TIME, no log message will be saved by LogSaver,
+    // so waitTillLogSaverDone cannot be called
+    if (newCheckpoint.getMaxEventTime() == UNREACHABLE_TIME) {
       // Sleep for 6 seconds to wait for LogSaver to start processing messages
       Thread.sleep(6000);
     } else {
@@ -276,11 +278,14 @@ public class LogSaverPluginTest extends KafkaTestBase {
       Lists.newArrayList(fileLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "",
                                                                         null, "INSTANCE"),
                                               0, Long.MAX_VALUE, Filter.EMPTY_FILTER));
-    int expectedSize = targetOffset == Long.MAX_VALUE ?
-      0 : Math.min(allEvents.size() - (int) targetOffset, allEvents.size());
-    Assert.assertEquals(expectedSize, events.size());
-    if (targetOffset != Long.MAX_VALUE) {
-      // Checkpoint should read 60 for both processor
+    Assert.assertEquals(expectedEventsSize, events.size());
+    // If newCheckpoint has timestamp UNREACHABLE_TIME, no log message will be consumed by LogSaver, so the checkpoint
+    // in log metrics plugin still has the original offset -1, but checkpoint of kafka log writer plugin has offset 60.
+    // This is because checkpoint with negative offset is ignored by KafkaOffsetFinder, but checkpoint in
+    // kafka log writer plugin was set to a positive offset in resetLogSaverPluginCheckpoint, and its offset was updated
+    // to the latest offset returned by KafkaOffsetFinder
+    if (newCheckpoint.getMaxEventTime() != UNREACHABLE_TIME) {
+      // log processors should have next offset 60 in saved checkpoints
       verifyCheckpoint();
     }
     verifyMetricsPlugin(expectedMetricsCount);
@@ -308,21 +313,8 @@ public class LogSaverPluginTest extends KafkaTestBase {
     }, 120, TimeUnit.SECONDS);
   }
 
-  private void resetLogSaverPluginCheckpoint(List<LogEvent> allEvents, long offset, long mismatchOffset)
+  private void resetLogSaverPluginCheckpoint(Checkpoint newCheckpoint)
     throws Exception {
-    // If offset is -1, set targetTime as 0. If offset is smaller than the size of allEvents,
-    // use the offset as the index to get event from allEvents, since offset starts from 0
-    // and increments as events are published. Offsets are equivalent to the indices in allEvents in this test.
-    // If offset exceeds the largest index of allEvents, use Long.MAX_VALUE as the
-    // target timestamp to cover the edge case that the target timestamp is larger than the timestamps of
-    // all existing messages.
-    long targetTime;
-    if (offset == -1) {
-      targetTime = 0;
-    } else {
-      targetTime = offset == Long.MAX_VALUE ?
-        Long.MAX_VALUE : allEvents.get((int) offset).getLoggingEvent().getTimeStamp();
-    }
     TypeLiteral<Set<KafkaLogProcessorFactory>> type = new TypeLiteral<Set<KafkaLogProcessorFactory>>() { };
     Set<KafkaLogProcessorFactory> processorFactories =
       injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES)));
@@ -331,7 +323,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
       if (processor instanceof  KafkaLogWriterPlugin) {
         KafkaLogWriterPlugin plugin = (KafkaLogWriterPlugin) processor;
         CheckpointManager manager = plugin.getCheckPointManager();
-        manager.saveCheckpoints(ImmutableMap.of(0, new Checkpoint(mismatchOffset, targetTime)));
+        manager.saveCheckpoints(ImmutableMap.of(0, newCheckpoint));
         break;
       }
     }

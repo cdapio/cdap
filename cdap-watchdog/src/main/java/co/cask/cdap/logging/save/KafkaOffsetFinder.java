@@ -24,6 +24,7 @@ import kafka.api.PartitionOffsetRequestInfo;
 import kafka.common.ErrorMapping;
 import kafka.common.TopicAndPartition;
 import kafka.javaapi.OffsetResponse;
+import kafka.javaapi.consumer.SimpleConsumer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.kafka.client.BrokerInfo;
 import org.apache.twill.kafka.client.BrokerService;
@@ -50,8 +51,6 @@ public class KafkaOffsetFinder {
   private static final int SO_TIMEOUT = 5 * 1000;           // 5 seconds.
   private static final long LATEST = kafka.api.OffsetRequest.LatestTime();
   private static final long EARLIEST = kafka.api.OffsetRequest.EarliestTime();
-  private static final int TIME_MATCH = 1;
-  private static final int TIME_NOT_MATCH = -1;
 
   private final BrokerService brokerService;
   private final KafkaConsumer consumer;
@@ -70,69 +69,26 @@ public class KafkaOffsetFinder {
       return checkpoint.getNextOffset();
     }
 
-    // First try to check whether the message with the offset in the given checkpoint has the same timestamp.
-    // If the message has the same timestamp as in the checkpoint, directly return the checkpoint's offset.
-    final AtomicInteger matchFound = new AtomicInteger(0);
-    Cancellable initCancel = null;
-    try {
-      initCancel = consumer.prepare().add(topic, partition, checkpoint.getNextOffset())
-        .consume(new KafkaConsumer.MessageCallback() {
-          @Override
-          public long onReceived(Iterator<FetchedMessage> messages) {
-            if (!messages.hasNext()) {
-              return EARLIEST;
-            }
-            FetchedMessage message = messages.next();
-            long offset = message.getOffset();
-            ILoggingEvent event;
-            try {
-              event = serializer.fromBytes(message.getPayload());
-            } catch (IOException e) {
-              LOG.warn("Message with offset {} in topic {} partition {} is ignored because of failure to decode.",
-                       offset, topic, partition, e);
-              return message.getNextOffset();
-            }
-            long timestamp = event.getTimeStamp();
-            if (offset == checkpoint.getNextOffset()) {
-              matchFound.set(timestamp == checkpoint.getMaxEventTime() ? TIME_MATCH : TIME_NOT_MATCH);
-            }
-            return message.getNextOffset();
-          }
-
-          @Override
-          public void finished() {
-            // no-op
-          }
-        });
-      Tasks.waitFor(true, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          return matchFound.get() != 0;
-        }
-      }, 1500, TimeUnit.MILLISECONDS);
-
-      if (matchFound.get() == TIME_MATCH) {
-        initCancel.cancel();
-        return checkpoint.getNextOffset();
-      }
-
-    } catch (Exception e) {
-      LOG.trace("Given checkpoint {} has mismatching offset and timestamp. Continue to search for the correct offset" +
-                  "with the given timestamp.", checkpoint, e);
-    }
-    if (initCancel != null) {
-      initCancel.cancel();
-    }
-
-    // Get BrokerInfo for constructing kafka.javaapi.consumer.SimpleConsumer in OffsetFinderCallback
+    // Get BrokerInfo for constructing SimpleConsumer in OffsetFinderCallback
     BrokerInfo brokerInfo = brokerService.getLeader(topic, partition);
     if (brokerInfo == null) {
       return EARLIEST; // Return earliest offset if brokerInfo is null
     }
     final BlockingQueue<Long> offsetQueue = new LinkedBlockingQueue<>();
+    brokerService.getLeader(topic, partition);
+    SimpleConsumer simpleConsumer
+      = new SimpleConsumer(brokerInfo.getHost(), brokerInfo.getPort(),
+                                                  SO_TIMEOUT, FETCH_SIZE, "simple-kafka-client");
+    long minOffset = getBoundaryOffset(simpleConsumer, partition, EARLIEST);
+    // Latest offset returned is 1 larger than the latest received message's offset
+    long maxOffset = getBoundaryOffset(simpleConsumer, partition, LATEST) - 1;
     OffsetFinderCallback callback =
-      new OffsetFinderCallback(offsetQueue, brokerInfo, checkpoint.getMaxEventTime(), topic, partition);
-    Cancellable findCancel = consumer.prepare().add(topic, partition, EARLIEST)
+      new OffsetFinderCallback(offsetQueue, brokerInfo, simpleConsumer, checkpoint.getMaxEventTime(), topic, partition,
+                               minOffset, maxOffset);
+    long startOffset =
+      (checkpoint.getNextOffset() > callback.getMaxOffset() || checkpoint.getNextOffset() < callback.getMinOffset()) ?
+      EARLIEST : checkpoint.getNextOffset();
+    Cancellable findCancel = consumer.prepare().add(topic, partition, startOffset)
       .consume(callback);
     Long targetOffset;
     try {
@@ -144,7 +100,7 @@ public class KafkaOffsetFinder {
       return EARLIEST;
     }
     if (targetOffset == null) {
-      targetOffset = callback.getBoundaryOffset(LATEST);
+      targetOffset = getBoundaryOffset(simpleConsumer, partition, LATEST);
       LOG.debug("Failed to find matching offset from Kafka because the timestamp in stored checkpoint {} " +
                   "is larger than all timestamps of the received messages. Return the latest offset {}",
                 checkpoint, targetOffset);
@@ -163,30 +119,25 @@ public class KafkaOffsetFinder {
 
     private long minOffset;
     private long maxOffset;
-    private kafka.javaapi.consumer.SimpleConsumer simpleConsumer;
+    private SimpleConsumer simpleConsumer;
 
-    OffsetFinderCallback(final BlockingQueue<Long> offsetQueue, BrokerInfo brokerInfo, long targetTimestamp,
-                         String topic, int partition) {
+    OffsetFinderCallback(final BlockingQueue<Long> offsetQueue, BrokerInfo brokerInfo,
+                         SimpleConsumer simpleConsumer, long targetTimestamp,
+                         String topic, int partition, long minOffset, long maxOffset) {
       this.offsetQueue = offsetQueue;
       this.targetTimestamp = targetTimestamp;
       this.topic = topic;
       this.partition = partition;
-      this.brokerInfo = brokerService.getLeader(topic, partition);
-      this.simpleConsumer
-        = new kafka.javaapi.consumer.SimpleConsumer(brokerInfo.getHost(), brokerInfo.getPort(),
-                                                    SO_TIMEOUT, FETCH_SIZE, "simple-kafka-client");
-      this.minOffset = getBoundaryOffset(EARLIEST);
-      // Latest offset returned is 1 larger than the latest received message's offset
-      this.maxOffset = getBoundaryOffset(LATEST) - 1;
+      this.brokerInfo = brokerInfo;
+      this.simpleConsumer = simpleConsumer;
+      this.minOffset = minOffset;
+      this.maxOffset = maxOffset;
     }
 
     @Override
     // Use binary search to find the offset of the message with the timestamp matching targetTimestamp.
     // Return the offset to fetch the next message until the matching message is found.
     public long onReceived(Iterator<FetchedMessage> messages) {
-      if (!messages.hasNext()) {
-        return EARLIEST;
-      }
       FetchedMessage message = messages.next();
       long offset = message.getOffset();
       ILoggingEvent event;
@@ -222,13 +173,7 @@ public class KafkaOffsetFinder {
       if (timeStamp < targetTimestamp) {
         // targetTimestamp is larger than all existing messages's timestamp, wait for new messages to come
         if (offset + 1 > maxOffset) {
-          try {
-            Thread.sleep(1000);
-          } catch (InterruptedException e) {
-            LOG.info("Thread {} is interrupted while waiting for newer Kafka message.");
-            Thread.currentThread().interrupt();
-          }
-          maxOffset = getBoundaryOffset(LATEST) - 1;
+          maxOffset = getBoundaryOffset(simpleConsumer, partition, LATEST) - 1;
           return maxOffset;
         }
         minOffset = offset + 1;
@@ -246,39 +191,45 @@ public class KafkaOffsetFinder {
       //no-op
     }
 
-    /**
-     * Gets earliest or latest message's offset
-     */
-    long getBoundaryOffset(long timeStamp) {
-      // If no broker, treat it as failure attempt.
-      if (simpleConsumer == null) {
-        LOG.warn("Failed to talk to any broker. Default offset to 0 for {}-{}", topic, partition);
-        return 0L;
-      }
-      // Fire offset request
-      kafka.javaapi.OffsetRequest request = new kafka.javaapi.OffsetRequest(ImmutableMap.of(
-        new TopicAndPartition(topic, partition),
-        new PartitionOffsetRequestInfo(timeStamp, 1)
-      ), kafka.api.OffsetRequest.CurrentVersion(), simpleConsumer.clientId());
-
-      OffsetResponse response = simpleConsumer.getOffsetsBefore(request);
-
-      // Retrieve offsets from response
-      long[] offsets = response.hasError() ? null : response.offsets(topic, partition);
-      if (offsets == null || offsets.length <= 0) {
-        short errorCode = response.errorCode(topic, partition);
-
-        // If the topic partition doesn't exists, use offset 0 without logging error.
-        if (errorCode != ErrorMapping.UnknownTopicOrPartitionCode()) {
-          simpleConsumer = new kafka.javaapi.consumer.SimpleConsumer(brokerInfo.getHost(), brokerInfo.getPort(),
-                                                                     SO_TIMEOUT, FETCH_SIZE, "simple-kafka-client");
-          LOG.warn("Failed to fetch offset for {}-{} with timestamp {}. Error: {}. Default offset to 0.",
-                   topic, partition, timeStamp, errorCode);
-        }
-        return 0L;
-      }
-
-      return offsets[0];
+    long getMinOffset() {
+      return minOffset;
     }
+
+    long getMaxOffset() {
+      return maxOffset;
+    }
+  }
+
+  /**
+   * Gets earliest or latest message's offset
+   */
+  private long getBoundaryOffset(SimpleConsumer simpleConsumer, int partition, long timeStamp) {
+    // If no broker, treat it as failure attempt.
+    if (simpleConsumer == null) {
+      LOG.error("Failed to talk to any broker. Default offset to 0 for {}-{}", topic, partition);
+      return 0L;
+    }
+    // Fire offset request
+    kafka.javaapi.OffsetRequest request = new kafka.javaapi.OffsetRequest(ImmutableMap.of(
+      new TopicAndPartition(topic, partition),
+      new PartitionOffsetRequestInfo(timeStamp, 1)
+    ), kafka.api.OffsetRequest.CurrentVersion(), simpleConsumer.clientId());
+
+    OffsetResponse response = simpleConsumer.getOffsetsBefore(request);
+
+    // Retrieve offsets from response
+    long[] offsets = response.hasError() ? null : response.offsets(topic, partition);
+    if (offsets == null || offsets.length <= 0) {
+      short errorCode = response.errorCode(topic, partition);
+
+      // If the topic partition doesn't exists, use offset 0 without logging error.
+      if (errorCode != ErrorMapping.UnknownTopicOrPartitionCode()) {
+        LOG.error("Failed to fetch offset for {}-{} with timestamp {}. Error: {}. Default offset to 0.",
+                 topic, partition, timeStamp, errorCode);
+      }
+      return 0L;
+    }
+
+    return offsets[0];
   }
 }
