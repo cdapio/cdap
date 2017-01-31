@@ -245,7 +245,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("namespace-id") final String namespaceId,
                               @PathParam("app-id") final String appId) throws Exception {
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
-    Collection<String> versions = applicationLifecycleService.getAppVerions(namespaceId, appId);
+    Collection<String> versions = applicationLifecycleService.getAppVersions(namespaceId, appId);
     if (versions.isEmpty()) {
       throw new ApplicationNotFoundException(applicationId);
     }

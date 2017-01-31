@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
@@ -74,12 +73,9 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
    * Adds the application owner information to the owner store
    */
   private void addOwner(ApplicationId entityId,
-                        @Nullable KerberosPrincipalId specifiedOwnerPrincipal) throws DatasetManagementException {
-    try {
+                        @Nullable KerberosPrincipalId specifiedOwnerPrincipal)
+    throws IOException, AlreadyExistsException {
       ownerAdmin.add(entityId, specifiedOwnerPrincipal);
-    } catch (IOException | AlreadyExistsException e) {
-      throw new DatasetManagementException(e.getMessage(), e);
-    }
   }
 
   // Register dataset usage, based upon the program specifications.
