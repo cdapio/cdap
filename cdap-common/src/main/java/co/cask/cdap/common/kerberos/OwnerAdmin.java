@@ -43,10 +43,18 @@ public interface OwnerAdmin {
     throws IOException, AlreadyExistsException;
 
   /**
-   * Retrieves the owner information for the given {@link EntityId}
+   * <p>Retrieves the owner information for the given {@link EntityId}</p>
+   * <p>Note: a null return value does not signifies presence or absence of the given entity in the system.
+   * It only means that no explicit owner principal was specified during entity creation and its owned by the system
+   * if its present</p>
    *
    * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
-   * @return {@link KerberosPrincipalId} of the {@link EntityId} owner
+   * @return {@link KerberosPrincipalId} of the {@link EntityId} owner if one was explicitly provided during entity
+   * creation or null if
+   * <ol>
+   * <li>the entity does not exists in the system</li>
+   * <li>entity exists in the system but no explicit owner principal was specified during creation</li>
+   * </ol>
    * @throws IOException if failed to get the store
    * @throws IllegalArgumentException if the given entity is not of supported type.
    */
@@ -83,7 +91,9 @@ public interface OwnerAdmin {
 
 
   /**
-   * Deletes the owner principal for the given {@link EntityId}
+   * <p>Deletes the owner principal for the given {@link EntityId} </p>
+   * <p>This call does not throw {@link co.cask.cdap.common.NotFoundException} if the entity does not
+   * exists in the store so its safe to call without checking its existence</p>
    *
    * @param entityId the entity whose owner principal needs to be deleted
    * @throws IOException if failed to get the owner store

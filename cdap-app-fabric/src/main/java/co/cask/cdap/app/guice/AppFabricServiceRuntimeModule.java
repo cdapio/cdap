@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.NoOpOwnerAdmin;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
@@ -164,6 +165,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+                               bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
                                bind(RouteStore.class).to(LocalRouteStore.class).in(Scopes.SINGLETON);
                                addInMemoryBindings(binder());
 
@@ -206,6 +208,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+                               bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
                                bind(RouteStore.class).to(LocalRouteStore.class).in(Scopes.SINGLETON);
                                addInMemoryBindings(binder());
 
@@ -270,6 +273,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(SchedulerService.class).to(DistributedSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
                                bind(MRJobInfoFetcher.class).to(DistributedMRJobInfoFetcher.class);
+                               bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
                                bind(StorageProviderNamespaceAdmin.class)
                                  .to(DistributedStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(DefaultUGIProvider.class);
@@ -343,7 +347,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(RuntimeStore.class).to(DefaultStore.class);
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
-      bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
 
       install(new PrivateModule() {
         @Override

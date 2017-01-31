@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -72,6 +72,8 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   public static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
 
   public static final String APP_CONFIG_HEADER = "X-App-Config";
+
+  public static final String OWNER_PRINCIPAL_HEADER = "X-Owner-Principal";
 
   protected int getInstances(HttpRequest request) throws BadRequestException {
     Instances instances;

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,6 +36,7 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -115,8 +116,14 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   @Override
   public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
-    super.addInstance(datasetTypeName, datasetInstanceId, props);
+    addInstance(datasetTypeName, datasetInstanceId, props, null);
+  }
 
+  @Override
+  public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props,
+                          @Nullable KerberosPrincipalId ownerPrincipal)
+    throws DatasetManagementException, IOException {
+    super.addInstance(datasetTypeName, datasetInstanceId, props, ownerPrincipal);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,6 +47,7 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -79,6 +80,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -157,14 +159,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
-                             @HeaderParam(APP_CONFIG_HEADER) String configString)
+                             @HeaderParam(APP_CONFIG_HEADER) String configString,
+                             @HeaderParam(OWNER_PRINCIPAL_HEADER) String ownerPrincipal)
     throws BadRequestException, NamespaceNotFoundException {
 
     NamespaceId namespace = validateNamespace(namespaceId);
 
     // null means use name provided by app spec
     try {
-      return deployApplication(responder, namespace, null, archiveName, configString);
+      return deployApplication(responder, namespace, null, archiveName, configString, ownerPrincipal);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
@@ -377,7 +380,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           // if we don't null check, it gets serialized to "null"
           String configString = appRequest.getConfig() == null ? null : GSON.toJson(appRequest.getConfig());
           applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-                                                artifactId, configString, createProgramTerminator());
+                                                artifactId, configString, createProgramTerminator(),
+                                                appRequest.getOwnerPrincipal());
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (ArtifactNotFoundException e) {
           responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
@@ -399,7 +403,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                          final NamespaceId namespace,
                                          final String appId,
                                          final String archiveName,
-                                         final String configString) throws IOException {
+                                         final String configString,
+                                         @Nullable final String ownerPrincipal) throws IOException {
 
     Id.Namespace idNamespace = namespace.toId();
     Location namespaceHomeLocation = namespacedLocationFactory.get(idNamespace);
@@ -430,6 +435,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return null;
     }
 
+    KerberosPrincipalId ownerPrincipalId = null;
+    if (ownerPrincipal != null) {
+      ownerPrincipalId = GSON.fromJson(ownerPrincipal, KerberosPrincipalId.class);
+    }
     // Store uploaded content to a local temp file
     String namespacesDir = configuration.get(Constants.Namespace.NAMESPACES_DIR);
     File localDataDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR));
@@ -440,6 +449,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new IOException("Could not create temporary directory at: " + tempDir);
     }
 
+    final KerberosPrincipalId finalOwnerPrincipalId = ownerPrincipalId;
     return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
 
       @Override
@@ -448,7 +458,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           // deploy app
           ApplicationWithPrograms app =
             applicationLifecycleService.deployAppAndArtifact(namespace, appId, artifactId, uploadedFile, configString,
-                                                             createProgramTerminator());
+                                                             finalOwnerPrincipalId, createProgramTerminator());
           responder.sendString(HttpResponseStatus.OK, String.format("Successfully deployed app %s",
                                                                     app.getApplicationId().getApplication()));
         } catch (InvalidArtifactException e) {
