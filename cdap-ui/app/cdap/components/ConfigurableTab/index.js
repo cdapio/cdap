@@ -41,7 +41,6 @@ export default class ConfigurableTab extends Component {
   }
   setTab(tabId) {
     this.setState({tabId});
-    document.querySelector('.tab-content').scrollTop = 0;
 
     if (typeof this.props.onTabClick === 'function') {
       this.props.onTabClick(tabId);
