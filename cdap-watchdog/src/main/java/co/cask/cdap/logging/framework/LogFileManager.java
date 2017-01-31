@@ -16,6 +16,8 @@
 
 package co.cask.cdap.logging.framework;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import com.google.common.io.Closeables;
@@ -49,16 +51,19 @@ class LogFileManager implements Flushable {
   private final FileMetaDataManager fileMetaDataManager;
   private final int syncIntervalBytes;
   private final Schema schema;
+  private final String permissions;
 
   LogFileManager(long maxFileLifetimeMs, int syncIntervalBytes, Schema schema,
                  FileMetaDataManager fileMetaDataManager,
-                 LocationFactory locationFactory) {
+                 LocationFactory locationFactory, CConfiguration cConfiguration) {
     this.maxLifetimeMillis = maxFileLifetimeMs;
     this.syncIntervalBytes = syncIntervalBytes;
     this.schema = schema;
     this.fileMetaDataManager = fileMetaDataManager;
     this.logsDirectoryLocation = locationFactory.create("logs");
     this.outputStreamMap = new HashMap<>();
+    // if permission is null, we use rw for owner(cdap) and no permissions for group and others
+    this.permissions = cConfiguration.get(Constants.LogSaver.PERMISSION, "600");
   }
 
   /**
@@ -116,7 +121,7 @@ class LogFileManager implements Flushable {
     // however there is a possibility for the log.saver could crash after file was created
     // but before meta data was written, log clean up should handle this scenario.
     // log cleanup shouldn't rely on metadata table for cleaning up old files.
-    while (!location.getLocation().createNew()) {
+    while (!location.getLocation().createNew(permissions)) {
       Uninterruptibles.sleepUninterruptibly(1L, TimeUnit.MILLISECONDS);
       location = getLocation(logPathIdentifier);
     }
@@ -161,8 +166,8 @@ class LogFileManager implements Flushable {
     }
   }
 
-  void ensureDirectoryCheck(Location location) throws IOException {
-    if (!location.isDirectory() && !location.mkdirs() && !location.isDirectory()) {
+  private void ensureDirectoryCheck(Location location) throws IOException {
+    if (!location.isDirectory() && !location.mkdirs(permissions) && !location.isDirectory()) {
       throw new IOException(
         String.format("File Exists at the logging location %s, Expected to be a directory", location));
     }
@@ -178,7 +183,6 @@ class LogFileManager implements Flushable {
         .append(logPathIdentifier.getPathId1())
         .append(logPathIdentifier.getPathId2());
     ensureDirectoryCheck(contextLocation);
-
 
     String fileName = String.format("%s.avro", currentTime);
     return new TimeStampLocation(contextLocation.append(fileName), currentTime);
