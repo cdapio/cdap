@@ -52,4 +52,10 @@
   .entity-cards {
     width: calc((100% - 20px - 10px - 10px) / 2);
   }
+
+  .message-section {
+    .message-section-tooltip {
+      margin-left: 5px;
+    }
+  }
 }

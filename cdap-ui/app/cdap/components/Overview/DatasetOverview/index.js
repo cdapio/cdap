@@ -26,7 +26,6 @@ import {MyMetadataApi} from 'api/metadata';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
 
-
 export default class DatasetOverview extends Component {
   constructor(props) {
     super(props);
@@ -85,7 +84,9 @@ export default class DatasetOverview extends Component {
             programs,
             schema: res[0].schema,
             name: appId, // FIXME: Finalize on entity detail for fast action
-            app: appId
+            app: appId,
+            id: this.props.entity.id,
+            type: 'dataset'
           };
 
           this.setState({
