@@ -431,18 +431,6 @@ public class FileStreamAdmin implements StreamAdmin {
         ownerAdmin.add(streamId, ownerPrincipal);
       }
 
-      final Location streamLocation = impersonator.doAs(streamId, new Callable<Location>() {
-
-      KerberosPrincipalId ownerPrincipal = null;
-      if (properties.containsKey(Constants.Security.OWNER_PRINCIPAL)) {
-        ownerPrincipal = GSON.fromJson(properties.getProperty(Constants.Security.OWNER_PRINCIPAL),
-                                       KerberosPrincipalId.class);
-      }
-      // If an owner was provided then store it in owner store first so that we can use it for impersonation below
-      if (ownerPrincipal != null) {
-        ownerAdmin.add(streamId, ownerPrincipal);
-      }
-
       final UserGroupInformation ugi = impersonator.getUGI(streamNamespace);
       final Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
         @Override
