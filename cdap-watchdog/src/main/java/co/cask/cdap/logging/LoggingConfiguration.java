@@ -46,16 +46,17 @@ public final class LoggingConfiguration {
   public static final String LOG_RETENTION_DURATION_DAYS = "log.retention.duration.days";
   public static final String LOG_MAX_FILE_SIZE_BYTES = "log.max.file.size.bytes";
   public static final String KAFKA_PRODUCER_TYPE = "kafka.producer.type";
-  public static final String KAFKA_PROCUDER_BUFFER_MS = "kafka.producer.buffer.ms";
+  public static final String KAFKA_PRODUCER_BUFFER_MS = "kafka.producer.buffer.ms";
   public static final String LOG_CLEANUP_RUN_INTERVAL_MINS = "log.cleanup.run.interval.mins";
 
   // Defaults
   public static final String DEFAULT_LOG_PATTERN = "%d{ISO8601} - %-5p [%t:%c{1}@%L] - %m%n";
   public static final String DEFAULT_KAFKA_PRODUCER_TYPE = "async";
-  public static final long DEFAULT_KAFKA_PROCUDER_BUFFER_MS = 1000;
+
+  public static final long DEFAULT_KAFKA_PRODUCER_BUFFER_MS = 1000;
   public static final int DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS = 24 * 60;
 
-  public static final long DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = 1 * 1000;
+  public static final long DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = 1000;
   public static final long DEFAULT_LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS = 4;
   public static final long DEFAULT_LOG_SAVER_MAX_FILE_LIFETIME_MS = TimeUnit.HOURS.toMillis(6);
   public static final long DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS = 60 * 1000;

@@ -55,7 +55,7 @@ public abstract class KafkaTestBase {
     ImmutableMap.<String, String>builder()
       .put(Constants.Logging.NUM_PARTITIONS, "2")
       .put(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync")
-      .put(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS, "100")
+      .put(LoggingConfiguration.KAFKA_PRODUCER_BUFFER_MS, "100")
       .put(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, "10")
       .put(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, "10240")
       .put(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, "5120")

@@ -1169,6 +1169,15 @@
   </property>
 
   <property>
+    <name>log.publish.partition.key</name>
+    <value>program</value>
+    <description>
+      Publish logs from a program or an app to same partition. Valid values are "application" and "program".
+      Changes to this property requires restart of all cdap applications.
+    </description>
+  </property>
+
+  <property>
     <name>log.retention.duration.days</name>
     <value>7</value>
     <description>
@@ -1218,7 +1227,7 @@
     </description>
   </property>
 
-
+  
   <!-- Master Configuration -->
 
   <property>

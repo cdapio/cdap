@@ -705,6 +705,7 @@ public final class Constants {
     // Configuration keys
     public static final String KAFKA_TOPIC = "log.kafka.topic";
     public static final String NUM_PARTITIONS = "log.publish.num.partitions";
+    public static final String LOG_PUBLISH_PARTITION_KEY = "log.publish.partition.key";
 
     public static final String PIPELINE_CONFIG_DIR = "log.process.pipeline.config.dir";
     public static final String PIPELINE_LIBRARY_DIR = "log.process.pipeline.lib.dir";
@@ -746,6 +747,7 @@ public final class Constants {
     public static final String TAG_WORKFLOW_MAP_REDUCE_ID = ".workflowMapReduceId";
     public static final String TAG_WORKFLOW_SPARK_ID = ".workflowSparkId";
     public static final String TAG_WORKFLOW_PROGRAM_RUN_ID = ".workflowProgramRunId";
+
   }
 
   /**
