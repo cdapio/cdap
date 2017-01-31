@@ -140,6 +140,7 @@ features:
     setPreferencesModalLabel: Preferences
     setPreferencesActionLabel: Set Preferences
     setPreferencesDescriptionLabel:
+      system: Specify new or edit existing system preferences. These preferences will be accessible in all namespaces, applications, and programs.
       namespace: Specify new or override existing system preferences. These preferences will be accessible in all applications within this namespace.
       app: Specify new or override existing system or namespace preferences. These preferences will be accessible in all programs within this application.
       program: Specify new or override existing system, namespace, or application preferences. These preferences will only be accessible within this program.
@@ -155,6 +156,7 @@ features:
     setPreferencesFailed: Error - Set Preferences Failed.
     setPreferencesSuccess:
       default: Preferences Saved
+      system: CDAP Preferences Saved
       application: Application Preferences Saved
       program: Program Preferences Saved
     start: Start
@@ -212,6 +214,7 @@ features:
       title: Configure
       buttons:
         add-ns: Add Namespace
+        set-system-preferences: Set System Preferences
         view-config: View Configurations
         manage-ns: Manage Namespaces
         delete-ns: Delete Namespace

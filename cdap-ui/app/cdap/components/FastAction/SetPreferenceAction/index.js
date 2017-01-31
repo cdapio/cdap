@@ -52,7 +52,9 @@ export default class SetPreferenceAction extends Component {
   }
 
   onPreferencesSaved() {
-    this.props.onSuccess();
+    if (this.props.onSuccess) {
+      this.props.onSuccess();
+    }
     this.setState({preferencesSaved: true});
     setTimeout(() => {
       this.setState({preferencesSaved: false});

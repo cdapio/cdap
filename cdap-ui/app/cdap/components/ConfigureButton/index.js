@@ -17,14 +17,8 @@
 import React, {PropTypes} from 'react';
 require('./ConfigureButton.scss');
 
-
-const propTypes  = {
-  label: PropTypes.string,
-  onClick: PropTypes.func,
-  iconClass: PropTypes.string
-};
-
 function ConfigureButton({label, onClick, iconClass}) {
+
   return (
     <div
       className="configure-button"
@@ -40,6 +34,11 @@ function ConfigureButton({label, onClick, iconClass}) {
   );
 }
 
-ConfigureButton.propTypes = propTypes;
+ConfigureButton.propTypes  = {
+  label: PropTypes.string,
+  onClick: PropTypes.func,
+  iconClass: PropTypes.string,
+  iconComponent: PropTypes.element
+};
 
 export default ConfigureButton;

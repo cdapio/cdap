@@ -40,35 +40,42 @@ export default class SetPreferenceModal extends Component {
       sortOrder: 'asc'
     };
 
-    this.params = {
-      namespace: NamespaceStore.getState().selectedNamespace
-    };
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
-    this.getSpecifiedPreferencesApi = myPreferenceApi.getNamespacePreferences;
-    this.getInheritedPreferencesApi = myPreferenceApi.getSystemPreferences;
-    this.setPreferencesApi = myPreferenceApi.setNamespacePreferences;
+    this.params = {};
+    this.setAtSystemLevel = this.props.setAtSystemLevel;
 
-    if (this.props.entity) {
-      if (this.props.entity.type === 'application') {
-        this.params.appId = this.props.entity.id;
-        this.getSpecifiedPreferencesApi = myPreferenceApi.getAppPreferences;
-        this.getInheritedPreferencesApi = myPreferenceApi.getNamespacePreferencesResolved;
-        this.setPreferencesApi = myPreferenceApi.setAppPreferences;
-      } else {
-        this.params.appId = this.props.entity.applicationId;
-        this.params.programId = this.props.entity.id;
-        this.params.programType = convertProgramToApi(this.props.entity.programType);
-        this.getSpecifiedPreferencesApi = myPreferenceApi.getProgramPreferences;
-        this.getInheritedPreferencesApi = myPreferenceApi.getAppPreferencesResolved;
-        this.setPreferencesApi = myPreferenceApi.setProgramPreferences;
+    if (this.setAtSystemLevel) {
+      this.getSpecifiedPreferencesApi = myPreferenceApi.getSystemPreferences;
+      this.setPreferencesApi = myPreferenceApi.setSystemPreferences;
+    } else {
+      this.params.namespace = namespace;
+      this.getSpecifiedPreferencesApi = myPreferenceApi.getNamespacePreferences;
+      this.getInheritedPreferencesApi = myPreferenceApi.getSystemPreferences;
+      this.setPreferencesApi = myPreferenceApi.setNamespacePreferences;
+
+      if (this.props.entity) {
+        if (this.props.entity.type === 'application') {
+          this.params.appId = this.props.entity.id;
+          this.getSpecifiedPreferencesApi = myPreferenceApi.getAppPreferences;
+          this.getInheritedPreferencesApi = myPreferenceApi.getNamespacePreferencesResolved;
+          this.setPreferencesApi = myPreferenceApi.setAppPreferences;
+        } else {
+          this.params.appId = this.props.entity.applicationId;
+          this.params.programId = this.props.entity.id;
+          this.params.programType = convertProgramToApi(this.props.entity.programType);
+          this.getSpecifiedPreferencesApi = myPreferenceApi.getProgramPreferences;
+          this.getInheritedPreferencesApi = myPreferenceApi.getAppPreferencesResolved;
+          this.setPreferencesApi = myPreferenceApi.setProgramPreferences;
+        }
       }
-    }
 
-    this.subscription = NamespaceStore.subscribe(() => {
-      this.params.namespace = NamespaceStore.getState().selectedNamespace;
-      this.getSpecifiedPreferences();
-      this.getInheritedPreferences();
-    });
+      this.subscription = NamespaceStore.subscribe(() => {
+        this.params.namespace = NamespaceStore.getState().selectedNamespace;
+        this.getSpecifiedPreferences();
+        this.getInheritedPreferences();
+      });
+    }
 
     this.apiSubscriptions = [];
     this.onKeyValueChange = this.onKeyValueChange.bind(this);
@@ -83,7 +90,9 @@ export default class SetPreferenceModal extends Component {
   }
 
   componentWillUnmount() {
-    this.subscription();
+    if (this.subscription) {
+      this.subscription();
+    }
     this.apiSubscriptions.forEach(apiSubscription => apiSubscription.dispose());
   }
 
@@ -128,6 +137,9 @@ export default class SetPreferenceModal extends Component {
   }
 
   getInheritedPreferences() {
+    if (!this.getInheritedPreferencesApi) {
+      return;
+    }
     this.apiSubscriptions.push(
       this.getInheritedPreferencesApi(this.params)
         .subscribe(
@@ -153,8 +165,11 @@ export default class SetPreferenceModal extends Component {
       this.setPreferencesApi(this.params, this.getKeyValObject())
         .subscribe(
           () => {
-            this.props.onPreferencesSaved();
+            if (this.props.onPreferencesSaved) {
+              this.props.onPreferencesSaved();
+            }
             this.props.toggleModal();
+            this.setState({saving: false});
           },
           (error) => {
             this.setState({
@@ -226,33 +241,37 @@ export default class SetPreferenceModal extends Component {
 
   renderSpecifyPreferences() {
     const actionLabel = T.translate('features.FastAction.setPreferencesActionLabel');
-    let entity = "Namespace " + this.params.namespace;
-    if (this.props.entity) {
-      entity = upperFirst(this.props.entity.type) + " " + this.props.entity.id;
+    let entity, description;
+    if (this.setAtSystemLevel) {
+      entity = 'CDAP';
+      description = T.translate('features.FastAction.setPreferencesDescriptionLabel.system');
+    } else {
+      entity = `Namespace ${this.params.namespace}`;
+      description = T.translate('features.FastAction.setPreferencesDescriptionLabel.namespace');
+      if (this.props.entity) {
+        entity = `${upperFirst(this.props.entity.type)} ${this.props.entity.id}`;
+        if (this.props.entity.type === 'application') {
+          description = T.translate('features.FastAction.setPreferencesDescriptionLabel.app');
+        } else {
+          description = T.translate('features.FastAction.setPreferencesDescriptionLabel.program');
+        }
+      }
     }
     const title = `${actionLabel} for ${entity}`;
     const keyLabel = T.translate('features.FastAction.setPreferencesColumnLabel.key');
     const valueLabel = T.translate('features.FastAction.setPreferencesColumnLabel.value');
-    let description = T.translate('features.FastAction.setPreferencesDescriptionLabel.namespace');
-    if (this.props.entity) {
-      if (this.props.entity.type === 'application') {
-        description = T.translate('features.FastAction.setPreferencesDescriptionLabel.app');
-      } else {
-        description = T.translate('features.FastAction.setPreferencesDescriptionLabel.program');
-      }
-    }
     return (
       <div>
-        <div className='specify-preferences-description'>
+        <div className="specify-preferences-description">
           <h4>{title}</h4>
           <p>{description}</p>
         </div>
-        <div className='specify-preferences-list'>
-          <div className='specify-preferences-labels'>
-            <span className='key-label'>{keyLabel}</span>
-            <span className='value-label'>{valueLabel}</span>
+        <div className="specify-preferences-list">
+          <div className="specify-preferences-labels">
+            <span className="key-label">{keyLabel}</span>
+            <span className="value-label">{valueLabel}</span>
           </div>
-          <div className='specify-preferences-values'>
+          <div className="specify-preferences-values">
             {
               !isEmpty(this.state.keyValues) ?
                 (
@@ -268,7 +287,6 @@ export default class SetPreferenceModal extends Component {
                 )
             }
           </div>
-
         </div>
       </div>
     );
@@ -279,19 +297,19 @@ export default class SetPreferenceModal extends Component {
     return (
       <th>
         <span
-          className='toggleable-columns'
+          className="toggleable-columns"
           onClick={this.toggleSorted.bind(this, columnToAttribute)}
         >
           {
             this.state.sortByAttribute === columnToAttribute ?
               <span>
-                <span className='text-underline'>{column}</span>
+                <span className="text-underline">{column}</span>
                 <span>
                   {
                     this.state.sortOrder === 'asc' ?
-                      <i className='fa fa-caret-down fa-lg'></i>
+                      <i className="fa fa-caret-down fa-lg"></i>
                     :
-                      <i className='fa fa-caret-up fa-lg'></i>
+                      <i className="fa fa-caret-up fa-lg"></i>
                   }
                 </span>
               </span>
@@ -304,6 +322,9 @@ export default class SetPreferenceModal extends Component {
   }
 
   renderInheritedPreferences() {
+    if (!this.getInheritedPreferencesApi) {
+      return null;
+    }
     const titleLabel = T.translate('features.FastAction.setPreferencesInheritedPrefsLabel');
     const keyLabel = T.translate('features.FastAction.setPreferencesColumnLabel.key');
     const valueLabel = T.translate('features.FastAction.setPreferencesColumnLabel.value');
@@ -311,10 +332,10 @@ export default class SetPreferenceModal extends Component {
     let numInheritedPreferences = this.state.inheritedPreferences.length;
     return (
       <div>
-        <div className='inherited-preferences-label'>
+        <div className="inherited-preferences-label">
           <h4>{titleLabel} ({numInheritedPreferences})</h4>
         </div>
-        <div className='inherited-preferences-list'>
+        <div className="inherited-preferences-list">
         {
            numInheritedPreferences ?
             <div>
@@ -423,7 +444,12 @@ export default class SetPreferenceModal extends Component {
                 }
               </div>
             </div>
-            <hr />
+            {
+              !this.setAtSystemLevel ?
+                <hr />
+              :
+                null
+            }
             <div className="inherited-preferences-container">
               {this.renderInheritedPreferences()}
             </div>
@@ -445,10 +471,12 @@ SetPreferenceModal.propTypes = {
   isOpen: PropTypes.func.isRequired,
   toggleModal: PropTypes.func.isRequired,
   setAtNamespaceLevel: PropTypes.bool,
+  setAtSystemLevel: PropTypes.bool,
   onPreferencesSaved: PropTypes.func
 };
 
 SetPreferenceModal.defaultProps = {
   setAtNamespaceLevel: false,
+  setAtSystemLevel: false,
   onPreferencesSaved: () => {}
 };
