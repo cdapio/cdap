@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.replication.hbase10cdh550;
+package co.cask.cdap.data2.replication;
 
 import co.cask.cdap.replication.ReplicationConstants;
 import co.cask.cdap.replication.StatusUtils;
@@ -37,7 +37,7 @@ import java.util.List;
  * For each region the writeTime from the last WAL Entry replicated is updated to the REPLICATION_STATE table.
  */
 public class LastReplicateTimeObserver extends BaseRegionServerObserver {
-  private HBase10CDH550TableUpdater hBase10CDH550TableUpdater = null;
+  private HBase10TableUpdater hBase10TableUpdater = null;
   private static final Logger LOG = LoggerFactory.getLogger(LastReplicateTimeObserver.class);
 
   @Override
@@ -45,15 +45,14 @@ public class LastReplicateTimeObserver extends BaseRegionServerObserver {
     LOG.info("LastReplicateTimeObserver Start received.");
     String tableName = StatusUtils.getReplicationStateTableName(env.getConfiguration());
     HTableInterface htableInterface = env.getTable(TableName.valueOf(tableName));
-    hBase10CDH550TableUpdater =
-      new HBase10CDH550TableUpdater(ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE,
-                                    env.getConfiguration(), htableInterface);
+    hBase10TableUpdater = new HBase10TableUpdater(ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE,
+                                                  env.getConfiguration(), htableInterface);
   }
 
   @Override
   public void stop(CoprocessorEnvironment env) throws IOException {
     LOG.info("LastReplicateTimeObserver Stop received.");
-    hBase10CDH550TableUpdater.cancelTimer();
+    hBase10TableUpdater.cancelTimer();
   }
 
   @Override
@@ -64,9 +63,8 @@ public class LastReplicateTimeObserver extends BaseRegionServerObserver {
                 entry.getKey().getTableName().toStringUtf8(),
                 entry.getKey().getWriteTime(),
                 entry.getKey().getEncodedRegionName().toStringUtf8());
-      hBase10CDH550TableUpdater.updateTime(entry.getKey().getEncodedRegionName().toStringUtf8(),
-                                           entry.getKey().getWriteTime());
+      hBase10TableUpdater.updateTime(entry.getKey().getEncodedRegionName().toStringUtf8(),
+                                     entry.getKey().getWriteTime());
     }
   }
 }
-
