@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,11 +29,14 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.io.Files;
+import org.apache.http.HttpResponse;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -71,7 +74,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
     try {
       applicationLifecycleService.deployAppAndArtifact(NamespaceId.DEFAULT, "appName", artifactId, appJarFile, null,
-                                                       new ProgramTerminator() {
+                                                       null, new ProgramTerminator() {
           @Override
           public void stop(ProgramId programId) throws Exception {
             // no-op
@@ -111,5 +114,29 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     stopProgram(wordcountFlow1.toId());
     waitState(wordcountFlow1.toId(), "STOPPED");
     deleteApp(testNSAppId.toId(), 200);
+  }
+
+  /**
+   * Some tests for owner information storage/propagation during app deployment.
+   * More tests at handler level {@link co.cask.cdap.internal.app.services.http.handlers.AppLifecycleHttpHandlerTest}
+   */
+  @Test
+  public void testOwner() throws Exception {
+    KerberosPrincipalId ownerPrincipal = new KerberosPrincipalId("alice/somehost.net@somekdc.net");
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1,
+                                   ownerPrincipal);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    // trying to redeploy the same app as a different owner should fail
+    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1,
+                      new KerberosPrincipalId("bob/somehost.net@somekdc.net"));
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(),
+                        response.getStatusLine().getStatusCode());
+
+    // although trying to re-deploy the app with same owner should work
+    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1,
+                      ownerPrincipal);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
   }
 }

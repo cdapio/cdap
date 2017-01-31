@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,9 @@ import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.gson.annotations.SerializedName;
 import org.apache.twill.filesystem.Location;
 
 import javax.annotation.Nullable;
@@ -38,10 +40,18 @@ public class AppDeploymentInfo {
   private final String appName;
   private final String appVersion;
   private final String configString;
+  @SerializedName("owner.principal")
+  private final KerberosPrincipalId ownerPrincipal;
 
   public AppDeploymentInfo(ArtifactDescriptor artifactDescriptor, NamespaceId namespaceId,
                            String appClassName, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString) {
+    this(artifactDescriptor, namespaceId, appClassName, appName, appVersion, configString, null);
+  }
+
+  public AppDeploymentInfo(ArtifactDescriptor artifactDescriptor, NamespaceId namespaceId,
+                           String appClassName, @Nullable String appName, @Nullable String appVersion,
+                           @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal) {
     this.artifactId = Artifacts.toArtifactId(namespaceId, artifactDescriptor.getArtifactId());
     this.artifactLocation = artifactDescriptor.getLocation();
     this.namespaceId = namespaceId;
@@ -49,6 +59,7 @@ public class AppDeploymentInfo {
     this.appName = appName;
     this.appVersion = appVersion;
     this.configString = configString;
+    this.ownerPrincipal = ownerPrincipal;
   }
 
   /**
@@ -101,5 +112,13 @@ public class AppDeploymentInfo {
   @Nullable
   public String getConfigString() {
     return configString;
+  }
+
+  /**
+   * @return the principal of the application owner
+   */
+  @Nullable
+  public KerberosPrincipalId getOwnerPrincipal() {
+    return ownerPrincipal;
   }
 }

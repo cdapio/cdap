@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,10 +23,13 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
+import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Represents an application returned for /apps/{app-id}.
@@ -42,6 +45,8 @@ public class ApplicationDetail {
   private final List<ProgramRecord> programs;
   private final List<PluginDetail> plugins;
   private final ArtifactSummary artifact;
+  @SerializedName("owner.principal")
+  private final KerberosPrincipalId ownerPrincipal;
 
   public ApplicationDetail(String name,
                            String description,
@@ -52,7 +57,20 @@ public class ApplicationDetail {
                            List<PluginDetail> plugins,
                            ArtifactSummary artifact) {
     this(name, ApplicationId.DEFAULT_VERSION, description, configuration, streams, datasets, programs,
-         plugins, artifact);
+         plugins, artifact, null);
+  }
+
+  public ApplicationDetail(String name,
+                           String description,
+                           String configuration,
+                           List<StreamDetail> streams,
+                           List<DatasetDetail> datasets,
+                           List<ProgramRecord> programs,
+                           List<PluginDetail> plugins,
+                           ArtifactSummary artifact,
+                           @Nullable KerberosPrincipalId ownerPrincipal) {
+    this(name, ApplicationId.DEFAULT_VERSION, description, configuration, streams, datasets, programs,
+         plugins, artifact, ownerPrincipal);
   }
 
   public ApplicationDetail(String name,
@@ -63,7 +81,7 @@ public class ApplicationDetail {
                            List<DatasetDetail> datasets,
                            List<ProgramRecord> programs,
                            List<PluginDetail> plugins,
-                           ArtifactSummary artifact) {
+                           ArtifactSummary artifact, @Nullable KerberosPrincipalId ownerPrincipal) {
     this.name = name;
     this.appVersion = appVersion;
     this.artifactVersion = artifact.getVersion();
@@ -74,6 +92,7 @@ public class ApplicationDetail {
     this.programs = programs;
     this.plugins = plugins;
     this.artifact = artifact;
+    this.ownerPrincipal = ownerPrincipal;
   }
 
   public String getName() {
@@ -117,7 +136,13 @@ public class ApplicationDetail {
     return artifact;
   }
 
-  public static ApplicationDetail fromSpec(ApplicationSpecification spec) {
+  @Nullable
+  public KerberosPrincipalId getOwnerPrincipal() {
+    return ownerPrincipal;
+  }
+
+  public static ApplicationDetail fromSpec(ApplicationSpecification spec,
+                                           @Nullable KerberosPrincipalId ownerPrincipal) {
     List<ProgramRecord> programs = new ArrayList<>();
     for (ProgramSpecification programSpec : spec.getFlows().values()) {
       programs.add(new ProgramRecord(ProgramType.FLOW, spec.getName(),
@@ -166,6 +191,6 @@ public class ApplicationDetail {
     ArtifactSummary summary = spec.getArtifactId() == null ?
       new ArtifactSummary(spec.getName(), null) : ArtifactSummary.from(spec.getArtifactId());
     return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(), spec.getConfiguration(),
-                                 streams, datasets, programs, plugins, summary);
+                                 streams, datasets, programs, plugins, summary, ownerPrincipal);
   }
 }

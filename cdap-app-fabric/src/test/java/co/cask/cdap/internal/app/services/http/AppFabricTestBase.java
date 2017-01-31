@@ -23,6 +23,9 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.StreamNotFoundException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
@@ -39,17 +42,24 @@ import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
+import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -403,7 +413,13 @@ public abstract class AppFabricTestBase {
 
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion,
                                 @Nullable String namespace) throws Exception {
-    return deploy(application, apiVersion, namespace, null, null);
+    return deploy(application, apiVersion, namespace, null, null, null);
+  }
+
+  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion,
+                                @Nullable String namespace,
+                                @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
+    return deploy(application, apiVersion, namespace, null, null, ownerPrincipal);
   }
 
   protected HttpResponse deploy(Id.Application appId,
@@ -433,7 +449,8 @@ public abstract class AppFabricTestBase {
    * Deploys an application with (optionally) a defined app name and app version
    */
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                @Nullable String artifactVersion, @Nullable Config appConfig) throws Exception {
+                                @Nullable String artifactVersion, @Nullable Config appConfig,
+                                @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
     namespace = namespace == null ? Id.Namespace.DEFAULT.getId() : namespace;
     apiVersion = apiVersion == null ? Constants.Gateway.API_VERSION_3_TOKEN : apiVersion;
     artifactVersion = artifactVersion == null ? String.format("1.0.%d", System.currentTimeMillis()) : artifactVersion;
@@ -455,9 +472,13 @@ public abstract class AppFabricTestBase {
     String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);
     request = getPost(versionedApiPath);
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setHeader("X-Archive-Name", String.format("%s-%s.jar", application.getSimpleName(), artifactVersion));
+    request.setHeader(AbstractAppFabricHttpHandler.ARCHIVE_NAME_HEADER,
+                      String.format("%s-%s.jar", application.getSimpleName(), artifactVersion));
     if (appConfig != null) {
-      request.setHeader("X-App-Config", GSON.toJson(appConfig));
+      request.setHeader(AbstractAppFabricHttpHandler.APP_CONFIG_HEADER, GSON.toJson(appConfig));
+    }
+    if (ownerPrincipal != null) {
+      request.setHeader(AbstractAppFabricHttpHandler.OWNER_PRINCIPAL_HEADER, GSON.toJson(ownerPrincipal));
     }
     request.setEntity(new FileEntity(artifactJar));
     return execute(request);
@@ -910,6 +931,16 @@ public abstract class AppFabricTestBase {
     File destination = new File(tmpFolder.newFolder(), name);
     Files.copy(Locations.newInputSupplier(appJar), destination);
     return destination;
+  }
+
+  protected DatasetMeta getDatasetMeta (DatasetId datasetId)
+    throws UnauthorizedException, UnauthenticatedException, NotFoundException, IOException {
+    return datasetClient.get(datasetId);
+  }
+
+  protected StreamProperties getStreamConfig(StreamId streamId)
+    throws StreamNotFoundException, UnauthenticatedException, UnauthorizedException, IOException {
+    return streamClient.getConfig(streamId);
   }
 
   private static ClientConfig getClientConfig(DiscoveryServiceClient discoveryClient, String service) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
@@ -25,12 +26,19 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.reflect.TypeToken;
+
+import java.io.IOException;
+import java.util.Collection;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -39,18 +47,39 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
 
   private final Store store;
   private final UsageRegistry usageRegistry;
+  private final OwnerAdmin ownerAdmin;
 
-  public ApplicationRegistrationStage(Store store, UsageRegistry usageRegistry) {
+  public ApplicationRegistrationStage(Store store, UsageRegistry usageRegistry, OwnerAdmin ownerAdmin) {
     super(TypeToken.of(ApplicationWithPrograms.class));
     this.store = store;
     this.usageRegistry = usageRegistry;
+    this.ownerAdmin = ownerAdmin;
   }
 
   @Override
   public void process(ApplicationWithPrograms input) throws Exception {
+    Collection<ApplicationId> allAppVersionsAppIds = store.getAllAppVersionsAppIds(input.getApplicationId());
+    // if allAppVersionsAppIds.isEmpty() is true that means this app is an entirely new app and no other version
+    // exists so we should add the owner information in owner store if one was provided
+    if (allAppVersionsAppIds.isEmpty() && input.getOwnerPrincipal() != null) {
+      addOwner(input.getApplicationId(), input.getOwnerPrincipal());
+    }
+
     store.addApplication(input.getApplicationId(), input.getSpecification());
     registerDatasets(input);
     emit(input);
+  }
+
+  /**
+   * Adds the application owner information to the owner store
+   */
+  private void addOwner(ApplicationId entityId,
+                        @Nullable KerberosPrincipalId specifiedOwnerPrincipal) throws DatasetManagementException {
+    try {
+      ownerAdmin.add(entityId, specifiedOwnerPrincipal);
+    } catch (IOException | AlreadyExistsException e) {
+      throw new DatasetManagementException(e.getMessage(), e);
+    }
   }
 
   // Register dataset usage, based upon the program specifications.

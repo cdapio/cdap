@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -145,6 +146,13 @@ public class PreviewDatasetFramework implements DatasetFramework {
   public void addInstance(String datasetTypeName, DatasetId datasetInstanceId,
                           DatasetProperties props) throws DatasetManagementException, IOException {
     localDatasetFramework.addInstance(datasetTypeName, datasetInstanceId, props);
+  }
+
+  @Override
+  public void addInstance(String datasetTypeName, DatasetId datasetInstanceId,
+                          DatasetProperties props,
+                          @Nullable KerberosPrincipalId ownerPrincipal) throws DatasetManagementException, IOException {
+    throw new UnsupportedOperationException("Creating dataset instance with owner is not supported");
   }
 
   @Override

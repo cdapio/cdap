@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ import co.cask.cdap.data2.dataset2.ForwardingProgramContextAwareDatasetFramework
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import com.google.common.base.Function;
 
 import java.io.IOException;
@@ -90,7 +91,14 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
   @Override
   public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props)
     throws IOException, DatasetManagementException {
-    super.addInstance(datasetTypeName, getMappedDatasetInstance(datasetInstanceId), props);
+    addInstance(datasetTypeName, datasetInstanceId, props, null);
+  }
+
+  @Override
+  public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props,
+                          @Nullable KerberosPrincipalId ownerPrincipal)
+    throws IOException, DatasetManagementException {
+    super.addInstance(datasetTypeName, getMappedDatasetInstance(datasetInstanceId), props, ownerPrincipal);
   }
 
   @Override
