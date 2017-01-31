@@ -19,12 +19,14 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.security.ImpersonationUtils;
 import co.cask.cdap.common.security.Impersonator;
@@ -336,7 +338,7 @@ public class FileStreamAdmin implements StreamAdmin {
   public StreamProperties getProperties(StreamId streamId) throws Exception {
     // User should have any access on the stream to read its properties
     ensureAccess(streamId);
-    KerberosPrincipalId ownerPrincipal = ownerAdmin.getOwner(streamId);
+    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(streamId);
     StreamConfig config = getConfig(streamId);
     StreamSpecification spec = streamMetaStore.getStream(streamId);
     return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB(),
@@ -348,6 +350,15 @@ public class FileStreamAdmin implements StreamAdmin {
     Location streamLocation;
     // User should have admin access on the stream to update its configuration
     ensureAccess(streamId, Action.ADMIN);
+
+    // if an owner principal was provided make sure kerberos is enabled
+    if (properties.getOwnerPrincipal() != null && !SecurityUtil.isKerberosEnabled(cConf)) {
+      throw new BadRequestException(String.format("Kerberos is not enabled and a principal %s was given. " +
+                                                    "Please try again without a principal.",
+                                                  properties.getOwnerPrincipal()));
+    }
+    verifyOwner(streamId, properties.getOwnerPrincipal());
+
     streamLocation = impersonator.doAs(streamId.getParent(), new Callable<Location>() {
       @Override
       public Location call() throws Exception {
@@ -356,9 +367,6 @@ public class FileStreamAdmin implements StreamAdmin {
     });
 
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamId);
-    boolean equals = Objects.equals(properties.getOwnerPrincipal(), ownerAdmin.getOwner(streamId));
-    Preconditions.checkArgument(equals,
-                                String.format("Updating %s is not supported.", Constants.Security.OWNER_PRINCIPAL));
 
     streamCoordinatorClient.updateProperties(
       streamId, new Callable<CoordinatorStreamProperties>() {
@@ -421,17 +429,26 @@ public class FileStreamAdmin implements StreamAdmin {
     privilegesManager.revoke(streamId);
     final Properties properties = (props == null) ? new Properties() : props;
     try {
+      // If owner principal was specified then check if kerberos is enabled as the first thing
+      String ownerPrincipal = properties.containsKey(Constants.Security.PRINCIPAL) ?
+        properties.getProperty(Constants.Security.PRINCIPAL) : null;
+      if (ownerPrincipal != null && !SecurityUtil.isKerberosEnabled(cConf)) {
+        throw new BadRequestException(String.format("Kerberos is not enabled to create %s with principal %s. " +
+                                                      "Please enable kerberos or try again without principal.",
+                                                    streamId, ownerPrincipal));
+      }
+
       // Grant All access to the stream created to the User
       privilegesManager.grant(streamId, authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
 
-      KerberosPrincipalId ownerPrincipal = null;
-      if (properties.containsKey(Constants.Security.OWNER_PRINCIPAL)) {
-        ownerPrincipal = GSON.fromJson(properties.getProperty(Constants.Security.OWNER_PRINCIPAL),
-                                       KerberosPrincipalId.class);
-      }
-      // If an owner was provided then store it in owner store first so that we can use it for impersonation below
-      if (ownerPrincipal != null) {
-        ownerAdmin.add(streamId, ownerPrincipal);
+      if (exists(streamId)) {
+        // if stream exists then make sure owner for this create request is same.
+        verifyOwner(streamId, ownerPrincipal);
+      } else {
+        // if the stream didn't exist then add the owner information
+        if (ownerPrincipal != null) {
+          ownerAdmin.add(streamId, new KerberosPrincipalId(ownerPrincipal));
+        }
       }
 
       final UserGroupInformation ugi = impersonator.getUGI(streamNamespace);
@@ -840,5 +857,11 @@ public class FileStreamAdmin implements StreamAdmin {
     if (!filter.apply(entityId)) {
       throw new UnauthorizedException(principal, entityId);
     }
+  }
+
+  private void verifyOwner(StreamId streamId, @Nullable String specifiedOwnerPrincipal) throws IOException {
+    boolean equals = Objects.equals(specifiedOwnerPrincipal, ownerAdmin.getOwnerPrincipal(streamId));
+    Preconditions.checkArgument(equals,
+                                String.format("Updating %s is not supported.", Constants.Security.PRINCIPAL));
   }
 }

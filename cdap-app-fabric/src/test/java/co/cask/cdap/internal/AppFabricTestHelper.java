@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,6 +58,7 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
@@ -171,9 +172,15 @@ public class AppFabricTestHelper {
 
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
                                        @Nullable String config, CConfiguration cConf) throws Exception {
+    deployApplication(namespace, applicationClz, config, null, cConf);
+  }
+
+  public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
+                                       @Nullable String config, @Nullable KerberosPrincipalId ownerPrincipal,
+                                       CConfiguration cConf) throws Exception {
     ensureNamespaceExists(namespace.toEntityId(), cConf);
     AppFabricClient appFabricClient = getInjector(cConf).getInstance(AppFabricClient.class);
-    Location deployedJar = appFabricClient.deployApplication(namespace, applicationClz, config);
+    Location deployedJar = appFabricClient.deployApplication(namespace, applicationClz, config, ownerPrincipal);
     deployedJar.delete(true);
   }
 

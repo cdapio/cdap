@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,6 +40,7 @@ import co.cask.cdap.common.CannotBeDeletedException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
@@ -66,6 +67,7 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
@@ -76,6 +78,7 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -97,6 +100,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -124,6 +128,7 @@ ApplicationLifecycleService extends AbstractIdleService {
   private final UsageRegistry usageRegistry;
   private final PreferencesStore preferencesStore;
   private final MetricStore metricStore;
+  private final OwnerAdmin ownerAdmin;
   private final ArtifactRepository artifactRepository;
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
   private final MetadataStore metadataStore;
@@ -137,7 +142,7 @@ ApplicationLifecycleService extends AbstractIdleService {
   ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store,
                               Scheduler scheduler, QueueAdmin queueAdmin,
                               StreamConsumerFactory streamConsumerFactory, UsageRegistry usageRegistry,
-                              PreferencesStore preferencesStore, MetricStore metricStore,
+                              PreferencesStore preferencesStore, MetricStore metricStore, OwnerAdmin ownerAdmin,
                               ArtifactRepository artifactRepository,
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                               MetadataStore metadataStore, PrivilegesManager privilegesManager,
@@ -154,6 +159,7 @@ ApplicationLifecycleService extends AbstractIdleService {
     this.artifactRepository = artifactRepository;
     this.managerFactory = managerFactory;
     this.metadataStore = metadataStore;
+    this.ownerAdmin = ownerAdmin;
     this.privilegesManager = privilegesManager;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
@@ -243,10 +249,11 @@ ApplicationLifecycleService extends AbstractIdleService {
       throw new ApplicationNotFoundException(appId);
     }
     ensureAccess(appId);
-    return ApplicationDetail.fromSpec(appSpec);
+    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
+    return ApplicationDetail.fromSpec(appSpec, ownerPrincipal);
   }
 
-  public Collection<String> getAppVerions(String namespace, String application) throws Exception {
+  public Collection<String> getAppVersions(String namespace, String application) throws Exception {
     Collection<ApplicationId> appIds = store.getAllAppVersionsAppIds(new ApplicationId(namespace, application));
     List<String> versions = new ArrayList<>();
     for (ApplicationId appId : appIds) {
@@ -327,6 +334,11 @@ ApplicationLifecycleService extends AbstractIdleService {
       newArtifactId = new ArtifactId(currentArtifact.getName(), requestedVersion, currentArtifact.getScope());
     }
 
+    // ownerAdmin.getOwner will give the owner of application irrespective of the version
+    boolean equals = Objects.equals(ownerAdmin.getOwnerPrincipal(appId), appRequest.getOwnerPrincipal());
+    Preconditions.checkArgument(equals,
+                                String.format("Updating %s is not supported.", Constants.Security.PRINCIPAL));
+
     Object requestedConfigObj = appRequest.getConfig();
     // if config is null, use the previous config. Shouldn't use a static GSON since the request Config object can
     // be a user class, otherwise there will be ClassLoader leakage.
@@ -357,11 +369,12 @@ ApplicationLifecycleService extends AbstractIdleService {
   public ApplicationWithPrograms deployAppAndArtifact(NamespaceId namespace, @Nullable String appName,
                                                       Id.Artifact artifactId, File jarFile,
                                                       @Nullable String configStr,
+                                                      @Nullable KerberosPrincipalId ownerPrincipal,
                                                       ProgramTerminator programTerminator) throws Exception {
 
     ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, jarFile);
     try {
-      return deployApp(namespace, appName, null, configStr, programTerminator, artifactDetail);
+      return deployApp(namespace, appName, null, configStr, programTerminator, artifactDetail, ownerPrincipal);
     } catch (Exception e) {
       // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
       // to the state we were in before this call.
@@ -399,8 +412,16 @@ ApplicationLifecycleService extends AbstractIdleService {
                                            Id.Artifact artifactId,
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator) throws Exception {
+    return deployApp(namespace, appName, appVersion, artifactId, configStr, programTerminator, null);
+  }
+
+  public ApplicationWithPrograms deployApp(NamespaceId namespace, @Nullable String appName, @Nullable String appVersion,
+                                           Id.Artifact artifactId,
+                                           @Nullable String configStr,
+                                           ProgramTerminator programTerminator,
+                                           @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
-    return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail);
+    return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail, ownerPrincipal);
   }
 
   /**
@@ -563,7 +584,8 @@ ApplicationLifecycleService extends AbstractIdleService {
                                             @Nullable String appVersion,
                                             @Nullable String configStr,
                                             ProgramTerminator programTerminator,
-                                            ArtifactDetail artifactDetail) throws Exception {
+                                            ArtifactDetail artifactDetail,
+                                            @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
     // Enforce that the current principal has write access to the namespace the app is being deployed to
     authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.WRITE);
 
@@ -575,7 +597,8 @@ ApplicationLifecycleService extends AbstractIdleService {
 
     // deploy application with newly added artifact
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), namespaceId,
-                                                             appClass.getClassName(), appName, appVersion, configStr);
+                                                             appClass.getClassName(), appName, appVersion, configStr,
+                                                             ownerPrincipal);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
@@ -649,6 +672,12 @@ ApplicationLifecycleService extends AbstractIdleService {
     deleteRouteConfig(appId, appSpec);
     store.deleteWorkflowStats(appId);
     store.removeApplication(appId);
+    try {
+      ownerAdmin.delete(appId);
+    } catch (Exception e) {
+      LOG.warn("Failed to delete app owner principal for application {} if one existed while deleting the " +
+                 "application.", appId);
+    }
 
     try {
       usageRegistry.unregister(appId);

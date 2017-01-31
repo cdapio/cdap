@@ -33,7 +33,6 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -193,19 +192,18 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
     // should not be able to create a dataset with invalid kerberos principal format
     HttpResponse response = createInstance(NamespaceId.DEFAULT.dataset("ownedDataset"), "datasetType1", null,
-                                           DatasetProperties.EMPTY,
-                                           new KerberosPrincipalId("alice/bob/somehost.net@somekdc.net"));
+                                           DatasetProperties.EMPTY, "alice/bob/somehost.net@somekdc.net");
     Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getResponseCode());
 
     // should be able to create a dataset with valid kerberos principal format
-    KerberosPrincipalId alicePrincipal = new KerberosPrincipalId("alice/somehost.net@somekdc.net");
+    String alicePrincipal = "alice/somehost.net@somekdc.net";
     response = createInstance(NamespaceId.DEFAULT.dataset("ownedDataset"), "datasetType1", null,
                               DatasetProperties.EMPTY,
                               alicePrincipal);
     Assert.assertEquals(HttpStatus.SC_OK, response.getResponseCode());
 
     // owner information should have stored
-    Assert.assertEquals(alicePrincipal, ownerAdmin.getOwner(NamespaceId.DEFAULT.dataset("ownedDataset")));
+    Assert.assertEquals(alicePrincipal, ownerAdmin.getOwnerPrincipal(NamespaceId.DEFAULT.dataset("ownedDataset")));
 
     // should be able to retrieve owner information back
     DatasetMeta meta = getInstanceObject("ownedDataset").getResponseObject();
@@ -415,7 +413,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private HttpResponse createInstance(DatasetId instance, String typeName, @Nullable String description,
                                       @Nullable DatasetProperties props,
-                                      @Nullable KerberosPrincipalId ownerPrincipal) throws IOException {
+                                      @Nullable String ownerPrincipal) throws IOException {
     DatasetInstanceConfiguration creationProperties;
     if (props != null) {
       creationProperties = new DatasetInstanceConfiguration(typeName, props.getProperties(), description,

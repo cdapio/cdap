@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.app.preview;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -49,6 +50,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   private final PipelineFactory pipelineFactory;
   private final CConfiguration cConf;
   private final Store store;
+  private final OwnerAdmin ownerAdmin;
   private final DatasetFramework datasetFramework;
   private final DatasetFramework inMemoryDatasetFramework;
   private final UsageRegistry usageRegistry;
@@ -59,7 +61,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
 
   @Inject
   PreviewApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
-                            Store store, DatasetFramework datasetFramework,
+                            Store store, OwnerAdmin ownerAdmin, DatasetFramework datasetFramework,
                             @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                             UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
                             PrivilegesManager privilegesManager,
@@ -74,18 +76,19 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
     this.impersonator = impersonator;
     this.privilegesManager = privilegesManager;
     this.authenticationContext = authenticationContext;
+    this.ownerAdmin = ownerAdmin;
   }
 
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, artifactRepository, impersonator));
-    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework));
+    pipeline.addLast(new ApplicationVerificationStage(cConf, store, datasetFramework, ownerAdmin));
     pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework,
                                                    inMemoryDatasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework));
     pipeline.addLast(new ProgramGenerationStage(privilegesManager, authenticationContext));
-    pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry));
+    pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
     pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);
   }
