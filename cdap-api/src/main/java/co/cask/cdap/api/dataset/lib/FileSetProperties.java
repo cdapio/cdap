@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.ExploreProperties;
 
 import java.util.Collections;
@@ -108,6 +109,23 @@ public class FileSetProperties {
    * Prefix used to store additional table properties for Hive.
    */
   public static final String PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX = "explore.table.property.";
+
+  /**
+   * The permissions for the dataset. The value for this property must be given either as a
+   * 9-character String such as "rwxr-x---" or as an octal-base number such as 750. Permissions
+   * will be applied by each dataset depending on the access control paradigm of the storage
+   * engine.
+   */
+  @Beta
+  public static final String PROPERTY_FILES_PERMISSIONS = "dataset.files.permissions";
+
+  /**
+   * The group name that the permission are assigned to. For file-based datasets, this group
+   * name is used as the group for created files and directories; for table-based datasets,
+   * group privileges will be granted to this group.
+   */
+  @Beta
+  public static final String PROPERTY_FILES_GROUP = "dataset.files.group";
 
   public static Builder builder() {
     return new Builder();
@@ -225,6 +243,22 @@ public class FileSetProperties {
    */
   public static String getExploreOutputFormat(Map<String, String> properties) {
     return properties.get(PROPERTY_EXPLORE_OUTPUT_FORMAT);
+  }
+
+  /**
+   * @return the default permissions for files and directories
+   */
+  @Beta
+  public static String getPermissions(Map<String, String> properties) {
+    return properties.get(PROPERTY_FILES_PERMISSIONS);
+  }
+
+  /**
+   * @return the name of the group for files and directories
+   */
+  @Beta
+  public static String getGroup(Map<String, String> properties) {
+    return properties.get(PROPERTY_FILES_GROUP);
   }
 
   /**
@@ -436,6 +470,24 @@ public class FileSetProperties {
      */
     public Builder setTableProperty(String name, String value) {
       add(PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX + name, value);
+      return this;
+    }
+
+    /**
+     * Set the default permissions for files and directories
+     */
+    @Beta
+    public Builder setPermissions(String permissions) {
+      add(PROPERTY_FILES_PERMISSIONS, permissions);
+      return this;
+    }
+
+    /**
+     * Set the name of the group for files and directories
+     */
+    @Beta
+    public Builder setGroup(String group) {
+      add(PROPERTY_FILES_GROUP, group);
       return this;
     }
   }

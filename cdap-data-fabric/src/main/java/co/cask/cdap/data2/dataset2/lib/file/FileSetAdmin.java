@@ -18,7 +18,6 @@ package co.cask.cdap.data2.dataset2.lib.file;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
@@ -92,8 +91,8 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
         throw new IOException(String.format(
           "Base location for file set '%s' at %s already exists", spec.getName(), baseLocation));
       }
-      String permissions = spec.getProperties().get(DatasetProperties.PROPERTY_PERMISSIONS);
-      String group = spec.getProperties().get(DatasetProperties.PROPERTY_PERMISSIONS_GROUP);
+      String permissions = FileSetProperties.getPermissions(spec.getProperties());
+      String group = FileSetProperties.getGroup(spec.getProperties());
       group = group != null ? group : UserGroupInformation.getCurrentUser().getPrimaryGroupName();
 
       // we can't simply mkdirs() the base location, because we need to set the group id on

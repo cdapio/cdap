@@ -27,21 +27,6 @@ import javax.annotation.Nullable;
 public final class DatasetProperties {
 
   /**
-   * The permissions for the dataset. The value for this property must be given either as a
-   * 9-character String such as "rwxr-x---" or as an octal-base number such as 750. Permissions
-   * will be applied by each dataset depending on the access control paradigm of the storage
-   * engine.
-   */
-  public static final String PROPERTY_PERMISSIONS = "dataset.permissions";
-
-  /**
-   * The group name that the permission are assigned to. For file-based datasets, this group
-   * name is used as the group for created files and directories; for table-based datasets,
-   * group privileges will be granted to this group.
-   */
-  public static final String PROPERTY_PERMISSIONS_GROUP = "dataset.permissions.group";
-
-  /**
    * Empty properties.
    */
   public static final DatasetProperties EMPTY = builder().build();
