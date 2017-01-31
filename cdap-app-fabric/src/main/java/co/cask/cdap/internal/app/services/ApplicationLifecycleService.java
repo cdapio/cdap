@@ -253,7 +253,7 @@ ApplicationLifecycleService extends AbstractIdleService {
     return ApplicationDetail.fromSpec(appSpec, ownerPrincipal);
   }
 
-  public Collection<String> getAppVerions(String namespace, String application) throws Exception {
+  public Collection<String> getAppVersions(String namespace, String application) throws Exception {
     Collection<ApplicationId> appIds = store.getAllAppVersionsAppIds(new ApplicationId(namespace, application));
     List<String> versions = new ArrayList<>();
     for (ApplicationId appId : appIds) {

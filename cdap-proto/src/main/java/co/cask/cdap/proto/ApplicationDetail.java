@@ -81,7 +81,8 @@ public class ApplicationDetail {
                            List<DatasetDetail> datasets,
                            List<ProgramRecord> programs,
                            List<PluginDetail> plugins,
-                           ArtifactSummary artifact, @Nullable KerberosPrincipalId ownerPrincipal) {
+                           ArtifactSummary artifact,
+                           @Nullable KerberosPrincipalId ownerPrincipal) {
     this.name = name;
     this.appVersion = appVersion;
     this.artifactVersion = artifact.getVersion();

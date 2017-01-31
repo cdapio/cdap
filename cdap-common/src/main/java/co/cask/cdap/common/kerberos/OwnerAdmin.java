@@ -44,8 +44,8 @@ public interface OwnerAdmin {
 
   /**
    * <p>Retrieves the owner information for the given {@link EntityId}</p>
-   * <p>Note: a null return value does not signifies presence or absence of the given entity in the system.
-   * It only means that no explicit owner principal was specified during entity creation and its owned by the system
+   * <p>Note: a null return value does not indicate presence or absence of the given entity in the system.
+   * It only means that no explicit owner principal was specified during entity creation and it's owned by the system
    * if its present</p>
    *
    * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
@@ -93,7 +93,7 @@ public interface OwnerAdmin {
   /**
    * <p>Deletes the owner principal for the given {@link EntityId} </p>
    * <p>This call does not throw {@link co.cask.cdap.common.NotFoundException} if the entity does not
-   * exists in the store so its safe to call without checking its existence</p>
+   * exists in the store so it's safe to call without checking its existence</p>
    *
    * @param entityId the entity whose owner principal needs to be deleted
    * @throws IOException if failed to get the owner store
