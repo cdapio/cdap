@@ -26,6 +26,8 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.common.security.UnsupportedUGIProvider;
@@ -160,6 +162,7 @@ public abstract class MetricsSuiteTestBase {
         bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
         bind(Store.class).to(DefaultStore.class);
         bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+        bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       }
     }));
 

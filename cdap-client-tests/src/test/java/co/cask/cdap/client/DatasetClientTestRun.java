@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -144,7 +144,7 @@ public class DatasetClientTestRun extends ClientTestBase {
     String description = "test description";
     datasetClient.create(instance,
                          new DatasetInstanceConfiguration(StandaloneDataset.TYPE_NAME,
-                                                          Collections.<String, String>emptyMap(), description));
+                                                          Collections.<String, String>emptyMap(), description, null));
     Assert.assertEquals(numBaseDataset + 1, datasetClient.list(TEST_NAMESPACE).size());
 
     // Assert dataset summary for the newly created dataset

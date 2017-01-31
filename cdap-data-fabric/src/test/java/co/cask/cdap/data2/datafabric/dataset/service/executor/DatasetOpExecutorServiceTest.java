@@ -32,6 +32,8 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.security.UGIProvider;
@@ -133,6 +135,7 @@ public class DatasetOpExecutorServiceTest {
         @Override
         protected void configure() {
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
       });
 

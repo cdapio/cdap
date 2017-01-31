@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,10 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import com.google.gson.annotations.SerializedName;
+
+import javax.annotation.Nullable;
 
 /**
  * Dataset instance metadata.
@@ -31,10 +34,19 @@ public class DatasetMeta {
   @SerializedName("hive_table")
   private final String hiveTableName;
 
-  public DatasetMeta(DatasetSpecification spec, DatasetTypeMeta type, String hiveTableName) {
+  @SerializedName("owner.principal")
+  private final KerberosPrincipalId ownerPrincipal;
+
+  public DatasetMeta(DatasetSpecification spec, DatasetTypeMeta type, @Nullable String hiveTableName) {
+    this(spec, type, hiveTableName, null);
+  }
+
+  public DatasetMeta(DatasetSpecification spec, DatasetTypeMeta type, @Nullable String hiveTableName,
+                     @Nullable KerberosPrincipalId ownerPrincipal) {
     this.spec = spec;
     this.type = type;
     this.hiveTableName = hiveTableName;
+    this.ownerPrincipal = ownerPrincipal;
   }
 
   public DatasetSpecification getSpec() {
@@ -45,7 +57,13 @@ public class DatasetMeta {
     return type;
   }
 
+  @Nullable
   public String getHiveTableName() {
     return hiveTableName;
+  }
+
+  @Nullable
+  public KerberosPrincipalId getOwnerPrincipal() {
+    return ownerPrincipal;
   }
 }

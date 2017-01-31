@@ -22,6 +22,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.common.security.UnsupportedUGIProvider;
@@ -110,6 +112,7 @@ public class DatasetBasedTimeScheduleStoreTest {
                                       @Override
                                       protected void configure() {
                                         bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+                                        bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
                                       }
                                     });
     txService = injector.getInstance(TransactionManager.class);
