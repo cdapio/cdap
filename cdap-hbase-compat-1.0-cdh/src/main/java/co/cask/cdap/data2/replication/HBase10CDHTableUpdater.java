@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.replication.hbase10;
+package co.cask.cdap.data2.replication;
 
 import co.cask.cdap.replication.ReplicationConstants;
 import co.cask.cdap.replication.StatusUtils;
@@ -39,12 +39,12 @@ import java.util.Map;
  * Common functionality required by Replication State Coprocessors to hold updates in memory and
  * flush into HBase periodically.
  */
-public class HBase10TableUpdater extends TableUpdater {
+public class HBase10CDHTableUpdater extends TableUpdater {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HBase10TableUpdater.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HBase10CDHTableUpdater.class);
   private final HTableInterface hTableInterface;
 
-  public HBase10TableUpdater(String rowType, Configuration conf, HTableInterface hTableInterface) {
+  public HBase10CDHTableUpdater(String rowType, Configuration conf, HTableInterface hTableInterface) {
     super(rowType, conf);
     this.hTableInterface = hTableInterface;
   }
@@ -80,3 +80,4 @@ public class HBase10TableUpdater extends TableUpdater {
     }
   }
 }
+

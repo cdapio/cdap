@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.replication.hbase10cdh550;
+package co.cask.cdap.data2.replication;
 
 import co.cask.cdap.replication.ReplicationConstants;
 import co.cask.cdap.replication.StatusUtils;
@@ -35,9 +35,9 @@ import java.io.IOException;
 /**
  * HBase coprocessor that tracks WAL writes for all tables to track replication status.
  * For each region the writeTime of the last WAL entry is written to the REPLICATION_STATE table.
- */
+*/
 public class LastWriteTimeObserver extends BaseWALObserver {
-  private HBase10CDH550TableUpdater hBase10CDH550TableUpdater = null;
+  private HBase11TableUpdater hBase11TableUpdater = null;
   private static final Logger LOG = LoggerFactory.getLogger(LastWriteTimeObserver.class);
 
   @Override
@@ -45,15 +45,14 @@ public class LastWriteTimeObserver extends BaseWALObserver {
     LOG.info("LastWriteTimeObserver Start received.");
     String tableName = StatusUtils.getReplicationStateTableName(env.getConfiguration());
     HTableInterface htableInterface = env.getTable(TableName.valueOf(tableName));
-    hBase10CDH550TableUpdater =
-      new HBase10CDH550TableUpdater(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE,
-                                    env.getConfiguration(), htableInterface);
+    hBase11TableUpdater = new HBase11TableUpdater(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE,
+                                                  env.getConfiguration(), htableInterface);
   }
 
   @Override
   public void stop(CoprocessorEnvironment e) throws IOException {
     LOG.info("LastWriteTimeObserver Stop received.");
-    hBase10CDH550TableUpdater.cancelTimer();
+    hBase11TableUpdater.cancelTimer();
   }
 
   @Override
@@ -69,6 +68,6 @@ public class LastWriteTimeObserver extends BaseWALObserver {
               logKey.getTablename().toString(),
               logKey.getWriteTime(),
               logKey.getEncodedRegionName().toString());
-    hBase10CDH550TableUpdater.updateTime(new String(logKey.getEncodedRegionName(), "UTF-8"), logKey.getWriteTime());
+    hBase11TableUpdater.updateTime(new String(logKey.getEncodedRegionName(), "UTF-8"), logKey.getWriteTime());
   }
 }
