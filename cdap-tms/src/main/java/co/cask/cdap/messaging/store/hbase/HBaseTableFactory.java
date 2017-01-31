@@ -52,7 +52,6 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -300,7 +299,13 @@ public final class HBaseTableFactory implements TableFactory {
       }
 
       // Add new coprocessor
-      addCoprocessor(coprocessor, newDescriptor);
+      CoprocessorDescriptor coprocessorDescriptor =
+        coprocessorManager.getCoprocessorDescriptor(coprocessor, Coprocessor.PRIORITY_USER);
+      Path path = coprocessorDescriptor.getPath() == null ? null : new Path(coprocessorDescriptor.getPath());
+      tableDescriptor.addCoprocessor(coprocessorDescriptor.getClassName(),
+                                     path,
+                                     coprocessorDescriptor.getPriority(),
+                                     coprocessorDescriptor.getProperties());
 
       // Update CDAP version, table prefix
       HBaseTableUtil.setVersion(newDescriptor);
@@ -353,7 +358,7 @@ public final class HBaseTableFactory implements TableFactory {
                 .addProperty(Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES, Integer.toString(1))
                 .addProperty(Constants.MessagingSystem.KEY_DISTRIBUTOR_BUCKETS_ATTR, Integer.toString(splits))
                 .addProperty(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE, metadataTableId.getNamespace())
-                .addCoprocessor(getCoprocessorDescriptor(coprocessor));
+                .addCoprocessor(coprocessorManager.getCoprocessorDescriptor(coprocessor, Coprocessor.PRIORITY_USER));
 
               // Set the key distributor size the same as the initial number of splits,
               // essentially one bucket per split.
@@ -400,20 +405,6 @@ public final class HBaseTableFactory implements TableFactory {
     } catch (NumberFormatException e) {
       throw new IOException("Invalid value for table attribute " + bucketAttr + " on HBase table " + tableId, e);
     }
-  }
-
-  private void addCoprocessor(Class<? extends Coprocessor> coprocessor,
-                              HTableDescriptorBuilder tableDescriptor) throws IOException {
-    Location jarFile = coprocessorManager.ensureCoprocessorExists(CoprocessorManager.Type.MESSAGING);
-    Path path = manageCoprocessors ? new Path(jarFile.toURI().getPath()) : null;
-    tableDescriptor.addCoprocessor(coprocessor.getName(), path,
-                                   Coprocessor.PRIORITY_USER, null);
-  }
-
-  private CoprocessorDescriptor getCoprocessorDescriptor(Class<? extends Coprocessor> coprocessor) throws IOException {
-    Location jarFile = coprocessorManager.ensureCoprocessorExists(CoprocessorManager.Type.MESSAGING);
-    String jarPath = manageCoprocessors ? jarFile.toURI().getPath() : null;
-    return new CoprocessorDescriptor(coprocessor.getName(), jarPath, Coprocessor.PRIORITY_USER, null);
   }
 
   /**

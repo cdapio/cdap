@@ -58,8 +58,6 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
   // todo: datasets should not depend on cdap configuration!
   private final CConfiguration conf;
 
-  private final CoprocessorManager coprocessorManager;
-
   public HBaseTableAdmin(DatasetContext datasetContext,
                          DatasetSpecification spec,
                          Configuration hConf,
@@ -67,10 +65,9 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
                          CConfiguration conf,
                          LocationFactory locationFactory) throws IOException {
     super(tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName()),
-          hConf, conf, tableUtil);
+          hConf, conf, tableUtil, locationFactory);
     this.spec = spec;
     this.conf = conf;
-    this.coprocessorManager = new CoprocessorManager(conf, locationFactory, tableUtil);
   }
 
   @Override
@@ -116,10 +113,9 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     tdBuilder.addColumnFamily(cfdBuilder.build());
 
     CoprocessorJar coprocessorJar = createCoprocessorJar();
-
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-      tdBuilder.addCoprocessor(getCoprocessorDescriptor(coprocessor, coprocessorJar.getJarLocation(),
-                                                        coprocessorJar.getPriority(coprocessor)));
+      tdBuilder.addCoprocessor(
+        coprocessorManager.getCoprocessorDescriptor(coprocessor, coprocessorJar.getPriority(coprocessor)));
     }
 
     byte[][] splits = null;
@@ -214,7 +210,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     if (coprocessorList.isEmpty()) {
       return CoprocessorJar.EMPTY;
     }
-    Location jarFile = coprocessorManager.ensureCoprocessorExists(CoprocessorManager.Type.TABLE);
+    Location jarFile = coprocessorManager.ensureCoprocessorExists();
     return new CoprocessorJar(coprocessorList, jarFile);
   }
 

@@ -1107,7 +1107,7 @@ cdap_setup() {
 cdap_setup_coprocessors() {
   local readonly __ret __class=co.cask.cdap.data.tools.CoprocessorBuildTool
 
-  cdap_run_class ${__class} ${@}
+  cdap_run_class ${__class} check ${@}
   __ret=${?}
   return ${__ret}
 }

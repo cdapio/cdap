@@ -314,9 +314,7 @@ public class UpgradeTool {
     LOG.info("Initializing Dataset Framework...");
     initializeDSFramework(cConf, dsFramework, includeNewDatasets);
     LOG.info("Building and uploading new HBase coprocessors...");
-    for (CoprocessorManager.Type type : CoprocessorManager.Type.values()) {
-      coprocessorManager.ensureCoprocessorExists(type);
-    }
+    coprocessorManager.ensureCoprocessorExists();
   }
 
   /**
