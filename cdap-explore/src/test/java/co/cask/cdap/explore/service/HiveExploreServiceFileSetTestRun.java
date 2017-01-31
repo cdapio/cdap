@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
@@ -52,6 +53,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -470,6 +472,102 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
                Collections.<QueryResult>emptyList());
   }
+
+  @Test
+  public void testPartitionedExisting() throws Exception {
+    testPartitionedExisting(FileSetProperties.DATA_USE_EXISTING, false);
+    testPartitionedExisting(FileSetProperties.DATA_POSSESS_EXISTING, true);
+  }
+
+  private void testPartitionedExisting(String reuseProperty, boolean possessed)
+    throws Exception {
+    final DatasetId dummyInstanceId = NAMESPACE_ID.dataset("dummy");
+    final DatasetId datasetInstanceId = NAMESPACE_ID.dataset("tpExisting");
+    File path = new File(tmpFolder.newFolder(), "base");
+    String tableName = "reuse";
+    // create a PFS in order to create a table in Hive and add a partition
+    // create a time partitioned file set
+    DatasetProperties props =
+      PartitionedFileSetProperties.builder()
+        .setPartitioning(Partitioning.builder().addIntField("number").build())
+        // properties for file set
+        .setBasePath(path.toString())
+        // properties for partitioned hive table
+        .setEnableExploreOnCreate(true)
+        .setExploreTableName(tableName)
+        .setExploreSchema("key STRING, value INT")
+        .setExploreFormat("csv")
+        .build();
+    datasetFramework.addInstance(PartitionedFileSet.class.getName(), dummyInstanceId, props);
+    PartitionedFileSet dummy = datasetFramework.getDataset(dummyInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
+    Assert.assertNotNull(dummy);
+
+    Location location = dummy.getEmbeddedFileSet().getLocation("number1").append("file1");
+    PartitionKey key = PartitionKey.builder().addIntField("number", 1).build();
+    FileWriterHelper.generateTextFile(location.getOutputStream(), ",", "x", 1, 2);
+    addPartition(dummy, key, "number1");
+
+    // validate data
+    List<ColumnDesc> expectedColumns = Lists.newArrayList(
+      new ColumnDesc(tableName + ".key", "STRING", 1, null),
+      new ColumnDesc(tableName + ".value", "INT", 2, null),
+      new ColumnDesc(tableName + ".number", "INT", 3, null));
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName, true, expectedColumns,
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("x1", 1, 1))));
+
+    props =
+      PartitionedFileSetProperties.builder()
+        .setPartitioning(Partitioning.builder().addIntField("number").build())
+        // properties for file set
+        .setBasePath(path.toString())
+        // properties for partitioned hive table
+        .setEnableExploreOnCreate(true)
+        .setExploreTableName(tableName)
+        .setExploreSchema("key STRING, value INT")
+        .setExploreFormat("csv")
+        .add(reuseProperty, "true")
+        .build();
+    datasetFramework.addInstance(PartitionedFileSet.class.getName(), datasetInstanceId, props);
+    PartitionedFileSet partitioned = datasetFramework.getDataset(datasetInstanceId,
+                                                                 DatasetDefinition.NO_ARGUMENTS, null);
+    Assert.assertNotNull(partitioned);
+
+    props =
+      PartitionedFileSetProperties.builder()
+        .setPartitioning(Partitioning.builder().addIntField("number").build())
+        // properties for file set
+        .setBasePath(path.toString())
+        // properties for partitioned hive table
+        .setEnableExploreOnCreate(true)
+        .setExploreTableName(tableName)
+        .setExploreSchema("k STRING, v INT")
+        .setExploreFormat("csv")
+        .add(reuseProperty, "true")
+        .build();
+    datasetFramework.updateInstance(datasetInstanceId, props);
+
+    // validate data
+    if (!possessed) {
+      runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName, true, expectedColumns,
+                 Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("x1", 1, 1))));
+    } else {
+      List<ColumnDesc> newExpectedColumns = Lists.newArrayList(
+        new ColumnDesc(tableName + ".k", "STRING", 1, null),
+        new ColumnDesc(tableName + ".v", "INT", 2, null),
+        new ColumnDesc(tableName + ".number", "INT", 3, null));
+      runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName, true, newExpectedColumns, null);
+    }
+
+    datasetFramework.deleteInstance(datasetInstanceId);
+    if (!possessed) {
+      runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName, true, expectedColumns,
+                 Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("x1", 1, 1))));
+    } else {
+      runCommand(NAMESPACE_ID, "SHOW tables", false, null, Collections.<QueryResult>emptyList());
+    }
+    datasetFramework.deleteInstance(dummyInstanceId);
+  }
+
 
   @Test
   public void testPartitionedAvroSchemaUpdate() throws Exception {

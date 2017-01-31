@@ -108,9 +108,9 @@ public class CoprocessorManager {
         @Override
         public boolean accept(String className, final URL classUrl, URL classPathUrl) {
           // Assuming the endpoint and protocol class doesn't have dependencies
-          // other than those comes with HBase, Java and fastutil.
+          // other than those comes with HBase, Java, fastutil, and gson
           if (className.startsWith("co.cask") || className.startsWith("it.unimi.dsi.fastutil")
-            || className.startsWith("org.apache.tephra")) {
+            || className.startsWith("org.apache.tephra") || className.startsWith("com.google.gson")) {
             if (!dependentClasses.containsKey(className)) {
               dependentClasses.put(className, classUrl);
             }

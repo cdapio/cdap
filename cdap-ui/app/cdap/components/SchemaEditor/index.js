@@ -26,6 +26,7 @@ export default class SchemaEditor extends Component {
   constructor(props) {
     super(props);
     let state = SchemaStore.getState();
+
     let rows;
     try {
       rows = cdapavsc.parse(state.schema, { wrapUnions: true });
@@ -52,6 +53,8 @@ export default class SchemaEditor extends Component {
     SchemaStore.subscribe(updateRowsAndDisplayFields.bind(this));
   }
   shouldComponentUpdate(nextProps, nextState) {
+    if (!nextState.rawSchema) { return true; }
+
     return nextState.rawSchema.fields.length !== this.state.rawSchema.fields.length;
   }
   onChange(schema) {

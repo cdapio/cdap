@@ -28,12 +28,13 @@ export default class HistoryTab extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      history: null
+      history: null,
+      entity: props.entity
     };
     this.pollSubscriptions = [];
   }
   componentWillMount() {
-    this.context
+    this.state
         .entity
         .programs
         .forEach(program => {
@@ -90,50 +91,56 @@ export default class HistoryTab extends Component {
       if (Array.isArray(this.state.history)) {
         if (this.state.history.length) {
           return (
-            <table className="app-detailed-view-history table table-bordered">
-              <thead>
-                <tr>
-                  <th>Program Name </th>
-                  <th>Start Time</th>
-                  <th>Run ID</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                  this.state
-                    .history
-                    .map( history => {
-                      return (
-                        <tr key={history.runid}>
-                          <td>{history.programName}</td>
-                          <td>{humanReadableDate(history.start)}</td>
-                          <td>{history.runid}</td>
-                          <td>{history.status}</td>
-                        </tr>
-                      );
-                    })
-                }
-              </tbody>
-            </table>
+            <div className="history-tab">
+              <table className="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Program Name </th>
+                    <th>Start Time</th>
+                    <th>Run ID</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {
+                    this.state
+                      .history
+                      .map( history => {
+                        return (
+                          <tr key={history.runid}>
+                            <td>{history.programName}</td>
+                            <td>{humanReadableDate(history.start)}</td>
+                            <td>{history.runid}</td>
+                            <td>{history.status}</td>
+                          </tr>
+                        );
+                      })
+                  }
+                </tbody>
+              </table>
+            </div>
           );
         } else {
           return (
-            <h3 className="text-xs-center empty-message">
-              {T.translate('features.AppDetailedView.History.emptyMessage')}
-            </h3>
+            <div className="history-tab">
+              <h3 className="text-xs-center empty-message">
+                {T.translate('features.AppDetailedView.History.emptyMessage')}
+              </h3>
+            </div>
           );
         }
       }
       return (
-        <h3 className="text-xs-center">
-          <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
-        </h3>
+        <div className="history-tab">
+          <h3 className="text-xs-center">
+            <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
+          </h3>
+        </div>
       );
     };
     return renderHistoryRows();
   }
 }
-HistoryTab.contextTypes = {
+HistoryTab.propTypes = {
   entity: PropTypes.object
 };

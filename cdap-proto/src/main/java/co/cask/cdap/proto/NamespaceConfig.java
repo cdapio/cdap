@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,18 +46,20 @@ public class NamespaceConfig {
   private final String hiveDatabase;
 
   private final String principal;
+  private final String groupName;
   private final String keytabURI;
 
   // scheduler queue name is kept non nullable unlike others like root directory, hbase namespace etc for backward
   // compatibility
   public NamespaceConfig(String schedulerQueueName, @Nullable String rootDirectory,
                          @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
-                         @Nullable String principal, @Nullable String keytabURI) {
+                         @Nullable String principal, @Nullable String groupName, @Nullable String keytabURI) {
     this.schedulerQueueName = schedulerQueueName;
     this.rootDirectory = rootDirectory;
     this.hbaseNamespace = hbaseNamespace;
     this.hiveDatabase = hiveDatabase;
     this.principal = principal;
+    this.groupName = groupName;
     this.keytabURI = keytabURI;
   }
 
@@ -83,6 +85,10 @@ public class NamespaceConfig {
   @Nullable
   public String getPrincipal() {
     return principal;
+  }
+
+  public String getGroupName() {
+    return groupName;
   }
 
   @Nullable
@@ -113,6 +119,10 @@ public class NamespaceConfig {
       difference.add("principal");
     }
 
+    if (!Objects.equals(this.groupName, other.groupName)) {
+      difference.add("groupName");
+    }
+
     if (!Objects.equals(this.keytabURI, other.keytabURI)) {
       difference.add("keytabURI");
     }
@@ -133,12 +143,14 @@ public class NamespaceConfig {
       Objects.equals(hbaseNamespace, other.hbaseNamespace) &&
       Objects.equals(hiveDatabase, other.hiveDatabase) &&
       Objects.equals(principal, other.principal) &&
+      Objects.equals(groupName, other.groupName) &&
       Objects.equals(keytabURI, other.keytabURI);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase, principal, keytabURI);
+    return Objects.hash(
+      schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase, principal, groupName, keytabURI);
   }
 
   @Override
@@ -149,6 +161,7 @@ public class NamespaceConfig {
       ", hbaseNamespace='" + hbaseNamespace + '\'' +
       ", hiveDatabase='" + hiveDatabase + '\'' +
       ", principal='" + principal + '\'' +
+      ", groupName='" + groupName + '\'' +
       ", keytabURI='" + keytabURI + '\'' +
       '}';
   }

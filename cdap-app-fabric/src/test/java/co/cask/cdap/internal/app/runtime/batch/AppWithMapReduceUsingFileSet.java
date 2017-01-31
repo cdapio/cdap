@@ -16,12 +16,14 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -35,35 +37,47 @@ import java.io.IOException;
 /**
  * App used to test whether M/R can read from file datasets.
  */
-public class AppWithMapReduceUsingFileSet extends AbstractApplication {
-
-  public static String inputDataset = System.getProperty("INPUT_DATASET_NAME");
-  public static String outputDataset = System.getProperty("OUTPUT_DATASET_NAME");
+public class AppWithMapReduceUsingFileSet extends AbstractApplication<AppWithMapReduceUsingFileSet.AppConfig> {
 
   @Override
   public void configure() {
     setName("AppWithMapReduceUsingFile");
     setDescription("Application with MapReduce job using file as dataset");
+    String inputDataset = getConfig().inputDataset;
+    String outputDataset = getConfig().outputDataset;
     createDataset(inputDataset, "fileSet", FileSetProperties.builder()
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
       .build());
+
     if (!outputDataset.equals(inputDataset)) {
-      createDataset(outputDataset, "fileSet", FileSetProperties.builder()
+      createDataset(outputDataset, "fileSet",  FileSetProperties.builder()
         .setBasePath("foo/my-file-output")
         .setInputFormat(TextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
         .build());
     }
-    addMapReduce(new ComputeSum());
+    addMapReduce(new ComputeSum(getConfig()));
   }
 
   /**
    *
    */
   public static final class ComputeSum extends AbstractMapReduce {
+
+    private final AppConfig config;
+
+    ComputeSum(AppConfig config) {
+      this.config = config;
+    }
+
+    @Override
+    protected void configure() {
+      setProperties(ImmutableMap.of("input", config.inputDataset,
+                                    "output", config.outputDataset));
+    }
 
     @Override
     public void initialize() throws Exception {
@@ -72,13 +86,13 @@ public class AppWithMapReduceUsingFileSet extends AbstractApplication {
       job.setReducerClass(FileReducer.class);
 
       // user can opt to define the mapper class through our APIs, instead of directly on the job
-      context.addInput(Input.ofDataset(inputDataset), FileMapper.class);
-      context.addOutput(Output.ofDataset(outputDataset));
+      context.addInput(Input.ofDataset(context.getSpecification().getProperty("input")), FileMapper.class);
+      context.addOutput(Output.ofDataset(context.getSpecification().getProperty("output")));
     }
   }
 
   public static class FileMapper extends Mapper<LongWritable, Text, Text, LongWritable> {
-    public static final String ONLY_KEY = "x";
+    static final String ONLY_KEY = "x";
     @Override
     public void map(LongWritable key, Text data, Context context)
       throws IOException, InterruptedException {
@@ -95,6 +109,21 @@ public class AppWithMapReduceUsingFileSet extends AbstractApplication {
         sum += value.get();
       }
       context.write(key.toString(), sum);
+    }
+  }
+
+  static class AppConfig extends Config {
+    final String inputDataset;
+    final String outputDataset;
+
+    public AppConfig(String inputDataset, String outputDataset) {
+      this.inputDataset = inputDataset;
+      this.outputDataset = outputDataset;
+    }
+
+    AppConfig(String inputDataset, String outputDataset, String permissions) {
+      this.inputDataset = inputDataset;
+      this.outputDataset = outputDataset;
     }
   }
 

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
@@ -63,6 +64,7 @@ import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -181,8 +183,20 @@ public class AppFabricTestHelper {
     return deployApplicationWithManager(Id.Namespace.DEFAULT, appClass, folderSupplier);
   }
 
+  public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
+                                                                     Supplier<File> folderSupplier,
+                                                                     Config config) throws Exception {
+    return deployApplicationWithManager(Id.Namespace.DEFAULT, appClass, folderSupplier, config);
+  }
+
   public static ApplicationWithPrograms deployApplicationWithManager(Id.Namespace namespace, Class<?> appClass,
                                                                      Supplier<File> folderSupplier) throws Exception {
+    return deployApplicationWithManager(namespace, appClass, folderSupplier, null);
+  }
+
+  public static ApplicationWithPrograms deployApplicationWithManager(Id.Namespace namespace, Class<?> appClass,
+                                                                     Supplier<File> folderSupplier,
+                                                                     Config config) throws Exception  {
     ensureNamespaceExists(namespace.toEntityId());
     Location deployedJar = createAppJar(appClass, folderSupplier);
     ArtifactVersion artifactVersion = new ArtifactVersion(String.format("1.0.%d", System.currentTimeMillis()));
@@ -193,7 +207,8 @@ public class AppFabricTestHelper {
                                    new File(deployedJar.toURI()));
 
     AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, namespace.toEntityId(),
-                                                   appClass.getName(), null, null, null);
+                                                   appClass.getName(), null, null,
+                                                   config == null ? null : new Gson().toJson(config));
     return getLocalManager().deploy(info).get();
   }
 

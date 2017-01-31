@@ -35,7 +35,7 @@ export default class Home extends Component {
     return (
       <div>
         <Match exactly pattern="/ns/:namespace" component={EntityListView} />
-        <Match exactly pattern="/ns/:namespace/apps/:appId" component={AppDetailedView} />
+        <Match pattern="/ns/:namespace/apps/:appId" component={AppDetailedView} />
         <Miss component={Page404} />
       </div>
     );

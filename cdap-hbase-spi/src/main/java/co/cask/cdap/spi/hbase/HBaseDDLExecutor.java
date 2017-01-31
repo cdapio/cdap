@@ -25,20 +25,11 @@ import javax.annotation.Nullable;
  * Interface providing the HBase DDL operations.
  */
 public interface HBaseDDLExecutor extends Closeable {
-
   /**
-   * Initialize the {@link HBaseDDLExecutor} with the configuration object provided
-   * @param conf the configurations with which to initialize
-   * @param <T>
+   * Initialize the {@link HBaseDDLExecutor}.
+   * @param context the context for the executor
    */
-  <T> void initialize(T conf);
-
-  /**
-   * Returns the conf with which the {@link HBaseDDLExecutor} was initialized.
-   * @param <T>
-   * @return the conf
-   */
-  <T> T getConf();
+  void initialize(HBaseDDLExecutorContext context);
 
   /**
    * Create the specified namespace if it does not exist.

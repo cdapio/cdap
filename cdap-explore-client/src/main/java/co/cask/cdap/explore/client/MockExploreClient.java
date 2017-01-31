@@ -79,7 +79,8 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
-  public ListenableFuture<Void> enableExploreDataset(DatasetId datasetInstance, DatasetSpecification spec) {
+  public ListenableFuture<Void> enableExploreDataset(DatasetId datasetInstance, DatasetSpecification spec,
+                                                     boolean truncating) {
     return null;
   }
 

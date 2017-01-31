@@ -14,9 +14,15 @@
  * the License.
  */
 
-.app-detailed-view-history {
+.history-tab {
+  padding: 20px;
   &.table-bordered {
     width: calc(100% - 20px);
     margin: 10px;
+  }
+
+  .empty-message {
+    margin-top: 15%;
+    color: gray;
   }
 }

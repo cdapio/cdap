@@ -486,7 +486,7 @@ public class DatasetInstanceService {
     // Enable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - CDAP-13933
     try {
-      exploreFacade.enableExploreDataset(datasetInstance, spec);
+      exploreFacade.enableExploreDataset(datasetInstance, spec, false);
     } catch (Exception e) {
       LOG.error("Cannot enable Explore for dataset instance {} of type {} with properties {}",
                 datasetInstance, creationProperties.getTypeName(), creationProperties.getProperties(), e);

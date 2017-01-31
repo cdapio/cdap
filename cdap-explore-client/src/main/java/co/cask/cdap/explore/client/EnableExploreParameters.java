@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,12 +24,18 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 public class EnableExploreParameters {
 
   private final DatasetSpecification spec;
+  private final boolean truncating;
 
-  public EnableExploreParameters(DatasetSpecification newSpec) {
+  public EnableExploreParameters(DatasetSpecification newSpec, boolean truncating) {
     this.spec = newSpec;
+    this.truncating = truncating;
   }
 
   public DatasetSpecification getSpec() {
     return spec;
+  }
+
+  public boolean isTruncating() {
+    return truncating;
   }
 }

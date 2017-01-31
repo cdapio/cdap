@@ -31,7 +31,6 @@ var plugins = [
     manifest: require(path.join(__dirname, 'dll', '/cdap-vendor-manifest.json'))
   }),
   new LodashModuleReplacementPlugin,
-  new LiveReloadPlugin(),
   new webpack.optimize.DedupePlugin(),
   new CopyWebpackPlugin([
     {
@@ -163,7 +162,13 @@ if (mode === 'production' || mode === 'build') {
 
 if (mode !== 'production') {
   webpackConfig = Object.assign({}, webpackConfig, {
-    devtool: 'source-map'
+    devtool: 'source-map',
+    plugins:  plugins.concat([
+      new LiveReloadPlugin({
+        port: 35728,
+        appendScriptTag: true
+      })
+    ])
   });
 }
 

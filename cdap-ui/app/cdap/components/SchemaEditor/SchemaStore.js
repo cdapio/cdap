@@ -15,6 +15,7 @@
  */
 
 import {combineReducers, createStore} from 'redux';
+
 const defaultAction = {
   type: '',
   payload: {}
@@ -36,6 +37,9 @@ const schema = (state = defaultState, action = defaultAction) => {
   switch (action.type) {
     case 'FIELD_UPDATE': {
       return Object.assign({}, state, {fields: action.payload.schema.fields});
+    }
+    case 'RESET': {
+      return defaultState;
     }
     default:
       return state;

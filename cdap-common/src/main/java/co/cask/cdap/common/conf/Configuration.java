@@ -2083,5 +2083,25 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
       // prevent duplicate calls
       currentName = null;
     }
-  };
+  }
+
+  /**
+   * Get {@link Map} of properties prefixed with the string provided as an input.
+   * Property names in the mapping are trimmed to remove the prefix.
+   *
+   * @param prefix the prefix for the config
+   * @return mapping of configuration properties with prefix stripped
+   */
+  public Map<String, String> getPropsWithPrefix(String prefix) {
+    Map<String, String> prefixedProperties = new HashMap<>();
+    for (Map.Entry<String, String> entry : this) {
+      String name = entry.getKey();
+      if (name.startsWith(prefix)) {
+        String value = get(name);
+        name = name.substring(prefix.length());
+        prefixedProperties.put(name, value);
+      }
+    }
+    return prefixedProperties;
+  }
 }

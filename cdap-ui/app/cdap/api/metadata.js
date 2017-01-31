@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,12 @@
  * the License.
  */
 
-.app-detaliled-view-main-tab {
-  padding: 10px;
-  .home-cards {
-    display: inline-block;
-    margin: 10px 10px 10px 0;
-    width: 300px;
-  }
-}
+import {apiCreator} from 'services/resource-helper';
+import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
+let dataSrc = DataSourceConfigurer.getInstance();
+let basepath = '/namespaces/:namespace/:entityType/:entityId/metadata';
+
+export const MyMetadataApi = {
+  getMetadata: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
+  getProperties: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/properties`),
+};

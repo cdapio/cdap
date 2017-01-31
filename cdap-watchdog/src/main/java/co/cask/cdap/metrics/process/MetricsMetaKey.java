@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,15 @@
  * the License.
  */
 
-.app-detailed-view-datasets-tab {
-  padding: 10px;
-  .home-cards {
-    display: inline-block;
-    margin: 10px 10px 10px 0;
-    width: 300px;
-  }
+package co.cask.cdap.metrics.process;
+
+/**
+ * A wrapper class to provide byte array format of keys for {@link MetricsConsumerMetaTable}.
+ */
+public interface MetricsMetaKey {
+
+  /**
+   * @return A byte array format of this object to be stored in the metrics meta table as a key
+   */
+  byte[] getKey();
 }

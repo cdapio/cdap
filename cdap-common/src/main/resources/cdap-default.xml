@@ -96,6 +96,16 @@
   </property>
 
   <property>
+    <name>master.manage.hbase.coprocessors</name>
+    <value>true</value>
+    <description>
+      Whether CDAP master should manage HBase coprocessors. This should only
+      be set to false if you are managing coprocessors yourself in order to
+      support rolling HBase upgrades.
+    </description>
+  </property>
+
+  <property>
     <name>master.startup.checks.classes</name>
     <value></value>
     <description>
@@ -237,7 +247,7 @@
     <name>dataset.unchecked.upgrade</name>
     <value>false</value>
     <description>
-      By default, any changes made to existing datasets are not deployed
+      If false, any changes made to existing datasets are not deployed
       when an app is redeployed; setting this value to true allows the
       dataset changes to be deployed upon app redeployment
     </description>
@@ -476,7 +486,7 @@
     <name>data.tx.bind.port</name>
     <value>0</value>
     <description>
-      Transaction service bind port; binds to a random port by default
+      Transaction service bind port; if 0 binds to a random port
     </description>
   </property>
 
@@ -574,8 +584,6 @@
   <property>
     <name>data.tx.snapshot.codecs</name>
     <value>
-      co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1,
-      co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2,
       org.apache.tephra.snapshot.SnapshotCodecV3,
       org.apache.tephra.snapshot.SnapshotCodecV4
     </value>
@@ -905,8 +913,8 @@
     <name>kafka.server.log.flush.interval.messages</name>
     <value>10000</value>
     <description>
-      The interval length (in number of messages) at which to force an fsync of data
-      written to the log
+      The interval length (in number of messages in the CDAP Kafka service) at which to
+      force an fsync of data written to the log 
     </description>
   </property>
 
@@ -914,7 +922,9 @@
     <name>kafka.server.log.retention.hours</name>
     <value>24</value>
     <description>
-      The number of hours to keep a log file before deleting it
+      The number of hours to keep a log file before deleting it; this is the time-to-live
+      in the CDAP Kafka service, while a log is in-flight between the container and the
+      CDAP log saver
     </description>
   </property>
 
@@ -922,7 +932,7 @@
     <name>kafka.server.num.partitions</name>
     <value>10</value>
     <description>
-      Default number of partitions for a topic
+      Default number of partitions for a topic in the CDAP Kafka service
     </description>
   </property>
 
@@ -938,7 +948,7 @@
     <name>kafka.server.zookeeper.connection.timeout.ms</name>
     <value>1000000</value>
     <description>
-      Maximum time in milliseconds that the client will wait to
+      Maximum time in milliseconds that the CDAP Kafka service will wait to
       establish a connection to ZooKeeper
     </description>
   </property>
@@ -961,7 +971,7 @@
       the Kafka service used by CDAP. If the same Kafka service ZooKeeper quorum
       and namespace are shared by multiple CDAP instances, each CDAP instance
       needs to distinguish its Kafka topics from those of other CDAP instances
-      with unique values for ${log.kafka.topic} and ${metrics.kafka.topic.prefix}.
+      with unique values for ${log.kafka.topic} and ${metrics.topic.prefix}.
     </description>
   </property>
 
@@ -1012,7 +1022,7 @@
     <name>log.retention.duration.days</name>
     <value>7</value>
     <description>
-      Duration in days of log file HDFS retention
+      Duration (the time-to-live) in days of saved log files in HDFS retention
     </description>
   </property>
 
@@ -1098,8 +1108,8 @@
     <value>ERROR</value>
     <description>
       The log level of application container logs that are streamed back to
-      the CDAP Master process log. The levels supported are [ ALL, TRACE,
-      DEBUG, INFO, WARN, ERROR, OFF ].
+      the CDAP Master process log. The levels supported are "ALL", "TRACE",
+      "DEBUG", "INFO", "WARN", "ERROR", and "OFF".
     </description>
   </property>
 
@@ -1200,7 +1210,8 @@
     <name>messaging.local.data.cleanup.frequency.secs</name>
     <value>3600</value>
     <description>
-      Scheduling frequency of TTL cleanup thread in seconds (only used in Standalone CDAP)
+      Scheduling frequency of time-to-live cleanup thread in seconds (only used in
+      Standalone CDAP)
     </description>
   </property>
 
@@ -1304,9 +1315,13 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${notification.topic}</value>
+    <value>${audit.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic}</value>
     <description>
-      A comma-separated list of topics that is always available in the system namespace
+      A comma-separated list of topics that is always available in the system namespace.
+      Multiple topics sharing the same prefix and distinguished by different numerical suffices
+      can be specified with the syntax &lt;common.prefix&gt;:&lt;total.topic.number&gt;,
+      where the &lt;total.topic.number&gt; is the total number of topics sharing the &lt;common.prefix&gt;,
+      and the numerical suffices will range from 0 to (&lt;total.topic.number&gt; - 1).
     </description>
   </property>
 
@@ -1330,7 +1345,7 @@
     <name>messaging.coprocessor.metadata.cache.expiration.seconds</name>
     <value>120</value>
     <description>
-      The default value of expiration time in seconds for metadata cache in hbase data tables coprocessors
+      Number of seconds after which the metadata cache in HBase data table coprocessors will expire
     </description>
   </property>
 
@@ -1471,10 +1486,26 @@
   </property>
 
   <property>
+    <name>metrics.kafka.meta.table</name>
+    <value>metrics.kafka.meta</value>
+    <description>
+      Name of the Kafka metrics meta table
+    </description>
+  </property>
+
+  <property>
     <name>metrics.kafka.partition.size</name>
     <value>10</value>
     <description>
-      Number of partitions for metrics topic
+      Number of partitions for Kafka metrics topic
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.kafka.topic.prefix</name>
+    <value>metrics</value>
+    <description>
+      Topic prefix used to publish metrics in Kafka
     </description>
   </property>
 
@@ -1491,6 +1522,36 @@
     <value>${master.service.memory.mb}</value>
     <description>
       Memory in megabytes for each metrics service instance
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.messaging.fetcher.limit</name>
+    <value>200</value>
+    <description>
+      Maximum number of metrics messages to be fetched from the messaging fetcher at once.
+      It is also the maximum number of metric values to be persisted in the metrics store after the
+      number of fetched messages reaches the limit.
+    </description>
+  </property>
+  
+  <property>
+    <name>metrics.messaging.meta.table</name>
+    <value>metrics.messaging.meta</value>
+    <description>
+      Name of the messaging metrics meta table
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.messaging.topic.num</name>
+    <value>10</value>
+    <description>
+      Number of topics for metrics messages. This property also sets the number of threads
+      used to fetch and process metrics in parallel from the messaging service. For a
+      value of N, topics will be created for metrics with names beginning at
+      ${metrics.topic.prefix}0, ${metrics.topic.prefix}1, up to
+      ${metrics.topic.prefix}(N-1).
     </description>
   </property>
 
@@ -1566,6 +1627,14 @@
     <value>45005</value>
     <description>
       Metrics Query service bind port
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.topic.prefix</name>
+    <value>metrics</value>
+    <description>
+      Topic prefix used to publish metrics in messaging
     </description>
   </property>
 
@@ -1795,7 +1864,7 @@
     <name>mapreduce.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for mapreduce
+      The type of retry policy for MapReduce programs
     </description>
   </property>
 
@@ -1875,7 +1944,7 @@
     <name>spark.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for spark
+      The type of retry policy for Spark programs
     </description>
   </property>
 
@@ -2188,10 +2257,10 @@
     <description>
       A comma-separated list of users for whom admin privileges are to be granted on the
       CDAP instance during CDAP startup, so that these users can create namespaces. These
-      users are also granted admin privileges on the default namespace, so that they can
-      manage privileges on the default namespace. This provides a method to bootstrap CDAP on
-      an authorization-enabled cluster. The default is empty, in which case no users have
-      access to creating namespaces or to managing privileges on the default namespace.
+      users are also granted admin privileges on the 'default' namespace, so that they can
+      manage privileges on the 'default' namespace. This provides a method to bootstrap CDAP on
+      an authorization-enabled cluster. The default value is empty, in which case no users have
+      access to creating namespaces or to managing privileges on the 'default' namespace.
       In that scenario, authorization in CDAP has to be bootstrapped externally using interfaces
       provided by the configured authorization extension.
     </description>

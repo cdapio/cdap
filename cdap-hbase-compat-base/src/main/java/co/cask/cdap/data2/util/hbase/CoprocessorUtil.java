@@ -83,7 +83,8 @@ public final class CoprocessorUtil {
             properties.put(m.group(1), m.group(2));
           }
         }
-        info.put(className, new CoprocessorDescriptor(className, path.toUri(), priority, properties));
+        String pathStr = path == null ? null : path.toUri().getPath();
+        info.put(className, new CoprocessorDescriptor(className, pathStr, priority, properties));
       } catch (Exception ex) {
         LOG.warn("Coprocessor attribute '{}' has invalid coprocessor specification '{}'", key, spec, ex);
       }

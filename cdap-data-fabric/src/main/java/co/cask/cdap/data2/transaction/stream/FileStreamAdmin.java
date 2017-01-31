@@ -419,9 +419,21 @@ public class FileStreamAdmin implements StreamAdmin {
     ensureAccess(streamNamespace, Action.WRITE);
     // revoke privileges to make sure there is no orphaned privileges
     privilegesManager.revoke(streamId);
+    final Properties properties = (props == null) ? new Properties() : props;
     try {
       // Grant All access to the stream created to the User
       privilegesManager.grant(streamId, authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
+
+      KerberosPrincipalId ownerPrincipal = null;
+      if (properties.containsKey(Constants.Security.OWNER_PRINCIPAL)) {
+        ownerPrincipal = GSON.fromJson(properties.getProperty(Constants.Security.OWNER_PRINCIPAL),
+                                       KerberosPrincipalId.class);
+      }
+      // If an owner was provided then store it in owner store first so that we can use it for impersonation below
+      if (ownerPrincipal != null) {
+        ownerAdmin.add(streamId, ownerPrincipal);
+      }
+
       final UserGroupInformation ugi = impersonator.getUGI(streamNamespace);
       final Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
         @Override
@@ -441,7 +453,6 @@ public class FileStreamAdmin implements StreamAdmin {
           }
 
           long createTime = System.currentTimeMillis();
-          Properties properties = (props == null) ? new Properties() : props;
           long partitionDuration = Long.parseLong(properties.getProperty(
             Constants.Stream.PARTITION_DURATION, cConf.get(Constants.Stream.PARTITION_DURATION)));
           long indexInterval = Long.parseLong(properties.getProperty(
@@ -451,11 +462,6 @@ public class FileStreamAdmin implements StreamAdmin {
           int threshold = Integer.parseInt(properties.getProperty(
             Constants.Stream.NOTIFICATION_THRESHOLD, cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
           String description = properties.getProperty(Constants.Stream.DESCRIPTION);
-          KerberosPrincipalId ownerPrincipal = null;
-          if (properties.containsKey(Constants.Security.OWNER_PRINCIPAL)) {
-            ownerPrincipal = GSON.fromJson(properties.getProperty(Constants.Security.OWNER_PRINCIPAL),
-                                           KerberosPrincipalId.class);
-          }
           FormatSpecification formatSpec = null;
           if (properties.containsKey(Constants.Stream.FORMAT_SPECIFICATION)) {
             formatSpec = GSON.fromJson(properties.getProperty(Constants.Stream.FORMAT_SPECIFICATION),
@@ -475,17 +481,6 @@ public class FileStreamAdmin implements StreamAdmin {
           createStreamFeeds(config);
           alterExploreStream(streamId, true, config.getFormat());
           streamMetaStore.addStream(streamId, description);
-          // If an owner was provided then store it in owner store.
-          try {
-            if (ownerPrincipal != null) {
-              ownerAdmin.add(streamId, ownerPrincipal);
-            }
-          } catch (Exception e) {
-            // clean up from streamMetaStore
-            streamMetaStore.removeStream(streamId);
-            // Propagate for the below cleanup of privilegeManager to happen
-            throw e;
-          }
           publishAudit(streamId, AuditType.CREATE);
           SystemMetadataWriter systemMetadataWriter =
             new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime, description);
@@ -496,6 +491,7 @@ public class FileStreamAdmin implements StreamAdmin {
     } catch (Exception e) {
       // there was a problem creating the stream. so revoke privilege.
       privilegesManager.revoke(streamId);
+      ownerAdmin.delete(streamId); // safe to call even if entry doesn't exists
       throw e;
     }
   }

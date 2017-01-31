@@ -20,30 +20,81 @@ import {parseMetadata} from 'services/metadata-parser';
 import {objectQuery} from 'services/helpers';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
+import {MyProgramApi} from 'api/program';
+import NamespaceStore from 'services/NamespaceStore';
+import {convertProgramToApi} from 'services/program-api-converter';
+import shortid from 'shortid';
+
 require('./ProgramTab.scss');
 
 export default class ProgramsTab extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      entity: this.props.entity
+      entity: this.props.entity,
+      runningPrograms: []
     };
+    this.statusSubscriptions = [];
+    this.setRunninPrograms();
   }
   componentWillReceiveProps(nextProps) {
     let entitiesMatch = objectQuery(nextProps, 'entity', 'name') === objectQuery(this.props, 'entity', 'name');
     if (!entitiesMatch) {
       this.setState({
-        entity: nextProps.entity
+        entity: nextProps.entity,
+        runningPrograms: []
       });
+      this.statusSubscriptions.forEach(sub => sub());
+      this.setRunninPrograms();
     }
   }
+  setRunninPrograms() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    this.state
+        .entity
+        .programs
+        .forEach(program => {
+          let sub = MyProgramApi
+            .pollStatus({
+              namespace,
+              appId: this.state.entity.name,
+              programType: convertProgramToApi(program.type),
+              programId: program.id
+            })
+            .subscribe(res => {
+              let runningPrograms = this.state.runningPrograms;
+              let programState = runningPrograms.filter(prog => prog.name === program.id);
+              if (programState.length) {
+                runningPrograms = runningPrograms.filter(prog => prog.name !== program.id);
+              }
+              runningPrograms.push({
+                name: program.id,
+                status: res.status === 'RUNNING' ? 1 : 0
+              });
+              this.setState({
+                runningPrograms
+              });
+            });
+          this.statusSubscriptions.push(sub);
+        });
+  }
+  componentWillUnmount() {
+    this.statusSubscriptions.forEach(sub => sub.dispose());
+  }
   render() {
+    let runningProgramsCount = 0;
+    if (this.state.runningPrograms.length) {
+      runningProgramsCount = this.state
+        .runningPrograms
+        .map(runningProgram => runningProgram.status)
+        .reduce((prev, curr) => prev + curr);
+    }
     if (!isNil(this.state.entity)) {
       return (
         <div className="program-tab">
           <div className="message-section">
             <strong> {T.translate('features.Overview.ProgramTab.title', {appId: this.state.entity.name})} </strong>
-            <div>{T.translate('features.Overview.ProgramTab.runningProgramLabel', {programCount: this.state.entity.programs.length})}</div>
+            <div>{T.translate('features.Overview.ProgramTab.runningProgramLabel', {programCount: runningProgramsCount})}</div>
           </div>
           {
             this.state.entity.programs.length ?
@@ -67,6 +118,9 @@ export default class ProgramsTab extends Component {
                       }
                     };
                     entity = parseMetadata(entity);
+                    let uniqueId = shortid.generate();
+                    entity.uniqueId = uniqueId;
+                    program.uniqueId = uniqueId;
                     return (
                       <EntityCard
                         className="entity-card-container"

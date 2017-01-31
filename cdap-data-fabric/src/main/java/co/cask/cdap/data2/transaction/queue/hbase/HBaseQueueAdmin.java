@@ -412,7 +412,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
         final String queueTableNamePrefix = String.format("%s.%s.", NamespaceId.SYSTEM.getNamespace(), queueType);
         final String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceId);
         final TableId configTableId = TableId.from(hbaseNamespace, getConfigTableName());
-        tableUtil.deleteAllInNamespace(ddlExecutor, hbaseNamespace, new Predicate<TableId>() {
+        tableUtil.deleteAllInNamespace(ddlExecutor, hbaseNamespace, hConf, new Predicate<TableId>() {
           @Override
           public boolean apply(TableId tableId) {
             // It's a bit hacky here since we know how the Dataset System names tables

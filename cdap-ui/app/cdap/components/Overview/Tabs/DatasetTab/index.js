@@ -19,6 +19,7 @@ require('./DatasetTab.scss');
 import {parseMetadata} from 'services/metadata-parser';
 import EntityCard from 'components/EntityCard';
 import {objectQuery} from 'services/helpers';
+import shortid from 'shortid';
 
 export default class DatasetTab extends Component {
   constructor(props) {
@@ -53,6 +54,9 @@ export default class DatasetTab extends Component {
                   }
                 };
                 entity = parseMetadata(entity);
+                let uniqueId = shortid.generate();
+                entity.uniqueId = uniqueId;
+                dataset.uniqueId = uniqueId;
                 return (
                   <EntityCard
                     className="entity-card-container"
@@ -74,6 +78,9 @@ export default class DatasetTab extends Component {
                   }
                 };
                 entity = parseMetadata(entity);
+                let uniqueId = shortid.generate();
+                entity.uniqueId = uniqueId;
+                stream.uniqueId = uniqueId;
                 return (
                   <EntityCard
                     className="entity-card-container"

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,6 +61,7 @@ public final class NamespaceMeta {
     private String hbaseNamespace;
     private String hiveDatabase;
     private String principal;
+    private String groupName;
     private String keytabURI;
 
     public Builder() {
@@ -77,6 +78,7 @@ public final class NamespaceMeta {
         this.hbaseNamespace = config.getHbaseNamespace();
         this.hiveDatabase = config.getHiveDatabase();
         this.principal = config.getPrincipal();
+        this.groupName = config.getGroupName();
         this.keytabURI = config.getKeytabURI();
       }
     }
@@ -126,6 +128,11 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public Builder setGroupName(String groupName) {
+      this.groupName = groupName;
+      return this;
+    }
+
     public Builder setKeytabURI(String keytabURI) {
       this.keytabURI = keytabURI;
       return this;
@@ -147,7 +154,7 @@ public final class NamespaceMeta {
 
       return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName, rootDirectory,
                                                                       hbaseNamespace, hiveDatabase,
-                                                                      principal, keytabURI));
+                                                                      principal, groupName, keytabURI));
     }
   }
 

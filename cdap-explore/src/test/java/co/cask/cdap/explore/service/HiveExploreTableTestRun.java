@@ -138,7 +138,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
     datasetFramework.addInstance(Table.class.getName(), datasetId, DatasetProperties.EMPTY);
     try {
       DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetId);
-      Assert.assertEquals(QueryHandle.NO_OP, exploreTableManager.enableDataset(datasetId, spec));
+      Assert.assertEquals(QueryHandle.NO_OP, exploreTableManager.enableDataset(datasetId, spec, false));
     } finally {
       datasetFramework.deleteInstance(datasetId);
     }
