@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,8 @@ import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,20 +128,62 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
   }
 
   private void createLocation(NamespaceMeta namespaceMeta) throws IOException {
+    boolean createdHome = false;
     Location namespaceHome;
     if (hasCustomLocation(namespaceMeta)) {
-      validateCustomLocation(namespaceMeta);
-      return;
+      namespaceHome = validateCustomLocation(namespaceMeta);
+    } else {
+      // no namespace custom location was provided one must be created by cdap
+      namespaceHome = namespacedLocationFactory.get(namespaceMeta);
+      if (namespaceHome.exists()) {
+        throw new FileAlreadyExistsException(namespaceHome.toString());
+      }
+      // create namespace home dir
+      if (!namespaceHome.mkdirs()) {
+        throw new IOException(String.format("Error while creating home directory '%s' for namespace '%s'",
+                                            namespaceHome, namespaceMeta.getNamespaceId()));
+      }
+      createdHome = true;
     }
-    // no namespace custom location was provided one must be created by cdap
-    namespaceHome = namespacedLocationFactory.get(namespaceMeta);
-    if (namespaceHome.exists()) {
-      throw new FileAlreadyExistsException(namespaceHome.toString());
-    }
-    // create namespace home dir
-    if (!namespaceHome.mkdirs()) {
-      throw new IOException(String.format("Error while creating home directory '%s' for namespace '%s'",
-                                          namespaceHome, namespaceMeta.getNamespaceId()));
+    Location namespaceData = namespaceHome.append(Constants.Dataset.DEFAULT_DATA_DIR);
+    String configuredGroupName = namespaceMeta.getConfig().getGroupName();
+    boolean createdData = false;
+    try {
+      if (createdHome) {
+        // set the group id of the namespace home if configured, or the current user's primary group
+        String groupName = configuredGroupName != null
+          ? configuredGroupName : UserGroupInformation.getCurrentUser().getPrimaryGroupName();
+        namespaceHome.setGroup(groupName);
+      }
+      // create the data directory with the default permissions; then add group privileges to rwx
+      // so that all users in this group, when impersonated, can create subdirectories for their datasets
+      if (!namespaceData.mkdirs()) {
+        throw new IOException(String.format("Error while creating data directory '%s' for namespace '%s'",
+                                            namespaceData, namespaceMeta.getNamespaceId()));
+      }
+      createdData = true;
+      // the data dir should have the group from the namespace config if present, or the same group as the home dir
+      String dataGroup = configuredGroupName != null ? configuredGroupName : namespaceHome.getGroup();
+      namespaceData.setGroup(dataGroup);
+      // set the permissions to rwx for group, if a group name was configured for the namespace
+      if (configuredGroupName != null) {
+        String permissions = namespaceData.getPermissions();
+        namespaceData.setPermissions(permissions.substring(0, 3) + "rwx" + permissions.substring(6));
+      }
+    } catch (Throwable t) {
+      try {
+        if (createdHome) {
+          namespaceHome.delete(true);
+        } else if (createdData) {
+          namespaceData.delete(true);
+        }
+      } catch (Throwable t1) {
+        LOG.warn("Error while cleaning up home directory '%s' for namespace '%s'",
+                 namespaceHome, namespaceMeta.getNamespaceId());
+        t.addSuppressed(t1);
+      }
+      Throwables.propagateIfInstanceOf(t, IOException.class);
+      throw Throwables.propagate(t);
     }
   }
 
@@ -147,7 +191,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
     return !Strings.isNullOrEmpty(namespaceMeta.getConfig().getRootDirectory());
   }
 
-  private void validateCustomLocation(NamespaceMeta namespaceMeta) throws IOException {
+  private Location validateCustomLocation(NamespaceMeta namespaceMeta) throws IOException {
     // since this is a custom location we expect it to exist. Get the custom location for the namespace from
     // namespaceLocationFactory since the location needs to be aware of local/distributed fs.
     Location customNamespacedLocation = namespacedLocationFactory.get(namespaceMeta);
@@ -173,5 +217,21 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
         customNamespacedLocation.toString(), namespaceMeta.getNamespaceId(),
         namespaceMeta.getConfig().getPrincipal()));
     }
+    // if a group name was configured in the namespace meta, validate the home location's group and permissions
+    if (namespaceMeta.getConfig().getGroupName() != null) {
+      String groupName = customNamespacedLocation.getGroup();
+      String permissions = customNamespacedLocation.getPermissions().substring(3, 6);
+      if (!groupName.equals(namespaceMeta.getConfig().getGroupName())) {
+        LOG.warn("The provided home directory '%s' for namespace '%s' has group '%s', which is different from " +
+                   "the configured group '%s' of the namespace.", customNamespacedLocation.toString(),
+                 namespaceMeta.getNamespaceId(), groupName, namespaceMeta.getConfig().getGroupName());
+      }
+      if (!"rwx".equals(permissions)) {
+        LOG.warn("The provided home directory '%s' for namespace '%s' has group permissions of '%s'. It is " +
+                   "recommended to set the group permissions to 'rwx'",
+                 customNamespacedLocation.toString(), namespaceMeta.getNamespaceId(), permissions);
+      }
+    }
+    return customNamespacedLocation;
   }
 }
