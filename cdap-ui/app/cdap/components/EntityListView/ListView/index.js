@@ -16,7 +16,7 @@
 
 import React, {PropTypes, Component} from 'react';
 import EntityCard from 'components/EntityCard';
-import classNames from 'classNames';
+import classnames from 'classnames';
 import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
 import HomeErrorMessage from 'components/EntityListView/ErrorMessage';
@@ -90,7 +90,7 @@ export default class HomeListView extends Component {
         return (
           <EntityCard
             className={
-              classNames('entity-card-container',
+              classnames('entity-card-container',
                 { active: entity.uniqueId === objectQuery(this.state, 'activeEntity', 'uniqueId') }
               )
             }
