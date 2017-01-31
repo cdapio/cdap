@@ -92,7 +92,7 @@ Here are some example JSON messages, pretty-printed:
   {
 	  "version": 1,
 	  "time": 1000,
-	  "entityId": {
+	  "datasetId": {
 		  "namespace": "ns1",
 		  "dataset": "ds1",
 		  "entity": "DATASET"
@@ -109,7 +109,7 @@ Here are some example JSON messages, pretty-printed:
   {
 	  "version": 1,
 	  "time": 2000,
-	  "entityId": {
+	  "datasetId": {
 		  "namespace": "ns1",
 		  "stream": "stream1",
 		  "entity": "STREAM"
@@ -136,7 +136,7 @@ Here are some example JSON messages, pretty-printed:
   {
 	  "version": 1,
 	  "time": 3000,
-	  "entityId": {
+	  "datasetId": {
   		"namespace": "ns1",
 	  	"application": "app1",
 		  "entity": "APPLICATION"

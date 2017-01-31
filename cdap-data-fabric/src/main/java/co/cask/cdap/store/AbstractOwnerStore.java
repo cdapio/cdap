@@ -33,7 +33,8 @@ abstract class AbstractOwnerStore implements OwnerStore {
   private static final Set<EntityType> SUPPORTED_ENTITY_TYPES = Sets.immutableEnumSet(EntityType.NAMESPACE,
                                                                                       EntityType.APPLICATION,
                                                                                       EntityType.DATASET,
-                                                                                      EntityType.STREAM);
+                                                                                      EntityType.STREAM,
+                                                                                      EntityType.ARTIFACT);
 
   /**
    * Validates the given {@link NamespacedEntityId} to be supported by the {@link OwnerStore}

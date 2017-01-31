@@ -27,7 +27,6 @@ import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
-import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
@@ -196,9 +195,9 @@ public class DatasetInstanceService {
     // for system dataset do not look up owner information in store as we know that it will be null.
     // Also, this is required for CDAP to start, because initially we don't want to look up owner admin
     // (causing its own lookup) as the SystemDatasetInitiator.getDataset is called when CDAP starts
-    KerberosPrincipalId ownerPrincipal = null;
+    String ownerPrincipal = null;
     if (!NamespaceId.SYSTEM.equals(instance.getNamespaceId())) {
-      ownerPrincipal = ownerAdmin.getOwner(instance);
+      ownerPrincipal = ownerAdmin.getOwnerPrincipal(instance);
     }
     return new DatasetMeta(spec, typeMeta, null, ownerPrincipal);
   }
@@ -267,12 +266,12 @@ public class DatasetInstanceService {
 
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     try {
-      KerberosPrincipalId ownerPrincipal = props.getOwnerPrincipal();
+      String ownerPrincipal = props.getOwnerPrincipal();
       // Store the owner principal first if one was provided since it will be used to impersonate while creating
       // dataset's files/tables in the underlying storage
       if (ownerPrincipal != null) {
-        SecurityUtil.validateKerberosPrincipal(ownerPrincipal);
-        ownerAdmin.add(datasetId, ownerPrincipal);
+        KerberosPrincipalId owner = new KerberosPrincipalId(ownerPrincipal);
+        ownerAdmin.add(datasetId, owner);
       }
       try {
         DatasetSpecification spec = opExecutorClient.create(datasetId, typeMeta,

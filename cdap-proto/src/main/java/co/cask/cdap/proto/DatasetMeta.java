@@ -17,7 +17,6 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
 import com.google.gson.annotations.SerializedName;
 
 import javax.annotation.Nullable;
@@ -34,15 +33,15 @@ public class DatasetMeta {
   @SerializedName("hive_table")
   private final String hiveTableName;
 
-  @SerializedName("owner.principal")
-  private final KerberosPrincipalId ownerPrincipal;
+  @SerializedName("principal")
+  private final String ownerPrincipal;
 
   public DatasetMeta(DatasetSpecification spec, DatasetTypeMeta type, @Nullable String hiveTableName) {
     this(spec, type, hiveTableName, null);
   }
 
   public DatasetMeta(DatasetSpecification spec, DatasetTypeMeta type, @Nullable String hiveTableName,
-                     @Nullable KerberosPrincipalId ownerPrincipal) {
+                     @Nullable String ownerPrincipal) {
     this.spec = spec;
     this.type = type;
     this.hiveTableName = hiveTableName;
@@ -63,7 +62,7 @@ public class DatasetMeta {
   }
 
   @Nullable
-  public KerberosPrincipalId getOwnerPrincipal() {
+  public String getOwnerPrincipal() {
     return ownerPrincipal;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,10 +21,13 @@ import co.cask.cdap.common.conf.Constants;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.InetAddress;
 
+import static co.cask.cdap.common.kerberos.SecurityUtil.getKeytabURIforPrincipal;
+
 /**
- *
+ * Tests for {@link SecurityUtil}
  */
 public class SecurityUtilTest {
 
@@ -58,5 +61,18 @@ public class SecurityUtilTest {
     noKeyTabConf.unset(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
     noKeyTabConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "prinicpal@REALM.NET");
     Assert.assertFalse(SecurityUtil.isKerberosEnabled(noKeyTabConf));
+  }
+
+  @Test
+  public void testGetKeytabURIforUser() throws IOException {
+    String user = "alice";
+    String confPath = "/dir1/dir2/${name}/${name}.keytab";
+    String expectedPath = "/dir1/dir2/alice/alice.keytab";
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Security.KEYTAB_PATH, confPath);
+    cConf.set("user", "blah blah");
+
+    String path = getKeytabURIforPrincipal(user, cConf);
+    Assert.assertEquals(expectedPath, path);
   }
 }
