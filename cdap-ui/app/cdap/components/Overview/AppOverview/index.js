@@ -24,6 +24,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import {objectQuery} from 'services/helpers';
 import shortid from 'shortid';
 import T from 'i18n-react';
+require('./AppOverview.scss');
 
 export default class AppOverview extends Component {
   constructor(props) {

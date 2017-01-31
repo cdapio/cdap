@@ -72,15 +72,20 @@ export default class DatasetOverview extends Component {
       MyMetadataApi.getProperties(metadataParams)
         .combineLatest(MyDatasetApi.getPrograms(datasetParams))
         .subscribe((res) => {
+          let appId;
           let programs = res[1].map((program) => {
             program.uniqueId = shortid.generate();
-            program.app = program.application.applicationId;
+            appId = program.application.applicationId;
+            program.app = appId;
+            program.name = program.id;
             return program;
           });
 
           let entityDetail = {
             programs,
-            schema: res[0].schema
+            schema: res[0].schema,
+            name: appId, // FIXME: Finalize on entity detail for fast action
+            app: appId
           };
 
           this.setState({

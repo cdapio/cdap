@@ -717,4 +717,16 @@ features:
   Description:
     label: Description
     nodescription: No Description available
+  ViewSwitch:
+    nameLabel: Name
+    typeLabel: Type
+    actionsLabel: Actions
+    DatasetStreamTable:
+      readsLabel: Reads
+      writesLabel: Writes
+      eventsLabel: Events
+      sizeLabel: Size
+    ProgramTable:
+      lastStartedLabel: Last Started
+      statusLabel: Status
 ...

@@ -13,19 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-.schema-tab {
-  padding: 10px;
-  height: calc(100% - 26px);
-
-  .disable-schema {
-    .fa-trash,
-    .fa-plus {
-      display: none;
-    }
+.dataentity-table {
+  padding-top: 10px;
+  .fast-actions-container .btn-link {
+    color: #4f5050;
   }
-
-  .schema-body .schema-row.nested > .field-name:before {
-    background-color: rgba(238, 238, 238, 1);
+  .table {
+    [class^="icon-"].fa,
+    [class*=" icon-"].fa {
+      margin-right: 5px;
+    }
   }
 }
