@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.namespace;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -149,7 +150,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
     String configuredGroupName = namespaceMeta.getConfig().getGroupName();
     boolean createdData = false;
     try {
-      if (createdHome) {
+      if (createdHome && SecurityUtil.isKerberosEnabled(cConf)) {
         // set the group id of the namespace home if configured, or the current user's primary group
         String groupName = configuredGroupName != null
           ? configuredGroupName : UserGroupInformation.getCurrentUser().getPrimaryGroupName();
@@ -162,13 +163,15 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
                                             namespaceData, namespaceMeta.getNamespaceId()));
       }
       createdData = true;
-      // the data dir should have the group from the namespace config if present, or the same group as the home dir
-      String dataGroup = configuredGroupName != null ? configuredGroupName : namespaceHome.getGroup();
-      namespaceData.setGroup(dataGroup);
-      // set the permissions to rwx for group, if a group name was configured for the namespace
-      if (configuredGroupName != null) {
-        String permissions = namespaceData.getPermissions();
-        namespaceData.setPermissions(permissions.substring(0, 3) + "rwx" + permissions.substring(6));
+      if (SecurityUtil.isKerberosEnabled(cConf)) {
+        // the data dir should have the group from the namespace config if present, or the same group as the home dir
+        String dataGroup = configuredGroupName != null ? configuredGroupName : namespaceHome.getGroup();
+        namespaceData.setGroup(dataGroup);
+        // set the permissions to rwx for group, if a group name was configured for the namespace
+        if (configuredGroupName != null) {
+          String permissions = namespaceData.getPermissions();
+          namespaceData.setPermissions(permissions.substring(0, 3) + "rwx" + permissions.substring(6));
+        }
       }
     } catch (Throwable t) {
       try {
