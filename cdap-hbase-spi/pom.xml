@@ -33,6 +33,11 @@
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-api-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
 </project>

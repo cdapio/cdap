@@ -16,11 +16,14 @@
 
 package co.cask.cdap.spi.hbase;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.Map;
 
 /**
  * HBase DDL executor context.
  */
+@Beta
 public interface HBaseDDLExecutorContext {
   /**
    * Returns the hadoop configuration with which the {@link HBaseDDLExecutor} was initialized.

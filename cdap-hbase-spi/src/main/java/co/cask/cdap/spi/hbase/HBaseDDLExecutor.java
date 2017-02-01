@@ -17,6 +17,8 @@
 package co.cask.cdap.spi.hbase;
 
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.io.Closeable;
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -24,6 +26,7 @@ import javax.annotation.Nullable;
 /**
  * Interface providing the HBase DDL operations.
  */
+@Beta
 public interface HBaseDDLExecutor extends Closeable {
   /**
    * Initialize the {@link HBaseDDLExecutor}.
