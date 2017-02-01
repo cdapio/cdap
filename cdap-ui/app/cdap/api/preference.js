@@ -22,7 +22,7 @@ const basepath = '/namespaces/:namespace';
 
 const myPreferenceApi = {
   getSystemPreferences: apiCreator(dataSrc, 'GET', 'REQUEST', '/preferences'),
-  setSystemPreferences: apiCreator(dataSrc, 'GET', 'REQUEST', '/preferences'),
+  setSystemPreferences: apiCreator(dataSrc, 'PUT', 'REQUEST', '/preferences'),
   getNamespacePreferences: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/preferences`),
   setNamespacePreferences: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/preferences`),
   getNamespacePreferencesResolved: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/preferences?resolved=true`),
