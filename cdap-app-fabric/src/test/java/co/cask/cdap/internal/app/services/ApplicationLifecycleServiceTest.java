@@ -29,7 +29,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.io.Files;
@@ -122,14 +121,14 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
    */
   @Test
   public void testOwner() throws Exception {
-    KerberosPrincipalId ownerPrincipal = new KerberosPrincipalId("alice/somehost.net@somekdc.net");
+    String ownerPrincipal = "alice/somehost.net@somekdc.net";
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1,
                                    ownerPrincipal);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     // trying to redeploy the same app as a different owner should fail
     response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1,
-                      new KerberosPrincipalId("bob/somehost.net@somekdc.net"));
+                      "bob/somehost.net@somekdc.net");
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(),
                         response.getStatusLine().getStatusCode());
 

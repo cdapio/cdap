@@ -116,7 +116,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   @Override
   public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
-    addInstance(datasetTypeName, datasetInstanceId, props, null);
+    super.addInstance(datasetTypeName, datasetInstanceId, props);
   }
 
   @Override

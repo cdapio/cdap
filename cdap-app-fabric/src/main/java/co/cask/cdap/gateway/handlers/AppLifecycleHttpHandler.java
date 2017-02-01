@@ -377,11 +377,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           Id.Artifact artifactId =
             Id.Artifact.from(artifactNamespace.toId(), artifactSummary.getName(), artifactSummary.getVersion());
 
+          KerberosPrincipalId ownerPrincipalId =
+            appRequest.getOwnerPrincipal() == null ? null : new KerberosPrincipalId(appRequest.getOwnerPrincipal());
+
           // if we don't null check, it gets serialized to "null"
           String configString = appRequest.getConfig() == null ? null : GSON.toJson(appRequest.getConfig());
           applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-                                                artifactId, configString, createProgramTerminator(),
-                                                appRequest.getOwnerPrincipal());
+                                                artifactId, configString, createProgramTerminator(), ownerPrincipalId);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (ArtifactNotFoundException e) {
           responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
@@ -435,10 +437,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return null;
     }
 
-    KerberosPrincipalId ownerPrincipalId = null;
-    if (ownerPrincipal != null) {
-      ownerPrincipalId = GSON.fromJson(ownerPrincipal, KerberosPrincipalId.class);
-    }
+    KerberosPrincipalId ownerPrincipalId = ownerPrincipal == null ? null : new KerberosPrincipalId(ownerPrincipal);
+
     // Store uploaded content to a local temp file
     String namespacesDir = configuration.get(Constants.Namespace.NAMESPACES_DIR);
     File localDataDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR));

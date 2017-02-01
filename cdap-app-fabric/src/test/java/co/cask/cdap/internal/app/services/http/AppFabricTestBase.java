@@ -21,6 +21,8 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
+import co.cask.cdap.client.DatasetClient;
+import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.NotFoundException;
@@ -56,7 +58,6 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -165,6 +166,8 @@ public abstract class AppFabricTestBase {
   private static ServiceStore serviceStore;
   private static MetadataService metadataService;
   private static LocationFactory locationFactory;
+  private static StreamClient streamClient;
+  private static DatasetClient datasetClient;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -211,6 +214,8 @@ public abstract class AppFabricTestBase {
     metadataService = injector.getInstance(MetadataService.class);
     metadataService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
+    streamClient = new StreamClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
+    datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     createNamespaces();
   }
 
@@ -418,7 +423,7 @@ public abstract class AppFabricTestBase {
 
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion,
                                 @Nullable String namespace,
-                                @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
+                                @Nullable String ownerPrincipal) throws Exception {
     return deploy(application, apiVersion, namespace, null, null, ownerPrincipal);
   }
 
@@ -450,7 +455,7 @@ public abstract class AppFabricTestBase {
    */
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
                                 @Nullable String artifactVersion, @Nullable Config appConfig,
-                                @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
+                                @Nullable String ownerPrincipal) throws Exception {
     namespace = namespace == null ? Id.Namespace.DEFAULT.getId() : namespace;
     apiVersion = apiVersion == null ? Constants.Gateway.API_VERSION_3_TOKEN : apiVersion;
     artifactVersion = artifactVersion == null ? String.format("1.0.%d", System.currentTimeMillis()) : artifactVersion;
@@ -478,7 +483,7 @@ public abstract class AppFabricTestBase {
       request.setHeader(AbstractAppFabricHttpHandler.APP_CONFIG_HEADER, GSON.toJson(appConfig));
     }
     if (ownerPrincipal != null) {
-      request.setHeader(AbstractAppFabricHttpHandler.OWNER_PRINCIPAL_HEADER, GSON.toJson(ownerPrincipal));
+      request.setHeader(AbstractAppFabricHttpHandler.OWNER_PRINCIPAL_HEADER, ownerPrincipal);
     }
     request.setEntity(new FileEntity(artifactJar));
     return execute(request);

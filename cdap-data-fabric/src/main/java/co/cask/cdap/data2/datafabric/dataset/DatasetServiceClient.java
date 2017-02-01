@@ -189,8 +189,9 @@ class DatasetServiceClient {
   }
 
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props,
-                          @Nullable KerberosPrincipalId ownerPrincipal)
+                          @Nullable KerberosPrincipalId owner)
     throws DatasetManagementException {
+    String ownerPrincipal = owner == null ? null : owner.getPrincipal();
     DatasetInstanceConfiguration creationProperties =
       new DatasetInstanceConfiguration(datasetType, props.getProperties(), props.getDescription(), ownerPrincipal);
 
