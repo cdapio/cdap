@@ -22,12 +22,12 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -79,9 +79,9 @@ public abstract class AbstractMetadataClient {
    * @return the {@link MetadataSearchResponse} for the given query.
    */
   public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
-                                               @Nullable MetadataSearchTargetType target)
+                                               @Nullable EntityTypeSimpleName target)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
-    Set<MetadataSearchTargetType> targets = ImmutableSet.of();
+    Set<EntityTypeSimpleName> targets = ImmutableSet.of();
     if (target != null) {
       targets = ImmutableSet.of(target);
     }
@@ -93,11 +93,11 @@ public abstract class AbstractMetadataClient {
    *
    * @param namespace the namespace to search in
    * @param query the query string with which to search
-   * @param targets {@link MetadataSearchTargetType}s to search. If empty, all possible types will be searched
+   * @param targets {@link EntityTypeSimpleName}s to search. If empty, all possible types will be searched
    * @return A set of {@link MetadataSearchResultRecord} for the given query.
    */
   public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
-                                               Set<MetadataSearchTargetType> targets)
+                                               Set<EntityTypeSimpleName> targets)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
     return searchMetadata(namespace, query, targets, null, 0, Integer.MAX_VALUE, 0, null, false);
   }
@@ -107,7 +107,7 @@ public abstract class AbstractMetadataClient {
    *
    * @param namespace the namespace to search in
    * @param query the query string with which to search
-   * @param targets {@link MetadataSearchTargetType}s to search. If empty, all possible types will be searched
+   * @param targets {@link EntityTypeSimpleName}s to search. If empty, all possible types will be searched
    * @param sort specifies sort field and sort order. If {@code null}, the sort order is by relevance
    * @param offset the index to start with in the search results. To return results from the beginning, pass {@code 0}
    * @param limit the number of results to return, starting from #offset. To return all, pass {@link Integer#MAX_VALUE}
@@ -121,13 +121,13 @@ public abstract class AbstractMetadataClient {
    * @return A set of {@link MetadataSearchResultRecord} for the given query.
    */
   public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
-                                               Set<MetadataSearchTargetType> targets, @Nullable String sort,
+                                               Set<EntityTypeSimpleName> targets, @Nullable String sort,
                                                int offset, int limit, int numCursors,
                                                @Nullable String cursor, boolean showHidden)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
 
     String path = String.format("metadata/search?query=%s", query);
-    for (MetadataSearchTargetType t : targets) {
+    for (EntityTypeSimpleName t : targets) {
       path += "&target=" + t;
     }
     if (sort != null) {

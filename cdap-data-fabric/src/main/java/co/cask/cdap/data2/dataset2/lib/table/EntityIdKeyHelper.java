@@ -16,18 +16,19 @@
 
 package co.cask.cdap.data2.dataset2.lib.table;
 
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.FlowId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -42,20 +43,24 @@ import java.util.Map;
 public final class EntityIdKeyHelper {
   public static final Map<Class<? extends NamespacedEntityId>, String> TYPE_MAP =
     ImmutableMap.<Class<? extends NamespacedEntityId>, String>builder()
-    .put(ArtifactId.class, MetadataSearchTargetType.ARTIFACT.getSerializedForm())
-    .put(ApplicationId.class, MetadataSearchTargetType.APP.getSerializedForm())
-    .put(ProgramId.class, MetadataSearchTargetType.PROGRAM.getSerializedForm())
-    .put(WorkflowId.class, MetadataSearchTargetType.PROGRAM.getSerializedForm())
-    .put(FlowId.class, MetadataSearchTargetType.PROGRAM.getSerializedForm())
-    .put(ServiceId.class, MetadataSearchTargetType.PROGRAM.getSerializedForm())
-    .put(DatasetId.class, MetadataSearchTargetType.DATASET.getSerializedForm())
-    .put(StreamId.class, MetadataSearchTargetType.STREAM.getSerializedForm())
-    .put(StreamViewId.class, MetadataSearchTargetType.VIEW.getSerializedForm())
-    .build();
+      .put(NamespaceId.class, EntityTypeSimpleName.NAMESPACE.getSerializedForm())
+      .put(ArtifactId.class, EntityTypeSimpleName.ARTIFACT.getSerializedForm())
+      .put(ApplicationId.class, EntityTypeSimpleName.APP.getSerializedForm())
+      .put(ProgramId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
+      .put(WorkflowId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
+      .put(FlowId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
+      .put(ServiceId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
+      .put(DatasetId.class, EntityTypeSimpleName.DATASET.getSerializedForm())
+      .put(StreamId.class, EntityTypeSimpleName.STREAM.getSerializedForm())
+      .put(StreamViewId.class, EntityTypeSimpleName.VIEW.getSerializedForm())
+      .build();
 
   public static void addTargetIdToKey(MDSKey.Builder builder, NamespacedEntityId namespacedEntityId) {
     String type = getTargetType(namespacedEntityId);
-    if (type.equals(TYPE_MAP.get(ProgramId.class))) {
+    if (type.equals(TYPE_MAP.get(NamespaceId.class))) {
+      NamespaceId namespaceId = (NamespaceId) namespacedEntityId;
+      builder.add(namespaceId.getNamespace());
+    } else if (type.equals(TYPE_MAP.get(ProgramId.class))) {
       ProgramId program = (ProgramId) namespacedEntityId;
       String namespaceId = program.getNamespace();
       String appId = program.getApplication();
@@ -105,7 +110,10 @@ public final class EntityIdKeyHelper {
   }
 
   public static NamespacedEntityId getTargetIdIdFromKey(MDSKey.Splitter keySplitter, String type) {
-    if (type.equals(TYPE_MAP.get(ProgramId.class))) {
+    if (type.equals(TYPE_MAP.get(NamespaceId.class))) {
+      String namespaceId = keySplitter.getString();
+      return new NamespaceId(namespaceId);
+    } else if (type.equals(TYPE_MAP.get(ProgramId.class))) {
       String namespaceId = keySplitter.getString();
       String appId = keySplitter.getString();
       String programType = keySplitter.getString();

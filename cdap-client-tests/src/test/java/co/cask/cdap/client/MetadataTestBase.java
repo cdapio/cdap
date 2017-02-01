@@ -19,6 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -31,7 +32,6 @@ import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import com.google.common.collect.Iterators;
@@ -458,21 +458,21 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
-                                                           Set<MetadataSearchTargetType> targets) throws Exception {
+                                                           Set<EntityTypeSimpleName> targets) throws Exception {
     // Note: Can't delegate this to the next method. This is because MetadataHttpHandlerTestRun overrides these two
     // methods, to strip out metadata from search results for easier assertions.
     return metadataClient.searchMetadata(namespaceId.toId(), query, targets).getResults();
   }
 
   protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
-                                                           Set<MetadataSearchTargetType> targets,
+                                                           Set<EntityTypeSimpleName> targets,
                                                            @Nullable String sort) throws Exception {
     return metadataClient.searchMetadata(namespaceId.toId(), query, targets,
                                          sort, 0, Integer.MAX_VALUE, 0, null, false).getResults();
   }
 
   protected MetadataSearchResponse searchMetadata(NamespaceId namespaceId, String query,
-                                                  Set<MetadataSearchTargetType> targets,
+                                                  Set<EntityTypeSimpleName> targets,
                                                   @Nullable String sort, int offset, int limit, int numCursors,
                                                   @Nullable String cursor, boolean showHiddden) throws Exception {
     return metadataClient.searchMetadata(namespaceId.toId(), query, targets, sort, offset, limit, numCursors,

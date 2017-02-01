@@ -24,8 +24,8 @@ import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -77,7 +77,7 @@ public class MetadataAdminAuthorizationTest {
     SecurityRequestContext.setUserId(ALICE.getName());
     authorizer.grant(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.WRITE));
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, "{}", cConf);
-    EnumSet<MetadataSearchTargetType> types = EnumSet.allOf(MetadataSearchTargetType.class);
+    EnumSet<EntityTypeSimpleName> types = EnumSet.allOf(EntityTypeSimpleName.class);
     Assert.assertFalse(
       metadataAdmin.search(NamespaceId.DEFAULT.getNamespace(), "*", types,
                            SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null, false).getResults().isEmpty());

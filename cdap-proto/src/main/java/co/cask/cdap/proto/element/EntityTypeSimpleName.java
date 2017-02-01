@@ -13,18 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto.metadata;
+package co.cask.cdap.proto.element;
 
 import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Supported types for metadata search.
+ * Simple names for various CDAP entities which can be used during entity serialization for persistence.
  */
 @Beta
-public enum MetadataSearchTargetType {
+public enum EntityTypeSimpleName {
   // the custom values are required because these value match the entity-type stored as
   // a part of MDS key.
   ALL("All"),
+  NAMESPACE("Namespace"),
   ARTIFACT("Artifact"),
   APP("Application"),
   PROGRAM("Program"),
@@ -34,17 +35,17 @@ public enum MetadataSearchTargetType {
 
   private final String serializedForm;
 
-  MetadataSearchTargetType(String serializedForm) {
+  EntityTypeSimpleName(String serializedForm) {
     this.serializedForm = serializedForm;
   }
 
   /**
-   * @return {@link MetadataSearchTargetType} of the given value.
+   * @return {@link EntityTypeSimpleName} of the given value.
    */
-  public static MetadataSearchTargetType valueOfSerializedForm(String value) {
-    for (MetadataSearchTargetType metadataSearchTargetType : values()) {
-      if (metadataSearchTargetType.serializedForm.equalsIgnoreCase(value)) {
-        return metadataSearchTargetType;
+  public static EntityTypeSimpleName valueOfSerializedForm(String value) {
+    for (EntityTypeSimpleName entityTypeSimpleName : values()) {
+      if (entityTypeSimpleName.serializedForm.equalsIgnoreCase(value)) {
+        return entityTypeSimpleName;
       }
     }
     throw new IllegalArgumentException(String.format("No enum constant for serialized form: %s", value));
