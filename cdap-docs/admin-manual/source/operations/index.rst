@@ -120,7 +120,7 @@ calls return a valid HTTP response with a 200 code.
 
     $ curl -w"\n" -X GET "http://localhost:10009/status"
 
-- To retrieve a **list of health checks of all the services running in YARN**, make a GET request
+- To retrieve a **list of health checks of all the CDAP system services running in YARN**, make a GET request
   to the URI (at the ``router.bind.port``)::
   
     http://<host>:10000/v3/system/services
