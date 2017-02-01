@@ -498,8 +498,8 @@ features:
         shorttitle: General Information
         title: General
         description: Provide information about the stream you want to create.
-        ttllabel: Event Life Time
-        ttl-placeholder: Specify time-to-live events in seconds
+        ttllabel: TTL
+        ttl-placeholder: Specify the time-to-live for events in seconds
       Step2:
         shorttitle: Setup Format and Schema
         title: Set Format and Schema
