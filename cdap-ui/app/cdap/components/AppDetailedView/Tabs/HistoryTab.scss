@@ -14,6 +14,8 @@
  * the License.
  */
 
+@import '../../../styles/variables.scss';
+
 .history-tab {
   padding: 20px;
   &.table-bordered {
@@ -24,5 +26,11 @@
   .empty-message {
     margin-top: 15%;
     color: gray;
+  }
+  table {
+    tr th,
+    tr td {
+      border-color: $custom_table-border-color;
+    }
   }
 }
