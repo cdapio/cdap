@@ -1877,6 +1877,7 @@
         <stage.opt.dir>${stage.dir}/opt/cdap/${package.name}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <stage.plugins.dir>${stage.opt.dir}/plugins</stage.plugins.dir>
+        <stage.coprocessor.dir>${stage.opt.dir}/coprocessor</stage.coprocessor.dir>
         <package.deb.depends>--depends cdap</package.deb.depends>
         <package.rpm.depends>--depends cdap</package.rpm.depends>
         <package.deb.arch>all</package.deb.arch>
