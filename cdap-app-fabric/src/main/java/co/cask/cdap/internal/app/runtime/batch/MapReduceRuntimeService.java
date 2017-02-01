@@ -45,6 +45,7 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.transaction.RetryingLongTransactionSystemClient;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
@@ -194,7 +195,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.programJarLocation = programJarLocation;
     this.locationFactory = locationFactory;
     this.streamAdmin = streamAdmin;
-    this.txClient = txClient;
+    this.txClient = new RetryingLongTransactionSystemClient(txClient, context.getRetryStrategy());
     this.context = context;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
