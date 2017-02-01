@@ -369,5 +369,18 @@ angular.module(PKG.name + '.feature.tracker')
               authorizedRoles: MYAUTH_ROLE.all,
               highlightTab: 'search'
             }
+          })
+          .state('tracker.detail.entity.compliance', {
+            url: '/compliance',
+            templateUrl: '/assets/features/tracker/templates/compliance.html',
+            controller: 'TrackerComplianceController',
+            controllerAs: 'ComplianceController',
+            onEnter: function($stateParams) {
+              document.title = 'Tracker - ' + $stateParams.entityId + ' Compliance view';
+            },
+            data: {
+              authorizedRoles: MYAUTH_ROLE.all,
+              highlightTab: 'search'
+            }
           });
   });

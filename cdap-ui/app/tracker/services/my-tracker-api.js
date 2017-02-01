@@ -31,7 +31,8 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, CDAP_UI_CONFIG) {
       baseQueryPath = '/data/explore/queries/:handle',
       truthMeterPath = '/namespaces/:namespace/apps/' + CDAP_UI_CONFIG.tracker.appId + '/services/' + CDAP_UI_CONFIG.tracker.serviceId + '/methods/v1/tracker-meter',
       tagsPath = '/namespaces/:namespace/apps/' + CDAP_UI_CONFIG.tracker.appId + '/services/' + CDAP_UI_CONFIG.tracker.serviceId + '/methods/v1/tags',
-      dictionaryPath = '/namespaces/:namespace/apps/' + CDAP_UI_CONFIG.tracker.appId + '/services/' + CDAP_UI_CONFIG.tracker.serviceId + '/methods/v1/dictionary';
+      dictionaryPath = '/namespaces/:namespace/apps/' + CDAP_UI_CONFIG.tracker.appId + '/services/' + CDAP_UI_CONFIG.tracker.serviceId + '/methods/v1/dictionary',
+      compliancePath = dictionaryPath + '/validate';
 
   return $resource(
     url({ _cdapPath: searchPath }),
@@ -88,6 +89,9 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, CDAP_UI_CONFIG) {
     postQuery: myHelpers.getConfig('POST', 'REQUEST', exploreQueryPath),
     getQueryResults: myHelpers.getConfig('POST', 'REQUEST', baseQueryPath + '/next', true),
     getQuerySchema: myHelpers.getConfig('GET', 'REQUEST', baseQueryPath + '/schema', true),
+
+    //Compliance Tab
+    complianceCheck: myHelpers.getConfig('POST', 'REQUEST', compliancePath, false, { suppressErrors: true }),
   });
 }
 

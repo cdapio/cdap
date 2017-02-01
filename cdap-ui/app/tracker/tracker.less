@@ -907,6 +907,39 @@ body.state-tracker-detail-entity-preview {
   }
 }
 
+body.state-tracker-detail-entity-compliance {
+  .passed-compliance {
+    margin-top: 150px;
+    font-size: 18px;
+    color: #666666;
+  }
+  .check {
+    background-color: @tracker-green;
+    padding: 5px;
+    border-radius: 15px;
+    color: black;
+    i {
+      font-size: 25px;
+      color: #000;
+      vertical-align: top;
+    }
+  }
+  .not-exist {
+    color: @tracker-green;
+  }
+  .not-matched {
+    color: #fa4347;
+  }
+  .table th {
+    background-color: white;
+    color: black;
+  }
+  .alert a {
+    color: white;
+    text-decoration: underline;
+  }
+}
+
 body.state-tracker-integrations {
   background-color: white;
   margin-bottom: 0;
