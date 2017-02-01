@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Recipe:: init
 #
-# Copyright © 2013-2016 Cask Data, Inc.
+# Copyright © 2013-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,7 +55,10 @@ end
   end
 end
 
-include_recipe 'krb5' if hadoop_kerberos?
+if hadoop_kerberos?
+  include_recipe 'krb5'
+  include_recipe 'krb5::rkerberos_gem'
+end
 
 princ =
   if node['cdap']['cdap_site'].key?('cdap.master.kerberos.principal')
