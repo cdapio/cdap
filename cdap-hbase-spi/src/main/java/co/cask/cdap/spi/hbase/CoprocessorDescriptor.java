@@ -16,6 +16,8 @@
 
 package co.cask.cdap.spi.hbase;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -23,6 +25,7 @@ import javax.annotation.Nullable;
 /**
  * Describes HBase coprocessor.
  */
+@Beta
 public final class CoprocessorDescriptor {
 
   private final String className;

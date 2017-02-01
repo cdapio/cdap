@@ -16,12 +16,15 @@
 
 package co.cask.cdap.spi.hbase;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.Collections;
 import java.util.Map;
 
 /**
  * Describes HBase table column family.
  */
+@Beta
 public final class ColumnFamilyDescriptor {
 
   private final String name;

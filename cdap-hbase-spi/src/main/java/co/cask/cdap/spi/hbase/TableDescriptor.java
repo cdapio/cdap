@@ -16,6 +16,8 @@
 
 package co.cask.cdap.spi.hbase;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +26,7 @@ import java.util.Set;
 /**
  * Describes an HBase table.
  */
+@Beta
 public final class TableDescriptor {
 
   private final String namespace;
