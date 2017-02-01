@@ -59,10 +59,12 @@ public class LastWriteTimeObserver extends BaseWALObserver {
   @Override
   public void postWALWrite(ObserverContext<? extends WALCoprocessorEnvironment> ctx, HRegionInfo info,
                            WALKey logKey, WALEdit logEdit) throws IOException {
-    if (logKey.getScopes() == null || logKey.getScopes().size() == 0) {
+    if (logKey.getScopes() == null || logKey.getScopes().size() == 0 || !logKey.getClusterIds().isEmpty()) {
       //if replication scope is not set for this entry, do not update write time.
       // This is to save us from cases where some HBase tables do not have replication enabled.
       // Ideally, you would check scopes against REPLICATION_SCOPE_LOCAL, but cell.getFamily() is expensive.
+      // also ignore if this logkey was processed by another cluster,
+      // which means the write originated on another cluster
       return;
     }
     LOG.debug("Update LastWriteTimeObserver for Table {}:{} for region={}",
