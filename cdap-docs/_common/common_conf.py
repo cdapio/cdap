@@ -126,6 +126,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.intersphinx',
     'sphinx.ext.extlinks',
+    'javadoc',
     'tabbed-parsed-literal',
     'youtube',
 ]
