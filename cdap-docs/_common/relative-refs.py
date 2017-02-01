@@ -12,7 +12,7 @@
         ]
     
     relative-refs = {
-        'javadoc': ('reference-manual/javadocs', 'http://docs.cask.co/cdap/develop/en/reference-manual/javadocs/'),
+        'javadoc': ('reference-manual/javadocs', 'http://docs.cask.co/cdap/current/en/reference-manual/javadocs/'),
     }
     
     "relative-refs" is a dictionary naming each "relative ref", and giving the reference location and a prefix.
@@ -30,7 +30,7 @@
 
     If prefix is defined and the link starts with the prefix, it will be stripped off:
     
-        http://docs.cask.co/cdap/develop/en/reference-manual/javadocs/co/cask/cdap/api/ClientLocalizationContext.html
+        http://docs.cask.co/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/ClientLocalizationContext.html
 
     becomes
     
@@ -44,11 +44,11 @@
       
     Examples: (All will produce the same final references, but with different titles shown)
     
-    :javadoc:`http://docs.cask.co/cdap/develop/en/reference-manual/javadocs/co/cask/cdap/api/ClientLocalizationContext.html`
+    :javadoc:`http://docs.cask.co/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/ClientLocalizationContext.html`
 
-    :javadoc:`<http://docs.cask.co/cdap/develop/en/reference-manual/javadocs/co/cask/cdap/api/ClientLocalizationContext.html>`
+    :javadoc:`<http://docs.cask.co/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/ClientLocalizationContext.html>`
 
-    :javadoc:`ClientLocalizationContext <http://docs.cask.co/cdap/develop/en/reference-manual/javadocs/co/cask/cdap/api/ClientLocalizationContext.html>`
+    :javadoc:`ClientLocalizationContext <http://docs.cask.co/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/ClientLocalizationContext.html>`
 
     :javadoc:`ClientLocalizationContext <co/cask/cdap/api/ClientLocalizationContext>`
 

@@ -132,7 +132,7 @@ extensions = [
 ]
 
 relative_refs = {
-    'javadoc': ('reference-manual/javadocs', 'http://docs.cask.co/cdap/develop/en/reference-manual/javadocs/'),
+    'javadoc': ('reference-manual/javadocs', 'http://docs.cask.co/cdap/current/en/reference-manual/javadocs/'),
 }
 
 # The Inter-Sphinx mapping
