@@ -21,8 +21,9 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.preview.PreviewStore;
-import co.cask.cdap.common.kerberos.NoOpOwnerAdmin;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerStore;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.security.UGIProvider;
@@ -56,6 +57,7 @@ import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
+import co.cask.cdap.store.DefaultOwnerStore;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
@@ -146,8 +148,9 @@ public class PreviewRunnerModule extends PrivateModule {
     bind(DataTracerFactory.class).to(DefaultDataTracerFactory.class);
     expose(DataTracerFactory.class);
 
-    // Bind to No-op since in preview mode we don't need owner principal and its security features
-    bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
+    bind(OwnerStore.class).to(DefaultOwnerStore.class);
+    expose(OwnerStore.class);
+    bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
     expose(OwnerAdmin.class);
   }
 }

@@ -34,7 +34,6 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableSet;
@@ -141,16 +140,16 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     addAppArtifact(artifactId.toId(), WordCountApp.class);
     ApplicationId applicationId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "WordCountApp");
     // deploy an app with a owner
-    KerberosPrincipalId ownerPrincipal = new KerberosPrincipalId("alice/somehost.net@somekdc.net");
+    String ownerPrincipal = "alice/somehost.net@somekdc.net";
     AppRequest<ConfigTestApp.ConfigClass> appRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()), null, ownerPrincipal);
     Assert.assertEquals(HttpResponseCodes.SC_OK, deploy(applicationId, appRequest).getStatusLine().getStatusCode());
 
     // should be able to retrieve the owner information of the app
     JsonObject appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), applicationId.getApplication());
-    Assert.assertEquals(ownerPrincipal.getPrincipal(),
-                        appDetails.get(Constants.Security.OWNER_PRINCIPAL).
-                          getAsJsonObject().get("principal").getAsString());
+    Assert.assertEquals(ownerPrincipal,
+                        appDetails.get(Constants.Security.OWNER_PRINCIPAL)
+                          .getAsJsonObject().get("principal").getAsString());
 
     // the stream created by the app should have the app owner too
     Assert.assertEquals(ownerPrincipal,
@@ -161,7 +160,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
                         getDatasetMeta(applicationId.getNamespaceId().dataset("mydataset")).getOwnerPrincipal());
 
     // trying to deploy the same app with another owner should fail
-    KerberosPrincipalId bobPrincipal = new KerberosPrincipalId("bob/somehost.net@somekdc.net");
+    String bobPrincipal = "bob/somehost.net@somekdc.net";
     appRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()), null, bobPrincipal);
     Assert.assertEquals(HttpResponseCodes.SC_BAD_REQUEST,
@@ -204,7 +203,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testOwnerInHeaders() throws Exception {
-    KerberosPrincipalId ownerPrincipal = new KerberosPrincipalId("bob/somehost.net@somekdc.net");
+    String ownerPrincipal = "bob/somehost.net@somekdc.net";
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
                                    NamespaceId.DEFAULT.getNamespace(), ownerPrincipal);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -213,7 +212,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // should be able to retrieve the owner information of the app
     JsonObject appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), applicationId.getApplication());
-    Assert.assertEquals(ownerPrincipal.getPrincipal(),
+    Assert.assertEquals(ownerPrincipal,
                         appDetails.get(Constants.Security.OWNER_PRINCIPAL).
                           getAsJsonObject().get("principal").getAsString());
 

@@ -62,6 +62,27 @@ public interface OwnerAdmin {
   KerberosPrincipalId getOwner(NamespacedEntityId entityId) throws IOException;
 
   /**
+   * <p>Delegates to {@link #getOwner(NamespacedEntityId)} to retrieve the owner information for the given
+   * {@link EntityId} and then return the principal of the entity as {@link String} by
+   * calling {@link KerberosPrincipalId#getPrincipal()} on the owner's principal if one exists.</p>
+   * <p>Note: a null return value does not indicate presence or absence of the given entity in the system.
+   * It only means that no explicit owner principal was specified during entity creation and it's owned by the system
+   * if its present</p>
+   *
+   * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
+   * @return {@link String} the principal of the {@link EntityId} owner if one was explicitly provided during entity
+   * creation or null if
+   * <ol>
+   * <li>the entity does not exists in the system</li>
+   * <li>entity exists in the system but no explicit owner principal was specified during creation</li>
+   * </ol>
+   * @throws IOException if failed to get the store
+   * @throws IllegalArgumentException if the given entity is not of supported type.
+   */
+  @Nullable
+  String getOwnerPrincipal(NamespacedEntityId entityId) throws IOException;
+
+  /**
    * <p>
    * Retrieves the owner information for the given {@link EntityId} by tracing the entity hierarchy.
    * </p>

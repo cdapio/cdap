@@ -53,7 +53,7 @@ final class StreamCreator {
         props.put(Constants.Stream.DESCRIPTION, spec.getDescription());
       }
       if (ownerPrincipal != null) {
-        props.put(Constants.Security.OWNER_PRINCIPAL, GSON.toJson(ownerPrincipal));
+        props.put(Constants.Security.OWNER_PRINCIPAL, ownerPrincipal.getPrincipal());
       }
       streamAdmin.create(namespaceId.stream(spec.getName()), props);
     }

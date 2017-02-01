@@ -24,7 +24,9 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
- * No-op implementation of {@link OwnerAdmin}.
+ * No-op implementation of {@link OwnerAdmin}. This is just a dummy OwnerAdmin which can be used in unit tests.
+ * Although, this binding should not be used if the the unit test needs app fabric, stream admin or
+ * dataset instance service as they need a functional OwnerAdmin.
  */
 public class NoOpOwnerAdmin implements OwnerAdmin {
   @Override
@@ -36,6 +38,12 @@ public class NoOpOwnerAdmin implements OwnerAdmin {
   @Nullable
   @Override
   public KerberosPrincipalId getOwner(NamespacedEntityId entityId) throws IOException {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getOwnerPrincipal(NamespacedEntityId entityId) throws IOException {
     return null;
   }
 

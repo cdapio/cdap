@@ -75,7 +75,7 @@ public class ForwardingDatasetFramework implements DatasetFramework {
   @Override
   public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
-    addInstance(datasetTypeName, datasetInstanceId, props, null);
+    delegate.addInstance(datasetTypeName, datasetInstanceId, props);
   }
 
   @Override
