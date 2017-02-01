@@ -23,6 +23,7 @@
  var ee = require('event-emitter');
  var VersionStore = require('../cdap/services/VersionStore').default;
  var VersionActions = require('../cdap/services/VersionStore/VersionActions').default;
+ var Version = require('../cdap/services/VersionRange/Version').default;
  export {
   Store,
   Header,
@@ -30,5 +31,6 @@
   globalEvents,
   ee,
   VersionStore,
-  VersionActions
+  VersionActions,
+  Version
 };
