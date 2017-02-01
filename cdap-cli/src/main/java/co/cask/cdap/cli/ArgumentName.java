@@ -140,7 +140,7 @@ public enum ArgumentName {
     return name;
   }
 
-  public static final String ENTITY_DESCRIPTION_STRING = String.format("'<%s>' 
+  public static final String ENTITY_DESCRIPTION_STRING = String.format("'<%s>' " +
     "is of the form '<entity-type>:<entity-id>', where '<entity-type>' is one of " +
     "'artifact', 'app', 'dataset', 'program', 'stream', or 'view'. For artifacts and apps, " +
     "'<entity-id>' is composed of the namespace, entity name, and version, such as " +
