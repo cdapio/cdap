@@ -38,6 +38,6 @@ public class RevokeEntityCommand extends RevokeActionCommand {
 
   @Override
   public String getDescription() {
-    return "Revokes all privileges for all users on the entity";
+    return "Revokes all privileges for all users on the entity. " + ArgumentName.ENTITY_DESCRIPTION_STRING;
   }
 }

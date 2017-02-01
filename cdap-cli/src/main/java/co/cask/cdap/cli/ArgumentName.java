@@ -109,7 +109,7 @@ public enum ArgumentName {
 
   INSTANCE_URI("cdap-instance-uri"),
   VERIFY_SSL_CERT("verify-ssl-cert"),
-  ENTITY("entity-id"),
+  ENTITY("entity"),
 
   /**
    * Metadata
@@ -140,7 +140,16 @@ public enum ArgumentName {
     return name;
   }
 
-  public static final String ENTITY_DESCRIPTION_STRING = String.format("'<%s>' is of the form " +
-    "'<entity-type>:<namespace-id>.<entity-name>', where '<entity-type>' is one of " +
-    "'artifact', 'app', 'dataset', 'program', 'stream', or 'view'.", ENTITY);
+  public static final String ENTITY_DESCRIPTION_STRING = String.format("'<%s>' 
+    "is of the form '<entity-type>:<entity-id>', where '<entity-type>' is one of " +
+    "'artifact', 'app', 'dataset', 'program', 'stream', or 'view'. For artifacts and apps, " +
+    "'<entity-id>' is composed of the namespace, entity name, and version, such as " +
+    "'<namespace-name>.<artifact-name>.<artifact-version>' or " +
+    "'<namespace-name>.<app-name>.<app-version>'. For programs, '<entity-id>' includes the " +
+    "application name and the program type: " +
+    "'<namespace-name>.<app-name>.<program-type>.<program-name>'. '<program-type>' is one of " +
+    "flow, mapreduce, service, spark, worker, or workflow. For datasets and streams, " +
+    "'<entity-id>' is the namespace and entity names, such as '<namespace-name>.<dataset-name>' " +
+    "or '<namespace-name>.<stream-name>'. For (stream) views, '<entity-id>' includes the stream " +
+    "that they were created from: '<namespace-name>.<stream-name>.<view-name>'.", ENTITY);
 }
