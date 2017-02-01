@@ -431,7 +431,7 @@ public class FileStreamAdmin implements StreamAdmin {
         ownerAdmin.add(streamId, ownerPrincipal);
       }
 
-      final UserGroupInformation ugi = impersonator.getUGI(streamNamespace);
+      final UserGroupInformation ugi = impersonator.getUGI(streamId);
       final Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
         @Override
         public Location call() throws Exception {
