@@ -315,7 +315,7 @@ class Management extends Component {
         <SetPreferenceModal
           isOpen={this.state.preferenceModal}
           toggleModal={this.togglePreferenceModal}
-          onPreferencesSaved={this.onSystemPreferencesSaved}
+          onSuccess={this.onSystemPreferencesSaved}
           setAtSystemLevel={true}
         />
       </div>
