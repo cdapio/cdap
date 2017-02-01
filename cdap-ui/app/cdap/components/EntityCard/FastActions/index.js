@@ -53,11 +53,14 @@ export default class FastActions extends Component {
       if (this.props.onSuccess) {
         this.props.onSuccess();
       }
-      return;
     }
-
+    if (action === 'delete') {
+      if (this.props.onSuccess) {
+        this.props.onSuccess(action);
+      }
+    }
     if (this.props.onUpdate) {
-      this.props.onUpdate();
+      this.props.onUpdate(action);
     }
   }
 

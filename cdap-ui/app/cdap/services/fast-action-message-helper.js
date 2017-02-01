@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,22 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+import T from 'i18n-react';
 
-@import '../../styles/variables.scss';
-
-.dataentity-table {
-  padding-top: 10px;
-  .fast-actions-container .btn-link {
-    color: #4f5050;
-  }
-  .table {
-    [class^="icon-"].fa,
-    [class*=" icon-"].fa {
-      margin-right: 5px;
-    }
-    tr th,
-    tr td {
-      border-color: $custom_table-border-color;
-    }
+export default function FastActionToMessage(action, options) {
+  switch (action) {
+    case 'setPreferences':
+      return T.translate('features.FastAction.setPreferencesSuccess.default', {entityType: options.entityType});
+    case 'truncate':
+      return T.translate('features.FastAction.truncateSuccess');
+    default:
+      return '';
   }
 }

@@ -80,6 +80,14 @@ export default class EntityListHeader extends Component {
       this.setState({sortDropdownTooltip: !this.state.sortDropdownTooltip});
     }
   }
+  onFilterClick(option) {
+    if (this.props.onFilterClick) {
+      this.props.onFilterClick(option);
+    }
+    this.setState({
+      isFilterExpanded: false
+    });
+  }
   render() {
 
     let tooltipId = 'filter-tooltip-target-id';
@@ -151,7 +159,7 @@ export default class EntityListHeader extends Component {
                         type="checkbox"
                         className="form-check-input"
                         checked={this.state.activeFilter.indexOf(option.id) !== -1}
-                        onChange={this.props.onFilterClick.bind(this, option)}
+                        onChange={this.onFilterClick.bind(this, option)}
                       />
                       {option.displayName}
                     </label>

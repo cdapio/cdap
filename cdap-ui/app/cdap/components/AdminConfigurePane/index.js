@@ -23,7 +23,7 @@ require('./AdminConfigurePane.scss');
 
 export default function AdminConfigurePane({ openNamespaceWizard, openPreferenceModal, preferencesSavedState, closePreferencesSavedMessage }) {
   let setPreferencesLabel = T.translate('features.Management.Configure.buttons.set-system-preferences');
-  let setPreferenceSuccessLabel = T.translate('features.FastAction.setPreferencesSuccess.system');
+  let setPreferenceSuccessLabel = T.translate('features.FastAction.setPreferencesSuccess.default', {entityType: 'CDAP'});
   let addNSLabel = T.translate('features.Management.Configure.buttons.add-ns');
   let wrenchClasses = classnames('fa fa-wrench', {'preferences-saved-wrench': preferencesSavedState});
 

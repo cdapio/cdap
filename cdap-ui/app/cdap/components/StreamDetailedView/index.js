@@ -30,6 +30,9 @@ import T from 'i18n-react';
 import StreamDetaildViewTab from 'components/StreamDetailedView/Tabs';
 import {MySearchApi} from 'api/search';
 import {parseMetadata} from 'services/metadata-parser';
+import FastActionToMessage from 'services/fast-action-message-helper';
+import capitalize from 'lodash/capitalize';
+import Redirect from 'react-router/Redirect';
 
 export default class StreamDetailedView extends Component {
   constructor(props) {
@@ -42,7 +45,9 @@ export default class StreamDetailedView extends Component {
       },
       loading: true,
       entityMetadata: objectQuery(this.props, 'location', 'state', 'entityMetadata') || {},
-      isInvalid: false
+      isInvalid: false,
+      routeToHome: false,
+      successMessage: null
     };
   }
 
@@ -134,6 +139,31 @@ export default class StreamDetailedView extends Component {
 
   }
 
+  goToHome(action) {
+    if (action === 'delete') {
+      let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+      this.setState({
+        selectedNamespace,
+        routeToHome: true
+      });
+    }
+    let successMessage;
+    if (action === 'setPreferences') {
+      successMessage = FastActionToMessage(action, {entityType: capitalize(this.state.entityMetadata.type)});
+    } else {
+      successMessage = FastActionToMessage(action);
+    }
+    this.setState({
+      successMessage
+    }, () => {
+      setTimeout(() => {
+        this.setState({
+          successMessage: null
+        });
+      }, 3000);
+    });
+  }
+
   render() {
     if (this.state.loading) {
       return (
@@ -150,14 +180,24 @@ export default class StreamDetailedView extends Component {
         <OverviewHeader
           icon="icon-streams"
           title={title}
+          successMessage={this.state.successMessage}
         />
-        <OverviewMetaSection entity={this.state.entityMetadata} />
+        <OverviewMetaSection
+          entity={this.state.entityMetadata}
+          onFastActionSuccess={this.goToHome.bind(this)}
+          onFastActionUpdate={this.goToHome.bind(this)}
+        />
         <StreamDetaildViewTab
           params={this.props.params}
           pathname={this.props.location.pathname}
           entity={this.state.entityDetail}
         />
-
+        {
+          this.state.routeToHome ?
+            <Redirect to={`/ns/${this.state.selectedNamespace}`} />
+          :
+            null
+        }
       </div>
     );
   }

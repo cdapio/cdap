@@ -123,9 +123,9 @@ export default class HistoryTab extends Component {
         } else {
           return (
             <div className="history-tab">
-              <h3 className="text-xs-center empty-message">
+              <i>
                 {T.translate('features.AppDetailedView.History.emptyMessage')}
-              </h3>
+              </i>
             </div>
           );
         }
