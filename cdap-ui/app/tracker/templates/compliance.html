@@ -1,0 +1,63 @@
+<!--
+  Copyright © 2017 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="alert alert-danger" ng-show="ComplianceController.formattedData.length > 0">
+  <span>These fields have failed compliance check based on <a ui-sref="tracker.dictionary">Data Dictionary</a></span>
+</div>
+
+<div class="content-loading text-center" ng-show="ComplianceController.loading && !ComplianceController.noSchema">
+  <h3>
+    <span class="fa fa-spinner fa-spin"></span>
+    <span>Checking for compliance</span>
+  </h3>
+</div>
+
+<div class="passed-compliance text-center" ng-if="!ComplianceController.formattedData.length > 0 && !ComplianceController.loading">
+  <span class="check">
+    <i class="fa fa-check-circle"></i>
+    <span>This {{ComplianceController.displayEntityType}} passed all compliance checks</span>
+  </span>
+</div>
+
+<div class="content-loading text-center" ng-if="ComplianceController.noSchema">
+    <span>There is no schema</span>
+</div>
+
+<table class="table table-bordered table-striped" ng-if="ComplianceController.formattedData.length > 0 && !ComplianceController.loading">
+  <thead>
+    <tr>
+      <th><span>&nbsp;</span>Name</th>
+      <th>Type</th>
+      <th>Null</th>
+      <th>PII</th>
+      <th>Reason</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="data in ComplianceController.formattedData">
+      <td>{{data.columnName}}</td>
+      <td>{{data.columnType}}</td>
+      <td>
+        <input type="checkbox" ng-checked="data.isNullable" ng-disabled="true">
+      </td>
+      <td>
+        <input type="checkbox" ng-checked="data.isPII" ng-disabled="true">
+      </td>
+      <td ng-class="{'not-exist': data.statusCode===404, 'not-matched': data.statusCode===409}">{{data.reason.join(', ')}}</td>
+    </tr>
+  </tbody>
+</table>
+
