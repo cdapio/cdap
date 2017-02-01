@@ -20,6 +20,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
@@ -32,6 +33,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.annotation.Nullable;
@@ -40,10 +42,23 @@ import javax.annotation.Nullable;
  * Tests for {@link DefaultNamespaceAdmin}
  */
 public class DefaultNamespaceAdminTest extends AppFabricTestBase {
-  private static final NamespaceAdmin namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
-  private static final LocationFactory baseLocationFactory = getInjector().getInstance(LocationFactory.class);
-  private static final NamespacedLocationFactory namespacedLocationFactory =
-    getInjector().getInstance(NamespacedLocationFactory.class);
+  private static NamespaceAdmin namespaceAdmin;
+  private static LocationFactory baseLocationFactory;
+  private static NamespacedLocationFactory namespacedLocationFactory;
+
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    CConfiguration cConf = createBasicCConf();
+    // we enable Kerberos for these unit tests, so we can test namespace group permissions (see testDataDirCreation).
+    cConf.set(Constants.Security.KERBEROS_ENABLED, Boolean.toString(true));
+    cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "cdap");
+    initializeAndStartServices(cConf, null);
+
+    namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
+    baseLocationFactory = getInjector().getInstance(LocationFactory.class);
+    namespacedLocationFactory =
+      getInjector().getInstance(NamespacedLocationFactory.class);
+  }
 
   @Test
   public void testNamespaces() throws Exception {

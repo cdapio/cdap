@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,9 +21,6 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
-import co.cask.cdap.client.DatasetClient;
-import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.client.StreamViewClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -33,6 +30,8 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.security.CurrentUGIProvider;
+import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.test.PluginJarHelper;
 import co.cask.cdap.common.utils.Tasks;
@@ -62,8 +61,10 @@ import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -154,9 +155,6 @@ public abstract class AppFabricTestBase {
   private static ServiceStore serviceStore;
   private static MetadataService metadataService;
   private static LocationFactory locationFactory;
-  private static StreamClient streamClient;
-  private static StreamViewClient streamViewClient;
-  private static DatasetClient datasetClient;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -168,7 +166,14 @@ public abstract class AppFabricTestBase {
 
   protected static void initializeAndStartServices(CConfiguration cConf,
                                                    @Nullable SConfiguration sConf) throws Exception {
-    injector = Guice.createInjector(new AppFabricTestModule(cConf, sConf));
+    injector = Guice.createInjector(
+      Modules.override(new AppFabricTestModule(cConf, sConf)).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          // needed because we set Kerberos to true in DefaultNamespaceAdminTest
+          bind(UGIProvider.class).to(CurrentUGIProvider.class);
+        }
+      }));
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
@@ -196,9 +201,6 @@ public abstract class AppFabricTestBase {
     metadataService = injector.getInstance(MetadataService.class);
     metadataService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
-    streamClient = new StreamClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
-    streamViewClient = new StreamViewClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
-    datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     createNamespaces();
   }
 
