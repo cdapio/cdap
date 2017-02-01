@@ -99,10 +99,11 @@ public class CoprocessorManager {
   }
 
   /**
-   * Get the location of the coprocessor and ensure it exists. If a coprocessor already exists, it will be overwritten.
+   * Get the location of the coprocessor and ensure it exists, optionally overwriting it if it exists.
    * In distributed mode, the coprocessor jar is loaded onto hdfs by the CoprocessorBuildTool,
    * but in other modes it is still useful to create the jar on demand.
    *
+   * @param overwrite whether to overwrite the coprocessor if it already exists
    * @return the location of the coprocessor
    * @throws IOException if there was an issue accessing the location
    */

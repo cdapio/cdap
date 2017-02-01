@@ -87,7 +87,6 @@ public final class HBaseTableFactory implements TableFactory {
   private final Map<TableId, HTableDescriptor> tableDescriptors;
   private final CoprocessorManager coprocessorManager;
   private final HBaseDDLExecutorFactory ddlExecutorFactory;
-  private final boolean manageCoprocessors;
 
   @Inject
   HBaseTableFactory(CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil,
@@ -97,7 +96,6 @@ public final class HBaseTableFactory implements TableFactory {
     this.tableUtil = tableUtil;
     this.tableDescriptors = new ConcurrentHashMap<>();
     this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
-    this.manageCoprocessors = cConf.getBoolean(Constants.HBase.MANAGE_COPROCESSORS);
 
     RejectedExecutionHandler callerRunsPolicy = new RejectedExecutionHandler() {
       @Override
@@ -302,9 +300,7 @@ public final class HBaseTableFactory implements TableFactory {
       CoprocessorDescriptor coprocessorDescriptor =
         coprocessorManager.getCoprocessorDescriptor(coprocessor, Coprocessor.PRIORITY_USER);
       Path path = coprocessorDescriptor.getPath() == null ? null : new Path(coprocessorDescriptor.getPath());
-      tableDescriptor.addCoprocessor(coprocessorDescriptor.getClassName(),
-                                     path,
-                                     coprocessorDescriptor.getPriority(),
+      tableDescriptor.addCoprocessor(coprocessorDescriptor.getClassName(), path, coprocessorDescriptor.getPriority(),
                                      coprocessorDescriptor.getProperties());
 
       // Update CDAP version, table prefix

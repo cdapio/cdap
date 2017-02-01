@@ -222,9 +222,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
                                 Integer priority) throws IOException {
     CoprocessorDescriptor descriptor = coprocessorManager.getCoprocessorDescriptor(coprocessor, priority);
     Path path = descriptor.getPath() == null ? null : new Path(descriptor.getPath());
-    tableDescriptor.addCoprocessor(descriptor.getClassName(),
-                                   path,
-                                   descriptor.getPriority(),
+    tableDescriptor.addCoprocessor(descriptor.getClassName(), path, descriptor.getPriority(),
                                    descriptor.getProperties());
   }
 
