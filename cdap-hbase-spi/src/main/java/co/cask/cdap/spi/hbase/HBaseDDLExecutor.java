@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Beta;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -109,4 +110,16 @@ public interface HBaseDDLExecutor extends Closeable {
    * @throws IllegalStateException if the specified table is not disabled
    */
   void deleteTableIfExists(String namespace, String name) throws IOException;
+
+  /**
+   * Grant permissions on a table to users or groups.
+   *
+   * @param namespace the namespace of the table
+   * @param name the name of the table
+   * @param permissions A map from user or group name to the permissions for that user or group, given as a string
+   *                    containing only characters 'a'(Admin), 'c'(Create), 'r'(Read), 'w'(Write), and 'x'(Execute).
+   *                    Group names must be prefixed with the character '@'.
+   * @throws IOException if anything goes wrong
+   */
+  void grantPermissions(String namespace, String name, Map<String, String> permissions) throws IOException;
 }

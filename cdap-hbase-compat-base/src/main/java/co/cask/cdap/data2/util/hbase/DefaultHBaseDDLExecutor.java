@@ -31,12 +31,15 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.security.access.Permission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -44,9 +47,11 @@ import javax.annotation.Nullable;
  * Default implementation of the {@link HBaseDDLExecutor}.
  */
 public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
-  public static final Logger LOG = LoggerFactory.getLogger(DefaultHBaseDDLExecutor.class);
-  public static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
-  private HBaseAdmin admin;
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultHBaseDDLExecutor.class);
+  private static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
+
+  protected HBaseAdmin admin;
 
   @Override
   public void initialize(HBaseDDLExecutorContext context) {
@@ -203,6 +208,50 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
   public void close() throws IOException {
     if (admin != null) {
       admin.close();
+    }
+  }
+
+  protected abstract void doGrantPermissions(String namespace, String name,
+                                             Map<String, Permission.Action[]> permissions) throws IOException;
+
+  @Override
+  public void grantPermissions(String namespace, String name, Map<String, String> permissions) throws IOException {
+    Map<String, Permission.Action[]> privilegesToGrant = new HashMap<>(permissions.size());
+    for (Map.Entry<String, String> entry : permissions.entrySet()) {
+      String user = entry.getKey();
+      String actionsForUser = entry.getValue();
+      try {
+        privilegesToGrant.put(user, toActions(actionsForUser));
+      } catch (IllegalArgumentException e) {
+        throw new IOException(String.format("Error granting permissions '%s' for table %s:%s to user %s: %s",
+                                            actionsForUser, namespace, name, user, e.getMessage()));
+      }
+      doGrantPermissions(namespace, name, privilegesToGrant);
+    }
+  }
+
+  protected Permission.Action[] toActions(String permissions) {
+    Permission.Action[] actions = new Permission.Action[permissions.length()];
+    for (int i = 0; i < actions.length; i++) {
+      actions[i] = toAction(permissions.charAt(i));
+    }
+    return actions;
+  }
+
+  private Permission.Action toAction(char c) {
+    switch (Character.toLowerCase(c)) {
+      case 'a':
+        return Permission.Action.ADMIN;
+      case 'c':
+        return Permission.Action.CREATE;
+      case 'r':
+        return Permission.Action.READ;
+      case 'w':
+        return Permission.Action.WRITE;
+      case 'x':
+        return Permission.Action.EXEC;
+      default:
+        throw new IllegalArgumentException(String.format("Unknown Action '%s'", c));
     }
   }
 }

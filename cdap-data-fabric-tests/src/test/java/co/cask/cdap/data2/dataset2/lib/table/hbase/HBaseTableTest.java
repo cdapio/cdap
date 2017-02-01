@@ -42,6 +42,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.apache.hadoop.hbase.Cell;
@@ -335,6 +336,25 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     HColumnDescriptor hcd = htd.getFamily(Bytes.toBytes("t"));
     Assert.assertNotNull(hcd);
     Assert.assertEquals("t", hcd.getNameAsString());
+  }
+
+  @Test
+  public void testTableWithPermissions() throws IOException {
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, "validPerms", TableProperties.builder()
+      .setTablePermissions(ImmutableMap.of("joe", "rwa")).build());
+    admin.create();
+    Assert.assertTrue(admin.exists());
+    admin.drop();
+
+    admin = getTableAdmin(CONTEXT1, "invalidPerms", TableProperties.builder()
+      .setTablePermissions(ImmutableMap.of("joe", "iwx")).build()); // invalid permissions
+    try {
+      admin.create();
+      Assert.fail("create() should have failed due to bad permissions");
+    } catch (IOException e) {
+      Assert.assertTrue(e.getMessage().contains("Unknown Action"));
+    }
+    Assert.assertFalse(admin.exists());
   }
 
   private static byte[] b(String s) {

@@ -44,6 +44,7 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -126,6 +127,19 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
 
     try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
       ddlExecutor.createTableIfNotExists(tdBuilder.build(), splits);
+      try {
+        Map<String, String> permissions = TableProperties.getTablePermissions(spec.getProperties());
+        if (permissions != null && !permissions.isEmpty()) {
+          tableUtil.grantPrivileges(ddlExecutor, tableId, permissions);
+        }
+      } catch (IOException | RuntimeException e) {
+        try {
+          drop();
+        } catch (Throwable t) {
+          e.addSuppressed(t);
+        }
+        throw e;
+      }
     }
   }
 

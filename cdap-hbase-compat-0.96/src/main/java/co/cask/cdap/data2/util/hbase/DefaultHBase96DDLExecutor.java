@@ -19,11 +19,19 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.spi.hbase.TableDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.security.access.Permission;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * Implementation of the {@link HBaseDDLExecutor} for HBase 0.96
  */
 public class DefaultHBase96DDLExecutor extends DefaultHBaseDDLExecutor {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultHBase96DDLExecutor.class);
 
   @Override
   public HTableDescriptor getHTableDescriptor(TableDescriptor descriptor) {
@@ -33,5 +41,28 @@ public class DefaultHBase96DDLExecutor extends DefaultHBaseDDLExecutor {
   @Override
   public TableDescriptor getTableDescriptor(HTableDescriptor descriptor) {
     return HBase96TableDescriptorUtil.getTableDescriptor(descriptor);
+  }
+
+  @Override
+  protected void doGrantPermissions(String namespace, String name, Map<String, Permission.Action[]> permissions) {
+    // no-op, not called
+  }
+
+  @Override
+  public void grantPermissions(String namespace, String name, Map<String, String> permissions) throws IOException {
+    StringBuilder statements = new StringBuilder();
+    for (Map.Entry<String, String> entry : permissions.entrySet()) {
+      String user = entry.getKey();
+      String actions = entry.getValue();
+      try {
+        toActions(actions);
+      } catch (IllegalArgumentException e) {
+        throw new IOException(String.format("Invalid permissions '%s' for table %s:%s and user %s: %s",
+                                            actions, namespace, name, user, e.getMessage()));
+      }
+      statements.append(String.format("\ngrant '%s', '%s', '%s:%s'", user, actions.toUpperCase(), namespace, name));
+    }
+    LOG.warn("Granting permissions is not implemented for HBase 0.96. " +
+               "Please grant these permissions manually in the hbase shell: {}", statements);
   }
 }

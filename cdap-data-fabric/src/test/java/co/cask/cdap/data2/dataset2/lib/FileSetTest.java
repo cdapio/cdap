@@ -138,8 +138,8 @@ public class FileSetTest {
     DatasetId datasetId = OTHER_NAMESPACE.dataset("testPermFS");
     dsFrameworkUtil.createInstance("fileSet", datasetId, FileSetProperties.builder()
       .setBasePath("perm/test/path")
-      .setPermissions(fsPermissions)
-      .setGroup(group)
+      .setFilePermissions(fsPermissions)
+      .setFileGroup(group)
       .build());
     FileSet fs = dsFrameworkUtil.getInstance(datasetId);
 
