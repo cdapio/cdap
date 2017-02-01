@@ -682,6 +682,7 @@ new pipeline using the *Import Pipeline* button:
 As determined by the configuration file, the application template will be set
 appropriately, and may change from the current one.
 
-A valid configuration file that meets the Hydrator configuration file specification is
+A valid configuration file that meets the :ref:`Hydrator configuration file specification 
+<hydrator-developing-pipelines-configuration-file-format>` is
 required. It may be created from an existing pipeline by exporting its configuration file.
 
