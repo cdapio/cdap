@@ -84,7 +84,7 @@ Standalone and Distributed CDAP
 - Build distributions (rpm, deb, tgz)::
 
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -DskipTests \
-    -P examples,templates,dist,coprocessors,release,rpm-prepare,rpm,deb-prepare,deb,tgz,unit-tests
+    -P examples,templates,dist,release,rpm-prepare,rpm,deb-prepare,deb,tgz,unit-tests
 
 - Build Cloudera Manager parcel::
 
