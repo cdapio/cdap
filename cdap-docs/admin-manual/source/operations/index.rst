@@ -131,8 +131,8 @@ calls return a valid HTTP response with a 200 code.
 
     $ curl -w"\n" -X GET "http://localhost:10000/v3/system/services"
 
-  On success, the call returns a JSON string with component names and their corresponding 
-  statuses (reformatted to fit)::
+  On success, the call returns a JSON string with component names, their corresponding 
+  statuses, and details of the services (reformatted to fit)::
   
     [{"name":"appfabric","description":"Service for managing application
       lifecycle.","status":"OK","logs":"OK","min":1,"max":1,"requested":1,"provisioned":1},
@@ -151,7 +151,7 @@ calls return a valid HTTP response with a 200 code.
      {"name":"transaction","description":"Service that maintains transaction
       states.","status":"OK","logs":"NOTOK","min":1,"max":1,"requested":1,"provisioned":1}]
 
-- To retrieve a **health check of all the services running in YARN**, make a GET request
+- To retrieve a **health check of all the CDAP system services running in YARN**, make a GET request
   to the URI (at the ``router.bind.port``)::
   
     http://<host>:10000/v3/system/services/status
@@ -162,7 +162,7 @@ calls return a valid HTTP response with a 200 code.
 
     $ curl -w"\n" -X GET "http://localhost:10000/v3/system/services/status"
 
-- To retrieve a **health check of a particular service running in YARN**, make a GET request
+- To retrieve a **health check of a particular CDAP system service running in YARN**, make a GET request
   to the URI (at the ``router.bind.port``), substituting for ``<service-id>``, as 
   shown in the :ref:`Monitor HTTP RESTful API <checking-the-status-of-a-system-service>`::
   
