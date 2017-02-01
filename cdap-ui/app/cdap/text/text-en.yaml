@@ -389,6 +389,11 @@ features:
       title: "Dataset Used by {appId}:"
     SchemaTab:
       emptyMessage: No Schema found.
+      title: Schema of each record in the {entityType} "{entityId}"
+      tooltip: Schema defines the structure of each record in the dataset. A schema is a collection of fields, where each field has a name and a data type.
+    Metadata:
+      ttl: "Time To Live (TTL): "
+      type: "Type: "
   Pagination:
     dropdown-label: Page
   Resource-Center:

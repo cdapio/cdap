@@ -87,7 +87,9 @@ export default class StreamOverview extends Component {
             programs,
             schema: res[0].schema,
             name: appId, // FIXME: Finalize on entity detail for fast action
-            app: appId
+            app: appId,
+            id: this.props.entity.id,
+            type: 'stream'
           };
 
           this.setState({

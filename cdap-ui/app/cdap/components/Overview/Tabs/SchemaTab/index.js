@@ -19,6 +19,7 @@ import {objectQuery} from 'services/helpers';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
 import SchemaEditor from 'components/SchemaEditor';
 import {getParsedSchema} from 'components/SchemaEditor/SchemaHelpers';
+import {Tooltip} from 'reactstrap';
 import T from 'i18n-react';
 
 require('./SchemaTab.scss');
@@ -27,8 +28,11 @@ export default class SchemaTab extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      entity: this.props.entity
+      entity: this.props.entity,
+      tooltipOpen: false
     };
+
+    this.toggleTooltip = this.toggleTooltip.bind(this);
   }
 
   componentWillMount() {
@@ -65,9 +69,31 @@ export default class SchemaTab extends Component {
     });
   }
 
+  toggleTooltip() {
+    this.setState({tooltipOpen: !this.state.tooltipOpen});
+  }
+
   render() {
+    const infoIconId = 'schema-tab-title-info';
+
     return (
       <div className="schema-tab">
+        <div className="message-section">
+          <strong> {T.translate('features.Overview.SchemaTab.title', {entityType: this.state.entity.type, entityId: this.state.entity.id})} </strong>
+          <span className="message-section-tooltip">
+            <i
+              className="fa fa-info-circle"
+              id={infoIconId}
+            />
+            <Tooltip
+              isOpen={this.state.tooltipOpen}
+              target={infoIconId}
+              toggle={this.toggleTooltip}
+            >
+              {T.translate('features.Overview.SchemaTab.tooltip')}
+            </Tooltip>
+          </span>
+        </div>
         <fieldset
           className="disable-schema"
           disabled
@@ -76,7 +102,7 @@ export default class SchemaTab extends Component {
             this.state.entity.schema ?
               <SchemaEditor />
             :
-            <div>
+            <div className="empty-schema">
               <i>{T.translate('features.Overview.SchemaTab.emptyMessage')}</i>
             </div>
           }

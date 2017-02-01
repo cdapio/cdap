@@ -69,6 +69,12 @@
       }
     }
   }
+  .entity-info {
+    span {
+      font-weight: bold;
+      color: rgba(102, 102, 102, 1);
+    }
+  }
   .description-holder {
     margin-top: 8px;
   }

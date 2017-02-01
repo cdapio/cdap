@@ -22,6 +22,8 @@ import Description from 'components/Description';
 import TimeAgo from 'react-timeago';
 import VersionsDropdown from 'components/VersionsDropdown';
 import Tags from 'components/Tags';
+import moment from 'moment';
+import T from 'i18n-react';
 
 require('./OverviewMetaSection.scss');
 
@@ -43,6 +45,43 @@ export default class OverviewMetaSection extends Component {
       });
     }
   }
+
+  renderStreamInfo() {
+    if (this.props.entity.type !== 'stream') { return null; }
+
+    const TWENTY_YEARS = 20 * 365 * 24 * 60 * 60;
+
+    let ttl = objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'ttl');
+    ttl = parseInt(ttl, 10);
+    ttl = ttl < TWENTY_YEARS ? moment.duration(ttl).humanize() : 'Forever';
+
+    return (
+      <div className="entity-info">
+        <strong>
+          {T.translate('features.Overview.Metadata.ttl')}
+        </strong>
+        <span>{ttl}</span>
+      </div>
+    );
+  }
+
+  renderDatasetInfo() {
+    if (this.props.entity.type !== 'datasetinstance') { return null; }
+
+    let type = objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'type');
+    type = type.split('.');
+    type = type[type.length - 1];
+
+    return (
+      <div className="entity-info">
+        <strong>
+          {T.translate('features.Overview.Metadata.type')}
+        </strong>
+        <span>{type}</span>
+      </div>
+    );
+  }
+
   onFastActionsUpdate() {}
   render() {
     let creationTime = objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'creation-time');
@@ -74,6 +113,8 @@ export default class OverviewMetaSection extends Component {
           />
         </div>
         <Description description={description} />
+        {this.renderDatasetInfo()}
+        {this.renderStreamInfo()}
         <Tags entity={this.props.entity} />
       </div>
     );
