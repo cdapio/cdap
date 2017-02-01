@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.ProjectInfo;
-import com.google.common.collect.ImmutableMap;
+import co.cask.cdap.spi.hbase.CoprocessorDescriptor;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.common.io.OutputSupplier;
@@ -43,67 +43,89 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import javax.annotation.Nullable;
 
 /**
  * Manages HBase coprocessors for Tables and Queues.
  */
 public class CoprocessorManager {
   private static final Logger LOG = LoggerFactory.getLogger(CoprocessorManager.class);
+  private static final String INCLUDE_BUILD_IN_PATH = "master.coprocessors.include.build.in.path";
+  private final boolean manageCoprocessors;
+  private final boolean includeBuildInPath;
   private final Location jarDir;
-  private final Map<Type, Set<Class<? extends Coprocessor>>> coprocessors;
-
-  /**
-   * Type of coprocessor.
-   */
-  public enum Type {
-    TABLE,
-    QUEUE,
-    MESSAGING
-  }
+  private final Set<Class<? extends Coprocessor>> coprocessors;
 
   public CoprocessorManager(CConfiguration cConf, LocationFactory locationFactory, HBaseTableUtil tableUtil) {
+    this.manageCoprocessors = cConf.getBoolean(Constants.HBase.MANAGE_COPROCESSORS);
+    // this is really only useful in a development setting, so not putting the default in cdap-default.xml
+    this.includeBuildInPath = cConf.getBoolean(INCLUDE_BUILD_IN_PATH, true);
     this.jarDir = locationFactory.create(cConf.get(Constants.CFG_HDFS_LIB_DIR));
-    this.coprocessors = ImmutableMap.<Type, Set<Class<? extends Coprocessor>>>of(
-      Type.TABLE, ImmutableSet.of(tableUtil.getTransactionDataJanitorClassForVersion(),
-                                  tableUtil.getIncrementHandlerClassForVersion()),
-      Type.QUEUE, ImmutableSet.of(tableUtil.getQueueRegionObserverClassForVersion(),
-                                  tableUtil.getDequeueScanObserverClassForVersion()),
-      Type.MESSAGING, ImmutableSet.of(tableUtil.getMessageTableRegionObserverClassForVersion(),
-                                      tableUtil.getPayloadTableRegionObserverClassForVersion()));
+    //noinspection unchecked
+    this.coprocessors = ImmutableSet.of(
+      tableUtil.getTransactionDataJanitorClassForVersion(),
+      tableUtil.getIncrementHandlerClassForVersion(),
+      tableUtil.getQueueRegionObserverClassForVersion(),
+      tableUtil.getDequeueScanObserverClassForVersion(),
+      tableUtil.getMessageTableRegionObserverClassForVersion(),
+      tableUtil.getPayloadTableRegionObserverClassForVersion());
+  }
+
+
+  /**
+   * Get the descriptor for a single coprocessor that uses the pre-built coprocessor jar.
+   */
+  public CoprocessorDescriptor getCoprocessorDescriptor(Class<? extends  Coprocessor> coprocessor,
+                                                        @Nullable Integer priority) throws IOException {
+    if (priority == null) {
+      priority = Coprocessor.PRIORITY_USER;
+    }
+
+    Location jarFile = ensureCoprocessorExists();
+    String jarPath = manageCoprocessors ? jarFile.toURI().getPath() : null;
+    return new CoprocessorDescriptor(coprocessor.getName(), jarPath, priority, null);
   }
 
   /**
-   * Get the location of the specified type of coprocessor and ensure it exists.
-   * In distributed mode, the coprocessor jars are loaded onto hdfs by the CoprocessorBuildTool,
+   * Get the location of the coprocessor and ensure it exists.
+   * In distributed mode, the coprocessor jar is loaded onto hdfs by the CoprocessorBuildTool,
    * but in other modes it is still useful to create the jar on demand.
    *
-   * @param type the type of coprocessor
    * @return the location of the coprocessor
    * @throws IOException if there was an issue accessing the location
    */
-  public synchronized Location ensureCoprocessorExists(Type type) throws IOException {
+  public synchronized Location ensureCoprocessorExists() throws IOException {
+    return ensureCoprocessorExists(false);
+  }
 
-    final Location targetPath = jarDir.append(String.format("%s-coprocessor-%s-%s.jar",
-                                                            type.name().toLowerCase(),
-                                                            ProjectInfo.getVersion(),
-                                                            HBaseVersion.get().toString()));
-    if (targetPath.exists()) {
+  /**
+   * Get the location of the coprocessor and ensure it exists, optionally overwriting it if it exists.
+   * In distributed mode, the coprocessor jar is loaded onto hdfs by the CoprocessorBuildTool,
+   * but in other modes it is still useful to create the jar on demand.
+   *
+   * @param overwrite whether to overwrite the coprocessor if it already exists
+   * @return the location of the coprocessor
+   * @throws IOException if there was an issue accessing the location
+   */
+  public synchronized Location ensureCoprocessorExists(boolean overwrite) throws IOException {
+
+    final Location targetPath = jarDir.append(getCoprocessorName());
+    if (!overwrite && targetPath.exists()) {
       return targetPath;
     }
 
     // ensure the jar directory exists
     Locations.mkdirsIfNotExists(jarDir);
 
-    Set<Class<? extends Coprocessor>> classes = coprocessors.get(type);
     StringBuilder buf = new StringBuilder();
-    for (Class<? extends Coprocessor> c : classes) {
+    for (Class<? extends Coprocessor> c : coprocessors) {
       buf.append(c.getName()).append(", ");
     }
 
     LOG.debug("Creating jar file for coprocessor classes: {}", buf.toString());
 
     final Map<String, URL> dependentClasses = new HashMap<>();
-    for (Class<? extends Coprocessor> clz : classes) {
+    for (Class<? extends Coprocessor> clz : coprocessors) {
       Dependencies.findClassDependencies(clz.getClassLoader(), new ClassAcceptor() {
         @Override
         public boolean accept(String className, final URL classUrl, URL classPathUrl) {
@@ -127,7 +149,7 @@ public class CoprocessorManager {
 
     // create the coprocessor jar on local filesystem
     LOG.debug("Adding " + dependentClasses.size() + " classes to jar");
-    File jarFile = File.createTempFile(type.name().toLowerCase(), ".jar");
+    File jarFile = File.createTempFile("coprocessor", ".jar");
     byte[] buffer = new byte[4 * 1024];
     try (JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarFile))) {
       for (Map.Entry<String, URL> entry : dependentClasses.entrySet()) {
@@ -184,5 +206,23 @@ public class CoprocessorManager {
 
     tmpLocation.renameTo(targetPath);
     return targetPath;
+  }
+
+  private String getCoprocessorName() {
+    ProjectInfo.Version cdapVersion = ProjectInfo.getVersion();
+    StringBuilder name = new StringBuilder()
+      .append("coprocessor-")
+      .append(cdapVersion.getMajor()).append('.')
+      .append(cdapVersion.getMinor()).append('.')
+      .append(cdapVersion.getFix());
+    if (cdapVersion.isSnapshot()) {
+      name.append("-SNAPSHOT");
+    }
+    if (includeBuildInPath) {
+      name.append("-").append(cdapVersion.getBuildTime());
+    }
+
+    name.append("-").append(HBaseVersion.get()).append(".jar");
+    return name.toString();
   }
 }
