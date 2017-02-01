@@ -29,7 +29,7 @@ public enum EntityTypeSimpleName {
   ARTIFACT("Artifact"),
   APP("Application"),
   PROGRAM("Program"),
-  DATASET_INSTANCE("DatasetInstance"),
+  DATASET("DatasetInstance"),
   STREAM("Stream"),
   VIEW("View");
 
