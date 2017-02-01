@@ -30,6 +30,12 @@ import co.cask.cdap.replication.ReplicationStatusKey;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileChecksum;
 import org.apache.hadoop.fs.FileStatus;
@@ -72,13 +78,20 @@ public class ReplicationStatusTool {
   private static Configuration hConf = HBaseConfiguration.create();
   protected static final Logger LOG = LoggerFactory.getLogger(ReplicationStatusTool.class);
 
-  private static boolean onMasterCluster = false;
-  private static String masterChecksum = null;
+  private static final Options options = new Options();
+  private static final String HELP_OPTION = "h";
+  private static final String INPUT_OPTION = "i";
+  private static final String OUTPUT_OPTION = "o";
+  private static final String MASTER_OPTION = "m";
+  private static final String DEBUG_OPTION = "d";
+  private static final String SHUTDOWNTIME_OPTION = "s";
+  private static final String FILE_OPTION = "f";
+
   private static Long masterShutdownTime = 0L;
   private static String inputStatusFileName = null;
   private static String outputStatusFileName = null;
   private static String dirsFileName = null;
-  private static boolean debugDump = false;
+  private static long shutDownTimeArgument = 0L;
 
   private static final Gson GSON = new Gson();
 
@@ -105,20 +118,38 @@ public class ReplicationStatusTool {
   }
 
   public static void main(String args[]) throws Exception {
+    CommandLine cmd;
+    try {
+      // parse the command line arguments
+      cmd = parseArgs(args);
+    } catch (ParseException e) {
+      LOG.error("Error when parsing command-line arguemnts", e);
+      printUsage();
+      return;
+    }
 
-    parseArgs(args);
-    if (debugDump) {
+    if (cmd.hasOption(DEBUG_OPTION)) {
       setupChecksumDirs();
       dumpClusterChecksums();
       dumpReplicationStateTable();
       return;
     }
+    inputStatusFileName = cmd.getOptionValue(INPUT_OPTION);
+    outputStatusFileName = cmd.getOptionValue(OUTPUT_OPTION);
+    dirsFileName = cmd.getOptionValue(FILE_OPTION);
+    if (cmd.hasOption(SHUTDOWNTIME_OPTION)) {
+      shutDownTimeArgument = Long.parseLong(cmd.getOptionValue(SHUTDOWNTIME_OPTION));
+      if (shutDownTimeArgument < 0L) {
+        System.out.println("Invalid ShutDown time.");
+        return;
+      }
+    }
 
-    if ((onMasterCluster && outputStatusFileName == null)
-      || (!onMasterCluster && inputStatusFileName == null)) {
-      showHelp();
+    if (cmd.hasOption(HELP_OPTION) || !sanityCheckOptions(cmd)) {
+      printUsage();
       return;
-    } else if (onMasterCluster) {
+    }
+    if (cmd.hasOption(MASTER_OPTION)) {
       setupChecksumDirs();
       processMasterCluster();
     } else {
@@ -127,48 +158,37 @@ public class ReplicationStatusTool {
     }
   }
 
-
-  private static void parseArgs(String args[]) {
-    for (int i = 0; i < args.length;) {
-      if (args[i].charAt(0) == '-') {
-        switch (args[i].charAt(1)) {
-          case 'm':
-            onMasterCluster = true;
-            i += 1;
-            break;
-          case 'i':
-            inputStatusFileName = args[i + 1];
-            i += 2;
-            break;
-          case 'o':
-            outputStatusFileName = args[i + 1];
-            i += 2;
-            break;
-          case 'f':
-            dirsFileName = args[i + 1];
-            i += 2;
-            break;
-          case 'd':
-            // Debug dump
-            debugDump = true;
-            i += 1;
-            break;
-          default:
-            return;
-        }
-      } else {
-        return;
-      }
+  private static boolean sanityCheckOptions(CommandLine cmd) {
+    if (cmd.hasOption(MASTER_OPTION) && !cmd.hasOption(OUTPUT_OPTION)) {
+      System.out.println("No File Path provided for creating Master Status with option -" + OUTPUT_OPTION);
+      return false;
     }
+    if (!cmd.hasOption(MASTER_OPTION) && !cmd.hasOption(INPUT_OPTION)) {
+      System.out.println("No File Path provided for reading Master Status with option -" + INPUT_OPTION);
+      return false;
+    }
+    return true;
   }
 
-  private static void showHelp() {
-    System.out.println("\nTool to check Replication Status.");
-    System.out.println("Run this tool on the Master cluster:");
-    System.out.println("#ReplicationStatusTool -m -o <output filepath> [-f <file with hdfs paths>]");
-    System.out.println("Then run on the Slave Cluster:");
-    System.out.println("#ReplicationStatusTool -i <file copied from Master> [-f <file with hdfs paths>]\n");
-    return;
+  private static void printUsage() {
+    HelpFormatter helpFormatter = new HelpFormatter();
+    helpFormatter.setWidth(80);
+    String usageHeader = "Options:";
+    String usageFooter = "";
+    String usageStr = "cdap run " + ReplicationStatusTool.class + " <options>";
+    helpFormatter.printHelp(usageStr, usageHeader, options, usageFooter);
+  }
+
+  private static CommandLine parseArgs(String[] args) throws ParseException {
+    options.addOption(MASTER_OPTION, false, "Use when running on Master Cluster");
+    options.addOption(OUTPUT_OPTION, true, "FilePath to dump Master Cluster Status");
+    options.addOption(INPUT_OPTION, true, "Status File copied from the Master Cluster");
+    options.addOption(FILE_OPTION, true, "File with HDFS Paths");
+    options.addOption(SHUTDOWNTIME_OPTION, true, "Override cdap-master Shutdown Time on Master Cluster [epoch time]");
+    options.addOption(DEBUG_OPTION, false, "Dump Cluster Status for debugging");
+    options.addOption(HELP_OPTION, false, "Show this Usage");
+    CommandLineParser parser = new BasicParser();
+    return parser.parse(options, args);
   }
 
   private static void setupChecksumDirs() throws IOException {
@@ -189,7 +209,7 @@ public class ReplicationStatusTool {
   }
 
   private static void processMasterCluster() throws IOException {
-    masterShutdownTime = getShutdownTime();
+    masterShutdownTime = shutDownTimeArgument != 0L ? shutDownTimeArgument : getShutdownTime();
     if (masterShutdownTime == 0L) {
       System.out.println("CDAP Shutdown time not available. Please run after CDAP has been shut down.");
       return;
@@ -236,11 +256,6 @@ public class ReplicationStatusTool {
     // Get replicate Time from table for all regions
     Map<String, Long> slaveTimeMap =
       getMapFromTable(ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE);
-
-    //Check if all regions are accounted on both clusters
-    if (masterTimeMap.size() != slaveTimeMap.size()) {
-      System.out.println("Number of regions on the Master and Slave Clusters do not match.");
-    }
 
     // Verify that all regions on the Master cluster are present on the Slave cluster
     complete = !checkDifferences(masterTimeMap.keySet(), slaveTimeMap.keySet(), "Region");
@@ -406,11 +421,6 @@ public class ReplicationStatusTool {
   private static void checkHDFSReplicationComplete(SortedMap<String, String> masterChecksumMap) throws IOException {
     boolean complete;
     SortedMap<String, String> slaveChecksumMap = getClusterChecksumMap();
-
-    //Check if all files are accounted on both clusters
-    if (masterChecksumMap.size() != slaveChecksumMap.size()) {
-      System.out.println("Number of HDFS files on the Master and Slave Clusters do not match.");
-    }
 
     // Verify that all files on Master are present on Slave. Ignore any extra files on Slave. This could
     // happen when old snapshot files are pruned by CDAP on the Master cluster.
