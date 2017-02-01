@@ -699,6 +699,7 @@ public final class Constants {
   public static final class Logging {
     public static final String COMPONENT_NAME = "services";
     public static final String KAFKA_TOPIC = "log.kafka.topic";
+    public static final String NUM_PARTITIONS = "log.publish.num.partitions";
   }
 
   /**

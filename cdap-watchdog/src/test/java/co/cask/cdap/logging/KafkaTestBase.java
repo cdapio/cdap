@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,7 +55,7 @@ public abstract class KafkaTestBase {
   @ClassRule
   public static final KafkaTester KAFKA_TESTER = new KafkaTester(
     ImmutableMap.<String, String>builder()
-      .put(LoggingConfiguration.NUM_PARTITIONS, "2")
+      .put(Constants.Logging.NUM_PARTITIONS, "2")
       .put(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync")
       .put(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS, "100")
       .put(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, "10")

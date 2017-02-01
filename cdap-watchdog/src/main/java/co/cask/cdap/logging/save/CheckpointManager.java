@@ -27,15 +27,19 @@ public interface CheckpointManager {
   /**
    * Persists the given map of {@link Checkpoint}s.
    */
-  void saveCheckpoints(Map<Integer, Checkpoint> checkpoints) throws Exception;
+  void saveCheckpoints(Map<Integer, ? extends Checkpoint> checkpoints) throws Exception;
 
   /**
-   * Reads the set of {@link Checkpoint}s for the given set of partitions.
+   * Reads the set of {@link Checkpoint}s for the given set of partitions. If there is no checkpoint for the partition,
+   * a {@link Checkpoint} with both {@link Checkpoint#getMaxEventTime()} and
+   * {@link Checkpoint#getNextOffset()} returning {@code -1} will be used.
    */
   Map<Integer, Checkpoint> getCheckpoint(Set<Integer> partitions) throws Exception;
 
   /**
-   * Reads the {@link Checkpoint} for the given partition.
+   * Reads the {@link Checkpoint} for the given partition. If there is no checkpoint for the partition,
+   * a {@link Checkpoint} will be returned with both {@link Checkpoint#getMaxEventTime()} and
+   * {@link Checkpoint#getNextOffset()} returning {@code -1}.
    */
   Checkpoint getCheckpoint(int partition) throws Exception;
 }

@@ -77,7 +77,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
   public static void setUpContext() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
-    cConf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
+    cConf.set(Constants.Logging.NUM_PARTITIONS, "2");
     cConf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync");
     String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/" +
       TestDistributedLogReader.class.getSimpleName();

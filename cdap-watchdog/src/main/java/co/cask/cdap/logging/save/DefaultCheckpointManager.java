@@ -88,7 +88,7 @@ final class DefaultCheckpointManager implements CheckpointManager {
   }
 
   @Override
-  public void saveCheckpoints(final Map<Integer, Checkpoint> checkpoints) throws Exception {
+  public void saveCheckpoints(final Map<Integer, ? extends Checkpoint> checkpoints) throws Exception {
     // if the checkpoints have not changed, we skip writing to table and return.
     if (lastCheckpoint.equals(checkpoints)) {
       return;
@@ -97,7 +97,7 @@ final class DefaultCheckpointManager implements CheckpointManager {
     execute(new TransactionExecutor.Procedure<Table>() {
       @Override
       public void apply(Table table) throws Exception {
-        for (Map.Entry<Integer, Checkpoint> entry : checkpoints.entrySet()) {
+        for (Map.Entry<Integer, ? extends Checkpoint> entry : checkpoints.entrySet()) {
           byte[] key = Bytes.add(rowKeyPrefix, Bytes.toBytes(entry.getKey()));
           Checkpoint checkpoint = entry.getValue();
           table.put(key, OFFSET_COL_NAME, Bytes.toBytes(checkpoint.getNextOffset()));

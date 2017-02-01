@@ -34,6 +34,9 @@ import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import kafka.admin.AdminUtils;
+import kafka.utils.ZKStringSerializer$;
+import org.I0Itec.zkclient.ZkClient;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.utils.Networks;
@@ -125,6 +128,8 @@ public class KafkaTester extends ExternalResource {
     tmpFolder.create();
     zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).setPort(zkServerPort).build();
     zkServer.startAndWait();
+    LOG.info("In memory ZK started on {}", zkServer.getConnectionStr());
+
     kafkaServer = new EmbeddedKafkaServer(generateKafkaConfig(kafkaPort));
     kafkaServer.startAndWait();
     initializeCConf(kafkaPort);
@@ -338,5 +343,13 @@ public class KafkaTester extends ExternalResource {
    */
   public BrokerService getBrokerService() {
     return brokerService;
+  }
+
+  /**
+   * Creates a topic with the given number of partitions.
+   */
+  public void createTopic(String topic, int partitions) {
+    AdminUtils.createTopic(new ZkClient(zkServer.getConnectionStr(), 20000, 2000, ZKStringSerializer$.MODULE$),
+                           topic, partitions, 1, new Properties());
   }
 }
