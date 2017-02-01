@@ -32,8 +32,43 @@ export default class UploadDataWizard extends Component {
     this.state = {
       showWizard: this.props.isOpen
     };
+    this.successInfo = {};
     this.setDefaultConfig();
     this.prepareInputForSteps();
+  }
+  componentWillUnmount() {
+    UploadDataStore.dispatch({
+      type: UploadDataActions.onReset
+    });
+  }
+  onSubmit() {
+    let state = UploadDataStore.getState();
+    let streamId = state.selectdestination.name;
+    let filename = state.viewdata.filename;
+    let packagename = state.viewdata.packagename;
+    let filetype = 'text/' + filename.split('.').pop();
+    let fileContents = state.viewdata.data;
+    let currentNamespace = NamespaceStore.getState().selectedNamespace;
+    let authToken = cookie.load('CDAP_Auth_Token');
+    this.buildSuccessInfo(packagename, streamId, currentNamespace);
+
+    return UploadDataActionCreator.uploadData({
+      url: `/namespaces/${currentNamespace}/streams/${streamId}/batch`,
+      fileContents,
+      headers: {
+        filetype,
+        filename,
+        authToken
+      }
+    });
+  }
+  toggleWizard(returnResult) {
+    if (this.state.showWizard) {
+      this.props.onClose(returnResult);
+    }
+    this.setState({
+      showWizard: !this.state.showWizard
+    });
   }
   setDefaultConfig() {
     const args = this.props.input.action.arguments;
@@ -68,37 +103,17 @@ export default class UploadDataWizard extends Component {
       }
     });
   }
-  onSubmit() {
-    let state = UploadDataStore.getState();
-    let streamId = state.selectdestination.name;
-    let filename = state.viewdata.filename;
-    let filetype = 'text/' + filename.split('.').pop();
-    let fileContents = state.viewdata.data;
-    let currentNamespace = NamespaceStore.getState().selectedNamespace;
-    let authToken = cookie.load('CDAP_Auth_Token');
-
-    return UploadDataActionCreator.uploadData({
-      url: `/namespaces/${currentNamespace}/streams/${streamId}/batch`,
-      fileContents,
-      headers: {
-        filetype,
-        filename,
-        authToken
-      }
-    });
-  }
-  toggleWizard(returnResult) {
-    if (this.state.showWizard) {
-      this.props.onClose(returnResult);
-    }
-    this.setState({
-      showWizard: !this.state.showWizard
-    });
-  }
-  componentWillUnmount() {
-    UploadDataStore.dispatch({
-      type: UploadDataActions.onReset
-    });
+  buildSuccessInfo(datapackName, streamId, namespace) {
+    let defaultSuccessMessage = T.translate('features.Wizard.UploadData.success');
+    let subtitle = T.translate('features.Wizard.UploadData.subtitle');
+    let buttonLabel = T.translate('features.Wizard.UploadData.callToAction');
+    let linkLabel = T.translate('features.Wizard.GoToHomePage');
+    this.successInfo.message = `${defaultSuccessMessage} "${datapackName}"`;
+    this.successInfo.subtitle = `${subtitle} "${streamId}".`;
+    this.successInfo.buttonLabel = buttonLabel;
+    this.successInfo.buttonUrl = `/cdap/ns/${namespace}/streams/${streamId}`;
+    this.successInfo.linkLabel = linkLabel;
+    this.successInfo.linkUrl = `/cdap/ns/${namespace}`;
   }
   render() {
     let input = this.props.input;
@@ -116,6 +131,7 @@ export default class UploadDataWizard extends Component {
           wizardConfig={UploadDataWizardConfig}
           wizardType="UploadData"
           store={UploadDataStore}
+          successInfo={this.successInfo}
           onSubmit={this.onSubmit.bind(this)}
           onClose={this.toggleWizard.bind(this)}/>
       </WizardModal>

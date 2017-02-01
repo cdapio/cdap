@@ -37,6 +37,7 @@ export default class StreamCreateWithUploadWizard extends Component {
       showWizard: this.props.isOpen
     };
     this.eventEmitter = ee(ee);
+    this.successInfo = {};
   }
   toggleWizard(returnResult) {
     if (this.state.showWizard) {
@@ -58,6 +59,7 @@ export default class StreamCreateWithUploadWizard extends Component {
   }
   createStream() {
     let state = CreateStreamWithUploadStore.getState();
+    let name = state.general.name;
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
     // FIXME: How to handle empty error messages???
     return CreateStream()
@@ -81,13 +83,24 @@ export default class StreamCreateWithUploadWizard extends Component {
                 }
               });
           }
-          return Promise.resolve(state.general.name);
+          return Promise.resolve(name);
         }
       )
       .map((res) => {
+        this.buildSuccessInfo(name, currentNamespace);
         this.eventEmitter.emit(globalEvents.STREAMCREATE);
         return res;
       });
+  }
+  buildSuccessInfo(streamId, namespace) {
+    let defaultSuccessMessage = T.translate('features.Wizard.StreamCreate.success');
+    let buttonLabel = T.translate('features.Wizard.StreamCreate.callToAction');
+    let linkLabel = T.translate('features.Wizard.GoToHomePage');
+    this.successInfo.message = `${defaultSuccessMessage} "${streamId}".`;
+    this.successInfo.buttonLabel = buttonLabel;
+    this.successInfo.buttonUrl = `/cdap/ns/${namespace}/streams/${streamId}`;
+    this.successInfo.linkLabel = linkLabel;
+    this.successInfo.linkUrl = `/cdap/ns/${namespace}`;
   }
   render() {
     let input = this.props.input || {};
@@ -108,6 +121,7 @@ export default class StreamCreateWithUploadWizard extends Component {
                 wizardConfig={CreateStreamUploadWizardConfig}
                 wizardType="StreamCreate"
                 onSubmit={this.createStream.bind(this)}
+                successInfo={this.successInfo}
                 onClose={this.toggleWizard.bind(this)}
                 store={CreateStreamWithUploadStore}/>
             </WizardModal>

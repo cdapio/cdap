@@ -21,6 +21,7 @@ import T from 'i18n-react';
 
 require('./Wizard.scss');
 import shortid from 'shortid';
+import isEmpty from 'lodash/isEmpty';
 import WizardStepHeader from './WizardStepHeader';
 import WizardStepContent from './WizardStepContent';
 import CardActionFeedback from 'components/CardActionFeedback';
@@ -45,6 +46,7 @@ export default class Wizard extends Component {
     this.state = {
       activeStep: this.props.wizardConfig.steps[0].id,
       success: false,
+      successInfo: {},
       loading: false,
       error: '',
     };
@@ -82,6 +84,7 @@ export default class Wizard extends Component {
           () => {
             this.setState({
               success: true,
+              successInfo: this.props.successInfo,
               error: false,
               loading: false
             });
@@ -174,34 +177,73 @@ export default class Wizard extends Component {
     const onSubmitSuccessMessage = function onSubmitSuccessMessage() {
       let doneLabel = T.translate('features.Wizard.Done');
       let skipLabel = T.translate('features.Wizard.Skip');
+      let successInfo = this.state.successInfo;
       return (
-        <div className="result-container">
-          <ul>
+        <div>
+          <div
+            className="close-section float-xs-right"
+            onClick={this.props.onClose.bind(null, true)}
+          >
+            <span className="fa fa-times" />
+          </div>
+          <div className="result-container">
             {
-              steps
-                .map((step, index) => {
-                  return {
-                    index,
-                    label: step.shorttitle,
-                    skipped: this.props.store.getState()[step.id] && this.props.store.getState()[step.id].__skipped
-                  };
-                })
-                .map((value) => {
-                  return (
-                    <li key={shortid.generate()}>
-                      Step - {value.index + 1} : {value.label} - {value.skipped ? skipLabel : doneLabel}
-                    </li>
-                  );
-                })
+              !isEmpty(successInfo) ?
+                (
+                  <div>
+                    <span className="success-message">
+                      {successInfo.message}
+                      <p>{successInfo.subtitle}</p>
+                    </span>
+                    <div className="clearfix">
+                      <a
+                        href={successInfo.buttonUrl}
+                        className="call-to-action btn btn-primary"
+                      >
+                        {successInfo.buttonLabel}
+                      </a>
+                      <a
+                        href={successInfo.linkUrl}
+                        className="secondary-call-to-action text-white"
+                      >
+                        {successInfo.linkLabel}
+                      </a>
+                    </div>
+                  </div>
+                )
+              :
+                (
+                  <div>
+                    <ul>
+                      {
+                        steps
+                          .map((step, index) => {
+                            return {
+                              index,
+                              label: step.shorttitle,
+                              skipped: this.props.store.getState()[step.id] && this.props.store.getState()[step.id].__skipped
+                            };
+                          })
+                          .map((value) => {
+                            return (
+                              <li key={shortid.generate()}>
+                                Step - {value.index + 1} : {value.label} - {value.skipped ? skipLabel : doneLabel}
+                              </li>
+                            );
+                          })
+                      }
+                    </ul>
+                    <div className="clearfix text-xs-center done-button">
+                      <div
+                        className="btn btn-primary"
+                        onClick={this.props.onClose.bind(null, true)}
+                      >
+                        Done
+                      </div>
+                    </div>
+                  </div>
+                )
             }
-          </ul>
-          <div className="clearfix text-xs-center done-button">
-            <div
-              className="btn btn-primary"
-              onClick={this.props.onClose.bind(null, true)}
-            >
-              Done
-            </div>
           </div>
         </div>
       );
@@ -307,6 +349,7 @@ Wizard.propTypes = {
     replaceReducer: PropTypes.func
   }).isRequired,
   onSubmit: PropTypes.func.isRequired,
+  successInfo: PropTypes.object,
   onClose: PropTypes.func.isRequired,
   finishButtonDisabled: PropTypes.bool
 };

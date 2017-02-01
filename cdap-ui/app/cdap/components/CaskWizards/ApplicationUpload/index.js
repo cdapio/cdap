@@ -21,6 +21,7 @@ import ApplicationUploadWizardConfig from 'services/WizardConfigs/ApplicationUpl
 import ApplicationUploadStore from 'services/WizardStores/ApplicationUpload/ApplicationUploadStore';
 import ApplicationUploadActions from 'services/WizardStores/ApplicationUpload/ApplicationUploadActions';
 import {UploadApplication} from 'services/WizardStores/ApplicationUpload/ActionCreator';
+import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
@@ -32,6 +33,19 @@ export default class ApplicationUploadWizard extends Component {
     this.state = {
       showWizard: props.isOpen || false
     };
+    this.successInfo = {};
+  }
+  componentWillUnmount() {
+    ApplicationUploadStore.dispatch({
+      type: ApplicationUploadActions.onReset
+    });
+  }
+  onSubmit() {
+    return UploadApplication().map((res) => {
+      this.buildSuccessInfo();
+      this.eventEmitter.emit(globalEvents.APPUPLOAD);
+      return res;
+    });
   }
   toggleWizard(returnResult) {
     if (this.state.showWizard && this.props.onClose) {
@@ -41,16 +55,19 @@ export default class ApplicationUploadWizard extends Component {
       showWizard: !this.state.showWizard
     });
   }
-  componentWillUnmount() {
-    ApplicationUploadStore.dispatch({
-      type: ApplicationUploadActions.onReset
-    });
-  }
-  onSubmit() {
-    return UploadApplication().map((res) => {
-      this.eventEmitter.emit(globalEvents.APPUPLOAD);
-      return res;
-    });
+  buildSuccessInfo() {
+    let state = ApplicationUploadStore.getState();
+    // TODO: change this when the backend gives back the app name when the jar file is uploaded successfully
+    let name = state.uploadFile.file.name.substring(0, state.uploadFile.file.name.indexOf('-'));
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    let defaultSuccessMessage = T.translate('features.Wizard.ApplicationUpload.success');
+    let buttonLabel = T.translate('features.Wizard.ApplicationUpload.callToAction');
+    let linkLabel = T.translate('features.Wizard.GoToHomePage');
+    this.successInfo.message = `${defaultSuccessMessage} "${name}".`;
+    this.successInfo.buttonLabel = buttonLabel;
+    this.successInfo.buttonUrl = `/cdap/ns/${namespace}/apps/${name}`;
+    this.successInfo.linkLabel = linkLabel;
+    this.successInfo.linkUrl = `/cdap/ns/${namespace}`;
   }
   render() {
     let input = this.props.input;
@@ -68,6 +85,7 @@ export default class ApplicationUploadWizard extends Component {
           wizardType="ApplicationUpload"
           store={ApplicationUploadStore}
           onSubmit={this.onSubmit.bind(this)}
+          successInfo={this.successInfo}
           onClose={this.toggleWizard.bind(this)}/>
       </WizardModal>
     );

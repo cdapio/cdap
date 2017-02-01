@@ -460,6 +460,8 @@ features:
         title: Upload JAR
         uploadHelperText: Upload the JAR for your application that you wish to deploy
         filePathLabel: Choose file
+      success: You have successfully deployed the application
+      callToAction: View Application Details
     ArtifactUpload:
       headerlabel: Add Third party Driver
       Step1:
@@ -481,7 +483,11 @@ features:
         typePlaceholder: Driver Type
         classnameLabel: Class Name
         classnamePlaceholder: Driver Class Name
+      success: You have successfully uploaded the driver
+      subtitle: You can now create a pipeline to extract data from Database using the driver.
+      callToAction: Create a Pipeline
     Done: Done
+    GoToHomePage: Go to Home Page
     Informational:
       termsandconditions: Terms and Conditions
       Step1:
@@ -522,6 +528,8 @@ features:
         title: Upload Data
         description: Upload data to the stream you created.
       headerlabel: Create Stream
+      success: You have successfully created the stream
+      callToAction: View Stream Details
     UploadData:
       Step1:
         shorttitle: View Data
@@ -535,6 +543,9 @@ features:
         destinationtype: Destination Type
         destinationname: Destination Name
       headerlabel: Upload Data
+      success: You have successfully uploaded the datapack
+      subtitle: to the stream
+      callToAction: View Stream Details
     PublishPipeline:
       Step1:
         shorttitle: Configure Pipeline
@@ -542,6 +553,8 @@ features:
         description: Specify the name of the pipeline.
       pipelinenameplaceholder: Pipeline Name
       headerlabel: Publish Pipeline
+      success: You have successfully created the pipeline
+      callToAction: Customize Pipeline
     HydratorPipeline:
       title: Create a Data Pipeline
       message: Choose the pipeline type you would like to create.
@@ -560,6 +573,9 @@ features:
         description: Upload the plugin configuration JSON.
         errorMessage: Invalid plugin JSON. Plugin configuration should be in JSON format.
         errorMessageParentArtifacts: Invalid plugin JSON. Please specify parent artifacts.
+      success: You have successfully uploaded the plugin
+      subtitle: Start creating a pipeline with the plugin.
+      callToAction: Create a Pipeline
     Add-Namespace:
        Step1:
          ssd-label: "General Information"
