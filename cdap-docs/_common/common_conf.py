@@ -126,10 +126,14 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.intersphinx',
     'sphinx.ext.extlinks',
-    'javadoc',
+    'relative-refs',
     'tabbed-parsed-literal',
     'youtube',
 ]
+
+relative_refs = {
+    'javadoc': ('reference-manual/javadocs', 'http://docs.cask.co/cdap/develop/en/reference-manual/javadocs/'),
+}
 
 # The Inter-Sphinx mapping
 
