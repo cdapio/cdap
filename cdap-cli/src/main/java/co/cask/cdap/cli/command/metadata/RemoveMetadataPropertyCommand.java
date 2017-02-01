@@ -54,7 +54,6 @@ public class RemoveMetadataPropertyCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Removes a specific metadata property for an entity. " +
-      AddMetadataPropertiesCommand.ENTITY_DESCRIPTION_STRING;
+    return "Removes a specific metadata property for an entity. " + ArgumentName.ENTITY_DESCRIPTION_STRING;
   }
 }

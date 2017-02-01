@@ -109,11 +109,11 @@ public enum ArgumentName {
 
   INSTANCE_URI("cdap-instance-uri"),
   VERIFY_SSL_CERT("verify-ssl-cert"),
+  ENTITY("entity-id"),
 
   /**
    * Metadata
    */
-  ENTITY("entity-id"),
   METADATA_SCOPE("scope"),
   SEARCH_QUERY("search-query"),
   TARGET_TYPE("target-type"),
@@ -139,4 +139,8 @@ public enum ArgumentName {
   public String toString() {
     return name;
   }
+
+  public static final String ENTITY_DESCRIPTION_STRING = String.format("'<%s>' is of the form " +
+    "'<entity-type>:<namespace-id>.<entity-name>', where '<entity-type>' is one of " +
+    "'artifact', 'app', 'dataset', 'program', 'stream', or 'view'.", ENTITY);
 }

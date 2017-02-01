@@ -34,10 +34,6 @@ public class AddMetadataPropertiesCommand extends AbstractCommand {
 
   private final MetadataClient client;
 
-  public static final String ENTITY_DESCRIPTION_STRING = String.format("'<%s>' is of the form " +
-    "'<entity-type>:<namespace-id>.<entity-name>', where '<entity-type>' is one of " +
-    "'artifact', 'app', 'dataset', 'program', 'stream', or 'view'.", ArgumentName.ENTITY);
-
   @Inject
   public AddMetadataPropertiesCommand(CLIConfig cliConfig, MetadataClient client) {
     super(cliConfig);
@@ -59,6 +55,6 @@ public class AddMetadataPropertiesCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Adds metadata properties for an entity. " + ENTITY_DESCRIPTION_STRING;
+    return "Adds metadata properties for an entity. " + ArgumentName.ENTITY_DESCRIPTION_STRING;
   }
 }

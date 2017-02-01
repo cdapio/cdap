@@ -53,6 +53,6 @@ public class RemoveMetadataTagsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Removes all metadata tags for an entity. " + AddMetadataPropertiesCommand.ENTITY_DESCRIPTION_STRING;
+    return "Removes all metadata tags for an entity. " + ArgumentName.ENTITY_DESCRIPTION_STRING;
   }
 }

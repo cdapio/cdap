@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Copyright © 2016 Cask Data, Inc.
+# Copyright © 2016-2017 Cask Data, Inc.
 #
 # Used to generate a table in the CLI documentation from the output of CLI tools.
 # 
@@ -14,7 +14,7 @@ import os
 import sys
 from optparse import OptionParser
 
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 
 LITERAL = '``'
 SPACE = ' '

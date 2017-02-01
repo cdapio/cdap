@@ -77,6 +77,6 @@ public class GetMetadataPropertiesCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the metadata properties of an entity. " + AddMetadataPropertiesCommand.ENTITY_DESCRIPTION_STRING;
+    return "Gets the metadata properties of an entity. " + ArgumentName.ENTITY_DESCRIPTION_STRING;
   }
 }
