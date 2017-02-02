@@ -300,8 +300,8 @@ public final class HBaseTableFactory implements TableFactory {
       CoprocessorDescriptor coprocessorDescriptor =
         coprocessorManager.getCoprocessorDescriptor(coprocessor, Coprocessor.PRIORITY_USER);
       Path path = coprocessorDescriptor.getPath() == null ? null : new Path(coprocessorDescriptor.getPath());
-      tableDescriptor.addCoprocessor(coprocessorDescriptor.getClassName(), path, coprocessorDescriptor.getPriority(),
-                                     coprocessorDescriptor.getProperties());
+      newDescriptor.addCoprocessor(coprocessorDescriptor.getClassName(), path, coprocessorDescriptor.getPriority(),
+                                   coprocessorDescriptor.getProperties());
 
       // Update CDAP version, table prefix
       HBaseTableUtil.setVersion(newDescriptor);
