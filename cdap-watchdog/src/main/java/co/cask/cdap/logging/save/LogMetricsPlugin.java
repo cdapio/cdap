@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,10 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.logging.meta.Checkpoint;
+import co.cask.cdap.logging.meta.CheckpointManager;
+import co.cask.cdap.logging.meta.CheckpointManagerFactory;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -112,7 +115,7 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
   }
 
   private String getMetricName(String namespace, String logLevel) {
-    return namespace.equals(Id.Namespace.SYSTEM.getId()) ?
+    return namespace.equals(NamespaceId.SYSTEM.getNamespace()) ?
            String.format("%s.%s", SYSTEM_METRIC_PREFIX, logLevel) :
            String.format("%s.%s", APP_METRIC_PREFIX, logLevel);
   }

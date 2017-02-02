@@ -21,14 +21,18 @@ package co.cask.cdap.logging.framework;
  */
 public class LogPathIdentifier {
   private static final String META_SEPARATOR = ":";
+
   private final String namespaceId;
   private final String pathId1;
   private final String pathId2;
+  private final transient String rowKey;
+
 
   public LogPathIdentifier(String namespaceId, String pathId1, String pathId2) {
     this.namespaceId = namespaceId;
     this.pathId1 = pathId1;
     this.pathId2 = pathId2;
+    this.rowKey = String.format("%s%s%s%s%s", namespaceId, META_SEPARATOR, pathId1, META_SEPARATOR, pathId2);
   }
 
   /**
@@ -60,6 +64,6 @@ public class LogPathIdentifier {
    * @return rowkey string
    */
   public String getRowKey() {
-    return String.format("%s%s%s%s%s", namespaceId, META_SEPARATOR, pathId1, META_SEPARATOR, pathId2);
+    return rowKey;
   }
 }
