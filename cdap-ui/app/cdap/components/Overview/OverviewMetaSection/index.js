@@ -43,7 +43,11 @@ export default class OverviewMetaSection extends Component {
       });
     }
   }
-  onFastActionsUpdate() {}
+  onFastActionsUpdate(action) {
+    if (this.props.onFastActionsUpdate) {
+      this.props.onFastActionsUpdate(action);
+    }
+  }
   render() {
     let creationTime = objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'creation-time');
     let description =  objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'description');
@@ -81,5 +85,6 @@ export default class OverviewMetaSection extends Component {
 }
 
 OverviewMetaSection.propTypes = {
-  entity: PropTypes.object
+  entity: PropTypes.object,
+  onFastActionsUpdate: PropTypes.func
 };

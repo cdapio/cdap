@@ -104,6 +104,10 @@ export default class StreamOverview extends Component {
     }
   }
 
+  onFastActionsUpdate(action) {
+    this.props.onCloseAndRefresh(action);
+  }
+
   render() {
     if (this.state.loading) {
       return (
@@ -121,7 +125,10 @@ export default class StreamOverview extends Component {
           linkTo="/"
           onClose={this.props.onClose}
         />
-        <OverviewMetaSection entity={this.state.entity} />
+        <OverviewMetaSection
+          entity={this.state.entity}
+          onFastActionsUpdate={this.onFastActionsUpdate.bind(this)}
+        />
         <StreamOverviewTab entity={this.state.entityDetail} />
       </div>
     );
@@ -131,5 +138,6 @@ export default class StreamOverview extends Component {
 StreamOverview.propTypes = {
   toggleOverview: PropTypes.bool,
   entity: PropTypes.object,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
+  onCloseAndRefresh: PropTypes.func
 };

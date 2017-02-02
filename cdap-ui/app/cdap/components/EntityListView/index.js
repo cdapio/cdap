@@ -522,6 +522,10 @@ class EntityListView extends Component {
     });
   }
 
+  onOverviewCloseAndRefresh() {
+    this.setState({selectedEntity: null}, this.search.bind(this));
+  }
+
   render() {
 
     if (!this.state.showSplash) {
@@ -574,6 +578,7 @@ class EntityListView extends Component {
               toggleOverview={!isNil(this.state.selectedEntity)}
               entity={this.state.selectedEntity}
               onClose={this.handleEntityClick.bind(this)}
+              onCloseAndRefresh={this.onOverviewCloseAndRefresh.bind(this)}
             />
           </div>
         </Pagination>

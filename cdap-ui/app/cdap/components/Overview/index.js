@@ -53,12 +53,15 @@ export default class Overview extends Component {
     }
   }
   hideOverview() {
-    this.setState({
-      toggleOverview: false,
-      entity: null
-    });
     if (this.props.onClose) {
       this.props.onClose();
+    }
+  }
+  closeAndRefresh(action) {
+    if (action === 'delete') {
+      if (this.props.onCloseAndRefresh) {
+        this.props.onCloseAndRefresh();
+      }
     }
   }
   render() {
@@ -71,7 +74,8 @@ export default class Overview extends Component {
               Tag,
               {
                 entity: this.state.entity,
-                onClose: this.hideOverview.bind(this)
+                onClose: this.hideOverview.bind(this),
+                onCloseAndRefresh: this.closeAndRefresh.bind(this)
               }
             )
           }
@@ -84,5 +88,6 @@ export default class Overview extends Component {
 Overview.propTypes = {
   toggleOverview: PropTypes.bool,
   entity: PropTypes.object,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
+  onCloseAndRefresh: PropTypes.func
 };

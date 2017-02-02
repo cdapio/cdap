@@ -99,6 +99,9 @@ export default class AppOverview extends Component {
         });
     }
   }
+  onFastActionsUpdate(action) {
+    this.props.onCloseAndRefresh(action);
+  }
   render() {
     if (this.state.loading) {
       return (
@@ -124,7 +127,10 @@ export default class AppOverview extends Component {
           }}
           onClose={this.props.onClose}
         />
-        <OverviewMetaSection entity={this.state.entity} />
+        <OverviewMetaSection
+          entity={this.state.entity}
+          onFastActionsUpdate={this.onFastActionsUpdate.bind(this)}
+        />
         <AppOverviewTab entity={this.state.entityDetail} />
       </div>
     );
@@ -134,5 +140,6 @@ export default class AppOverview extends Component {
 AppOverview.propTypes = {
   toggleOverview: PropTypes.bool,
   entity: PropTypes.object,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
+  onCloseAndRefresh: PropTypes.func
 };
