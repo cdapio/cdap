@@ -21,7 +21,6 @@ import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
@@ -108,9 +107,9 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     this.outputFormatClassName = FileSetProperties.getOutputFormat(spec.getProperties());
 
     // runtime arguments can override permissions
-    this.permissions = runtimeArguments.containsKey(DatasetProperties.PROPERTY_PERMISSIONS)
-      ? runtimeArguments.get(DatasetProperties.PROPERTY_PERMISSIONS)
-      : spec.getProperty(DatasetProperties.PROPERTY_PERMISSIONS);
+    this.permissions = FileSetProperties.getPermissions(runtimeArguments) != null
+      ? FileSetProperties.getPermissions(runtimeArguments)
+      : FileSetProperties.getPermissions(spec.getProperties());
   }
 
   /**
@@ -263,7 +262,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     }
     // runtime arguments may override the permissions property
     Map<String, String> outputArguments = FileSetProperties.getOutputProperties(runtimeArguments);
-    String outputPermissions = outputArguments.get(DatasetProperties.PROPERTY_PERMISSIONS);
+    String outputPermissions = FileSetProperties.getPermissions(outputArguments);
     if (outputPermissions == null) {
       outputPermissions = this.permissions;
     }

@@ -138,8 +138,8 @@ public class FileSetTest {
     DatasetId datasetId = OTHER_NAMESPACE.dataset("testPermFS");
     dsFrameworkUtil.createInstance("fileSet", datasetId, FileSetProperties.builder()
       .setBasePath("perm/test/path")
-      .add(DatasetProperties.PROPERTY_PERMISSIONS, fsPermissions)
-      .add(DatasetProperties.PROPERTY_PERMISSIONS_GROUP, group)
+      .setPermissions(fsPermissions)
+      .setGroup(group)
       .build());
     FileSet fs = dsFrameworkUtil.getInstance(datasetId);
 
@@ -179,7 +179,7 @@ public class FileSetTest {
 
     // instantiate the dataset with custom permissions in the runtime arguments
     fs = dsFrameworkUtil.getInstance(datasetId, ImmutableMap.of(
-      DatasetProperties.PROPERTY_PERMISSIONS, customPermissions));
+      FileSetProperties.PROPERTY_FILES_PERMISSIONS, customPermissions));
 
     // create an empty file with custom permissions and validate them
     base = fs.getBaseLocation();
