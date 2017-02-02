@@ -102,6 +102,26 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
+  public void testGrant() throws Exception {
+    String namespace = "perm";
+    TableId tableId = TableId.from("perm", "priv");
+
+    // create a namespace and table
+    if (namespacesSupported()) {
+      createNamespace(namespace);
+    }
+    create(tableId);
+    Assert.assertTrue(exists(tableId));
+
+    // assign some privileges to the table
+    getTableUtil().grantPrivileges(ddlExecutor, tableId, ImmutableMap.of("joe", "RWX", "@readers", "RX"));
+
+    // clean up
+    drop(tableId);
+    deleteNamespace(namespace);
+  }
+
+  @Test
   public void testTableSizeMetrics() throws Exception {
     HBaseTableUtil tableUtil = getTableUtil();
     // namespace should not exist

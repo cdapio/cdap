@@ -107,9 +107,9 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     this.outputFormatClassName = FileSetProperties.getOutputFormat(spec.getProperties());
 
     // runtime arguments can override permissions
-    this.permissions = FileSetProperties.getPermissions(runtimeArguments) != null
-      ? FileSetProperties.getPermissions(runtimeArguments)
-      : FileSetProperties.getPermissions(spec.getProperties());
+    this.permissions = FileSetProperties.getFilePermissions(runtimeArguments) != null
+      ? FileSetProperties.getFilePermissions(runtimeArguments)
+      : FileSetProperties.getFilePermissions(spec.getProperties());
   }
 
   /**
@@ -262,7 +262,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     }
     // runtime arguments may override the permissions property
     Map<String, String> outputArguments = FileSetProperties.getOutputProperties(runtimeArguments);
-    String outputPermissions = FileSetProperties.getPermissions(outputArguments);
+    String outputPermissions = FileSetProperties.getFilePermissions(outputArguments);
     if (outputPermissions == null) {
       outputPermissions = this.permissions;
     }

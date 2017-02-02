@@ -91,8 +91,8 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
         throw new IOException(String.format(
           "Base location for file set '%s' at %s already exists", spec.getName(), baseLocation));
       }
-      String permissions = FileSetProperties.getPermissions(spec.getProperties());
-      String group = FileSetProperties.getGroup(spec.getProperties());
+      String permissions = FileSetProperties.getFilePermissions(spec.getProperties());
+      String group = FileSetProperties.getFileGroup(spec.getProperties());
       group = group != null ? group : UserGroupInformation.getCurrentUser().getPrimaryGroupName();
 
       // we can't simply mkdirs() the base location, because we need to set the group id on

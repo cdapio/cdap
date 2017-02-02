@@ -18,12 +18,27 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.spi.hbase.TableDescriptor;
+import com.google.common.base.Throwables;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.security.access.AccessControlClient;
+import org.apache.hadoop.hbase.security.access.Permission;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Map;
 
 /**
  * Implementation of {@link HBaseDDLExecutor} for HBase version 1.0 CDH
  */
 public class DefaultHBase10CDHDDLExecutor extends DefaultHBaseDDLExecutor {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultHBase10CDHDDLExecutor.class);
+
   @Override
   public HTableDescriptor getHTableDescriptor(TableDescriptor descriptor) {
     return HBase10CDHTableDescriptorUtil.getHTableDescriptor(descriptor);
@@ -32,5 +47,29 @@ public class DefaultHBase10CDHDDLExecutor extends DefaultHBaseDDLExecutor {
   @Override
   public TableDescriptor getTableDescriptor(HTableDescriptor descriptor) {
     return HBase10CDHTableDescriptorUtil.getTableDescriptor(descriptor);
+  }
+
+  @Override
+  protected void doGrantPermissions(String namespace, String name,
+                                    Map<String, Permission.Action[]> permissions) throws IOException {
+    TableName table = TableName.valueOf(namespace, name);
+    try (Connection connection = ConnectionFactory.createConnection(admin.getConfiguration())) {
+      if (!AccessControlClient.isAccessControllerRunning(connection)) {
+        LOG.debug("Access control is off. Not granting privileges. ");
+        return;
+      }
+      for (Map.Entry<String, Permission.Action[]> entry : permissions.entrySet()) {
+        String user = entry.getKey();
+        Permission.Action[] actions = entry.getValue();
+        LOG.info("Granting {} for table {}:{} and user {}", Arrays.toString(actions), namespace, name, user);
+        try {
+          AccessControlClient.grant(connection, table, user, null, null, actions);
+        } catch (Throwable t) {
+          Throwables.propagateIfInstanceOf(t, IOException.class);
+          throw new IOException(String.format("Error while granting %s for table %s:%s and user %s",
+                                              Arrays.toString(actions), namespace, name, user), t);
+        }
+      }
+    }
   }
 }

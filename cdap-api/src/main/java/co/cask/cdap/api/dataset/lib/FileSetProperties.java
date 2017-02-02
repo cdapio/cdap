@@ -249,7 +249,7 @@ public class FileSetProperties {
    * @return the default permissions for files and directories
    */
   @Beta
-  public static String getPermissions(Map<String, String> properties) {
+  public static String getFilePermissions(Map<String, String> properties) {
     return properties.get(PROPERTY_FILES_PERMISSIONS);
   }
 
@@ -257,7 +257,7 @@ public class FileSetProperties {
    * @return the name of the group for files and directories
    */
   @Beta
-  public static String getGroup(Map<String, String> properties) {
+  public static String getFileGroup(Map<String, String> properties) {
     return properties.get(PROPERTY_FILES_GROUP);
   }
 
@@ -477,7 +477,7 @@ public class FileSetProperties {
      * Set the default permissions for files and directories
      */
     @Beta
-    public Builder setPermissions(String permissions) {
+    public Builder setFilePermissions(String permissions) {
       add(PROPERTY_FILES_PERMISSIONS, permissions);
       return this;
     }
@@ -486,7 +486,7 @@ public class FileSetProperties {
      * Set the name of the group for files and directories
      */
     @Beta
-    public Builder setGroup(String group) {
+    public Builder setFileGroup(String group) {
       add(PROPERTY_FILES_GROUP, group);
       return this;
     }

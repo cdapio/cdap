@@ -488,7 +488,7 @@ public abstract class HBaseTableUtil {
   }
 
   /**
-   * Truncates a table
+   * Truncates a table.
    * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
    * @param tableId  {@link TableId} for the specified table
    * @throws IOException
@@ -496,6 +496,21 @@ public abstract class HBaseTableUtil {
   public void truncateTable(HBaseDDLExecutor ddlExecutor, TableId tableId) throws IOException {
     TableName tableName = HTableNameConverter.toTableName(getTablePrefix(cConf), tableId);
     ddlExecutor.truncateTable(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
+  }
+
+  /**
+   * Grants permissions on a table.
+   * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
+   * @param tableId  {@link TableId} for the specified table
+   * @param permissions A map from user or group name to the permissions for that user or group, given as a string
+   *                    containing only characters 'a'(Admin), 'c'(Create), 'r'(Read), 'w'(Write), and 'x'(Execute).
+   *                    Group names must be prefixed with the character '@'.
+   * @throws IOException
+   */
+  public void grantPrivileges(HBaseDDLExecutor ddlExecutor, TableId tableId,
+                              Map<String, String> permissions) throws IOException {
+    TableName tableName = HTableNameConverter.toTableName(getTablePrefix(cConf), tableId);
+    ddlExecutor.grantPermissions(tableName.getNamespaceAsString(), tableName.getQualifierAsString(), permissions);
   }
 
   /**
