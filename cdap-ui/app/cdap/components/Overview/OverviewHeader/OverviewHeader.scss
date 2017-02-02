@@ -20,6 +20,20 @@
   color: black;
   padding: 10px 16px 5px;
   background: white;
+  position: relative;
+
+  .success-message {
+    position: absolute;
+    width: 100%;
+    background: $success-message-bg;
+    top: 0;
+    left: 0;
+    color: white;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+  }
 
   .header {
     flex: 1;

@@ -25,7 +25,8 @@ import {MyDatasetApi} from 'api/dataset';
 import {MyMetadataApi} from 'api/metadata';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
-
+import FastActionToMessage from 'services/fast-action-message-helper';
+import capitalize from 'lodash/capitalize';
 
 export default class DatasetOverview extends Component {
   constructor(props) {
@@ -34,7 +35,8 @@ export default class DatasetOverview extends Component {
     this.state = {
       entity: this.props.entity,
       entityDetail: null,
-      loading: false
+      loading: false,
+      successMessage: null
     };
   }
 
@@ -105,6 +107,18 @@ export default class DatasetOverview extends Component {
     this.props.onCloseAndRefresh(action);
   }
 
+  onFastActionUpdate(action) {
+    let successMessage;
+    if (action === 'truncate') {
+      successMessage = FastActionToMessage(action, {entityType: capitalize(this.props.entity.type)});
+    } else {
+      successMessage = FastActionToMessage(action);
+    }
+    this.setState({
+      successMessage
+    });
+  }
+
   render() {
     if (this.state.loading) {
       return (
@@ -121,10 +135,12 @@ export default class DatasetOverview extends Component {
           title={title}
           linkTo="/"
           onClose={this.props.onClose}
+          successMessage={this.state.successMessage}
         />
         <OverviewMetaSection
           entity={this.state.entity}
           onFastActionSuccess={this.onFastActionSuccess.bind(this)}
+          onFastActionUpdate={this.onFastActionUpdate.bind(this)}
         />
         <DatasetOverviewTab entity={this.state.entityDetail} />
       </div>

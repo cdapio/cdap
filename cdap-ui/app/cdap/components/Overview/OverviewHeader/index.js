@@ -14,45 +14,81 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import React, {PropTypes, Component} from 'react';
 import classnames from 'classnames';
 import {Link} from 'react-router';
 require('./OverviewHeader.scss');
 
-export default function OverviewHeader({icon, title, linkTo, onClose}) {
-  return (
-    <div className="overview-header">
-      <div className="header">
-        <i className={classnames("fa", icon)} />
-        <h4>{title}</h4>
+export default class OverviewHeader extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      successMessage: this.props.successMessage
+    };
+  }
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.successMessage !== this.state.successMessage) {
+      this.setState({
+        successMessage: nextProps.successMessage
+      }, () => {
+        setTimeout(() => {
+          this.setState({
+            successMessage: null
+          });
+        }, 3000);
+      });
+    }
+  }
+  render() {
+    return (
+      <div className="overview-header">
+        {
+          this.state.successMessage ?
+            <div className="overview-header success-message">
+              <h5>
+                <span>
+                  {
+                    this.state.successMessage
+                  }
+                </span>
+              </h5>
+            </div>
+          :
+            null
+        }
+        <div className="header">
+          <i className={classnames("fa", this.props.icon)} />
+          <h4>{this.props.title}</h4>
+        </div>
+        {
+          this.props.linkTo ?
+            <Link
+              className="link-to-detail"
+              to={this.props.linkTo}
+            >
+              View Details
+            </Link>
+          :
+            null
+        }
+        {
+          this.props.onClose ?
+            <span
+              className="fa fa-times"
+              onClick={this.props.onClose}
+            >
+            </span>
+          :
+            null
+        }
       </div>
-      {
-        linkTo ?
-          <Link
-            className="link-to-detail"
-            to={linkTo}
-          >
-            View Details
-          </Link>
-        :
-          null
-      }
-      {
-        onClose ?
-          <span
-            className="fa fa-times"
-            onClick={onClose}
-          >
-          </span>
-        :
-          null
-      }
-    </div>
-  );
+    );
+  }
 }
 OverviewHeader.propTypes = {
   icon: PropTypes.string,
   title: PropTypes.string,
   linkTo: PropTypes.object,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
+  successMessage: PropTypes.string
 };

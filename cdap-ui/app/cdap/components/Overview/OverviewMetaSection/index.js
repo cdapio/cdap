@@ -48,6 +48,11 @@ export default class OverviewMetaSection extends Component {
       this.props.onFastActionSuccess(action);
     }
   }
+  onFastActionUpdate(action) {
+    if (this.props.onFastActionUpdate) {
+      this.props.onFastActionUpdate(action);
+    }
+  }
   render() {
     let creationTime = objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'creation-time');
     let description =  objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'description');
@@ -75,6 +80,7 @@ export default class OverviewMetaSection extends Component {
             className="overview-fast-actions"
             entity={this.props.entity}
             onSuccess={this.onFastActionSuccess.bind(this)}
+            onUpdate={this.onFastActionUpdate.bind(this)}
           />
         </div>
         <Description description={description} />
@@ -86,5 +92,6 @@ export default class OverviewMetaSection extends Component {
 
 OverviewMetaSection.propTypes = {
   entity: PropTypes.object,
-  onFastActionSuccess: PropTypes.func
+  onFastActionSuccess: PropTypes.func,
+  onFastActionUpdate: PropTypes.func
 };
