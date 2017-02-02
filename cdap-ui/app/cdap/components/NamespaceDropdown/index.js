@@ -183,7 +183,7 @@ export default class NamespaceDropdown extends Component {
                   this.state.preferencesSavedMessage === true ?
                     (
                       <div className="preferences-saved-message text-white">
-                        <span>{T.translate('features.FastAction.setPreferencesSuccess.default')}</span>
+                        <span>{T.translate('features.FastAction.setPreferencesSuccess.default', {entityType: 'Namespace'})}</span>
                         <span
                           className='fa fa-times'
                           onClick={() => this.setState({preferencesSavedMessage: false})}

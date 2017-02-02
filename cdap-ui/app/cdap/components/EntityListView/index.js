@@ -526,6 +526,14 @@ class EntityListView extends Component {
     this.setState({selectedEntity: null}, this.search.bind(this));
   }
 
+  onFastActionSuccess() {
+    if (this.state.selectedEntity) {
+      this.onOverviewCloseAndRefresh();
+      return;
+    }
+    this.search();
+  }
+
   render() {
 
     if (!this.state.showSplash) {
@@ -567,7 +575,7 @@ class EntityListView extends Component {
               list={this.state.entities}
               loading={this.state.loading}
               onEntityClick={this.handleEntityClick.bind(this)}
-              onUpdate={this.search.bind(this)}
+              onFastActionSuccess={this.onFastActionSuccess.bind(this)}
               errorMessage={this.state.entityErr}
               errorStatusCode={this.state.errStatusCode}
               animationDirection={this.state.animationDirection}

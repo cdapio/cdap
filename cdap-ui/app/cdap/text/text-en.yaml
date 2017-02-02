@@ -135,6 +135,7 @@ features:
     deleteFailed: Failed to delete {entityId}.
     truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
     truncateLabel: Truncate
+    truncateSuccess: Truncated Successfully
     truncateFailed: Failed to truncate {entityId}.
     sendEventsLabel: Send Events
     setPreferencesModalLabel: Preferences
@@ -154,9 +155,7 @@ features:
     setPreferencesReset: Reset
     setPreferencesFailed: Error - Set Preferences Failed.
     setPreferencesSuccess:
-      default: Preferences Saved
-      application: Application Preferences Saved
-      program: Program Preferences Saved
+      default: "{entityType} Preferences Saved"
     start: Start
     stop: Stop
     sendEventsButtonLabel: Send
