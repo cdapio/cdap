@@ -592,6 +592,7 @@ public class CLIMainTest extends CLITestBase {
     final String description = "testDescription";
     final String keytab = "keytab";
     final String principal = "principal";
+    final String group = "group";
     final String hbaseNamespace = "hbase";
     final String hiveDatabase = "hiveDB";
     final String schedulerQueueName = "queue";
@@ -615,14 +616,14 @@ public class CLIMainTest extends CLITestBase {
 //                              String.format("Error: namespace '%s' was not found", doesNotExist));
 
     // create a namespace
-    String command = String.format("create namespace %s description %s principal %s keytab-URI %s " +
+    String command = String.format("create namespace %s description %s principal %s group-name %s keytab-URI %s " +
                                      "hbase-namespace %s hive-database %s root-directory %s scheduler-queue-name %s",
-                                   name, description, principal, keytab, hbaseNamespace,
+                                   name, description, principal, group, keytab, hbaseNamespace,
                                    hiveDatabase, rootDirectory, schedulerQueueName);
     testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", name));
 
     NamespaceMeta expected = new NamespaceMeta.Builder()
-      .setName(name).setDescription(description).setPrincipal(principal).setKeytabURI(keytab)
+      .setName(name).setDescription(description).setPrincipal(principal).setGroupName(group).setKeytabURI(keytab)
       .setHBaseNamespace(hbaseNamespace).setSchedulerQueueName(schedulerQueueName)
       .setHiveDatabase(hiveDatabase).setRootDirectory(rootDirectory).build();
     expectedNamespaces = Lists.newArrayList(defaultNs, expected);
