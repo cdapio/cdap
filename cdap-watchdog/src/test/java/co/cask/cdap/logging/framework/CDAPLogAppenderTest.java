@@ -34,6 +34,7 @@ import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
@@ -51,8 +52,10 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -118,9 +121,13 @@ public class CDAPLogAppenderTest {
                                                         2 * 1024 * 1024);
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
     CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
-    injector.injectMembers(cdapLogAppender);
     cdapLogAppender.setSyncIntervalBytes(syncInterval);
     cdapLogAppender.setMaxFileLifetimeMs(TimeUnit.DAYS.toMillis(1));
+    AppenderContext context = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
+                                                       injector.getInstance(TransactionSystemClient.class),
+                                                       injector.getInstance(LocationFactory.class));
+    context.start();
+    cdapLogAppender.setContext(context);
     cdapLogAppender.start();
 
     LoggingEvent event =
@@ -137,6 +144,7 @@ public class CDAPLogAppenderTest {
 
     cdapLogAppender.doAppend(event);
     cdapLogAppender.stop();
+    context.stop();
 
     try {
       List<LogLocation> files = fileMetaDataManager.listFiles(cdapLogAppender.getLoggingPath(properties));
@@ -173,9 +181,14 @@ public class CDAPLogAppenderTest {
                                                         2 * 1024 * 1024);
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
     CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
-    injector.injectMembers(cdapLogAppender);
+    AppenderContext context = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
+                                                       injector.getInstance(TransactionSystemClient.class),
+                                                       injector.getInstance(LocationFactory.class));
+    context.start();
+
     cdapLogAppender.setSyncIntervalBytes(syncInterval);
     cdapLogAppender.setMaxFileLifetimeMs(500);
+    cdapLogAppender.setContext(context);
     cdapLogAppender.start();
 
     Map<String, String> properties = new HashMap<>();
@@ -203,6 +216,7 @@ public class CDAPLogAppenderTest {
     event2.setTimeStamp(currentTimeMillisEvent1 + 1000);
     cdapLogAppender.doAppend(event2);
     cdapLogAppender.stop();
+    context.stop();
 
     try {
       List<LogLocation> files = fileMetaDataManager.listFiles(cdapLogAppender.getLoggingPath(properties));

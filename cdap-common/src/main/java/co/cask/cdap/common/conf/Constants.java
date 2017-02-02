@@ -704,6 +704,8 @@ public final class Constants {
     // Constants
     // Table used to store log metadata
     public static final String META_TABLE = "log.meta";
+
+
   }
 
   /**
