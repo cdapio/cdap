@@ -114,13 +114,18 @@ export default class StreamOverview extends Component {
     }
 
     let title = T.translate('commons.entity.stream.singular');
-
+    let namespace = NamespaceStore.getState().selectedNamespace;
     return (
       <div className="app-overview">
         <OverviewHeader
           icon="icon-streams"
           title={title}
-          linkTo="/"
+          linkTo={{
+            pathname: `/ns/${namespace}/streams/${this.props.entity.id}`,
+            state: {
+              entityDetail: this.state.entityDetail
+            }
+          }}
           onClose={this.props.onClose}
         />
         <OverviewMetaSection entity={this.state.entity} />
