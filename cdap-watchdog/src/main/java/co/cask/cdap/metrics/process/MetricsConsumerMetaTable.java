@@ -18,7 +18,6 @@ package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import com.google.common.collect.Maps;
 
 import java.util.Map;
 import java.util.SortedMap;
@@ -38,7 +37,7 @@ public class MetricsConsumerMetaTable {
   }
 
   public synchronized <T extends MetricsMetaKey> void save(Map<T, Long> offsets) throws Exception {
-    SortedMap<byte[], SortedMap<byte[], Long>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    SortedMap<byte[], SortedMap<byte[], Long>> updates = new TreeMap<>(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<T, Long> entry : offsets.entrySet()) {
       SortedMap<byte[], Long> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
       map.put(OFFSET_COLUMN, entry.getValue());
@@ -47,9 +46,9 @@ public class MetricsConsumerMetaTable {
     metaTable.put(updates);
   }
 
-  public synchronized <T extends MetricsMetaKey> void saveBytes(Map<T, byte[]> offsets) throws Exception {
-    SortedMap<byte[], SortedMap<byte[], byte[]>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for (Map.Entry<T, byte[]> entry : offsets.entrySet()) {
+  public <T extends MetricsMetaKey> void saveMessageIds(Map<T, byte[]> messageIds) throws Exception {
+    SortedMap<byte[], SortedMap<byte[], byte[]>> updates = new TreeMap<>(Bytes.BYTES_COMPARATOR);
+    for (Map.Entry<T, byte[]> entry : messageIds.entrySet()) {
       SortedMap<byte[], byte[]> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
       map.put(MESSAGE_ID_COLUMN, entry.getValue());
       updates.put(entry.getKey().getKey(), map);

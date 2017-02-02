@@ -25,7 +25,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.messaging.data.RawMessage;
-import co.cask.cdap.metrics.MessagingMetricsTestBase;
+import co.cask.cdap.metrics.MetricsTestBase;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.common.io.ByteBufferInputStream;
@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Testing the basic properties of the {@link MessagingMetricsCollectionService}.
  */
-public class MessagingMetricsCollectionServiceTest extends MessagingMetricsTestBase {
+public class MessagingMetricsCollectionServiceTest extends MetricsTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsCollectionServiceTest.class);
 

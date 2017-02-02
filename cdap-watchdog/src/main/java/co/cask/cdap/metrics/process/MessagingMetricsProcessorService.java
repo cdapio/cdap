@@ -262,6 +262,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
           return;
         }
 
+        // Ensure there's only one thread can persist records when the persistingFlag is false.
+        // The thread set persistingFlag to true when it starts to persist.
         if (!persistingFlag.compareAndSet(false, true)) {
           return;
         }
@@ -277,8 +279,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
           persistMessageIds(metaKeyMapCopy);
         } catch (Exception e) {
           // Simple log and ignore the error.
-          LOG.error("Failed to persist consumed messages {}", metaKeyMapCopy, e);
+          LOG.error("Failed to persist consumed messages.", e);
         } finally {
+          // Set persistingFlag back to false after persisting completes.
           persistingFlag.set(false);
         }
       } catch (Exception e) {
@@ -288,30 +291,26 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
 
     private void persistRecords(List<MetricValues> metricValues) throws Exception {
       long now = System.currentTimeMillis();
-      addProcessingStats(metricValues, now);
+      long lastRecordTime = metricValues.get(metricValues.size() - 1).getTimestamp();
+      long delay = now - TimeUnit.SECONDS.toMillis(lastRecordTime);
+      metricValues.add(
+        new MetricValues(metricsContextMap, TimeUnit.MILLISECONDS.toSeconds(now), ImmutableList.of(
+          new MetricValue("metrics.process.count", MetricType.COUNTER, metricValues.size()),
+          new MetricValue("metrics.process.delay.ms", MetricType.GAUGE, delay))));
       metricStore.add(metricValues);
       recordsProcessed += metricValues.size();
       // avoid logging more than once a minute
       if (now > lastLoggedMillis + TimeUnit.MINUTES.toMillis(1)) {
         lastLoggedMillis = now;
-        LOG.debug("{} metrics records processed in thread {}. Last record time: {}.",
-                 recordsProcessed, getName(), metricValues.get(metricValues.size() - 1).getTimestamp());
+        LOG.debug("{} metrics records processed in thread {}. Last metric record's timestamp: {}. " +
+                    "Metrics process delay: {}",
+                  recordsProcessed, getName(), lastRecordTime, delay);
       }
-    }
-
-    private void addProcessingStats(List<MetricValues> records, long currentTime) {
-      int count = records.size();
-      long delay = currentTime - TimeUnit.SECONDS.toMillis(records.get(records.size() - 1).getTimestamp());
-      records.add(
-        new MetricValues(metricsContextMap, TimeUnit.MILLISECONDS.toSeconds(currentTime),
-                         ImmutableList.of(new MetricValue("metrics.process.count", MetricType.COUNTER, count),
-                                          new MetricValue("metrics.process.delay.ms", MetricType.GAUGE, delay))));
     }
 
     private void persistMessageIds(Map<TopicIdMetaKey, byte[]> metaKeyMap) {
       try {
-        metaTable.saveBytes(metaKeyMap);
-        LOG.debug("Persisted consumed messages messageId's {}", metaKeyMap);
+        metaTable.saveMessageIds(metaKeyMap);
       } catch (Exception e) {
         LOG.error("Failed to persist consumed messages messageId's {}", metaKeyMap, e);
       }
