@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,25 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.logging.save;
+package co.cask.cdap.logging.meta;
 
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import com.google.inject.Inject;
-import org.apache.tephra.TransactionExecutorFactory;
+import org.apache.tephra.TransactionSystemClient;
 
 /**
  * Creates {@link DefaultCheckpointManager}s.
  */
 public class CheckpointManagerFactory {
-  private final LogSaverTableUtil tableUtil;
-  private final TransactionExecutorFactory txExecutorFactory;
+
+  private final DatasetFramework datasetFramework;
+  private final TransactionSystemClient txClient;
 
   @Inject
-  public CheckpointManagerFactory(LogSaverTableUtil tableUtil, TransactionExecutorFactory txExecutorFactory) {
-    this.tableUtil = tableUtil;
-    this.txExecutorFactory = txExecutorFactory;
+  CheckpointManagerFactory(DatasetFramework datasetFramework, TransactionSystemClient txClient) {
+    this.datasetFramework = datasetFramework;
+    this.txClient = txClient;
   }
 
   public CheckpointManager create(String topic, int prefix) {
-    return new DefaultCheckpointManager(tableUtil, txExecutorFactory, topic, prefix);
+    return new DefaultCheckpointManager(datasetFramework, txClient, topic, prefix);
   }
 }

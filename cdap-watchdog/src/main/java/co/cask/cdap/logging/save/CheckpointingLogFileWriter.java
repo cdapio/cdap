@@ -17,6 +17,8 @@
 package co.cask.cdap.logging.save;
 
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
+import co.cask.cdap.logging.meta.Checkpoint;
+import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.logging.write.AvroFileWriter;
 import co.cask.cdap.logging.write.LogFileWriter;
 import com.google.common.collect.Maps;

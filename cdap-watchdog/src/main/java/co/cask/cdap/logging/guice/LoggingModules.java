@@ -79,7 +79,6 @@ public class LoggingModules extends RuntimeModule {
     };
   }
 
-
   /**
    * Provider for Async log appender and plugins to be used in standalone.
    */

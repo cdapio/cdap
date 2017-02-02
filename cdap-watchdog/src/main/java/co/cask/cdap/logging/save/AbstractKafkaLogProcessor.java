@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.save;
 
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
+import co.cask.cdap.logging.meta.Checkpoint;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 
@@ -24,7 +25,7 @@ import java.util.Iterator;
 import javax.annotation.Nullable;
 
 /**
- * Abstract Log Processor that stores offsets for paritions and checks if a given event is already processed.
+ * Abstract Log Processor that stores offsets for partitions and checks if a given event is already processed.
  */
 public abstract class AbstractKafkaLogProcessor implements KafkaLogProcessor {
   private Checkpoint checkpoint;
@@ -58,7 +59,7 @@ public abstract class AbstractKafkaLogProcessor implements KafkaLogProcessor {
    */
   protected abstract void doProcess(Iterator<KafkaLogEvent> event);
 
-  public boolean alreadyProcessed(KafkaLogEvent event) {
+  private boolean alreadyProcessed(KafkaLogEvent event) {
     // If no checkpoint is found, then the event needs to be processed.
     // if the event offset is less than or equal to what is already checkpointed then the event is already processed
     return checkpoint != null && event.getNextOffset() <= checkpoint.getNextOffset();
