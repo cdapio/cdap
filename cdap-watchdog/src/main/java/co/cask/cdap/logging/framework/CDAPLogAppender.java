@@ -44,15 +44,15 @@ import java.util.Map;
  */
 public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flushable {
   private static final Logger LOG = LoggerFactory.getLogger(CDAPLogAppender.class);
-  public static final String TAG_NAMESPACE_ID = ".namespaceId";
-  public static final String TAG_APPLICATION_ID = ".applicationId";
-  public static final String TAG_FLOW_ID = ".flowId";
-  public static final String TAG_SERVICE_ID = ".serviceId";
-  public static final String TAG_MAP_REDUCE_JOB_ID = ".mapReduceId";
-  public static final String TAG_SPARK_JOB_ID = ".sparkId";
-  public static final String TAG_USER_SERVICE_ID = ".userserviceid";
-  public static final String TAG_WORKER_ID = ".workerid";
-  public static final String TAG_WORKFLOW_ID = ".workflowId";
+  private static final String TAG_NAMESPACE_ID = ".namespaceId";
+  private static final String TAG_APPLICATION_ID = ".applicationId";
+  private static final String TAG_FLOW_ID = ".flowId";
+  private static final String TAG_SERVICE_ID = ".serviceId";
+  private static final String TAG_MAP_REDUCE_JOB_ID = ".mapReduceId";
+  private static final String TAG_SPARK_JOB_ID = ".sparkId";
+  private static final String TAG_USER_SERVICE_ID = ".userserviceid";
+  private static final String TAG_WORKER_ID = ".workerid";
+  private static final String TAG_WORKFLOW_ID = ".workflowId";
 
   private LogFileManager logFileManager;
 

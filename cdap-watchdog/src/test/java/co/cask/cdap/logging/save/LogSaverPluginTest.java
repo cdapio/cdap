@@ -38,7 +38,6 @@ import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.logging.KafkaTestBase;
-import co.cask.cdap.logging.LogSaverTableUtilOverride;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
@@ -46,6 +45,9 @@ import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
+import co.cask.cdap.logging.meta.Checkpoint;
+import co.cask.cdap.logging.meta.CheckpointManager;
+import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
 import co.cask.cdap.logging.read.AvroFileReader;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
@@ -104,7 +106,7 @@ import static co.cask.cdap.logging.appender.LoggingTester.LogCallback;
  */
 @Category(SlowTests.class)
 public class LogSaverPluginTest extends KafkaTestBase {
-  private static final Logger LOG = LoggerFactory.getLogger(LogSaverTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LogSaverPluginTest.class);
 
   private static Injector injector;
   private static TransactionManager txManager;
@@ -197,7 +199,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
       // Now reset the logsaver to start reading from reset offset
       // Change the log meta table so that checkpoints are new, and old log files are not read during read later
-      LogSaverTableUtilOverride.setLogMetaTableName("log.meta1");
+      LoggingStoreTableUtil.setMetaTableName("log.meta1");
 
       // Reset checkpoint for log saver plugin
       resetLogSaverPluginCheckpoint(10);

@@ -46,9 +46,6 @@ public final class LoggingConfiguration {
   public static final String KAFKA_PROCUDER_BUFFER_MS = "kafka.producer.buffer.ms";
   public static final String LOG_CLEANUP_RUN_INTERVAL_MINS = "log.cleanup.run.interval.mins";
 
-  // Constants
-  // Table used to store log metadata
-  public static final String LOG_META_DATA_TABLE = "log.meta";
   // Defaults
   public static final String DEFAULT_LOG_PATTERN = "%d{ISO8601} - %-5p [%t:%c{1}@%L] - %m%n";
   public static final String DEFAULT_KAFKA_PRODUCER_TYPE = "async";
