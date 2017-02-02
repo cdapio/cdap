@@ -110,13 +110,18 @@ export default class DatasetOverview extends Component {
     }
 
     let title = T.translate('commons.entity.dataset.singular');
-
+    let namespace = NamespaceStore.getState().selectedNamespace;
     return (
       <div className="app-overview">
         <OverviewHeader
           icon="icon-datasets"
           title={title}
-          linkTo="/"
+          linkTo={{
+            pathname: `/ns/${namespace}/datasets/${this.props.entity.id}`,
+            state: {
+              entityDetail: this.state.entityDetail
+            }
+          }}
           onClose={this.props.onClose}
         />
         <OverviewMetaSection entity={this.state.entity} />

@@ -19,6 +19,8 @@ import Miss from 'react-router/Miss';
 import Page404 from 'components/404';
 import EntityListView from 'components/EntityListView';
 import AppDetailedView from 'components/AppDetailedView';
+import DatasetDetailedView from 'components/DatasetDetailedView';
+import StreamDetailedView from 'components/StreamDetailedView';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 
@@ -36,6 +38,8 @@ export default class Home extends Component {
       <div>
         <Match exactly pattern="/ns/:namespace" component={EntityListView} />
         <Match pattern="/ns/:namespace/apps/:appId" component={AppDetailedView} />
+        <Match pattern="/ns/:namespace/datasets/:datasetId" component={DatasetDetailedView} />
+        <Match pattern="/ns/:namespace/streams/:streamId" component={StreamDetailedView} />
         <Miss component={Page404} />
       </div>
     );
