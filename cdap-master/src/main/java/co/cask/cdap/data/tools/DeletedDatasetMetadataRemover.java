@@ -22,10 +22,10 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
@@ -55,13 +55,13 @@ final class DeletedDatasetMetadataRemover {
     List<DatasetId> removedDatasets = new ArrayList<>();
     for (NamespaceMeta namespaceMeta : nsStore.list()) {
       Set<MetadataSearchResultRecord> searchResults =
-        metadataStore.search(namespaceMeta.getName(), "*", EnumSet.of(MetadataSearchTargetType.DATASET),
+        metadataStore.search(namespaceMeta.getName(), "*", EnumSet.of(EntityTypeSimpleName.DATASET),
                              SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null, false).getResults();
       for (MetadataSearchResultRecord searchResult : searchResults) {
         NamespacedEntityId entityId = searchResult.getEntityId();
         Preconditions.checkState(entityId instanceof DatasetId,
                                  "Since search was filtered for %s, expected result to be a %s, but got a %s",
-                                 MetadataSearchTargetType.DATASET, DatasetId.class.getSimpleName(),
+                                 EntityTypeSimpleName.DATASET, DatasetId.class.getSimpleName(),
                                  entityId.getClass().getName());
         DatasetId datasetInstance = (DatasetId) entityId;
         if (!dsFramework.hasInstance(datasetInstance)) {

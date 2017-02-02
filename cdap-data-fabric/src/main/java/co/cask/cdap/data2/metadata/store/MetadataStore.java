@@ -19,11 +19,11 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
 import java.util.Map;
 import java.util.Set;
@@ -165,7 +165,7 @@ public interface MetadataStore {
    *
    * @param namespaceId the namespace to search in
    * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value]
-   * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
+   * @param types the {@link EntityTypeSimpleName} to restrict the search to, if empty all types are searched
    * @param sortInfo represents sorting information. Use {@link SortInfo#DEFAULT} to return search results without
    *                 sorting (which implies that the sort order is by relevance to the search query)
    * @param offset the index to start with in the search results. To return results from the beginning, pass {@code 0}
@@ -180,7 +180,7 @@ public interface MetadataStore {
    * @return the {@link MetadataSearchResponse} containing search results for the specified search query and filters
    */
   MetadataSearchResponse search(String namespaceId, String searchQuery,
-                                Set<MetadataSearchTargetType> types,
+                                Set<EntityTypeSimpleName> types,
                                 SortInfo sortInfo, int offset, int limit,
                                 int numCursors, String cursor, boolean showHidden) throws BadRequestException;
 

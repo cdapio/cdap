@@ -19,11 +19,11 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
 import java.util.Map;
 import java.util.Set;
@@ -154,7 +154,7 @@ public interface MetadataAdmin {
 
   /**
    * Executes a search for CDAP entities in the specified namespace with the specified search query and
-   * an optional set of {@link MetadataSearchTargetType entity types} in the specified {@link MetadataScope}.
+   * an optional set of {@link EntityTypeSimpleName entity types} in the specified {@link MetadataScope}.
    *
    * @param namespaceId the namespace id to filter the search by
    * @param searchQuery the search query
@@ -172,7 +172,7 @@ public interface MetadataAdmin {
    *                    or not.
    * @return the {@link MetadataSearchResponse} containing search results for the specified search query and filters
    */
-  MetadataSearchResponse search(String namespaceId, String searchQuery, Set<MetadataSearchTargetType> types,
+  MetadataSearchResponse search(String namespaceId, String searchQuery, Set<EntityTypeSimpleName> types,
                                 SortInfo sortInfo, int offset, int limit, int numCursors,
                                 String cursor, boolean showHidden) throws Exception;
 }

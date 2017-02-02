@@ -31,8 +31,8 @@ import co.cask.cdap.cli.completer.element.ProgramIdCompleter;
 import co.cask.cdap.cli.completer.element.StreamIdCompleter;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.metadata.MetadataScope;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.proto.security.Principal;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
@@ -72,7 +72,7 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.COMMAND_CATEGORY.getName(), new EnumCompleter(CommandCategory.class))
         .put(ArgumentName.TABLE_RENDERER.getName(), new EnumCompleter(RenderAsCommand.Type.class))
         .put(ArgumentName.WORKFLOW_TOKEN_SCOPE.getName(), new EnumCompleter(WorkflowToken.Scope.class))
-        .put(ArgumentName.TARGET_TYPE.getName(), new EnumCompleter(MetadataSearchTargetType.class))
+        .put(ArgumentName.TARGET_TYPE.getName(), new EnumCompleter(EntityTypeSimpleName.class))
         .put(ArgumentName.METADATA_SCOPE.getName(), new EnumCompleter(MetadataScope.class))
         .put(ArgumentName.FORMAT.getName(), new StringsCompleter(Formats.ALL))
         .put(ArgumentName.PRINCIPAL_TYPE.getName(), new EnumCompleter(Principal.PrincipalType.class))
