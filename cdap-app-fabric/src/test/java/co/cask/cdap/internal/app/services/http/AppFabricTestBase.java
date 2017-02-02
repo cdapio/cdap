@@ -483,7 +483,7 @@ public abstract class AppFabricTestBase {
       request.setHeader(AbstractAppFabricHttpHandler.APP_CONFIG_HEADER, GSON.toJson(appConfig));
     }
     if (ownerPrincipal != null) {
-      request.setHeader(AbstractAppFabricHttpHandler.OWNER_PRINCIPAL_HEADER, ownerPrincipal);
+      request.setHeader(AbstractAppFabricHttpHandler.PRINCIPAL_HEADER, ownerPrincipal);
     }
     request.setEntity(new FileEntity(artifactJar));
     return execute(request);

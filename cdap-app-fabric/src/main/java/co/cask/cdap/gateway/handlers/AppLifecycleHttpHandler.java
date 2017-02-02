@@ -160,7 +160,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") final String namespaceId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
                              @HeaderParam(APP_CONFIG_HEADER) String configString,
-                             @HeaderParam(OWNER_PRINCIPAL_HEADER) String ownerPrincipal)
+                             @HeaderParam(PRINCIPAL_HEADER) String ownerPrincipal)
     throws BadRequestException, NamespaceNotFoundException {
 
     NamespaceId namespace = validateNamespace(namespaceId);

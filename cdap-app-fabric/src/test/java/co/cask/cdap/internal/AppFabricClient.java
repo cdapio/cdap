@@ -426,7 +426,7 @@ public class AppFabricClient {
     String owner = null;
     if (ownerPrincipal != null) {
       owner = GSON.toJson(ownerPrincipal, KerberosPrincipalId.class);
-      request.setHeader(AbstractAppFabricHttpHandler.OWNER_PRINCIPAL_HEADER, owner);
+      request.setHeader(AbstractAppFabricHttpHandler.PRINCIPAL_HEADER, owner);
     }
     MockResponder mockResponder = new MockResponder();
     BodyConsumer bodyConsumer = appLifecycleHttpHandler.deploy(request, mockResponder, namespace.getId(), archiveName,
