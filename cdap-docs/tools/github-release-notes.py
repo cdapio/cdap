@@ -70,7 +70,7 @@ reformats it, and writes it to the terminal.
     parser.add_option(
         '-v', '--version',
         dest='version',
-        help="The CDAP version to be used for documentation links; if supplied, first section of doc done; if no version, entire file is used",
+        help="The CDAP version to be used for documentation links; if supplied, first section of doc is converted; if no version, entire file is used",
         metavar='cdap-version',
         default='')
 
