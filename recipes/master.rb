@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Recipe:: master
 #
-# Copyright © 2013-2016 Cask Data, Inc.
+# Copyright © 2013-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -74,24 +74,6 @@ if hadoop_kerberos?
       append true
       members ['cdap']
       action :modify
-    end
-
-    # We need to be hbase to run our shell
-    execute 'kinit-as-hbase-user' do
-      command "kinit -kt #{node['krb5']['keytabs_dir']}/hbase.service.keytab hbase/#{node['fqdn']}@#{node['krb5']['krb5_conf']['realms']['default_realm'].upcase}"
-      user 'hbase'
-      only_if "test -e #{node['krb5']['keytabs_dir']}/hbase.service.keytab"
-    end
-    # Template for HBase GRANT
-    template "#{Chef::Config[:file_cache_path]}/hbase-grant.hbase" do
-      source 'hbase-shell.erb'
-      owner 'hbase'
-      group 'hadoop'
-      action :create
-    end
-    execute 'hbase-grant' do
-      command "hbase shell #{Chef::Config[:file_cache_path]}/hbase-grant.hbase"
-      user 'hbase'
     end
   else
     # Hadoop is secure, but we're not configured for Kerberos

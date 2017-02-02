@@ -95,3 +95,18 @@ krb5_keytab keytab do
   action :create
   only_if { hadoop_kerberos? }
 end
+
+# Template for HBase grant - this is done here to ensure it's present
+template "#{Chef::Config[:file_cache_path]}/hbase-grant.hbase" do
+  source 'hbase-shell.erb'
+  owner 'hbase'
+  group 'hadoop'
+  action :create
+end
+
+hbkt = "#{node['krb5']['keytabs_dir']}/hbase.service.keytab"
+execute 'kinit-as-hbase-and-grant' do
+  command "kinit -kt #{hbkt} hbase/#{node['fqdn']} && hbase shell #{Chef::Config[:file_cache_path]}/hbase-grant.hbase"
+  user 'hbase'
+  only_if { hadoop_kerberos? }
+end
