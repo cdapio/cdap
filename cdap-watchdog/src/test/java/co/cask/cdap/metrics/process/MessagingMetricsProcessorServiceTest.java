@@ -27,6 +27,7 @@ import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.io.DatumReaderFactory;
@@ -45,6 +46,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Testing possible race condition of the {@link MessagingMetricsProcessorService}
@@ -56,7 +61,7 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
   private static final int PARTITION_SIZE = 2;
 
   @Test
-  public void persistMetricsTests() throws IOException, TopicNotFoundException, InterruptedException {
+  public void persistMetricsTests() throws IOException, TopicNotFoundException, InterruptedException, TimeoutException, ExecutionException {
     injector.getInstance(TransactionManager.class).startAndWait();
     injector.getInstance(DatasetOpExecutor.class).startAndWait();
     injector.getInstance(DatasetService.class).startAndWait();
@@ -66,7 +71,7 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
       partitions.add(i);
     }
 
-    MockMetricStore metricStore = new MockMetricStore();
+    final MockMetricStore metricStore = new MockMetricStore();
 
     injector.getInstance(MetricStore.class);
 
@@ -75,7 +80,7 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
                                            partitions, messagingService, injector.getInstance(SchemaGenerator.class),
                                            injector.getInstance(DatumReaderFactory.class),
                                            metricStore,
-                                           10);
+                                           5);
     messagingMetricsProcessorService.startAndWait();
     for (int i = 0; i < 50; i++) {
       publishMessagingMetrics(i, METRICS_CONTEXT, expected, MetricType.COUNTER);
@@ -83,7 +88,14 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
     for (int i = 50; i < 100; i++) {
       publishMessagingMetrics(i, METRICS_CONTEXT, expected, MetricType.GAUGE);
     }
-    Thread.sleep(7000);
+
+    Tasks.waitFor(51, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return metricStore.getAllMetrics().size();
+      }
+    }, 15, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+
     assertMetricsResult(expected, metricStore.getAllMetrics());
   }
 
@@ -115,13 +127,17 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
     public void add(Collection<? extends MetricValues> metricValues) throws Exception {
       for (MetricValues metric : metricValues) {
         for (MetricValue metricValue : metric.getMetrics()) {
-          if (MetricType.GAUGE.equals(metricValue.getType())) {
+          if (MetricType.GAUGE.equals(metricValue.getType())
+            && metricValue.getName().startsWith(GAUGE_METRIC_NAME_PREFIX)) {
             metricsMap.put(EXPECTED_METRIC_PREFIX + metricValue.getName(), metricValue.getValue());
           } else {
             if (!COUNTER_METRIC_NAME.equals(metricValue.getName())) {
               continue;
             }
             Long currentValue = metricsMap.get(EXPECTED_COUNTER_METRIC_NAME);
+            // Sleep for 10 seconds to increase the odd of race condition when this add method
+            // is called by multiple threads concurrently
+            Thread.sleep(10);
             if (currentValue == null) {
               metricsMap.put(EXPECTED_COUNTER_METRIC_NAME, 1L);
             } else {

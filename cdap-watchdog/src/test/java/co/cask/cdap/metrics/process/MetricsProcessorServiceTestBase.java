@@ -60,6 +60,7 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
 
   protected static final String EXPECTED_METRIC_PREFIX = "system.";
   protected static final String COUNTER_METRIC_NAME = "counter_metric";
+  protected static final String GAUGE_METRIC_NAME_PREFIX = "gauge_metric";
   protected static final int PARTITION_SIZE = 2;
   protected static final long START_TIME = 1;
   protected static final String EXPECTED_COUNTER_METRIC_NAME = EXPECTED_METRIC_PREFIX + COUNTER_METRIC_NAME;
@@ -94,7 +95,7 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
     throws TopicNotFoundException, IOException {
     MetricValues metric;
     if (MetricType.GAUGE.equals(metricType)) {
-      String metricName = "gauge_metric" + i;
+      String metricName = GAUGE_METRIC_NAME_PREFIX + i;
       metric =
         new MetricValues(metricsContext, metricName, START_TIME + i, i, metricType);
       expected.put(EXPECTED_METRIC_PREFIX + metricName, (long) i);
