@@ -27,6 +27,8 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -34,6 +36,8 @@ import java.io.IOException;
  * Administration for file sets.
  */
 public class FileSetAdmin implements DatasetAdmin, Updatable {
+
+  private static final Logger LOG = LoggerFactory.getLogger(FileSetAdmin.class);
 
   private final DatasetSpecification spec;
   private final boolean isExternal;
@@ -76,8 +80,6 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
    * @param truncating whether this call to create() is part of a truncate() operation. The effect is:
    *                   If possessExisting is true, then the truncate() has just dropped this
    *                   dataset and that deleted the base directory: we must recreate it.
-   *
-   *
    */
   private void create(boolean truncating) throws IOException {
     if (isExternal) {
@@ -93,7 +95,12 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
       }
       String permissions = FileSetProperties.getFilePermissions(spec.getProperties());
       String group = FileSetProperties.getFileGroup(spec.getProperties());
-      group = group != null ? group : UserGroupInformation.getCurrentUser().getPrimaryGroupName();
+      if (group == null) {
+        String[] groups = UserGroupInformation.getCurrentUser().getGroupNames();
+        if (groups.length > 0) {
+          group = groups[0];
+        }
+      }
 
       // we can't simply mkdirs() the base location, because we need to set the group id on
       // every directory we create. Thus find the first ancestor of the base that does not exist:
@@ -107,13 +114,21 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
       if (firstDirToCreate != null) {
         if (null == permissions) {
           firstDirToCreate.mkdirs();
-          firstDirToCreate.setGroup(group);
-          // all following directories are created with the same group id as their parent
-          baseLocation.mkdirs();
         } else {
           firstDirToCreate.mkdirs(permissions);
-          firstDirToCreate.setGroup(group);
-          // all following directories are created with the same group id as their parent
+        }
+        if (group != null) {
+          try {
+            firstDirToCreate.setGroup(group);
+          } catch (Exception e) {
+            LOG.warn("Failed to set group {} for base location {} of file set {}: {}. Please set it manually.",
+                     group, firstDirToCreate.toURI().toString(), spec.getName(), e.getMessage());
+          }
+        }
+        // all following directories are created with the same group id as their parent
+        if (null == permissions) {
+          baseLocation.mkdirs();
+        } else {
           baseLocation.mkdirs(permissions);
         }
       }
@@ -123,7 +138,7 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
   private void validateExists(String property) throws IOException {
     if (!exists()) {
       throw new IOException(String.format(
-        "Property '%s' for file set '%s' is true, but Base location at %s does not exist",
+        "Property '%s' for file set '%s' is true, but base location at %s does not exist",
         property, spec.getName(), baseLocation));
     }
   }
