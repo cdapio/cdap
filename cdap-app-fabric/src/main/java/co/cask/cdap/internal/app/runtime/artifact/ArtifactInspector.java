@@ -59,6 +59,7 @@ import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -136,6 +137,8 @@ final class ArtifactInspector {
         }
         return builder.build();
       }
+    } catch (EOFException | ZipException e) {
+      throw new InvalidArtifactException("Artifact " + artifactId + " is not a valid zip file.", e);
     } finally {
       try {
         DirUtils.deleteDirectoryContents(stageDir.toFile());
