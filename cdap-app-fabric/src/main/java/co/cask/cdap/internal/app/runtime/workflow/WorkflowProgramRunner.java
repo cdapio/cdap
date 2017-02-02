@@ -28,31 +28,45 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
+import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * A {@link ProgramRunner} that runs a {@link Workflow}.
  */
 public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
-
+  private static final Logger LOG = LoggerFactory.getLogger(WorkflowProgramRunner.class);
   private final ProgramRunnerFactory programRunnerFactory;
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
@@ -89,7 +103,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   }
 
   @Override
-  public ProgramController run(Program program, ProgramOptions options) {
+  public ProgramController run(final Program program, final ProgramOptions options) {
     // Extract and verify options
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -101,7 +115,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(program.getName());
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
-    RunId runId = ProgramRunners.getRunId(options);
+    final RunId runId = ProgramRunners.getRunId(options);
 
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
@@ -109,17 +123,98 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
       ((ProgramContextAware) datasetFramework).initContext(programId.run(runId));
     }
 
+    // List of all Closeable resources that needs to be cleanup
+    final List<Closeable> closeables = new ArrayList<>();
+    try {
+      PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
+      if (pluginInstantiator != null) {
+        closeables.add(pluginInstantiator);
+      }
 
-    PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
-    WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
-                                               metricsCollectionService, datasetFramework, discoveryServiceClient,
-                                               txClient, runtimeStore, cConf, pluginInstantiator,
-                                               secureStore, secureStoreManager, messagingService);
-    // Controller needs to be created before starting the driver so that the state change of the driver
-    // service can be fully captured by the controller.
-    ProgramController controller = new WorkflowProgramController(program, driver, serviceAnnouncer, runId);
-    driver.start();
+      WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
+                                                 metricsCollectionService, datasetFramework, discoveryServiceClient,
+                                                 txClient, runtimeStore, cConf, pluginInstantiator,
+                                                 secureStore, secureStoreManager, messagingService);
 
-    return controller;
+      // Controller needs to be created before starting the driver so that the state change of the driver
+      // service can be fully captured by the controller.
+      final ProgramController controller = new WorkflowProgramController(program, driver, serviceAnnouncer, runId);
+      final String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
+      controller.addListener(new AbstractListener() {
+        @Override
+        public void init(ProgramController.State state, @Nullable Throwable cause) {
+          // Get start time from RunId
+          long startTimeInSeconds = RunIds.getTime(controller.getRunId(), TimeUnit.SECONDS);
+          if (startTimeInSeconds == -1) {
+            // If RunId is not time-based, use current time as start time
+            startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+          }
+          runtimeStore.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId,
+                                options.getUserArguments().asMap(), options.getArguments().asMap());
+
+          // Check if program already reached to COMPLETED state.
+          // This can happen if there is a delay in calling the init listener
+          if (state == ProgramController.State.COMPLETED) {
+            completed();
+          }
+
+          // Check if program already reached to ERROR state
+          // This can happen if there is a delay in calling the init listener
+          if (state == ProgramController.State.ERROR) {
+            error(controller.getFailureCause());
+          }
+        }
+
+        @Override
+        public void completed() {
+          LOG.debug("Program {} with run id {} completed successfully.", program.getId(), runId.getId());
+          runtimeStore.setStop(program.getId(), runId.getId(),
+                               TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                               ProgramController.State.COMPLETED.getRunStatus());
+        }
+
+        @Override
+        public void killed() {
+          LOG.debug("Program {} with run id {} killed.", program.getId(), runId.getId());
+          runtimeStore.setStop(program.getId(), runId.getId(),
+                               TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                               ProgramController.State.KILLED.getRunStatus());
+        }
+
+        @Override
+        public void suspended() {
+          LOG.debug("Suspending Program {} with run id {}.", program.getId(), runId.getId());
+          runtimeStore.setSuspend(program.getId(), runId.getId());
+        }
+
+        @Override
+        public void resuming() {
+          LOG.debug("Resuming Program {} {}.", program.getId(), runId.getId());
+          runtimeStore.setResume(program.getId(), runId.getId());
+        }
+
+        @Override
+        public void error(Throwable cause) {
+          LOG.info("Program {} with run id {} stopped because of error {}.", program.getId(), runId.getId(), cause);
+          closeAllQuietly(closeables);
+          runtimeStore.setStop(program.getId(), runId.getId(),
+                               TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                               ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
+        }
+      }, Threads.SAME_THREAD_EXECUTOR);
+
+      driver.start();
+
+      return controller;
+    } catch (Exception e) {
+      closeAllQuietly(closeables);
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private void closeAllQuietly(Iterable<Closeable> closeables) {
+    for (Closeable c : closeables) {
+      Closeables.closeQuietly(c);
+    }
   }
 }

@@ -21,6 +21,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -75,17 +76,17 @@ public class WikipediaPipelineAppTest extends TestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(WikipediaPipelineWorkflow.NAME);
     // Test with default threshold. Workflow should not proceed beyond first condition.
-    testWorkflow(workflowManager, appConfig);
+    testWorkflow(workflowManager, appConfig, 1);
 
     // Test with a reduced threshold, so the workflow proceeds beyond the first predicate
-    testWorkflow(workflowManager, appConfig, 1);
+    testWorkflow(workflowManager, appConfig, 2, 1);
 
     // Test K-Means
     appConfig = new WikipediaPipelineApp.WikipediaAppConfig("kmeans");
     appRequest = new AppRequest<>(ARTIFACT_SUMMARY, appConfig);
     appManager = deployApplication(APP_ID.toId(), appRequest);
     workflowManager = appManager.getWorkflowManager(WikipediaPipelineWorkflow.NAME);
-    testWorkflow(workflowManager, appConfig, 1);
+    testWorkflow(workflowManager, appConfig, 3, 1);
   }
 
   private void createTestData() throws Exception {
@@ -138,13 +139,13 @@ public class WikipediaPipelineAppTest extends TestBase {
     }, 10, TimeUnit.SECONDS);
   }
 
-  private void testWorkflow(WorkflowManager workflowManager,
-                            WikipediaPipelineApp.WikipediaAppConfig config) throws Exception {
-    testWorkflow(workflowManager, config, null);
+  private void testWorkflow(WorkflowManager workflowManager, WikipediaPipelineApp.WikipediaAppConfig config,
+                            int expectedRuns) throws Exception {
+    testWorkflow(workflowManager, config, expectedRuns, null);
   }
 
   private void testWorkflow(WorkflowManager workflowManager, WikipediaPipelineApp.WikipediaAppConfig config,
-                            @Nullable Integer threshold) throws Exception {
+                            int expectedRuns, @Nullable Integer threshold) throws Exception {
     if (threshold == null) {
       workflowManager.start();
     } else {
@@ -152,7 +153,8 @@ public class WikipediaPipelineAppTest extends TestBase {
         WikipediaPipelineWorkflow.MIN_PAGES_THRESHOLD_KEY, String.valueOf(threshold),
         WikipediaPipelineWorkflow.MODE_KEY, WikipediaPipelineWorkflow.ONLINE_MODE));
     }
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, expectedRuns, 5, TimeUnit.MINUTES);
     String pid = getLatestPid(workflowManager.getHistory());
     WorkflowTokenNodeDetail tokenAtCondition =
       workflowManager.getTokenAtNode(pid, WikipediaPipelineWorkflow.EnoughDataToProceed.class.getSimpleName(),

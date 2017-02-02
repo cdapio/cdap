@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -152,8 +153,8 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     // start the worker and wait for it to finish
     File newBasePath = new File(TMP_FOLDER.newFolder(), "extra");
     Assert.assertFalse(newBasePath.exists());
-    manager = manager.start(ImmutableMap.of("new.base.path", newBasePath.getPath()));
-    manager.waitForFinish(30, TimeUnit.SECONDS);
+    manager.start(ImmutableMap.of("new.base.path", newBasePath.getPath()));
+    manager.waitForRun(ProgramRunStatus.COMPLETED, 30, TimeUnit.SECONDS);
 
     // validate that worker created dataset a
     DataSetManager<Table> aManager = getDataset("a");
@@ -177,8 +178,8 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     Assert.assertNull(getDataset("d").get());
 
     // run the worker again to drop all datasets
-    manager = manager.start(ImmutableMap.of("dropAll", "true"));
-    manager.waitForFinish(30, TimeUnit.SECONDS);
+    manager.start(ImmutableMap.of("dropAll", "true"));
+    manager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 30, TimeUnit.SECONDS);
 
     Assert.assertNull(getDataset("a").get());
     Assert.assertNull(getDataset("b").get());

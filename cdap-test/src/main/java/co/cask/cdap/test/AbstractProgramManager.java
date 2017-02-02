@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
@@ -24,6 +25,8 @@ import com.google.common.collect.ImmutableMap;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -73,6 +76,24 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
     long sleepMillis = Math.max(10, Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
     waitForStatus(false, sleepMillis, timeoutUnit.toMillis(timeout), TimeUnit.MILLISECONDS);
   }
+
+  @Override
+  public void waitForRun(ProgramRunStatus status, long timeout, TimeUnit timeoutUnit)
+    throws InterruptedException, ExecutionException, TimeoutException {
+    waitForRuns(status, 1, timeout, timeoutUnit);
+  }
+
+  @Override
+  public void waitForRuns(final ProgramRunStatus status, final int runCount, long timeout, TimeUnit timeoutUnit)
+    throws InterruptedException, ExecutionException, TimeoutException {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return getHistory(status).size() >= runCount;
+      }
+    }, timeout, timeoutUnit);
+  }
+
 
   @Override
   public void waitForStatus(boolean status) throws InterruptedException {

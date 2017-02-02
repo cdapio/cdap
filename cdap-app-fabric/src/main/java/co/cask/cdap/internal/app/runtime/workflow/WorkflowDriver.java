@@ -541,7 +541,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void run() throws Exception {
-    LOG.info("Start workflow execution for {}", workflowSpec.getName());
+    LOG.info("Start workflow execution for {} with run id {}.", workflowSpec.getName(), workflowRunId.getRun());
     LOG.debug("Workflow specification is {}", workflowSpec);
     basicWorkflowContext.setState(new ProgramState(ProgramStatus.RUNNING, null));
     executeAll(workflowSpec.getNodes().iterator(), program.getApplicationSpecification(),
