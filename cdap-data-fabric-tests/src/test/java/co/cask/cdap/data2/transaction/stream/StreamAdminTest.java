@@ -269,7 +269,7 @@ public abstract class StreamAdminTest {
     StreamId stream = FOO_NAMESPACE.stream("stream");
     Properties properties = new Properties();
     String ownerPrincipal = "user/somehost@somekdc.net";
-    properties.put(Constants.Security.OWNER_PRINCIPAL, ownerPrincipal);
+    properties.put(Constants.Security.PRINCIPAL, ownerPrincipal);
     streamAdmin.create(stream, properties);
     Assert.assertTrue(streamAdmin.exists(stream));
 

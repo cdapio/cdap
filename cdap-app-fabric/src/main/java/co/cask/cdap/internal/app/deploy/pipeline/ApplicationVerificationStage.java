@@ -179,8 +179,8 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
       Preconditions.checkArgument(equals, String.format("'%s' already exists and the specified '%s' : '%s' is " +
                                                           "not same as existing one. '%s' of an entity cannot " +
                                                           "be updated.", entityId,
-                                                        Constants.Security.OWNER_PRINCIPAL, specifiedOwnerPrincipal,
-                                                        Constants.Security.OWNER_PRINCIPAL));
+                                                        Constants.Security.PRINCIPAL, specifiedOwnerPrincipal,
+                                                        Constants.Security.PRINCIPAL));
     } catch (IOException e) {
       throw new DatasetManagementException(e.getMessage(), e);
     }

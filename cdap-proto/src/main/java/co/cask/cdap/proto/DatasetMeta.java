@@ -33,7 +33,7 @@ public class DatasetMeta {
   @SerializedName("hive_table")
   private final String hiveTableName;
 
-  @SerializedName("owner.principal")
+  @SerializedName("principal")
   private final String ownerPrincipal;
 
   public DatasetMeta(DatasetSpecification spec, DatasetTypeMeta type, @Nullable String hiveTableName) {

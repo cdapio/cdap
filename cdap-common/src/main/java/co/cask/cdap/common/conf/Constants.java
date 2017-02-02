@@ -757,7 +757,7 @@ public final class Constants {
     public static final String URI_SCHEME = "http://";
 
     /** Key to specify the kerberos principal of the entity owner **/
-    public static final String OWNER_PRINCIPAL = "owner.principal";
+    public static final String PRINCIPAL = "principal";
 
     /**
      * App Fabric

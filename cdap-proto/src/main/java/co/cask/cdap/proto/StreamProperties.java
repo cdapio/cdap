@@ -29,7 +29,7 @@ public class StreamProperties {
 
   private final Long ttl;
   private final FormatSpecification format;
-  @SerializedName("owner.principal")
+  @SerializedName("principal")
   private final String ownerPrincipal;
 
   @SerializedName("notification.threshold.mb")

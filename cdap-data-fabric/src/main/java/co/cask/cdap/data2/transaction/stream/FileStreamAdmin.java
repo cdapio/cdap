@@ -422,8 +422,8 @@ public class FileStreamAdmin implements StreamAdmin {
       // Grant All access to the stream created to the User
       privilegesManager.grant(streamId, authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
 
-      String ownerPrincipal = properties.containsKey(Constants.Security.OWNER_PRINCIPAL) ?
-        properties.getProperty(Constants.Security.OWNER_PRINCIPAL) : null;
+      String ownerPrincipal = properties.containsKey(Constants.Security.PRINCIPAL) ?
+        properties.getProperty(Constants.Security.PRINCIPAL) : null;
 
       if (exists(streamId)) {
         // if stream exists then make sure owner for this create request is same
@@ -846,6 +846,6 @@ public class FileStreamAdmin implements StreamAdmin {
   private void verifyOwner(StreamId streamId, @Nullable String specifiedOwnerPrincipal) throws IOException {
     boolean equals = Objects.equals(specifiedOwnerPrincipal, ownerAdmin.getOwnerPrincipal(streamId));
     Preconditions.checkArgument(equals,
-                                String.format("Updating %s is not supported.", Constants.Security.OWNER_PRINCIPAL));
+                                String.format("Updating %s is not supported.", Constants.Security.PRINCIPAL));
   }
 }

@@ -337,7 +337,7 @@ ApplicationLifecycleService extends AbstractIdleService {
     // ownerAdmin.getOwner will give the owner of application irrespective of the version
     boolean equals = Objects.equals(ownerAdmin.getOwner(appId), appRequest.getOwnerPrincipal());
     Preconditions.checkArgument(equals,
-                                String.format("Updating %s is not supported.", Constants.Security.OWNER_PRINCIPAL));
+                                String.format("Updating %s is not supported.", Constants.Security.PRINCIPAL));
 
     Object requestedConfigObj = appRequest.getConfig();
     // if config is null, use the previous config. Shouldn't use a static GSON since the request Config object can
