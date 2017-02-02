@@ -29,6 +29,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import {parseMetadata} from 'services/metadata-parser';
 import AppDetailedViewTab from 'components/AppDetailedView/Tabs';
 import shortid from 'shortid';
+import Redirect from 'react-router/Redirect';
 require('./AppDetailedView.scss');
 
 export default class AppDetailedView extends Component {
@@ -39,6 +40,8 @@ export default class AppDetailedView extends Component {
         programs: [],
         datasets: [],
         streams: [],
+        routeToHome: false,
+        selectedNamespace: null
       },
       loading: true,
       entityMetadata: objectQuery(this.props, 'location', 'state', 'entityMetadata') || {},
@@ -123,6 +126,15 @@ export default class AppDetailedView extends Component {
       });
     }
   }
+  goToHome(action) {
+    if (action === 'delete') {
+      let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+      this.setState({
+        selectedNamespace,
+        routeToHome: true
+      });
+    }
+  }
   render() {
     let title = this.state.entityDetail.isHydrator ?
       T.translate('commons.entity.cdap-data-pipeline.singular')
@@ -142,12 +154,21 @@ export default class AppDetailedView extends Component {
           icon="icon-fist"
           title={title}
         />
-        <OverviewMetaSection entity={this.state.entityMetadata} />
+        <OverviewMetaSection
+          entity={this.state.entityMetadata}
+          onFastActionSuccess={this.goToHome.bind(this)}
+        />
         <AppDetailedViewTab
           params={this.props.params}
           pathname={this.props.location.pathname}
           entity={this.state.entityDetail}/
         >
+        {
+          this.state.routeToHome ?
+            <Redirect to={`/ns/${this.state.selectedNamespace}`} />
+          :
+            null
+        }
       </div>
     );
   }

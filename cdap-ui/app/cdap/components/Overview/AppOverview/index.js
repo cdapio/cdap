@@ -99,7 +99,7 @@ export default class AppOverview extends Component {
         });
     }
   }
-  onFastActionsUpdate(action) {
+  onFastActionSuccess(action) {
     this.props.onCloseAndRefresh(action);
   }
   render() {
@@ -129,7 +129,7 @@ export default class AppOverview extends Component {
         />
         <OverviewMetaSection
           entity={this.state.entity}
-          onFastActionsUpdate={this.onFastActionsUpdate.bind(this)}
+          onFastActionSuccess={this.onFastActionSuccess.bind(this)}
         />
         <AppOverviewTab entity={this.state.entityDetail} />
       </div>

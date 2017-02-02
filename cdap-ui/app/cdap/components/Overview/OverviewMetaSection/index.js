@@ -43,9 +43,9 @@ export default class OverviewMetaSection extends Component {
       });
     }
   }
-  onFastActionsUpdate(action) {
-    if (this.props.onFastActionsUpdate) {
-      this.props.onFastActionsUpdate(action);
+  onFastActionSuccess(action) {
+    if (this.props.onFastActionSuccess) {
+      this.props.onFastActionSuccess(action);
     }
   }
   render() {
@@ -74,7 +74,7 @@ export default class OverviewMetaSection extends Component {
           <FastActions
             className="overview-fast-actions"
             entity={this.props.entity}
-            onSuccess={this.onFastActionsUpdate.bind(this)}
+            onSuccess={this.onFastActionSuccess.bind(this)}
           />
         </div>
         <Description description={description} />
@@ -86,5 +86,5 @@ export default class OverviewMetaSection extends Component {
 
 OverviewMetaSection.propTypes = {
   entity: PropTypes.object,
-  onFastActionsUpdate: PropTypes.func
+  onFastActionSuccess: PropTypes.func
 };
