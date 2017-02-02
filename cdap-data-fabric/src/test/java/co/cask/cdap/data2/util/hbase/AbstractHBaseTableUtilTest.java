@@ -113,8 +113,24 @@ public abstract class AbstractHBaseTableUtilTest {
     create(tableId);
     Assert.assertTrue(exists(tableId));
 
+    // attempt to assign invalid permissions to the namespace or the table
+    try {
+      ddlExecutor.grantPermissions(tableId.getNamespace(), null, ImmutableMap.of("joe", "iii"));
+      Assert.fail("Grant should have failed with invalid permissions");
+    } catch (IOException e) {
+      Assert.assertTrue(e.getMessage().contains("Unknown Action"));
+    }
+    try {
+      getTableUtil().grantPermissions(ddlExecutor, tableId, ImmutableMap.of("@readers", "RXT"));
+      Assert.fail("Grant should have failed with invalid permissions");
+    } catch (IOException e) {
+      Assert.assertTrue(e.getMessage().contains("Unknown Action"));
+    }
+
+    // assign some privileges to the namespace
+    ddlExecutor.grantPermissions(tableId.getNamespace(), null, ImmutableMap.of("joe", "RX", "@readers", "CA"));
     // assign some privileges to the table
-    getTableUtil().grantPrivileges(ddlExecutor, tableId, ImmutableMap.of("joe", "RWX", "@readers", "RX"));
+    getTableUtil().grantPermissions(ddlExecutor, tableId, ImmutableMap.of("joe", "RWX", "@readers", "RX"));
 
     // clean up
     drop(tableId);

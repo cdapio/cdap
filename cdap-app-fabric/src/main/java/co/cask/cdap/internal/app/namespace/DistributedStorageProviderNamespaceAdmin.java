@@ -28,6 +28,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -70,13 +71,28 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
     if (NamespaceId.DEFAULT.equals(namespaceMeta.getNamespaceId())) {
       return;
     }
-    // TODO: CDAP-1519: Create base directory for filesets under namespace home
-    // create HBase namespace
+    // create HBase namespace and set group C(reate) permission if a group is configured
     String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceMeta);
 
     if (Strings.isNullOrEmpty(namespaceMeta.getConfig().getHbaseNamespace())) {
       try (HBaseDDLExecutor executor = hBaseDDLExecutorFactory.get()) {
-        executor.createNamespaceIfNotExists(hbaseNamespace);
+        boolean created = executor.createNamespaceIfNotExists(hbaseNamespace);
+        if (namespaceMeta.getConfig().getGroupName() != null) {
+          try {
+            executor.grantPermissions(hbaseNamespace, null,
+                                      ImmutableMap.of("@" + namespaceMeta.getConfig().getGroupName(), "C"));
+          } catch (IOException | RuntimeException e) {
+            // don't leave a partial state behind, as this fails the create(), the namespace should be removed
+            if (created) {
+              try {
+                executor.deleteNamespaceIfExists(hbaseNamespace);
+              } catch (Throwable t) {
+                e.addSuppressed(t);
+              }
+            }
+            throw e;
+          }
+        }
       } catch (Throwable t) {
         try {
           // if we failed to create a namespace in hbase then do clean up for above creations

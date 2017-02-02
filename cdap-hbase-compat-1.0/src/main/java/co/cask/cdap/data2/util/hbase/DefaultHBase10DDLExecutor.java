@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of the {@link HBaseDDLExecutor} for HBase version 1.0
@@ -50,24 +51,29 @@ public class DefaultHBase10DDLExecutor extends DefaultHBaseDDLExecutor {
   }
 
   @Override
-  protected void doGrantPermissions(String namespace, String name,
+  protected void doGrantPermissions(String namespace, @Nullable String table,
                                     Map<String, Permission.Action[]> permissions) throws IOException {
-    TableName table = TableName.valueOf(namespace, name);
+    String entity = table == null ? "namespace " + namespace : "table " + namespace + ":" + table;
     try (Connection connection = ConnectionFactory.createConnection(admin.getConfiguration())) {
       if (!AccessControlClient.isAccessControllerRunning(connection)) {
-        LOG.debug("Access control is off. Not granting privileges. ");
+        LOG.debug("Access control is off. Not granting privileges for {}. ", entity);
         return;
       }
       for (Map.Entry<String, Permission.Action[]> entry : permissions.entrySet()) {
         String user = entry.getKey();
+        String userOrGroup = user.startsWith("@") ? "group " + user.substring(1) : "user " + user;
         Permission.Action[] actions = entry.getValue();
-        LOG.info("Granting {} for table {}:{} and user {}", Arrays.toString(actions), namespace, name, user);
         try {
-          AccessControlClient.grant(connection, table, user, null, null, actions);
+          LOG.info("Granting {} for {} to {}", Arrays.toString(actions), entity, userOrGroup);
+          if (table != null) {
+            AccessControlClient.grant(connection, TableName.valueOf(namespace, table), user, null, null, actions);
+          } else {
+            AccessControlClient.grant(connection, namespace, user, actions);
+          }
         } catch (Throwable t) {
           Throwables.propagateIfInstanceOf(t, IOException.class);
-          throw new IOException(String.format("Error while granting %s for table %s:%s and user %s",
-                                              Arrays.toString(actions), namespace, name, user), t);
+          throw new IOException(String.format("Error while granting %s for %s to %s",
+                                              Arrays.toString(actions), entity, userOrGroup), t);
         }
       }
     }

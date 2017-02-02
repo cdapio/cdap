@@ -89,13 +89,15 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
   }
 
   @Override
-  public void createNamespaceIfNotExists(String name) throws IOException {
+  public boolean createNamespaceIfNotExists(String name) throws IOException {
     Preconditions.checkArgument(name != null, "Namespace should not be null.");
-    if (!hasNamespace(name)) {
-      NamespaceDescriptor namespaceDescriptor =
-        NamespaceDescriptor.create(encodeHBaseEntity(name)).build();
-      admin.createNamespace(namespaceDescriptor);
+    if (hasNamespace(name)) {
+      return false;
     }
+    NamespaceDescriptor namespaceDescriptor =
+      NamespaceDescriptor.create(encodeHBaseEntity(name)).build();
+    admin.createNamespace(namespaceDescriptor);
+    return true;
   }
 
   @Override
@@ -118,14 +120,15 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
       return;
     }
 
+    boolean tableExistsFailure = false;
     try {
       LOG.debug("Attempting to create table '{}' if it does not exist", Bytes.toString(htd.getName()));
       admin.createTable(htd, splitKeys);
-      LOG.info("Table created '{}'", Bytes.toString(htd.getName()));
     } catch (TableExistsException e) {
       // table may exist because someone else is creating it at the same
       // time. But it may not be available yet, and opening it might fail.
       LOG.debug("Table '{}' already exists.", Bytes.toString(htd.getName()), e);
+      tableExistsFailure = true;
     }
 
     // Wait for table to materialize
@@ -136,8 +139,12 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
       sleepTime = sleepTime <= 0 ? 1 : sleepTime;
       do {
         if (admin.tableExists(htd.getName())) {
-          LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.",
-                   Bytes.toString(htd.getName()));
+          if (tableExistsFailure) {
+            LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.",
+                     Bytes.toString(htd.getName()));
+          } else {
+            LOG.info("Table '{}' created.", Bytes.toString(htd.getName()));
+          }
           return;
         } else {
           TimeUnit.NANOSECONDS.sleep(sleepTime);
@@ -211,11 +218,11 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
     }
   }
 
-  protected abstract void doGrantPermissions(String namespace, String name,
+  protected abstract void doGrantPermissions(String namespace, @Nullable String table,
                                              Map<String, Permission.Action[]> permissions) throws IOException;
 
   @Override
-  public void grantPermissions(String namespace, String name, Map<String, String> permissions) throws IOException {
+  public void grantPermissions(String namespace, String table, Map<String, String> permissions) throws IOException {
     Map<String, Permission.Action[]> privilegesToGrant = new HashMap<>(permissions.size());
     for (Map.Entry<String, String> entry : permissions.entrySet()) {
       String user = entry.getKey();
@@ -223,11 +230,13 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
       try {
         privilegesToGrant.put(user, toActions(actionsForUser));
       } catch (IllegalArgumentException e) {
-        throw new IOException(String.format("Error granting permissions '%s' for table %s:%s to user %s: %s",
-                                            actionsForUser, namespace, name, user, e.getMessage()));
+        String entity = table == null ? "namespace " + namespace : "table " + namespace + ":" + table;
+        String userOrGroup = user.startsWith("@") ? "group " + user.substring(1) : "user " + user;
+        throw new IOException(String.format("Error granting permissions '%s' for %s to %s: %s",
+                                            actionsForUser, entity, userOrGroup, e.getMessage()));
       }
-      doGrantPermissions(namespace, name, privilegesToGrant);
     }
+    doGrantPermissions(namespace, table, privilegesToGrant);
   }
 
   protected Permission.Action[] toActions(String permissions) {

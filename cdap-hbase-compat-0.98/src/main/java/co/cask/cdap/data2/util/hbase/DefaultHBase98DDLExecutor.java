@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of the {@link HBaseDDLExecutor} for HBase 0.98
@@ -44,12 +45,14 @@ public class DefaultHBase98DDLExecutor extends DefaultHBaseDDLExecutor {
   }
 
   @Override
-  protected void doGrantPermissions(String namespace, String name, Map<String, Permission.Action[]> permissions) {
+  protected void doGrantPermissions(String namespace, @Nullable String table,
+                                    Map<String, Permission.Action[]> permissions) {
     // no-op, not called
   }
 
   @Override
-  public void grantPermissions(String namespace, String name, Map<String, String> permissions) throws IOException {
+  public void grantPermissions(String namespace, @Nullable String table, Map<String, String> permissions)
+    throws IOException {
     StringBuilder statements = new StringBuilder();
     for (Map.Entry<String, String> entry : permissions.entrySet()) {
       String user = entry.getKey();
@@ -57,10 +60,12 @@ public class DefaultHBase98DDLExecutor extends DefaultHBaseDDLExecutor {
       try {
         toActions(actions);
       } catch (IllegalArgumentException e) {
-        throw new IOException(String.format("Invalid permissions '%s' for table %s:%s and user %s: %s",
-                                            actions, namespace, name, user, e.getMessage()));
+        String entity = table == null ? "namespace " + namespace : "table " + namespace + ":" + table;
+        String userOrGroup = user.startsWith("@") ? "group " + user.substring(1) : "user " + user;
+        throw new IOException(String.format("Invalid permissions '%s' for %s and %s: %s",
+                                            actions, entity, userOrGroup, e.getMessage()));
       }
-      statements.append(String.format("\ngrant '%s', '%s', '%s:%s'", user, actions.toUpperCase(), namespace, name));
+      statements.append(String.format("\ngrant '%s', '%s', '%s:%s'", user, actions.toUpperCase(), namespace, table));
     }
     LOG.warn("Granting permissions is not implemented for HBase 0.98. " +
                "Please grant these permissions manually in the hbase shell: {}", statements);

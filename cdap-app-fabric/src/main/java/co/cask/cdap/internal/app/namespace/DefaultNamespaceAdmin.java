@@ -160,6 +160,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       validateCustomMapping(metadata);
     }
 
+    LOG.info("Creating namespace {} with {}.", metadata.getNamespaceId(), metadata.getConfig());
+
     // Namespace can be created. Check if the user is authorized now.
     Principal principal = authenticationContext.getPrincipal();
     privilegesManager.grant(namespace, principal, EnumSet.allOf(Action.class));
@@ -193,6 +195,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       privilegesManager.revoke(namespace);
       throw new NamespaceCannotBeCreatedException(namespace, t);
     }
+    LOG.info("Namespace {} created.", metadata.getNamespaceId());
   }
 
   private void validateCustomMapping(NamespaceMeta metadata) throws Exception {

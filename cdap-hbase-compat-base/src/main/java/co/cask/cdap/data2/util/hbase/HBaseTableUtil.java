@@ -507,8 +507,8 @@ public abstract class HBaseTableUtil {
    *                    Group names must be prefixed with the character '@'.
    * @throws IOException
    */
-  public void grantPrivileges(HBaseDDLExecutor ddlExecutor, TableId tableId,
-                              Map<String, String> permissions) throws IOException {
+  public void grantPermissions(HBaseDDLExecutor ddlExecutor, TableId tableId,
+                               Map<String, String> permissions) throws IOException {
     TableName tableName = HTableNameConverter.toTableName(getTablePrefix(cConf), tableId);
     ddlExecutor.grantPermissions(tableName.getNamespaceAsString(), tableName.getQualifierAsString(), permissions);
   }

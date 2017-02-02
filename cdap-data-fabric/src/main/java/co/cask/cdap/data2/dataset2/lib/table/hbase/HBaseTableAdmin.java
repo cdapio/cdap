@@ -130,7 +130,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
       try {
         Map<String, String> permissions = TableProperties.getTablePermissions(spec.getProperties());
         if (permissions != null && !permissions.isEmpty()) {
-          tableUtil.grantPrivileges(ddlExecutor, tableId, permissions);
+          tableUtil.grantPermissions(ddlExecutor, tableId, permissions);
         }
       } catch (IOException | RuntimeException e) {
         try {
