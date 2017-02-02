@@ -40,7 +40,7 @@ public class AppDeploymentInfo {
   private final String appName;
   private final String appVersion;
   private final String configString;
-  @SerializedName("owner.principal")
+  @SerializedName("principal")
   private final KerberosPrincipalId ownerPrincipal;
 
   public AppDeploymentInfo(ArtifactDescriptor artifactDescriptor, NamespaceId namespaceId,

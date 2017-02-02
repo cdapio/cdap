@@ -36,7 +36,7 @@ public class ApplicationDeployable {
   private final ApplicationSpecification specification;
   private final ApplicationSpecification existingAppSpec;
   private final ApplicationDeployScope applicationDeployScope;
-  @SerializedName("owner.principal")
+  @SerializedName("principal")
   private final KerberosPrincipalId ownerPrincipal;
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,

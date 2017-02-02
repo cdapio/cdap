@@ -29,7 +29,7 @@ public final class DatasetInstanceConfiguration {
   private final String typeName;
   private final Map<String, String> properties;
   private final String description;
-  @SerializedName("owner.principal")
+  @SerializedName("principal")
   private final String ownerPrincipal;
 
   public DatasetInstanceConfiguration(String typeName, Map<String, String> properties) {

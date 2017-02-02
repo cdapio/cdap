@@ -247,7 +247,7 @@ public final class StreamHandler extends AbstractHttpHandler {
       }
 
       if (streamProperties.getOwnerPrincipal() != null) {
-        props.put(Constants.Security.OWNER_PRINCIPAL, streamProperties.getOwnerPrincipal());
+        props.put(Constants.Security.PRINCIPAL, streamProperties.getOwnerPrincipal());
       }
     }
 
@@ -526,7 +526,7 @@ public final class StreamHandler extends AbstractHttpHandler {
         json.addProperty("description", src.getDescription());
       }
       if (src.getOwnerPrincipal() != null) {
-        json.addProperty(Constants.Security.OWNER_PRINCIPAL, src.getOwnerPrincipal());
+        json.addProperty(Constants.Security.PRINCIPAL, src.getOwnerPrincipal());
       }
       return json;
     }
@@ -546,8 +546,8 @@ public final class StreamHandler extends AbstractHttpHandler {
         jsonObj.get("notification.threshold.mb").getAsInt() : null;
 
       String description = jsonObj.has("description") ? jsonObj.get("description").getAsString() : null;
-      String ownerPrincipal = jsonObj.has(Constants.Security.OWNER_PRINCIPAL) ?
-        jsonObj.get(Constants.Security.OWNER_PRINCIPAL).getAsString() : null;
+      String ownerPrincipal = jsonObj.has(Constants.Security.PRINCIPAL) ?
+        jsonObj.get(Constants.Security.PRINCIPAL).getAsString() : null;
       return new StreamProperties(ttl, format, threshold, description, ownerPrincipal);
     }
   }
