@@ -38,10 +38,13 @@ import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
 import co.cask.cdap.etl.mock.batch.NodeStatesAction;
 import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
+import co.cask.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
 import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
 import co.cask.cdap.etl.mock.batch.joiner.MockJoiner;
 import co.cask.cdap.etl.mock.test.HydratorTestBase;
-import co.cask.cdap.etl.mock.transform.FieldsPrefixTransform;
+import co.cask.cdap.etl.mock.transform.DropNullTransform;
+import co.cask.cdap.etl.mock.transform.FilterErrorTransform;
+import co.cask.cdap.etl.mock.transform.FlattenErrorTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.Connection;
@@ -146,6 +149,144 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "action1.row", "action1.column"));
 
     appManager.getHistory(appId.workflow(SmartWorkflow.NAME).toId(), ProgramRunStatus.FAILED);
+  }
+
+  @Test
+  public void testErrorTransform() throws Exception {
+    testErrorTransform(Engine.MAPREDUCE);
+    testErrorTransform(Engine.SPARK);
+  }
+
+  private void testErrorTransform(Engine engine) throws Exception {
+    String source1TableName = "errTestIn1-" + engine;
+    String source2TableName = "errTestIn2-" + engine;
+    String sink1TableName = "errTestOut1-" + engine;
+    String sink2TableName = "errTestOut2-" + engine;
+
+    Schema inputSchema = Schema.recordOf("user",
+                                         Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+                                         Schema.Field.of("id", Schema.of(Schema.Type.INT)));
+    /*
+     *
+     * source1 --> filter1 --> filter2 --> agg1 --> agg2
+     *                |           |         |        |
+     *                |-----------|---------|--------|--------|--> errorflatten --> sink1
+     *                |                                       |
+     *                |                                       |--> errorfilter --> sink2
+     *                |
+     * source2 --> dropnull
+     *
+     * arrows coming out the right represent output records
+     * arrows coming out the bottom represent error records
+     * this will test multiple stages from multiple phases emitting errors to the same stage
+     * as well as errors from one stage going to multiple stages
+     * and transforms that have an error schema different from their output schema
+     */
+    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+      .setEngine(engine)
+      .addStage(new ETLStage("source1", MockSource.getPlugin(source1TableName, inputSchema)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(source2TableName, inputSchema)))
+      .addStage(new ETLStage("filter1", StringValueFilterTransform.getPlugin("name", "Leo")))
+      .addStage(new ETLStage("filter2", StringValueFilterTransform.getPlugin("name", "Ralph")))
+      .addStage(new ETLStage("agg1", GroupFilterAggregator.getPlugin("name", "Don")))
+      .addStage(new ETLStage("agg2", GroupFilterAggregator.getPlugin("name", "Mike")))
+      .addStage(new ETLStage("errorflatten", FlattenErrorTransform.getPlugin()))
+      .addStage(new ETLStage("errorfilter", FilterErrorTransform.getPlugin(3)))
+      .addStage(new ETLStage("dropnull", DropNullTransform.getPlugin("name")))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1TableName)))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2TableName)))
+      .addConnection("source1", "filter1")
+      .addConnection("source2", "dropnull")
+      .addConnection("filter1", "filter2")
+      .addConnection("filter2", "agg1")
+      .addConnection("agg1", "agg2")
+      .addConnection("filter1", "errorflatten")
+      .addConnection("filter1", "errorfilter")
+      .addConnection("filter2", "errorflatten")
+      .addConnection("filter2", "errorfilter")
+      .addConnection("agg1", "errorflatten")
+      .addConnection("agg1", "errorfilter")
+      .addConnection("agg2", "errorflatten")
+      .addConnection("agg2", "errorfilter")
+      .addConnection("dropnull", "errorflatten")
+      .addConnection("dropnull", "errorfilter")
+      .addConnection("errorflatten", "sink1")
+      .addConnection("errorfilter", "sink2")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app("ErrTransformTest-" + engine);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    List<StructuredRecord> input = ImmutableList.of(
+      StructuredRecord.builder(inputSchema).set("name", "Leo").set("id", 1).build(),
+      StructuredRecord.builder(inputSchema).set("name", "Ralph").set("id", 2).build(),
+      StructuredRecord.builder(inputSchema).set("name", "Don").set("id", 3).build(),
+      StructuredRecord.builder(inputSchema).set("name", "Mike").set("id", 4).build());
+    DataSetManager<Table> source1Table = getDataset(source1TableName);
+    MockSource.writeInput(source1Table, input);
+    input = ImmutableList.of(StructuredRecord.builder(inputSchema).set("name", "April").set("id", 5).build());
+    DataSetManager<Table> source2Table = getDataset(source2TableName);
+    MockSource.writeInput(source2Table, input);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+
+    Schema flattenSchema =
+      Schema.recordOf("erroruser",
+                      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+                      Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+                      Schema.Field.of("errMsg", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                      Schema.Field.of("errCode", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+                      Schema.Field.of("errStage", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    Set<StructuredRecord> expected = ImmutableSet.of(
+      StructuredRecord.builder(flattenSchema).set("name", "Leo").set("id", 1)
+        .set("errMsg", "bad string value").set("errCode", 1).set("errStage", "filter1").build(),
+      StructuredRecord.builder(flattenSchema).set("name", "Ralph").set("id", 2)
+        .set("errMsg", "bad string value").set("errCode", 1).set("errStage", "filter2").build(),
+      StructuredRecord.builder(flattenSchema).set("name", "Don").set("id", 3)
+        .set("errMsg", "bad val").set("errCode", 3).set("errStage", "agg1").build(),
+      StructuredRecord.builder(flattenSchema).set("name", "Mike").set("id", 4)
+        .set("errMsg", "bad val").set("errCode", 3).set("errStage", "agg2").build(),
+      StructuredRecord.builder(flattenSchema).set("name", "April").set("id", 5)
+        .set("errMsg", "Field name was not null").set("errCode", 5).set("errStage", "dropnull").build());
+    DataSetManager<Table> sink1Table = getDataset(sink1TableName);
+    Assert.assertEquals(expected, ImmutableSet.copyOf(MockSink.readOutput(sink1Table)));
+
+    expected = ImmutableSet.of(
+      StructuredRecord.builder(inputSchema).set("name", "Leo").set("id", 1).build(),
+      StructuredRecord.builder(inputSchema).set("name", "Ralph").set("id", 2).build(),
+      StructuredRecord.builder(inputSchema).set("name", "April").set("id", 5).build());
+    DataSetManager<Table> sink2Table = getDataset(sink2TableName);
+    Assert.assertEquals(expected, ImmutableSet.copyOf(MockSink.readOutput(sink2Table)));
+
+    /*
+     *
+     * source1 (4) --> filter1 (3) --> filter2 (2) --> agg1 (1) --> agg2
+     *                   |                |              |            |
+     *                  (1)              (1)            (1)          (1)
+     *                   |----------------|--------------|------------|--------|--> errorflatten (5) --> sink1
+     *                   |                                                     |
+     *                  (1)                                                    |--> errorfilter (3) --> sink2
+     *                   |
+     * source2 --> dropnull
+     */
+    validateMetric(4, appId, "source1.records.out");
+    validateMetric(1, appId, "source2.records.out");
+    validateMetric(1, appId, "dropnull.records.error");
+    validateMetric(3, appId, "filter1.records.out");
+    validateMetric(1, appId, "filter1.records.error");
+    validateMetric(2, appId, "filter2.records.out");
+    validateMetric(1, appId, "filter2.records.error");
+    validateMetric(1, appId, "agg1.records.out");
+    validateMetric(1, appId, "agg1.records.error");
+    validateMetric(1, appId, "agg2.records.error");
+    validateMetric(5, appId, "errorflatten.records.out");
+    validateMetric(3, appId, "errorfilter.records.out");
+    validateMetric(5, appId, "sink1.records.in");
+    validateMetric(3, appId, "sink2.records.in");
   }
 
   @Test
@@ -877,12 +1018,12 @@ public class DataPipelineTest extends HydratorTestBase {
     String sinkName = "innerJoinSink-" + engine;
     String sinkName2 = "innerJoinSink-2" + engine;
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source1", MockSource.getPlugin(input1Name)))
-      .addStage(new ETLStage("source2", MockSource.getPlugin(input2Name)))
-      .addStage(new ETLStage("source3", MockSource.getPlugin(input3Name)))
-      .addStage(new ETLStage("t1", FieldsPrefixTransform.getPlugin("", inputSchema1.toString())))
-      .addStage(new ETLStage("t2", FieldsPrefixTransform.getPlugin("", inputSchema2.toString())))
-      .addStage(new ETLStage("t3", FieldsPrefixTransform.getPlugin("", inputSchema3.toString())))
+      .addStage(new ETLStage("source1", MockSource.getPlugin(input1Name, inputSchema1)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(input2Name, inputSchema2)))
+      .addStage(new ETLStage("source3", MockSource.getPlugin(input3Name, inputSchema3)))
+      .addStage(new ETLStage("t1", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("t2", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("t3", IdentityTransform.getPlugin()))
       .addStage(new ETLStage(joinerName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&" +
                                                                   "t1.customer_name=t2.cust_name=t3.c_name",
                                                                 "t1,t2,t3", "")))
@@ -1008,12 +1149,12 @@ public class DataPipelineTest extends HydratorTestBase {
     String joinerName = "outerJoiner-" + engine;
     String sinkName = "outerJoinSink-" + engine;
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source1", MockSource.getPlugin(input1Name)))
-      .addStage(new ETLStage("source2", MockSource.getPlugin(input2Name)))
-      .addStage(new ETLStage("source3", MockSource.getPlugin(input3Name)))
-      .addStage(new ETLStage("t1", FieldsPrefixTransform.getPlugin("", inputSchema1.toString())))
-      .addStage(new ETLStage("t2", FieldsPrefixTransform.getPlugin("", inputSchema2.toString())))
-      .addStage(new ETLStage("t3", FieldsPrefixTransform.getPlugin("", inputSchema3.toString())))
+      .addStage(new ETLStage("source1", MockSource.getPlugin(input1Name, inputSchema1)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(input2Name, inputSchema2)))
+      .addStage(new ETLStage("source3", MockSource.getPlugin(input3Name, inputSchema3)))
+      .addStage(new ETLStage("t1", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("t2", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("t3", IdentityTransform.getPlugin()))
       .addStage(new ETLStage(joinerName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&" +
                                                                   "t1.customer_name=t2.cust_name=t3.c_name", "t1", "")))
       .addStage(new ETLStage(sinkName, MockSink.getPlugin(outputName)))
@@ -1173,13 +1314,13 @@ public class DataPipelineTest extends HydratorTestBase {
     String sinkName = "multiJoinOutputSink-" + engine;
     String outerJoinName = "multiJoinOuter-" + engine;
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source1", MockSource.getPlugin(source1MulitJoinInput)))
-      .addStage(new ETLStage("source2", MockSource.getPlugin(source2MultiJoinInput)))
-      .addStage(new ETLStage("source3", MockSource.getPlugin(source3MultiJoinInput)))
-      .addStage(new ETLStage("t1", FieldsPrefixTransform.getPlugin("", inputSchema1.toString())))
-      .addStage(new ETLStage("t2", FieldsPrefixTransform.getPlugin("", inputSchema2.toString())))
-      .addStage(new ETLStage("t3", FieldsPrefixTransform.getPlugin("", inputSchema3.toString())))
-      .addStage(new ETLStage("t4", FieldsPrefixTransform.getPlugin("", outSchema1.toString())))
+      .addStage(new ETLStage("source1", MockSource.getPlugin(source1MulitJoinInput, inputSchema1)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(source2MultiJoinInput, inputSchema2)))
+      .addStage(new ETLStage("source3", MockSource.getPlugin(source3MultiJoinInput, inputSchema3)))
+      .addStage(new ETLStage("t1", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("t2", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("t3", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("t4", IdentityTransform.getPlugin()))
       .addStage(new ETLStage("innerjoin", MockJoiner.getPlugin("t1.customer_id=t2.cust_id",
                                                                "t1,t2", "")))
       .addStage(new ETLStage(outerJoinName, MockJoiner.getPlugin("t4.item_id=t3.i_id",

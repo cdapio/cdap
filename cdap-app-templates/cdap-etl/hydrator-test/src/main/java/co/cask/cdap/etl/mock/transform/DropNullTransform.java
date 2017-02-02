@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.etl.mock.transform;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
@@ -29,37 +30,63 @@ import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * Transform that filters out records whose configured field is a configured value.
- * For example, can filter all records whose 'x' field is equal to 5. Assumes the field is of type int.
+ * Transform that drops a configurable field from all input records if it has a null value.
+ * The the value is not null, it is emitted as an error
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
-@Name("IntValueFilter")
-public class IntValueFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
+@Name("DropField")
+public class DropNullTransform extends Transform<StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
 
-  public IntValueFilterTransform(Config config) {
+  public DropNullTransform(Config config) {
     this.config = config;
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
-    stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
+    Schema inputSchema = stageConfigurer.getInputSchema();
+    if (inputSchema != null) {
+      stageConfigurer.setOutputSchema(getOutputSchema(inputSchema));
+    }
   }
 
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
-    Integer value = input.get(config.field);
-    if (value != config.value) {
-      emitter.emit(input);
-    } else {
-      emitter.emitError(new InvalidEntry<>(2, "bad int value", input));
+    boolean isNotNull = false;
+    StructuredRecord.Builder builder = StructuredRecord.builder(getOutputSchema(input.getSchema()));
+    for (Schema.Field field : input.getSchema().getFields()) {
+      String fieldName = field.getName();
+      Object val = input.get(fieldName);
+      if (fieldName.equals(config.field)) {
+        isNotNull = val != null;
+        continue;
+      }
+      builder.set(fieldName, input.get(fieldName));
     }
+    if (isNotNull) {
+      emitter.emitError(new InvalidEntry<>(5, "Field " + config.field + " was not null", input));
+    } else {
+      emitter.emit(builder.build());
+    }
+  }
+
+  private Schema getOutputSchema(Schema inputSchema) {
+    List<Schema.Field> fields = new ArrayList<>();
+    for (Schema.Field inputField : inputSchema.getFields()) {
+      if (inputField.getName().equals(config.field)) {
+        continue;
+      }
+      fields.add(inputField);
+    }
+    return Schema.recordOf(inputSchema.getRecordName() + ".short", fields);
   }
 
   /**
@@ -67,21 +94,18 @@ public class IntValueFilterTransform extends Transform<StructuredRecord, Structu
    */
   public static class Config extends PluginConfig {
     private String field;
-    private int value;
   }
 
-  public static ETLPlugin getPlugin(String field, int value) {
+  public static ETLPlugin getPlugin(String field) {
     Map<String, String> properties = new HashMap<>();
     properties.put("field", field);
-    properties.put("value", String.valueOf(value));
-    return new ETLPlugin("IntValueFilter", Transform.PLUGIN_TYPE, properties, null);
+    return new ETLPlugin("DropField", Transform.PLUGIN_TYPE, properties, null);
   }
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("field", new PluginPropertyField("field", "", "string", true, false));
-    properties.put("value", new PluginPropertyField("value", "", "int", true, false));
-    return new PluginClass(Transform.PLUGIN_TYPE, "IntValueFilter", "", IntValueFilterTransform.class.getName(),
+    return new PluginClass(Transform.PLUGIN_TYPE, "DropField", "", DropNullTransform.class.getName(),
                            "config", properties);
   }
 }

@@ -18,6 +18,8 @@ package co.cask.cdap.etl.spark;
 
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.etl.api.ErrorRecord;
+import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
@@ -31,12 +33,15 @@ import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.function.BatchSinkFunction;
+import co.cask.cdap.etl.spark.function.ErrorFilter;
+import co.cask.cdap.etl.spark.function.ErrorTransformFunction;
 import co.cask.cdap.etl.spark.function.InitialJoinFunction;
 import co.cask.cdap.etl.spark.function.JoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.LeftJoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.OuterJoinFlattenFunction;
+import co.cask.cdap.etl.spark.function.OutputFilter;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
-import co.cask.cdap.etl.spark.function.TransformFunction;
+import scala.Tuple2;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,7 +55,7 @@ import java.util.Set;
  */
 public abstract class SparkPipelineRunner {
 
-  protected abstract SparkCollection<Object> getSource(StageInfo stageInfo) throws Exception;
+  protected abstract SparkCollection<Tuple2<Boolean, Object>> getSource(StageInfo stageInfo) throws Exception;
 
 
   protected abstract SparkPairCollection<Object, Object> addJoinKey(
@@ -69,6 +74,7 @@ public abstract class SparkPipelineRunner {
       new DefaultMacroEvaluator(sec.getWorkflowToken(), sec.getRuntimeArguments(), sec.getLogicalStartTime(), sec,
                                 sec.getNamespace());
     Map<String, SparkCollection<Object>> stageDataCollections = new HashMap<>();
+    Map<String, SparkCollection<ErrorRecord<Object>>> stageErrorCollections = new HashMap<>();
 
     // should never happen, but removes warning
     if (pipelinePhase.getDag() == null) {
@@ -77,33 +83,55 @@ public abstract class SparkPipelineRunner {
 
     for (String stageName : pipelinePhase.getDag().getTopologicalOrder()) {
       StageInfo stageInfo = pipelinePhase.getStage(stageName);
+      //noinspection ConstantConditions
       String pluginType = stageInfo.getPluginType();
+
+      // don't want to do an additional filter for stages that can emit errors,
+      // but aren't connected to an ErrorTransform
+      boolean hasErrorOutput = false;
+      Set<String> outputs = pipelinePhase.getStageOutputs(stageInfo.getName());
+      for (String output : outputs) {
+        //noinspection ConstantConditions
+        if (ErrorTransform.PLUGIN_TYPE.equals(pipelinePhase.getStage(output).getPluginType())) {
+          hasErrorOutput = true;
+          break;
+        }
+      }
 
       SparkCollection<Object> stageData = null;
 
       Map<String, SparkCollection<Object>> inputDataCollections = new HashMap<>();
-      for (String inputStageName : stageInfo.getInputs()) {
+      Set<String> stageInputs = stageInfo.getInputs();
+      for (String inputStageName : stageInputs) {
         inputDataCollections.put(inputStageName, stageDataCollections.get(inputStageName));
       }
 
-      // if this stage has multiple inputs, and is not a joiner plugin,
+      // if this stage has multiple inputs, and is not a joiner plugin, or an error transform
       // initialize the stageRDD as the union of all input RDDs.
       if (!inputDataCollections.isEmpty()) {
         Iterator<SparkCollection<Object>> inputCollectionIter = inputDataCollections.values().iterator();
         stageData = inputCollectionIter.next();
-        // don't union if we're joining
-        while (!BatchJoiner.PLUGIN_TYPE.equals(pluginType) && inputCollectionIter.hasNext()) {
+        // don't union inputs records if we're joining or if we're processing errors
+        while (!BatchJoiner.PLUGIN_TYPE.equals(pluginType) && !ErrorTransform.PLUGIN_TYPE.equals(pluginType)
+          && inputCollectionIter.hasNext()) {
           stageData = stageData.union(inputCollectionIter.next());
         }
       }
 
+      SparkCollection<ErrorRecord<Object>> stageErrors = null;
       PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
       if (stageData == null) {
 
         // this if-else is nested inside the stageRDD null check to avoid warnings about stageRDD possibly being
         // null in the other else-if conditions
         if (sourcePluginType.equals(pluginType)) {
-          stageData = getSource(stageInfo);
+          SparkCollection<Tuple2<Boolean, Object>> combinedData = getSource(stageInfo);
+          if (hasErrorOutput) {
+            // need to cache, otherwise the stage can be computed twice, once for output and once for errors.
+            combinedData.cache();
+            stageErrors = combinedData.flatMap(stageInfo, new OutputFilter<>());
+          }
+          stageData = combinedData.flatMap(stageInfo, new ErrorFilter<>());
         } else {
           throw new IllegalStateException(String.format("Stage '%s' has no input and is not a source.", stageName));
         }
@@ -114,7 +142,40 @@ public abstract class SparkPipelineRunner {
 
       } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
 
-        stageData = stageData.flatMap(stageInfo, new TransformFunction<>(pluginFunctionContext));
+        SparkCollection<Tuple2<Boolean, Object>> combinedData = stageData.transform(stageInfo);
+        if (hasErrorOutput) {
+          // need to cache, otherwise the stage can be computed twice, once for output and once for errors.
+          combinedData.cache();
+          stageErrors = combinedData.flatMap(stageInfo, new OutputFilter<>());
+        }
+        stageData = combinedData.flatMap(stageInfo, new ErrorFilter<>());
+
+      } else if (ErrorTransform.PLUGIN_TYPE.equals(pluginType)) {
+
+        // union all the errors coming into this stage
+        SparkCollection<ErrorRecord<Object>> inputErrors = null;
+        for (String inputStage : stageInputs) {
+          SparkCollection<ErrorRecord<Object>> inputErrorsFromStage = stageErrorCollections.get(inputStage);
+          if (inputErrorsFromStage == null) {
+            continue;
+          }
+          if (inputErrors == null) {
+            inputErrors = inputErrorsFromStage;
+          } else {
+            inputErrors = inputErrors.union(inputErrorsFromStage);
+          }
+        }
+
+        if (inputErrors != null) {
+          SparkCollection<Tuple2<Boolean, Object>> combinedData =
+            inputErrors.flatMap(stageInfo, new ErrorTransformFunction<>(pluginFunctionContext));
+          if (hasErrorOutput) {
+            // need to cache, otherwise the stage can be computed twice, once for output and once for errors.
+            combinedData.cache();
+            stageErrors = combinedData.flatMap(stageInfo, new OutputFilter<>());
+          }
+          stageData = combinedData.flatMap(stageInfo, new ErrorFilter<>());
+        }
 
       } else if (SparkCompute.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -130,7 +191,13 @@ public abstract class SparkPipelineRunner {
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
 
         Integer partitions = stagePartitions.get(stageName);
-        stageData = stageData.aggregate(stageInfo, partitions);
+        SparkCollection<Tuple2<Boolean, Object>> combinedData = stageData.aggregate(stageInfo, partitions);
+        if (hasErrorOutput) {
+          // need to cache, otherwise the stage can be computed twice, once for output and once for errors.
+          combinedData.cache();
+          stageErrors = combinedData.flatMap(stageInfo, new OutputFilter<>());
+        }
+        stageData = combinedData.flatMap(stageInfo, new ErrorFilter<>());
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -210,8 +277,12 @@ public abstract class SparkPipelineRunner {
 
       if (shouldCache(pipelinePhase, stageInfo)) {
         stageData = stageData.cache();
+        if (stageErrors != null) {
+          stageErrors = stageErrors.cache();
+        }
       }
       stageDataCollections.put(stageName, stageData);
+      stageErrorCollections.put(stageName, stageErrors);
     }
   }
 
@@ -229,6 +300,7 @@ public abstract class SparkPipelineRunner {
     // otherwise the union computation may trigger recomputing this stage
     for (String outputStageName : outputs) {
       StageInfo outputStage = pipelinePhase.getStage(outputStageName);
+      //noinspection ConstantConditions
       if (outputStage.getInputs().size() > 1) {
         return true;
       }

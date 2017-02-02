@@ -31,6 +31,7 @@ import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSink;
 import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSource;
 import co.cask.cdap.etl.mock.batch.NodeStatesAction;
 import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
+import co.cask.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
 import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
 import co.cask.cdap.etl.mock.batch.joiner.DupeFlagger;
 import co.cask.cdap.etl.mock.batch.joiner.MockJoiner;
@@ -39,9 +40,12 @@ import co.cask.cdap.etl.mock.realtime.MockSink;
 import co.cask.cdap.etl.mock.realtime.MockSource;
 import co.cask.cdap.etl.mock.spark.Window;
 import co.cask.cdap.etl.mock.spark.compute.StringValueFilterCompute;
+import co.cask.cdap.etl.mock.transform.AllErrorTransform;
 import co.cask.cdap.etl.mock.transform.DoubleTransform;
-import co.cask.cdap.etl.mock.transform.ErrorTransform;
+import co.cask.cdap.etl.mock.transform.DropNullTransform;
 import co.cask.cdap.etl.mock.transform.FieldsPrefixTransform;
+import co.cask.cdap.etl.mock.transform.FilterErrorTransform;
+import co.cask.cdap.etl.mock.transform.FlattenErrorTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.IntValueFilterTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
@@ -63,27 +67,31 @@ public class HydratorTestBase extends TestBase {
   // To work around, we'll just explicitly specify each plugin.
   private static final Set<PluginClass> REALTIME_MOCK_PLUGINS = ImmutableSet.of(
     LookupSource.PLUGIN_CLASS, MockSink.PLUGIN_CLASS, MockSource.PLUGIN_CLASS,
-    DoubleTransform.PLUGIN_CLASS, ErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
-    IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS
+    DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
+    IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
+    FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS
   );
   private static final Set<PluginClass> BATCH_MOCK_PLUGINS = ImmutableSet.of(
-    FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS,
+    FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS, GroupFilterAggregator.PLUGIN_CLASS,
     MockJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
     co.cask.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS, co.cask.cdap.etl.mock.batch.MockSource.PLUGIN_CLASS,
     MockRuntimeDatasetSink.PLUGIN_CLASS, MockRuntimeDatasetSource.PLUGIN_CLASS,
     MockExternalSource.PLUGIN_CLASS, MockExternalSink.PLUGIN_CLASS,
-    DoubleTransform.PLUGIN_CLASS, ErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
-    FieldsPrefixTransform.PLUGIN_CLASS, IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS,
-    MockAction.PLUGIN_CLASS, StringValueFilterCompute.PLUGIN_CLASS
+    DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
+    FieldsPrefixTransform.PLUGIN_CLASS, IntValueFilterTransform.PLUGIN_CLASS,
+    StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
+    MockAction.PLUGIN_CLASS, StringValueFilterCompute.PLUGIN_CLASS,
+    FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS
   );
   private static final Set<PluginClass> STREAMING_MOCK_PLUGINS = ImmutableSet.of(
     co.cask.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,
     co.cask.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS,
-    DoubleTransform.PLUGIN_CLASS, ErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
-    IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS,
-    FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS,
+    DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
+    IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
+    FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS, GroupFilterAggregator.PLUGIN_CLASS,
     MockJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
-    StringValueFilterCompute.PLUGIN_CLASS, Window.PLUGIN_CLASS
+    StringValueFilterCompute.PLUGIN_CLASS, Window.PLUGIN_CLASS,
+    FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS
   );
 
   public HydratorTestBase() {
@@ -98,7 +106,7 @@ public class HydratorTestBase extends TestBase {
                       artifactId,
                       REALTIME_MOCK_PLUGINS,
                       MockSink.class, MockSource.class, LookupSource.class,
-                      DoubleTransform.class, ErrorTransform.class, IdentityTransform.class,
+                      DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class);
   }
 
@@ -117,7 +125,7 @@ public class HydratorTestBase extends TestBase {
                       co.cask.cdap.etl.mock.batch.MockSource.class,
                       co.cask.cdap.etl.mock.batch.MockSink.class,
                       MockExternalSource.class, MockExternalSink.class,
-                      DoubleTransform.class, ErrorTransform.class, IdentityTransform.class,
+                      DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
                       FieldCountAggregator.class, IdentityAggregator.class, FieldsPrefixTransform.class,
                       StringValueFilterCompute.class,
@@ -139,7 +147,7 @@ public class HydratorTestBase extends TestBase {
                       STREAMING_MOCK_PLUGINS,
                       co.cask.cdap.etl.mock.spark.streaming.MockSource.class,
                       co.cask.cdap.etl.mock.batch.MockSink.class,
-                      DoubleTransform.class, ErrorTransform.class, IdentityTransform.class,
+                      DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
                       StringValueFilterCompute.class, Window.class);
   }

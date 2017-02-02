@@ -31,13 +31,15 @@ public class PipeTransformDetail implements Destroyable {
   private final Transformation transformation;
   private final PipeEmitter<PipeTransformDetail> emitter;
   private final boolean removeStageName;
+  private final boolean isErrorConsumer;
 
-  public PipeTransformDetail(String stageName, boolean removeStageName,
+  public PipeTransformDetail(String stageName, boolean removeStageName, boolean isErrorConsumer,
                              Transformation transformation, PipeEmitter<PipeTransformDetail> emitter) {
     this.stageName = stageName;
     this.removeStageName = removeStageName;
     this.transformation = transformation;
     this.emitter = emitter;
+    this.isErrorConsumer = isErrorConsumer;
   }
 
   public void process(KeyValue<String, Object> value) {
@@ -54,6 +56,10 @@ public class PipeTransformDetail implements Destroyable {
 
   public void addTransformation(String stageName, PipeTransformDetail pipeTransformDetail) {
     emitter.addTransformDetail(stageName, pipeTransformDetail);
+  }
+
+  public boolean isErrorConsumer() {
+    return isErrorConsumer;
   }
 
   @Override

@@ -70,6 +70,11 @@ public class MockPipelineConfigurer implements PipelineConfigurer {
       public void setOutputSchema(@Nullable Schema schema) {
         outputSchema = schema;
       }
+
+      @Override
+      public void setErrorSchema(@Nullable Schema errorSchema) {
+
+      }
     };
   }
 

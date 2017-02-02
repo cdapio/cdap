@@ -20,11 +20,15 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.MultiInputPipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.action.Action;
+import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
+import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.etl.planner.Dag;
@@ -34,6 +38,7 @@ import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,6 +57,8 @@ import java.util.Set;
  * @param <P> the pipeline specification generated from the config
  */
 public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends PipelineSpec> {
+  private static final Set<String> VALID_ERROR_INPUTS = ImmutableSet.of(
+    BatchSource.PLUGIN_TYPE, Transform.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE);
   protected final PluginConfigurer configurer;
   private final Class<? extends Dataset> errorDatasetClass;
   private final DatasetProperties errorDatasetProperties;
@@ -113,6 +120,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
       StageSpec stageSpec = configureStage(stageConnections, pluginConfigurer);
       Schema outputSchema = stageSpec.getOutputSchema();
+      Schema outputErrorSchema = stageSpec.getErrorSchema();
 
       // for each output, set their input schema to our output schema
       for (String outputStageName : stageConnections.getOutputs()) {
@@ -131,13 +139,18 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
                                                              "outputs a null schema.", stageName));
         }
 
+        // if the output stage is an error transform, it takes the error schema of this stage as its input.
+        // all other plugin types that the output schema of this stage as its input.
+        Schema nextStageInputSchema = ErrorTransform.PLUGIN_TYPE.equals(outputStageType) ?
+          outputErrorSchema : outputSchema;
+
         // Do not allow more than one input schema for stages other than Joiner
-        if (!outputStageType.equals(BatchJoiner.PLUGIN_TYPE) &&
-          !hasSameSchema(outputStageConfigurer.getInputSchemas(), outputSchema)) {
+        if (!BatchJoiner.PLUGIN_TYPE.equals(outputStageType) &&
+          !hasSameSchema(outputStageConfigurer.getInputSchemas(), nextStageInputSchema)) {
           throw new IllegalArgumentException("Two different input schema were set for the stage " + outputStageName);
         }
 
-        outputStageConfigurer.addInputSchema(stageName, outputSchema);
+        outputStageConfigurer.addInputSchema(stageName, nextStageInputSchema);
       }
       specBuilder.addStage(stageSpec);
     }
@@ -182,6 +195,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       .setErrorDatasetName(stage.getErrorDatasetName())
       .addInputSchemas(inputSchemas)
       .setOutputSchema(outputSchema)
+      .setErrorSchema(pluginConfigurer.getStageConfigurer().getErrorSchema())
       .addInputs(stageConnections.getInputs())
       .addOutputs(stageConnections.getOutputs())
       .build();
@@ -239,6 +253,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * Sink stages have at least one input and no outputs.
    * There are no cycles in the pipeline.
    * All inputs into a stage have the same schema.
+   * ErrorTransforms only have BatchSource, Transform, or BatchAggregator as input stages
    *
    * Returns the stages in the order they should be configured to ensure that all input stages are configured
    * before their output.
@@ -254,6 +269,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     }
 
     Set<String> actionStages = new HashSet<>();
+    Map<String, String> stageTypes = new HashMap<>();
     // check stage name uniqueness
     Set<String> stageNames = new HashSet<>();
     for (ETLStage stage : config.getStages()) {
@@ -266,6 +282,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       if (Action.PLUGIN_TYPE.equals(stage.getPlugin().getType())) {
         actionStages.add(stage.getName());
       }
+      stageTypes.put(stage.getName(), stage.getPlugin().getType());
     }
 
     // check that the from and to are names of actual stages
@@ -282,37 +299,54 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
     Dag dag = new Dag(config.getConnections());
 
-    // check source plugins are sources in the dag
-    // check sink plugins are sinks in the dag
-    // check that other plugins are not sources or sinks in the dag
     Map<String, StageConnections> stages = new HashMap<>();
     for (ETLStage stage : config.getStages()) {
       String stageName = stage.getName();
       Set<String> stageInputs = dag.getNodeInputs(stageName);
       Set<String> stageOutputs = dag.getNodeOutputs(stageName);
+      String stageType = stage.getPlugin().getType();
 
-      if (isSource(stage.getPlugin().getType())) {
+      // check source plugins are sources in the dag
+      if (isSource(stageType)) {
         if (!stageInputs.isEmpty() && !actionStages.containsAll(stageInputs)) {
           throw new IllegalArgumentException(
             String.format("Source %s has incoming connections from %s. Sources cannot have any incoming connections.",
                           stageName, Joiner.on(',').join(stageInputs)));
         }
-      } else if (isSink(stage.getPlugin().getType())) {
+      } else if (isSink(stageType)) {
         if (!stageOutputs.isEmpty() && !actionStages.containsAll(stageOutputs)) {
           throw new IllegalArgumentException(
             String.format("Sink %s has outgoing connections to %s. Sinks cannot have any outgoing connections.",
                           stageName, Joiner.on(',').join(stageOutputs)));
         }
       } else {
-        if (stageInputs.isEmpty() && !(stage.getPlugin().getType().equals(Action.PLUGIN_TYPE))) {
-          throw new IllegalArgumentException(
-            String.format("Stage %s is unreachable, it has no incoming connections.", stageName));
+        // check that other non-action plugins are not sources or sinks in the dag
+        boolean isAction = Action.PLUGIN_TYPE.equals(stageType);
+        if (!isAction) {
+          if (stageInputs.isEmpty()) {
+            throw new IllegalArgumentException(
+              String.format("Stage %s is unreachable, it has no incoming connections.", stageName));
+          }
+          if (stageOutputs.isEmpty()) {
+            throw new IllegalArgumentException(
+              String.format("Stage %s is a dead end, it has no outgoing connections.", stageName));
+          }
         }
-        if (stageOutputs.isEmpty() && !(stage.getPlugin().getType().equals(Action.PLUGIN_TYPE))) {
-          throw new IllegalArgumentException(
-            String.format("Stage %s is a dead end, it has no outgoing connections.", stageName));
+
+        // check that error transforms only have stages that can emit errors as input
+        boolean isErrorTransform = ErrorTransform.PLUGIN_TYPE.equals(stageType);
+        if (isErrorTransform) {
+          for (String inputStage : stageInputs) {
+            String inputType = stageTypes.get(inputStage);
+            if (!VALID_ERROR_INPUTS.contains(inputType)) {
+              throw new IllegalArgumentException(String.format(
+                "ErrorTransform %s cannot have stage %s of type %s as input. Only %s stages can emit errors.",
+                stageName, inputStage, inputType, Joiner.on(',').join(VALID_ERROR_INPUTS)));
+            }
+          }
         }
       }
+
       stages.put(stageName, new StageConnections(stage, stageInputs, stageOutputs));
     }
 

@@ -35,12 +35,13 @@ import javax.annotation.Nullable;
  */
 public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageConfigurer {
   private Schema outputSchema;
-  private final String stageName;
-  private Map<String, Schema> inputSchemas;
+  private Schema outputErrorSchema;
+  private boolean errorSchemaSet;
+  protected Map<String, Schema> inputSchemas;
 
-  public DefaultStageConfigurer(String stageName) {
-    this.stageName = stageName;
+  public DefaultStageConfigurer() {
     this.inputSchemas = new HashMap<>();
+    this.errorSchemaSet = false;
   }
 
   @Nullable
@@ -63,6 +64,20 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
   @Override
   public void setOutputSchema(@Nullable Schema outputSchema) {
     this.outputSchema = outputSchema;
+  }
+
+  @Override
+  public void setErrorSchema(@Nullable Schema errorSchema) {
+    this.outputErrorSchema = errorSchema;
+    errorSchemaSet = true;
+  }
+
+  public Schema getErrorSchema() {
+    if (errorSchemaSet) {
+      return outputErrorSchema;
+    }
+    // only joiners can have multiple input schemas, and joiners can't emit errors
+    return inputSchemas.isEmpty() ? null : inputSchemas.values().iterator().next();
   }
 
   public void addInputSchema(String inputStageName, @Nullable Schema inputSchema) {

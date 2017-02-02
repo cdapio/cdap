@@ -17,10 +17,10 @@
 package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.etl.api.ErrorRecord;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.batch.PipeTransformDetail;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import co.cask.cdap.etl.common.BasicErrorRecord;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,31 +31,34 @@ import javax.annotation.Nullable;
  * transformed record
  */
 public class TransformEmitter implements PipeEmitter<PipeTransformDetail> {
-  private static final Logger LOG = LoggerFactory.getLogger(TransformEmitter.class);
-
   private final String stageName;
-  private final Map<String, PipeTransformDetail> nextStages;
   private final ErrorOutputWriter<Object, Object> errorOutputWriter;
+  private final Map<String, PipeTransformDetail> outputConsumers;
+  private final Map<String, PipeTransformDetail> errorConsumers;
 
   public TransformEmitter(String stageName, @Nullable ErrorOutputWriter<Object, Object> errorOutputWriter) {
     this.stageName = stageName;
-    this.nextStages = new HashMap<>();
     this.errorOutputWriter = errorOutputWriter;
+    this.outputConsumers = new HashMap<>();
+    this.errorConsumers = new HashMap<>();
   }
 
   @Override
   public void emit(Object value) {
-    for (PipeTransformDetail pipeTransformDetail : nextStages.values()) {
+    for (PipeTransformDetail pipeTransformDetail : outputConsumers.values()) {
       pipeTransformDetail.process(new KeyValue<>(stageName, value));
     }
   }
 
   @Override
   public void emitError(InvalidEntry<Object> invalidEntry) {
+    for (PipeTransformDetail pipeTransformDetail : errorConsumers.values()) {
+      ErrorRecord errorRecord = new BasicErrorRecord<>(invalidEntry.getInvalidRecord(), stageName,
+                                                       invalidEntry.getErrorCode(), invalidEntry.getErrorMsg());
+      pipeTransformDetail.process(new KeyValue<>(stageName, (Object) errorRecord));
+    }
     try {
-      if (errorOutputWriter == null) {
-        LOG.warn("Transform : {} has error records, but does not have a error dataset configured.", stageName);
-      } else {
+      if (errorOutputWriter != null) {
         errorOutputWriter.write(invalidEntry);
       }
     } catch (Exception e) {
@@ -65,6 +68,10 @@ public class TransformEmitter implements PipeEmitter<PipeTransformDetail> {
 
   @Override
   public void addTransformDetail(String stageName, PipeTransformDetail pipeTransformDetail) {
-    nextStages.put(stageName, pipeTransformDetail);
+    if (pipeTransformDetail.isErrorConsumer()) {
+      errorConsumers.put(stageName, pipeTransformDetail);
+    } else {
+      outputConsumers.put(stageName, pipeTransformDetail);
+    }
   }
 }

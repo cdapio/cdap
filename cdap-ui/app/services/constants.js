@@ -44,7 +44,8 @@ angular.module(PKG.name + '.services')
         'batchaggregator': 'batchaggregator',
         'sink': 'batchsink',
         'batchjoiner': 'batchjoiner',
-        'windower': 'windower'
+        'windower': 'windower',
+        'errortransform': 'errortransform'
       },
       'cdap-etl-realtime': {
         'source': 'realtimesource',
@@ -59,7 +60,8 @@ angular.module(PKG.name + '.services')
         'sparksink': 'sparksink',
         'sparkcompute': 'sparkcompute',
         'batchjoiner': 'batchjoiner',
-        'action': 'action'
+        'action': 'action',
+        'errortransform': 'errortransform'
       },
       'post-run-actions': {
         'email': 'Send Email',
@@ -79,7 +81,8 @@ angular.module(PKG.name + '.services')
       'batchjoiner': pluginLabels['analytics'],
       'action': 'Action',
       'streamingsource': pluginLabels['source'],
-      'windower': pluginLabels['transform']
+      'windower': pluginLabels['transform'],
+      'errortransform': pluginLabels['transform']
     },
     pluginLabels: pluginLabels,
     // understand what plugin type is what.
@@ -96,7 +99,8 @@ angular.module(PKG.name + '.services')
       'sparksink': 'sink',
       'sparkcompute': 'transform',
       'batchjoiner': 'transform',
-      'action': 'action'
+      'action': 'action',
+      'errortransform': 'transform'
     },
 
     artifactConvert: {

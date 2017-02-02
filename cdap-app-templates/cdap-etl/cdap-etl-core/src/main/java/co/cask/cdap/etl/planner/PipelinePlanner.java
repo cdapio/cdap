@@ -204,6 +204,7 @@ public class PipelinePlanner {
         .addInputSchemas(actionStageSpec.getInputSchemas())
         .addOutputs(actionStageSpec.getOutputs())
         .setOutputSchema(actionStageSpec.getOutputSchema())
+        .setErrorSchema(actionStageSpec.getErrorSchema())
         .setErrorDatasetName(actionStageSpec.getErrorDatasetName())
         .build();
       phases.put(node, PipelinePhase.builder(supportedPluginTypes).addStage(actionStageInfo).build());
@@ -274,6 +275,7 @@ public class PipelinePlanner {
                               .addInputSchemas(spec.getInputSchemas())
                               .addOutputs(spec.getOutputs())
                               .setOutputSchema(spec.getOutputSchema())
+                              .setErrorSchema(spec.getErrorSchema())
                               .setErrorDatasetName(spec.getErrorDatasetName())
                               .build());
     }

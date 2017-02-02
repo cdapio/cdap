@@ -23,6 +23,8 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
+import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
@@ -30,12 +32,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Transform used to test writing to error datasets. Writes all its input as errors.
+ * Transform used to test error emission. Writes all its input as errors.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
-@Name("Error")
-public class ErrorTransform extends Transform<StructuredRecord, StructuredRecord> {
+@Name("AllError")
+public class AllErrorTransform extends Transform<StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
+
+  @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+    stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
+  }
 
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
@@ -43,11 +51,11 @@ public class ErrorTransform extends Transform<StructuredRecord, StructuredRecord
   }
 
   public static ETLPlugin getPlugin() {
-    return new ETLPlugin("Error", Transform.PLUGIN_TYPE, new HashMap<String, String>(), null);
+    return new ETLPlugin("AllError", Transform.PLUGIN_TYPE, new HashMap<String, String>(), null);
   }
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    return new PluginClass(Transform.PLUGIN_TYPE, "Error", "", ErrorTransform.class.getName(), null, properties);
+    return new PluginClass(Transform.PLUGIN_TYPE, "AllError", "", AllErrorTransform.class.getName(), null, properties);
   }
 }

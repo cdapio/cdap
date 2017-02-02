@@ -21,6 +21,7 @@ import co.cask.cdap.etl.spark.streaming.DynamicDriverContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.streaming.Time;
+import scala.Tuple2;
 
 /**
  * Serializable function that can be used to perform a flat map on a DStream. Dynamically instantiates
@@ -30,7 +31,7 @@ import org.apache.spark.streaming.Time;
  * @param <T> type of input object
  * @param <U> type of output object
  */
-public class DynamicTransform<T, U> implements Function2<JavaRDD<T>, Time, JavaRDD<U>> {
+public class DynamicTransform<T, U> implements Function2<JavaRDD<T>, Time, JavaRDD<Tuple2<Boolean, Object>>> {
   private final DynamicDriverContext dynamicDriverContext;
   private transient TransformFunction<T, U> transformFunction;
 
@@ -39,7 +40,7 @@ public class DynamicTransform<T, U> implements Function2<JavaRDD<T>, Time, JavaR
   }
 
   @Override
-  public JavaRDD<U> call(JavaRDD<T> input, Time batchTime) throws Exception {
+  public JavaRDD<Tuple2<Boolean, Object>> call(JavaRDD<T> input, Time batchTime) throws Exception {
     if (transformFunction == null) {
       transformFunction = new TransformFunction<>(dynamicDriverContext.getPluginFunctionContext());
     }
