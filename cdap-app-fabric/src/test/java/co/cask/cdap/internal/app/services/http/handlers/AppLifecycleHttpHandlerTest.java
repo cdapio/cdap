@@ -147,9 +147,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // should be able to retrieve the owner information of the app
     JsonObject appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), applicationId.getApplication());
-    Assert.assertEquals(ownerPrincipal,
-                        appDetails.get(Constants.Security.PRINCIPAL)
-                          .getAsJsonObject().get("principal").getAsString());
+    Assert.assertEquals(ownerPrincipal, appDetails.get(Constants.Security.PRINCIPAL).getAsString());
 
     // the stream created by the app should have the app owner too
     Assert.assertEquals(ownerPrincipal,
@@ -212,9 +210,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // should be able to retrieve the owner information of the app
     JsonObject appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), applicationId.getApplication());
-    Assert.assertEquals(ownerPrincipal,
-                        appDetails.get(Constants.Security.PRINCIPAL).
-                          getAsJsonObject().get("principal").getAsString());
+    Assert.assertEquals(ownerPrincipal, appDetails.get(Constants.Security.PRINCIPAL).getAsString());
 
     // cleanup app
     Assert.assertEquals(200,

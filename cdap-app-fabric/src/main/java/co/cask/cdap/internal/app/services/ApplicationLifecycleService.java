@@ -88,7 +88,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import com.sun.org.apache.bcel.internal.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,6 +100,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -249,7 +249,7 @@ ApplicationLifecycleService extends AbstractIdleService {
       throw new ApplicationNotFoundException(appId);
     }
     ensureAccess(appId);
-    KerberosPrincipalId ownerPrincipal = ownerAdmin.getOwner(appId);
+    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
     return ApplicationDetail.fromSpec(appSpec, ownerPrincipal);
   }
 
@@ -335,7 +335,7 @@ ApplicationLifecycleService extends AbstractIdleService {
     }
 
     // ownerAdmin.getOwner will give the owner of application irrespective of the version
-    boolean equals = Objects.equals(ownerAdmin.getOwner(appId), appRequest.getOwnerPrincipal());
+    boolean equals = Objects.equals(ownerAdmin.getOwnerPrincipal(appId), appRequest.getOwnerPrincipal());
     Preconditions.checkArgument(equals,
                                 String.format("Updating %s is not supported.", Constants.Security.PRINCIPAL));
 

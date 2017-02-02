@@ -23,7 +23,6 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
@@ -45,8 +44,8 @@ public class ApplicationDetail {
   private final List<ProgramRecord> programs;
   private final List<PluginDetail> plugins;
   private final ArtifactSummary artifact;
-  @SerializedName("owner.principal")
-  private final KerberosPrincipalId ownerPrincipal;
+  @SerializedName("principal")
+  private final String ownerPrincipal;
 
   public ApplicationDetail(String name,
                            String description,
@@ -68,7 +67,7 @@ public class ApplicationDetail {
                            List<ProgramRecord> programs,
                            List<PluginDetail> plugins,
                            ArtifactSummary artifact,
-                           @Nullable KerberosPrincipalId ownerPrincipal) {
+                           @Nullable String ownerPrincipal) {
     this(name, ApplicationId.DEFAULT_VERSION, description, configuration, streams, datasets, programs,
          plugins, artifact, ownerPrincipal);
   }
@@ -82,7 +81,7 @@ public class ApplicationDetail {
                            List<ProgramRecord> programs,
                            List<PluginDetail> plugins,
                            ArtifactSummary artifact,
-                           @Nullable KerberosPrincipalId ownerPrincipal) {
+                           @Nullable String ownerPrincipal) {
     this.name = name;
     this.appVersion = appVersion;
     this.artifactVersion = artifact.getVersion();
@@ -138,12 +137,12 @@ public class ApplicationDetail {
   }
 
   @Nullable
-  public KerberosPrincipalId getOwnerPrincipal() {
+  public String getOwnerPrincipal() {
     return ownerPrincipal;
   }
 
   public static ApplicationDetail fromSpec(ApplicationSpecification spec,
-                                           @Nullable KerberosPrincipalId ownerPrincipal) {
+                                           @Nullable String ownerPrincipal) {
     List<ProgramRecord> programs = new ArrayList<>();
     for (ProgramSpecification programSpec : spec.getFlows().values()) {
       programs.add(new ProgramRecord(ProgramType.FLOW, spec.getName(),
